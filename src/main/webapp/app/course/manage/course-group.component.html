@@ -92,7 +92,7 @@
                 <ngx-datatable-column prop="" [minWidth]="150" [width]="200">
                     <ng-template ngx-datatable-header-template> </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <div class="w-100 text-right">
+                        <div class="w-100 text-end">
                             <button
                                 jhiDeleteButton
                                 [actionType]="ActionType.Remove"
@@ -101,7 +101,7 @@
                                 (delete)="removeFromGroup(value)"
                                 [dialogError]="dialogError$"
                             >
-                                <fa-icon [icon]="'user-slash'" class="mr-1"></fa-icon>
+                                <fa-icon [icon]="'user-slash'" class="me-1"></fa-icon>
                             </button>
                         </div>
                     </ng-template>

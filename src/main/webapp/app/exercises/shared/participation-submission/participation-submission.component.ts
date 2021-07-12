@@ -43,7 +43,7 @@ export class ParticipationSubmissionComponent implements OnInit {
 
     @Input() participationId: number;
 
-    public exerciseStatusBadge = 'badge-success';
+    public exerciseStatusBadge = 'bg-success';
 
     isTmpOrSolutionProgrParticipation = false;
     exercise?: Exercise;
@@ -93,7 +93,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 // Find programming exercise of template and solution programming participation
                 this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
                     const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
                     const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
                     // Check if requested participationId belongs to the template or solution participation
@@ -113,7 +113,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 // Get exercise for release and due dates
                 this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
                 });
                 this.fetchParticipationAndSubmissionsForStudent();
             }
@@ -215,28 +215,28 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     deleteResult(submission: Submission, result: Result) {
-        if (this.exercise && submission.id && result.id) {
+        if (this.exercise && submission.id && result.id && submission.participation?.id) {
             switch (this.exercise.type) {
                 case ExerciseType.TEXT:
-                    this.textAssessmentService.deleteAssessment(submission.id, result.id).subscribe(
+                    this.textAssessmentService.deleteAssessment(submission.participation.id, submission.id, result.id).subscribe(
                         () => this.updateResults(submission, result),
                         (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );
                     break;
                 case ExerciseType.MODELING:
-                    this.modelingAssessmentsService.deleteAssessment(submission.id, result.id).subscribe(
+                    this.modelingAssessmentsService.deleteAssessment(submission.participation.id, submission.id, result.id).subscribe(
                         () => this.updateResults(submission, result),
                         (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    this.fileUploadAssessmentService.deleteAssessment(submission.id, result.id).subscribe(
+                    this.fileUploadAssessmentService.deleteAssessment(submission.participation.id, submission.id, result.id).subscribe(
                         () => this.updateResults(submission, result),
                         (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );
                     break;
                 case ExerciseType.PROGRAMMING:
-                    this.programmingAssessmentService.deleteAssessment(submission.id, result.id).subscribe(
+                    this.programmingAssessmentService.deleteAssessment(submission.participation.id, submission.id, result.id).subscribe(
                         () => this.updateResults(submission, result),
                         (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );

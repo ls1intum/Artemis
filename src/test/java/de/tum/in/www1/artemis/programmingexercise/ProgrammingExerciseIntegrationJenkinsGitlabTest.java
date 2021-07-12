@@ -75,6 +75,12 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testExportSubmissionAnonymizationCombining() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportSubmissionAnonymizationCombining();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void textExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
         programmingExerciseIntegrationServiceTest.textExportSubmissionsByParticipationIds_invalidParticipationId_badRequest();
     }

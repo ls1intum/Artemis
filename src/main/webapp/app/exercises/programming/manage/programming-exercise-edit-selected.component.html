@@ -1,7 +1,7 @@
 <div>
     <div class="modal-header">
         <h4 class="modal-title" jhiTranslate="entity.action.editSelected">Edit selected</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
         <div class="row justify-content-center">
@@ -19,7 +19,7 @@
                     </tbody>
                 </table>
             </div>
-            <button type="button" class="btn ml-2 btn-primary" (click)="closeModal()" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorReadButton">Ok</button>
+            <button type="button" class="btn ms-2 btn-primary" (click)="closeModal()" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorReadButton">Ok</button>
         </div>
         <div *ngIf="!failureOccurred" class="row justify-content-center">
             <div class="col-lg-8 col-sm-12">

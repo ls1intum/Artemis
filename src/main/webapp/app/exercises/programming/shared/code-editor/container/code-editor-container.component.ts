@@ -3,7 +3,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { fromPairs, toPairs, uniq } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
 import { ActivatedRoute } from '@angular/router';
-import { Interactable } from '@interactjs/core/Interactable';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
@@ -19,7 +18,7 @@ import {
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
+import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
 import { CodeEditorAceComponent, Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
@@ -226,26 +225,14 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
 
     // displays the alert for confirming refreshing or closing the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
-    unloadNotification($event: any) {
+    unloadNotification(event: any) {
         if (!this.canDeactivate()) {
-            $event.returnValue = this.translateService.instant('pendingChanges');
+            event.returnValue = this.translateService.instant('pendingChanges');
         }
     }
 
-    onToggleCollapse({
-        event,
-        horizontal,
-        interactable,
-        resizableMinWidth,
-        resizableMinHeight,
-    }: {
-        event: any;
-        horizontal: boolean;
-        interactable: Interactable;
-        resizableMinWidth?: number;
-        resizableMinHeight?: number;
-    }) {
-        this.grid.toggleCollapse(event, horizontal, interactable, resizableMinWidth, resizableMinHeight);
+    onToggleCollapse(event: InteractableEvent) {
+        this.grid.toggleCollapse(event);
     }
 
     onGridResize(type: ResizeType) {

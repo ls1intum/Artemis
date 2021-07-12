@@ -174,3 +174,5 @@ repos-download/
 /coverage
 /exports
 /src/main/resources/config/application-local*.yml
+/src/test/cypress/screenshots/
+/src/test/cypress/videos/

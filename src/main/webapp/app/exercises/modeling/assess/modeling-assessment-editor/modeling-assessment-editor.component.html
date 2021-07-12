@@ -45,6 +45,7 @@
             (feedbackChanged)="onFeedbackChanged($event)"
             [explanation]="submission?.explanationText || ''"
             [highlightDifferences]="highlightDifferences"
+            [elementCounts]="submission && submission.similarElements"
         ></jhi-modeling-assessment>
         <jhi-collapsable-assessment-instructions
             *ngIf="modelingExercise"
@@ -80,7 +81,7 @@
 <ng-template #noSubmission>
     <div *ngIf="!loadingInitialSubmission" class="alert alert-warning text-center mt-4" role="alert">
         <p jhiTranslate="modelingAssessment.notFound">We haven't found any new submission without an assessment, please go back.</p>
-        <a [routerLink]="exerciseDashboardLink" class="btn btn-info btn-sm mr-1 mb-1 assessment-dashboard">
+        <a [routerLink]="exerciseDashboardLink" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
             <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
         </a>
     </div>

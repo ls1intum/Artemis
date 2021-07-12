@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,10 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.ase.athene.protobuf.AtheneResponse;
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
-import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
 
 /**
  * REST controller for managing Athene results.
@@ -38,12 +35,12 @@ public class AtheneResource {
      * Saves automatic textAssessments of Athene
      *
      * @param exerciseId The exerciseId of the exercise which will be saved
-     * @param requestBody The calculation results containing blocks and clusters
+     * @param atheneResponse The calculation results containing blocks and clusters
      * @param auth The secret for authorization
      * @return 200 Ok if successful or 401 unauthorized if secret is wrong
      */
-    @PostMapping(value = "/{exerciseId}", consumes = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Result> saveAtheneResult(@PathVariable Long exerciseId, @RequestBody AtheneDTO requestBody, @RequestHeader("Authorization") String auth) {
+    @PostMapping(value = "/{exerciseId}", consumes = "application/x-protobuf")
+    public ResponseEntity saveAtheneResult(@PathVariable Long exerciseId, @RequestBody AtheneResponse atheneResponse, @RequestHeader("Authorization") String auth) {
         log.debug("REST call to inform about new Athene results for exercise: {}", exerciseId);
 
         // Check Authorization header
@@ -57,7 +54,7 @@ public class AtheneResource {
         }
 
         // The atheneService will manage the processing and database saving
-        atheneService.processResult(requestBody.getClusters(), requestBody.getBlocks(), exerciseId);
+        atheneService.processResult(atheneResponse.getClustersList(), atheneResponse.getSegmentsList(), exerciseId);
 
         log.debug("REST call for new Athene results for exercise {} finished", exerciseId);
 

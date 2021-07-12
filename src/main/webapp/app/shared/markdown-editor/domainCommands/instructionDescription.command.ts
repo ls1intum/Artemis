@@ -3,7 +3,7 @@ import { addTextAtCursor } from 'app/shared/util/markdown-util';
 
 export class InstructionDescriptionCommand extends DomainTagCommand {
     public static readonly identifier = '[description]';
-    public static readonly text = ' Add grading instruction here (only visible for tutors)';
+    public static readonly text = 'Add grading instruction here (only visible for tutors)';
     displayCommandButton = false;
 
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addInstruction';

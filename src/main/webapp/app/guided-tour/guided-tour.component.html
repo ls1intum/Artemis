@@ -26,7 +26,7 @@
                 </h3>
                 <div
                     *ngIf="guidedTourService.currentTour"
-                    class="close"
+                    class="btn-close"
                     (click)="
                         guidedTourService.isCurrentTour(cancelTour) || guidedTourService.isCurrentTour(completedTour) ? guidedTourService.resetTour() : guidedTourService.skipTour()
                     "

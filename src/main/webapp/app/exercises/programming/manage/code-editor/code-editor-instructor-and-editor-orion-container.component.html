@@ -23,17 +23,17 @@
                 [showGradedBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
                 [short]="true"
                 [personalParticipation]="false"
-                class="mr-2"
+                class="me-2"
             ></jhi-updating-result>
         </div>
-        <div class="d-flex align-items-center justify-content-end mr-2 mb-3">
+        <div class="d-flex align-items-center justify-content-end me-2 mb-3">
             <jhi-programming-exercise-instructor-exercise-status
-                class="mr-2"
+                class="me-2"
                 [exercise]="exercise"
                 [templateParticipation]="exercise.templateParticipation!"
                 [solutionParticipation]="exercise.solutionParticipation!"
             ></jhi-programming-exercise-instructor-exercise-status>
-            <div ngbDropdown class="d-inline-block mr-2">
+            <div ngbDropdown class="d-inline-block me-2">
                 <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
                 <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                     <button
@@ -65,21 +65,21 @@
                 </div>
             </div>
             <jhi-programming-exercise-student-trigger-build-button
-                class="mr-3"
+                class="me-3"
                 *ngIf="selectedRepository !== REPOSITORY.TEST"
                 [exercise]="exercise"
                 [participation]="selectedParticipation!"
                 [btnSize]="ButtonSize.MEDIUM"
             ></jhi-programming-exercise-student-trigger-build-button>
-            <jhi-exercise-hint-student *ngIf="exercise && this.selectedRepository === REPOSITORY.ASSIGNMENT" [exerciseId]="exercise.id!" class="mr-2"></jhi-exercise-hint-student>
-            <jhi-ide-button class="ml-1" [buttonLoading]="orionState.building" buttonLabel="{{ 'artemisApp.editor.submit' | artemisTranslate }}" (click)="submit()">
+            <jhi-exercise-hint-student *ngIf="exercise && this.selectedRepository === REPOSITORY.ASSIGNMENT" [exerciseId]="exercise.id!" class="me-2"></jhi-exercise-hint-student>
+            <jhi-ide-button class="ms-1" [buttonLoading]="orionState.building" buttonLabel="{{ 'artemisApp.editor.submit' | artemisTranslate }}" (clickHandler)="submit()">
             </jhi-ide-button>
             <jhi-ide-button
                 *ngIf="selectedRepository !== REPOSITORY.TEST"
-                class="ml-1"
+                class="ms-1"
                 [buttonLoading]="orionState.building"
                 buttonLabel="{{ 'artemisApp.editor.intellij.testLocally' | artemisTranslate }}"
-                (click)="buildLocally()"
+                (clickHandler)="buildLocally()"
             ></jhi-ide-button>
         </div>
         <jhi-programming-exercise-editable-instructions

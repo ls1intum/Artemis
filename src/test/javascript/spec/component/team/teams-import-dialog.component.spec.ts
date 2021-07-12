@@ -12,9 +12,9 @@ import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-impo
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component.ts';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { flatMap } from 'lodash';
 import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';

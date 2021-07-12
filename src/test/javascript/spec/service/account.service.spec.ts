@@ -19,7 +19,7 @@ describe('AccountService', () => {
     let httpService: MockHttpService;
     let getStub: SinonStub;
 
-    const getUserUrl = 'undefinedapi/account';
+    const getUserUrl = 'api/account';
     const user = { id: 1, groups: ['USER'] } as User;
     const user2 = { id: 2, groups: ['USER'] } as User;
 

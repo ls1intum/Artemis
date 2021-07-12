@@ -36,6 +36,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { RouterTestingModule } from '@angular/router/testing';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -129,6 +130,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 ArtemisConfirmIconModule,
                 TextSharedModule,
                 RouterTestingModule,
+                ArtemisGradingInstructionLinkIconModule,
             ],
             declarations: [
                 TextSubmissionAssessmentComponent,
@@ -210,7 +212,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.validateFeedback();
         component.save();
         expect(textAssessmentService.save).toHaveBeenCalledWith(
-            exercise.id!,
+            result?.participation?.id,
             result!.id!,
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
             [component.textBlockRefs[0].block!, textBlockRef.block!],
@@ -271,7 +273,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.validateFeedback();
         component.submit();
         expect(textAssessmentService.submit).toHaveBeenCalledWith(
-            exercise.id!,
+            participation.id!,
             result!.id!,
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
             [component.textBlockRefs[0].block!, textBlockRef.block!],

@@ -12,7 +12,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import * as chai from 'chai';
 import * as moment from 'moment';

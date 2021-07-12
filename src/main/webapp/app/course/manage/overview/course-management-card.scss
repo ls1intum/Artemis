@@ -93,6 +93,12 @@
         height: 300px;
     }
 
+    .statistics-card {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+
     .control-label {
         cursor: pointer;
     }
@@ -197,4 +203,17 @@
 
         height: unset;
     }
+}
+
+/*
+HACK: Something is bogus with the scss of top-level pages
+      Redefine some rules with '!important' to prevent them from being overwritten bogusly
+*/
+.btn-primary,
+.btn-primary:hover,
+.btn-info,
+.btn-info:hover,
+.btn-success,
+.btn-success:hover {
+    color: #fff !important;
 }

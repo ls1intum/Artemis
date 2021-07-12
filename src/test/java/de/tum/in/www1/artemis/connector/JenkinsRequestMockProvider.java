@@ -141,12 +141,15 @@ public class JenkinsRequestMockProvider {
     private void mockGetJobConfig(String folderName, String jobName) throws IOException {
         doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
         doReturn(Optional.of(new FolderJob())).when(jenkinsServer).getFolderJob(any(JobWithDetails.class));
-        doReturn("").when(jenkinsServer).getJobXml(any(FolderJob.class), eq(jobName));
+
+        var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
+        doReturn(mockXml).when(jenkinsServer).getJobXml(any(FolderJob.class), eq(jobName));
     }
 
-    private void mockGetFolderConfig(String folderName) throws IOException {
+    public void mockGetFolderConfig(String folderName) throws IOException {
         doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
-        doReturn("").when(jenkinsServer).getJobXml(eq(folderName));
+        var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
+        doReturn(mockXml).when(jenkinsServer).getJobXml(eq(folderName));
     }
 
     private void mockUpdateJob(String folderName, String jobName) throws IOException {
@@ -219,6 +222,16 @@ public class JenkinsRequestMockProvider {
         mockTriggerBuild(projectKey, planName, false);
     }
 
+    public void mockUpdatePlanRepository(String projectKey, String planName, HttpStatus expectedHttpStatus) throws IOException, URISyntaxException {
+        var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
+
+        mockGetFolderJob(projectKey, new FolderJob());
+        mockGetJobXmlForBuildPlanWith(projectKey, mockXml);
+
+        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planName, "config.xml").build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(expectedHttpStatus));
+    }
+
     private void mockGetJobXmlForBuildPlanWith(String projectKey, String xmlToReturn) throws IOException {
         mockGetFolderJob(projectKey, new FolderJob());
         doReturn(xmlToReturn).when(jenkinsServer).getJobXml(any(), any());
@@ -251,7 +264,7 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    private void mockGetFolderJob(String folderName, FolderJob folderJobToReturn) throws IOException {
+    public void mockGetFolderJob(String folderName, FolderJob folderJobToReturn) throws IOException {
         final var jobWithDetails = new JobWithDetails();
         doReturn(jobWithDetails).when(jenkinsServer).getJob(folderName);
         doReturn(com.google.common.base.Optional.of(folderJobToReturn)).when(jenkinsServer).getFolderJob(jobWithDetails);

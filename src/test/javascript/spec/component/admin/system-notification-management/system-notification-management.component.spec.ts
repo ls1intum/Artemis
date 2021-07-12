@@ -7,7 +7,7 @@ import { SystemNotification } from 'app/entities/system-notification.model';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import * as moment from 'moment';
 import { JhiItemCountComponent, JhiSortDirective } from 'ng-jhipster';

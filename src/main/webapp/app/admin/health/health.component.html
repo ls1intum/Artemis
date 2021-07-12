@@ -2,7 +2,7 @@
     <h2>
         <span id="health-page-heading" jhiTranslate="health.title">Health Checks</span>
 
-        <button class="btn btn-primary float-right" (click)="refresh()"><fa-icon [icon]="'sync'"></fa-icon> <span jhiTranslate="health.refresh.button">Refresh</span></button>
+        <button class="btn btn-primary float-end" (click)="refresh()"><fa-icon [icon]="'sync'"></fa-icon> <span jhiTranslate="health.refresh.button">Refresh</span></button>
     </h2>
     <div class="table-responsive">
         <table id="healthCheck" class="table table-striped" aria-describedby="health-page-heading">
@@ -18,7 +18,7 @@
                     <td>
                         <span>
                             {{ 'health.indicator.' + componentHealth.key | artemisTranslate }}
-                            <a *ngIf="componentHealth.value?.details?.url" class="badge badge-info" [href]="componentHealth.value?.details.url">
+                            <a *ngIf="componentHealth.value?.details?.url" class="badge bg-info" [href]="componentHealth.value?.details.url">
                                 {{ componentHealth.value?.details.url }}
                             </a>
                         </span>

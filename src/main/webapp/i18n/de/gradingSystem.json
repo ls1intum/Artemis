@@ -4,7 +4,7 @@
             "title": "Notenschlüssel",
             "titleCourse": "Notenschlüssel für Kurs",
             "titleExam": "Notenschlüssel für Klausur",
-            "defaultButton": "Generiere standarmäßiger Notenschlüssel",
+            "defaultButton": "Standard Notenschlüssel Generieren",
             "gradeType": {
                 "title": "Notentyp",
                 "grade": "Note",
@@ -15,9 +15,11 @@
                 "lower": "Untere Schranke inklusiv",
                 "upper": "Obere Schranke inklusiv"
             },
-            "firstPassingGrade": "Erste bestehende Note",
+            "firstPassingGrade": "Bestanden ab",
             "min": "Min %",
+            "minPoints": "Min Punkte",
             "max": "Max %",
+            "maxPoints": "Max Punkte",
             "gradeName": "Notenname",
             "bonusPoints": "Bonus Punkte",
             "delete": "Löschen",
@@ -28,7 +30,11 @@
                 "title": "Hilfe zum Notenschlüssel",
                 "general": {
                     "title": "Allgemeine Informationen",
-                    "explanation": "Ein Notenschlüssel besteht aus Notenstufen, die alle möglichen Prozentwerte von 0 bis 100 abdecken. Alle benachbarten Notenstufen sollten sich an ihren Schranken überschneiden (Beispiel: Notenstufen (60, 70) und (70, 80) überschneiden sich bei 70%). Welche Notenstufe diese Schranke einschließt, wird durch die \"Inklusivität\" bestimmt. Alle Notenstufen haben außerdem entweder einen Namen (1,0, Ausreichend, A,...) oder eine Bonuspunktzahl (5, 10,..), abhängig von dem \"Notentyp\""
+                    "explanation": "Ein Notenschlüssel besteht aus Notenstufen, die alle möglichen Prozentwerte von 0 bis 100 abdecken. Alle benachbarten Notenstufen sollten sich an ihren Schranken überschneiden (Beispiel: Notenstufen (60, 70) und (70, 80) überschneiden sich bei 70%). Welche Notenstufe diese Schranke einschließt, wird durch die \"Inklusivität\" bestimmt. Alle Notenstufen haben außerdem entweder einen Namen (1,0, Ausreichend, A,...) oder eine damit verbundene Anzahl an Bonuspunkten (5, 10,..), abhängig von dem \"Notentyp\""
+                },
+                "maxPoints": {
+                    "title": "Maximale Punktzahl",
+                    "explanation": "Legt die maximale Punktzahl für den gegebenen Kurs/die gegebene Prüfung fest. Der Wert wird benötigt, wenn ein Notenschlüssel mit absoluter Punktzahl als Schranke anstelle eines Prozentsatzes benötigt wird"
                 },
                 "gradeType": {
                     "title": "Notentyp",
@@ -40,19 +46,30 @@
                 },
                 "firstPassingGrade": {
                     "title": "Erste bestehende Note",
-                    "explanation": "Legt die erste bestehende Note für einen Notenschlüssel fest. Jede Note mit höheren Prozentsätzen wird ebenfalls als bestanden gewertet"
+                    "explanation": "Legt für diesen Notenschlüssel fest, ab welcher Note die Leistung als bestanden gewertet wird"
                 }
             },
             "error": {
-                "empty": "Die Notenstufen sind leer!",
+                "empty": "Es gibt keine Notenstufen!",
+                "negativeMaxPoints": "Maximale Punkte können nicht negativ sein",
                 "emptyFields": "Alle Notenstufenfelder müssen ausgefüllt werden!",
-                "invalidMinMaxPercentages": "Die Prozentsätze der Notenstufen müssen alle zwischen 0 und 100 (jeweils einschließlich) liegen und der Min % muss kleiner als der Max % sein!",
+                "invalidMinMaxPercentages": "Die Prozentsätze der Notenstufen müssen alle zwischen 0 und 100 (jeweils einschließlich) liegen und Min % muss kleiner als Max % sein!",
+                "invalidMinMaxPoints": "Die Punkte der Notenstufen müssen alle zwischen 0 und der maximalen Punktzahl für den Kurs/die Prüfung (jeweils einschließlich) liegen. Min Punkte muss kleiner als Max Punkte sein!",
                 "nonUniqueGradeNames": "Alle Notenstufen müssen eindeutige Namen haben!",
                 "unsetFirstPassingGrade": "Die erste bestehende Note muss gesetzt sein!",
                 "invalidBonusPoints": "Die Bonuspunkte müssen mindestens 0 sein!",
-                "nonStrictlyIncreasingBonusPoints": "Aufeinanderfolgende Notenstufen müssen steigende Bonuspunktwerte haben!",
+                "nonStrictlyIncreasingBonusPoints": "Aufeinanderfolgende Notenstufen müssen steigende Bonuspunktzahl haben!",
                 "invalidAdjacency": "Die Max % aller Notenstufen (außer der letzten), müssen gleich den Min % ihrer nachfolgenden Notenstufe sein!",
                 "invalidFirstAndLastStep": "Der Min % der ersten Notenstufe muss 0 sein und der Max % der letzten Notenstufe muss 100 sein!"
+            },
+            "overview": {
+                "info": "Der Notenschlüssel basiert auf der erreichbaren Punktzahl. Er kann sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",
+                "intervals": {
+                    "title": "Intervalle:",
+                    "leftInclusiveRightExclusive": "Linke Schranke wird in das Intervall eingeschlossen und rechte wird ausgeschlossen",
+                    "leftExclusiveRightInclusive": "Die linke Schranke ist vom Intervall ausgeschlossen und die rechte ist darin enthalten",
+                    "bothInclusive": "Beide Schranken sind im Intervall enthalten"
+                }
             }
         },
         "gradingScale": {

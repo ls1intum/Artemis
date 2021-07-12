@@ -75,7 +75,7 @@
                 [participationIdList]="participation ? [participation!.id!] : []"
             ></jhi-programming-assessment-repo-export>
             <a
-                class="ml-2 mr-5"
+                class="ms-2 me-5"
                 href="{{ participation?.userIndependentRepositoryUrl }}"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -92,9 +92,9 @@
                 [isBuilding]="false"
                 [participation]="participation"
                 [short]="true"
-                class="mr-1"
+                class="me-1"
             ></jhi-result>
-            <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id!" [exerciseHints]="exercise.exerciseHints" class="mr-2"></jhi-exercise-hint-student>
+            <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id!" [exerciseHints]="exercise.exerciseHints" class="me-2"></jhi-exercise-hint-student>
         </div>
         <jhi-assessment-instructions
             *ngIf="exercise"
@@ -121,7 +121,7 @@
 <ng-template #noSubmission>
     <div *ngIf="!loadingInitialSubmission" class="alert alert-warning text-center mt-4" role="alert">
         <p jhiTranslate="artemisApp.programmingAssessment.notFound">We haven't found any new submission without an assessment, please go back.</p>
-        <a [routerLink]="exerciseDashboardLink" class="btn btn-info btn-sm mr-1 mb-1 assessment-dashboard">
+        <a [routerLink]="exerciseDashboardLink" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
             <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
         </a>
     </div>

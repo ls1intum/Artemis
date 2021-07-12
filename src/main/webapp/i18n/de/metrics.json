@@ -32,7 +32,7 @@
                 }
             },
             "processMetricsCustom": {
-                "activeUsers": "Aktive Benutzer"
+                "activeUsers": "Aktive Nutzer:innen"
             },
             "gc": {
                 "title": "Speicherbereinigung (GC)",

@@ -165,7 +165,6 @@ public class ComplaintResponseResource {
         }
         else {
             // hide unnecessary information
-            complaintResponse.getComplaint().setResultBeforeComplaint(null);
             complaintResponse.getComplaint().getResult().setParticipation(null);
             complaintResponse.getComplaint().getResult().setSubmission(null);
         }

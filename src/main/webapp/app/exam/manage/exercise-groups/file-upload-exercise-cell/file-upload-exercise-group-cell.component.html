@@ -1,5 +1,3 @@
-<td *ngIf="fileUploadExercise" class="align-middle">
-    <ng-container *ngIf="fileUploadExercise.type === exerciseType.FILE_UPLOAD">
-        {{ fileUploadExercise.filePattern || '' }}
-    </ng-container>
-</td>
+<ng-container *ngIf="fileUploadExercise.type === exerciseType.FILE_UPLOAD">
+    {{ fileUploadExercise.filePattern || '' }}
+</ng-container>

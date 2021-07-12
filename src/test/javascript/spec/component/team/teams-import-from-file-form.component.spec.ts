@@ -5,7 +5,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Team } from 'app/entities/team.model';
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component.ts';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import * as chai from 'chai';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { restore, SinonSpy, SinonStub, spy, stub } from 'sinon';

@@ -65,20 +65,20 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
         this.hasImported = false;
     }
 
-    async onCSVFileSelect($event: any) {
-        if ($event.target.files.length > 0) {
+    async onCSVFileSelect(event: any) {
+        if (event.target.files.length > 0) {
             this.resetDialog();
-            this.studentsToImport = await this.readStudentsFromCSVFile($event, $event.target.files[0]);
+            this.studentsToImport = await this.readStudentsFromCSVFile(event, event.target.files[0]);
         }
     }
 
     /**
      * Reads students from a csv file into a list of StudentDTOs
      * The column "registrationNumber" is mandatory since the import requires it as an identifier
-     * @param $event File change event from the HTML input of type file
+     * @param event File change event from the HTML input of type file
      * @param csvFile File that contains one student per row and has at least the columns specified in csvColumns
      */
-    private async readStudentsFromCSVFile($event: any, csvFile: File): Promise<StudentDTO[]> {
+    private async readStudentsFromCSVFile(event: any, csvFile: File): Promise<StudentDTO[]> {
         let csvStudents: CsvStudent[] = [];
         try {
             this.isParsing = true;
@@ -93,7 +93,7 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
             this.performExtraValidations(csvFile, csvStudents);
         }
         if (this.validationError) {
-            $event.target.value = ''; // remove selected file so user can fix the file and select it again
+            event.target.value = ''; // remove selected file so user can fix the file and select it again
             return [];
         }
         return csvStudents.map(

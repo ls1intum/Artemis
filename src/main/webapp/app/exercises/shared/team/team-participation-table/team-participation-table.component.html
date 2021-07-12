@@ -33,7 +33,7 @@
                         <fa-icon [icon]="controls.iconForSortPropField('releaseDate')"></fa-icon>
                     </span>
                 </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value" class="mr-5">
+                <ng-template ngx-datatable-cell-template let-value="value" class="me-5">
                     {{ value ? (moment(value) | artemisDate: 'short-date') : ('artemisApp.exercise.dateNotSet' | artemisTranslate) }}
                 </ng-template>
             </ngx-datatable-column>
@@ -45,7 +45,7 @@
                         <fa-icon [icon]="controls.iconForSortPropField('dueDate')"></fa-icon>
                     </span>
                 </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value" class="mr-5">
+                <ng-template ngx-datatable-cell-template let-value="value" class="me-5">
                     {{ value ? (moment(value) | artemisDate: 'short-date') : ('artemisApp.exercise.dateNotSet' | artemisTranslate) }}
                 </ng-template>
             </ngx-datatable-column>

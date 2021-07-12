@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Location } from '@angular/common';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -32,11 +31,15 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { QuizStatus, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { PostingsComponent } from 'app/overview/postings/postings.component';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
+import { ComplaintService } from 'app/complaints/complaint.service';
+import { Complaint } from 'app/entities/complaint.model';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -59,6 +62,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public courseId: number;
     private subscription: Subscription;
     public exercise?: Exercise;
+    public resultWithComplaint?: Result;
+    public latestRatedResult?: Result;
+    public complaint?: Complaint;
     public showMoreResults = false;
     public sortedHistoryResult: Result[]; // might be a subset of the actual results in combinedParticipation.results
     public exerciseCategories: ExerciseCategory[];
@@ -70,6 +76,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public gradingCriteria: GradingCriterion[];
     showWelcomeAlert = false;
     private postings?: PostingsComponent;
+    baseResource: string;
+    isExamExercise: boolean;
 
     /**
      * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
@@ -79,7 +87,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public wasSubmissionSimulated = false;
 
     constructor(
-        private $location: Location,
         private exerciseService: ExerciseService,
         private courseService: CourseManagementService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -99,6 +106,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private teamService: TeamService,
         private quizExerciseService: QuizExerciseService,
         private submissionService: ProgrammingSubmissionService,
+        private complaintService: ComplaintService,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     ngOnInit() {
@@ -151,6 +160,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
+            this.getLatestRatedResult();
         });
     }
 
@@ -180,6 +190,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.postings.exercise = this.exercise;
             this.postings.loadPosts(); // reload the posts
         }
+        this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
     }
 
     /**
@@ -308,12 +319,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Navigates to the previous page or, if no previous navigation happened, to the courses exercise overview
+     */
     backToCourse() {
-        this.$location.back();
+        this.navigationUtilService.navigateBack(['courses', this.courseId.toString(), 'exercises']);
     }
 
     exerciseRatedBadge(result: Result): string {
-        return result.rated ? 'badge-success' : 'badge-info';
+        return result.rated ? 'bg-success' : 'bg-info';
     }
 
     get hasMoreResults(): boolean {
@@ -321,14 +335,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return false;
         }
         return this.studentParticipation.results.length > MAX_RESULT_HISTORY_LENGTH;
-    }
-
-    get exerciseRouterLink(): string | null {
-        if (this.exercise && [ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(this.exercise.type!)) {
-            return `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise!.id}/submissions`;
-        }
-
-        return null;
     }
 
     get showResults(): boolean {
@@ -349,10 +355,25 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Returns the latest finished result for modeling and text exercises. It does not have to be rated.
      * For other exercise types it returns a rated result.
      */
-    get latestRatedResult() {
+    getLatestRatedResult() {
         if (!this.studentParticipation || !this.hasResults) {
             return undefined;
         }
+        const resultWithComplaint = getFirstResultWithComplaintFromResults(this.studentParticipation?.results);
+        if (resultWithComplaint) {
+            this.complaintService.findByResultId(resultWithComplaint.id!).subscribe(
+                (res) => {
+                    if (!res.body) {
+                        return;
+                    }
+                    this.complaint = res.body;
+                },
+                (err: HttpErrorResponse) => {
+                    this.onError(err.message);
+                },
+            );
+        }
+        this.resultWithComplaint = resultWithComplaint;
 
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
             return this.studentParticipation?.results?.find((result: Result) => !!result.completionDate) || undefined;
@@ -364,7 +385,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (latestResult) {
                 latestResult.participation = this.studentParticipation;
             }
-            return latestResult;
+            this.latestRatedResult = latestResult;
         }
     }
 
@@ -410,6 +431,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             instance.exercise = this.exercise;
             instance.loadPosts(); // reload the posts
         }
+    }
+
+    private onError(error: string) {
+        this.jhiAlertService.error(error);
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################

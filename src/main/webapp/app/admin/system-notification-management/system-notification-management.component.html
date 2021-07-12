@@ -1,7 +1,7 @@
 <div>
     <h2>
         <span id="system-notification-management-page-heading" jhiTranslate="artemisApp.systemNotification.systemNotifications">System notifications</span>
-        <a class="btn btn-primary float-right jh-create-entity" [routerLink]="['./new']">
+        <a class="btn btn-primary float-end jh-create-entity" [routerLink]="['./new']">
             <fa-icon [icon]="'plus'"></fa-icon> <span jhiTranslate="artemisApp.systemNotification.createLabel">Create a new system notification</span>
         </a>
     </h2>
@@ -27,16 +27,16 @@
                     <td>{{ notification.text }}</td>
                     <td>{{ notification.type }}</td>
                     <td>
-                        <span *ngIf="isNotificationActive(notification); else notActive" class="badge badge-success">{{
+                        <span *ngIf="isNotificationActive(notification); else notActive" class="badge bg-success">{{
                             'artemisApp.systemNotification.active' | artemisTranslate
                         }}</span>
                         <ng-template #notActive>
-                            <span class="badge badge-danger">{{ 'artemisApp.systemNotification.notActive' | artemisTranslate }}</span>
+                            <span class="badge bg-danger">{{ 'artemisApp.systemNotification.notActive' | artemisTranslate }}</span>
                         </ng-template>
                     </td>
                     <td>{{ notification.notificationDate | artemisDate }}</td>
                     <td>{{ notification.expireDate | artemisDate }}</td>
-                    <td class="text-right">
+                    <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <a id="viewButton" [routerLink]="['./', notification.id]" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="'eye'"></fa-icon>

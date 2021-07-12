@@ -45,6 +45,7 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
             """)
     Optional<StudentScore> findStudentScoreByExerciseAndUserLazy(@Param("exercise") Exercise exercise, @Param("user") User user);
 
+    // TODO: use a custom object instead of Object[] (as in the example above with ParticipantScoreAverageDTO)
     @Query("""
             SELECT sc.user, SUM(sc.lastRatedPoints)
             FROM StudentScore sc

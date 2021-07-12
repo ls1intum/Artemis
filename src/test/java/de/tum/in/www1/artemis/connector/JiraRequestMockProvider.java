@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.connector;
 
+import static org.springframework.test.web.client.ExpectedCount.never;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
@@ -139,6 +140,11 @@ public class JiraRequestMockProvider {
 
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
+    }
+
+    public void verifyNoGetOrCreateUserJira(String username) throws URISyntaxException {
+        final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/user").queryParam("username", username).queryParam("expand", "groups").build().toUri();
+        mockServer.expect(never(), requestTo(path));
     }
 
     public void mockGetOrCreateUserJiraCaptchaException(String username, String email, String firstName, Set<String> groups) throws URISyntaxException, IOException {

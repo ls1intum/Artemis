@@ -1,5 +1,5 @@
 <div *ngIf="buildingSummary; else loadingState" class="d-flex">
-    <div id="result-eta" *ngIf="hasBuildingSubmissions" class="badge badge-secondary d-flex flex-column justify-content-between mr-3">
+    <div id="result-eta" *ngIf="hasBuildingSubmissions" class="badge bg-secondary d-flex flex-column justify-content-between me-3">
         <fa-icon [icon]="'clock'"></fa-icon>
         <span
             [ngbTooltip]="'artemisApp.programmingExercise.resultETATooltip' | artemisTranslate"
@@ -10,7 +10,7 @@
     <div id="build-state" class="d-flex flex-column justify-content-between">
         <span
             id="build-state-building"
-            class="badge badge-primary flex-grow-0"
+            class="badge bg-primary flex-grow-0"
             [innerHTML]="
                 'artemisApp.programmingExercise.buildingSubmissions' | artemisTranslate: { number: buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }
             "
@@ -19,7 +19,7 @@
         </span>
         <span
             id="build-state-failed"
-            [ngClass]="['badge', buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0 ? 'badge-danger' : 'badge-success', 'flex-grow-0']"
+            [ngClass]="['badge', buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0 ? 'bg-danger' : 'bg-success', 'flex-grow-0']"
             [innerHTML]="'artemisApp.programmingExercise.failedSubmissions' | artemisTranslate: { number: buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }"
         >
             Failed submissions: {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
@@ -28,7 +28,7 @@
     <jhi-programming-exercise-trigger-all-button [exercise]="exercise"></jhi-programming-exercise-trigger-all-button>
     <jhi-button
         id="trigger-failed-button"
-        class="ml-3"
+        class="ms-3"
         [disabled]="!hasFailedSubmissions"
         [isLoading]="isBuildingFailedSubmissions"
         [icon]="'redo'"

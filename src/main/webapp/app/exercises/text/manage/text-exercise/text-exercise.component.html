@@ -5,7 +5,7 @@
         <button
             *ngIf="course && course.isAtLeastEditor"
             id="jh-import-entity"
-            class="btn btn-primary float-right jh-create-entity create-text-exercise mr-1"
+            class="btn btn-primary float-end jh-create-entity create-text-exercise me-1"
             (click)="openImportModal()"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
@@ -14,7 +14,7 @@
         <a
             *ngIf="course && course.isAtLeastEditor"
             id="jh-create-entity"
-            class="btn btn-primary float-right jh-create-entity create-text-exercise mr-1"
+            class="btn btn-primary float-end jh-create-entity create-text-exercise me-1"
             [routerLink]="['/course-management', course.id, 'text-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
@@ -62,7 +62,7 @@
                     <td>{{ textExercise.bonusPoints }}</td>
                     <td>{{ exerciseService.isIncludedInScore(textExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ textExercise.presentationScoreEnabled }}</td>
-                    <td class="text-right">
+                    <td class="text-end">
                         <jhi-text-exercise-row-buttons [courseId]="courseId" [exercise]="textExercise"></jhi-text-exercise-row-buttons>
                     </td>
                 </tr>

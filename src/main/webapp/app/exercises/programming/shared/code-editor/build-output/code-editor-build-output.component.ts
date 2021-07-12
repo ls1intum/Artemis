@@ -84,7 +84,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             const latestResult = findLatestResult(this.participation.results);
             of(latestResult)
                 .pipe(
-                    switchMap((result) => (result && !result.feedbacks ? this.loadAndAttachResultDetails(result) : of(result))),
+                    switchMap((result) => (result && !result.feedbacks ? this.loadAndAttachResultDetails(this.participation, result) : of(result))),
                     tap((result) => (this.result = result)),
                     switchMap((result) => this.fetchBuildResults(result)),
                     map((buildLogsFromServer) => BuildLogEntryArray.fromBuildLogs(buildLogsFromServer!)),
@@ -170,8 +170,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      * @desc Fetches details for the result (if we received one) and attach them to the result.
      * Mutates the input parameter result.
      */
-    loadAndAttachResultDetails(result: Result): Observable<Result> {
-        return this.resultService.getFeedbackDetailsForResult(result.id!).pipe(
+    loadAndAttachResultDetails(participation: Participation, result: Result): Observable<Result> {
+        return this.resultService.getFeedbackDetailsForResult(participation.id!, result.id!).pipe(
             map((res) => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
@@ -205,11 +205,11 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     /**
      * @function toggleEditorCollapse
      * @desc Calls the parent (editorComponent) toggleCollapse method
-     * @param $event
+     * @param event
      */
-    toggleEditorCollapse($event: any) {
+    toggleEditorCollapse(event: any) {
         this.onToggleCollapse.emit({
-            event: $event,
+            event,
             horizontal: false,
             interactable: this.interactResizable,
             resizableMinWidth: undefined,

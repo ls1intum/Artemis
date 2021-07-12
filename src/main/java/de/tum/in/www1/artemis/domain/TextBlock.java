@@ -89,6 +89,11 @@ public class TextBlock implements Serializable {
         id = sha1Hex(idString);
     }
 
+    public TextBlock id(String id) {
+        setId(id);
+        return this;
+    }
+
     public int getStartIndex() {
         return startIndex;
     }

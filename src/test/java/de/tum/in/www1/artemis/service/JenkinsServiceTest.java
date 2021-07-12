@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -7,6 +8,8 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +18,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.StreamUtils;
 
@@ -190,5 +194,37 @@ public class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTe
             programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise);
         });
         assertThat(exception.getMessage()).startsWith("Cannot give assign permissions to plan");
+    }
+
+    @Test
+    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    public void testFailToUpdatePlanRepositoryBadRequest() throws Exception {
+        testFailToUpdatePlanRepositoryRestClientException(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    public void testFailToUpdatePlanRepositoryInternalError() throws Exception {
+        testFailToUpdatePlanRepositoryRestClientException(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private void testFailToUpdatePlanRepositoryRestClientException(HttpStatus expectedStatus) throws IOException, URISyntaxException {
+        var programmingExercise = continuousIntegrationTestService.programmingExercise;
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        database.addTestCasesToProgrammingExercise(programmingExercise);
+        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+
+        String projectKey = programmingExercise.getProjectKey();
+        String planName = programmingExercise.getProjectKey();
+
+        jenkinsRequestMockProvider.mockUpdatePlanRepository(projectKey, planName, expectedStatus);
+
+        Exception exception = assertThrows(JenkinsException.class, () -> {
+            String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
+            continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUrl(), templateRepoUrl,
+                    Optional.empty());
+        });
+        assertThat(exception.getMessage()).startsWith("Error trying to configure build plan in Jenkins");
     }
 }

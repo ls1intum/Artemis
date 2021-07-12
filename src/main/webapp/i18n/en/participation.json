@@ -2,18 +2,18 @@
     "artemisApp": {
         "participation": {
             "home": {
-                "title": "Participations",
-                "createLabel": "Create a new Participation",
-                "createOrEditLabel": "Create or edit a Participation"
+                "title": "Participation",
+                "createLabel": "Create new participation",
+                "createOrEditLabel": "Create or edit participation"
             },
-            "created": "A new participation is created with identifier {{ param }}",
-            "updated": "The Participation of {{ param }} was updated",
-            "deleted": "The Participation of {{ param }} was deleted",
+            "created": "Created new participation with identifier {{ param }}",
+            "updated": "Updated participation with identifier {{ param }}",
+            "deleted": "Deleted participation with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete the participation of <strong>{{ title }}</strong>?"
+                "question": "Are you sure you want to delete <strong>{{ title }}</strong>'s participation?"
             },
             "cleanupBuildPlan": {
-                "question": "Are you sure you want to delete the build plan of the participation of <strong>{{ title }}</strong>?"
+                "question": "Are you sure you want to delete the build plan of <strong>{{ title }}</strong>'s participation?"
             },
             "addPresentation": {
                 "label": "Add presentation",
@@ -39,7 +39,7 @@
             "students": "Students",
             "templateParticipation": "Template Participation",
             "solutionParticipation": "Solution Participation",
-            "noParticipation": "The participation could not be found!",
+            "noParticipation": "That participation could not be found!",
             "exercise": "Exercise",
             "deleteRepository": "Delete repository",
             "deleteBuildPlan": "Delete build plan",
@@ -49,7 +49,7 @@
                 "resultCount": "Result Count",
                 "results": "Results",
                 "assessor": "Assessor",
-                "submissionsForParticipation": "Submissions of {{ participant }} for Exercise {{ exercise }}",
+                "submissionsForParticipation": "Submissions by {{ participant }} for exercise {{ exercise }}",
                 "action": "Action",
                 "delete": "Are you sure you want to delete this submission?"
             }

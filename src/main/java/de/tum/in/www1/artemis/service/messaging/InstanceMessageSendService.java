@@ -19,6 +19,24 @@ public interface InstanceMessageSendService {
     void sendProgrammingExerciseScheduleCancel(Long exerciseId);
 
     /**
+     * Send a message to the main server that a modeling exercise was created or updated and a (re-)scheduling has to be performed
+     * @param exerciseId the id of the exercise that should be scheduled
+     */
+    void sendModelingExerciseSchedule(Long exerciseId);
+
+    /**
+     * Send a message to the main server that a modeling exercise was deleted and the scheduling should be cancelled
+     * @param exerciseId the id of the exercise that should be no longer be scheduled
+     */
+    void sendModelingExerciseScheduleCancel(Long exerciseId);
+
+    /**
+     * Send a message to the main server that a modeling exercise should be instantly get clustered
+     * @param exerciseId the id of the exercise that should be clustered
+     */
+    void sendModelingExerciseInstantClustering(Long exerciseId);
+
+    /**
      * Send a message to the main server that a text exercise was created or updated and a (re-)scheduling has to be performed
      * @param exerciseId the id of the exercise that should be scheduled
      */

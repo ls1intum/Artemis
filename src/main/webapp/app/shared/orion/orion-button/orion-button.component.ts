@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
@@ -12,11 +12,23 @@ export class OrionButtonComponent {
     @Input() outlined = false;
     @Input() smallButton = false;
     @Input() disabled = false;
-    @Input() featureToggle: FeatureToggle = FeatureToggle.PROGRAMMING_EXERCISES; // Disable by feature toggle.
+    // Disable by feature toggle.
+    @Input() featureToggle: FeatureToggle = FeatureToggle.PROGRAMMING_EXERCISES;
+    // Indirect handler to disable clicking while loading
+    @Output() clickHandler = new EventEmitter<void>();
 
     constructor() {}
 
     public get btnPrimary(): boolean {
         return !this.outlined;
+    }
+
+    /**
+     * Forwards the click event to the handler only if the button is enabled
+     */
+    public handleClick() {
+        if (!this.buttonLoading) {
+            this.clickHandler.emit();
+        }
     }
 }

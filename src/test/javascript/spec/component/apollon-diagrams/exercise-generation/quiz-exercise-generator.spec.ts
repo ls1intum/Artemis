@@ -1,28 +1,46 @@
-import { UMLModel, Selection } from '@ls1intum/apollon';
+import { HttpResponse } from '@angular/common/http';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { Selection, UMLModel } from '@ls1intum/apollon';
+import { Text } from '@ls1intum/apollon/lib/utils/svg/text';
+import { TranslateService } from '@ngx-translate/core';
+import { Course } from 'app/entities/course.model';
+import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { Course } from 'app/entities/course.model';
-import { TestBed } from '@angular/core/testing';
-import * as sinon from 'sinon';
-import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import * as moment from 'moment';
 import { MockProvider } from 'ng-mocks';
-import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Router } from '@angular/router';
-import { Text } from '@ls1intum/apollon/lib/utils/svg/text';
 import { of } from 'rxjs';
-import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import * as sinon from 'sinon';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
     return { width: 0, height: 0 };
 };
+
+const question1 = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1 } as QuizQuestion;
+const question2 = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [] } as QuizQuestion;
+const question3 = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3 } as QuizQuestion;
+const now = moment();
+
+const quizExercise = (<any>{
+    id: 1,
+    quizQuestions: [question1, question2, question3],
+    releaseDate: moment(now).subtract(2, 'minutes'),
+    adjustedReleaseDate: moment(now).subtract(2, 'minutes'),
+    dueDate: moment(now).add(2, 'minutes'),
+    adjustedDueDate: moment(now).add(2, 'minutes'),
+    started: true,
+}) as QuizExercise;
 
 describe('QuizExercise Generator', () => {
     let quizExerciseService: QuizExerciseService;
@@ -65,7 +83,7 @@ describe('QuizExercise Generator', () => {
         configureServices();
         const examplePath = '/path/to/file';
         sandbox.stub(fileUploaderService, 'uploadFile').resolves({ path: examplePath });
-        sandbox.stub(quizExerciseService, 'create').returns(of());
+        sandbox.stub(quizExerciseService, 'create').returns(of({ body: quizExercise } as HttpResponse<QuizExercise>));
         sandbox.stub(svgRenderer, 'convertRenderedSVGToPNG').resolves(new Blob());
         // @ts-ignore
         const classDiagram: UMLModel = testClassDiagram as UMLModel;

@@ -1,6 +1,6 @@
 import { Course } from 'app/entities/course.model';
 import * as sinon from 'sinon';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
@@ -89,7 +89,7 @@ describe('ApollonQuizExerciseGeneration Component', () => {
         expect(fixture.componentInstance.courseTitle).toEqual(course.title);
     });
 
-    it('save', fakeAsync(() => {
+    it('save', async () => {
         const div = document.createElement('div');
         fixture.componentInstance.apollonEditor = new ApollonEditor(div, {
             mode: ApollonMode.Exporting,
@@ -98,14 +98,14 @@ describe('ApollonQuizExerciseGeneration Component', () => {
             locale: Locale.de,
         });
         fixture.componentInstance.course = course;
+
         const quizExercise: QuizExercise = new QuizExercise(course, undefined);
         const module = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator');
         sandbox.stub(module, 'generateDragAndDropQuizExercise').returns(quizExercise);
         const ngbModalSpy = sandbox.spy(ngbModal, 'close');
 
         // test
-        fixture.componentInstance.save();
-        tick();
+        await fixture.componentInstance.save();
         expect(ngbModalSpy).toBeCalledTimes(1);
-    }));
+    });
 });

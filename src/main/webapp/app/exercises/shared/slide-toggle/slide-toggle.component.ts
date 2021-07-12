@@ -4,9 +4,9 @@ import { Component, Output, EventEmitter } from '@angular/core';
     selector: 'jhi-slide-toggle',
     template: `
         <!-- Default switch -->
-        <div class="custom-control custom-switch">
-            <input type="checkbox" class="custom-control-input" id="customSwitches" [(ngModel)]="checked" (change)="getCheckedFlag()" />
-            <label class="custom-control-label" for="customSwitches"></label>
+        <div class="form-check form-switch">
+            <input type="checkbox" class="form-check-input" id="flexSwitchCheckDefault" [(ngModel)]="checked" (change)="getCheckedFlag()" />
+            <label class="form-check-label" for="flexSwitchCheckDefault"></label>
         </div>
         <label *ngIf="checked === false || checked === undefined" jhiTranslate="artemisApp.exercise.gradingInstructions"> Grading Instructions</label>
         <label *ngIf="checked === true" jhiTranslate="artemisApp.exercise.structuredGradingInstructions"> Structured Grading Instructions</label>

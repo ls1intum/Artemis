@@ -7,25 +7,25 @@
             <div *ngIf="exercise?.type === ExerciseType.PROGRAMMING" class="d-flex align-items-center mt-2">
                 <label class="radio-inline mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showAll' | artemisTranslate }}</span>
+                    <span class="ms-1">{{ 'artemisApp.exercise.showAll' | artemisTranslate }}</span>
                 </label>
-                <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
+                <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.FAILED)" [value]="FilterProp.FAILED" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showFailed' | artemisTranslate }}</span>
+                    <span class="ms-1">{{ 'artemisApp.exercise.showFailed' | artemisTranslate }}</span>
                 </label>
-                <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
+                <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
                     <input
                         type="radio"
                         [ngModel]="participationCriteria.filterProp"
                         (click)="updateParticipationFilter(FilterProp.NO_SUBMISSIONS)"
                         [value]="FilterProp.NO_SUBMISSIONS"
                     />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showNoSubmissions' | artemisTranslate }}</span>
+                    <span class="ms-1">{{ 'artemisApp.exercise.showNoSubmissions' | artemisTranslate }}</span>
                 </label>
             </div>
         </div>
         <jhi-programming-exercise-instructor-submission-state
-            class="ml-auto"
+            class="ms-auto"
             *ngIf="exercise?.isAtLeastInstructor && exercise?.type === ExerciseType.PROGRAMMING"
             [exercise]="exercise"
         ></jhi-programming-exercise-instructor-submission-state>
@@ -212,14 +212,14 @@
 
                 <ngx-datatable-column prop="" [minWidth]="350" [width]="350">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <div class="w-100 text-right">
+                        <div class="w-100 text-end">
                             <div class="btn-group">
                                 <ng-container *ngIf="exercise?.type === ExerciseType.PROGRAMMING && exercise.isAtLeastInstructor">
                                     <jhi-programming-exercise-instructor-trigger-build-button
                                         *ngIf="hasLoadedPendingSubmissions; else triggerLoading"
                                         [exercise]="exercise"
                                         [participation]="value"
-                                        class="mr-1"
+                                        class="me-1"
                                     >
                                     </jhi-programming-exercise-instructor-trigger-build-button>
                                     <ng-template #triggerLoading>
@@ -234,7 +234,7 @@
                                     [entityTitle]="exercise.teamMode ? value.team?.name : value.student?.name"
                                     deleteQuestion="artemisApp.participation.delete.question"
                                     (delete)="deleteParticipation(value.id, $event)"
-                                    [dialogError]="dialogError$"
+                                    [dialogError]="dialogError"
                                     [additionalChecks]="
                                         exercise.type === ExerciseType.PROGRAMMING
                                             ? { deleteBuildPlan: 'artemisApp.participation.deleteBuildPlan', deleteRepository: 'artemisApp.participation.deleteRepository' }
@@ -250,19 +250,19 @@
                                     [actionType]="ActionType.Cleanup"
                                     deleteQuestion="artemisApp.participation.cleanupBuildPlan.question"
                                     (delete)="cleanupProgrammingExerciseParticipation(value)"
-                                    [dialogError]="dialogError$"
+                                    [dialogError]="dialogError"
                                     [entityTitle]="exercise.teamMode ? value.team?.name : value.student?.name"
                                 >
                                     <fa-icon [icon]="'eraser'"></fa-icon>
                                 </button>
-                                <button *ngIf="this.presentationScoreEnabled && value.presentationScore !== 1" (click)="addPresentation(value)" class="btn btn-info btn-sm mr-1">
+                                <button *ngIf="this.presentationScoreEnabled && value.presentationScore !== 1" (click)="addPresentation(value)" class="btn btn-info btn-sm me-1">
                                     <fa-icon [icon]="'file-powerpoint'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.addPresentation.label">Add presentation</span>
                                 </button>
                                 <button
                                     *ngIf="this.presentationScoreEnabled && value.presentationScore === 1"
                                     (click)="removePresentation(value)"
-                                    class="btn btn-danger btn-sm mr-1"
+                                    class="btn btn-danger btn-sm me-1"
                                 >
                                     <fa-icon [icon]="'file-powerpoint'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.removePresentation.label">Remove presentation</span>

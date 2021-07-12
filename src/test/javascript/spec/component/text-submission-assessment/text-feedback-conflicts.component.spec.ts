@@ -34,6 +34,7 @@ import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
+import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 
 describe('TextFeedbackConflictsComponent', () => {
     let component: TextFeedbackConflictsComponent;
@@ -161,6 +162,7 @@ describe('TextFeedbackConflictsComponent', () => {
                 RouterModule,
                 RouterTestingModule,
                 TextSharedModule,
+                ArtemisGradingInstructionLinkIconModule,
             ],
             declarations: [
                 TextFeedbackConflictsComponent,
@@ -247,7 +249,7 @@ describe('TextFeedbackConflictsComponent', () => {
         );
         component.overrideLeftSubmission();
         expect(textAssessmentService.submit).toHaveBeenCalledWith(
-            exercise.id!,
+            participation.id!,
             textSubmission.latestResult!.id!,
             [component.leftTextBlockRefs[0].feedback!],
             [component.leftTextBlockRefs[0].block!],
@@ -324,7 +326,7 @@ describe('TextFeedbackConflictsComponent', () => {
             ),
         );
         component.discardConflict();
-        expect(textAssessmentService.solveFeedbackConflict).toHaveBeenCalledWith(exercise.id!, feedbackConflict.id!);
+        expect(textAssessmentService.solveFeedbackConflict).toHaveBeenCalledWith(exercise!.id!, feedbackConflict.id!);
     });
 
     it('should switch submissions when it changed in the header', () => {

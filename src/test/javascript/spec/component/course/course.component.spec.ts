@@ -23,7 +23,7 @@ import { JhiAlertService, JhiSortByDirective, JhiSortDirective } from 'ng-jhipst
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { MomentModule } from 'ngx-moment';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs/internal/observable/of';
+import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
@@ -33,7 +33,7 @@ import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;

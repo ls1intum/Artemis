@@ -1,4 +1,4 @@
-import './vendor.ts';
+import './vendor';
 
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';

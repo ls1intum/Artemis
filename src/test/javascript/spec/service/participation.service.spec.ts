@@ -7,6 +7,12 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockRouter } from '../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
 
 describe('Participation Service', () => {
     let injector: TestBed;
@@ -17,6 +23,12 @@ describe('Participation Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
+            providers: [
+                { provide: Router, useClass: MockRouter },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+            ],
         });
         injector = getTestBed();
         service = injector.get(ParticipationService);
@@ -186,7 +198,7 @@ describe('Participation Service', () => {
 
         const expected = Object.assign({}, returnedFromService);
         service
-            .update(expected)
+            .update(1, expected)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'PUT' });

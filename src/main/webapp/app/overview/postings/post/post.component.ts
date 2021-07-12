@@ -29,6 +29,7 @@ export class PostComponent implements OnInit {
     @Output() interactPost = new EventEmitter<PostAction>();
     editText?: string;
     isEditMode: boolean;
+    isLoading = false;
     EditorMode = EditorMode;
     courseId: number;
 
@@ -61,9 +62,18 @@ export class PostComponent implements OnInit {
      * Changes the post content
      */
     savePost(): void {
+        this.isLoading = true;
         this.post.content = this.editText;
-        this.postService.update(this.courseId, this.post).subscribe(() => {
-            this.isEditMode = false;
+        this.postService.update(this.courseId, this.post).subscribe({
+            next: () => {
+                this.isEditMode = false;
+            },
+            error: () => {
+                this.isLoading = false;
+            },
+            complete: () => {
+                this.isLoading = false;
+            },
         });
     }
 

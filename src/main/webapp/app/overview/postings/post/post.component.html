@@ -1,75 +1,53 @@
-<!-- question not in edit mode -->
+<!-- post not in edit mode -->
 <ng-container *ngIf="!isEditMode">
-    <div class="row pl-2 mb-1">
+    <div class="row ps-2 mt-1 pe-1 justify-content-between">
         <div class="col-auto px-0">
-            <fa-icon [icon]="'comment'"></fa-icon>
+            <fa-icon [icon]="'comment'" class="labels"></fa-icon>
         </div>
-        <div class="col">
-            <span class="posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.postLabel' | artemisTranslate }}</span>
+        <div class="col-auto">
+            <span class="text-black-50 posting-subtitle">{{ post.author!.name }} • {{ post.creationDate | artemisDate: 'short' }}</span>
         </div>
-        <div class="col-auto px-0">
+        <div class="col-auto px-0" *ngIf="isAtLeastTutorInCourse || isAuthorOfPost(post)">
             <fa-icon
-                class="clickable mr-1"
-                *ngIf="isAtLeastTutorInCourse || isAuthorOfPost(post)"
-                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editPost' | artemisTranslate"
+                size="xs"
+                class="me-0.5 clickable action-icon"
+                [ngbTooltip]="'artemisApp.metis.sidebar.editPost' | artemisTranslate"
                 container="body"
                 [icon]="'pencil-alt'"
                 (click)="toggleEditMode()"
             ></fa-icon>
             <jhi-confirm-icon
-                class="clickable mr-1"
-                *ngIf="isAtLeastTutorInCourse || isAuthorOfPost(post)"
+                iconSize="xs"
                 (confirmEvent)="deletePost()"
-                [ngClass]="'mr-1'"
-                [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deletePost' | artemisTranslate"
-                [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeletePost' | artemisTranslate"
+                [ngClass]="'me-1 clickable action-icon'"
+                [initialTooltip]="'artemisApp.metis.sidebar.deletePost' | artemisTranslate"
+                [confirmTooltip]="'artemisApp.metis.sidebar.confirmDeletePost' | artemisTranslate"
             ></jhi-confirm-icon>
         </div>
     </div>
-    <div class="row">
-        <jhi-post-votes [postId]="post.id!" [votes]="post.votes!" (interactVotes)="interactVotes($event)"></jhi-post-votes>
+    <div class="row align-items-center">
+        <jhi-post-votes class="col-auto" [postId]="post.id!" [votes]="post.votes!" (interactVotes)="interactVotes($event)"></jhi-post-votes>
         <div
             id="content"
             class="col posting-content markdown-preview"
             [innerHTML]="post.content ? (post.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"
         ></div>
     </div>
-    <div class="row pl-2 mb-2">
-        <span class="text-black-50 posting-subtitle">{{ post.author!.name }} - {{ post.creationDate | artemisDate: 'short' }}</span>
-    </div>
 </ng-container>
-<!-- question in edit mode -->
+<!-- post in edit mode -->
 <ng-container *ngIf="isEditMode">
     <div class="row mb-2">
         <div class="col-12">
-            <div class="row pl-2 mb-1">
+            <div class="row ps-2 mt-1">
                 <div class="col-auto px-0">
-                    <fa-icon [icon]="'comment'"></fa-icon>
+                    <fa-icon [icon]="'comment'" class="labels"></fa-icon>
                 </div>
-                <div class="col">
-                    <span class="form-control-label posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editPost' | artemisTranslate }}</span>
-                </div>
-                <div class="col-auto px-0">
-                    <fa-icon
-                        class="clickable mr-1"
-                        *ngIf="isAtLeastTutorInCourse || isAuthorOfPost(post)"
-                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editPost' | artemisTranslate"
-                        container="body"
-                        [icon]="'pencil-alt'"
-                        (click)="toggleEditMode()"
-                    ></fa-icon>
-                    <jhi-confirm-icon
-                        class="clickable mr-1"
-                        *ngIf="isAtLeastTutorInCourse || isAuthorOfPost(post)"
-                        (confirmEvent)="deletePost()"
-                        [ngClass]="'mr-1'"
-                        [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deletePost' | artemisTranslate"
-                        [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeletePost' | artemisTranslate"
-                    ></jhi-confirm-icon>
+                <div class="col-auto">
+                    <span class="text-black-50 posting-subtitle">{{ post.author!.name }} • {{ post.creationDate | artemisDate: 'short' }}</span>
                 </div>
             </div>
         </div>
-        <div class="col-12 px-0">
+        <div class="col-12 px-2">
             <jhi-markdown-editor
                 class="markdown-editor background-editor-color w-100"
                 [(markdown)]="editText"
@@ -79,13 +57,18 @@
                 [enableFileUpload]="false"
             ></jhi-markdown-editor>
         </div>
-        <div class="col-12 d-flex justify-content-around">
-            <button class="btn btn-sm btn-outline-secondary" (click)="toggleEditMode()">
-                {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | artemisTranslate }}
+        <div class="col-12 mt-2 d-flex">
+            <button class="btn btn-sm me-1 btn-outline-secondary" (click)="toggleEditMode()">
+                {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}
             </button>
-            <button class="btn btn-sm btn-outline-secondary" (click)="savePost()">
-                {{ 'artemisApp.courseOverview.exerciseDetails.faq.savePost' | artemisTranslate }}
-            </button>
+            <button
+                class="btn btn-sm btn-outline-secondary"
+                jhi-postings-button
+                [buttonLoading]="isLoading"
+                [disabled]="!editText || editText.length === 0"
+                [buttonLabel]="'artemisApp.metis.sidebar.savePost' | artemisTranslate"
+                (click)="savePost()"
+            ></button>
         </div>
     </div>
 </ng-container>

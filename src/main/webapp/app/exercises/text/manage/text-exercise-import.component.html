@@ -1,12 +1,12 @@
 <form>
     <div class="modal-header">
         <h4 class="modal-title" jhiTranslate="artemisApp.textExercise.home.importLabel">Import a Text Exercise</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
         <div class="form-group form-inline">
-            Search for exercise: <input class="form-control ml-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
-            <span class="ml-3" *ngIf="loading" jhiTranslate="artemisApp.exercise.import.loading">Loading...</span>
+            Search for exercise: <input class="form-control ms-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
+            <span class="ms-3" *ngIf="loading" jhiTranslate="artemisApp.exercise.import.loading">Loading...</span>
         </div>
         <table class="table table-striped">
             <thead class="thead-dark">

@@ -92,10 +92,10 @@
             <div class="edit-quiz-footer-content">
                 <div></div>
                 <div class="form-group">
-                    <span *ngIf="!pendingChanges() && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.saved" class="badge badge-success"> </span>
-                    <span *ngIf="pendingChanges() && validQuiz() && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge badge-primary"> </span>
-                    <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge badge-primary"> </span>
-                    <span *ngIf="!validQuiz()" jhiTranslate="artemisApp.quizExercise.edit.invalidInput" class="badge badge-danger"> </span>
+                    <span *ngIf="!pendingChanges() && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.saved" class="badge bg-success"> </span>
+                    <span *ngIf="pendingChanges() && validQuiz() && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge bg-primary"> </span>
+                    <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-primary"> </span>
+                    <span *ngIf="!validQuiz()" jhiTranslate="artemisApp.quizExercise.edit.invalidInput" class="badge bg-danger"> </span>
                     <button
                         class="btn btn-warning"
                         (click)="resetAll()"

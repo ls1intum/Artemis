@@ -9,6 +9,7 @@ import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { JhiAlertService } from 'ng-jhipster';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
@@ -23,6 +24,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
     /**  */
     autoSaveInterval: number;
+    autoSaveTimer: number;
 
     /** Whether to crop the downloaded image to the selection. */
     crop = true;
@@ -130,10 +132,13 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * to the model after 30 seconds.
      */
     private setAutoSaveTimer(): void {
-        clearInterval(this.autoSaveInterval);
         this.autoSaveInterval = window.setInterval(() => {
-            this.saveDiagram();
-        }, 30000);
+            this.autoSaveTimer++;
+            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
+                this.autoSaveTimer = 0;
+                this.saveDiagram();
+            }
+        }, AUTOSAVE_CHECK_INTERVAL);
     }
 
     /**

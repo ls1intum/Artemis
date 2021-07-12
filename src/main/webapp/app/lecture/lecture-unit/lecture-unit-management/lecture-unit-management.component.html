@@ -18,7 +18,7 @@
             ></jhi-learning-goals-popover>
         </div>
         <div class="col-9 mx-auto col-md-7 offset-md-2" [ngSwitch]="lectureUnit.type">
-            <span class="badge badge-info">
+            <span class="badge bg-info">
                 {{
                     getLectureUnitReleaseDate(lectureUnit)
                         ? ('artemisApp.lectureUnit.details.releaseDateSet' | artemisTranslate) + (getLectureUnitReleaseDate(lectureUnit) | artemisDate)
@@ -28,7 +28,7 @@
 
             <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!"></jhi-exercise-unit>
             <div *ngSwitchCase="LectureUnitType.ATTACHMENT">
-                <span class="badge badge-info">
+                <span class="badge bg-info">
                     {{ ('artemisApp.lectureUnit.details.attachmentVersion' | artemisTranslate) + getAttachmentVersion(lectureUnit) }}
                 </span>
                 <jhi-attachment-unit [attachmentUnit]="lectureUnit"></jhi-attachment-unit>

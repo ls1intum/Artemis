@@ -15,29 +15,31 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, getSubmissionResultById, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
+import { TextAssessmentEvent } from 'app/entities/text-assesment-event.model';
 
 type EntityResponseType = HttpResponse<Result>;
+type EntityResponseEventType = HttpResponse<TextAssessmentEvent>;
 type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
 
 @Injectable({
     providedIn: 'root',
 })
 export class TextAssessmentService {
-    private readonly resourceUrl = SERVER_API_URL + 'api/text-assessments';
+    private readonly resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {}
 
     /**
      * Saves the passed feedback items of the assessment.
-     * @param exerciseId id of the exercise the assessed submission was made to of type {number}
+     * @param participationId id of the participation the assessed submission was made to of type {number}
      * @param resultId id of the corresponding result of type {number}
      * @param feedbacks list of feedback made during assessment of type {Feedback[]}
      * @param textBlocks list of text blocks of type {TextBlock[]}
      */
-    public save(exerciseId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
+    public save(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, body, { observe: 'response' })
+            .put<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/text-assessment`, body, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
 
@@ -48,11 +50,22 @@ export class TextAssessmentService {
      * @param feedbacks list of feedback made during assessment of type {Feedback[]}
      * @param textBlocks list of text blocks of type {TextBlock[]}
      */
-    public submit(exerciseId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
+    public submit(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, body, { observe: 'response' })
+            .post<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/submit-text-assessment`, body, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
+    }
+
+    /**
+     * Submits an assessment event to the artemis analytics for text exercises.
+     * @param assessmentEvent an event of type {TextAssessmentEvent}
+     */
+    public submitTextAssessmentEvent(assessmentEvent: TextAssessmentEvent): Observable<EntityResponseEventType> {
+        const body = Object.assign({}, assessmentEvent);
+        return this.http
+            .post<TextAssessmentEvent>(`${this.resourceUrl}/text-assessment-event/add-event`, body, { observe: 'response' })
+            .pipe(map((res: EntityResponseEventType) => Object.assign({}, res)));
     }
 
     /**
@@ -67,8 +80,9 @@ export class TextAssessmentService {
         textBlocks: TextBlock[],
         complaintResponse: ComplaintResponse,
         submissionId: number,
+        participationId: number,
     ): Observable<EntityResponseType> {
-        const url = `${this.resourceUrl}/text-submissions/${submissionId}/assessment-after-complaint`;
+        const url = `${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/text-assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             textBlocks,
@@ -77,8 +91,8 @@ export class TextAssessmentService {
         return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
 
-    saveExampleAssessment(exampleSubmissionId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
-        const url = `${this.resourceUrl}/text-submissions/${exampleSubmissionId}/example-assessment`;
+    saveExampleAssessment(exerciseId: number, exampleSubmissionId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
+        const url = `${this.resourceUrl}/exercises/${exerciseId}/example-submissions/${exampleSubmissionId}/example-text-assessment`;
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http.put<Result>(url, body, { observe: 'response' }).pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
@@ -88,26 +102,27 @@ export class TextAssessmentService {
      * @param exerciseId id of the exercise the assessed submission was made to of type {number}
      * @param submissionId id of corresponding submission of type {number}
      */
-    public cancelAssessment(exerciseId: number, submissionId: number): Observable<void> {
-        return this.http.put<void>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/cancel-assessment`, null);
+    public cancelAssessment(participationId: number, submissionId: number): Observable<void> {
+        return this.http.post<void>(`${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/cancel-assessment`, undefined);
     }
 
     /**
      * Deletes an assessment.
+     * @param participationId id of the participation, to which the assessment and the submission belong to
      * @param submissionId id of the submission, to which the assessment belongs to
      * @param resultId     id of the result which is deleted
      */
-    deleteAssessment(submissionId: number, resultId: number): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/text-submissions/${submissionId}/delete/${resultId}`);
+    deleteAssessment(participationId: number, submissionId: number, resultId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/participations/${participationId}/text-submissions/${submissionId}/results/${resultId}`);
     }
 
     /**
-     * Get all feedback items for a submission.
+     * @param participationId id of the participation the submission belongs to
      * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
      * @param correctionRound
      * @param resultId instructors can results by id
      */
-    public getFeedbackDataForExerciseSubmission(submissionId: number, correctionRound = 0, resultId?: number): Observable<StudentParticipation> {
+    public getFeedbackDataForExerciseSubmission(participationId: number, submissionId: number, correctionRound = 0, resultId?: number): Observable<StudentParticipation> {
         let params = new HttpParams();
         if (resultId && resultId > 0) {
             // in case resultId is set, we do not need the correction round
@@ -115,22 +130,24 @@ export class TextAssessmentService {
         } else {
             params = params.set('correction-round', correctionRound.toString());
         }
-        return this.http.get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`, { observe: 'response', params }).pipe(
-            // Wire up Result and Submission
-            tap((response) => {
-                const participation = response.body!;
-                const submission = participation.submissions![0];
-                let result;
-                if (resultId) {
-                    result = getSubmissionResultById(submission, resultId);
-                } else {
-                    result = getSubmissionResultByCorrectionRound(submission, correctionRound)!;
-                }
-                TextAssessmentService.reconnectResultsParticipation(participation, submission, result!);
-                (submission as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
-            }),
-            map((response) => response.body!),
-        );
+        return this.http
+            .get<StudentParticipation>(`${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/for-text-assessment`, { observe: 'response', params })
+            .pipe<HttpResponse<StudentParticipation>, StudentParticipation>(
+                // Wire up Result and Submission
+                tap((response: HttpResponse<StudentParticipation>) => {
+                    const participation = response.body!;
+                    const submission = participation.submissions![0];
+                    let result;
+                    if (resultId) {
+                        result = getSubmissionResultById(submission, resultId);
+                    } else {
+                        result = getSubmissionResultByCorrectionRound(submission, correctionRound)!;
+                    }
+                    TextAssessmentService.reconnectResultsParticipation(participation, submission, result!);
+                    (submission as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
+                }),
+                map<HttpResponse<StudentParticipation>, StudentParticipation>((response: HttpResponse<StudentParticipation>) => response.body!),
+            );
     }
 
     /**
@@ -139,11 +156,11 @@ export class TextAssessmentService {
      * @param submissionId id of the submission for which the example result should be retrieved of type {number}
      */
     public getExampleResult(exerciseId: number, submissionId: number): Observable<Result> {
-        return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/example-result`);
+        return this.http.get<Result>(`${this.resourceUrl}/exercises/${exerciseId}/submissions/${submissionId}/example-result`);
     }
 
-    public deleteExampleFeedback(exampleSubmissionId: number): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/text-submissions/${exampleSubmissionId}/example-assessment/feedback`);
+    public deleteExampleFeedback(exerciseId: number, exampleSubmissionId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/example-submissions/${exampleSubmissionId}/example-text-assessment/feedback`);
     }
 
     /**
@@ -152,8 +169,8 @@ export class TextAssessmentService {
      * @param submissionId id of the submission feedback belongs to of type {number}
      * @param feedbackId id of the feedback to search for conflicts of type {number}
      */
-    public getConflictingTextSubmissions(submissionId: number, feedbackId: number): Observable<TextSubmission[]> {
-        return this.http.get<TextSubmission[]>(`${this.resourceUrl}/submission/${submissionId}/feedback/${feedbackId}/feedback-conflicts`);
+    public getConflictingTextSubmissions(participationId: number, submissionId: number, feedbackId: number): Observable<TextSubmission[]> {
+        return this.http.get<TextSubmission[]>(`${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/feedback/${feedbackId}/feedback-conflicts`);
     }
 
     /**
@@ -163,7 +180,7 @@ export class TextAssessmentService {
      * @param feedbackConflictId id of the feedback conflict to be solved
      */
     public solveFeedbackConflict(exerciseId: number, feedbackConflictId: number): Observable<FeedbackConflict> {
-        return this.http.get<FeedbackConflict>(`${this.resourceUrl}/exercise/${exerciseId}/feedbackConflict/${feedbackConflictId}/solve-feedback-conflict`);
+        return this.http.post<FeedbackConflict>(`${this.resourceUrl}/exercises/${exerciseId}/feedback-conflicts/${feedbackConflictId}/solve`, undefined);
     }
 
     private static prepareFeedbacksAndTextblocksForRequest(feedbacks: Feedback[], textBlocks: TextBlock[]): TextAssessmentDTO {

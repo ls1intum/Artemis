@@ -3,9 +3,9 @@
         <h4 class="title">
             <span *ngIf="quizExercise.id && quizExercise.course" jhiTranslate="artemisApp.quizExercise.edit.title" [translateValues]="{ param: quizExercise.course.title }"> </span>
             <span *ngIf="!quizExercise.id && quizExercise.course" jhiTranslate="artemisApp.quizExercise.new.title" [translateValues]="{ param: quizExercise.course.title }"> </span>
-            <span class="badge badge-info align-text-top float-right">
+            <span class="badge bg-info align-text-top float-end">
                 <span jhiTranslate="artemisApp.quizExercise.maxScore"></span>&nbsp;
-                <span class="badge badge-light">{{ calculateMaxExerciseScore() }}</span>
+                <span class="badge text-dark bg-light">{{ calculateMaxExerciseScore() }}</span>
                 <span class="sr-only" jhiTranslate="artemisApp.quizExercise.maxScore"></span>
             </span>
         </h4>
@@ -50,7 +50,7 @@
                                 <input
                                     id="quiz-duration-minutes"
                                     style="width: 70px"
-                                    class="form-control mr-2"
+                                    class="form-control me-2"
                                     title="Duration"
                                     type="number"
                                     min="0"
@@ -62,7 +62,7 @@
                                 <input
                                     id="quiz-duration-seconds"
                                     style="width: 70px"
-                                    class="form-control mr-2 ml-2"
+                                    class="form-control me-2 ms-2"
                                     title="Duration"
                                     type="number"
                                     max="60"
@@ -129,7 +129,7 @@
                     </div>
                 </div>
             </div>
-            <div class="text-left mt-1 mb-1">
+            <div class="text-start mt-1 mb-1">
                 <h4>
                     <span jhiTranslate="artemisApp.quizExercise.questions"> </span>
                 </h4>
@@ -198,23 +198,51 @@
             <ng-container *ngIf="showExistingQuestions && showExistingQuestionsFromExam; then existingQuestionsFromExamTemplate"></ng-container>
 
             <div class="question-options row d-flex justify-content-start" *ngIf="showExistingQuestions && showExistingQuestionsFromFile">
-                <div class="mr-2 col flex-grow-0" style="white-space: nowrap">
+                <div class="me-2 col flex-grow-0" style="white-space: nowrap">
                     <span jhiTranslate="artemisApp.quizExercise.importJSON" class="font-weight-bold colon-suffix no-flex-shrink"> </span>
                 </div>
                 <div class="input-group flex-grow-1 col">
-                    <div class="custom-file">
-                        <input id="importFileInput" type="file" accept=".json" class="custom-file-input" (change)="setImportFile($event)" placeholder="Upload file..." />
-                        <label class="custom-file-label overflow-ellipsis" for="importFileInput">{{ importFileName }}</label>
-                    </div>
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-primary" (click)="importQuiz()" jhiTranslate="entity.action.import" [ngClass]="{ disabled: !importFile }"></button>
-                    </div>
+                    <input id="importFileInput" type="file" accept=".json" class="form-control" (change)="setImportFile($event)" placeholder="Upload file..." />
+                    <button class="btn btn-outline-primary" (click)="importQuiz()" jhiTranslate="entity.action.import" [ngClass]="{ disabled: !importFile }"></button>
                 </div>
             </div>
             <div class="edit-quiz-footer">
                 <div class="container">
                     <div class="edit-quiz-footer-content">
-                        <div class="form-group flex-fill ml-1" *ngIf="!isExamMode && quizExercise.id">
+                        <div class="form-group" *ngIf="!isExamMode" style="width: max-content !important">
+                            <span jhiTranslate="artemisApp.quizExercise.status" class="colon-suffix me-1" style="align-self: center"></span>
+                            <select
+                                *ngIf="showDropdown === 'isOpenForPractice'"
+                                class="form-select"
+                                [(ngModel)]="quizExercise.isOpenForPractice"
+                                (ngModelChange)="cacheValidation()"
+                                title="status"
+                            >
+                                <option *ngFor="let option of statusOptionsPractice" [value]="option.key">
+                                    <span *ngIf="option.key === true">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | artemisTranslate }}</span>
+                                    <span *ngIf="option.key === false">{{ 'artemisApp.quizExercise.quizStatus.closed' | artemisTranslate }}</span>
+                                </option>
+                            </select>
+                            <select
+                                *ngIf="showDropdown === 'isVisibleBeforeStart'"
+                                class="form-select"
+                                [(ngModel)]="quizExercise.isVisibleBeforeStart"
+                                (ngModelChange)="cacheValidation()"
+                                title="status"
+                            >
+                                <option *ngFor="let option of statusOptionsVisible" [value]="option.key">
+                                    <span *ngIf="option.key === true">{{ 'artemisApp.quizExercise.quizStatus.visible' | artemisTranslate }}</span>
+                                    <span *ngIf="option.key === false">{{ 'artemisApp.quizExercise.quizStatus.hidden' | artemisTranslate }}</span>
+                                </option>
+                            </select>
+                            <select *ngIf="showDropdown === 'active'" class="form-select" title="status" disabled>
+                                <option *ngFor="let option of statusOptionsActive" [value]="option.key">
+                                    {{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group flex-fill ms-3" *ngIf="!isExamMode && quizExercise.id">
                             <div class="form-group flex-fill">
                                 <input
                                     minlength="3"
@@ -227,44 +255,12 @@
                                 />
                             </div>
                         </div>
-                        <div class="form-group" *ngIf="!isExamMode">
-                            <span jhiTranslate="artemisApp.quizExercise.status" class="colon-suffix"></span>
-                            <select
-                                *ngIf="showDropdown === 'isOpenForPractice'"
-                                class="form-control"
-                                [(ngModel)]="quizExercise.isOpenForPractice"
-                                (ngModelChange)="cacheValidation()"
-                                title="status"
-                            >
-                                <option *ngFor="let option of statusOptionsPractice" [value]="option.key">
-                                    <span *ngIf="option.key === true">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | artemisTranslate }}</span>
-                                    <span *ngIf="option.key === false">{{ 'artemisApp.quizExercise.quizStatus.closed' | artemisTranslate }}</span>
-                                </option>
-                            </select>
-                            <select
-                                *ngIf="showDropdown === 'isVisibleBeforeStart'"
-                                class="form-control"
-                                [(ngModel)]="quizExercise.isVisibleBeforeStart"
-                                (ngModelChange)="cacheValidation()"
-                                title="status"
-                            >
-                                <option *ngFor="let option of statusOptionsVisible" [value]="option.key">
-                                    <span *ngIf="option.key === true">{{ 'artemisApp.quizExercise.quizStatus.visible' | artemisTranslate }}</span>
-                                    <span *ngIf="option.key === false">{{ 'artemisApp.quizExercise.quizStatus.hidden' | artemisTranslate }}</span>
-                                </option>
-                            </select>
-                            <select *ngIf="showDropdown === 'active'" class="form-control" title="status" disabled>
-                                <option *ngFor="let option of statusOptionsActive" [value]="option.key">
-                                    {{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}
-                                </option>
-                            </select>
-                        </div>
 
                         <div class="form-group">
-                            <span *ngIf="!pendingChangesCache && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.saved" class="badge badge-success"> </span>
-                            <span *ngIf="pendingChangesCache && quizIsValid && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge badge-secondary">
+                            <span *ngIf="!pendingChangesCache && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.saved" class="badge bg-success"> </span>
+                            <span *ngIf="pendingChangesCache && quizIsValid && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge bg-secondary">
                             </span>
-                            <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge badge-secondary"> </span>
+                            <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-secondary"> </span>
                             <ng-template #tooltipTranslate>
                                 <div *ngFor="let reason of computeInvalidReasons()">
                                     <p
@@ -285,12 +281,12 @@
                                     <p *ngIf="(warning.translateValues | json) == '{}'" jhiTranslate="{{ warning.translateKey }}"></p>
                                 </div>
                             </ng-template>
-                            <span *ngIf="!quizIsValid" class="badge badge-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right">
+                            <span *ngIf="!quizIsValid" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right">
                                 <fa-icon [icon]="'exclamation-circle'"></fa-icon>
                                 <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
                                 <span>({{ computeInvalidReasons().length }})</span>
                             </span>
-                            <span *ngIf="warningQuizCache" class="badge badge-warning" [ngbTooltip]="warningTranslate" tooltip-placement="top-right">
+                            <span *ngIf="warningQuizCache" class="badge bg-warning" [ngbTooltip]="warningTranslate" tooltip-placement="top-right">
                                 <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
                                 <span>({{ computeInvalidWarnings().length }})</span>
                             </span>
@@ -355,24 +351,24 @@
             <div class="form-group question-options existing-question-container">
                 <div class="existing-question-select-course w-100">
                     <span jhiTranslate="artemisApp.quizExercise.selectCourse" class="font-weight-bold align-middle"></span>
-                    <select class="form-control ml-5" [(ngModel)]="selectedCourseId" (change)="onCourseSelect()" style="flex: 1">
+                    <select class="form-select ms-5" [(ngModel)]="selectedCourseId" (change)="onCourseSelect()" style="flex: 1">
                         <option *ngFor="let course of courses" [value]="course.id">{{ course.title }}</option>
                     </select>
                 </div>
                 <div class="existing-question-filter w-100" *ngIf="allExistingQuestions.length !== 0">
                     <input class="form-control search-query" [(ngModel)]="searchQueryText" placeholder="Search Query" />
                     <div class="checkboxes">
-                        <div class="form-check custom-control custom-checkbox">
-                            <input type="checkbox" id="cbDnDFilter" class="form-check-input custom-control-input" [(ngModel)]="dndFilterEnabled" />
-                            <label class="form-check-label custom-control-label" for="cbDnDFilter" jhiTranslate="artemisApp.quizExercise.filter.dnd"> </label>
+                        <div class="form-check">
+                            <input type="checkbox" id="cbDnDFilter" class="form-check-input" [(ngModel)]="dndFilterEnabled" />
+                            <label class="form-check-label" for="cbDnDFilter" jhiTranslate="artemisApp.quizExercise.filter.dnd"></label>
                         </div>
-                        <div class="form-check custom-control custom-checkbox">
-                            <input type="checkbox" id="cbMCFilter" class="form-check-input custom-control-input" [(ngModel)]="mcqFilterEnabled" />
-                            <label class="form-check-label custom-control-label" for="cbMCFilter" jhiTranslate="artemisApp.quizExercise.filter.mcq"> </label>
+                        <div class="form-check">
+                            <input type="checkbox" id="cbMCFilter" class="form-check-input" [(ngModel)]="mcqFilterEnabled" />
+                            <label class="form-check-label" for="cbMCFilter" jhiTranslate="artemisApp.quizExercise.filter.mcq"></label>
                         </div>
-                        <div class="form-check custom-control custom-checkbox">
-                            <input type="checkbox" id="cbShortAnswerFilter" class="form-check-input custom-control-input" [(ngModel)]="shortAnswerFilterEnabled" />
-                            <label class="form-check-label custom-control-label" for="cbShortAnswerFilter" jhiTranslate="artemisApp.quizExercise.filter.sa"> </label>
+                        <div class="form-check">
+                            <input type="checkbox" id="cbShortAnswerFilter" class="form-check-input" [(ngModel)]="shortAnswerFilterEnabled" />
+                            <label class="form-check-label" for="cbShortAnswerFilter" jhiTranslate="artemisApp.quizExercise.filter.sa"></label>
                         </div>
                     </div>
                     <button class="btn btn-outline-dark" (click)="applyFilter()" jhiTranslate="artemisApp.quizExercise.filter.applyFilter"></button>
@@ -404,19 +400,20 @@
                                 <td width="55%">{{ question.title }}</td>
                                 <td width="30%">{{ question.exercise?.title }}</td>
                                 <td width="10%" class="mb-0">
-                                    <h5><span *ngIf="question.type === MULTIPLE_CHOICE" class="badge badge-info align-text-top">MC</span></h5>
-                                    <h5><span *ngIf="question.type === DRAG_AND_DROP" class="badge badge-warning align-text-top">DnD</span></h5>
-                                    <h5><span *ngIf="question.type === SHORT_ANSWER" class="badge badge-success align-text-top">SA</span></h5>
+                                    <h5><span *ngIf="question.type === MULTIPLE_CHOICE" class="badge bg-info align-text-top">MC</span></h5>
+                                    <h5><span *ngIf="question.type === DRAG_AND_DROP" class="badge bg-warning align-text-top">DnD</span></h5>
+                                    <h5><span *ngIf="question.type === SHORT_ANSWER" class="badge bg-success align-text-top">SA</span></h5>
                                 </td>
                                 <td width="5%">
-                                    <div class="form-check custom-control custom-checkbox">
+                                    <div class="form-check">
                                         <input
                                             type="checkbox"
                                             id="cbExportQuizQuestion{{ question.id }}"
-                                            class="form-check-input custom-control-input"
+                                            class="form-check-input"
                                             [(ngModel)]="question.exportQuiz"
+                                            style="margin-left: 0"
                                         />
-                                        <label class="form-check-label custom-control-label" for="cbExportQuizQuestion{{ question.id }}">&nbsp;</label>
+                                        <label class="form-check-label" for="cbExportQuizQuestion{{ question.id }}">&nbsp;</label>
                                     </div>
                                 </td>
                             </tr>
@@ -426,7 +423,7 @@
                 <div
                     *ngIf="allExistingQuestions.length !== 0 && existingQuestions.length === 0 && selectedCourseId != null"
                     jhiTranslate="artemisApp.quizExercise.noMatchingQuestionsFound"
-                    class="ml-3"
+                    class="ms-3"
                 ></div>
                 <button
                     class="btn btn-outline-primary"
@@ -440,24 +437,24 @@
             <div class="form-group question-options existing-question-container">
                 <div class="existing-question-select-course w-100">
                     <span jhiTranslate="artemisApp.quizExercise.selectExam" class="font-weight-bold align-middle"></span>
-                    <select class="form-control ml-5" [(ngModel)]="selectedExamId" (change)="onExamSelect()" style="flex: 1">
+                    <select class="form-select ms-5" [(ngModel)]="selectedExamId" (change)="onExamSelect()" style="flex: 1">
                         <option *ngFor="let exam of exams" [value]="exam.id">{{ exam.title }}</option>
                     </select>
                 </div>
                 <div class="existing-question-filter w-100" *ngIf="allExistingQuestions.length !== 0">
                     <input class="form-control search-query" [(ngModel)]="searchQueryText" placeholder="Search Query" />
                     <div class="checkboxes">
-                        <div class="form-check custom-control custom-checkbox">
-                            <input type="checkbox" id="cbDnDFilterExam" class="form-check-input custom-control-input" [(ngModel)]="dndFilterEnabled" />
-                            <label class="form-check-label custom-control-label" for="cbDnDFilterExam" jhiTranslate="artemisApp.quizExercise.filter.dnd"> </label>
+                        <div class="form-check">
+                            <input type="checkbox" id="cbDnDFilterExam" class="form-check-input" [(ngModel)]="dndFilterEnabled" />
+                            <label class="form-check-label" for="cbDnDFilterExam" jhiTranslate="artemisApp.quizExercise.filter.dnd"></label>
                         </div>
-                        <div class="form-check custom-control custom-checkbox">
-                            <input type="checkbox" id="cbMCFilterExam" class="form-check-input custom-control-input" [(ngModel)]="mcqFilterEnabled" />
-                            <label class="form-check-label custom-control-label" for="cbMCFilterExam" jhiTranslate="artemisApp.quizExercise.filter.mcq"> </label>
+                        <div class="form-check">
+                            <input type="checkbox" id="cbMCFilterExam" class="form-check-input" [(ngModel)]="mcqFilterEnabled" />
+                            <label class="form-check-label" for="cbMCFilterExam" jhiTranslate="artemisApp.quizExercise.filter.mcq"></label>
                         </div>
-                        <div class="form-check custom-control custom-checkbox">
-                            <input type="checkbox" id="cbShortAnswerFilterExam" class="form-check-input custom-control-input" [(ngModel)]="shortAnswerFilterEnabled" />
-                            <label class="form-check-label custom-control-label" for="cbShortAnswerFilterExam" jhiTranslate="artemisApp.quizExercise.filter.sa"> </label>
+                        <div class="form-check">
+                            <input type="checkbox" id="cbShortAnswerFilterExam" class="form-check-input" [(ngModel)]="shortAnswerFilterEnabled" />
+                            <label class="form-check-label" for="cbShortAnswerFilterExam" jhiTranslate="artemisApp.quizExercise.filter.sa"></label>
                         </div>
                     </div>
                     <button class="btn btn-outline-dark" (click)="applyFilter()" jhiTranslate="artemisApp.quizExercise.filter.applyFilter"></button>
@@ -489,19 +486,20 @@
                                 <td width="55%">{{ question.title }}</td>
                                 <td width="30%">{{ question.exercise?.title }}</td>
                                 <td width="10%" class="mb-0">
-                                    <h5><span *ngIf="question.type === MULTIPLE_CHOICE" class="badge badge-info align-text-top">MC</span></h5>
-                                    <h5><span *ngIf="question.type === DRAG_AND_DROP" class="badge badge-warning align-text-top">DnD</span></h5>
-                                    <h5><span *ngIf="question.type === SHORT_ANSWER" class="badge badge-success align-text-top">SA</span></h5>
+                                    <h5><span *ngIf="question.type === MULTIPLE_CHOICE" class="badge bg-info align-text-top">MC</span></h5>
+                                    <h5><span *ngIf="question.type === DRAG_AND_DROP" class="badge bg-warning align-text-top">DnD</span></h5>
+                                    <h5><span *ngIf="question.type === SHORT_ANSWER" class="badge bg-success align-text-top">SA</span></h5>
                                 </td>
                                 <td width="5%">
-                                    <div class="form-check custom-control custom-checkbox">
+                                    <div class="form-check">
                                         <input
                                             type="checkbox"
                                             id="cbExportExamQuizQuestion{{ question.id }}"
-                                            class="form-check-input custom-control-input"
+                                            class="form-check-input"
                                             [(ngModel)]="question.exportQuiz"
+                                            style="margin-left: 0"
                                         />
-                                        <label class="form-check-label custom-control-label" for="cbExportExamQuizQuestion{{ question.id }}">&nbsp;</label>
+                                        <label class="form-check-label" for="cbExportExamQuizQuestion{{ question.id }}">&nbsp;</label>
                                     </div>
                                 </td>
                             </tr>
@@ -511,7 +509,7 @@
                 <div
                     *ngIf="allExistingQuestions.length !== 0 && existingQuestions.length === 0 && selectedExamId != null"
                     jhiTranslate="artemisApp.quizExercise.noMatchingQuestionsFound"
-                    class="ml-3"
+                    class="ms-3"
                 ></div>
                 <button
                     class="btn btn-outline-primary"

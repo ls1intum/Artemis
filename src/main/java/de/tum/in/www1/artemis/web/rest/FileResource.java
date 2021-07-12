@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
@@ -8,12 +10,14 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -24,14 +28,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
@@ -53,11 +61,15 @@ public class FileResource {
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
+    private final CourseRepository courseRepository;
+
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     private final TokenProvider tokenProvider;
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
+
+    private final AuthorizationCheckService authCheckService;
 
     // NOTE: this list has to be the same as in file-uploader.service.ts
     private final List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip"));
@@ -72,7 +84,7 @@ public class FileResource {
 
     public FileResource(FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, TokenProvider tokenProvider,
             FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
-            AttachmentUnitRepository attachmentUnitRepository) {
+            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -80,6 +92,8 @@ public class FileResource {
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.attachmentUnitRepository = attachmentUnitRepository;
+        this.authCheckService = authCheckService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -90,7 +104,7 @@ public class FileResource {
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
      */
-    @PostMapping("/fileUpload")
+    @PostMapping("fileUpload")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName) throws URISyntaxException {
         log.debug("REST request to upload file : {}", file.getOriginalFilename());
@@ -104,7 +118,7 @@ public class FileResource {
      * @param filename The filename of the file to get
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping("/files/temp/{filename:.+}")
+    @GetMapping("files/temp/{filename:.+}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<byte[]> getTempFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
@@ -119,7 +133,7 @@ public class FileResource {
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
      */
-    @PostMapping("/markdown-file-upload")
+    @PostMapping("markdown-file-upload")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
             throws URISyntaxException {
@@ -133,7 +147,7 @@ public class FileResource {
      * @param filename The filename of the file to get
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping("/files/markdown/{filename:.+}")
+    @GetMapping("files/markdown/{filename:.+}")
     @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
@@ -182,7 +196,7 @@ public class FileResource {
      * @param filename   the filename of the file
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("/files/drag-and-drop/backgrounds/{questionId}/{filename:.+}")
+    @GetMapping("files/drag-and-drop/backgrounds/{questionId}/{filename:.+}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
@@ -196,7 +210,7 @@ public class FileResource {
      * @param filename   the filename of the file
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("/files/drag-and-drop/drag-items/{dragItemId}/{filename:.+}")
+    @GetMapping("files/drag-and-drop/drag-items/{dragItemId}/{filename:.+}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
@@ -212,7 +226,7 @@ public class FileResource {
      * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("/files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
+    @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
     @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename,
             @RequestParam("access_token") String temporaryAccessToken) {
@@ -238,7 +252,7 @@ public class FileResource {
      * @param filename the filename of the file
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("/files/course/icons/{courseId}/{filename:.+}")
+    @GetMapping("files/course/icons/{courseId}/{filename:.+}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getCourseIcon(@PathVariable Long courseId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
@@ -255,11 +269,38 @@ public class FileResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getTemporaryFileAccessToken(@PathVariable String filename) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        // TODO: we should check that the filename actually exists in the context in Artemis, ideally we also verify that the user has access to this file already here
         if (filename == null) {
             return ResponseEntity.badRequest().build();
         }
-        String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, filename);
-        return ResponseEntity.ok(temporaryAccessToken);
+        try {
+            String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, filename);
+            return ResponseEntity.ok(temporaryAccessToken);
+        }
+        catch (IllegalAccessException e) {
+            return forbidden();
+        }
+    }
+
+    /**
+     * GET /files/attachments/access-token/{courseId} : Generates an access token that is valid for 30 seconds and given course
+     *
+     * @param courseId the course id the access token is for
+     * @return The generated access token, 403 if the user has no access to the course
+     */
+    @GetMapping("files/attachments/course/{courseId}/access-token")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<String> getTemporaryFileAccessTokenForCourse(@PathVariable Long courseId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), null);
+
+        try {
+            String temporaryAccessToken = tokenProvider.createFileTokenForCourseWithCustomDuration(authentication, 30, courseId);
+            return ResponseEntity.ok(temporaryAccessToken);
+        }
+        catch (IllegalAccessException e) {
+            return forbidden();
+        }
     }
 
     /**
@@ -284,6 +325,45 @@ public class FileResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
         return buildFileResponse(Paths.get(FilePathService.getLectureAttachmentFilePath(), String.valueOf(optionalLecture.get().getId())).toString(), filename);
+    }
+
+    /**
+     * GET /files/attachments/lecture/{lectureId}/merge-pdf : Get the lecture units
+     * PDF attachments merged
+     *
+     * @param lectureId            ID of the lecture, the lecture units belongs to
+     * @param temporaryAccessToken The access token is required to authenticate the
+     *                             user that accesses it
+     * @return The merged PDF file, 403 if the logged in user is not allowed to
+     *         access it, or 404 if the files to be merged do not exist
+     */
+    @GetMapping("files/attachments/lecture/{lectureId}/merge-pdf")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<byte[]> getLecturePdfAttachmentsMerged(@PathVariable Long lectureId, @RequestParam("access_token") String temporaryAccessToken) {
+        log.debug("REST request to get merged pdf files for a lecture with id : {}", lectureId);
+
+        if (!validateTemporaryAccessTokenForCourse(temporaryAccessToken, lectureRepository.findByIdElseThrow(lectureId).getCourse())) {
+            // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
+            String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding attachmentUnit";
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
+        }
+
+        Set<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE);
+
+        List<String> attachmentLinks = lectureAttachments.stream()
+                .filter(unit -> unit.isVisibleToStudents() && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
+                .map(unit -> Paths
+                        .get(FilePathService.getAttachmentUnitFilePath(), String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))
+                        .toString())
+                .collect(Collectors.toList());
+
+        Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks);
+        if (file.isEmpty()) {
+            log.error("Failed to merge PDF lecture units for lecture with id : " + lectureId);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file.get());
+
     }
 
     /**
@@ -319,7 +399,22 @@ public class FileResource {
      * @return true if temporaryAccessToken is valid for this file, false otherwise
      */
     private boolean validateTemporaryAccessToken(String temporaryAccessToken, String filename) {
-        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndFile(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE_AUTHORITY, filename)) {
+        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndFile(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE, filename)) {
+            log.info("Attachment with invalid token was accessed");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Validates temporary access token for course files access
+     *
+     * @param temporaryAccessToken token to be validated
+     * @param course               the course
+     * @return true if temporaryAccessToken is valid for this course, false otherwise
+     */
+    private boolean validateTemporaryAccessTokenForCourse(String temporaryAccessToken, Course course) {
+        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndCourse(temporaryAccessToken, course.getId())) {
             log.info("Attachment with invalid token was accessed");
             return false;
         }
@@ -340,8 +435,14 @@ public class FileResource {
         // Currently set to 10 MB
 
         // check for file type
-        String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
-        if (fileExtension == null || this.allowedFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
+        String filename = file.getOriginalFilename();
+        if (filename == null) {
+            throw new IllegalArgumentException("Filename cannot be null");
+        }
+        // sanitize the filename and replace all invalid characters with "_"
+        filename = filename.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+        String fileExtension = FilenameUtils.getExtension(filename);
+        if (this.allowedFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
             return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedFileExtensions));
         }
 
@@ -375,12 +476,9 @@ public class FileResource {
             // create file (generate new filename, if file already exists)
             boolean fileCreated;
             File newFile;
-            String filename;
+
             do {
-                if (keepFileName) {
-                    filename = file.getOriginalFilename().replaceAll("\\s", "");
-                }
-                else {
+                if (!keepFileName) {
                     filename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8)
                             + "." + fileExtension;
                 }
@@ -399,7 +497,7 @@ public class FileResource {
             Files.copy(file.getInputStream(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
             // return path for getting the file
-            String responseBody = "{\"path\":\"" + responsePath.toString() + "\"}";
+            String responseBody = "{\"path\":\"" + responsePath + "\"}";
             return ResponseEntity.created(new URI(responsePath.toString())).body(responseBody);
         }
         catch (IOException e) {
@@ -423,9 +521,18 @@ public class FileResource {
                 return ResponseEntity.notFound().build();
             }
 
-            ContentDisposition contentDisposition = ContentDisposition.builder("inline").filename(filename).build();
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentDisposition(contentDisposition);
+
+            if (filename.endsWith("htm") || filename.endsWith("html") || filename.endsWith("svg") || filename.endsWith("svgz")) {
+                // attachment will force the user to download the file
+                ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(filename).build();
+                headers.setContentDisposition(contentDisposition);
+            }
+            else {
+                ContentDisposition contentDisposition = ContentDisposition.builder("inline").filename(filename).build();
+                headers.setContentDisposition(contentDisposition);
+            }
+
             FileNameMap fileNameMap = URLConnection.getFileNameMap();
             String mimeType = fileNameMap.getContentTypeFor(filename);
 

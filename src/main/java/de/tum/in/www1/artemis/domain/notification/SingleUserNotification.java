@@ -49,7 +49,7 @@ public class SingleUserNotification extends Notification {
     /**
      * Set the target JSON string for an exercise notification
      *
-     * @param answerPost a question that was posted for an exercise
+     * @param answerPost an answer for an exercise post
      * @return JSON string with all properties for the notification target field
      */
     public String answerPostTargetForExercise(AnswerPost answerPost) {
@@ -65,7 +65,7 @@ public class SingleUserNotification extends Notification {
     /**
      * Set the target JSON string for a lecture notification
      *
-     * @param answerPost a question that was posted for a lecture
+     * @param answerPost an answer for a lecture post
      * @return JSON string with all properties for the notification target field
      */
     public String answerPostTargetForLecture(AnswerPost answerPost) {

@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
+import de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore;
 import de.tum.in.www1.artemis.domain.statistics.ScoreDistribution;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.repository.*;
@@ -30,17 +31,20 @@ public class StatisticsService {
 
     private final CourseRepository courseRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     private final UserRepository userRepository;
 
-    private final ParticipationRepository participationRepository;
+    private final TeamRepository teamRepository;
 
     public StatisticsService(StatisticsRepository statisticsRepository, ParticipantScoreRepository participantScoreRepository, CourseRepository courseRepository,
-            UserRepository userRepository, ParticipationRepository participationRepository) {
+            ExerciseRepository exerciseRepository, UserRepository userRepository, TeamRepository teamRepository) {
         this.statisticsRepository = statisticsRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.courseRepository = courseRepository;
+        this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
-        this.participationRepository = participationRepository;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -125,11 +129,12 @@ public class StatisticsService {
      */
     public CourseManagementStatisticsDTO getCourseStatistics(Long courseId) {
         var courseManagementStatisticsDTO = new CourseManagementStatisticsDTO();
-        var exercises = statisticsRepository.findExercisesByCourseId(courseId);
+        Set<Exercise> exercises = statisticsRepository.findExercisesByCourseId(courseId);
         var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
-        var averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
-        var averageScoreForExercises = statisticsRepository.findAvgPointsForExercises(includedExercises);
+        Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
+        List<CourseStatisticsAverageScore> averageScoreForExercises = statisticsRepository.findAvgPointsForExercises(includedExercises);
+        sortAfterReleaseDate(averageScoreForExercises);
         averageScoreForExercises.forEach(exercise -> {
             var roundedAverageScore = round(exercise.getAverageScore());
             exercise.setAverageScore(roundedAverageScore);
@@ -161,12 +166,25 @@ public class StatisticsService {
     public ExerciseManagementStatisticsDTO getExerciseStatistics(Exercise exercise) throws EntityNotFoundException {
         var course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
         var exerciseManagementStatisticsDTO = new ExerciseManagementStatisticsDTO();
-        // number of students
-        long numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
-        exerciseManagementStatisticsDTO.setNumberOfStudentsInCourse(Objects.requireNonNullElse(numberOfStudents, 0L));
-        // number of participations
-        long numberOfParticipations = participationRepository.getNumberOfParticipationsForExercise(exercise.getId());
-        exerciseManagementStatisticsDTO.setNumberOfParticipations(numberOfParticipations);
+
+        // number of students or teams and number of participations of students or teams
+        long numberOfParticipationsOfStudentsOrTeams;
+        long numberOfStudentsOrTeams;
+        if (exercise.isTeamMode()) {
+            Long teamParticipations = exerciseRepository.getTeamParticipationCountById(exercise.getId());
+            numberOfParticipationsOfStudentsOrTeams = teamParticipations == null ? 0L : teamParticipations;
+
+            numberOfStudentsOrTeams = teamRepository.getNumberOfTeamsForExercise(exercise.getId());
+        }
+        else {
+            Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId());
+            numberOfParticipationsOfStudentsOrTeams = studentParticipations == null ? 0L : studentParticipations;
+
+            numberOfStudentsOrTeams = userRepository.countUserInGroup(course.getStudentGroupName());
+        }
+        exerciseManagementStatisticsDTO.setNumberOfParticipations(numberOfParticipationsOfStudentsOrTeams);
+        exerciseManagementStatisticsDTO.setNumberOfStudentsOrTeamsInCourse(Objects.requireNonNullElse(numberOfStudentsOrTeams, 0L));
+
         // questions stats
         long questionsAsked = statisticsRepository.getNumberOfQuestionsAskedForExercise(exercise.getId());
         exerciseManagementStatisticsDTO.setNumberOfQuestions(questionsAsked);
@@ -202,5 +220,31 @@ public class StatisticsService {
         exerciseManagementStatisticsDTO.setNumberOfExerciseScores(scores.size());
 
         return exerciseManagementStatisticsDTO;
+    }
+
+    /**
+     * Sorting averageScores for release dates
+     * @param exercises the exercises which we want to sort
+     */
+    private void sortAfterReleaseDate(List<CourseStatisticsAverageScore> exercises) {
+        exercises.sort((exerciseA, exerciseB) -> {
+            var releaseDateA = exerciseA.getReleaseDate();
+            var releaseDateB = exerciseB.getReleaseDate();
+            if (releaseDateA == null) {
+                // If A has no release date, sort B first
+                return 1;
+            }
+            else if (releaseDateB == null) {
+                // If B has no release date, sort A first
+                return -1;
+            }
+            else if (releaseDateA.isEqual(releaseDateB)) {
+                return 0;
+            }
+            else {
+                // Sort the one with the earlier release date first
+                return releaseDateA.isBefore(releaseDateB) ? -1 : 1;
+            }
+        });
     }
 }

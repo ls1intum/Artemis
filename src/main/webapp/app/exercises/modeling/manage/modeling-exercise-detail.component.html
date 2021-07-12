@@ -5,22 +5,14 @@
             <hr />
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
-            <div class="text-left">
+            <div class="text-start">
                 <jhi-non-programming-exercise-detail-common-actions
-                    *ngIf="modelingExercise.course"
+                    *ngIf="course"
+                    [isExamExercise]="isExamExercise"
+                    [course]="course"
                     [exercise]="modelingExercise"
-                    [courseId]="modelingExercise.course.id!"
-                    [isExamExercise]="false"
                 ></jhi-non-programming-exercise-detail-common-actions>
-
-                <a
-                    *ngIf="modelingExercise.isAtLeastTutor && modelingExercise.course"
-                    [routerLink]="['/course-management', modelingExercise.course!.id!, 'modeling-exercises', modelingExercise.id!, 'exercise-statistics']"
-                    class="btn btn-info btn-sm mr-1"
-                >
-                    <fa-icon [icon]="'chart-bar'"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
-                </a>
-                <a *ngIf="modelingExercise.isAtLeastEditor" class="btn btn-primary btn-sm mr-1" id="check-plagiarism-download" routerLink="plagiarism">
+                <a *ngIf="modelingExercise.isAtLeastEditor" class="btn btn-outline-primary btn-sm me-1" id="check-plagiarism-download" routerLink="plagiarism">
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
                 </a>
             </div>
@@ -61,6 +53,19 @@
                     <span [innerHTML]="sampleSolution"></span>
                 </dd>
             </dl>
+            <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN']">
+                <dl class="row-md">
+                    <dt>
+                        <span jhiTranslate="artemisApp.modelingExercise.clusters">Clusters</span>
+                    </dt>
+                    <dd>
+                        <button (click)="buildModelClusters()" class="btn btn-primary" jhiTranslate="artemisApp.modelingExercise.buildClusters.action">Build Clusters</button>
+                    </dd>
+                    <dd>
+                        <button (click)="deleteModelClusters()" class="btn btn-primary" jhiTranslate="artemisApp.modelingExercise.deleteClusters.action">Delete Clusters</button>
+                    </dd>
+                </dl>
+            </ng-container>
         </div>
     </div>
 </div>

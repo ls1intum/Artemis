@@ -140,7 +140,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
     cancelAssessment(submission: Submission) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.assessmentsService.cancelAssessment(this.exercise.id!, submission.id!).subscribe(() => {
+            this.assessmentsService.cancelAssessment(submission.participation!.id!, submission.id!).subscribe(() => {
                 this.getSubmissions();
             });
         }
@@ -149,7 +149,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
     /**
      * get the link for the assessment of a specific submission of the current exercise
      */
-    getAssessmentLink(submissionId: number) {
-        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
+    getAssessmentLink(participationId: number, submissionId: number) {
+        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, submissionId, this.examId, this.exerciseGroupId);
     }
 }

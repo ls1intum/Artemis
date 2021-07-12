@@ -93,7 +93,7 @@ export class AssessmentLocksComponent implements OnInit {
                     break;
                 case SubmissionExerciseType.TEXT:
                     if (canceledSubmission.participation?.exercise?.id) {
-                        this.textAssessmentService.cancelAssessment(canceledSubmission.participation.exercise.id, canceledSubmission.id!).subscribe();
+                        this.textAssessmentService.cancelAssessment(canceledSubmission.participation.id!, canceledSubmission.id!).subscribe();
                     }
                     break;
                 case SubmissionExerciseType.FILE_UPLOAD:

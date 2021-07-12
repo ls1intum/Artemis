@@ -1,15 +1,15 @@
 <div *ngIf="participation">
     <h2 jhiTranslate="artemisApp.participation.participationSubmission.submissionsForParticipation" [translateValues]="{ participant: getName(), exercise: exercise?.title }"></h2>
     <h4 *ngIf="exercise?.releaseDate">
-        <span class="mr-2"> {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}: {{ (exercise!.releaseDate | artemisDate) || 'N/A' }} </span>
+        <span class="me-2"> {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}: {{ (exercise!.releaseDate | artemisDate) || 'N/A' }} </span>
         <span [ngClass]="exerciseStatusBadge" class="badge">{{ exercise!.releaseDate | artemisTimeAgo }} </span>
     </h4>
     <h4 *ngIf="exercise?.dueDate">
-        <span class="mr-2"> {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}: {{ (exercise!.dueDate | artemisDate) || 'N/A' }} </span>
+        <span class="me-2"> {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}: {{ (exercise!.dueDate | artemisDate) || 'N/A' }} </span>
         <span [ngClass]="exerciseStatusBadge" class="badge"> {{ exercise!.dueDate | artemisTimeAgo }} </span>
     </h4>
     <h4 *ngIf="exercise?.assessmentDueDate">
-        <span class="mr-2"> {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}: {{ (exercise!.assessmentDueDate | artemisDate) || 'N/A' }} </span>
+        <span class="me-2"> {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}: {{ (exercise!.assessmentDueDate | artemisDate) || 'N/A' }} </span>
         <span [ngClass]="exerciseStatusBadge" class="badge">{{ exercise!.assessmentDueDate | artemisTimeAgo }}</span>
     </h4>
 </div>
@@ -140,7 +140,7 @@
             </ng-template>
             <ng-template ngx-datatable-cell-template let-value="value">
                 <button
-                    class="btn btn-danger btn-sm mr-1"
+                    class="btn btn-danger btn-sm me-1"
                     id="deleteButton"
                     jhiDeleteButton
                     deleteQuestion="artemisApp.participation.participationSubmission.delete"

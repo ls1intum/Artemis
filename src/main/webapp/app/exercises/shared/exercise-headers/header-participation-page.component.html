@@ -5,14 +5,14 @@
                 <ng-content select="[pagetitle]"></ng-content>
             </h4>
             <div class="d-flex align-items-center">
-                <h6 class="mr-2 mb-0">{{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }}</h6>
+                <h6 class="me-2 mb-0">{{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }}</h6>
                 <span>{{ (exercise.dueDate | artemisDate) || 'N/A' }}</span>
-                <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge ml-2">{{ exercise.dueDate | artemisTimeAgo }}</span>
+                <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge ms-2">{{ exercise.dueDate | artemisTimeAgo }}</span>
             </div>
             <div *ngIf="exercise.categories" class="d-sm-flex">
-                <h6 class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.categories' | artemisTranslate }}</h6>
+                <h6 class="me-1">{{ 'artemisApp.courseOverview.exerciseDetails.categories' | artemisTranslate }}</h6>
                 <h6 *ngFor="let category of exerciseCategories">
-                    <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
+                    <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
                 </h6>
             </div>
         </div>
@@ -27,10 +27,10 @@
                             >{{ exercise.maxPoints }}
                             <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }} )</span>
                         </span>
-                        <jhi-difficulty-badge *ngIf="exercise.difficulty" class="ml-1" [exercise]="exercise"></jhi-difficulty-badge>
+                        <jhi-difficulty-badge *ngIf="exercise.difficulty" class="ms-1" [exercise]="exercise"></jhi-difficulty-badge>
                         <jhi-included-in-score-badge
                             *ngIf="exercise.includedInOverallScore && exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_COMPLETELY"
-                            class="ml-1"
+                            class="ms-1"
                             [includedInOverallScore]="exercise.includedInOverallScore"
                         ></jhi-included-in-score-badge>
                     </td>
@@ -41,7 +41,7 @@
                     </td>
                     <td>
                         <span>{{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }}</span>
-                        <span [ngClass]="exerciseStatusBadge" class="badge ml-1">{{ exercise.assessmentDueDate | artemisTimeAgo }}</span>
+                        <span [ngClass]="exerciseStatusBadge" class="badge ms-1">{{ exercise.assessmentDueDate | artemisTimeAgo }}</span>
                     </td>
                 </tr>
             </table>

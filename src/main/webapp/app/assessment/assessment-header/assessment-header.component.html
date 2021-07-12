@@ -1,9 +1,9 @@
 <h3 class="top-container">
     <!--back button only used in assessment dashboard-->
-    <div class="row-container mr-2">
+    <div class="row-container me-2">
         <span *ngIf="!isTestRun" jhiTranslate="artemisApp.assessment.assessment">Assessment</span>
         <span *ngIf="isTestRun" jhiTranslate="artemisApp.assessment.testRunAssessment">Test Run Assessment</span>
-        <span *ngIf="isIllegalSubmission" class="badge badge-danger ml-3" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission">
+        <span *ngIf="isIllegalSubmission" class="badge bg-danger ms-3" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission">
             Warning: You are viewing an illegal submission.
         </span>
     </div>
@@ -21,7 +21,7 @@
         <span
             id="assessmentLocked"
             *ngIf="!isAssessor && !hasComplaint"
-            class="text-danger ml-3"
+            class="text-danger ms-3"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentLocked"
             [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
@@ -31,7 +31,7 @@
         <span
             id="moreFeedbackRequest"
             *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && hasMoreFeedbackRequest && !complaintHandled"
-            class="ml-3"
+            class="ms-3"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.moreFeedbackRequest"
         >
@@ -40,7 +40,7 @@
         <span
             id="assessmentReadOnlyUnhandledComplaint"
             *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && !hasMoreFeedbackRequest && !complaintHandled"
-            class="ml-3"
+            class="ms-3"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentReadOnlyUnhandledComplaint"
         >
@@ -49,25 +49,16 @@
         <span
             id="assessmentReadOnlyhandled"
             *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && complaintHandled"
-            class="ml-3"
+            class="ms-3"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentReadOnlyHandledComplaint"
         >
             The complaint about your assessment has been resolved.
         </span>
         <span
-            *ngIf="!isAssessor && hasComplaint"
-            class="ml-3"
-            style="font-size: 65%"
-            jhiTranslate="artemisApp.assessment.assessmentLockedComplaintView"
-            [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
-        >
-            Original Assessor: otherUser
-        </span>
-        <span
             id="assessmentLockedCurrentUser"
             *ngIf="isAssessor && (!hasComplaint || isAtLeastInstructor)"
-            class="text-danger ml-3"
+            class="text-danger ms-3"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"
         >
@@ -76,7 +67,7 @@
         <!-- Highlight the difference between first and second correction -->
         <button
             *ngIf="!isProgrammingExercise && result && correctionRound > 0"
-            class="btn ml-2 btn-primary"
+            class="btn ms-2 btn-primary"
             (click)="toggleHighlightDifferences()"
             [disabled]="saveBusy || submitBusy || cancelBusy"
         >
@@ -95,18 +86,22 @@
         </button>
         <br />
         <ng-container *ngIf="!result?.completionDate">
-            <button class="btn ml-2 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">
+            <button class="btn ms-2 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">
                 <fa-icon *ngIf="saveBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <fa-icon [icon]="'save'"></fa-icon>
                 <span jhiTranslate="entity.action.save">Save</span>
             </button>
-            <button class="btn ml-2 btn-success" (click)="submit.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">
+            <button
+                class="btn ms-2 btn-success"
+                (click)="submit.emit(); sendSubmitAssessmentEventToAnalytics()"
+                [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy"
+            >
                 <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="entity.action.submit">Submit</span>
             </button>
             <button
                 *ngIf="!isTestRun"
-                class="btn ml-2 btn-danger"
+                class="btn ms-2 btn-danger"
                 (click)="cancel.emit()"
                 [disabled]="!(isAtLeastInstructor || isAssessor) || saveBusy || submitBusy || cancelBusy"
             >
@@ -114,23 +109,23 @@
                 <span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
         </ng-container>
-        <button class="btn ml-2 btn-danger" *ngIf="result?.completionDate && canOverride" (click)="submit.emit()" [disabled]="!assessmentsAreValid || submitBusy">
+        <button class="btn ms-2 btn-danger" *ngIf="result?.completionDate && canOverride" (click)="submit.emit()" [disabled]="!assessmentsAreValid || submitBusy">
             <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
         </button>
         <button
-            class="btn ml-2 btn-success"
+            class="btn ms-2 btn-success"
             id="assessNextButton"
             *ngIf="result?.completionDate && (isAssessor || isAtLeastInstructor) && !hasComplaint && !isTeamMode && !isTestRun"
             [disabled]="nextSubmissionBusy || submitBusy"
-            (click)="nextSubmission.emit()"
+            (click)="nextSubmission.emit(); sendAssessNextEventToAnalytics()"
         >
             <fa-icon *ngIf="nextSubmissionBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.assessment.button.nextSubmission"> Next Submission</span>
         </button>
 
-        <a [routerLink]="exerciseDashboardLink" class="btn ml-2 btn-info">
-            <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+        <a [routerLink]="exerciseDashboardLink" class="btn ms-2 btn-info">
+            <span jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
         </a>
     </div>
 </h3>

@@ -35,16 +35,16 @@ export class RatingComponent implements OnInit {
 
     /**
      * Update/Create new Rating for the result
-     * @param $event - starRating component that holds new rating value
+     * @param event - starRating component that holds new rating value
      */
-    onRate($event: { oldValue: number; newValue: number; starRating: StarRatingComponent }) {
+    onRate(event: { oldValue: number; newValue: number; starRating: StarRatingComponent }) {
         // block rating to prevent double sending of post request
         if (this.disableRating) {
             return;
         }
 
         // update feedback locally
-        this.rating.rating = $event.newValue;
+        this.rating.rating = event.newValue;
         // Break circular dependency
         if (this.rating.result) {
             this.rating.result.participation = undefined;

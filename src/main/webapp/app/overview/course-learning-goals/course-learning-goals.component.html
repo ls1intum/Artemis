@@ -4,10 +4,10 @@
     </div>
 </div>
 
-<div *ngIf="!isLoading" class="card-deck">
+<div *ngIf="!isLoading" class="row row-cols-auto">
     <h2 *ngIf="learningGoals && learningGoals.length > 0" class="text-center">{{ 'artemisApp.learningGoal.title' | artemisTranslate }}</h2>
     <jhi-learning-goal-card
-        class="mx-auto"
+        class="mx-auto col"
         *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
         [learningGoal]="learningGoal"
         [learningGoalProgress]="getLearningGoalProgress(learningGoal)"

@@ -6,7 +6,7 @@ import { checkForMissingTranslationKey } from 'app/shared/util/utils';
 @Component({
     selector: 'jhi-alert',
     template: `
-        <div class="alerts" role="alert">
+        <div class="alerts mt-1" role="alert">
             <div *ngFor="let alert of alerts" [ngClass]="setClasses(alert)">
                 <ngb-alert *ngIf="alert && alert.type && alert.msg && alert.close" [type]="alert.type" (close)="alert.close(alerts)">
                     <pre [innerHTML]="getAlertMessage(alert)"></pre>

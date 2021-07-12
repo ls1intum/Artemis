@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Short Answer Spot Counter",
                 "createOrEditLabel": "Create or edit a Short Answer Spot Counter"
             },
-            "created": "A new Short Answer Spot Counter is created with identifier {{ param }}",
-            "updated": "A Short Answer Spot Counter is updated with identifier {{ param }}",
-            "deleted": "A Short Answer Spot Counter is deleted with identifier {{ param }}",
+            "created": "Created new Short Answer Spot Counter with identifier {{ param }}",
+            "updated": "Updated Short Answer Spot Counter with identifier {{ param }}",
+            "deleted": "Deleted Short Answer Spot Counter with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Short Answer Spot Counter {{ id }}?"
             },

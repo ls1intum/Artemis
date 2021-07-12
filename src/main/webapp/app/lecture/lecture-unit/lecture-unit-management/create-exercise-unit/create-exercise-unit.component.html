@@ -14,7 +14,7 @@
         <div class="col-sm-6 mx-auto">
             <p>{{ 'artemisApp.exerciseUnit.createExerciseUnit.description' | artemisTranslate }}</p>
         </div>
-        <div class="col-sm-6 mx-auto text-right">
+        <div class="col-sm-6 mx-auto text-end">
             <button id="createButton" type="button" class="btn btn-primary" [disabled]="exercisesToCreateUnitFor.length === 0" (click)="createExerciseUnits()">
                 {{ 'entity.action.submit' | artemisTranslate }}
             </button>

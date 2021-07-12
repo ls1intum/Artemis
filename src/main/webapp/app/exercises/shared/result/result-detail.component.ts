@@ -81,7 +81,9 @@ export class ResultDetailComponent implements OnInit {
         of(this.result.feedbacks)
             .pipe(
                 // If the result already has feedbacks assigned to it, don't query the server.
-                switchMap((feedbacks: Feedback[] | undefined | null) => (feedbacks && feedbacks.length ? of(feedbacks) : this.getFeedbackDetailsForResult(this.result.id!))),
+                switchMap((feedbacks: Feedback[] | undefined | null) =>
+                    feedbacks && feedbacks.length ? of(feedbacks) : this.getFeedbackDetailsForResult(this.result.participation!.id!, this.result.id!),
+                ),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
                     // In case the exerciseType is not set, we try to set it back if the participation is from a programming exercise
                     if (!this.exerciseType && isProgrammingExerciseParticipation(this.result?.participation)) {
@@ -126,8 +128,8 @@ export class ResultDetailComponent implements OnInit {
      * @param resultId The current result
      * @private
      */
-    private getFeedbackDetailsForResult(resultId: number) {
-        return this.resultService.getFeedbackDetailsForResult(resultId).pipe(map(({ body: feedbackList }) => feedbackList!));
+    private getFeedbackDetailsForResult(participationId: number, resultId: number) {
+        return this.resultService.getFeedbackDetailsForResult(participationId, resultId).pipe(map(({ body: feedbackList }) => feedbackList!));
     }
 
     /**

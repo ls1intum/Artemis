@@ -66,7 +66,10 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     public void setupTestScenario() {
-        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime pastReleaseDate = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime pastDueDate = ZonedDateTime.now().minusDays(3);
+        ZonedDateTime pastAssessmentDueDate = ZonedDateTime.now().minusDays(2);
+
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
         this.database.addUsers(5, 10, 0, 10);
         User student1 = userRepository.findOneByLogin("student1").get();
@@ -74,9 +77,9 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         // creating course
         Course course = this.database.createCourse();
         Long idOfCourse = course.getId();
-        TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        TextExercise textExercise = database.createIndividualTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
         idOfIndividualTextExercise = textExercise.getId();
-        Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        Exercise teamExercise = database.createTeamTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
         idOfTeamTextExercise = teamExercise.getId();
         User tutor1 = userRepository.findOneByLogin("tutor1").get();
         idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise, "team1").getId();

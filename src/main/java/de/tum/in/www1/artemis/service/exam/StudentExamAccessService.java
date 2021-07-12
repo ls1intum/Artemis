@@ -85,7 +85,7 @@ public class StudentExamAccessService {
             return Optional.of(conflict());
         }
 
-        // Check that the student of the required student exam is the current user
+        // Check that the student of the required student exam (from the database) is the current user
         if (!studentExam.get().getUser().equals(currentUser)) {
             return Optional.of(forbidden());
         }

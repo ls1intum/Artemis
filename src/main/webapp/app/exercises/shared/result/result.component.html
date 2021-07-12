@@ -5,7 +5,7 @@
 <ng-container [ngSwitch]="templateStatus">
     <ng-container *ngSwitchCase="ResultTemplateStatus.IS_BUILDING">
         <span class="text-primary">
-            <fa-icon [icon]="'circle-notch'" size="lg" [spin]="true" class="mr-2"></fa-icon>
+            <fa-icon [icon]="'circle-notch'" size="lg" [spin]="true" class="me-2"></fa-icon>
             <span jhiTranslate="artemisApp.editor.building">Building...</span>
         </span>
     </ng-container>
@@ -18,17 +18,24 @@
                     <span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score</span>
                     {{ round(result.score) }}%,
                 </span>
-                <span *ngIf="hasFeedback">
+                <span *ngIf="resultIsPreliminary(result)">
                     <span class="guided-tour result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip" container="body">
                         {{ resultString }}
                     </span>
                 </span>
-                <span *ngIf="!hasFeedback && onlyShowSuccessfulCompileStatus" [ngbTooltip]="resultTooltip" container="body">
-                    {{ resultString }}
-                </span>
-                <span *ngIf="!hasFeedback && !onlyShowSuccessfulCompileStatus" [ngbTooltip]="resultTooltip" container="body">
-                    {{ result.resultString }}
-                </span>
+                <ng-container *ngIf="!resultIsPreliminary(result)">
+                    <span *ngIf="hasFeedback">
+                        <span class="guided-tour result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip" container="body">
+                            {{ resultString }}
+                        </span>
+                    </span>
+                    <span *ngIf="!hasFeedback && onlyShowSuccessfulCompileStatus" [ngbTooltip]="resultTooltip" container="body">
+                        {{ resultString }}
+                    </span>
+                    <span *ngIf="!hasFeedback && !onlyShowSuccessfulCompileStatus" [ngbTooltip]="resultTooltip" container="body">
+                        {{ result.resultString }}
+                    </span>
+                </ng-container>
                 <span *ngIf="!short"> ({{ result.completionDate! | artemisTimeAgo }}) </span>
                 <!-- TODO in the future we should make sure that result.submission.submissionDate is used here, because submissionDate and completionDate can be different for certain exercise types -->
             </span>
@@ -38,7 +45,7 @@
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
                 </a>
             </span>
-            <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'badge-info': !result.rated, 'badge-success': result.rated }">
+            <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'bg-info': !result.rated, 'bg-success': result.rated }">
                 {{ (result.rated ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded') | artemisTranslate | uppercase }}
             </span>
         </ng-container>

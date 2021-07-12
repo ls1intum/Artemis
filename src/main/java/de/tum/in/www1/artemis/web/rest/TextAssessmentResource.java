@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.*;
@@ -35,8 +35,7 @@ import io.swagger.annotations.ApiResponses;
  * REST controller for managing TextAssessment.
  */
 @RestController
-// TODO: remove 'text-assessments' here
-@RequestMapping("/api/text-assessments")
+@RequestMapping("/api")
 public class TextAssessmentResource extends AssessmentResource {
 
     @Value("${jhipster.clientApp.name}")
@@ -55,6 +54,8 @@ public class TextAssessmentResource extends AssessmentResource {
     private final TextSubmissionService textSubmissionService;
 
     private final TextSubmissionRepository textSubmissionRepository;
+
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
 
@@ -85,26 +86,32 @@ public class TextAssessmentResource extends AssessmentResource {
         this.automaticTextAssessmentConflictService = automaticTextAssessmentConflictService;
         this.feedbackConflictRepository = feedbackConflictRepository;
         this.feedbackRepository = feedbackRepository;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
     }
 
     /**
-     * Saves a given manual textAssessment
-     * TODO SE: refactor this REST call to not use the exerciseId anymore, and make uniform with other save..Assessment calls
-     * @param exerciseId the exerciseId of the exercise which will be saved
+     * PUT participations/:participationId/results/:resultId/text-assessment : Saves a given manual textAssessment
+     *
+     * @param participationId the participationId of the participation the result belongs to
      * @param resultId the resultId the assessment belongs to
      * @param textAssessment the assessments
      * @return 200 Ok if successful with the corresponding result as body, but sensitive information are filtered out
      */
-    @PutMapping("/exercise/{exerciseId}/result/{resultId}")
+    @PutMapping("participations/{participationId}/results/{resultId}/text-assessment")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Result> saveTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
+    public ResponseEntity<Result> saveTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks() != null
                 && textAssessment.getFeedbacks().stream().filter(Feedback::hasReference).anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
         if (hasAssessmentWithTooLongReference) {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
-        final var textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(resultId);
+        Result result = resultRepository.findOneElseThrow(resultId);
+        if (!result.getParticipation().getId().equals(participationId)) {
+            return badRequest("participationId", "400", "participationId in Result of resultId " + resultId + "doesn't match the paths participationId!");
+        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, result.getParticipation().getExercise(), null);
+        final var textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks(), resultId);
 
         if (response.getStatusCode().is2xxSuccessful()) {
@@ -115,18 +122,31 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * PUT text-submissions/:submissionId/example-assessment : save manual example text assessment
+     * PUT exercises/:exerciseId/example-submissions/:exampleSubmissionId/example-text-assessment : save manual example text assessment
      *
+     * @param exerciseId the id of the exercise the exampleSubmission belongs to
      * @param exampleSubmissionId id of the submission
      * @param textAssessment list of text assessments (consists of feedbacks and text blocks)
      * @return result after saving example text assessment
      */
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
-    @PutMapping("/text-submissions/{exampleSubmissionId}/example-assessment")
+    @PutMapping("exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/example-text-assessment")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Result> saveTextExampleAssessment(@PathVariable long exampleSubmissionId, @RequestBody TextAssessmentDTO textAssessment) {
+    public ResponseEntity<Result> saveTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId, @RequestBody TextAssessmentDTO textAssessment) {
         log.debug("REST request to save text example assessment : {}", exampleSubmissionId);
+        Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findBySubmissionId(exampleSubmissionId);
+        if (optionalExampleSubmission.isPresent()) {
+            ExampleSubmission exampleSubmission = optionalExampleSubmission.get();
+            if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
+                return badRequest("exerciseId", "400", "exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + "doesn't match the paths exerciseId!");
+            }
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
+        }
+        else {
+            TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
+        }
         final var response = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
         if (response.getStatusCode().is2xxSuccessful()) {
             final Submission submission = response.getBody().getSubmission();
@@ -137,22 +157,25 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * DELETE text-submissions/:exampleSubmissionId/example-assessment : delete result & text blocks for example submission.
-     * This is used when updating the text of the example assessment.
+     * DELETE exercises/:exerciseId/example-submissions/:exampleSubmissionId/example-assessment/feedback : delete feedback for example submission.
      *
+     * @param exerciseId the id of the exercise the exampleSubmission belongs to
      * @param exampleSubmissionId id of the submission
      * @return 204 No Content
      */
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @DeleteMapping("/text-submissions/{exampleSubmissionId}/example-assessment/feedback")
+    @DeleteMapping("exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/example-text-assessment/feedback")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Void> deleteTextExampleAssessment(@PathVariable long exampleSubmissionId) {
+    public ResponseEntity<Void> deleteTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId) {
         log.debug("REST request to delete text example assessment : {}", exampleSubmissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         final var exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
         Submission submission = exampleSubmission.getSubmission();
         Exercise exercise = exampleSubmission.getExercise();
         checkAuthorization(exercise, user);
+        if (!exercise.getId().equals(exerciseId)) {
+            return badRequest("exerciseId", "400", "exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + "doesn't match the paths exerciseId!");
+        }
 
         if (!(submission instanceof TextSubmission)) {
             return ResponseEntity.badRequest().build();
@@ -172,24 +195,34 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Submits manual textAssessments for a given result and notify the user if it's before the Assessment Due Date
      *
-     * @param exerciseId the exerciseId of the exercise which will be saved
+     * POST participations/:participationId/results/:resultId/submit-text-assessment : Submits manual textAssessments for a given result
+     *     and notify the user if it's before the Assessment Due Date
+     *
+     * @param participationId the participationId of the participation whose assessment shall be saved
      * @param resultId the resultId the assessment belongs to
      * @param textAssessment the assessments which should be submitted
      * @return 200 Ok if successful with the corresponding result as a body, but sensitive information are filtered out
      */
-    @PutMapping("/exercise/{exerciseId}/result/{resultId}/submit")
+    @PostMapping("participations/{participationId}/results/{resultId}/submit-text-assessment")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Result> submitTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
+    public ResponseEntity<Result> submitTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks().stream().filter(Feedback::hasReference)
                 .anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
         if (hasAssessmentWithTooLongReference) {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
-        final TextExercise exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        final TextSubmission textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(resultId);
+        Result result = resultRepository.findOneElseThrow(resultId);
+        if (!(result.getParticipation().getExercise() instanceof TextExercise)) {
+            return badRequest("Exercise", "400", "This exercise isn't a TextExercise!");
+        }
+        else if (!result.getParticipation().getId().equals(participationId)) {
+            return badRequest("participationId", "400", "participationId in Result of resultId " + resultId + "doesn't match the paths participationId!");
+        }
+        final TextExercise exercise = (TextExercise) result.getParticipation().getExercise();
+        checkAuthorization(exercise, null);
+        final TextSubmission textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, textAssessment.getFeedbacks(), resultId);
 
         if (response.getStatusCode().is2xxSuccessful()) {
@@ -198,7 +231,7 @@ public class TextAssessmentResource extends AssessmentResource {
             // call feedback conflict service
             if (exercise.isAutomaticAssessmentEnabled() && automaticTextAssessmentConflictService.isPresent()) {
                 this.automaticTextAssessmentConflictService.get().asyncCheckFeedbackConsistency(textAssessment.getTextBlocks(), textSubmission.getLatestResult().getFeedbacks(),
-                        exerciseId);
+                        exercise.getId());
             }
         }
 
@@ -206,20 +239,25 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Update an assessment after a complaint was accepted.
+     * PUT participations/:participationId/submissions/:submissionId/text-assessment-after-complaint : Update an assessment after a complaint was accepted.
      *
+     * @param participationId  the id of the participation the submission belongs to
      * @param submissionId     the id of the submission for which the assessment should be updated
      * @param assessmentUpdate the assessment update containing the new feedback items and the response to the complaint
      * @return the updated result
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/text-submissions/{submissionId}/assessment-after-complaint")
+    @PutMapping("participations/{participationId}/submissions/{submissionId}/text-assessment-after-complaint")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody TextAssessmentUpdateDTO assessmentUpdate) {
+    public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long participationId, @PathVariable Long submissionId,
+            @RequestBody TextAssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
+        if (!studentParticipation.getId().equals(participationId)) {
+            return badRequest("participationId", "400", "participationId in Submission of submissionId " + submissionId + "doesn't match the paths participationId!");
+        }
         long exerciseId = studentParticipation.getExercise().getId();
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(textExercise, user);
@@ -234,53 +272,64 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
+     * POST participations/:participationId/submissions/:submissionId/cancel-assessment : Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
      * again.
      *
      * @param submissionId the id of the submission for which the current assessment should be canceled
-     * @param exerciseId the exerciseId of the exercise for which the assessment gets canceled
+     * @param participationId the participationId of the participation for which the assessment should get canceled
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
-    @PutMapping("/exercise/{exerciseId}/submission/{submissionId}/cancel-assessment")
+    @PostMapping("participations/{participationId}/submissions/{submissionId}/cancel-assessment")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Void> cancelAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+    public ResponseEntity<Void> cancelAssessment(@PathVariable Long participationId, @PathVariable Long submissionId) {
+        Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
+        if (!submission.getParticipation().getId().equals(participationId)) {
+            return badRequest("participationId", "400", "The Submission with Id " + submissionId + " doesnt belong to Participation with Id " + participationId + " !");
+        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, submission.getParticipation().getExercise(), null);
         return super.cancelAssessment(submissionId);
     }
 
     /**
      * Delete an assessment of a given submission.
      *
+     * @param participationId - the id of the participation to the submission
      * @param submissionId - the id of the submission for which the current assessment should be deleted
      * @param resultId     - the id of the result which should get deleted
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
-    @DeleteMapping("/text-submissions/{submissionId}/delete/{resultId}")
+    @DeleteMapping("participations/{participationId}/text-submissions/{submissionId}/results/{resultId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> deleteAssessment(@PathVariable Long submissionId, @PathVariable Long resultId) {
-        return super.deleteAssessment(submissionId, resultId);
+    public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
+        return super.deleteAssessment(participationId, submissionId, resultId);
     }
 
     /**
+     * GET participations/:participationId/submissions/:submissionId/for-text-assessment
      * Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
      * assessing the submission, then we also return all the results the tutor has already inserted. If another tutor has already started working on this submission, the system
      * returns an error
      * In case an instructors calls, the resultId is used first. In case the resultId is not set, the correctionRound is used.
      * In case neither resultId nor correctionRound are set, the first correctionRound is used.
      *
+     * @param participationId the id of the participation the submissions belongs to
      * @param submissionId the id of the submission we want
      * @param correctionRound correction round for which we want the submission
      * @param resultId if result already exists, we want to get the submission for this specific result
      * @return a Participation of the tutor in the submission
      */
-    @GetMapping("/submission/{submissionId}")
+    @GetMapping("participations/{participationId}/submissions/{submissionId}/for-text-assessment")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId,
+    public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long participationId, @PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
 
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
-
         final var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(submissionId);
         final Participation participation = textSubmission.getParticipation();
+        if (!participation.getId().equals(participationId)) {
+            return badRequest("participationId", "400",
+                    "Submission with submissionId " + submissionId + "doesnt fit to participation with participationId" + participationId + " !");
+        }
         final var exercise = participation.getExercise();
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
@@ -308,7 +357,7 @@ public class TextAssessmentResource extends AssessmentResource {
             if (result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())
                     && result.getCompletionDate() == null) {
                 // If we already have a result, we need to check if it is locked.
-                throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
+                return locked(ENTITY_NAME, "alreadyAssessed", "This submission is being assessed by another tutor");
             }
 
             textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission, correctionRound);
@@ -349,22 +398,26 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Retrieve the result of an example assessment, only if the user is an instructor or if the submission is used for tutorial purposes.
+     * GET exercise/:exerciseId/submission/:submissionId/example-result : Retrieve the result of an example assessment, only if the user is an instructor or if the submission is used for tutorial purposes.
      *
      * @param exerciseId   the id of the exercise
      * @param submissionId the id of the submission which must be connected to an example submission
      * @return the example result linked to the submission
      */
-    @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/example-result")
+    @GetMapping("/exercises/{exerciseId}/submissions/{submissionId}/example-result")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
-        final var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
+        final var textExercise = exampleSubmission.getExercise();
+        if(!textExercise.getId().equals(exerciseId)){
+            return badRequest("exerciseId", "400", "Exercise to submission with submissionId " + submissionId + "doesnt have the exerciseId "+ exerciseId +" !");
+        }
 
         // If the user is not at least a tutor for this exercise, return error
-       authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, user);
-        final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, user);
+
         Submission submission = exampleSubmission.getSubmission();
 
         if (!(submission instanceof final TextSubmission textSubmission)) {
@@ -394,27 +447,27 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Retrieves all the text submissions that have conflicting feedback with the given feedback id.
+     * GET participations/:participationId/submissions/:submissionId/feedbacks/:feedbackId/feedback-conflicts : Retrieves all the text submissions that have conflicting feedback with the given feedback id.
      * User needs to be either assessor of the submission (with given feedback id) or an instructor for the exercise to check the conflicts.
      *
+     * @param participationId - id of the participation to the submission
      * @param submissionId - id of the submission with the feedback that has conflicts
      * @param feedbackId - id of the feedback that has conflicts
      * @return - Set of text submissions
      */
-    @GetMapping("/submission/{submissionId}/feedback/{feedbackId}/feedback-conflicts")
+    @GetMapping("/participations/{participationId}/submissions/{submissionId}/feedbacks/{feedbackId}/feedback-conflicts")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Set<TextSubmission>> getConflictingTextSubmissions(@PathVariable long submissionId, @PathVariable long feedbackId) {
+    public ResponseEntity<Set<TextSubmission>> getConflictingTextSubmissions(@PathVariable long participationId, @PathVariable long submissionId, @PathVariable long feedbackId) {
         log.debug("REST request to get conflicting text assessments for feedback id: {}", feedbackId);
 
-        final Optional<TextSubmission> textSubmission = textSubmissionRepository.findByIdWithEagerParticipationExerciseResultAssessor(submissionId);
-        if (textSubmission.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID."))
-                    .body(null);
-        }
+        final TextSubmission textSubmission = textSubmissionRepository.findByIdWithEagerParticipationExerciseResultAssessorElseThrow(submissionId);
 
-        final TextExercise textExercise = (TextExercise) textSubmission.get().getParticipation().getExercise();
-        final Result result = textSubmission.get().getLatestResult();
+        final TextExercise textExercise = (TextExercise) textSubmission.getParticipation().getExercise();
+        final Result result = textSubmission.getLatestResult();
+
+        if (!textSubmission.getParticipation().getId().equals(participationId)) {
+            return badRequest("participationId", "400", "The participationId in the path doesnt match the participationId to the submission " + submissionId + " !");
+        }
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         checkTextExerciseForRequest(textExercise, user);
@@ -435,7 +488,7 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * With given feedbackConflictId, finds the conflict and sets it as solved.
+     * POST exercise/:exerciseId/feedbackConflict/:feedbackConflictId/solve : With given feedbackConflictId, finds the conflict and sets it as solved.
      * Checks; if the feedback conflict is present, if the user is the assessor of one of the feedback or
      * if the user is at least the instructor for the exercise.
      *
@@ -443,7 +496,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param feedbackConflictId - feedback conflict id to set the conflict as solved
      * @return - solved feedback conflict
      */
-    @GetMapping("/exercise/{exerciseId}/feedbackConflict/{feedbackConflictId}/solve-feedback-conflict")
+    @PostMapping("/exercises/{exerciseId}/feedback-conflicts/{feedbackConflictId}/solve")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<FeedbackConflict> solveFeedbackConflict(@PathVariable long exerciseId, @PathVariable long feedbackConflictId) {
         log.debug("REST request to set feedback conflict as solved for feedbackConflictId: {}", feedbackConflictId);
@@ -452,23 +505,17 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Automatic text assessment conflict service is not available!", "automaticTextAssessmentConflictService",
                     "AutomaticTextAssessmentConflictServiceNotFound");
         }
-
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        final var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
-        Optional<FeedbackConflict> optionalFeedbackConflict = this.feedbackConflictRepository.findByFeedbackConflictId(feedbackConflictId);
-        if (optionalFeedbackConflict.isEmpty()) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, "feedbackConflict", "feedbackConflictNotFound", "No feedback conflict was found for the given ID."))
-                    .body(null);
+        final FeedbackConflict feedbackConflict = feedbackConflictRepository.findByFeedbackConflictIdElseThrow(feedbackConflictId);
+        if (!feedbackConflict.getFirstFeedback().getResult().getParticipation().getExercise().getId().equals(exerciseId)) {
+            return badRequest("exerciseId", "400", "The exerciseId in the path doesnt match the exerciseId to the feedbackConflict " + feedbackConflictId + " !");
         }
-
-        final FeedbackConflict feedbackConflict = optionalFeedbackConflict.get();
+        final TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         final User firstAssessor = feedbackConflict.getFirstFeedback().getResult().getAssessor();
         final User secondAssessor = feedbackConflict.getSecondFeedback().getResult().getAssessor();
 
         final boolean isInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
-
         if (!firstAssessor.getLogin().equals(user.getLogin()) && !secondAssessor.getLogin().equals(user.getLogin()) && !isInstructorForExercise) {
             return forbidden();
         }
@@ -494,7 +541,6 @@ public class TextAssessmentResource extends AssessmentResource {
         if (textExercise == null) {
             throw new BadRequestAlertException("No exercise was found for the given ID.", "textExercise", "exerciseNotFound");
         }
-
         validateExercise(textExercise);
         checkAuthorization(textExercise, user);
     }

@@ -50,7 +50,7 @@
                 [required]="inserted"
                 [disabled]="startView ? waitingForExamStart : false"
             />
-            <span id="formatted-confirmation-text" class="d-inline-block ml-2" [innerHTML]="formattedConfirmationText"></span>
+            <span id="formatted-confirmation-text" class="d-inline-block ms-2" [innerHTML]="formattedConfirmationText"></span>
         </div>
         <div style="text-align: center">
             <div class="login-form">
@@ -64,7 +64,7 @@
                     </div>
                 </div>
                 <div class="row justify-content-center" style="padding-bottom: 0; margin-bottom: 0">
-                    <div class="form-group" style="padding-bottom: 0; margin-bottom: 0">
+                    <div class="form-group" style="padding-bottom: 0; margin-bottom: 0; width: unset">
                         <input
                             size="50"
                             type="text"
@@ -84,8 +84,8 @@
                     </div>
                 </div>
                 <div class="row justify-content-center">
-                    <div class="form-group">
-                        <div class="alert alert-danger mt-1" *ngIf="!!!confirmed && inserted">
+                    <div class="form-group" style="width: 60%">
+                        <div class="alert alert-danger mt-1" *ngIf="!confirmed && inserted">
                             <span [innerHTML]="'artemisApp.exam.notConfirmed' | artemisTranslate"></span>
                         </div>
                         <div class="alert alert-danger mt-1" *ngIf="!nameIsCorrect && inserted">

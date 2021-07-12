@@ -10,5 +10,5 @@ export class NotReleasedTagComponent {
     readonly moment = moment;
 
     @Input() public exercise: Exercise;
-    public exerciseStatusBadge = 'badge-success';
+    public exerciseStatusBadge = 'bg-success';
 }

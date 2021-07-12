@@ -15,12 +15,10 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 
 @Service
 public class GitUtilService {
@@ -41,9 +39,6 @@ public class GitUtilService {
         LOCAL, REMOTE
     }
 
-    @Autowired
-    GitService gitService;
-
     private Repository remoteRepo;
 
     private Repository localRepo;
@@ -52,19 +47,30 @@ public class GitUtilService {
 
     private Git remoteGit;
 
+    /**
+     * Initializes the repository with three dummy files
+     */
     public void initRepo() {
+        initRepo("main");
+    }
+
+    /**
+     * Initializes the repository with three dummy files
+     * @param defaultBranch The default branch name of the repository
+     */
+    public void initRepo(String defaultBranch) {
         try {
             deleteRepos();
 
-            remoteGit = Git.init().setDirectory(remotePath.toFile()).call();
-
-            // create some files in the remote repository and clone them
+            remoteGit = Git.init().setInitialBranch(defaultBranch).setDirectory(remotePath.toFile()).call();
+            // create some files in the remote repository
             remotePath.resolve(FILES.FILE1.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE2.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE3.toString()).toFile().createNewFile();
             remoteGit.add().addFilepattern(".").call();
             remoteGit.commit().setMessage("initial commit").call();
 
+            // clone remote repository
             localGit = Git.cloneRepository().setURI(remotePath.toString()).setDirectory(localPath.toFile()).call();
 
             reinitializeLocalRepository();
@@ -153,9 +159,14 @@ public class GitUtilService {
         }
     }
 
+    public File getFile(REPOS repo, FILES fileToRead) {
+        Path path = Paths.get(getCompleteRepoPathStringByType(repo), fileToRead.toString());
+        return path.toFile();
+    }
+
     public String getFileContent(REPOS repo, FILES fileToRead) {
         try {
-            var path = Paths.get(getCompleteRepoPathStringByType(repo), fileToRead.toString());
+            Path path = Paths.get(getCompleteRepoPathStringByType(repo), fileToRead.toString());
             byte[] encoded = Files.readAllBytes(path);
             return new String(encoded, Charset.defaultCharset());
         }
@@ -169,6 +180,30 @@ public class GitUtilService {
             Git git = new Git(getRepoByType(repo));
             git.add().addFilepattern(".").call();
             git.commit().setMessage("new commit").call();
+        }
+        catch (GitAPIException ignored) {
+        }
+    }
+
+    /**
+     * Checks out a branch of the repository. If the branch doesn't exist yet, it gets created
+     * @param repo The repository on which the action should be operated
+     * @param branch The branch that should be checked out
+     */
+    public void checkoutBranch(REPOS repo, String branch) {
+        checkoutBranch(repo, branch, true);
+    }
+
+    /**
+     * @param repo The repository on which the action should be operated
+     * @param branch The branch that should be checked out
+     * @param createBranch indicator if a non existing branch should get created
+     */
+    public void checkoutBranch(REPOS repo, String branch, boolean createBranch) {
+        try {
+            Git git = new Git(getRepoByType(repo));
+            git.checkout().setCreateBranch(createBranch).setName(branch).call();
+            git.close();
         }
         catch (GitAPIException ignored) {
         }

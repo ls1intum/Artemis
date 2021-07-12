@@ -2,7 +2,7 @@
     "artemisApp": {
         "textAssessment": {
             "title": "Assessment Editor for Text Exercises",
-            "loading": "Please wait while Artemis is finding the submission!",
+            "loading": "Please wait while Artemis finds the submission!",
             "heading": {
                 "assessment": "Assessment Editor for Text Exercise {{exerciseTitle}}",
                 "exampleAssessment": "Example Assessment Editor for Text Exercise {{exerciseTitle}}"
@@ -13,7 +13,7 @@
             "submit": "Submit Assessment",
             "submitSuccessful": "Your assessment was submitted successfully!",
             "override": "Override Assessment",
-            "resultDismissed": "Your assessment was dismissed because another tutor already rated this submission.",
+            "resultDismissed": "Your assessment was rejected because another tutor has already graded this submission.",
             "exampleSubmissisonInstruction": "Create an example submission",
             "error": {
                 "invalidAssessments": "Your assessments are not valid!",
@@ -25,7 +25,7 @@
             "predefineTextBlocks": "Add Text Blocks automatically",
             "automatic": "Automatic",
             "automaticGenerated": "Automatically generated feedback",
-            "lock": "You do now have the lock on this submission. Only you can assess this submission. Please assess this submission before opening other submissions.",
+            "lock": "You now have the lock on this submission. Only you can assess this submission. Please assess this submission before opening other submissions.",
             "submissionLocked": "submission locked",
             "studentSubmission": "Student submission",
             "instructions": "&nbsp; Instructions &nbsp;",
@@ -41,7 +41,7 @@
             "dashboard": {
                 "heading": "Submissions and assessments of text exercise \"{{exerciseTitle}}\""
             },
-            "notFound": "We haven't found any new text submission without an assessment, please go back to the dashboard.",
+            "notFound": "We couldn't find any unassessed text submissions. Please return to the dashboard.",
             "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",
             "updateAfterComplaintFailed": "Updating the Assessment failed.",
             "cancel": "Cancel assessment",
@@ -49,16 +49,24 @@
             "feedbackEditor": {
                 "dismissFeedback": "Do you want to delete this feedback?",
                 "dismissFeedbackConfirmation": "Please confirm that you want to delete this feedback!",
-                "feedbackCommentPlaceholder": "Enter your feedback comment here.."
+                "feedbackCommentPlaceholder": "Enter your feedback comment here ...",
+                "impactWarning": "This feedback might affect <strong style=\"color:blue\">{{affectedSubmissionsCount}}</strong> other similar submission/s.",
+                "impactWarningTooltip": "The number of times that your feedback will be reused as an automatic suggestion in other submissions that were found to have a similar text block.",
+                "automaticFeedbackInformationModal": {
+                    "heading": "Automatic Feedback Tracing",
+                    "introduction": "This automatic suggestion comes from a previously graded submission shown below.<br />The <span style='background-color: #d8e8f5'>highlighted feedback</span> has been reused:<br/><br/>",
+                    "trace": "Find out where this suggestion comes from",
+                    "points": "Points",
+                    "reused": "Reused {{reusedCount}} times"
+                }
             },
-            "feedbackImpactWarning": "This feedback might affect <strong style=\"color:red\">{{affectedSubmissionsCount}}</strong> other similar submission/s.",
             "assessmentInstruction": "Please hover over and click on the text block you want to assess.<br>Hold <code>alt</code>/<code>option</code> while selecting a piece of text to assess custom blocks.",
             "conflict": {
                 "assessor": "Assessor: You",
                 "otherAssessor": "Assessor: {{otherUser}}",
                 "conflictingAssessments": "{{number}} conflicts",
                 "discard": "Discard Conflict",
-                "notFound": "We haven't found any conflicts for the selected feedback, please go back.",
+                "notFound": "We couldn't find any conflicts for the selected feedback, please go back.",
                 "overrideAssessment": "Override Left Assessment",
                 "solveFeedbackConflictSuccessful": "Feedback conflict solved successfully.",
                 "type": {

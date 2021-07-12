@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Multiple Choice Question Statistic",
                 "createOrEditLabel": "Create or edit a Multiple Choice Question Statistic"
             },
-            "created": "A new Multiple Choice Question Statistic is created with identifier {{ param }}",
-            "updated": "A Multiple Choice Question Statistic is updated with identifier {{ param }}",
-            "deleted": "A Multiple Choice Question Statistic is deleted with identifier {{ param }}",
+            "created": "Created new Multiple Choice Question Statistic with identifier {{ param }}",
+            "updated": "Updated Multiple Choice Question Statistic with identifier {{ param }}",
+            "deleted": "Deleted Multiple Choice Question Statistic with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Multiple Choice Question Statistic {{ id }}?"
             },

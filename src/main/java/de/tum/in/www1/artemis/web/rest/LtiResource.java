@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.IOException;
-import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -20,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.TimeService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
@@ -61,13 +62,16 @@ public class LtiResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final TimeService timeService;
+
     public LtiResource(LtiService ltiService, UserRepository userRepository, ExerciseRepository exerciseRepository, TokenProvider tokenProvider,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, TimeService timeService) {
         this.ltiService = ltiService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.tokenProvider = tokenProvider;
         this.authCheckService = authCheckService;
+        this.timeService = timeService;
     }
 
     /**
@@ -137,7 +141,7 @@ public class LtiResource {
         // If the current user was created within the last 15 minutes, we just created the user
         // Display a welcome message to the user
         boolean isNewUser = SecurityUtils.isAuthenticated()
-                && TimeUnit.SECONDS.toMinutes(ZonedDateTime.now().toEpochSecond() - userRepository.getUser().getCreatedDate().getEpochSecond()) < 15;
+                && TimeUnit.SECONDS.toMinutes(timeService.now().toEpochSecond() - userRepository.getUser().getCreatedDate().getEpochSecond()) < 15;
 
         log.info("isNewUser: {}", isNewUser);
 
@@ -148,13 +152,22 @@ public class LtiResource {
 
         // Note: The following redirect URL has to match the URL in user-route-access-service.ts in the method canActivate(...)
 
-        String redirectUrl = request.getScheme() + // "https"
-                "://" +                                // "://"
-                request.getServerName() +              // "artemis.ase.in.tum.de"
-                (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/courses/"
-                + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/exercises/" + exercise.getId() + (isNewUser ? "?welcome" : "")
-                + (!SecurityUtils.isAuthenticated() ? "?login" : "") + (isNewUser || !SecurityUtils.isAuthenticated() ? "&" : "") + "jwt=" + jwt;
+        UriComponentsBuilder redirectUrlComponentsBuilder = UriComponentsBuilder.newInstance().scheme(request.getScheme()).host(request.getServerName());
+        if (request.getServerPort() != 80 && request.getServerPort() != 443) {
+            redirectUrlComponentsBuilder.port(request.getServerPort());
+        }
+        redirectUrlComponentsBuilder.pathSegment("courses").pathSegment(exercise.getCourseViaExerciseGroupOrCourseMember().getId().toString()).pathSegment("exercises")
+                .pathSegment(exercise.getId().toString());
 
+        if (isNewUser) {
+            redirectUrlComponentsBuilder.queryParam("welcome", "");
+        }
+        if (!SecurityUtils.isAuthenticated()) {
+            redirectUrlComponentsBuilder.queryParam("login", "");
+        }
+        redirectUrlComponentsBuilder.queryParam("jwt", jwt);
+
+        String redirectUrl = redirectUrlComponentsBuilder.build().toString();
         log.info("redirect to url: {}", redirectUrl);
         response.sendRedirect(redirectUrl);
     }

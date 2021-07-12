@@ -43,8 +43,10 @@ export class PlagiarismHeaderComponent {
      * @param status the new status of the comparison
      */
     updatePlagiarismStatus(status: PlagiarismStatus) {
-        return this.http.put<void>(`${this.resourceUrl}/${this.comparison.id}/status`, { status }, { observe: 'response' }).subscribe(() => {
-            this.comparison.status = status;
+        // store comparison in variable in case comparison changes while request is made
+        const comparison = this.comparison;
+        return this.http.put<void>(`${this.resourceUrl}/${comparison.id}/status`, { status }, { observe: 'response' }).subscribe(() => {
+            comparison.status = status;
         });
     }
 

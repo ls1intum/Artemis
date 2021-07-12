@@ -10,6 +10,8 @@ import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { lastValueFrom } from 'rxjs';
+import { round } from 'app/shared/util/utils';
 
 // Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
 const MAX_SIZE_UNIT = 200;
@@ -66,7 +68,7 @@ export async function generateDragAndDropQuizExercise(
     const quizExercise = createDragAndDropQuizExercise(course, title, dragAndDropQuestion);
 
     // Save the quiz exercise
-    await quizExerciseService.create(quizExercise).toPromise();
+    await lastValueFrom(quizExerciseService.create(quizExercise));
 
     return quizExercise;
 }
@@ -244,10 +246,10 @@ async function generateDragAndDropItemForRelationship(
 function computeDropLocation(elementLocation: { x: number; y: number; width: number; height: number }, totalSize: { width: number; height: number }): DropLocation {
     const dropLocation = new DropLocation();
     // round to second decimal
-    dropLocation.posX = Math.round((elementLocation.x / totalSize.width) * MAX_SIZE_UNIT * 100) / 100;
-    dropLocation.posY = Math.round((elementLocation.y / totalSize.height) * MAX_SIZE_UNIT * 100) / 100;
-    dropLocation.width = Math.round((elementLocation.width / totalSize.width) * MAX_SIZE_UNIT * 100) / 100;
-    dropLocation.height = Math.round((elementLocation.height / totalSize.height) * MAX_SIZE_UNIT * 100) / 100;
+    dropLocation.posX = round((elementLocation.x / totalSize.width) * MAX_SIZE_UNIT, 2);
+    dropLocation.posY = round((elementLocation.y / totalSize.height) * MAX_SIZE_UNIT, 2);
+    dropLocation.width = round((elementLocation.width / totalSize.width) * MAX_SIZE_UNIT, 2);
+    dropLocation.height = round((elementLocation.height / totalSize.height) * MAX_SIZE_UNIT, 2);
     return dropLocation;
 }
 

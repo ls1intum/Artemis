@@ -1,7 +1,7 @@
 {
     "statistics": {
         "statistics-title": "Statistiken",
-        "amountOfStudents": "# an Studenten",
+        "amountOfStudents": "# Studierende",
         "span": {
             "day": "Tag",
             "week": "Woche",
@@ -9,36 +9,36 @@
             "quarter": "Quartal",
             "year": "Jahr"
         },
-        "title": "Benutzerstatistiken",
+        "title": "Nutzungsstatistiken",
         "course_statistics_title": "Kursstatistiken",
         "submissions": "Abgaben",
-        "active_users": "Aktive Nutzer",
-        "logged_in_users": "Eingeloggte Nutzer",
+        "active_users": "Aktive Nutzer:innen",
+        "logged_in_users": "Eingeloggte Nutzer:innen",
         "released_exercises": "Veröffentlichte Aufgaben",
         "exercises_due": "Aufgaben mit Abgabeende",
         "conducted_exams": "Durchgeführte Klausuren",
         "exam_participations": "Klausurteilnahmen",
         "exam_registrations": "Klausuranmeldungen",
-        "active_tutors": "Aktive Tutoren",
+        "active_tutors": "Aktive Tutor:innen",
         "created_results": "Erstellte Resultate",
         "created_feedbacks": "Erstellte Feedbacks",
-        "questions_asked": "Gestellte Fragen",
-        "questions_answered": "Beantwortete Fragen",
+        "posts": "Beiträge",
+        "answered_posts": "Beantwortete Beiträge",
         "score_distribution": "Bewertungsverteilung",
-        "submissionsTitle": "# an Abgaben",
-        "active_usersTitle": "# an Benutzer",
-        "logged_in_usersTitle": "# an Benutzer",
-        "released_exercisesTitle": "# an Aufgaben",
-        "exercises_dueTitle": "# an Aufgaben",
-        "conducted_examsTitle": "# an Klausuren",
-        "exam_participationsTitle": "# an Klausurteilnahmen",
-        "exam_registrationsTitle": "# an Klausuranmeldungen",
-        "active_tutorsTitle": "# an Tutoren",
-        "created_resultsTitle": "# an Bewertungen",
-        "created_feedbacksTitle": "# an Feedbacks",
-        "questions_askedTitle": "# an Fragen",
-        "questions_answeredTitle": "# an Antworten",
-        "score_distributionTitle": "% an Studenten"
+        "submissionsTitle": "# Abgaben",
+        "active_usersTitle": "# Nutzer:innen",
+        "logged_in_usersTitle": "# Nutzer:innen",
+        "released_exercisesTitle": "# Aufgaben",
+        "exercises_dueTitle": "# Aufgaben",
+        "conducted_examsTitle": "# Klausuren",
+        "exam_participationsTitle": "# Klausurteilnahmen",
+        "exam_registrationsTitle": "# Klausuranmeldungen",
+        "active_tutorsTitle": "# Tutor:innen",
+        "created_resultsTitle": "# Bewertungen",
+        "created_feedbacksTitle": "# Feedbacks",
+        "postsTitle": "# Beiträge",
+        "answered_postsTitle": "# Beantwortete Beiträge",
+        "score_distributionTitle": "% Studierende"
     },
     "calendar_week": "KW",
     "overview": {
@@ -74,6 +74,6 @@
         "title": "Aufgabenstatistiken",
         "averageScore": "Duschnittspunktzahl",
         "participationRate": "Teilnahmen",
-        "questionsAnswered": "Beantwortete Fragen"
+        "answered_posts": "Beantwortete Beiträge"
     }
 }

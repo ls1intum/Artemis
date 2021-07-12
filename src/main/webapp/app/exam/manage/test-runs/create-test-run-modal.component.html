@@ -1,7 +1,7 @@
 <div class="modal-content">
     <div class="modal-header">
         <h4 class="modal-title" id="createTestRunModal" jhiTranslate="artemisApp.examManagement.testRun.setup">Create Test Run</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="cancel()">&times;</button>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="cancel()"></button>
     </div>
 
     <div class="modal-body">
@@ -9,7 +9,7 @@
             <h5><span jhiTranslate="artemisApp.studentExams.workingTime">Working time</span></h5>
             <p>Set the working time:</p>
             <form class="d-flex" [formGroup]="workingTimeForm">
-                <div class="mr-2">
+                <div class="me-2">
                     <input formControlName="minutes" type="number" style="width: 60px; height: 35px" class="text-center" min="0" step="1" required />
                     :
                     <input formControlName="seconds" type="number" style="width: 60px; height: 35px" class="text-center" min="0" max="59" step="1" required />

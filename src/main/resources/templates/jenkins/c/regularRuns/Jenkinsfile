@@ -14,10 +14,10 @@ pipeline {
             stage('Checkout') {
                 steps {
                     dir('#testsCheckoutPath') {
-                        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'tests', url: '#testRepository']]])
+                        checkout([$class: 'GitSCM', branches: [[name: '**']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'tests', url: '#testRepository']]])
                     }
                     dir('#assignmentCheckoutPath') {
-                        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'assignment', url: '#assignmentRepository']]])
+                        checkout([$class: 'GitSCM', branches: [[name: '**']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'assignment', url: '#assignmentRepository']]])
                     }
                 }
             }
@@ -27,10 +27,10 @@ pipeline {
                         sh  '''
                             cd $WORKSPACE
                             # Updating assignment and test-reports ownership...
-                            sudo chown artemis_user:artemis_user assignment/ -R
-                            sudo rm -rf test-reports
-                            sudo mkdir test-reports
-                            sudo chown artemis_user:artemis_user test-reports/ -R
+                            chown artemis_user:artemis_user assignment/ -R
+                            rm -rf test-reports
+                            mkdir test-reports
+                            chown artemis_user:artemis_user test-reports/ -R
 
                             # assignment
                             cd tests

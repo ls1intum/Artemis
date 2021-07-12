@@ -19,22 +19,22 @@
 <!--resizable container-->
 <jhi-resizeable-container *ngIf="textExercise" [isExerciseParticipation]="true">
     <!--region Left Panel-->
-    <div left-body class="text-editor-grid pl-2 pb-2 w-100">
-        <div class="grid-area-team-info pb-4 pl-md-2" *ngIf="textExercise?.teamMode && isActive">
+    <div left-body class="text-editor-grid ps-2 pb-2 w-100">
+        <div class="grid-area-team-info pb-4 ps-md-2" *ngIf="textExercise?.teamMode && isActive">
             <jhi-team-participate-info-box
                 [exercise]="textExercise"
                 [participation]="participation"
-                [typing$]="textEditorInputStream$"
+                [typing$]="textEditorInputObservable"
                 [dockedToRightSide]="true"
             ></jhi-team-participate-info-box>
         </div>
 
         <div class="grid-area-main">
             <div>
-                <span class="badge badge-primary mb-2">
+                <span class="badge bg-primary mb-2">
                     {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
                 </span>
-                <span class="badge badge-primary mb-2">
+                <span class="badge bg-primary mb-2">
                     {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
                 </span>
             </div>
@@ -52,7 +52,7 @@
                 <jhi-team-submission-sync
                     *ngIf="textExercise?.teamMode"
                     [exerciseType]="textExercise.type!"
-                    [submission$]="submissionStream$"
+                    [submissionObservable]="submissionObservable"
                     [participation]="participation"
                     (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
                 ></jhi-team-submission-sync>
@@ -86,7 +86,7 @@
             <jhi-complaint-interactions
                 *ngIf="textExercise && result && participation"
                 [exercise]="textExercise"
-                [result]="result"
+                [result]="resultWithComplaint ? resultWithComplaint : result"
                 [participation]="participation"
             ></jhi-complaint-interactions>
         </div>

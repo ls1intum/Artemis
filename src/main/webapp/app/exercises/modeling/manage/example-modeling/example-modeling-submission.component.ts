@@ -19,6 +19,7 @@ import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/model
 import { concatMap, tap } from 'rxjs/operators';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -172,7 +173,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 this.location.go(newUrl);
             },
             (error: HttpErrorResponse) => {
-                this.jhiAlertService.error(error.message);
+                onError(this.jhiAlertService, error);
             },
         );
     }
@@ -213,7 +214,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
             },
             (error: HttpErrorResponse) => {
-                this.jhiAlertService.error(error.message);
+                onError(this.jhiAlertService, error);
             },
         );
     }
@@ -388,7 +389,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 } else if (errorType === 'error.tooHigh') {
                     this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
                 } else {
-                    this.jhiAlertService.error(error.message);
+                    onError(this.jhiAlertService, error);
                 }
             },
         );

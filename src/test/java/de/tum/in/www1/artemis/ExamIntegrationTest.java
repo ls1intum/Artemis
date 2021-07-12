@@ -1708,24 +1708,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testArchiveCourseWithExam() throws Exception {
-        Course course = database.addEmptyCourse();
+        Course course = database.createCourseWithExamAndExercises();
         course.setEndDate(ZonedDateTime.now().minusMinutes(5));
         course = courseRepo.save(course);
-
-        ExerciseGroup exerciseGroup1 = new ExerciseGroup();
-
-        Exam exam = database.addExam(course);
-        exam.addExerciseGroup(exerciseGroup1);
-        exam = examRepository.save(exam);
-
-        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
-        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
-
-        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        exerciseGroup1.addExercise(programmingExercise);
-
-        exerciseGroupRepository.save(exerciseGroup1);
 
         request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
 

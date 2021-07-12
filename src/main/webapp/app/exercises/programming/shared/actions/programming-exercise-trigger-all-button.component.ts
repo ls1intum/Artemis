@@ -17,7 +17,7 @@ import { ButtonType } from 'app/shared/components/button.component';
     template: `
         <jhi-button
             id="trigger-all-button"
-            class="ml-3"
+            class="ms-3"
             [disabled]="disabled"
             [btnType]="ButtonType.ERROR"
             [isLoading]="isTriggeringBuildAll"
@@ -80,7 +80,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
         <form name="triggerAllForm" (ngSubmit)="confirmTrigger()">
             <div class="modal-header">
                 <h4 class="modal-title" jhiTranslate="artemisApp.programmingExercise.resubmitAll">Trigger all</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="cancel()">&times;</button>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="cancel()"></button>
             </div>
             <div class="modal-body">
                 <jhi-alert-error></jhi-alert-error>

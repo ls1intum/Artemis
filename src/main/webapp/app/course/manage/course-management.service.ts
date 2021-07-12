@@ -35,7 +35,7 @@ export class CourseManagementService {
 
     private readonly courses: Map<number, SubjectObservablePair<Course>> = new Map();
 
-    private coursesForNotifications: BehaviorSubject<Course[] | null> = new BehaviorSubject<Course[] | null>(null);
+    private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
     private fetchingCoursesForNotifications = false;
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService, private lectureService: LectureService, private accountService: AccountService) {}
@@ -425,17 +425,17 @@ export class CourseManagementService {
 
     /**
      * Gets the cached courses. If there none the courses for the current user will be fetched.
-     * @returns {BehaviorSubject<Course[] | null>}
+     * @returns {BehaviorSubject<Course[] | undefined>}
      */
-    getCoursesForNotifications(): BehaviorSubject<Course[] | null> {
+    getCoursesForNotifications(): BehaviorSubject<Course[] | undefined> {
         // The timeout is set to ensure that the request for retrieving courses
         // here is only made if there was no similar request made before.
         setTimeout(() => {
             // Retrieve courses if no courses were fetched before and are not queried at the moment.
-            if (!this.fetchingCoursesForNotifications && !this.coursesForNotifications) {
+            if (!this.fetchingCoursesForNotifications && !this.coursesForNotifications.getValue()) {
                 this.findAllForNotifications().subscribe(
                     (res: HttpResponse<Course[]>) => {
-                        this.coursesForNotifications.next(res.body);
+                        this.coursesForNotifications.next(res.body || undefined);
                     },
                     () => (this.fetchingCoursesForNotifications = false),
                 );

@@ -36,12 +36,12 @@
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.workingTime" [ngbTooltip]="getWorkingTimeToolTip()">Working time</span></h5>
         <form class="d-flex" [formGroup]="workingTimeForm" (ngSubmit)="saveWorkingTime()">
-            <div class="mr-2" [ngbTooltip]="getWorkingTimeToolTip()">
+            <div class="me-2" [ngbTooltip]="getWorkingTimeToolTip()">
                 <input formControlName="minutes" type="number" style="width: 60px; height: 35px" class="text-center" min="0" step="1" required />
                 :
                 <input formControlName="seconds" type="number" style="width: 60px; height: 35px" class="text-center" min="0" max="59" step="1" required />
             </div>
-            <button type="submit" class="btn btn-primary mr-2" [disabled]="workingTimeForm.invalid || isSavingWorkingTime || examIsVisible()">
+            <button type="submit" class="btn btn-primary me-2" [disabled]="workingTimeForm.invalid || isSavingWorkingTime || examIsVisible()">
                 <fa-icon [icon]="'save'" [ngbTooltip]="getWorkingTimeToolTip()"></fa-icon>
                 <span jhiTranslate="entity.action.save" [ngbTooltip]="getWorkingTimeToolTip()">Save</span>
             </button>
@@ -50,7 +50,7 @@
 
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.participationStatus">Participation state</span></h5>
-        <div class="mr-2">
+        <div class="me-2">
             <ol style="list-style-type: none">
                 <li>
                     <strong>{{ 'artemisApp.studentExams.started' | artemisTranslate }}:</strong>
@@ -73,9 +73,7 @@
                 <span *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToUnsubmitted">Change Student Exam to Unsubmitted</span>
                 <span *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToSubmitted">Change Student Exam to Submitted</span>
             </h4>
-            <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-                <span aria-hidden="true">&times;</span>
-            </button>
+            <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
         </div>
         <div class="modal-body">
             <p jhiTranslate="artemisApp.studentExams.confirmDialog.question">Are you sure you want to change the submission state?</p>

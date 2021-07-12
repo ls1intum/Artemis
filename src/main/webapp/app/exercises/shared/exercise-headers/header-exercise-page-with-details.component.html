@@ -2,20 +2,20 @@
     <div class="row">
         <div class="col general-info">
             <h3>
-                <fa-icon *ngIf="displayBackButton" [icon]="'arrow-left'" (click)="onBackClick()" class="back-button mr-2"></fa-icon>
+                <fa-icon *ngIf="displayBackButton" [icon]="'arrow-left'" (click)="onBackClick()" class="back-button me-2"></fa-icon>
                 <ng-content select="[pagetitle]"></ng-content>
                 <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
             </h3>
 
             <ng-template [ngIf]="isExamMode" [ngIfElse]="courseMode">
                 <h4>
-                    <span class="mr-2" *ngIf="!isTestRun"> {{ 'artemisApp.exam.endDate' | artemisTranslate }} : {{ exam?.endDate | artemisDate }} </span>
+                    <span class="me-2" *ngIf="!isTestRun"> {{ 'artemisApp.exam.endDate' | artemisTranslate }} : {{ exam?.endDate | artemisDate }} </span>
                     <span *ngIf="exam?.endDate && !isTestRun" [ngClass]="exerciseStatusBadge" class="badge">
                         {{ exam?.endDate | artemisTimeAgo }}
                     </span>
                 </h4>
                 <h4 *ngIf="!isTestRun">
-                    <span class="mr-2"> {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }} : {{ exam?.publishResultsDate | artemisDate }} </span>
+                    <span class="me-2"> {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }} : {{ exam?.publishResultsDate | artemisDate }} </span>
                     <span *ngIf="exam?.publishResultsDate" [ngClass]="exerciseStatusBadge" class="badge">
                         {{ exam?.publishResultsDate | artemisTimeAgo }}
                     </span>
@@ -23,13 +23,13 @@
             </ng-template>
             <ng-template #courseMode>
                 <h4>
-                    <span class="mr-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }} {{ (exercise.dueDate | artemisDate) || 'N/A' }} </span>
+                    <span class="me-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }} {{ (exercise.dueDate | artemisDate) || 'N/A' }} </span>
                     <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge">
                         {{ exercise.dueDate | artemisTimeAgo }}
                     </span>
                 </h4>
                 <h4 *ngIf="exercise.assessmentDueDate">
-                    <span class="mr-2"> {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }} : {{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }} </span>
+                    <span class="me-2"> {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }} : {{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }} </span>
                     <span [ngClass]="exerciseStatusBadge" class="badge">
                         {{ exercise.assessmentDueDate | artemisTimeAgo }}
                     </span>
@@ -37,9 +37,9 @@
             </ng-template>
 
             <div class="d-md-flex" *ngIf="exercise.categories">
-                <h4 class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.categories' | artemisTranslate }}</h4>
+                <h4 class="me-1">{{ 'artemisApp.courseOverview.exerciseDetails.categories' | artemisTranslate }}</h4>
                 <h4 *ngFor="let category of exerciseCategories">
-                    <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
+                    <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
                 </h4>
             </div>
         </div>
@@ -72,7 +72,7 @@
                 <div class="col-6">
                     <h5>
                         {{ exercise.maxPoints }}
-                        <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }} )</span>
+                        <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
                     </h5>
                 </div>
             </div>

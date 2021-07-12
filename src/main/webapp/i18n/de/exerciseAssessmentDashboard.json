@@ -2,7 +2,7 @@
     "artemisApp": {
         "exerciseAssessmentDashboard": {
             "home": {
-                "title": "Dashboard für Lehrerübungen"
+                "title": "Dashboard für Übungsbewertungen"
             },
             "participation": {
                 "instructionsReviewed": "Du hast die Anweisungen gelesen, du kannst nun die Beispielabgaben lesen."
@@ -30,7 +30,7 @@
             "tutorialSubmissions": "Bewertung von Beispielabgaben",
             "assessingExampleSubmission": "Beispielabgabe bewerten",
             "assessExampleSubmission": "Bewertete Beispielabgabe",
-            "studentsSubmissions": "Abgaben der Studenten",
+            "studentsSubmissions": "Abgaben der Studierenden",
             "testRunSubmissions": "Testlaufabgaben",
             "submissionDate": "Abgabedatum",
             "result": "Ergebnis",
@@ -48,7 +48,7 @@
             "noComplaintsDisplayed": "Es gibt keine Beschwerden (abgesehen von Beschwerden über deine Bewertungen)",
             "evaluateComplaint": "Auswertung der Beschwerde.",
             "showComplaint": "Beschwerde anzeigen",
-            "complaintEvaluated": "Beschwerde wurde bereits bewertet",
+            "complaintEvaluated": "Beschwerde ist bereits bewertet",
             "complaintNotEvaluated": "Beschwerde muss noch bewertet werden",
             "moreFeedback": "Anfragen für weiteres Feedback",
             "noMoreFeedbackRequests": "Es gibt keine Feedbackanfragen.",
@@ -79,11 +79,18 @@
                 "GERMAN": "Deutsch",
                 "UNKNOWN": "Unbekannt"
             },
-            "complaintHint": "Zeigt Beschwerden über Bewertungen von anderen Tutoren. Beachte: Beschwerden über deine Bewertungen werden hier nicht angezeigt.",
+            "complaintHint": "Zeigt Beschwerden über Bewertungen von anderen Tutor:innen. Beachte: Beschwerden über deine Bewertungen werden hier nicht angezeigt.",
             "moreFeedbackRequestHint": "Zeigt Anfragen für weiteres Feedback von deinen Bewertungen an.",
-            "noSubmissionsInfo": "In dieser Korrekturrunde kannst du 0 Einreichungen korrigieren. {{notYetAssessed}} Einreichungen sind noch nicht korrigiert, davon sind {{lockedSubmissionsByOtherTutor}} von anderen Tutoren gesperrt",
+            "noSubmissionsInfo": "In dieser Korrekturrunde kannst du 0 Einreichungen korrigieren. {{notYetAssessed}} Einreichungen sind noch nicht korrigiert, davon sind {{lockedSubmissionsByOtherTutor}} von anderen Tutor:innen gesperrt",
             "noSubmissionsInfoSecondCorrection": " und {{firstRoundAssessments}} wurden von dir in der ersten Korrekturrunde korrigiert. ",
-            "noSubmissionsBecauseFirstAssessedByYourself": "Nur Einreichungen die du nicht selbst in der ersten Korrekturrunde bearbeitet hast können korrigiert werden."
+            "noSubmissionsBecauseFirstAssessedByYourself": "Nur Einreichungen, die du nicht selbst in der ersten Korrekturrunde bearbeitet hast, können korrigiert werden.",
+            "orion": {
+                "startYourParticipation": "Aufgabe in Orion bewerten",
+                "startAssessment": "Neue Bewertung in Orion starten",
+                "continueAssessment": "Bewertung in Orion fortsetzen",
+                "openAssessment": "Bewertung in Orion öffnen",
+                "downloadFailed": "Abgabe konnte nicht heruntergeladen werden. Datei möglicherweise zu groß. Versuche manuelles Herunterladen."
+            }
         }
     }
 }

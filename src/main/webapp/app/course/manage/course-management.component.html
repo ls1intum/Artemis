@@ -1,12 +1,12 @@
 <div>
     <div class="row">
-        <div class="col-12 col-sm">
+        <div class="col-sm">
             <h4 id="course-page-heading" jhiTranslate="artemisApp.course.home.title">Courses</h4>
         </div>
         <div class="col-12 col-sm-auto d-flex">
-            <label class="d-flex align-items-center mb-0 mr-2">
+            <label class="d-flex align-items-center mb-0 me-2">
                 <input type="checkbox" [checked]="showOnlyActive" (change)="toggleShowOnlyActive()" />
-                <span class="ml-2" jhiTranslate="artemisApp.course.showActive">Show only active courses</span>
+                <span class="ms-2" jhiTranslate="artemisApp.course.showActive">Show only active courses</span>
             </label>
             <a
                 jhiOrionFilter
@@ -26,7 +26,7 @@
     <div class="table-responsive" *ngIf="courses">
         <div class="course-table-container mb-3" *ngFor="let semester of courseSemesters">
             <div class="control-label" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
-                <fa-icon class="pr-3" [icon]="semesterCollapsed[semester] ? 'angle-down' : 'angle-up'"></fa-icon>
+                <fa-icon class="pe-3" [icon]="semesterCollapsed[semester] ? 'angle-down' : 'angle-up'"></fa-icon>
                 <span *ngIf="semester !== '' && semester !== 'test'">
                     <strong>{{ 'artemisApp.course.semester' | artemisTranslate }}: {{ semester }}</strong>
                 </span>

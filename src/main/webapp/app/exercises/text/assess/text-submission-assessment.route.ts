@@ -43,14 +43,15 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
      * @param route
      */
     resolve(route: ActivatedRouteSnapshot) {
+        const participationId = Number(route.paramMap.get('participationId'));
         const submissionId = Number(route.paramMap.get('submissionId'));
         const correctionRound = Number(route.queryParamMap.get('correction-round'));
         const resultId = Number(route.paramMap.get('resultId'));
         if (resultId) {
-            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, undefined, resultId).pipe(catchError(() => of(undefined)));
+            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(participationId, submissionId, undefined, resultId).pipe(catchError(() => of(undefined)));
         }
         if (submissionId) {
-            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, correctionRound).pipe(catchError(() => of(undefined)));
+            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(participationId, submissionId, correctionRound).pipe(catchError(() => of(undefined)));
         }
         return of(undefined);
     }
@@ -67,8 +68,9 @@ export class FeedbackConflictResolver implements Resolve<TextSubmission[] | unde
     resolve(route: ActivatedRouteSnapshot) {
         const submissionId = Number(route.paramMap.get('submissionId'));
         const feedbackId = Number(route.paramMap.get('feedbackId'));
+        const participationId = Number(route.paramMap.get('participationId'));
         if (submissionId && feedbackId) {
-            return this.textAssessmentService.getConflictingTextSubmissions(submissionId, feedbackId).pipe(catchError(() => of(undefined)));
+            return this.textAssessmentService.getConflictingTextSubmissions(participationId, submissionId, feedbackId).pipe(catchError(() => of(undefined)));
         }
         return of(undefined);
     }
@@ -99,7 +101,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'submissions/:submissionId/assessment',
+        path: 'participations/:participationId/submissions/:submissionId/assessment',
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
@@ -112,7 +114,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'submissions/:submissionId/assessments/:resultId',
+        path: 'participations/:participationId/submissions/:submissionId/assessments/:resultId',
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
@@ -125,7 +127,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'submissions/:submissionId/text-feedback-conflict/:feedbackId',
+        path: 'participations/:participationId/submissions/:submissionId/text-feedback-conflict/:feedbackId',
         component: TextFeedbackConflictsComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],

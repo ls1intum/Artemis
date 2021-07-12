@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -68,9 +69,9 @@ public class GradingScaleResource {
     public ResponseEntity<GradingScale> getGradingScaleForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourseId(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        return ResponseEntity.ok(gradingScale);
+        return gradingScale.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }
 
     /**
@@ -85,9 +86,9 @@ public class GradingScaleResource {
     public ResponseEntity<GradingScale> getGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get grading scale for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        return ResponseEntity.ok(gradingScale);
+        return gradingScale.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }
 
     /**
@@ -113,6 +114,11 @@ public class GradingScaleResource {
         }
         else if (gradingScale.getId() != null) {
             return badRequest(ENTITY_NAME, "gradingScaleHasId", "A grading scale can't contain a predefined id");
+        }
+
+        if (!Objects.equals(gradingScale.getCourse().getMaxPoints(), course.getMaxPoints())) {
+            course.setMaxPoints(gradingScale.getCourse().getMaxPoints());
+            courseRepository.save(course);
         }
         gradingScale.setCourse(course);
 
@@ -148,6 +154,10 @@ public class GradingScaleResource {
             return badRequest(ENTITY_NAME, "gradingScaleHasId", "A grading scale can't contain a predefined id");
         }
         Exam exam = examRepository.findByIdElseThrow(examId);
+        if (gradingScale.getExam().getMaxPoints() != exam.getMaxPoints()) {
+            exam.setMaxPoints(gradingScale.getExam().getMaxPoints());
+            examRepository.save(exam);
+        }
         gradingScale.setExam(exam);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
@@ -170,7 +180,11 @@ public class GradingScaleResource {
         GradingScale oldGradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         gradingScale.setId(oldGradingScale.getId());
-        gradingScale.setCourse(oldGradingScale.getCourse());
+        if (!Objects.equals(gradingScale.getCourse().getMaxPoints(), course.getMaxPoints())) {
+            course.setMaxPoints(gradingScale.getCourse().getMaxPoints());
+            courseRepository.save(course);
+        }
+        gradingScale.setCourse(course);
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
     }
@@ -188,10 +202,15 @@ public class GradingScaleResource {
     public ResponseEntity<GradingScale> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody GradingScale gradingScale) {
         log.debug("REST request to update a grading scale for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
+        Exam exam = examRepository.findByIdElseThrow(examId);
         GradingScale oldGradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         gradingScale.setId(oldGradingScale.getId());
-        gradingScale.setExam(oldGradingScale.getExam());
+        if (gradingScale.getExam().getMaxPoints() != exam.getMaxPoints()) {
+            exam.setMaxPoints(gradingScale.getExam().getMaxPoints());
+            examRepository.save(exam);
+        }
+        gradingScale.setExam(exam);
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
     }

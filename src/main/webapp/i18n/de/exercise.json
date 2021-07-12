@@ -11,8 +11,8 @@
             "resultCount": "{{resultsLength}} Ergebnisse",
             "resultsPerPage": "{{number}} Ergebnisse pro Seite",
             "showAllResults": "Zeige alle Ergebnisse",
-            "searchForStudents": "Suche nach Studenten-Logins oder Namen (Komma getrennt)",
-            "searchForTeams": "Suche nach Team (Kurz-)Namen oder nach Studenten-Logins/Namen (Komma getrennt)",
+            "searchForStudents": "Suche nach Studierenden-Logins oder Namen (Komma getrennt)",
+            "searchForTeams": "Suche nach Team (Kurz-)Namen oder nach Studierenden-Logins/Namen (Komma getrennt)",
             "created": "Übung erstellt mit ID {{ param }}",
             "updated": "Übung aktualisiert mit ID {{ param }}",
             "deleted": "Übung gelöscht mit ID {{ param }}",
@@ -45,9 +45,14 @@
             "problemStatement": "Aufgabenstellung",
             "sampleSolution": "Beispiel Lösung",
             "gradingInstructions": "Benotungshinweise",
+            "gradingInstruction": "Benotungshinweis: ",
             "structuredGradingInstructions": "Strukturierte Benotungshinweise",
             "addGradingCriterion": "Benotungskriterium hinzufügen",
             "deleteGradingCriterion": "Benotungskriterium löschen",
+            "resetGradingCriterionTitle": "Titel des Benotungskriteriums zurücksetzen",
+            "resetGradingInstruction": "Benotungshinweis zurücksetzen",
+            "deleteGradingInstruction": "Benotungshinweis löschen",
+            "addGradingInstruction": "Benotungshinweis hinzufügen",
             "usageCount": "Maximale Zählung in der Bewertung",
             "DragDropInstruction": "Drag & Drop Benotungshinweis zum Feedback-Element",
             "gradingScale": "Benotungsskala",
@@ -85,14 +90,14 @@
             "medium": "Mittel",
             "hard": "Schwer",
             "mode": "Modus",
-            "modeTooltip": "Der Bearbeitungsmodus einer Aufgabe bestimmt, ob Studenten alleine oder in Teams daran arbeiten. ACHTUNG: Dies kann später nicht mehr geändert werden!",
+            "modeTooltip": "Der Bearbeitungsmodus einer Aufgabe bestimmt, ob Studierende alleine oder in Teams daran arbeiten. ACHTUNG: Dies kann später nicht mehr geändert werden!",
             "modes": {
                 "individual": "Individuell",
                 "team": "Team"
             },
             "teamAssignmentConfig": {
                 "teamSize": "Team-Größe",
-                "teamSizeTooltip": "Empfehlung für die Tutoren bezüglich minimaler und maximaler Anzahl Studenten pro Team.",
+                "teamSizeTooltip": "Empfehlung für die Tutor:innen bezüglich minimaler und maximaler Anzahl an Studierenden pro Team.",
                 "participants": "Mitglieder"
             },
             "categories": "Kategorien",
@@ -108,11 +113,11 @@
             "type": "Typ",
             "mcqType": "Multiple-Choice Fragen",
             "dndType": "Drag und Drop Fragen",
-            "welcome": "<strong>Herzlich Willkommen bei Artemis!</strong> Wir haben automatisch einen Account für dich erstellt. Klicke auf den Button <i>Aufgabe starten</i>!",
+            "welcome": "<strong>Herzlich Willkommen bei Artemis!</strong> Wir haben automatisch ein Konto für dich erstellt. Klicke auf den Button <i>Aufgabe starten</i>!",
             "personalRepositoryClone": "Dein persönliches Repository wurde eingerichtet. Klicke auf den Button <i>Repository klonen</i>!",
             "personalRepositoryOnline": "Dein persönliches Repository wurde eingerichtet. Klicke auf den Button <i>Programmiereditor öffnen</i>!",
             "startError": "<strong>Uh oh! Etwas ist schief gelaufen... Bitte versuch es in wenigen Minuten noch einmal die Aufgabe zu starten.</strong>",
-            "studentName": "Studentenname",
+            "studentName": "Name Studierende:r",
             "studentId": "Login",
             "teamName": "Team Name",
             "teamShortName": "Kurzname",
@@ -145,7 +150,7 @@
             "resultCreationUnsuccessful": "Das Ergebnis wurde nicht erzeugt",
             "presentationScoreEnabled": {
                 "title": "Präsentation",
-                "description": "Wenn das Präsentationsergebnis aktiviert ist, dann können Tutoren auf der Seite \"Teilnahmen\" dieser Übung eine Punkt für Präsentation von Studenten eintragen."
+                "description": "Wenn das Präsentationsergebnis aktiviert ist, dann können Tutor:innen auf der Seite \"Teilnahmen\" dieser Übung einen Punkt für Präsentation von Studierenden eintragen."
             },
             "errors": {
                 "exerciseNotFound": "Diese Übung konnte nicht gefunden werden"
@@ -181,13 +186,16 @@
             "isTeamExercise": "Diese Aufgabe ist eine Teamaufgabe.",
             "update": {
                 "warning": {
-                    "warning": "Warnung!",
-                    "confirm": "Änderungen bestätigen",
-                    "problems": "Folgende Probleme können auftreten:",
-                    "instructionDeleted": "Benotungshinweise gelöscht:",
-                    "scoringChange": "Bewertungsart verändert:",
-                    "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
-                    "confirmtext": "Möchtest du die Änderungen wirklich übernehmen?"
+                    "warning": "Warnung: Diese Änderungen wird möglicherweise Probleme verursachen",
+                    "saveExerciseWithoutReevaluation": "Nicht neu bewerten",
+                    "problems": "Um Inkonsistenzen zwischen bestehendem und zukünftigem Feedback, das mit der betroffenen Benotungshinweis verbunden ist, zu vermeiden, muss die Aufgabe neu bewertet werden. Dazu gehört auch die Neuberechnung der Ergebnisse.",
+                    "instructionDeleted": "Benotungshinweise gelöscht",
+                    "creditChanged": "Punkte-Bewertung im Benotungshinweis geändert",
+                    "usageCountChanged": "Nutzungsanzahl im Benotungshinweis geändert",
+                    "confirmText": "Möchtest du diese Änderungen mit oder ohne eine Neubewertung der Aufgabe durchführen?",
+                    "reevaluateExercise": "Neu bewerten",
+                    "deleteFeedback": "Lösche zusätzlich sämtliches Feedback, das mit den gelöschten Benotungshinweisen zusammenhängt.",
+                    "information": "Wenn du keine Neubewertung auslösen möchtest, können wir die Konsistenz des Feedbacks, das mit dem Benotungshinweis zusammenhängt, nicht mehr garantieren."
                 }
             }
         },

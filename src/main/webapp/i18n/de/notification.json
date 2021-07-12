@@ -11,8 +11,8 @@
             "by": "von",
             "allLoaded": "Keine weiteren Mitteilungen vorhanden.",
             "target": {
-                "newAnswer": "Antwort ansehen",
-                "newQuestion": "Frage ansehen",
+                "newAnswerPost": "Antwort ansehen",
+                "newPost": "Beitrag ansehen",
                 "exerciseCreated": "Übung ansehen",
                 "exerciseUpdated": "Übung ansehen",
                 "attachmentUpdated": "Vorlesung ansehen"

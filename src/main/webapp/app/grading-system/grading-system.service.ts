@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
+import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<GradingScale>;
 
@@ -12,7 +12,7 @@ export type EntityResponseType = HttpResponse<GradingScale>;
 export class GradingSystemService {
     public resourceUrl = SERVER_API_URL + 'api/courses';
 
-    constructor(private router: Router, private http: HttpClient) {}
+    constructor(private http: HttpClient) {}
 
     /**
      * Store a new grading scale for course on the server
@@ -97,11 +97,52 @@ export class GradingSystemService {
     /**
      * Finds all grade steps for exam
      *
+     * @param courseId the course for which the grade steps are retrieved
+     */
+    findGradeStepsForCourse(courseId: number): Observable<HttpResponse<GradeStepsDTO>> {
+        return this.http.get<GradeStepsDTO>(`${this.resourceUrl}/${courseId}/grading-scale/grade-steps`, { observe: 'response' });
+    }
+
+    /**
+     * Finds all grade steps for exam
+     *
      * @param courseId the course to which the exam belongs
      * @param examId the exam for which the grade steps are retrieved
      */
     findGradeStepsForExam(courseId: number, examId: number): Observable<HttpResponse<GradeStepsDTO>> {
         return this.http.get<GradeStepsDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale/grade-steps`, { observe: 'response' });
+    }
+
+    /**
+     * Finds all grade steps for a course or an exam
+     *
+     * @param courseId the course for which the grade steps are queried
+     * @param examId if present the grade steps for this exam are queried instead
+     */
+    findGradeSteps(courseId: number, examId?: number): Observable<GradeStepsDTO | undefined> {
+        let gradeStepsObservable: Observable<HttpResponse<GradeStepsDTO>>;
+        if (examId != undefined) {
+            gradeStepsObservable = this.findGradeStepsForExam(courseId, examId);
+        } else {
+            gradeStepsObservable = this.findGradeStepsForCourse(courseId);
+        }
+        return gradeStepsObservable.pipe(
+            map((gradeStepsDTO) => {
+                if (gradeStepsDTO && gradeStepsDTO.body) {
+                    return gradeStepsDTO.body;
+                }
+            }),
+        );
+    }
+
+    /**
+     * Finds a grade step for course that matches the given percentage
+     *
+     * @param courseId the course to which the exam belongs
+     * @param percentage the percentage which will be matched
+     */
+    public matchPercentageToGradeStepForCourse(courseId: number, percentage: number): Observable<HttpResponse<GradeDTO>> {
+        return this.http.get<GradeDTO>(`${this.resourceUrl}/${courseId}/grading-scale/match-grade-step?gradePercentage=${percentage}`, { observe: 'response' });
     }
 
     /**
@@ -113,6 +154,29 @@ export class GradingSystemService {
      */
     public matchPercentageToGradeStepForExam(courseId: number, examId: number, percentage: number): Observable<HttpResponse<GradeDTO>> {
         return this.http.get<GradeDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale/match-grade-step?gradePercentage=${percentage}`, { observe: 'response' });
+    }
+
+    /**
+     * Finds a grade step for an exam or a course that matches the given percentage
+     *
+     * @param percentage the percentage which will be matched
+     * @param courseId the course for which the matching is done
+     * @param examId if present, the matching is done for this exam instead
+     */
+    public matchPercentageToGradeStep(percentage: number, courseId: number, examId?: number): Observable<GradeDTO | undefined> {
+        let responseObservable: Observable<HttpResponse<GradeDTO>>;
+        if (examId != undefined) {
+            responseObservable = this.matchPercentageToGradeStepForExam(courseId, examId, percentage);
+        } else {
+            responseObservable = this.matchPercentageToGradeStepForCourse(courseId, percentage);
+        }
+        return responseObservable.pipe(
+            map((response) => {
+                if (response && response.body) {
+                    return response.body;
+                }
+            }),
+        );
     }
 
     /**
@@ -133,9 +197,10 @@ export class GradingSystemService {
      * @param percentage the percentage to be matched
      */
     matchGradePercentage(gradeStep: GradeStep, percentage: number): boolean {
-        if (percentage === gradeStep.lowerBoundPercentage) {
+        const EPSILON = 0.01;
+        if (Math.abs(percentage - gradeStep.lowerBoundPercentage) < EPSILON) {
             return gradeStep.lowerBoundInclusive;
-        } else if (percentage === gradeStep.upperBoundPercentage) {
+        } else if (Math.abs(percentage - gradeStep.upperBoundPercentage) < EPSILON) {
             return gradeStep.upperBoundInclusive;
         } else {
             return percentage > gradeStep.lowerBoundPercentage && percentage < gradeStep.upperBoundPercentage;
@@ -164,5 +229,18 @@ export class GradingSystemService {
             return gradeStep.upperBoundInclusive && gradeStep.upperBoundPercentage === 100;
         });
         return maxGradeStep?.gradeName || '';
+    }
+
+    /**
+     * Sets the grade points
+     *
+     * @param gradeSteps the grade steps for which the grade points are set
+     * @param maxPoints the max points, based on which the grade points are set
+     */
+    setGradePoints(gradeSteps: GradeStep[], maxPoints: number) {
+        for (const gradeStep of gradeSteps) {
+            gradeStep.lowerBoundPoints = (maxPoints * gradeStep.lowerBoundPercentage) / 100;
+            gradeStep.upperBoundPoints = (maxPoints * gradeStep.upperBoundPercentage) / 100;
+        }
     }
 }

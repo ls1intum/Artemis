@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.StringUtil.stripIllegalCharacters;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -121,6 +122,8 @@ public class TeamResource {
         if (!shortNameMatcher.matches()) {
             throw new BadRequestAlertException("The team name must start with a letter.", ENTITY_NAME, "teamShortNameInvalid");
         }
+        // Also remove illegal characters from the long name
+        team.setName(stripIllegalCharacters(team.getName()));
         // Tutors can only create teams for themselves while instructors can select any tutor as the team owner
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             team.setOwner(user);
@@ -162,6 +165,8 @@ public class TeamResource {
         if (!team.getShortName().equals(existingTeam.get().getShortName())) {
             return forbidden(ENTITY_NAME, "shortNameChangeForbidden", "The team's short name cannot be changed after the team has been created.");
         }
+        // Remove illegal characters from the long name
+        team.setName(stripIllegalCharacters(team.getName()));
 
         // Prepare auth checks
         User user = userRepository.getUserWithGroupsAndAuthorities();

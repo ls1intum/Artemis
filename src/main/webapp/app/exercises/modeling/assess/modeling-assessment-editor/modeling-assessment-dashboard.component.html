@@ -6,17 +6,17 @@
     <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
     <div>
         <!-- These buttons only make sense when semi automatic assessment is possible -->
-        <div *ngIf="exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="button-toolbar float-right">
+        <div *ngIf="exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="button-toolbar float-end">
             <button
                 (click)="assessNextOptimal()"
                 [disabled]="busy || (optimalSubmissions && optimalSubmissions.length === 0 && assessedSubmissions === submissions.length)"
-                class="btn btn-success btn-sm mr-1"
+                class="btn btn-success btn-sm me-1"
             >
                 <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;Assess next submission
             </button>
-            <button (click)="refresh()" [disabled]="busy" class="btn btn-primary btn-sm mr-1"><fa-icon [fixedWidth]="true" [icon]="'sync'"></fa-icon>&nbsp;Refresh</button>
+            <button (click)="refresh()" [disabled]="busy" class="btn btn-primary btn-sm me-1"><fa-icon [fixedWidth]="true" [icon]="'sync'"></fa-icon>&nbsp;Refresh</button>
             <ng-container *ngIf="course.isAtLeastInstructor">
-                <button (click)="resetOptimality()" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [disabled]="busy" class="btn btn-primary btn-sm mr-1">
+                <button (click)="resetOptimality()" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [disabled]="busy" class="btn btn-primary btn-sm me-1">
                     <fa-icon [fixedWidth]="true" [icon]="'sync'"></fa-icon>&nbsp;Reset assessment order
                 </button>
             </ng-container>
@@ -72,7 +72,7 @@
                                 canOverrideAssessments
                             "
                             [queryParams]="{ optimal: false, hideBackButton: true }"
-                            [routerLink]="getAssessmentRouterLink(submission.id!)"
+                            [routerLink]="getAssessmentRouterLink(submission.participation!.id!, submission.id!)"
                             class="btn btn-success btn-sm"
                         >
                             <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;Assess model
@@ -212,7 +212,7 @@
                                     *ngIf="!submission.latestResult"
                                     [class.disabled]="busy"
                                     [queryParams]="{ optimal: false, hideBackButton: true }"
-                                    [routerLink]="getAssessmentLink(submission.id!)"
+                                    [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                     class="btn btn-success btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | artemisTranslate }}
@@ -221,7 +221,7 @@
                                     *ngIf="submission.latestResult"
                                     [class.disabled]="busy"
                                     [queryParams]="{ optimal: false, hideBackButton: true }"
-                                    [routerLink]="getAssessmentLink(submission.id!)"
+                                    [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                     class="btn btn-primary btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
@@ -236,7 +236,7 @@
                                         *ngIf="submission.results[correctionRound].completionDate"
                                         [class.disabled]="busy"
                                         [queryParams]="{ optimal: false, hideBackButton: true, 'correction-round': correctionRound }"
-                                        [routerLink]="getAssessmentLink(submission.id!)"
+                                        [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                         class="btn btn-primary btn-sm mb-1"
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
@@ -246,11 +246,11 @@
                                     </a>
                                     <!-- button for existing result with lock-->
                                     <span *ngIf="!submission.results[correctionRound].completionDate">
-                                        <div class="btn-group-vertical mr-1 mb-10">
+                                        <div class="btn-group-vertical me-1 mb-10">
                                             <a
                                                 [class.disabled]="busy"
                                                 [queryParams]="{ 'correction-round': correctionRound }"
-                                                [routerLink]="getAssessmentLink(submission.id!)"
+                                                [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                                 class="btn btn-warning btn-sm mb-1"
                                             >
                                                 <fa-icon [fixedWidth]="true" [icon]="'edit'"></fa-icon>&nbsp;
@@ -280,7 +280,7 @@
                                     "
                                     [class.disabled]="busy"
                                     [queryParams]="{ 'correction-round': submission.results ? submission.results.length : 0 }"
-                                    [routerLink]="getAssessmentLink(submission.id!)"
+                                    [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                     class="btn btn-success btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>

@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import * as sinon from 'sinon';
-import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
+import { MockPipe } from 'ng-mocks';
 import { Component, Directive, Input } from '@angular/core';
 import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';

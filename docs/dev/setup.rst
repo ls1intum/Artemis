@@ -217,14 +217,14 @@ When you import the project into IntelliJ the run configurations will also be im
 The recommended way is to run the server and the client separated. This provides fast rebuilds of the server and hot module replacement in the client.
 
 * **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
-* **Artemis (Client):** Will execute ``yarn install`` and ``yarn start``. The client will be available at `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see `Client Setup <setup.rst#client-setup>`__).
+* **Artemis (Client):** Will execute ``yarn install`` and ``yarn start``. The client will be available at `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see `Client Setup <#client-setup>`__).
 
 Other run / debug configurations
 """"""""""""""""""""""""""""""""
 
 * **Artemis (Server & Client):** Will start the server and the client. The client will be available at `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
 * **Artemis (Server, Jenkins & Gitlab):** The server will be started separated from the client with the profiles ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
-* **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled (see `Athene Service <setup.rst#athene-service>`__).
+* **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled (see `Athene Service <#athene-service>`__).
 
 
 Typical problems with Liquibase checksums
@@ -315,8 +315,7 @@ Using the command line
 
 You should be able to run the following
 command to install development tools and dependencies. You will only
-need to run this command when dependencies change in
-`package.json <package.json>`__.
+need to run this command when dependencies change in ``package.json``.
 
 ::
 
@@ -338,6 +337,17 @@ above in Server Setup) and if you have configured
 ``application-artemis.yml`` correctly, then you should be able to login
 with your TUM Online account.
 
+In case you encounter any problems regarding JavaScript heap memory leaks when executing ``yarn start`` or any other scripts from ``package.json``, you can change the memory limit parameter used in the ``webpack-ts`` script in ``package.json`` to the following:
+
+::
+
+   # This local change in `package.json` should not be committed.
+   "webpack-ts": "cross-env NODE_OPTIONS=--max_old_space_size=5120 TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack" # possible higher values are 6144, 7168, and 8192
+
+
+Make sure to **not commit this change** in ``package.json``.
+
+
 For more information, review `Working with
 Angular <https://www.jhipster.tech/development/#working-with-angular>`__.
 For further instructions on how to develop with JHipster, have a look at
@@ -351,7 +361,7 @@ You can define the following custom assets for Artemis to be used
 instead of the TUM defaults:
 
 * The logo next to the “Artemis” heading on the navbar → ``${artemisRunDirectory}/public/images/logo.png``
-* The favicon → ``${artemisRunDirectory}/public/images/favicon.ico``
+* The favicon → ``${artemisRunDirectory}/favicon.svg``
 * The privacy statement HTML → ``${artemisRunDirectory}/public/content/privacy_statement.html``
 * The imprint statement HTML → ``${artemisRunDirectory}/public/content/imprint.html``
 * The contact email address in the ``application-{dev,prod}.yml`` configuration file under the key ``info.contact``
@@ -408,7 +418,7 @@ Enable the ``athene`` Spring profile:
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Athene service is running on a dedicated machine and is adressed via
+The Athene service is running on a dedicated machine and is addressed via
 HTTP. We need to extend the configuration in the file
 ``src/main/resources/config/application-artemis.yml`` like so:
 

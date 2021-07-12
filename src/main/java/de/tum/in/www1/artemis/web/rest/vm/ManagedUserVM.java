@@ -4,6 +4,7 @@ import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 
@@ -13,11 +14,7 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ManagedUserVM extends UserDTO {
 
-    public static final int PASSWORD_MIN_LENGTH = 8;
-
-    public static final int PASSWORD_MAX_LENGTH = 100;
-
-    @Size(min = PASSWORD_MIN_LENGTH, max = PASSWORD_MAX_LENGTH)
+    @Size(min = Constants.PASSWORD_MIN_LENGTH, max = Constants.PASSWORD_MAX_LENGTH)
     private String password;
 
     public ManagedUserVM() {
@@ -26,6 +23,11 @@ public class ManagedUserVM extends UserDTO {
 
     public ManagedUserVM(User user) {
         super(user);
+    }
+
+    public ManagedUserVM(User user, String password) {
+        this(user);
+        setPassword(password);
     }
 
     public String getPassword() {

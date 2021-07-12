@@ -22,6 +22,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import * as moment from 'moment';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -36,15 +37,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly moment = moment;
-
+    assessmentType = AssessmentType.SEMI_AUTOMATIC;
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
     supportsAuxiliaryRepositories: boolean;
-
+    baseResource: string;
+    shortBaseResource: string;
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
     lockingOrUnlockingRepositories = false;
-
+    courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
 
     private dialogErrorSource = new Subject<string>();
@@ -68,7 +70,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
-
+            this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
             this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorForExercise(this.programmingExercise);
             this.programmingExercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.programmingExercise);
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
@@ -92,6 +94,15 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.statisticsService.getExerciseStatistics(programmingExercise.id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
                 this.doughnutStats = statistics;
             });
+            if (!this.isExamExercise) {
+                this.baseResource = `/course-management/${this.courseId}/programming-exercises/${programmingExercise.id}/`;
+                this.shortBaseResource = `/course-management/${this.courseId}/`;
+            } else {
+                this.baseResource =
+                    `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
+                    `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/programming-exercises/${this.programmingExercise.id}/`;
+                this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
+            }
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -117,27 +128,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 return result ? [result] : [];
             }),
         );
-    }
-
-    /**
-     * Returns the route for editing the exercise. Exam and course exercises have different routes.
-     */
-    getEditRoute() {
-        if (this.isExamExercise) {
-            return [
-                '/course-management',
-                this.programmingExercise.exerciseGroup?.exam?.course?.id,
-                'exams',
-                this.programmingExercise.exerciseGroup?.exam?.id,
-                'exercise-groups',
-                this.programmingExercise.exerciseGroup?.id,
-                'programming-exercises',
-                this.programmingExercise.id,
-                'edit',
-            ];
-        } else {
-            return ['/course-management', this.programmingExercise.course?.id, 'programming-exercises', this.programmingExercise.id, 'edit'];
-        }
     }
 
     combineTemplateCommits() {
@@ -183,12 +173,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     /**
      * Cleans up programming exercise
-     * @param $event contains additional checks from the dialog
+     * @param event contains additional checks from the dialog
      */
-    cleanupProgrammingExercise($event: { [key: string]: boolean }) {
-        return this.exerciseService.cleanup(this.programmingExercise.id!, $event.deleteRepositories).subscribe(
+    cleanupProgrammingExercise(event: { [key: string]: boolean }) {
+        return this.exerciseService.cleanup(this.programmingExercise.id!, event.deleteRepositories).subscribe(
             () => {
-                if ($event.deleteRepositories) {
+                if (event.deleteRepositories) {
                     this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessageWithRepositories');
                 } else {
                     this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessage');
@@ -199,8 +189,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         );
     }
 
-    public deleteProgrammingExercise($event: { [key: string]: boolean }) {
-        this.programmingExerciseService.delete(this.programmingExercise.id!, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
+    public deleteProgrammingExercise(event: { [key: string]: boolean }) {
+        this.programmingExerciseService.delete(this.programmingExercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',

@@ -105,7 +105,12 @@
                 "reachableHelpExerciseGroup": "Die erreichbare Punktzahl ist die Summe der maximalen Punktzahlen aller Aufgaben dieses Aufgabentyps, die bewertet wurden, unabhängig von deiner Teilnahme.",
                 "totalHelpExerciseGroup": "Die maximale Punktzahl ist Summe der maximalen Punktzahlen aller Aufgaben von diesem Aufgabentyp.",
                 "reachableHelp": "Die erreichbare Punktzahl ist die Summe der maximalen Punktzahlen aller Aufgaben, die bewertet wurden, unabhängig von deiner Teilnahme.",
-                "totalHelp": "Die maximale Punktzahl ist Summe der maximalen Punktzahlen aller Aufgaben."
+                "totalHelp": "Die maximale Punktzahl ist Summe der maximalen Punktzahlen aller Aufgaben.",
+                "grade": "Aktuelle Note",
+                "bonus": "Aktuelle Bonuspunkte",
+                "gradeInfo": "(basierend auf der erreichbaren Punktzahl)",
+                "gradeHelp": "Die Note basiert auf der von dir erreichbaren Punktzahl. Sie kann sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",
+                "bonusHelp": "Die Bonuspunkte basieren auf der von dir erreichbaren Punktzahl. Sie können sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden."
             },
             "lectureList": {
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",
@@ -123,7 +128,8 @@
                 "date": "Datum",
                 "notReleased": "Nicht freigegeben",
                 "version": "Version",
-                "isDownloading": "Wird heruntergeladen..."
+                "isDownloading": "Wird heruntergeladen...",
+                "downloadPdf": "PDF Herunterladen"
             },
             "exerciseDetails": {
                 "dueDate": "Einreichungsfrist:",
@@ -136,7 +142,7 @@
                 "problemStatement": "Problemstellung:",
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {
-                    "title": "Dozentenaktionen:",
+                    "title": "Aktionen für Lehrende:",
                     "scores": "Bewertungen",
                     "submissions": "Einreichungen",
                     "statistics": "Statistiken"
@@ -151,38 +157,7 @@
                 "graded": "Bewertet",
                 "notGraded": "Nicht bewertet",
                 "rated": "Bewertet",
-                "practice": "Übung",
-                "faq": {
-                    "header": "Postings",
-                    "show": "Antworten anzeigen",
-                    "hide": "Antworten einklappen",
-                    "noPosts": "Es gibt keine Postings.",
-                    "addNewPost": "Einen neuen Post erstellen",
-                    "newPostLabel": "Neuer Post",
-                    "newAnswerLabel": "Neuer Post",
-                    "answerLabel": "Antwort",
-                    "postLabel": "Post",
-                    "approvedLabel": "Vom Tutor bestätigt",
-                    "answerNow": "Jetzt beantworten",
-                    "noAnswers": "Auf diesen Post wurde noch nicht reagiert",
-                    "answerCount": "Zeige Antworten ({{count}})",
-                    "yourPost": "Dein Post",
-                    "cancel": "Abbrechen",
-                    "addPost": "Post hinzufügen",
-                    "savePost": "Post speichern",
-                    "addAnswer": "Antwort hinzufügen",
-                    "saveAnswer": "Antwort speichern",
-                    "deletePost": "Möchtest du deinen Post löschen?",
-                    "confirmDeletePost": "Bitte bestätige, dass du deinen Post löschen möchtest!",
-                    "editPost": "Post bearbeiten",
-                    "deleteAnswer": "Möchtest du deine Antwort löschen?",
-                    "confirmDeleteAnswer": "Bitte bestätige, dass du deine Antwort löschen möchtest!",
-                    "editAnswer": "Antwort bearbeiten",
-                    "approveAnswer": "Antwort bestätigen",
-                    "unapproveAnswer": "Antwort nicht bestätigen",
-                    "hideAnswers": "Weniger Antworten anzeigen",
-                    "showAnswers": "Weitere Antworten anzeigen ({{count}})"
-                }
+                "practice": "Übung"
             }
         }
     }

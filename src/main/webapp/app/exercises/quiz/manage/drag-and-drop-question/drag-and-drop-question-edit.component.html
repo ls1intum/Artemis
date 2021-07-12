@@ -22,13 +22,13 @@
                 <input class="form-control" title="score" type="number" min="1" max="9999" [(ngModel)]="question.points" (ngModelChange)="questionUpdated.emit()" />
             </div>
             <div class="question-type">
-                <h3 class="mb-0"><span class="badge badge-warning align-text-top">DnD</span></h3>
+                <h3 class="mb-0"><span class="badge bg-warning align-text-top">DnD</span></h3>
             </div>
         </div>
     </div>
     <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex }}">
         <div class="row" *ngIf="reEvaluationInProgress">
-            <div class="col-md-10 text-left">
+            <div class="col-md-10 text-start">
                 <div class="input-group">
                     <input
                         class="form-control"
@@ -44,7 +44,7 @@
                     </span>
                 </div>
             </div>
-            <div class="col-md-2 text-right">
+            <div class="col-md-2 text-end">
                 <div class="form-group">
                     <div class="re-evaluate-button" (click)="moveUpQuestion()">
                         <fa-icon [icon]="'chevron-up'" size="2x"></fa-icon>
@@ -137,15 +137,12 @@
         </div>
         <hr />
         <div class="question-options row d-flex justify-content-start">
-            <div class="col-lg-2 col-md-2 col-sm-2 overflow-ellipsis">
+            <div class="col-lg-2 col-md-2 col-sm-2 overflow-ellipsis" style="width: max-content !important">
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.uploadBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="!reEvaluationInProgress"></span>
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.changeBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="reEvaluationInProgress"></span>
             </div>
             <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file">
-                <div class="custom-file">
-                    <input id="backgroundFileInput{{ questionIndex }}" type="file" accept="image/*" class="custom-file-input" (change)="setBackgroundFile($event)" />
-                    <label class="custom-file-label overflow-ellipsis" for="backgroundFileInput{{ questionIndex }}">{{ backgroundFileName }}</label>
-                </div>
+                <input id="backgroundFileInput{{ questionIndex }}" type="file" accept="image/*" class="form-control" (change)="setBackgroundFile($event)" />
                 <div class="input-group-prepend">
                     <button class="btn btn-outline-primary" (click)="uploadBackground()" [disabled]="isUploadingBackgroundFile || !backgroundFile">
                         <span *ngIf="isUploadingBackgroundFile" jhiTranslate="artemisApp.dragAndDropQuestion.uploading"></span>
@@ -291,17 +288,14 @@
                         <span *ngIf="!isUploadingDragItemFile && reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.changeDragItemPicture"> </span>
                     </button>
                 </div>
-                <div class="custom-file">
-                    <input
-                        id="dragItemFileInput{{ questionIndex }}"
-                        type="file"
-                        accept="image/*"
-                        class="custom-file-input"
-                        (change)="setDragItemFile($event)"
-                        placeholder="Upload file..."
-                    />
-                    <label class="custom-file-label overflow-ellipsis" for="dragItemFileInput{{ questionIndex }}">{{ dragItemFileName }}</label>
-                </div>
+                <input
+                    id="dragItemFileInput{{ questionIndex }}"
+                    type="file"
+                    accept="image/*"
+                    class="form-control"
+                    (change)="setDragItemFile($event)"
+                    placeholder="Upload file..."
+                />
             </div>
             <ng-container *ngIf="!reEvaluationInProgress">
                 <div class="question-options">

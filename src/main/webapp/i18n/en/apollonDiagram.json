@@ -6,34 +6,34 @@
                 "createLabel": "Create a new Apollon Diagram",
                 "createOrEditLabel": "Create or edit an Apollon Diagram",
                 "error": {
-                    "loading": "Error while loading Apollon diagrams"
+                    "loading": "Error while loading Apollon Diagrams"
                 }
             },
-            "created": "Apollon Diagram created with ID {{ param }}",
-            "updated": "Apollon Diagram updated with ID {{ param }}",
-            "deleted": "Apollon Diagram deleted with ID {{ param }}",
+            "created": "Created new Apollon Diagram with ID {{ param }}",
+            "updated": "Updated Apollon Diagram with ID {{ param }}",
+            "deleted": "Deleted Apollon Diagram with ID {{ param }}",
             "create": {
-                "success": "Apollon diagram with title {{ title }} was created successfully",
-                "error": "Error while creating Apollon diagram"
+                "success": "Apollon Diagram with title {{ title }} was created successfully",
+                "error": "Error while creating Apollon Diagram"
             },
             "update": {
-                "error": "Error while updating Apollon diagram"
+                "error": "Error while updating Apollon Diagram"
             },
             "delete": {
                 "question": "Are you sure you want to delete Apollon Diagram {{ id }}?",
-                "success": "Apollon diagram with title {{ title }} was deleted successfully",
-                "error": "Error while deleting the apollon diagrams with title {{ title }}"
+                "success": "Apollon Diagram with title {{ title }} was deleted successfully",
+                "error": "Error while deleting the Apollon Diagram with title {{ title }}"
             },
             "detail": {
                 "title": "Apollon Diagram",
                 "crop": "Crop image to selection",
-                "help": "Download your current selection as a PNG image.",
+                "help": "Download your current selection as a PNG image",
                 "createLabel": "Generate a Quiz Exercise",
                 "generate": "Generate",
                 "error": {
-                    "loading": "Error while loading Apollon diagram"
+                    "loading": "Error while loading Apollon Diagram"
                 },
-                "quizExercise": "Generate a quiz exercise for course {{ title }}."
+                "quizExercise": "Generate a Quiz Exercise for course {{ title }}."
             },
             "title": "Title",
             "jsonRepresentation": "JSON Representation",

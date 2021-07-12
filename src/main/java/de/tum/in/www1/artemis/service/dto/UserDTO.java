@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.dto;
 
+import static de.tum.in.www1.artemis.config.Constants.*;
+
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -25,7 +27,7 @@ public class UserDTO extends AuditingEntityDTO {
 
     @NotBlank
     @Pattern(regexp = Constants.LOGIN_REGEX)
-    @Size(min = 1, max = 50)
+    @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
     private String login;
 
     @Size(max = 50)

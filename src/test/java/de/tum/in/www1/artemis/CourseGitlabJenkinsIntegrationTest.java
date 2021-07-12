@@ -126,6 +126,12 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateCourseWithoutIdAsInstructor() throws Exception {
+        courseTestService.testUpdateCourseWithoutIdAsInstructor();
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testUpdateCourseIsEmpty() throws Exception {
         courseTestService.testUpdateCourseIsEmpty();

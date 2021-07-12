@@ -6,7 +6,6 @@ import { createQuizExercise, submitRandomAnswerRESTExam } from './requests/quiz.
 import {
     newExam,
     newExerciseGroup,
-    newTextExercise,
     addUserToStudentsInExam,
     generateExams,
     startExercises,
@@ -16,7 +15,7 @@ import {
     evaluateQuizzes,
     submitExam,
 } from './requests/exam.js';
-import { submitRandomTextAnswerExam } from './requests/text.js';
+import { submitRandomTextAnswerExam, newTextExercise } from './requests/text.js';
 import { newModelingExercise, submitRandomModelingAnswerExam } from './requests/modeling.js';
 import { createProgrammingExercise, ParticipationSimulation, simulateSubmission, TestResult } from './requests/programmingExercise.js';
 import { someSuccessfulErrorContentJava, allSuccessfulContentJava, buildErrorContentJava } from './resource/constants_java.js';
@@ -40,6 +39,8 @@ let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 let userOffset = parseInt(__ENV.USER_OFFSET);
 const onlyPrepare = __ENV.ONLY_PREPARE === true || __ENV.ONLY_PREPARE === 'true';
+// Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
+const userIdOffset = 99;
 
 export function setup() {
     console.log('__ENV.CREATE_USERS: ' + __ENV.CREATE_USERS);
@@ -61,8 +62,8 @@ export function setup() {
 
         createUsersIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset);
 
-        const instructorUsername = baseUsername.replace('USERID', '1');
-        const instructorPassword = basePassword.replace('USERID', '1');
+        const instructorUsername = baseUsername.replace('USERID', '101');
+        const instructorPassword = basePassword.replace('USERID', '101');
 
         addUserToInstructorsInCourse(artemisAdmin, instructorUsername, course.id);
 
@@ -92,7 +93,7 @@ export function setup() {
 
         createProgrammingExercise(artemis, undefined, exerciseGroup4, 'JAVA', false);
 
-        for (let i = 1; i <= iterations; i++) {
+        for (let i = 1 + userIdOffset; i <= iterations + userIdOffset; i++) {
             addUserToStudentsInExam(artemis, baseUsername.replace('USERID', i + userOffset), exam);
         }
 
@@ -133,7 +134,7 @@ export default function (data) {
     sleep(delay);
 
     group('Artemis Exam Stresstest', function () {
-        const userId = parseInt(__VU) + userOffset;
+        const userId = parseInt(__VU) + userOffset + userIdOffset;
         const currentUsername = baseUsername.replace('USERID', userId);
         const currentPassword = basePassword.replace('USERID', userId);
         const artemis = login(currentUsername, currentPassword);
@@ -241,8 +242,8 @@ export function teardown(data) {
     if (onlyPrepare) {
         return;
     }
-    const instructorUsername = baseUsername.replace('USERID', '1');
-    const instructorPassword = basePassword.replace('USERID', '1');
+    const instructorUsername = baseUsername.replace('USERID', '101');
+    const instructorPassword = basePassword.replace('USERID', '101');
 
     const artemis = login(instructorUsername, instructorPassword);
 

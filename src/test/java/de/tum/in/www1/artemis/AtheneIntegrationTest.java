@@ -17,6 +17,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.in.ase.athene.protobuf.AtheneResponse;
+import de.tum.in.ase.athene.protobuf.Segment;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextCluster;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -25,7 +27,6 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.TextBlockService;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
 
 public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -66,38 +67,27 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             database.addSubmission(exercise, submission, String.format("student%d", i + 1));
         }
 
-        final var requestBody = new AtheneDTO();
+        final var atheneResultBuilder = AtheneResponse.newBuilder();
 
-        final var textBlockDTOs = textSubmissions.stream().map(textBlockService::splitSubmissionIntoBlocks).flatMap(Collection::stream).map(block -> {
-            final var dto = new AtheneDTO.TextBlockDTO();
-            dto.setId(block.getId());
-            dto.setSubmissionId(block.getSubmission().getId());
-            dto.setText(block.getText());
-            dto.setStartIndex(block.getStartIndex());
-            dto.setEndIndex(block.getEndIndex());
-            return dto;
-        }).collect(Collectors.toList());
-        requestBody.setBlocks(textBlockDTOs);
+        final var segments = textSubmissions.stream().map(textBlockService::splitSubmissionIntoBlocks).flatMap(Collection::stream)
+                .map(block -> Segment.newBuilder().setId(block.getId()).setSubmissionId(block.getSubmission().getId().intValue()).setText(block.getText())
+                        .setStartIndex(block.getStartIndex()).setEndIndex(block.getEndIndex()).build())
+                .collect(Collectors.toList());
+        atheneResultBuilder.addAllSegments(segments);
 
-        final var clusterDTOs = List.of(0, 1, 2).stream().map(cid -> {
-            final var blocksInCluster = textBlockDTOs.subList(cid * 3, (cid + 1) * 3).stream().map(dto -> {
-                var block = new TextBlock();
-                block.setId(dto.getId());
-                return block;
-            }).collect(Collectors.toList());
-            final double[][] matrix = { { 0.0, 0.1, 0.2 }, { 0.1, 0.0, 0.2 }, { 0.2, 0.1, 0.0 } };
-            final double[] probabilities = { 0.9, 0.8, 0.7 };
+        List.of(0, 1, 2).forEach(cid -> {
+            var clusterBuilder = atheneResultBuilder.addClustersBuilder();
+            segments.subList(cid * 3, (cid + 1) * 3).forEach(segment -> clusterBuilder.addSegmentsBuilder().setId(segment.getId()).build());
 
-            final TextCluster cluster = new TextCluster();
-            cluster.setId(Long.valueOf(cid));
-            cluster.setBlocks(blocksInCluster);
-            cluster.setDistanceMatrix(matrix);
-            cluster.setProbabilities(probabilities);
-            return cluster;
-        }).collect(Collectors.toMap(cluster -> cluster.getId().intValue(), cluster -> cluster));
-        clusterDTOs.forEach((key, value) -> value.setId(null));
+            final float[][] matrix = { { 0.0f, 0.1f, 0.2f }, { 0.1f, 0.0f, 0.2f }, { 0.2f, 0.1f, 0.0f } };
+            for (int x = 0; x < matrix.length; x++) {
+                for (int y = 0; y < matrix[x].length; y++) {
+                    clusterBuilder.addDistanceMatrixBuilder().setX(x).setY(y).setValue(matrix[x][y]).build();
+                }
+            }
 
-        requestBody.setClusters(clusterDTOs);
+            clusterBuilder.build();
+        });
 
         List<Long> runningAtheneTasks = new ArrayList<>();
         runningAtheneTasks.add(exercise.getId());
@@ -105,7 +95,8 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         final HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.set("Authorization", atheneApiSecret);
-        request.postWithoutLocation(ATHENE_RESULT_API_PATH + exercise.getId(), requestBody, HttpStatus.OK, httpHeaders);
+        AtheneResponse atheneResponse = atheneResultBuilder.build();
+        request.postWithoutLocation(ATHENE_RESULT_API_PATH + exercise.getId(), atheneResponse.toByteArray(), HttpStatus.OK, httpHeaders, "application/x-protobuf");
 
         final List<TextCluster> clusters = textClusterRepository.findAllByExercise(exercise);
 
@@ -118,8 +109,8 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             for (int blockIndex = 0; blockIndex < blocks.size(); blockIndex++) {
                 TextBlock block = blocks.get(blockIndex);
                 assertThat(block.getAddedDistance(), greaterThan(1.65));
-                final TextBlock textBlockFromRequest = clusterDTOs.get(clusterIndex).getBlocks().get(blockIndex);
-                assertThat(block.getId(), is(equalTo(textBlockFromRequest.getId())));
+                Segment segment = atheneResponse.getClusters(clusterIndex).getSegmentsList().get(blockIndex);
+                assertThat(block.getId(), is(equalTo(segment.getId())));
                 var positionInCluster = ReflectionTestUtils.getField(block, "positionInCluster");
                 assertThat(positionInCluster, is(equalTo(blockIndex)));
             }

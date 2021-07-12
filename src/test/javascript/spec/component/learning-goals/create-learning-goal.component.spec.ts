@@ -2,14 +2,14 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { JhiAlertService } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { CreateLearningGoalComponent } from 'app/course/learning-goals/create-learning-goal/create-learning-goal.component';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -80,7 +80,8 @@ describe('CreateLearningGoal', () => {
         createLearningGoalComponentFixture.detectChanges();
         expect(createLearningGoalComponent).to.be.ok;
     });
-    it('should send POST request upon form submission and navigate', fakeAsync(() => {
+
+    it('should send POST request upon form submission and navigate', () => {
         const router: Router = TestBed.inject(Router);
         const learningGoalService = TestBed.inject(LearningGoalService);
 
@@ -119,5 +120,5 @@ describe('CreateLearningGoal', () => {
             expect(createStub).to.have.been.calledOnce;
             expect(navigateSpy).to.have.been.calledOnce;
         });
-    }));
+    });
 });

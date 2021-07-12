@@ -26,9 +26,20 @@ Course Info Bar
 .tab-bar-course-overview {
     // ensure enough vertical space below for absolutely positioned exercise controls
     // when tab bar is shown on course overview page
-    @media (max-width: 750px) {
+    @media (max-width: 1200px) {
         min-height: 100px;
         padding-bottom: 40px;
+    }
+
+    @media (max-width: 600px) {
+        min-height: 140px;
+        padding-bottom: 80px;
+    }
+}
+
+.exercise-controls {
+    @media (max-width: 600px) {
+        margin-top: -40px;
     }
 }
 
@@ -211,4 +222,21 @@ canvas#complete-chart {
     }
     border: none;
     border-radius: 1px;
+}
+
+/* Default the color to white even on bootstrap 5 */
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:disabled,
+.btn-info,
+.btn-info:hover,
+.btn-success,
+.btn-success:hover {
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .col-12 {
+        width: 100% !important;
+    }
 }

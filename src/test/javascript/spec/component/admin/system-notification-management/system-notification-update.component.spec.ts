@@ -1,20 +1,21 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import { spy } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../../test.module';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -29,7 +30,6 @@ describe('SystemNotificationManagementUpdateComponent', () => {
             data: of({ notification: { id: 1, title: 'test' } as SystemNotification }),
         },
     } as any as ActivatedRoute;
-    const router = { navigate() {} };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -40,18 +40,13 @@ describe('SystemNotificationManagementUpdateComponent', () => {
                 MockDirective(AlertErrorComponent),
                 MockDirective(FormDateTimePickerComponent),
             ],
-            providers: [
-                { provide: ActivatedRoute, useValue: route },
-                { provide: Router, useValue: router },
-            ],
-            schemas: [],
+            providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(ArtemisNavigationUtilService)],
         })
             .compileComponents()
             .then(() => {
                 updateComponentFixture = TestBed.createComponent(SystemNotificationManagementUpdateComponent);
                 updateComponent = updateComponentFixture.componentInstance;
-                service = updateComponentFixture.debugElement.injector.get(SystemNotificationService);
-                sinon.stub(router, 'navigate');
+                service = TestBed.inject(SystemNotificationService);
             });
     });
 

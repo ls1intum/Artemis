@@ -12,17 +12,18 @@
             ></fa-icon>
         </div>
     </div>
-    <canvas
-        class="col-md-9"
-        baseChart
-        height="250"
-        width="1500"
-        [datasets]="chartData"
-        [labels]="barChartLabels"
-        [options]="barChartOptions"
-        [legend]="barChartLegend"
-        [chartType]="lineChartType"
-    ></canvas>
+    <div class="col-md-9">
+        <canvas
+            baseChart
+            height="250"
+            width="1500"
+            [datasets]="chartData"
+            [labels]="barChartLabels"
+            [options]="barChartOptions"
+            [legend]="barChartLegend"
+            [chartType]="lineChartType"
+        ></canvas>
+    </div>
     <fa-icon
         *ngIf="exerciseAverageScores.length > 10 && exerciseAverageScores[10 + currentPeriod] != null"
         [icon]="'arrow-right'"

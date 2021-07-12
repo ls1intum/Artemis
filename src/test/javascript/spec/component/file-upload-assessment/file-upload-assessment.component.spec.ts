@@ -38,7 +38,7 @@ import { By } from '@angular/platform-browser';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { Complaint } from 'app/entities/complaint.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import * as sinon from 'sinon';
@@ -69,6 +69,15 @@ describe('FileUploadAssessmentComponent', () => {
     const params1 = { exerciseId: 20, courseId: 123, submissionId: 7 };
     const params2 = { exerciseId: 20, courseId: 123, submissionId: 'new' };
 
+    const resultWithComplaint = {
+        id: 55,
+        hasComplaint: true,
+        complaint: { id: 555, complaintText: 'complaint', complaintType: ComplaintType.COMPLAINT },
+    };
+    const submissionWithResultsAndComplaint = {
+        id: 20,
+        results: [resultWithComplaint],
+    } as FileUploadSubmission;
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [
@@ -190,7 +199,6 @@ describe('FileUploadAssessmentComponent', () => {
             const complaint = new Complaint();
             complaint.id = 0;
             complaint.complaintText = 'complaint';
-            complaint.resultBeforeComplaint = 'result';
             stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
             stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
             comp.submission = submission;
@@ -571,12 +579,9 @@ describe('FileUploadAssessmentComponent', () => {
 
     describe('getComplaint', () => {
         it('should get Complaint', () => {
-            comp.result = createResult(comp.submission);
-            comp.result.hasComplaint = true;
-            const complaint = new Complaint();
-            complaint.id = 0;
-            complaint.complaintText = 'complaint';
-            complaint.resultBeforeComplaint = 'result';
+            comp.submission = submissionWithResultsAndComplaint;
+            comp.result = resultWithComplaint;
+            const complaint = resultWithComplaint.complaint;
             stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
             expect(comp.complaint).to.be.undefined;
             comp.getComplaint();
@@ -591,7 +596,8 @@ describe('FileUploadAssessmentComponent', () => {
             expect(comp.complaint).to.be.undefined;
         });
         it('should get error', () => {
-            comp.result = createResult(comp.submission);
+            comp.submission = submissionWithResultsAndComplaint;
+            comp.result = resultWithComplaint;
             const alertServiceSpy = sinon.spy(alertService, 'error');
             const errorResponse = new HttpErrorResponse({ error: { message: 'Forbidden' }, status: 403 });
             stub(complaintService, 'findByResultId').returns(throwError(errorResponse));

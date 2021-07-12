@@ -223,7 +223,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // called by build output
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnce;
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledWithExactly(participation.results![0].id);
+        expect(getFeedbackDetailsForResultStub).to.have.been.calledWithExactly(participation.id!, participation.results![0].id);
     };
 
     const loadFile = (fileName: string, fileContent: string) => {
@@ -300,7 +300,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnce;
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledWithExactly(participation.results![0].id);
+        expect(getFeedbackDetailsForResultStub).to.have.been.calledWithExactly(participation.id!, participation.results![0].id);
 
         setTimeout(() => {
             // called by build output

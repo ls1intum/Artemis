@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { lastValueFrom } from 'rxjs';
 
 export interface FileUploadResponse {
     path?: string;
@@ -49,7 +50,7 @@ export class FileUploaderService {
         formData.append('file', file, fileName);
         const keepFileName: boolean = !!options && options.keepFileName;
         const url = `/api/fileUpload?keepFileName=${keepFileName}`;
-        return this.http.post<FileUploadResponse>(url, formData).toPromise();
+        return lastValueFrom(this.http.post<FileUploadResponse>(url, formData));
     }
 
     /**
@@ -84,7 +85,7 @@ export class FileUploaderService {
         formData.append('file', file, fileName);
         const keepFileName: boolean = !!options && options.keepFileName;
         const url = `/api/markdown-file-upload?keepFileName=${keepFileName}`;
-        return this.http.post<FileUploadResponse>(url, formData).toPromise();
+        return lastValueFrom(this.http.post<FileUploadResponse>(url, formData));
     }
 
     /**
@@ -93,13 +94,13 @@ export class FileUploaderService {
      */
     async duplicateFile(filePath: string): Promise<FileUploadResponse> {
         // Get file from the server using filePath,
-        const file = await this.http.get(filePath, { responseType: 'blob' }).toPromise();
+        const file = await lastValueFrom(this.http.get(filePath, { responseType: 'blob' }));
         // Generate a temp file name with extension. File extension is necessary as server stores only specific kind of files,
         const tempFilename = 'temp' + filePath.split('/').pop()!.split('#')[0].split('?')[0];
         const formData = new FormData();
         formData.append('file', file, tempFilename);
         // Upload the file to server. This will make a new file in the server in the temp folder
         // and will return path of the file,
-        return await this.http.post<FileUploadResponse>(`/api/fileUpload?keepFileName=${false}`, formData).toPromise();
+        return await lastValueFrom(this.http.post<FileUploadResponse>(`/api/fileUpload?keepFileName=${false}`, formData));
     }
 }

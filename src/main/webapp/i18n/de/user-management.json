@@ -1,18 +1,18 @@
 {
     "userManagement": {
         "home": {
-            "title": "Benutzer",
-            "createLabel": "Neuen Benutzer erstellen",
-            "createOrEditLabel": "Benutzer erstellen oder bearbeiten"
+            "title": "Nutzer:in",
+            "createLabel": "Nutzer:in erstellen",
+            "createOrEditLabel": "Nutzer:in erstellen oder bearbeiten"
         },
-        "created": "Ein neuer Benutzer wurde mit ID {{ param }} erstellt",
-        "updated": "Ein Benutzer mit ID {{ param }} wurde geändert",
-        "deleted": "Ein Benutzer mit ID {{ param }} wurde gelöscht",
+        "created": "Nutzer:in wurde mit ID {{ param }} erstellt",
+        "updated": "Nutzer:in mit ID {{ param }} wurde geändert",
+        "deleted": "Nutzer:in mit ID {{ param }} wurde gelöscht",
         "delete": {
-            "question": "Soll der Benutzer <strong>{{ title }}</strong> wirklich gelöscht werden?"
+            "question": "Soll Nutzer:in <strong>{{ title }}</strong> wirklich gelöscht werden?"
         },
         "detail": {
-            "title": "Benutzer"
+            "title": "User"
         },
         "login": "Login",
         "firstName": "Vorname",
@@ -24,7 +24,7 @@
         "groups": "Gruppen",
         "addGroup": "+ Gruppe",
         "enterGroup": "Gruppe eingeben",
-        "organizations": "Benutzer Organisationen",
+        "organizations": "Nutzer:in Organisationen",
         "email": "E-Mail",
         "activated": "Aktiv",
         "deactivated": "Deaktiviert",
@@ -34,7 +34,7 @@
         "createdDate": "Erstellt am",
         "lastModifiedBy": "Bearbeitet von",
         "lastModifiedDate": "Zuletzt bearbeitet",
-        "searchForUser": "Suche nach Nutzern: ",
+        "searchForUser": "Suche nach Nutzer:innen: ",
         "search": "Suche",
         "loading": "Laden...",
         "searchError": "Der Suchbegriff muss leer oder mindestens 3 Zeichen lang sein."

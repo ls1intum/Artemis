@@ -1,7 +1,7 @@
 {
     "global": {
         "title": "Artemis",
-        "browsehappy": "You are using an <strong>outdated</strong> browser. Please <a href=\"http://browsehappy.com/?locale=en\">upgrade your browser</a> to improve your experience.",
+        "browsehappy": "You are using an <strong>outdated</strong> browser. Please <a href=\"http://browsehappy.com/?locale=en\">update your browser</a> to improve your experience.",
         "generic": {
             "yes": "Yes",
             "no": "No",
@@ -23,7 +23,7 @@
                 "textExercise": "Text Exercise",
                 "fileUploadExercise": "File Upload Exercise",
                 "programmingExercise": "Programming Exercise",
-                "modelingExercise": "Modeling Exercise",
+                "modelingExercise": "Modelling Exercise",
                 "quizExercise": "Quiz Exercise",
                 "lecture": "Lecture",
                 "ltiOutcomeUrl": "Lti Outcome Url",
@@ -40,7 +40,7 @@
                 "exerciseResult": "Exercise Result",
                 "feedback": "Feedback",
                 "submission": "Submission",
-                "modelingSubmission": "Modeling Submission",
+                "modelingSubmission": "Modelling Submission",
                 "quizSubmission": "Quiz Submission",
                 "programmingSubmission": "Programming Submission",
                 "textSubmission": "Text Submission",
@@ -130,7 +130,7 @@
                     "suffix": ", you can try the default accounts:<br>- Administrator (login=\"admin\" and password=\"admin\") <br>- User (login=\"user\" and password=\"user\")."
                 },
                 "register": {
-                    "noaccount": "You don't have an account yet?",
+                    "noaccount": "Don't have an account yet?",
                     "link": "Register a new account"
                 }
             },
@@ -204,11 +204,11 @@
             "submit": "Submit",
             "submitTooltip": "You can submit multiple times until the exercise deadline. Your last submission will count towards your score.",
             "submitNoDeadlineTooltip": "You can submit multiple times. Your last submission will count towards your score.",
-            "submitDeadlineMissedTooltip": "The deadline has expired. Your submissions will not get graded!",
-            "deadlineMissedTooltip": "The deadline has expired. You can no longer submit any solutions!",
+            "submitDeadlineMissedTooltip": "The deadline has passed. Your submissions will not be graded!",
+            "deadlineMissedTooltip": "The deadline has passed. You may no longer submit any solutions!",
             "submitDeadlineMissed": "Submit (deadline missed)",
             "submitSuccessfulAlert": "Your submission was successful! You can change your submission or wait for your feedback.",
-            "submitDeadlineMissedAlert": "Your submission was successful! You can change your submission or wait for your feedback. As you missed the deadline the score will not be counted.",
+            "submitDeadlineMissedAlert": "Your submission was successful! You can change your submission or wait for your feedback. As you missed the deadline, your score will not be counted.",
             "retry": "Retry",
             "reset": "Reset",
             "re-evaluate": "Re-evaluate",
@@ -227,7 +227,7 @@
             "newResult": "New Result",
             "updateResult": "Update Result",
             "viewResult": "View Result",
-            "cleanupBuildPlan": "Cleanup Build Plan",
+            "cleanupBuildPlan": "Clean up Build Plan",
             "registerForCourse": "Register For Course",
             "exercise": "Exercises",
             "scores": "Scores",
@@ -235,7 +235,7 @@
             "manageHints": "Manage Hints",
             "addExternalSubmission": "Add External Submission",
             "addAuxiliaryRepository": "Add Auxiliary Repository",
-            "questionsAndAnswers": "Q&A",
+            "discussion": "Discussions",
             "toggleToUnsubmitted": "Change Student Exam to Unsubmitted",
             "toggleToSubmitted": "Change Student Exam to Submitted"
         },
@@ -271,14 +271,15 @@
             "required": "This field is required.",
             "minlength": "This field is required to be at least {{ min }} characters.",
             "maxlength": "This field cannot be longer than {{ max }} characters.",
-            "min": "This field should be at least {{ min }}.",
+            "min": "This field must be at least {{ min }}.",
             "max": "This field cannot be more than {{ max }}.",
-            "minbytes": "This field should be at least {{ min }} bytes.",
+            "minbytes": "This field must be at least {{ min }} bytes.",
             "maxbytes": "This field cannot be more than {{ max }} bytes.",
-            "pattern": "This field should follow pattern for {{ pattern }}.",
-            "number": "This field should be a number.",
-            "datetimelocal": "This field should be a date and time.",
-            "patternLogin": "This field can only contain letters, digits and e-mail addresses."
+            "pattern": "This field must fulfill the pattern {{ pattern }}.",
+            "number": "This field must be a number.",
+            "datetimelocal": "This field must be a date and time.",
+            "patternLogin": "This field may only contain letters, digits and e-mail addresses.",
+            "invalidPattern": "This field contains an invalid e-mail pattern."
         }
     },
     "error": {
@@ -287,7 +288,7 @@
         "url.not.found": "Not found",
         "NotNull": "Field {{ fieldName }} cannot be empty!",
         "Size": "Field {{ fieldName }} does not meet min/max size requirements!",
-        "userexists": "Login name already used!",
+        "userexists": "Login name already in use!",
         "emailexists": "Email is already in use!",
         "idexists": "A new {{ entityName }} cannot already have an ID",
         "missingname": "A new {{entityName}} needs a name",

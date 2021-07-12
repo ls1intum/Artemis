@@ -29,7 +29,7 @@
             "invalidText": "Diese Frage ist ungültig und wird daher als komplett richtig gelöst bewertet",
             "retry": " Wiederholen",
             "loading": "Warten bis das Bild geladen wurde.",
-            "failed": "Es tut uns leid, dass das Bild nicht geladen werden konnte. Bitte versuchen es erneut indem du auch den Button klickst.",
+            "failed": "Es tut uns leid, dass das Bild nicht geladen werden konnte. Bitte versuche es erneut, indem du auf den Button klickst.",
             "showSampleSolution": "Blende die Musterlösung ein",
             "hideSampleSolution": "Blende die Musterlösung aus",
             "allOptions": "Wähle bitte alle richtigen Antwortmöglichkeiten aus."

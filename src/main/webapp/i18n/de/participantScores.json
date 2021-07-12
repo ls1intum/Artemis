@@ -1,11 +1,11 @@
 {
     "artemisApp": {
         "participantScores": {
-            "pageTitle": "Teilnehmer Ergebnisse",
+            "pageTitle": "Teilnahmeergebnisse",
             "participantScoreDTO": {
                 "id": "Id",
-                "userId": "Nutzer Id",
-                "userName": "Nutzername",
+                "userId": "Nutzer:in Id",
+                "userName": "Login",
                 "teamId": "Team Id",
                 "teamName": "Team Name",
                 "exerciseId": "Aufgaben Id",
@@ -18,7 +18,7 @@
                 "lastRatedPoints": "Letzten bewerteten Punkte"
             },
             "participantScoreAverageDTO": {
-                "userName": "Nutzername",
+                "userName": "Login",
                 "teamName": "Team Name",
                 "averageScore": "Durchschnittliches Ergebnis",
                 "averageRatedScore": "Durchschnittliches bewertetes Ergebnis",
@@ -27,7 +27,7 @@
             },
             "average": "Durchschnittswerte",
             "individual": "Individuelle Werte",
-            "searchForStudentsOrTeam": "Suche nach Student oder Team",
+            "searchForStudentsOrTeam": "Suche nach Studierende:r oder Team",
             "averageScore": "Durchschnittliches Ergebnis: {{avg}}%",
             "averageRatedScore": "Durchschnittliches bewertetes Ergebnis: {{avg}}%",
             "notIncluded": "Optionale Aufgaben nicht miteingerechnet!"

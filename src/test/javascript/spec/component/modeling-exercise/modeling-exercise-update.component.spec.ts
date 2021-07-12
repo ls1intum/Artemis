@@ -19,8 +19,6 @@ import { MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
 
 describe('ModelingExercise Management Update Component', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -28,7 +26,6 @@ describe('ModelingExercise Management Update Component', () => {
     let service: ModelingExerciseService;
     let courseService: CourseManagementService;
     let exerciseService: ExerciseService;
-    let exampleSubmissionService: ExampleSubmissionService;
     const categories = [{ category: 'testCat' }, { category: 'testCat2' }];
     const categoriesStringified = categories.map((cat) => JSON.stringify(cat));
 
@@ -51,56 +48,65 @@ describe('ModelingExercise Management Update Component', () => {
         service = fixture.debugElement.injector.get(ModelingExerciseService);
         courseService = fixture.debugElement.injector.get(CourseManagementService);
         exerciseService = fixture.debugElement.injector.get(ExerciseService);
-        exampleSubmissionService = fixture.debugElement.injector.get(ExampleSubmissionService);
     });
 
     describe('save', () => {
-        it('Should call update service on save for existing entity', fakeAsync(() => {
-            // GIVEN
-            const entity = new ModelingExercise(UMLDiagramType.ActivityDiagram, undefined, undefined);
-            entity.id = 123;
-            spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
-            comp.modelingExercise = entity;
-            comp.modelingExercise.course = { id: 1 } as Course;
-            // WHEN
-            comp.save();
-            tick(); // simulate async
+        describe('new exercise', () => {
+            const course = { id: 1 } as Course;
+            const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            modelingExercise.course = course;
 
-            // THEN
-            expect(service.update).toHaveBeenCalledWith(entity, {});
-            expect(comp.isSaving).toEqual(false);
-        }));
+            beforeEach(() => {
+                const route = TestBed.inject(ActivatedRoute);
+                route.data = of({ modelingExercise });
+                route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
+            });
 
-        it('Should call create service on save for new entity', fakeAsync(() => {
-            // GIVEN
-            const entity = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
-            spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
-            comp.modelingExercise = entity;
-            comp.modelingExercise.course = { id: 1 } as Course;
-            // WHEN
-            comp.save();
-            tick(); // simulate async
+            it('Should call create service on save for new entity', fakeAsync(() => {
+                // GIVEN
+                comp.ngOnInit();
 
-            // THEN
-            expect(service.create).toHaveBeenCalledWith(entity);
-            expect(comp.isSaving).toEqual(false);
-        }));
+                const entity = { ...modelingExercise };
+                spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
 
-        it('Should trim the exercise title before saving', fakeAsync(() => {
-            // GIVEN
-            const entity = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
-            entity.title = 'My Exercise   ';
-            spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
-            comp.modelingExercise = entity;
-            comp.modelingExercise.course = { id: 1 } as Course;
-            // WHEN
-            comp.save();
-            tick(); // simulate async
+                // WHEN
+                comp.save();
+                tick(1000); // simulate async
 
-            // THEN
-            expect(service.create).toHaveBeenCalledWith(entity);
-            expect(entity.title).toEqual('My Exercise');
-        }));
+                // THEN
+                expect(service.create).toHaveBeenCalledWith(entity);
+                expect(comp.isSaving).toEqual(false);
+            }));
+        });
+
+        describe('existing exercise', () => {
+            const course = { id: 1 } as Course;
+            const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            modelingExercise.course = course;
+            modelingExercise.id = 123;
+
+            beforeEach(() => {
+                const route = TestBed.inject(ActivatedRoute);
+                route.data = of({ modelingExercise });
+                route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
+            });
+
+            it('Should call update service on save for existing entity', fakeAsync(() => {
+                // GIVEN
+                comp.ngOnInit();
+
+                const entity = { ...modelingExercise };
+                spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
+
+                // WHEN
+                comp.save();
+                tick(); // simulate async
+
+                // THEN
+                expect(service.update).toHaveBeenCalledWith(entity, {});
+                expect(comp.isSaving).toEqual(false);
+            }));
+        });
     });
 
     describe('ngOnInit in import mode: Course to Course', () => {
@@ -266,18 +272,4 @@ describe('ModelingExercise Management Update Component', () => {
         comp.getCheckedFlag(false);
         expect(comp.checkedFlag).toBe(false);
     });
-
-    it('should delete example submission', fakeAsync(() => {
-        comp.modelingExercise = new ModelingExercise(UMLDiagramType.Flowchart, undefined, undefined);
-        const exampleSubmission1 = new ExampleSubmission();
-        exampleSubmission1.id = 1;
-        const exampleSubmission2 = new ExampleSubmission();
-        exampleSubmission2.id = 2;
-        comp.modelingExercise.exampleSubmissions = [exampleSubmission1, exampleSubmission2];
-        spyOn(exampleSubmissionService, 'delete').and.returnValue(of(new HttpResponse({})));
-        comp.deleteExampleSubmission(2, 1);
-        tick();
-        expect(exampleSubmissionService.delete).toHaveBeenCalledWith(2);
-        expect(comp.modelingExercise.exampleSubmissions).toEqual([exampleSubmission1]);
-    }));
 });

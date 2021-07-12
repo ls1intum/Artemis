@@ -6,7 +6,7 @@
         <ng-container *ngIf="instructorView">
             {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | artemisTranslate: { examTitle: studentExam.exam!.title!, studentName: studentExam.user!.name! } }}
         </ng-container>
-        <button id="exportToPDFButton" class="btn btn-primary float-right" (click)="printPDF()">
+        <button id="exportToPDFButton" class="btn btn-primary float-end" (click)="printPDF()">
             <fa-icon [icon]="'print'"></fa-icon>
             <span jhiTranslate="artemisApp.exam.examSummary.exportPDF">Export PDF</span>
         </button>
@@ -36,7 +36,7 @@
                     exercise.studentParticipations![0].submissions![0].type === SUBMISSION_TYPE_ILLEGAL
                 "
             >
-                <span class="badge badge-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
+                <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
             </div>
             <div *ngIf="resultsPublished && exercise.studentParticipations?.length">
                 <jhi-result [participation]="exercise.studentParticipations![0]"></jhi-result>
@@ -53,7 +53,7 @@
         </div>
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise.id!)">
             <div *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && resultsPublished">
-                <a *ngIf="exercise.studentParticipations?.length" class="btn btn-primary float-right" [routerLink]="generateLink(exercise)">
+                <a *ngIf="exercise.studentParticipations?.length" class="btn btn-primary float-end" [routerLink]="generateLink(exercise)">
                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                     <span jhiTranslate="artemisApp.exam.examSummary.viewResult">&nbsp;View Result</span>
                 </a>
@@ -102,7 +102,7 @@
                     </ng-container>
                     <jhi-complaint-interactions
                         *ngIf="getSubmissionForExercise(exercise) && exercise.type !== QUIZ && isAfterStudentReviewStart()"
-                        class="mb-2 mt-2 ml-3"
+                        class="mb-2 mt-2 ms-3"
                         [exercise]="exercise"
                         [participation]="getParticipationForExercise(exercise)!"
                         [exam]="examWithOnlyIdAndStudentReviewPeriod"
@@ -123,7 +123,7 @@
                 </ng-container>
                 <jhi-complaint-interactions
                     *ngIf="exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && getSubmissionForExercise(exercise) && isAfterStudentReviewStart()"
-                    class="mb-2 mt-2 ml-3"
+                    class="mb-2 mt-2 ms-3"
                     [exercise]="exercise"
                     [participation]="getParticipationForExercise(exercise)!"
                     [exam]="examWithOnlyIdAndStudentReviewPeriod"

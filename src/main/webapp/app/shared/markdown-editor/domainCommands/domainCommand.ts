@@ -30,10 +30,12 @@ export abstract class DomainCommand extends Command {
             regex = this.getTagRegex('g');
 
         const indexes: Array<{ matchStart: number; matchEnd: number; innerTagContent: string }> = [];
-        let match;
+
         // A line can have multiple tags in it, so we need to check for multiple matches.
-        while ((match = regex.exec(line))) {
+        let match = regex.exec(line);
+        while (match != undefined) {
             indexes.push({ matchStart: match.index, matchEnd: match.index + match[0].length, innerTagContent: match[1] });
+            match = regex.exec(line);
         }
         const matchOnCursor = indexes.find(({ matchStart, matchEnd }) => column > matchStart && column <= matchEnd);
         return matchOnCursor || null;

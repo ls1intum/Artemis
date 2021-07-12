@@ -83,7 +83,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
     generateMarkdown(): string {
         let markdownText = '';
-        if (this.criteria === undefined || this.criteria.length === 0) {
+        if (this.criteria == undefined || this.criteria.length === 0) {
             this.criteria = [];
             const dummyCriterion = new GradingCriterion();
             const exampleCriterion = new GradingCriterion();
@@ -96,7 +96,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             this.criteria.push(exampleCriterion);
         }
         for (const criterion of this.criteria) {
-            if (criterion.title === null || criterion.title === undefined) {
+            if (criterion.title == undefined) {
                 // if it is a dummy criterion, leave out the command identifier
                 markdownText += this.generateInstructionsMarkdown(criterion);
             } else {
@@ -112,7 +112,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      */
     generateInstructionsMarkdown(criterion: GradingCriterion): string {
         let markdownText = '';
-        if (criterion.structuredGradingInstructions === undefined || criterion.structuredGradingInstructions.length === 0) {
+        if (criterion.structuredGradingInstructions == undefined || criterion.structuredGradingInstructions.length === 0) {
             this.instructions = [];
             const newInstruction = new GradingInstruction();
             this.instructions.push(newInstruction);
@@ -149,7 +149,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     generateCreditsText(instruction: GradingInstruction): string {
-        if (instruction.credits === undefined) {
+        if (instruction.credits == undefined) {
             instruction.credits = parseFloat(CreditsCommand.text);
             return CreditsCommand.identifier + ' ' + CreditsCommand.text;
         }
@@ -157,7 +157,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     generateGradingScaleText(instruction: GradingInstruction): string {
-        if (instruction.gradingScale === undefined) {
+        if (instruction.gradingScale == undefined) {
             instruction.gradingScale = GradingScaleCommand.text;
             return GradingScaleCommand.identifier + ' ' + GradingScaleCommand.text;
         }
@@ -165,7 +165,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     generateInstructionDescriptionText(instruction: GradingInstruction): string {
-        if (instruction.instructionDescription === undefined) {
+        if (instruction.instructionDescription == undefined) {
             instruction.instructionDescription = InstructionDescriptionCommand.text;
             return InstructionDescriptionCommand.identifier + ' ' + InstructionDescriptionCommand.text;
         }
@@ -173,7 +173,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     generateInstructionFeedback(instruction: GradingInstruction): string {
-        if (instruction.feedback === undefined) {
+        if (instruction.feedback == undefined) {
             instruction.feedback = FeedbackCommand.text;
             return FeedbackCommand.identifier + ' ' + FeedbackCommand.text;
         }
@@ -181,7 +181,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     generateUsageCount(instruction: GradingInstruction): string {
-        if (instruction.usageCount === undefined) {
+        if (instruction.usageCount == undefined) {
             instruction.usageCount = parseInt(UsageCountCommand.text, 10);
             return UsageCountCommand.identifier + ' ' + UsageCountCommand.text;
         }
@@ -259,7 +259,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      */
     groupInstructionsToCriteria(domainCommands: [string, DomainCommand | null][]): void {
         const initialCriteriaCommands = domainCommands;
-        if (this.exercise.gradingCriteria === undefined) {
+        if (this.exercise.gradingCriteria == undefined) {
             this.exercise.gradingCriteria = [];
         }
         for (const [text, command] of domainCommands) {
@@ -298,6 +298,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     setInstructionParameters(domainCommands: [string, DomainCommand | null][]): void {
         let index = 0;
         for (const [text, command] of domainCommands) {
+            if (!this.instructions[index]) {
+                break;
+            }
             if (command instanceof CreditsCommand) {
                 this.instructions[index].credits = parseFloat(text);
             } else if (command instanceof GradingScaleCommand) {
@@ -335,8 +338,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param {GradingCriterion} criteria
      */
     onInstructionChange(domainCommands: [string, DomainCommand | null][], instruction: GradingInstruction): void {
-        this.instructions = [];
-        this.instructions.push(instruction);
+        this.instructions = [instruction];
         this.setInstructionParameters(domainCommands);
     }
 
@@ -349,18 +351,22 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     resetInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
         const criterionIndex = this.findCriterionIndex(criterion, this.exercise);
         const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
+        const instructionIndex = this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
+        let backupInstructionIndex = undefined;
 
         if (backupCriterionIndex >= 0) {
-            const instructionIndex = this.findInstructionIndex(instruction, this.exercise, criterionIndex);
-            const backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriterionIndex);
+            backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriterionIndex);
 
-            if (backupInstructionIndex >= 0) {
+            if (backupInstructionIndex != undefined && backupInstructionIndex >= 0) {
                 this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions![instructionIndex] = cloneDeep(
                     this.backupExercise.gradingCriteria![backupCriterionIndex].structuredGradingInstructions![backupInstructionIndex],
                 );
-                this.initializeMarkdown();
             }
         }
+        if (backupCriterionIndex < 0 || backupInstructionIndex == undefined || backupInstructionIndex < 0) {
+            this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions![instructionIndex] = new GradingInstruction();
+        }
+        this.initializeMarkdown();
     }
 
     findCriterionIndex(criterion: GradingCriterion, exercise: Exercise) {
@@ -370,8 +376,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     findInstructionIndex(instruction: GradingInstruction, exercise: Exercise, criterionIndex: number) {
-        return exercise.gradingCriteria![criterionIndex].structuredGradingInstructions?.findIndex((sgi) => {
-            return sgi.id === instruction.id;
+        return exercise.gradingCriteria![criterionIndex].structuredGradingInstructions?.findIndex((gradingInstruction) => {
+            return gradingInstruction.id === instruction.id;
         });
     }
 
@@ -439,6 +445,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
         if (backupCriterionIndex >= 0) {
             this.exercise.gradingCriteria![criterionIndex].title = cloneDeep(this.backupExercise.gradingCriteria![backupCriterionIndex].title);
+        } else {
+            criterion.title = '';
         }
     }
 

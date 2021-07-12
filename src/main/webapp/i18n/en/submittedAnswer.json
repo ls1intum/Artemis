@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Submitted Answer",
                 "createOrEditLabel": "Create or edit a Submitted Answer"
             },
-            "created": "A new Submitted Answer is created with identifier {{ param }}",
-            "updated": "A Submitted Answer is updated with identifier {{ param }}",
-            "deleted": "A Submitted Answer is deleted with identifier {{ param }}",
+            "created": "Created new Submitted Answer with identifier {{ param }}",
+            "updated": "Updated Submitted Answer with identifier {{ param }}",
+            "deleted": "Deleted Submitted Answer with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Submitted Answer {{ id }}?"
             },

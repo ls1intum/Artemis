@@ -4,15 +4,16 @@
             <h3 class="col-md-8 d-flex">{{ 'statistics.score_distribution' | artemisTranslate }}</h3>
         </div>
     </div>
-    <canvas
-        class="col-md-9"
-        baseChart
-        height="250"
-        width="1500"
-        [datasets]="chartData"
-        [labels]="barChartLabels"
-        [options]="barChartOptions"
-        [legend]="chartLegend"
-        [chartType]="barChartType"
-    ></canvas>
+    <div class="col-md-9">
+        <canvas
+            baseChart
+            height="250"
+            width="1500"
+            [datasets]="chartData"
+            [labels]="barChartLabels"
+            [options]="barChartOptions"
+            [legend]="chartLegend"
+            [chartType]="barChartType"
+        ></canvas>
+    </div>
 </div>

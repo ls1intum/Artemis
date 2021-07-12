@@ -1,20 +1,21 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
+import { onError } from 'app/shared/util/global.utils';
+import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -36,6 +37,8 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     domainCommandsSampleSolution = [new KatexCommand()];
     domainCommandsGradingInstructions = [new KatexCommand()];
 
+    saveCommand: SaveExerciseCommand<FileUploadExercise>;
+
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
         private modalService: NgbModal,
@@ -44,8 +47,12 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
-        private router: Router,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
+
+    get editType(): EditType {
+        return this.fileUploadExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
+    }
 
     /**
      * Initializes information relevant to file upload exercise
@@ -68,52 +75,33 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                     (categoryRes: HttpResponse<string[]>) => {
                         this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                     },
-                    (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                    (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                 );
             }
+
+            this.saveCommand = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise, this.editType);
         });
     }
 
     /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state and we edited an existing exercise
-     * Returns to the overview page if there is no previous state and we created a new exercise
-     * Returns to the exercise group page if we are in exam mode
+     * Return to the previous page or a default if no previous page exists
      */
     previousState() {
-        navigateBackFromExerciseUpdate(this.router, this.fileUploadExercise);
+        this.navigationUtilService.navigateBackFromExerciseUpdate(this.fileUploadExercise);
     }
 
     save() {
-        if (this.fileUploadExercise.gradingInstructionFeedbackUsed) {
-            const ref = this.popupService.checkExerciseBeforeUpdate(this.fileUploadExercise, this.backupExercise);
-            if (!this.modalService.hasOpenModals()) {
-                this.saveExercise();
-            } else {
-                ref.then((reference) => {
-                    reference.componentInstance.confirmed.subscribe(() => {
-                        this.saveExercise();
-                    });
-                });
-            }
-        } else {
-            this.saveExercise();
-        }
-    }
-
-    /**
-     * Creates or updates file upload exercise
-     */
-    saveExercise() {
-        Exercise.sanitize(this.fileUploadExercise);
-
         this.isSaving = true;
-        if (this.fileUploadExercise.id !== undefined) {
-            this.subscribeToSaveResponse(this.fileUploadExerciseService.update(this.fileUploadExercise, this.fileUploadExercise.id));
-        } else {
-            this.subscribeToSaveResponse(this.fileUploadExerciseService.create(this.fileUploadExercise));
-        }
+
+        this.saveCommand.save(this.fileUploadExercise).subscribe(
+            () => this.onSaveSuccess(),
+            (res: HttpErrorResponse) => this.onSaveError(res),
+            () => {
+                this.isSaving = false;
+            },
+        );
     }
+
     /**
      * Validates if the date is correct
      */
@@ -126,13 +114,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      */
     updateCategories(categories: ExerciseCategory[]) {
         this.fileUploadExercise.categories = categories;
-    }
-
-    private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {
-        result.subscribe(
-            () => this.onSaveSuccess(),
-            (res: HttpErrorResponse) => this.onSaveError(res),
-        );
     }
 
     private onSaveSuccess() {
@@ -148,9 +129,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.isSaving = false;
     }
 
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
-    }
     /**
      * gets the flag of the structured grading instructions slide toggle
      */

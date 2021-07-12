@@ -21,14 +21,16 @@
                     "yourPoints": "Your points",
                     "maxPoints": "Points",
                     "bonus": "Bonus points",
-                    "youAchievedWithBonus": "You achieved {{achievedPoints}} points out of possible {{normalPoints}} normal points and {{bonusPoints}} bonus points",
-                    "youAchieved": "You achieved {{achievedPoints}} points out of possible {{normalPoints}} normal points",
-                    "maxPointsNotSet": "The exam max points are not set."
+                    "youAchievedWithBonus": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points and an additional {{bonusPoints}} bonus points",
+                    "youAchieved": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points",
+                    "maxPointsNotSet": "The maximum number of points in the exam is not set."
                 },
                 "grade": "Grade",
                 "bonus": "Bonus points for the final exam",
                 "interval": "Interval (%)",
-                "gradeKeyButton": "View Grade Key"
+                "intervalPoints": "Interval (Points)",
+                "gradeKeyButton": "View Grading Key",
+                "gradeKeyButtonBonus": "View Bonus Rules"
             },
             "title": "Exam",
             "startExam": "Start",
@@ -63,8 +65,8 @@
                 "atLeastOneExercisePerExerciseGroup": "All exercise groups must have at least one exercise.",
                 "allExercisesInExerciseGroupOfSameIncludedType": "All exercises in an exercise group need to have the same meaning for the exam score calculation (normal exercise, bonus exercise, not included).",
                 "allExercisesInExerciseGroupGiveSameNumberOfPoints": "All exercises in an exercise group need to give the same number of points or bonus points",
-                "tooManyMaxPoints": "Check that you set the exam max points correctly! The max points a student can earn in the mandatory exercise groups is too big",
-                "tooFewMaxPoints": "Check that you set the exam max points correctly! The max points a student can earn in the exercise groups is too low",
+                "tooManyMaxPoints": "Check that you have correctly set the maximum points in the exam! The maximum points a student can earn in the mandatory exercise groups is too high",
+                "tooFewMaxPoints": "Check that you have correctly set the maximum points in the exam! The maximum points a student can earn in the exercise groups is too low",
                 "numberOfExercisesMustBeSet": "The number of exercises must be set for the exam.",
                 "numberOfExercisesInExamNotSet": "The number of exercises in the exam is not set.",
                 "tooFewExerciseGroups": "The number of exercise groups is too small.",
@@ -72,7 +74,7 @@
                 "maxPointsNotSet": "The exam max points are not set."
             },
             "error": {
-                "cannotRegisterInstructor": "You cannot register instructors or administrators to exams."
+                "cannotRegisterInstructor": "You cannot register instructors or administrators for exams."
             }
         },
         "examScores": {
@@ -81,7 +83,11 @@
             "maxPoints": "Maximum Points",
             "title": "Exam Scores",
             "examStatisticsTitle": "Exam Statistics",
+            "ExerciseGroupsTitle": "Exercise Groups & Exercise Statistics",
+            "averagePointsTooltip": "Average points",
             "studentResultsTitle": "Student Results",
+            "firstCorrectionColumn": "First correction",
+            "secondCorrectionColumn": "Second correction",
             "titleExerciseGroupColumn": "Exercise Group",
             "titleExerciseColumn": "Exercise",
             "averagePointsColumn": "Average",
@@ -118,16 +124,22 @@
             "timer": "Time left: ",
             "timerEndView": "Time left to submit: ",
             "connected": "Your answers will be saved every 30s.",
-            "ideConnected": "",
-            "disconnected": "You are disconnected. Please check your Internet connection. You can continue working, but you need to be connected in order to save changes!",
-            "disconnectedCodeEditorAndOfflineIDE": "You are disconnected. Please check your Internet connection. You can still work offline by cloning the repository.",
+            "ideConnected": "Your answers have to be submitted manually.",
+            "disconnected": "You are disconnected. Please check your internet connection. You can continue working, but you need to be connected in order to save changes!",
+            "disconnectedCodeEditorAndOfflineIDE": "You are disconnected. Please check your internet connection. You can still work offline by cloning the repository.",
             "disconnectedCodeEditorNoOfflineIDE": "You are disconnected. Please reconnect in order to continue working in the online code editor.",
-            "disconnectedNoCodeEditor": "You are disconnected. Please check your Internet connection.",
+            "disconnectedNoCodeEditor": "You are disconnected. Please check your internet connection.",
             "waitForStart": "Please wait until the exam \"{{ title }}\" begins.",
             "timeUntilPlannedStart": "Time until planned start:",
             "finishExam": "Finish",
             "progress": "Exercise {{ current }} of {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
+            "exerciseType": "Type",
+            "examOverview": "Exam Overview",
+            "examStatus": "Status",
+            "examExercises": "Exam Exercises:",
+            "exercisePoints": "Points",
+            "exerciseName": "Name",
             "noStudentExam": "You are not registered for the exam {{ examTitle }}. Please contact your instructor.",
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
@@ -146,14 +158,14 @@
             "notSynced": "Exercise not saved",
             "submitted": "You have submitted a solution for this exercise. You can still work on it and submit again.",
             "notSubmitted": "Exercise not submitted",
-            "notSavedOrSubmitted": "You have unsaved/unsubmitted changes",
+            "notSavedOrSubmitted": "You have unsubmitted changes",
             "saveSubmissionError": "Your changes could not be saved! Please make sure that you are online and try saving again.",
             "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?",
             "handInEarly": "Hand in early",
             "continueAfterHandInEarly": "Continue",
             "continueAfterHandInEarlyDescription": "You don't want to hand in yet?",
-            "handInEarlyNotice": "You are about to hand in before the end of the exam.\nAfter finishing the exam you cannot participate any longer.",
-            "handInEarlyNoticeFirstSentence": "You are about to hand in before the end of the exam.",
+            "handInEarlyNotice": "You are about to hand in your submission before the end of the exam.\nAfter finishing the exam you cannot participate any longer.",
+            "handInEarlyNoticeFirstSentence": "You are about to hand in your submission before the end of the exam.",
             "handInEarlyNoticeSecondSentence": "After finishing the exam you cannot participate any longer.",
             "namePlaceholder": "Enter your full name here"
         },
@@ -199,7 +211,7 @@
             "studentExamStatusWarningTooltip": "Click on the button 'Generate missing individual exams' to create the missing student exams. Alternatively, click the button 'Generate individual exams' to delete and re-create exams for all students",
             "evaluateQuizExerciseSuccess": "{{number}} quiz exercises successfully evaluated!",
             "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}",
-            "assessUnsubmittedStudentExamsSuccess": "Reviewed all student exams and assessed the unsubmitted or empty modeling and text exercises with 0 points.",
+            "assessUnsubmittedStudentExamsSuccess": "Reviewed all student exams and assessed the unsubmitted or empty modelling and text exercises with 0 points.",
             "assessUnsubmittedStudentExamsFailure": "The exam is not over yet for all students",
             "unlockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were unlocked.",
             "unlockAllRepositoriesFailure": "There was an error during the unlocking of the programming exercises:\n {{message}}",
@@ -214,9 +226,9 @@
                 "titleToUnsubmitted": "Change Student Exam to Unsubmitted",
                 "titleToSubmitted": "Change Student Exam to Submitted",
                 "question": "Are you sure you want to change the submission state?",
-                "submitText": "This will set the submission date of the exam to this moment, and set the Submitted status to 'Yes'. Un-submitting the student exam later is possible.\n",
-                "unSubmitText": "This will delete the submission date and set the Submitted status to 'No'.",
-                "warningRemove": "<strong class='text-danger'>Recovering the original submission date after the deletion is not possible!</strong>",
+                "submitText": "This will set the submission date of the exam to this moment, and the submission state to 'submitted'. You will be allowed to un-submit the exam later.\n",
+                "unSubmitText": "This will delete the submission date and set the submission state to 'unsubmitted'.",
+                "warningRemove": "<strong class='text-danger'>Recovering the original submission date will not be possible after deletion!</strong>",
                 "submit": "Submit",
                 "unsubmit": "Unsubmit"
             }
@@ -238,7 +250,10 @@
             "courseName": "Course name",
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
-            "maxPoints": "Maximum number of points in exam",
+            "maxPoints": {
+                "title": "Maximum number of points for exam",
+                "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
+            },
             "numberOfExercisesInExam": "Number of exercises in exam",
             "numberOfCorrectionRoundsInExam": "Number of correction rounds in exam",
             "randomizeQuestionOrder": "Randomize order of exercise groups",
@@ -250,7 +265,7 @@
             "examChecklist": "Exam Checklist",
             "studentExams": "Student Exams",
             "students": "Students",
-            "gradingSystem": "Grade Key",
+            "gradingSystem": "Grading Key",
             "testRun": {
                 "testRun": "Test Run",
                 "title": "Test Run Management: ",
@@ -259,8 +274,8 @@
                 "setupHint": "Select an exercise for every exercise group by clicking on it.\n<strong>Note:</strong> If you have already created a test run with one of the exercises, the exercise will already contain a submission and result.",
                 "assess": "Assess Your Test Runs",
                 "manage": "Manage Working Time",
-                "text": "Here you can create a test run for the exam. Pick which exercises your exam should contain and run the conduction. Afterwards you will be able to assess your submissions and grade them as a tutor. You have the option to view the results and complain as a student. Additionally, you can also respond to the complaints about the assessment as a tutor.\n<strong>Note:</strong> Submissions made within test runs do not count towards the exam scores.",
-                "reminderToDelete": "Make sure to delete all Test Runs before the exam conduction. All test runs are automatically deleted if you assess the unsubmitted student exams and empty submissions.",
+                "text": "Here you can create a test run for the exam. Pick which exercises your exam should contain and begin. Afterwards you will be able to assess your submissions and grade them as a tutor. You have the option to view the results and complain as a student. Additionally, you can also respond to the complaints about the assessment as a tutor.\n<strong>Note:</strong> Submissions made within test runs do not count towards the exam scores.",
+                "reminderToDelete": "Make sure to delete all Test Runs before conducting the exam. All test runs are automatically deleted if you assess the unsubmitted student exams and empty submissions.",
                 "secondCorrectionHint": "Hint: The second correction does not apply to test runs.",
                 "createTestRunDisabled": "No exercises found",
                 "assessTestRunDisabled": "None of your test runs have ended",
@@ -286,13 +301,13 @@
                 "registerAllFromCourseTooltip": "Register all students enrolled in this course",
                 "removeFromExam": {
                     "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?",
-                    "deleteParticipationsAndSubmission": "Delete participations and submissions of this student in the associated exam?"
+                    "deleteParticipationsAndSubmission": "Delete this student's participation and submissions in the associated exam?"
                 },
                 "importStudents": {
                     "buttonLabel": "Import students",
                     "dialogTitle": "Import students into:",
                     "introText": "This dialog can be used to import students into this exam.",
-                    "dialogText": "Each entry in the input file must contain a value for either matriculation number or login.<br>Values for family and first name are optional.",
+                    "dialogText": "Each entry in the input file must contain a value for either matriculation number or login.<br>Values for last and first name are optional.",
                     "csvFile": {
                         "label": "Select .csv file",
                         "tooltip": "Please select the .csv file containing the students for the import. Either 'LOGIN' or 'REGISTRATION_NUMBER' column values must be present per entry."
@@ -318,30 +333,30 @@
                 "optional": "Optional",
                 "noExercises": "No exercises have been added yet.",
                 "delete": {
-                    "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises are also deleted.",
+                    "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will also be deleted.",
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
                 },
                 "addTextExercise": "Add Text Exercise",
                 "addQuizExercise": "Add Quiz",
                 "addFileUploadExercise": "Add File Upload Exercise",
-                "addModelingExercise": "Add Modeling Exercise",
+                "addModelingExercise": "Add Modelling Exercise",
                 "addProgrammingExercise": "Add Programming Exercise",
                 "orderCouldNotBeSaved": "The order could not be saved"
             },
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the Exam to confirm."
+                "typeNameToConfirm": "Please type in the name of the exam to confirm."
             },
             "checklist": {
-                "title": "Exam Conduction Checklist",
-                "introduction": "You can find a detailed documentation with screenshots about the exam mode in the",
+                "title": "Exam Checklist",
+                "introduction": "You can find detailed documentation with screenshots about the exam mode in the",
                 "linkDescription": "Instructors Guide",
                 "checklistItem": "Task",
                 "description": "Description",
                 "status": "Current status",
                 "goTo": "Page",
                 "tableItem": {
-                    "register": "Register students to the exam",
+                    "register": "Register students for the exam",
                     "exerciseGroups": "Create at least one exercise group with exercises",
                     "generateStudentExams": "Generate all student exams",
                     "prepareExerciseStart": "Prepare exercise start",
@@ -355,16 +370,16 @@
                     "exportResults": "Export the exam results"
                 },
                 "descriptionItem": {
-                    "register": "You can register students to the exam in three different ways: via a .csv file, by hand or you can import all students registered to the exam's course.",
+                    "register": "You can register students for the exam in three different ways: via a .csv file, manually, or by importing all students registered in the course.",
                     "exerciseGroups": "You can create exercise groups with multiple exercise variants to make cheating for students more difficult. The points in all exercises within a given exercise group must be identical, and the number of exercise groups must equal the exam's number of exercises.",
-                    "generateStudentExams": "Student exams must be generated for all registered students before starting the exam. Their working time can be adjusted individually.\nAdditionally the commits of the templates in programming exercises get combined into one commit.",
+                    "generateStudentExams": "Student exams must be generated for all registered students before starting the exam. Their working time can be adjusted individually.\nAdditionally, the commits of the templates in programming exercises will be combined into one commit.",
                     "prepareExerciseStart": "Preparing the exercises can reduce load on the server during the exam.",
                     "examDetails": "Before conducting an exam, please make sure to have filled out all exam details. (Start text, dates, etc.)",
-                    "conductExam": "On the student exam page you can see which students already submitted their exam.",
+                    "conductExam": "On the student exam page you can see which students have already submitted their exam.",
                     "assessAllSubmissions": "The number of correction rounds per exercise depends on the exam's number of correction rounds.",
                     "publishResults": "Publishing the results makes them available to students. Student exams are published on the publishing date for results within the exam.",
                     "examReview": "Make sure to have all dates specified correctly.",
-                    "resolveComplaints": "Complaints can be resolved within the Assessment Dashboard.",
+                    "resolveComplaints": "Complaints can be resolved from the Assessment Dashboard.",
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
                     "exportResults": "Exports the exam results as a .csv file."
                 },
@@ -373,7 +388,7 @@
                     "numberofexercisegroupsequal": "Number of exercise groups equals number of exercises in exam",
                     "eachexercisegroup": "Each exercise group contains at least one exercise",
                     "pointsexercisegroupequal": "Points in exercises of each exercise group are identical",
-                    "totalpointspossible": "Maximum number of points in exam can be realized with the exercise groups configuration",
+                    "totalpointspossible": "Maximum number of points in exam can be attained with the current exercise group configuration",
                     "hasExercises": "has",
                     "zeroexercises": "0",
                     "exerciseStart": "Exercise Group",

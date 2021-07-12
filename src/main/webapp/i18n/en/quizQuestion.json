@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Question",
                 "createOrEditLabel": "Create or edit a Question"
             },
-            "created": "A new Question is created with identifier {{ param }}",
-            "updated": "A Question is updated with identifier {{ param }}",
-            "deleted": "A Question is deleted with identifier {{ param }}",
+            "created": "Created new Question with identifier {{ param }}",
+            "updated": "Updated Question with identifier {{ param }}",
+            "deleted": "Deleted Question with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Question {{ id }}?"
             },
@@ -26,10 +26,10 @@
             "exercise": "Exercise",
             "yourScore": "Your Score",
             "invalid": "Invalid",
-            "invalidText": "This question is invalid and will be assess as complete correct",
+            "invalidText": "This question is invalid and will therefore be assessed as completely correct",
             "retry": " Retry",
             "loading": "Please wait until the picture is loaded",
-            "failed": "Sorry the image could not be loaded. Please try again",
+            "failed": "Sorry, the image could not be loaded. Please try again",
             "showSampleSolution": "Show Sample Solution",
             "hideSampleSolution": "Hide Sample Solution",
             "allOptions": "Please choose all correct answer options"

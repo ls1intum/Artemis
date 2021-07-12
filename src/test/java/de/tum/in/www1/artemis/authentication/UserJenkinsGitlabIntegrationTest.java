@@ -349,7 +349,7 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
         gitlabRequestMockProvider.mockUpdateVcsUserFailToActivate(oldLogin, user);
-        request.put("/api/users", new ManagedUserVM(user), HttpStatus.INTERNAL_SERVER_ERROR);
+        request.put("/api/users", new ManagedUserVM(user, "some-new-password"), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -377,7 +377,7 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
         gitlabRequestMockProvider.mockUpdateVcsUserFailToActivate(oldLogin, user);
-        request.put("/api/users", new ManagedUserVM(user), HttpStatus.INTERNAL_SERVER_ERROR);
+        request.put("/api/users", new ManagedUserVM(user, "some-new-password"), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -391,7 +391,7 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
         gitlabRequestMockProvider.mockUpdateVcsUser(oldLogin, user, Set.of(), user.getGroups(), true);
 
-        request.put("/api/users", new ManagedUserVM(user), HttpStatus.OK);
+        request.put("/api/users", new ManagedUserVM(user, user.getPassword()), HttpStatus.OK);
 
         UserRepository userRepository = userTestService.getUserRepository();
         final var userInDB = userRepository.findById(user.getId());

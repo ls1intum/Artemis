@@ -39,7 +39,7 @@
                     name="releaseDate"
                 ></jhi-date-time-picker>
             </div>
-            <div class="form-group flex-grow-1 ml-3">
+            <div class="form-group flex-grow-1 ms-3">
                 <jhi-date-time-picker
                     name="dueDate"
                     [error]="!!textExercise.dueDateError"
@@ -131,6 +131,7 @@
                 [domainCommands]="domainCommandsProblemStatement"
                 [(markdown)]="textExercise.problemStatement"
                 [editorMode]="EditorMode.LATEX"
+                [shouldDisplayAlert]="false"
             ></jhi-markdown-editor>
         </div>
         <div class="form-group" id="field_sampleSolution">
@@ -140,6 +141,7 @@
                 [domainCommands]="domainCommandsSampleSolution"
                 [(markdown)]="textExercise.sampleSolution"
                 [editorMode]="EditorMode.LATEX"
+                [shouldDisplayAlert]="false"
             ></jhi-markdown-editor>
         </div>
         <div class="form-group" name="gradingInstructions" id="field_gradingInstructions">
@@ -150,24 +152,20 @@
                 [domainCommands]="domainCommandsGradingInstructions"
                 [(markdown)]="textExercise.gradingInstructions"
                 [editorMode]="EditorMode.LATEX"
+                [shouldDisplayAlert]="false"
             ></jhi-markdown-editor>
             <jhi-grading-instructions-details *ngIf="this.checkedFlag" [exercise]="textExercise"></jhi-grading-instructions-details>
         </div>
         <div class="form-group" *ngIf="isImport || !textExercise.id">
             <span jhiTranslate="artemisApp.textExercise.exampleSubmissions">Example submissions</span>
-
-            <div class="alert alert-info" *ngIf="!textExercise.id" jhiTranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise">
-                To create an example submission, you first need to finish creating the text exercise.
-            </div>
-            <div class="alert alert-info" *ngIf="isImport" jhiTranslate="artemisApp.textExercise.import.exampleSubmissionsRequireExercise">
-                To create an example submission, you first need to finish importing the text exercise
-            </div>
+            <div class="alert alert-info" *ngIf="!textExercise.id || isImport" jhiTranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise"></div>
         </div>
         <div class="form-group" *ngIf="textExercise.id && !isExamMode && !isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
             <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>
     </div>
+    <jhi-alert></jhi-alert>
     <div>
         <button type="button" class="btn btn-secondary" (click)="previousState()">
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>

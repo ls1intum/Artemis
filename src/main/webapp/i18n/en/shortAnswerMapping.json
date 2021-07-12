@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Short Answer Mapping",
                 "createOrEditLabel": "Create or edit a Short Answer Mapping"
             },
-            "created": "A new Short Answer Mapping is created with identifier {{ param }}",
-            "updated": "A Short Answer Mapping is updated with identifier {{ param }}",
-            "deleted": "A Short Answer Mapping is deleted with identifier {{ param }}",
+            "created": "Created new Short Answer Mapping with identifier {{ param }}",
+            "updated": "Updated Short Answer Mapping with identifier {{ param }}",
+            "deleted": "Deleted Short Answer Mapping with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Short Answer Mapping {{ id }}?"
             },

@@ -17,11 +17,11 @@
             "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
             "submitFailed": "Absenden deiner Bewertung ist fehlgeschlagen!",
             "submitFailedWithConflict": "Abgabe der Bewertung fehlgeschlagen! Konflikt mit bestehender Bewertung wurde erkannt",
-            "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat.",
+            "resultDismissed": "Deine Bewertung wurde nicht übernommen, da es bereits eine Bewertung von Tutor:innen gibt.",
             "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
             "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
             "confirmSubmission": "Du hast nicht alle Modellelemente bewertet. Bist du sicher, dass du diese Bewertung einreichen möchtest? Du kannst es nachträglich nicht mehr ändern.",
-            "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung.",
+            "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutor:innen wieder zur Verfügung.",
             "noConflicts": "Konflikte konnten nicht geladen werden",
             "conflictsResolved": "Es wurden alle Konflikte bearbeitet.",
             "feedbackTextTooLong": "Bewertung konnte nicht gespeichert werden. Feedback-Text darf nicht länger als 500 Zeichen sein."

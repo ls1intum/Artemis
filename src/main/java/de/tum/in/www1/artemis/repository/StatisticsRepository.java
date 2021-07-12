@@ -425,6 +425,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             new de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore(
                 p.exercise.id,
                 p.exercise.title,
+                p.exercise.releaseDate,
                 avg(p.lastScore)
                 )
             from ParticipantScore p

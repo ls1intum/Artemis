@@ -1,24 +1,26 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise, ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService, navigateToExampleSubmissions } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
+import { onError } from 'app/shared/util/global.utils';
+import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise-utils';
+import { UMLModel } from '@ls1intum/apollon';
+import { ModelingEditorComponent } from '../shared/modeling-editor.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -26,6 +28,9 @@ import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-upda
     styleUrls: ['./modeling-exercise-update.scss'],
 })
 export class ModelingExerciseUpdateComponent implements OnInit {
+    @ViewChild(ModelingEditorComponent, { static: false })
+    modelingEditor?: ModelingEditorComponent;
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     EditorMode = EditorMode;
@@ -35,6 +40,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
     modelingExercise: ModelingExercise;
     backupExercise: ModelingExercise;
+    exampleSolution: UMLModel;
     isSaving: boolean;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -46,8 +52,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     examCourseId?: number;
     isImport: boolean;
     isExamMode: boolean;
-    // TODO: Melih Oezbeyli(iozbeyli) Make it true after compass hazelcast problem is resolved
-    semiAutomaticAssessmentAvailable = false;
+    semiAutomaticAssessmentAvailable = true;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -58,10 +63,18 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         private exerciseService: ExerciseService,
         private exerciseGroupService: ExerciseGroupService,
         private eventManager: JhiEventManager,
-        private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
         private router: Router,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
+
+    get editType(): EditType {
+        if (this.isImport) {
+            return EditType.IMPORT;
+        }
+
+        return this.modelingExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
+    }
 
     /**
      * Initializes all relevant data for creating or editing modeling exercise
@@ -76,6 +89,11 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         // Get the modelingExercise
         this.activatedRoute.data.subscribe(({ modelingExercise }) => {
             this.modelingExercise = modelingExercise;
+
+            if (this.modelingExercise.sampleSolutionModel != undefined) {
+                this.exampleSolution = JSON.parse(this.modelingExercise.sampleSolutionModel);
+            }
+
             this.backupExercise = cloneDeep(this.modelingExercise);
             this.examCourseId = this.modelingExercise.course?.id || this.modelingExercise.exerciseGroup?.exam?.course?.id;
         });
@@ -95,14 +113,14 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                                 (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                 },
-                                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                             );
                         } else {
                             this.courseService.findAllCategoriesOfCourse(this.modelingExercise.exerciseGroup!.exam!.course!.id!).subscribe(
                                 (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                 },
-                                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                             );
                         }
                     } else {
@@ -158,88 +176,46 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     save() {
-        if (this.modelingExercise.gradingInstructionFeedbackUsed) {
-            const ref = this.popupService.checkExerciseBeforeUpdate(this.modelingExercise, this.backupExercise);
-            if (!this.modalService.hasOpenModals()) {
-                this.saveExercise();
-            } else {
-                ref.then((reference) => {
-                    reference.componentInstance.confirmed.subscribe(() => {
-                        this.saveExercise();
-                    });
-                });
-            }
-        } else {
-            this.saveExercise();
-        }
-    }
-
-    /**
-     * Sends a request to either update, create or import a modeling exercise
-     */
-    saveExercise(): void {
-        Exercise.sanitize(this.modelingExercise);
-
+        this.modelingExercise.sampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
         this.isSaving = true;
-        if (this.isImport) {
-            this.subscribeToSaveResponse(this.modelingExerciseService.import(this.modelingExercise));
-        } else if (this.modelingExercise.id !== undefined) {
-            const requestOptions = {} as any;
 
-            if (this.notificationText) {
-                requestOptions.notificationText = this.notificationText;
-            }
-            this.subscribeToSaveResponse(this.modelingExerciseService.update(this.modelingExercise, requestOptions));
-        } else {
-            this.subscribeToSaveResponse(this.modelingExerciseService.create(this.modelingExercise));
-        }
+        new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType)
+            .save(this.modelingExercise, this.notificationText)
+            .subscribe(
+                (exercise: ModelingExercise) => this.onSaveSuccess(exercise.id!),
+                (error: HttpErrorResponse) => this.onSaveError(error),
+                () => {
+                    this.isSaving = false;
+                },
+            );
     }
 
     /**
-     * Deletes the example submission
-     * @param id of the submission that will be deleted
-     * @param index in the example submissions array
-     */
-    deleteExampleSubmission(id: number, index: number): void {
-        this.exampleSubmissionService.delete(id).subscribe(
-            () => {
-                this.modelingExercise.exampleSubmissions!.splice(index, 1);
-            },
-            (error: HttpErrorResponse) => {
-                this.jhiAlertService.error(error.message);
-            },
-        );
-    }
-
-    /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state
-     * Returns to the overview page if there is no previous state and we created a new exercise
-     * Returns to the exercise groups page if we are in exam mode
+     * Return to the previous page or a default if no previous page exists
      */
     previousState() {
-        navigateBackFromExerciseUpdate(this.router, this.modelingExercise);
+        this.navigationUtilService.navigateBackFromExerciseUpdate(this.modelingExercise);
     }
 
-    private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>): void {
-        result.subscribe(
-            () => this.onSaveSuccess(),
-            () => this.onSaveError(),
-        );
-    }
-
-    private onSaveSuccess(): void {
+    private onSaveSuccess(exerciseId: number): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
-        this.previousState();
+
+        switch (this.editType) {
+            case EditType.CREATE:
+            case EditType.IMPORT:
+                // Passing exerciseId since it is required for navigation to the example submission dashboard.
+                navigateToExampleSubmissions(this.router, { ...this.modelingExercise, id: exerciseId });
+                break;
+            case EditType.UPDATE:
+                this.previousState();
+                break;
+        }
     }
 
-    private onSaveError(): void {
+    private onSaveError(error: HttpErrorResponse): void {
+        onError(this.jhiAlertService, error);
         this.isSaving = false;
-    }
-
-    private onError(error: HttpErrorResponse): void {
-        this.jhiAlertService.error(error.message);
     }
 
     /**
@@ -253,9 +229,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * When the diagram type changes, we need to check whether {@link AssessmentType.SEMI_AUTOMATIC} is available for the type. If not, we revert to {@link AssessmentType.MANUAL}
      */
     diagramTypeChanged() {
-        const semiAutomaticSupportPossible =
-            this.modelingExercise.diagramType === UMLDiagramType.ClassDiagram || this.modelingExercise.diagramType === UMLDiagramType.ActivityDiagram;
-        if (this.isExamMode || !semiAutomaticSupportPossible) {
+        if (this.isExamMode || !this.semiAutomaticAssessmentAvailable) {
             this.modelingExercise.assessmentType = AssessmentType.MANUAL;
         }
     }

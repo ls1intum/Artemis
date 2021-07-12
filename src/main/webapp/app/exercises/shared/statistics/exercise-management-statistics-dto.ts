@@ -7,7 +7,7 @@ export class ExerciseManagementStatisticsDto {
 
     // participation rate
     numberOfParticipations: number;
-    numberOfStudentsInCourse: number;
+    numberOfStudentsOrTeamsInCourse: number;
 
     // questions
     numberOfQuestions: number;

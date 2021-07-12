@@ -86,7 +86,7 @@ $error-bg-color: #f8d7da;
     tbody > tr > td,
     tbody > tr > td,
     th {
-        width: calc(100% / 4); // divide by the number of table columns
+        width: 25%; // divide by the number of table columns: calc(100% / 4)
         float: left;
     }
 

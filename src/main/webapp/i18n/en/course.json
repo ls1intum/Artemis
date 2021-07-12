@@ -7,11 +7,11 @@
                 "editLabel": "Edit course",
                 "createOrEditLabel": "Create or edit a course"
             },
-            "created": "A new course was created with title {{ param }}",
-            "updated": "A Course was updated with title {{ param }}",
-            "deleted": "A Course was deleted with title {{ param }}",
+            "created": "Created new course with title {{ param }}",
+            "updated": "Updated Course with title {{ param }}",
+            "deleted": "Deleted Course with title {{ param }}",
             "delete": {
-                "question": "Are you sure you want to permanently delete the course <strong>{{ title }}</strong>? All associated elements will be deleted, including the exams, exercises, repositories and build plans. This action can NOT be undone!",
+                "question": "Are you sure you want to permanently delete the course <strong>{{ title }}</strong>? All associated elements will be deleted, including exams, exercises, repositories and build plans. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the course to confirm."
             },
             "showActive": "Show only active courses",
@@ -21,16 +21,16 @@
             "courseIcon": "Course Icon",
             "shortName": "Short Name",
             "maxComplaints": {
-                "title": "Maximum amount of complaints per student",
-                "description": "Set the maximum amount of complaints allowed per student. If a complaint is rejected, it counts towards the allowed quota. If a complaint is accepted, the student gets to keep it. The scope of this limit are individual exercises."
+                "title": "Maximum number of complaints per student",
+                "description": "Set the maximum number of complaints allowed per student. Accepted complaints do not count toward this quota. This limit applies only to individual exercises."
             },
             "maxTeamComplaints": {
-                "title": "Maximum amount of complaints per team",
-                "description": "Set the maximum amount of complaints allowed per team. If a complaint is rejected, it counts towards the allowed quota. If a complaint is accepted, the team gets to keep it. The scope of this limit are team exercises."
+                "title": "Maximum number of complaints per team",
+                "description": "Set the maximum number of complaints allowed per team. Accepted complaints do not count toward this quota. This limit applies only to team exercises."
             },
             "maxComplaintTimeDays": {
-                "title": "Deadline for complaints in days after result date",
-                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to complain anymore after this deadline."
+                "title": "Complaint deadline in days after result date",
+                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to submit any more complaints after this deadline."
             },
             "postsEnabled": {
                 "title": "Enable postings by students",
@@ -38,14 +38,14 @@
             },
             "complaintsEnabled": {
                 "title": "Enable complaints",
-                "description": "Enabling this allows students to complain about results."
+                "description": "Enabling this allows students to complain about assessments."
             },
             "requestMoreFeedbackEnabled": {
                 "title": "Enable more feedback requests",
-                "description": "This option allows students to request more feedback without using a complaint. Asking for further feedback will not count towards the number of complaints, but it will also not allow a modification of the assessment. By default, this option is enabled, but it can be disabled if a correction of the assessment must always be possible."
+                "description": "This option allows students to request more feedback without complaining. Asking for further feedback will not count towards the number of complaints, but it will also not allow modification of the assessment. By default, this option is enabled, but it can be disabled if assessment corrections must always be possible."
             },
             "maxRequestMoreFeedbackTimeDays": {
-                "title": "Deadline for more feedback requests in days after result date",
+                "title": "More feedback request deadline in days after result date",
                 "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to request more feedback after this deadline."
             },
             "customizeGroupNames": {
@@ -61,7 +61,11 @@
             "startDate": "Start",
             "endDate": "End",
             "semester": "Semester",
-            "gradingSystem": "Grade Key",
+            "maxPoints": {
+                "title": "Maximum number of points for course",
+                "warning": "Updating this field will update the grading key for the course if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
+            },
+            "gradingSystem": "Grading Key",
             "testCourse": {
                 "title": "Test Course",
                 "description": "Activate this checkbox for courses used for testing.",
@@ -80,13 +84,13 @@
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",
-            "modelingExercises": "Modeling Exercises",
+            "modelingExercises": "Modelling Exercises",
             "textExercises": "Text Exercises",
             "upload": "Upload",
             "uploading": "Uploading...",
             "fileUploadExercises": "File Upload Exercises",
             "students": "Students",
-            "participations": "Participations",
+            "participations": "Participation",
             "tutors": "Tutors",
             "editors": "Editors",
             "instructors": "Instructors",
@@ -96,7 +100,7 @@
             "instructor": "Instructor",
             "form": {
                 "shortname": {
-                    "minlength": "Short Name must have a length of 3 or more characters.",
+                    "minlength": "Short Name must contain at least 3 characters.",
                     "forbidden": "Short Name must start with a letter and cannot contain special characters."
                 }
             },
@@ -104,7 +108,7 @@
             "instructorDashboard": "Instructor Course Dashboard",
             "presentationScoreEnabled": {
                 "title": "Presentation Score",
-                "description": "Activate this checkbox to define the amount of presentations a student has to hold to receive the grade bonus for the course. Afterwards you can define for every created exercise, if this feature should be activated."
+                "description": "Activate this checkbox to define the number of presentations a student has to hold to receive the grade bonus for the course. Afterwards you can define for every created exercise whether this feature should be activated."
             },
             "presentationScore": "Required Presentation Score for Bonus",
             "courseGroup": {

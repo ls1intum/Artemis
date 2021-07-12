@@ -11,7 +11,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 @Component({
     selector: 'jhi-exercise-scores-export-button',
     template: `
-        <button class="btn btn-info btn-sm mr-1" (click)="exportResults()">
+        <button class="btn btn-info btn-sm me-1" (click)="exportResults()">
             <fa-icon [icon]="'download'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
         </button>

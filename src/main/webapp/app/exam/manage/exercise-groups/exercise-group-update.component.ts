@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { Exam } from 'app/entities/exam.model';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-exercise-group-update',
@@ -62,7 +63,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
+        onError(this.jhiAlertService, error);
         this.isSaving = false;
     }
 }

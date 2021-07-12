@@ -13,12 +13,12 @@
             "showAllResults": "Show all results",
             "searchForStudents": "Search for students by login or name (comma separated)",
             "searchForTeams": "Search for teams by (short) name or for students by login/name (comma separated)",
-            "created": "A new Exercise is created with identifier {{ param }}",
-            "updated": "An Exercise is updated with identifier {{ param }}",
-            "deleted": "An Exercise is deleted with identifier {{ param }}",
+            "created": "Created new Exercise with identifier {{ param }}",
+            "updated": "Updated Exercise with identifier {{ param }}",
+            "deleted": "Deleted Exercise with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to permanently delete the exercise <strong>{{ title }}</strong>? This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the Exercise to confirm."
+                "typeNameToConfirm": "Please type in the name of the exercise to confirm."
             },
             "reset": {
                 "question": "Are you sure you want to reset the exercise <strong>{{ title }}</strong>? This action can NOT be undone!"
@@ -45,11 +45,16 @@
             "problemStatement": "Problem Statement",
             "sampleSolution": "Example Solution",
             "gradingInstructions": "Grading Instructions",
+            "gradingInstruction": "Grading Instruction: ",
             "structuredGradingInstructions": "Structured Grading Instructions",
             "addGradingCriterion": "Add Grading Criterion",
             "deleteGradingCriterion": "Delete This Criterion",
+            "resetGradingCriterionTitle": "Reset the grading criterion title",
+            "resetGradingInstruction": "Reset grading instruction",
+            "deleteGradingInstruction": "Delete grading instruction",
+            "addGradingInstruction": "Add new grading instruction",
             "usageCount": "Max Count in Score",
-            "usageCountHint": "This number specifies how often points for this instruction will be added to the final score",
+            "usageCountHint": "This number specifies how many times points for this instruction may be added to the final score",
             "DragDropInstruction": "Drag & Drop instruction to feedback element",
             "gradingScale": "Grading Scale",
             "instructionDescription": "Instruction Description",
@@ -97,7 +102,7 @@
             },
             "categories": "Categories",
             "noCategory": "No Category",
-            "participations": "Participations",
+            "participations": "Participation",
             "submissions": "Submissions",
             "teams": "Teams",
             "exportNames": "Export Names",
@@ -132,7 +137,7 @@
             "tagPlaceholder": "+Category",
             "tagSecondaryPlaceholder": "Enter a new category",
             "isProgramming": "This is a programming exercise",
-            "isModeling": "This is a modeling exercise",
+            "isModeling": "This is a modelling exercise",
             "isQuiz": "This is a quiz exercise",
             "isText": "This is a text exercise",
             "isFileUpload": "This is a file upload exercise",
@@ -142,10 +147,10 @@
             "lateSubmissionReceived": "Artemis received a late submission, please wait for the result and then scroll down to the result history to see more details.",
             "lateSubmissionResultReceived": "Artemis received an ungraded result for a late submission, please scroll down to see the score in the result history.",
             "resultCreationSuccessful": "The result was created successfully",
-            "resultCreationUnsuccessful": "The result was created unsuccessfully",
+            "resultCreationUnsuccessful": "The result could not be created",
             "presentationScoreEnabled": {
                 "title": "Presentation",
-                "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participations\" page of the exercise."
+                "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participation\" page of the exercise."
             },
             "errors": {
                 "exerciseNotFound": "This exercise was not found"
@@ -166,12 +171,12 @@
                     }
                 },
                 "points": {
-                    "customMin": "The points must be at least 1.",
-                    "customMax": "The points must be at max 9999."
+                    "customMin": "The number of points must be at least 1.",
+                    "customMax": "The number of points may not exceed 9999."
                 },
                 "bonusPoints": {
-                    "customMin": "The points must be at least 0.",
-                    "customMax": "The points must be at max 9999."
+                    "customMin": "The number of points must be at least 0.",
+                    "customMax": "The number of points may not exceed 9999."
                 },
                 "maxPenalty": {
                     "pattern": "The maximum penalty must be between 0 and 100 percent!"
@@ -181,13 +186,16 @@
             "isTeamExercise": "This is a team exercise.",
             "update": {
                 "warning": {
-                    "warning": "Warning!",
-                    "confirm": "Confirm changes",
-                    "problems": "The following problems may occur:",
-                    "instructionDeleted": "Grading Instruction deleted:",
-                    "scoringChange": "Scoring changed:",
-                    "results": "The existing results must be recalculated!",
-                    "confirmtext": "Do you really want to perform these changes?"
+                    "warning": "Warning: These changes will possibly cause problems",
+                    "saveExerciseWithoutReevaluation": "Do not re-evaluate",
+                    "problems": "To avoid inconsistencies between existing feedback and future feedback that is associated to affected grading instruction, the exercise has to be re-evaluated. This includes the recalculation of the results.",
+                    "instructionDeleted": "Grading instruction deleted",
+                    "creditChanged": "Grading instruction credit changed",
+                    "usageCountChanged": "Grading instruction usage count changed",
+                    "confirmText": "Do you want to perform these changes with or without the re-evaluation of the exercise?",
+                    "reevaluateExercise": "Re-evaluate",
+                    "deleteFeedback": "Additionally delete all corresponding feedback that is associated with the deleted Grading Instruction.",
+                    "information": "If you do not want to trigger a re-evaluation, we can not guarantee the consistency of feedback associated to this grading instruction."
                 }
             },
             "isUsedForTutorial": "Tutor needs to review"

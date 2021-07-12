@@ -102,11 +102,21 @@
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR', 'ROLE_TA']">
                             <!-- exercise without exam-->
                             <span *ngIf="exercise.type === ExerciseType.FILE_UPLOAD && exercise.course && submission">
-                                <a *ngIf="!submission.latestResult" [class.disabled]="busy" [routerLink]="getAssessmentLink(submission.id!)" class="btn btn-success btn-sm mb-1">
+                                <a
+                                    *ngIf="!submission.latestResult"
+                                    [class.disabled]="busy"
+                                    [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
+                                    class="btn btn-success btn-sm mb-1"
+                                >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | artemisTranslate }}
                                 </a>
 
-                                <a *ngIf="submission.latestResult" [class.disabled]="busy" [routerLink]="getAssessmentLink(submission.id!)" class="btn btn-primary btn-sm mb-1">
+                                <a
+                                    *ngIf="submission.latestResult"
+                                    [class.disabled]="busy"
+                                    [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
+                                    class="btn btn-primary btn-sm mb-1"
+                                >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
                                 </a>
                             </span>
@@ -119,7 +129,7 @@
                                         *ngIf="submission.results[correctionRound].completionDate"
                                         [class.disabled]="busy"
                                         [queryParams]="{ 'correction-round': correctionRound }"
-                                        [routerLink]="getAssessmentLink(submission.id!)"
+                                        [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                         class="btn btn-primary btn-sm mb-1"
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
@@ -129,11 +139,11 @@
                                     </a>
                                     <!-- button for existing result with lock-->
                                     <span *ngIf="submission.results && !(submission!.results![correctionRound] && submission!.results![correctionRound].completionDate)">
-                                        <div class="btn-group-vertical mr-1 mb-10">
+                                        <div class="btn-group-vertical me-1 mb-10">
                                             <a
                                                 [class.disabled]="busy"
                                                 [queryParams]="{ 'correction-round': correctionRound }"
-                                                [routerLink]="getAssessmentLink(submission.id!)"
+                                                [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                                 class="btn btn-warning btn-sm mb-1"
                                             >
                                                 <fa-icon [fixedWidth]="true" [icon]="'edit'"></fa-icon>&nbsp;
@@ -163,7 +173,7 @@
                                     "
                                     [class.disabled]="busy"
                                     [queryParams]="{ 'correction-round': submission.results ? submission.results.length : 0 }"
-                                    [routerLink]="getAssessmentLink(submission.id!)"
+                                    [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                     class="btn btn-success btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>

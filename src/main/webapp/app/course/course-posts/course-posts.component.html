@@ -1,10 +1,10 @@
 <ng-container *ngIf="courseId">
     <div class="w-100 d-inline-flex justify-content-between pb-2">
-        <h3><span jhiTranslate="artemisApp.post.overview.title">Questions</span></h3>
+        <h3><span jhiTranslate="artemisApp.metis.overview.title">Questions</span></h3>
         <jhi-button
             (onClick)="toggleHidePosts()"
             [icon]="'filter'"
-            [title]="showPostsWithApprovedAnswerPosts ? 'artemisApp.post.overview.hideApproved' : 'artemisApp.post.overview.showApproved'"
+            [title]="showPostsWithApprovedAnswerPosts ? 'artemisApp.metis.overview.hideApproved' : 'artemisApp.metis.overview.showApproved'"
         ></jhi-button>
     </div>
     <div class="table-responsive" *ngIf="posts && posts.length > 0; else noPosts">
@@ -12,14 +12,16 @@
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span><fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th><span jhiTranslate="artemisApp.post.text">Question Text</span></th>
-                    <th jhiSortBy="creationDate"><span jhiTranslate="artemisApp.post.creationDate">Creation Date</span><fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="votes"><span jhiTranslate="artemisApp.post.votes">Votes</span><fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="answers"><span jhiTranslate="artemisApp.post.answers">Answers</span><fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th><span jhiTranslate="artemisApp.metis.post.text">Question Text</span></th>
+                    <th jhiSortBy="creationDate"><span jhiTranslate="artemisApp.metis.post.creationDate">Creation Date</span><fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="votes"><span jhiTranslate="artemisApp.metis.post.votes">Votes</span><fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="answers"><span jhiTranslate="artemisApp.metis.post.answers">Answers</span><fa-icon [icon]="'sort'"></fa-icon></th>
                     <th *ngIf="showPostsWithApprovedAnswerPosts" jhiSortBy="approvedAnswerPosts">
-                        <span jhiTranslate="artemisApp.post.approvedAnswerPosts">Approved Answers</span><fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="artemisApp.metis.post.approvedAnswerPosts">Approved Answers</span><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="exerciseOrLectureTitle"><span jhiTranslate="artemisApp.post.exerciseOrLecture">Exercise / Lecture</span><fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="exerciseOrLectureTitle">
+                        <span jhiTranslate="artemisApp.metis.post.exerciseOrLecture">Exercise / Lecture</span><fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -41,7 +43,7 @@
     </div>
     <ng-template #noPosts>
         <div>
-            {{ 'artemisApp.post.overview.noPosts' | artemisTranslate }}
+            {{ 'artemisApp.metis.overview.noPosts' | artemisTranslate }}
         </div>
     </ng-template>
 </ng-container>

@@ -14,11 +14,11 @@ import { StudentsExamImportButtonComponent } from 'app/exam/manage/students/stud
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
+import { MockPipe } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
@@ -155,7 +155,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should register all enrolled students of the course to the exam', () => {
-        const examServiceStubAddAll = sinon.stub(examManagementService, 'addAllStudentsOfCourseToExam').returns(of(new HttpResponse()));
+        const examServiceStubAddAll = sinon.stub(examManagementService, 'addAllStudentsOfCourseToExam').returns(of(new HttpResponse<void>()));
         const examWithOneUser = { course, id: 2, registeredUsers: [user2] };
         const examServiceStub = sinon.stub(examManagementService, 'find').returns(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();

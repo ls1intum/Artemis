@@ -1,19 +1,18 @@
 import * as chai from 'chai';
 import * as moment from 'moment';
 import { SinonStub, spy, stub } from 'sinon';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { BehaviorSubject, lastValueFrom, of, Subject } from 'rxjs';
 import { range as _range } from 'lodash';
 import * as sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import {
     ExerciseSubmissionState,
-    IProgrammingSubmissionService,
     ProgrammingSubmissionService,
     ProgrammingSubmissionState,
     ProgrammingSubmissionStateObj,
 } from 'app/exercises/programming/participate/programming-submission.service';
-import { IParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockAlertService } from '../helpers/mocks/service/mock-alert.service';
 import { Result } from 'app/entities/result.model';
 import { SERVER_API_URL } from 'app/app.constants';
@@ -21,19 +20,27 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock-participation-websocket.service';
-import { IProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/service/mock-programming-exercise-participation.service';
+import { MockOrionConnectorService } from '../helpers/mocks/service/mock-orion-connector.service';
+import { ProgrammingAssessmentRepoExportService } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { TestBed } from '@angular/core/testing';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { JhiAlertService } from 'ng-jhipster';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('ProgrammingSubmissionService', () => {
-    let websocketService: MockWebsocketService;
-    let httpService: MockHttpService;
-    let participationWebsocketService: IParticipationWebsocketService;
-    let alertService: MockAlertService;
-    let participationService: IProgrammingExerciseParticipationService;
-    let submissionService: IProgrammingSubmissionService;
+    let websocketService: JhiWebsocketService;
+    let httpService: HttpClient;
+    let participationWebsocketService: ParticipationWebsocketService;
+    let participationService: ProgrammingExerciseParticipationService;
+    let submissionService: ProgrammingSubmissionService;
+    const orionConnectorService = new MockOrionConnectorService();
+    let repositoryExportService: ProgrammingAssessmentRepoExportService;
 
     let httpGetStub: SinonStub;
     let wsSubscribeStub: SinonStub;
@@ -59,24 +66,38 @@ describe('ProgrammingSubmissionService', () => {
         result = { id: 31, submission: currentSubmission } as any;
         result2 = { id: 32, submission: currentSubmission2 } as any;
 
-        websocketService = new MockWebsocketService();
-        httpService = new MockHttpService();
-        participationWebsocketService = new MockParticipationWebsocketService();
-        alertService = new MockAlertService();
-        participationService = new MockProgrammingExerciseParticipationService();
+        TestBed.configureTestingModule({
+            imports: [],
+            declarations: [],
+            providers: [
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: HttpClient, useClass: MockHttpService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
+                { provide: OrionConnectorService, useValue: orionConnectorService },
+                { provide: ProgrammingAssessmentRepoExportService, useClass: ProgrammingAssessmentRepoExportService },
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                submissionService = TestBed.inject(ProgrammingSubmissionService);
+                websocketService = TestBed.inject(JhiWebsocketService);
+                httpService = TestBed.inject(HttpClient);
+                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+                participationService = TestBed.inject(ProgrammingExerciseParticipationService);
+                repositoryExportService = TestBed.inject(ProgrammingAssessmentRepoExportService);
 
-        httpGetStub = stub(httpService, 'get');
-        wsSubscribeStub = stub(websocketService, 'subscribe');
-        wsUnsubscribeStub = stub(websocketService, 'unsubscribe');
-        wsSubmissionSubject = new Subject<Submission | undefined>();
-        wsReceiveStub = stub(websocketService, 'receive').returns(wsSubmissionSubject);
-        wsLatestResultSubject = new Subject<Result | undefined>();
-        participationWsLatestResultStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(wsLatestResultSubject as any);
-        getLatestResultStub = stub(participationService, 'getLatestResultWithFeedback');
-        notifyAllResultSubscribersStub = stub(participationWebsocketService, 'notifyAllResultSubscribers');
-
-        // @ts-ignore
-        submissionService = new ProgrammingSubmissionService(websocketService, httpService, participationWebsocketService, participationService, alertService);
+                httpGetStub = stub(httpService, 'get');
+                wsSubscribeStub = stub(websocketService, 'subscribe');
+                wsUnsubscribeStub = stub(websocketService, 'unsubscribe');
+                wsSubmissionSubject = new Subject<Submission | undefined>();
+                wsReceiveStub = stub(websocketService, 'receive').returns(wsSubmissionSubject);
+                wsLatestResultSubject = new Subject<Result | undefined>();
+                participationWsLatestResultStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(wsLatestResultSubject as any);
+                getLatestResultStub = stub(participationService, 'getLatestResultWithFeedback');
+                notifyAllResultSubscribersStub = stub(participationWebsocketService, 'notifyAllResultSubscribers');
+            });
     });
 
     afterEach(() => {
@@ -257,13 +278,13 @@ describe('ProgrammingSubmissionService', () => {
         httpGetStub.returns(of(pendingSubmissions));
 
         // This load the submissions for participation 1 and 2, but not for 3.
-        submissionService.getSubmissionStateOfExercise(exerciseId).toPromise();
+        lastValueFrom(submissionService.getSubmissionStateOfExercise(exerciseId));
         submissionService.getLatestPendingSubmissionByParticipationId(participation1.id!, exerciseId, true).subscribe(({ submissionState: state, submission: sub }) => {
             submissionState = state;
             submission = sub;
         });
 
-        expect(httpGetStub).to.have.been.calledOnceWithExactly('undefinedapi/programming-exercises/3/latest-pending-submissions');
+        expect(httpGetStub).to.have.been.calledOnceWithExactly('api/programming-exercises/3/latest-pending-submissions');
         // Fetching the latest pending submission should not trigger a rest call for a cached submission.
         expect(fetchLatestPendingSubmissionSpy).not.to.have.been.called;
         expect(submissionState).to.equal(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
@@ -343,5 +364,41 @@ describe('ProgrammingSubmissionService', () => {
         // Should now unsubscribe as last participation for topic was unsubscribed
         submissionService.unsubscribeForLatestSubmissionOfParticipation(2);
         expect(wsUnsubscribeStub).to.have.been.called;
+    });
+
+    describe('Orion functions', () => {
+        it('downloadSubmission should convert and call connector', () => {
+            const downloadSubmissionSpy = spy(orionConnectorService, 'downloadSubmission');
+            const isCloningSpy = spy(orionConnectorService, 'isCloning');
+            const exportSubmissionStub = stub(repositoryExportService, 'exportReposByParticipations');
+
+            // first it loads the submission
+            httpGetStub.returns(of(currentSubmission));
+            // then the exported file
+            const response = new HttpResponse({ body: new Blob(['Stuff', 'in blob']), status: 200 });
+            exportSubmissionStub.returns(of(response));
+
+            // mock FileReader
+            const mockReader = {
+                result: 'testBase64',
+                // required, used to instantly trigger the callback
+                // @ts-ignore
+                readAsDataURL() {
+                    this.onloadend();
+                },
+            };
+            const readerStub = stub(window, 'FileReader');
+            readerStub.returns(mockReader);
+
+            submissionService.downloadSubmissionInOrion(25, 11, 0);
+
+            expect(isCloningSpy).to.have.been.calledOnceWithExactly(true);
+            // ignore HttpParams
+            expect(httpGetStub).to.have.been.calledOnceWith('api/programming-submissions/11/lock');
+            // ignore RepositoryExportOptions
+            expect(exportSubmissionStub).to.have.been.calledOnceWith(25, [1]);
+            expect(readerStub).to.have.been.calledOnce;
+            expect(downloadSubmissionSpy).to.have.been.calledOnceWithExactly(11, 0, 'testBase64');
+        });
     });
 });

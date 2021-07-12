@@ -8,10 +8,17 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 })
 export class ExerciseUpdateWarningComponent {
     instructionDeleted = false;
-    scoringChanged = false;
+    creditChanged = false;
+    deleteFeedback = false;
+    usageCountChanged = false;
 
     @Output()
     confirmed = new EventEmitter<object>();
+
+    @Output()
+    reEvaluated = new EventEmitter<object>();
+
+    canceled = new EventEmitter<void>();
 
     constructor(public activeModal: NgbActiveModal) {}
 
@@ -19,14 +26,30 @@ export class ExerciseUpdateWarningComponent {
      * Closes the modal
      */
     clear(): void {
+        this.canceled.emit();
         this.activeModal.close();
     }
 
     /**
-     * Confirm changes
+     * Save changes without re-evaluation
      */
-    confirmChange(): void {
+    saveExerciseWithoutReevaluation(): void {
         this.confirmed.emit();
         this.activeModal.close();
+    }
+
+    /**
+     * Re-evaluate the exercise
+     */
+    reEvaluateExercise(): void {
+        this.reEvaluated.emit();
+        this.activeModal.close();
+    }
+
+    /**
+     * Toggle the option to deleteFeedback
+     */
+    toggleDeleteFeedback() {
+        this.deleteFeedback = !this.deleteFeedback;
     }
 }

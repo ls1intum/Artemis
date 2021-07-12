@@ -4,11 +4,11 @@
             "acquired": "Du hast jetzt die Sperre auf diese Anfrage für 24 Stunden!",
             "removeButton": "Entferne Sperre",
             "lockRemoved": "Sperre von Anfrage entfernt",
-            "lockInformation": "Gesperrt von {{user}} bis {{endDate}}",
-            "lockInformationYou": "Gesperrt von DIR bis {{endDate}}",
+            "lockInformation": "Gesperrt durch {{user}} bis {{endDate}}",
+            "lockInformationYou": "Durch dich gesperrt bis {{endDate}}",
             "notUnlocked": "Nicht gesperrt",
             "lockStatus": "Status der Sperre",
-            "notAllowedToRespond": "Es ist dir nicht erlaubt auf diese Anfrage zu antworten!\nBei Teamaufgaben ist der Teamtutor sowohl für Beschwerden als auch Mehr-Feedback Anfragen verantwortlich.\nBei individuellen Aufgaben werden Beschwerden von einem anderen Tutor beantwortet und Mehr-Feedback Anfragen von dem Tutor, welcher die Aufgabe bewertet hat.\nBei Testläufen für Klausuren darf auch dieser Tutor Beschwerden beantworten."
+            "notAllowedToRespond": "Es ist dir nicht erlaubt, auf diese Anfrage zu antworten!\nBei Teamaufgaben sind Teamtutor:innen sowohl für Beschwerden als auch Mehr-Feedback Anfragen verantwortlich.\nBei individuellen Aufgaben werden Beschwerden von anderen Tutor:innen beantwortet und Mehr-Feedback Anfragen von Tutor:innen, die die Aufgabe bewertet haben.\nBei Testläufen für Klausuren dürfen auch bewertende Tutor:innen Beschwerden beantworten."
         },
         "complaintResponse": {
             "title": "Antwort auf die Beschwerde",

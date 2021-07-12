@@ -23,7 +23,11 @@ export const SUBMIT_QUIZ_EXAM = (exerciseId) => `/exercises/${exerciseId}/submis
 export const EXAMS = (courseId) => `${COURSE(courseId)}/exams`;
 export const EXAM = (courseId, examId) => EXAMS(courseId) + `/${examId}`;
 export const EXERCISE_GROUPS = (courseId, examId) => `${EXAM(courseId, examId)}/exerciseGroups`;
-export const TEXT_EXERCISE = '/text-exercises';
+export const TEXT_EXERCISES = '/text-exercises';
+export const TEXT_EXERCISE = (exerciseId) => `/text-exercises/${exerciseId}`;
+export const SUBMIT_TEXT_EXAM = (exerciseId) => `/exercises/${exerciseId}/text-submissions`;
+export const TEXT_SUBMISSION_WITHOUT_ASSESSMENT = (exerciseId) => `/exercises/${exerciseId}/text-submission-without-assessment?lock=true`;
+export const ASSESS_TEXT_SUBMISSION = (exerciseId, resultId) => `/exercise/${exerciseId}/result/${resultId}`;
 export const EXAM_STUDENTS = (courseId, examId, username) => `${EXAM(courseId, examId)}/students/${username}`;
 export const GENERATE_STUDENT_EXAMS = (courseId, examId) => `${EXAM(courseId, examId)}/generate-student-exams`;
 export const STUDENT_EXAMS = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams`;
@@ -32,7 +36,6 @@ export const START_EXERCISES = (courseId, examId) => `${EXAM(courseId, examId)}/
 export const EVALUATE_QUIZ_EXAM = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams/evaluate-quiz-exercises`;
 export const SUBMIT_EXAM = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams/submit`;
 export const EXAM_CONDUCTION = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams/conduction`;
-export const SUBMIT_TEXT_EXAM = (exerciseId) => `/exercises/${exerciseId}/text-submissions`;
 export const MODELING_EXERCISES = '/modeling-exercises';
 export const MODELING_EXERCISE = (exerciseId) => `/modeling-exercises/${exerciseId}`;
 export const SUBMIT_MODELING_EXAM = (exerciseId) => `/exercises/${exerciseId}/modeling-submissions`;

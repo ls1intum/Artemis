@@ -1,11 +1,8 @@
 <div (drop)="updateAssessmentOnDrop($event)" (dragover)="$event.preventDefault()" class="card mb-3">
     <div class="card-header" [class.color-cyan]="assessment.type == FeedbackType_AUTOMATIC">
-        <fa-icon [icon]="'trash-alt'" class="float-right" (click)="delete()" *ngIf="!disabled"></fa-icon>
-        <span
-            class="badge badge-secondary float-right"
-            *ngIf="assessment.type == FeedbackType_AUTOMATIC"
-            title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}"
-        >
+        <jhi-grading-instruction-link-icon *ngIf="assessment.gradingInstruction!" [assessment]="assessment"></jhi-grading-instruction-link-icon>
+        <fa-icon [icon]="'trash-alt'" class="float-end" (click)="delete()" *ngIf="!disabled"></fa-icon>
+        <span class="badge bg-secondary float-end" *ngIf="assessment.type == FeedbackType_AUTOMATIC" title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}">
             <fa-icon [icon]="'robot'"></fa-icon>
             <span jhiTranslate="artemisApp.textAssessment.automatic">Automatic</span>
         </span>

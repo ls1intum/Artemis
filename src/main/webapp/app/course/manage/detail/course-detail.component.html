@@ -22,53 +22,53 @@
         </div>
         <jhi-alert></jhi-alert>
         <div class="tab-bar tab-bar-course-detail">
-            <a [routerLink]="['/course-management', course.id, 'exercises']" class="tab-item btn btn-primary btn-md ml-1">
+            <a [routerLink]="['/course-management', course.id, 'exercises']" class="tab-item btn btn-primary btn-md ms-1">
                 <fa-icon [icon]="'list-alt'"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</span>
             </a>
-            <a [routerLink]="['/course-management', course.id, 'exams']" class="tab-item btn btn-primary btn-md ml-1">
+            <a [routerLink]="['/course-management', course.id, 'exams']" class="tab-item btn btn-primary btn-md ms-1">
                 <fa-icon [icon]="'graduation-cap'"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</span>
             </a>
-            <a *ngIf="course.isAtLeastEditor" [routerLink]="['/course-management', course.id, 'lectures']" class="tab-item btn btn-primary btn-md ml-1">
+            <a *ngIf="course.isAtLeastEditor" [routerLink]="['/course-management', course.id, 'lectures']" class="tab-item btn btn-primary btn-md ms-1">
                 <fa-icon [icon]="'file-pdf'"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
             </a>
-            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'goal-management']" class="tab-item btn btn-primary btn-md ml-1">
+            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'goal-management']" class="tab-item btn btn-primary btn-md ms-1">
                 <fa-icon [icon]="'flag'"></fa-icon>
                 <span jhiTranslate="artemisApp.learningGoal.learningGoalButton">Learning Goals</span>
             </a>
-            <a [routerLink]="['/course-management', course.id, 'assessment-dashboard']" class="tab-item btn btn-info btn-md ml-1">
+            <a [routerLink]="['/course-management', course.id, 'assessment-dashboard']" class="tab-item btn btn-info btn-md ms-1">
                 <fa-icon [icon]="'user-check'"></fa-icon>
                 <span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
             </a>
-            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="tab-item btn btn-info btn-md ml-1">
+            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="tab-item btn btn-info btn-md ms-1">
                 <fa-icon [icon]="'chess-king'"></fa-icon>
                 <span jhiTranslate="artemisApp.course.instructorDashboard">Instructor Dashboard</span>
             </a>
-            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-info btn-md ml-1">
+            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-info btn-md ms-1">
                 <fa-icon [icon]="'table'"></fa-icon>
                 <span jhiTranslate="entity.action.scores">Scores</span>
             </a>
-            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn btn-info btn-md ml-1">
-                <fa-icon [icon]="'clipboard'"></fa-icon> <span jhitranslate="artemisApp.course.gradingSystem">Grade Key</span>
+            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn btn-info btn-md ms-1">
+                <fa-icon [icon]="'clipboard'"></fa-icon> <span jhitranslate="artemisApp.course.gradingSystem">Grading Key</span>
             </a>
-            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'participant-scores']" class="tab-item btn btn-info btn-md ml-1">
+            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'participant-scores']" class="tab-item btn btn-info btn-md ms-1">
                 <fa-icon [icon]="'eye'"></fa-icon>
                 <span jhiTranslate="artemisApp.participantScores.pageTitle">Participant Score</span>
             </a>
-            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="tab-item btn btn-info btn-md ml-1">
+            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="tab-item btn btn-info btn-md ms-1">
                 <fa-icon [icon]="'chart-bar'"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
             </a>
-            <div class="ml-auto">
+            <div class="ms-auto">
                 <a
                     *ngIf="course.postsEnabled && course.isAtLeastTutor"
                     [routerLink]="['/course-management', course.id!, 'posts']"
-                    class="tab-item btn btn-primary btn-md ml-1 mr-1"
+                    class="tab-item btn btn-primary btn-md ms-1 me-1"
                 >
                     <fa-icon [icon]="'comment'"></fa-icon>
-                    <span jhiTranslate="entity.action.questionsAndAnswers">Q&A</span>
+                    <span jhiTranslate="entity.action.discussion">Discussion</span>
                 </a>
                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'edit']" class="tab-item btn btn-warning btn-md">
                     <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
@@ -77,10 +77,10 @@
                     *ngIf="course.isAtLeastInstructor"
                     [archiveMode]="'Course'"
                     [course]="course"
-                    class="archive-button ml-1"
+                    class="archive-button ms-1"
                 ></jhi-course-exam-archive-button>
                 <button
-                    class="tab-item btn btn-md ml-1 mr-1"
+                    class="tab-item btn btn-md ms-1 me-1"
                     *jhiHasAnyAuthority="['ROLE_ADMIN']"
                     [buttonSize]="ButtonSize.MEDIUM"
                     jhiDeleteButton
@@ -99,7 +99,7 @@
                 <div class="row">
                     <jhi-course-detail-doughnut-chart
                         class="doughnut-container col-md-6 my-3"
-                        [courseId]="course.id!"
+                        [course]="course"
                         [contentType]="DoughnutChartType.ASSESSMENT"
                         [currentPercentage]="courseDTO?.currentPercentageAssessments"
                         [currentAbsolute]="courseDTO?.currentAbsoluteAssessments"
@@ -107,7 +107,7 @@
                     ></jhi-course-detail-doughnut-chart>
                     <jhi-course-detail-doughnut-chart
                         class="doughnut-container col-md-6 my-3"
-                        [courseId]="course.id!"
+                        [course]="course"
                         [contentType]="DoughnutChartType.COMPLAINTS"
                         [currentPercentage]="courseDTO?.currentPercentageComplaints"
                         [currentAbsolute]="courseDTO?.currentAbsoluteComplaints"
@@ -117,7 +117,7 @@
                 <div class="row">
                     <jhi-course-detail-doughnut-chart
                         class="doughnut-container col-md-6 my-3"
-                        [courseId]="course.id!"
+                        [course]="course"
                         [contentType]="DoughnutChartType.FEEDBACK"
                         [currentPercentage]="courseDTO?.currentPercentageMoreFeedbacks"
                         [currentAbsolute]="courseDTO?.currentAbsoluteMoreFeedbacks"
@@ -125,7 +125,7 @@
                     ></jhi-course-detail-doughnut-chart>
                     <jhi-course-detail-doughnut-chart
                         class="doughnut-container col-md-6 my-3"
-                        [courseId]="course.id!"
+                        [course]="course"
                         [contentType]="DoughnutChartType.AVERAGE_COURSE_SCORE"
                         [currentPercentage]="courseDTO?.currentPercentageAverageScore"
                         [currentAbsolute]="courseDTO?.currentAbsoluteAverageScore"

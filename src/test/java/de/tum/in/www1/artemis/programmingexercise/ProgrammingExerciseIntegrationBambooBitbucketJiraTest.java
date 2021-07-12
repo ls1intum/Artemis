@@ -63,6 +63,12 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testExportSubmissionAnonymizationCombining() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportSubmissionAnonymizationCombining();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void textExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
         programmingExerciseIntegrationServiceTest.textExportSubmissionsByParticipationIds_invalidParticipationId_badRequest();
     }
@@ -419,6 +425,12 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_projectTypeNotExpected_badRequest() throws Exception {
         programmingExerciseIntegrationServiceTest.createProgrammingExercise_projectTypeNotExpected_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_onlineCodeEditorNotExpected_badRequest() throws Exception {
+        programmingExerciseIntegrationServiceTest.createProgrammingExercise_onlineCodeEditorNotExpected_badRequest();
     }
 
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -860,5 +872,23 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @WithMockUser(value = "editor1", roles = "EDITOR")
     public void testExportAuxiliaryRepositoryRepositoryNotFound() throws Exception {
         programmingExerciseIntegrationServiceTest.testExportAuxiliaryRepositoryRepositoryNotFound();
+    }
+
+    @Test
+    @WithMockUser(value = "instructoralt1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        programmingExerciseIntegrationServiceTest.testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
+        programmingExerciseIntegrationServiceTest.testReEvaluateAndUpdateProgrammingExercise_notFound();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
+        programmingExerciseIntegrationServiceTest.testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict();
     }
 }

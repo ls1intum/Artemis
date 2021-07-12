@@ -1,12 +1,12 @@
 <div>
     <!-- correction round label-->
     <h5 class="correction-label" *ngIf="highlightDifferences && feedback.copiedFeedbackId">
-        <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: '#3e8acc' }" jhiTranslate="artemisApp.assessment.diffView.correctionRoundDiffFirst"
+        <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: '#3e8acc' }" jhiTranslate="artemisApp.assessment.diffView.correctionRoundDiffFirst"
             >First correction round</span
         >
     </h5>
     <h5 class="correction-label" *ngIf="highlightDifferences && !feedback.copiedFeedbackId">
-        <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: '#ffa561' }" jhiTranslate="artemisApp.assessment.diffView.correctionRoundDiffSecond"
+        <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: '#ffa561' }" jhiTranslate="artemisApp.assessment.diffView.correctionRoundDiffSecond"
             >Second correction round</span
         >
     </h5>

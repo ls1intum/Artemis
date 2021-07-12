@@ -1,0 +1,53 @@
+{
+    "artemisApp": {
+        "metis": {
+            "sidebar": {
+                "header": "Diskussion",
+                "show": "Diskussion anzeigen",
+                "hide": "Diskussion einklappen",
+                "noPosts": "Es gibt keine Beiträge.",
+                "addNewPost": "Einen neuen Beitrag erstellen",
+                "approvedLabel": "Vom Tutor bestätigt",
+                "answerNow": "Jetzt beantworten",
+                "answerCount": "Zeige Antworten ({{count}})",
+                "cancel": "Abbrechen",
+                "addPost": "Beitrag hinzufügen",
+                "savePost": "Beitrag speichern",
+                "addAnswer": "Antwort hinzufügen",
+                "saveAnswer": "Antwort speichern",
+                "deletePost": "Möchtest du deinen Beitrag löschen?",
+                "confirmDeletePost": "Bitte bestätige, dass du deinen Beitrag löschen möchtest!",
+                "editPost": "Beitrag bearbeiten",
+                "deleteAnswer": "Möchtest du deine Antwort löschen?",
+                "confirmDeleteAnswer": "Bitte bestätige, dass du deine Antwort löschen möchtest!",
+                "editAnswer": "Antwort bearbeiten",
+                "approveAnswer": "Antwort bestätigen",
+                "unapproveAnswer": "Antwort nicht bestätigen",
+                "hideAnswers": "Weniger Antworten anzeigen",
+                "showAnswers": "Weitere Antworten anzeigen ({{count}})"
+            },
+            "overview": {
+                "title": "Beiträge",
+                "noPosts": "Es gibt keine Beiträge in diesem Kurs",
+                "showApproved": "Zeige Beiträge mit bestätigten Antworten an",
+                "hideApproved": "Ignoriere Beiträge mit bestätigten Antworten"
+            },
+            "post": {
+                "created": "Beitrag erfolgreich erstellt",
+                "updated": "Beitrag erfolgreich aktualisiert",
+                "deleted": "Beitrag erfolgreich gelöscht",
+                "text": "Beitrag",
+                "creationDate": "Erstellt am",
+                "votes": "Votes",
+                "answers": "Antworten",
+                "approvedAnswerPosts": "Bestätigte Antworten",
+                "exerciseOrLecture": "Übung / Vorlesung"
+            },
+            "answerPost": {
+                "created": "Antwort erfolgreich erstellt",
+                "updated": "Antwort erfolgreich aktualisiert",
+                "deleted": "Antwort erfolgreich gelöscht"
+            }
+        }
+    }
+}

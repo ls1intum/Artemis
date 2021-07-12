@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Course } from 'app/entities/course.model';
@@ -135,8 +135,8 @@ export class AccountService implements IAccountService {
         }
 
         // retrieve the userIdentity data from the server, update the identity object, and then resolve.
-        return this.fetch()
-            .pipe(
+        return lastValueFrom(
+            this.fetch().pipe(
                 map((response: HttpResponse<User>) => {
                     const user = response.body!;
                     if (user) {
@@ -162,8 +162,8 @@ export class AccountService implements IAccountService {
                     this.userIdentity = undefined;
                     return of(undefined);
                 }),
-            )
-            .toPromise();
+            ),
+        );
     }
 
     /**

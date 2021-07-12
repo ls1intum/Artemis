@@ -7,13 +7,13 @@
                 "assessment": "Bewertungseditor der Textaufgabe {{exerciseTitle}}",
                 "exampleAssessment": "Beispiel Bewertungseditor der Textaufgabe {{exerciseTitle}}"
             },
-            "assessor": "Prüfer/in",
+            "assessor": "Bewertet von",
             "save": "Bewertung speichern",
             "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
             "submit": "Bewertung einreichen",
             "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
             "override": "Bewertung überschreiben",
-            "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat.",
+            "resultDismissed": "Deine Bewertung wurde nicht übernommen, da andere Tutor:innen bereits bewertet haben.",
             "exampleSubmissisonInstruction": "Erstelle eine Beispielabgabe",
             "error": {
                 "invalidAssessments": "Deine Bewertung ist nicht gültig!",
@@ -45,17 +45,25 @@
             "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
             "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
             "cancel": "Bewertung abbrechen",
-            "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung.",
+            "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutor:innen wieder zur Verfügung.",
             "feedbackEditor": {
-                "dismissFeedback": "Möchtest du das Feedback löschen?",
-                "dismissFeedbackConfirmation": "Bitte bestätige, dass du das Feedback löschen möchtest!",
-                "feedbackCommentPlaceholder": "Gib deine Anmerkung bitte hier ein.."
+                "dismissFeedback": "Soll das Feedback gelöscht werden?",
+                "dismissFeedbackConfirmation": "Bitte bestätige, dass das Feedback gelöscht werden soll!",
+                "feedbackCommentPlaceholder": "Gib deine Anmerkung bitte hier ein ...",
+                "impactWarning": "Dieses Feedback kann <strong style=\"color:blue\">{{affectedSubmissionsCount}}</strong> weitere ähnliche Einreichung/en beinflussen.",
+                "impactWarningTooltip": "Die Anzahl, wie oft dein Feedback als automatischer Vorschlag in anderen Einreichungen wiederverwendet wird, die einen ähnlichen Textblock aufweisen.",
+                "automaticFeedbackInformationModal": {
+                    "heading": "Automatische Feedbackverfolgung",
+                    "introduction": "Dieser automatische Vorschlag stammt von einer zuvor bewerteten Vorlage, die unten gezeigt wird. <br/> Das  <span style='background-color: #d8e8f5'>hervorgehobene Feedback</span> wurde wiederverwendet:<br/><br/>",
+                    "trace": "Herkunft des automatischen Feedbacks verfolgen",
+                    "points": "Punkte",
+                    "reused": "{{reusedCount}} mal wiederverwendet"
+                }
             },
-            "feedbackImpactWarning": "Diese Feedback kann <strong style=\"color:red\">{{affectedSubmissionsCount}}</strong> weitere ähnliche Einreichung/en beinflussen.",
-            "assessmentInstruction": "Bitte halte deine Maus über und klicke auf den Textblock, den du bewerten möchten.<br>Drücke <code>alt</code>/<code>option</code> und wähle gleichzeitig Text aus, um eigene Textblöcke zu bewerten.",
+            "assessmentInstruction": "Bitte hovern Sie mit der Maus über den zu bewertenden Textblock und klicken Sie diesen an um ihn zu bewerten.<br>Drücke <code>alt</code>/<code>option</code> und wähle gleichzeitig Text aus, um eigene Textblöcke zu bewerten.",
             "conflict": {
-                "assessor": "Bewerter: Du",
-                "otherAssessor": "Bewerter: {{otherUser}}",
+                "assessor": "Bewertet von: Dir",
+                "otherAssessor": "Bewertet von: {{otherUser}}",
                 "conflictingAssessments": "{{number}} Konflikte",
                 "discard": "Konflikt verwerfen",
                 "notFound": "Wir haben für das ausgewählte Feedback keine Konflikte gefunden, bitte gehe zurück.",

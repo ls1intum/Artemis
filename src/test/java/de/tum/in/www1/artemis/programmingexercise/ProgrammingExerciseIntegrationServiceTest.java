@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
 import java.io.IOException;
@@ -85,6 +87,9 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -258,21 +263,46 @@ public class ProgrammingExerciseIntegrationServiceTest {
         doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
         doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
 
+        var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString())
+                .collect(Collectors.toList());
+        final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
+                String.join(",", participationIds));
+        // all options false by default, only test if export works at all
+        var exportOptions = new RepositoryExportOptionsDTO();
+
+        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        assertThat(downloadedFile).exists();
+
+        // Recursively unzip the exported file, to make sure there is no erroneous content
+        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
+        Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
+        List<Path> entries = Files.walk(extractedZipDir).collect(Collectors.toList());
+
+        // Make sure both repositories are present
+        assertThat(entries.stream().anyMatch(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString()))).isTrue();
+        assertThat(entries.stream().anyMatch(entry -> entry.toString().endsWith(Paths.get("student2", ".git").toString()))).isTrue();
+    }
+
+    public void testExportSubmissionAnonymizationCombining() throws Exception {
+        // provide repositories
+        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
+
         // Mock and pretend first commit is template commit
-        ObjectId head1 = localGit.getRepository().findRef("HEAD").getObjectId();
-        ObjectId head2 = localGit2.getRepository().findRef("HEAD").getObjectId();
-        // Each head has to be returned twice, once for combineStudentCommits and once for anonymizeStudentCommits
-        when(gitService.getLastCommitHash(any())).thenReturn(head1, head1, head2, head2).thenCallRealMethod();
+        ObjectId head = localGit.getRepository().findRef("HEAD").getObjectId();
+        when(gitService.getLastCommitHash(any())).thenReturn(head);
+        doNothing().when(gitService).resetToOriginHead(any());
 
         // Add commit to anonymize
         assertThat(localRepoFile.toPath().resolve("Test.java").toFile().createNewFile()).isTrue();
         localGit.add().addFilepattern(".").call();
         localGit.commit().setMessage("commit").setAuthor("user1", "email1").call();
 
-        var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString())
-                .collect(Collectors.toList());
+        // Rest call
         final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
-                String.join(",", participationIds));
+                String.valueOf(participation1.getId()));
+        var exportOptions = getOptions();
+        exportOptions.setAddParticipantName(false);
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
@@ -286,9 +316,9 @@ public class ProgrammingExerciseIntegrationServiceTest {
         Optional<Path> extractedRepo1 = entries.stream().filter(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString())).findFirst();
         assertThat(extractedRepo1).isPresent();
         try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
-            RevCommit latestCommit = downloadedGit.log().setMaxCount(1).call().iterator().next();
-            assertThat(latestCommit.getAuthorIdent().getName()).isEqualTo("student");
-            assertThat(latestCommit.getFullMessage()).isEqualTo("All student changes in one commit");
+            RevCommit commit = downloadedGit.log().setMaxCount(1).call().iterator().next();
+            assertThat(commit.getAuthorIdent().getName().equals("student")).isTrue();
+            assertThat(commit.getFullMessage().equals("All student changes in one commit")).isTrue();
         }
     }
 
@@ -868,6 +898,16 @@ public class ProgrammingExerciseIntegrationServiceTest {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
+    public void createProgrammingExercise_onlineCodeEditorNotExpected_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.SWIFT);
+        programmingExercise.setProjectType(ProjectType.XCODE);
+        programmingExercise.setAllowOnlineEditor(true);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
     public void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
@@ -1282,6 +1322,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
     public void unlockAllRepositories() throws Exception {
         mockDelegate.mockConfigureRepository(programmingExercise, participation1.getParticipantIdentifier(), participation1.getStudents(), false);
         mockDelegate.mockConfigureRepository(programmingExercise, participation2.getParticipantIdentifier(), participation2.getStudents(), false);
+        mockDelegate.mockDefaultBranch(programmingExercise);
 
         final var endpoint = ProgrammingExerciseResource.Endpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.OK);
@@ -1292,7 +1333,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         database.changeUser("instructor1");
 
         var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
-        assertThat(notifications).as("Intructor get notified that unlock operations were successful")
+        assertThat(notifications).as("Instructor get notified that unlock operations were successful")
                 .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION))
                 .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION));
     }
@@ -1664,5 +1705,25 @@ public class ProgrammingExerciseIntegrationServiceTest {
         public AuxiliaryRepository get() {
             return repository;
         }
+    }
+
+    public void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExercise, HttpStatus.FORBIDDEN);
+    }
+
+    public void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
+        request.put("/api/programming-exercises/" + 123456789 + "/re-evaluate", programmingExercise, HttpStatus.NOT_FOUND);
+    }
+
+    public void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
+        database.addCourseWithOneProgrammingExercise();
+        database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+        ProgrammingExercise programmingExerciseToBeConflicted = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(1);
+
+        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExerciseToBeConflicted, HttpStatus.CONFLICT);
     }
 }

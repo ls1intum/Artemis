@@ -3,20 +3,20 @@
         "fileUploadAssessment": {
             "editorTitle": "Assessment Editor for File Upload Exercise {{ title }}",
             "submissionFile": "Download Submission File",
-            "notFound": "We haven't found any new file upload submission without an assessment, please go back.",
+            "notFound": "We couldn't find any unassessed file upload submissions, please go back.",
             "addFeedback": "Add new Feedback",
-            "assessInstruction": "Please, click the \"Add new Feedback\" button.",
+            "assessInstruction": "Please click the \"Add new Feedback\" button.",
             "deleteAssessment": "Delete Assessment {{ index }} ?",
             "dashboard": {
                 "heading": "Submissions and assessments of file upload exercise \"{{exerciseTitle}}\""
             },
             "error": {
                 "invalidAssessments": "Your assessments are not valid!",
-                "invalidScoreMustBeNumber": "The points field must be a number and can not be empty!",
-                "invalidNeedScore": "Each Feedback item must have points."
+                "invalidScoreMustBeNumber": "The points field must be a number and cannot be empty!",
+                "invalidNeedScore": "Each Feedback item must contain points."
             },
             "messages": {
-                "lock": "You do now have the lock on this submission. Only you can assess this file. Please assess this file before opening other submissions."
+                "lock": "You now have the lock on this submission. Only you can assess this submission. Please assess this submission before opening others."
             }
         }
     }

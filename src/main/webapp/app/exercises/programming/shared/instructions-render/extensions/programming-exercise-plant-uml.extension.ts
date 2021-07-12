@@ -45,6 +45,9 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                 tap((plantUmlSvg: string) => {
                     const plantUmlHtmlContainer = document.getElementById(`plantUml-${index}`);
                     if (plantUmlHtmlContainer) {
+                        // We add a max-width: 100% style attribute to the svg element
+                        // to prevent overflowing the enclosing container
+                        plantUmlSvg = plantUmlSvg.replace(`style="width`, `style="max-width:100%;width`);
                         // We need to sanitize the received svg as it could contain malicious code in a script tag.
                         plantUmlHtmlContainer.innerHTML = DOMPurify.sanitize(plantUmlSvg);
                     }

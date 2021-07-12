@@ -4,7 +4,7 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import { SinonStub, stub } from 'sinon';
+import { SinonStub, stub, spy } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -60,6 +60,10 @@ import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
+import { OrionModule } from 'app/shared/orion/orion.module';
+import { MockOrionConnectorService } from '../../helpers/mocks/service/mock-orion-connector.service';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -167,9 +171,20 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         numberOfAssessmentsOfCorrectionRounds,
         numberOfLockedAssessmentByOtherTutorsOfCorrectionRound,
     } as StatsForDashboard;
+
+    const submissionWithComplaintDTO = {
+        submission: {
+            id: 23,
+            results: [result1],
+        },
+        complaint: {
+            result: result1,
+        },
+    } as SubmissionWithComplaintDTO;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
     const router = new MockRouter();
     const navigateSpy = sinon.spy(router, 'navigate');
+    const orionConnectorService = new MockOrionConnectorService();
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -183,6 +198,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 RouterModule,
                 TranslateModule.forRoot(),
                 ArtemisAssessmentSharedModule,
+                OrionModule,
             ],
             declarations: [
                 ExerciseAssessmentDashboardComponent,
@@ -203,6 +219,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 DeviceDetectorService,
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: Router, useValue: router },
+                { provide: OrionConnectorService, useValue: orionConnectorService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
@@ -254,6 +271,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
                 modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [modelingSubmissionAssessed], headers: new HttpHeaders() })));
                 modelingSubmissionStubWithoutAssessment.returns(of(modelingSubmission));
+                comp.submissionsWithComplaints = [submissionWithComplaintDTO];
             });
     });
 
@@ -477,6 +495,37 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.isTestRun = true;
             comp.openAssessmentEditor(submission);
             expect(navigateSpy).to.have.been.calledWith(expectedUrl);
+        });
+    });
+
+    describe('Orion functions', () => {
+        it('assessExercise should call connector', () => {
+            const assessExerciseSpy = spy(orionConnectorService, 'assessExercise');
+
+            comp.exercise = programmingExercise;
+            comp.openAssessmentInOrion();
+
+            expect(assessExerciseSpy).to.have.been.calledOnceWithExactly(programmingExercise);
+        });
+        it('download new submission should call service', () => {
+            const downloadSubmissionInOrion = spy(programmingSubmissionService, 'downloadSubmissionInOrion');
+
+            comp.exerciseId = programmingExercise.id!;
+            programmingSubmissionStubWithoutAssessment.returns(of(programmingSubmission));
+
+            comp.downloadSubmissionInOrion('new', 0);
+
+            expect(programmingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(programmingExercise.id, true, 0);
+            expect(downloadSubmissionInOrion).to.have.been.calledOnceWithExactly(programmingExercise.id, programmingSubmission.id, 0);
+        });
+        it('download submission number should call service', () => {
+            const downloadSubmissionInOrion = spy(programmingSubmissionService, 'downloadSubmissionInOrion');
+
+            comp.exerciseId = programmingExercise.id!;
+
+            comp.downloadSubmissionInOrion(programmingSubmission, 0);
+
+            expect(downloadSubmissionInOrion).to.have.been.calledOnceWithExactly(programmingExercise.id, programmingSubmission.id, 0);
         });
     });
 });

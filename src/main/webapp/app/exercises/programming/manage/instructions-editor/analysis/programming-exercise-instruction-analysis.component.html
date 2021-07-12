@@ -1,32 +1,32 @@
 <div class="editable-instruction-container__status__container">
     <ng-container *ngIf="invalidTestCases.length + missingTestCases.length > 0; else testCasesOk">
         <div id="instruction_analysis_test-case-issues" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="'exclamation-triangle'" class="text-warning mr-1" [ngbTooltip]="testCasesTooltipContent"></fa-icon>
+            <fa-icon [icon]="'exclamation-triangle'" class="text-warning me-1" [ngbTooltip]="testCasesTooltipContent"></fa-icon>
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.issues">Test case issues.</span>
         </div>
     </ng-container>
     <ng-template #testCasesOk>
         <div id="instruction_analysis_test-case-ok" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="'check-circle'" class="text-success mr-1"></fa-icon>
+            <fa-icon [icon]="'check-circle'" class="text-success me-1"></fa-icon>
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.ok">Test cases ok.</span>
         </div>
     </ng-template>
 
     <ng-container *ngIf="invalidHints.length > 0; else hintsOk">
         <div id="instruction_analysis_hint-issues" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="'exclamation-triangle'" class="text-warning mr-1" [ngbTooltip]="hintsTooltipContent"></fa-icon>
+            <fa-icon [icon]="'exclamation-triangle'" class="text-warning me-1" [ngbTooltip]="hintsTooltipContent"></fa-icon>
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.hintsAnalysis.issues">Hints issues.</span>
         </div>
     </ng-container>
     <ng-template #hintsOk>
         <div id="instruction_analysis_hint-ok" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="'check-circle'" class="text-success mr-1"></fa-icon>
+            <fa-icon [icon]="'check-circle'" class="text-success me-1"></fa-icon>
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.hintsAnalysis.ok">Hints ok.</span>
         </div>
     </ng-template>
 
     <ng-template #testCasesTooltipContent>
-        <div class="text-left w-100">
+        <div class="text-start w-100">
             <div *ngIf="invalidTestCases.length">
                 <span [innerHTML]="'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCases' | artemisTranslate: { number: invalidTestCases.length }"
                     >There are {{ invalidTestCases.length }} test cases that are part of the problem statement but can't be found in your test repository:</span
@@ -35,7 +35,7 @@
                     <li *ngFor="let test of invalidTestCases">{{ test }}</li>
                 </ul>
             </div>
-            <div *ngIf="missingTestCases.length" class="text-left">
+            <div *ngIf="missingTestCases.length" class="text-start">
                 <span>{{ 'artemisApp.programmingExercise.testCaseAnalysis.missingTestCases' | artemisTranslate: { number: missingTestCases.length } }}</span>
                 <ul>
                     <li *ngFor="let test of missingTestCases">{{ test }}</li>
@@ -45,7 +45,7 @@
     </ng-template>
 
     <ng-template #hintsTooltipContent>
-        <div class="text-left w-100">
+        <div class="text-start w-100">
             <div *ngIf="invalidHints.length">
                 <span [innerHTML]="'artemisApp.programmingExercise.hintsAnalysis.invalidHints' | artemisTranslate: { number: invalidHints.length }"
                     >There are {{ invalidHints.length }} test cases that are part of the problem statement but can't be found in your test repository:</span

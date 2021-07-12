@@ -2,14 +2,14 @@
     "modelingAssessmentEditor": {
         "conflicts": "Conflict",
         "ownAssessmentTitle": "Your current assessment",
-        "conflictingAssessmentTitle": "1. out of {{count}} conflicting assessments. Assessed by",
+        "conflictingAssessmentTitle": "1st out of {{count}} conflicting assessments. Assessed by",
         "button": {
             "applyChanges": "Apply Changes",
             "keepYours": "Keep Yours",
             "acceptTheirs": "Take Over"
         },
         "messages": {
-            "lock": "You do now have the lock on this submission. Only you can assess this model. Please assess this model before opening other submissions.",
+            "lock": "You now have the lock on this submission. Only you can assess this model. Please assess this model before opening other submissions.",
             "noModel": "No model could be found for this submission.",
             "loadSubmissionFailed": "Retrieving requested submission failed.",
             "saveSuccessful": "Your assessment was saved successfully!",
@@ -24,7 +24,7 @@
             "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again.",
             "noConflicts": "Conflicts could not be loaded",
             "conflictsResolved": "All conflicts have been processed.",
-            "feedbackTextTooLong": "Failed to save Assessment. Feedback text must not be longer than 500 characters."
+            "feedbackTextTooLong": "Failed to save Assessment. Feedback text must be no longer than 500 characters."
         },
         "automaticAssessmentAvailable": "Congratulations! To save you some time, parts of this model were already assessed automatically. Please review the automatic assessment and assess the rest of the model afterwards. By submitting the assessment you also confirm the automatic assessment. Please be aware that you are responsible for the whole assessment.",
         "highlightingColors": {

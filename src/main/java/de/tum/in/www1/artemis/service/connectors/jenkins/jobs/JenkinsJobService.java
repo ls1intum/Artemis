@@ -1,15 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.jobs;
 
 import java.io.IOException;
-import java.io.StringWriter;
 
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
-import org.jsoup.Jsoup;
-import org.jsoup.parser.Parser;
+import org.apache.http.client.HttpResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -91,7 +86,7 @@ public class JenkinsJobService {
     }
 
     /**
-     * Gets the xml config of the job that is inside a folder
+     * Gets the xml config of the job that is inside a folder and replaces the old reference to the master branch by a reference to the default branch
      * @param folderName the name of the folder
      * @param jobName the name of the job
      * @return the xml document
@@ -103,7 +98,10 @@ public class JenkinsJobService {
                 throw new JenkinsException("The folder " + folderName + "does not exist.");
             }
 
-            var xmlString = jenkinsServer.getJobXml(folder, jobName);
+            String xmlString = jenkinsServer.getJobXml(folder, jobName);
+            // Replace the old reference to the master branch by a reference to the default branch
+            xmlString = xmlString.replace("*/master", "**");
+
             return XmlFileUtils.readFromString(xmlString);
         }
         catch (IOException e) {
@@ -118,18 +116,13 @@ public class JenkinsJobService {
      * @return the xml document or null if the folder doesn't exist
      * @throws IOException in case of errors
      */
-    public org.jsoup.nodes.Document getFolderConfig(String folderName) throws IOException {
+    public Document getFolderConfig(String folderName) throws IOException {
         if (jenkinsServer.getJob(folderName) == null) {
             return null;
         }
 
-        var folderXml = jenkinsServer.getJobXml(folderName);
-
-        // Parse the config xml file for the job and insert the permissions into it.
-        var document = Jsoup.parse(folderXml, "", Parser.xmlParser());
-        document.outputSettings().indentAmount(0).prettyPrint(false);
-
-        return document;
+        String folderXml = jenkinsServer.getJobXml(folderName);
+        return XmlFileUtils.readFromString(folderXml);
     }
 
     /**
@@ -144,31 +137,13 @@ public class JenkinsJobService {
             if (folder == null) {
                 throw new JenkinsException("Cannot create job " + jobName + " because the folder " + folderName + " does not exist.");
             }
-            jenkinsServer.createJob(folder, jobName, writeXmlToString(jobConfig), useCrumb);
+
+            String configString = XmlFileUtils.writeToString(jobConfig);
+            jenkinsServer.createJob(folder, jobName, configString, useCrumb);
         }
-        catch (IOException e) {
+        catch (IOException | TransformerException e) {
             log.error(e.getMessage(), e);
             throw new JenkinsException(e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Writes the xml document into a string.
-     * @param doc the xml document
-     * @return the xml as string
-     */
-    public String writeXmlToString(Document doc) {
-        try {
-            final var tf = TransformerFactory.newInstance();
-            final var transformer = tf.newTransformer();
-            final var writer = new StringWriter();
-            transformer.transform(new DOMSource(doc), new StreamResult(writer));
-            return writer.getBuffer().toString();
-        }
-        catch (TransformerException e) {
-            final var errorMessage = "Unable to parse XML document to String! " + doc;
-            log.error(errorMessage, e);
-            throw new JenkinsException(errorMessage, e);
         }
     }
 
@@ -179,18 +154,16 @@ public class JenkinsJobService {
      * @return the job config as an xml document or null if the job doesn't exist
      * @throws IOException in case of errors
      */
-    public org.jsoup.nodes.Document getJobConfig(String folderName, String jobName) throws IOException {
+    public Document getJobConfig(String folderName, String jobName) throws IOException {
         var job = jenkinsServer.getJob(folderName);
         if (job == null) {
             return null;
         }
-        var folder = jenkinsServer.getFolderJob(job);
-        var jobXml = jenkinsServer.getJobXml(folder.orNull(), jobName);
 
-        // Parse the config xml file for the job and insert the permissions into it.
-        var document = Jsoup.parse(jobXml, "", Parser.xmlParser());
-        document.outputSettings().indentAmount(0).prettyPrint(false);
-        return document;
+        var folder = jenkinsServer.getFolderJob(job);
+
+        String jobXml = jenkinsServer.getJobXml(folder.orNull(), jobName);
+        return XmlFileUtils.readFromString(jobXml);
     }
 
     /**
@@ -200,14 +173,61 @@ public class JenkinsJobService {
      * @param jobConfig the updated job config
      * @throws IOException in case of errors
      */
-    public void updateJob(String folderName, String jobName, org.jsoup.nodes.Document jobConfig) throws IOException {
-        if (folderName != null && !folderName.isEmpty()) {
-            var job = jenkinsServer.getJob(folderName);
-            var folder = jenkinsServer.getFolderJob(job);
-            jenkinsServer.updateJob(folder.orNull(), jobName, jobConfig.toString(), useCrumb);
+    public void updateJob(String folderName, String jobName, Document jobConfig) throws IOException {
+        try {
+            String configString = XmlFileUtils.writeToString(jobConfig);
+
+            if (folderName != null && !folderName.isEmpty()) {
+                var job = jenkinsServer.getJob(folderName);
+                var folder = jenkinsServer.getFolderJob(job);
+                jenkinsServer.updateJob(folder.orNull(), jobName, configString, useCrumb);
+            }
+            else {
+                jenkinsServer.updateJob(jobName, configString, useCrumb);
+            }
         }
-        else {
-            jenkinsServer.updateJob(jobName, jobConfig.toString(), useCrumb);
+        catch (TransformerException e) {
+            throw new IOException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Updates the xml desription of the folder job.
+     *
+     * @param folderName the name of the folder
+     * @param folderConfig the xml document of the folder
+     * @throws IOException in case of errors
+     */
+    public void updateFolderJob(String folderName, Document folderConfig) throws IOException {
+        try {
+            String configString = XmlFileUtils.writeToString(folderConfig);
+            jenkinsServer.updateJob(folderName, configString, useCrumb);
+        }
+        catch (TransformerException e) {
+            throw new IOException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Deletes the job from Jenkins. Doesn't do anything if the job
+     * doesn't exist.
+     *
+     * @param jobName the name of the job to delete.
+     */
+    public void deleteJob(String jobName) {
+        try {
+            jenkinsServer.deleteJob(jobName, useCrumb);
+        }
+        catch (HttpResponseException e) {
+            // We don't throw an exception if the project doesn't exist in Jenkins (404 status)
+            if (e.getStatusCode() != org.apache.http.HttpStatus.SC_NOT_FOUND) {
+                log.error(e.getMessage(), e);
+                throw new JenkinsException("Error while trying to delete job in Jenkins for " + jobName, e);
+            }
+        }
+        catch (IOException e) {
+            log.error(e.getMessage(), e);
+            throw new JenkinsException("Error while trying to delete job in Jenkins for " + jobName, e);
         }
     }
 }

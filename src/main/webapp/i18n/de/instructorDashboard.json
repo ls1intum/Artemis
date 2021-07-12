@@ -1,8 +1,8 @@
 {
     "instructorDashboard": {
-        "exerciseResultSummery": "{{ exercisesLength }} veröffentlichte Übungen, {{ studentsLength }} Studenten mit Ergebnissen",
+        "exerciseResultSummery": "{{ exercisesLength }} veröffentlichte Übungen, {{ studentsLength }} Studierende mit Ergebnissen",
         "name": "Name",
-        "username": "Benutzername",
+        "username": "Login",
         "title": "Kursbewertungen",
         "exerciseDashboard": "Übungsbewertungen",
         "participated": "Teilgenommen an Übungen",
@@ -15,7 +15,7 @@
         "overallScore": "Gesamtpunkte",
         "max": "Max",
         "average": "Durchschnitt",
-        "students": "Studenten",
+        "students": "Studierende",
         "cleanup": {
             "title": "Aufräumen",
             "question": "Sollen wirklich ALLE Studierenden-Build-Pläne für die Programmieraufgabe <strong>{{ title }}</strong> dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
@@ -29,21 +29,21 @@
             "title": "Abgaben herunterladen",
             "titleSingle": "Abgabe herunterladen",
             "questions": {
-                "individual": "Tragen sie hier alle Kennungen der Studenten ein, die heruntergeladen werden sollen getrennt durch ein Komma (z.B. ga87fix,ga63dut)",
+                "individual": "Tragen sie hier alle Kennungen der Studierenden ein, die heruntergeladen werden sollen getrennt durch ein Komma (z.B. ga87fix,ga63dut)",
                 "team": "Tragen sie hier alle Kurznamen der Teams ein, die heruntergeladen werden sollen getrennt durch ein Komma (z.B. team1,team2)"
             },
             "timeWarning": "<b>Achtung:</b> Diese Aktion kann abhängig von Größe und Anzahl der Repositories mehrere Minuten dauern.",
-            "currentlySelected": "Sie sind dabei die Abgaben <strong>aller Teams/Studenten</strong> von folgenden Aufgaben herunterzuladen:"
+            "currentlySelected": "Sie sind dabei die Abgaben <strong>aller Teams/Studierende</strong> von folgenden Aufgaben herunterzuladen:"
         },
         "exportCSV": "Als CSV exportieren",
         "exportSubmissions": {
             "title": "Abgaben exportieren",
-            "downloadAllStudents": "Oder lade die Abgaben aller Studenten herunter",
-            "question": "Tragen sie hier alle Kennungen der Studenten getrennt durch ein Komma ein, deren Abgaben heruntergeladen werden sollen (z.B. ga87fix,ga63dut)",
+            "downloadAllStudents": "Oder lade die Abgaben aller Studierenden herunter",
+            "question": "Tragen sie hier alle Kennungen der Studierenden getrennt durch ein Komma ein, deren Abgaben heruntergeladen werden sollen (z.B. ga87fix,ga63dut)",
             "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
             "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Einreichungsfrist der Aufgabe)",
             "successMessage": "Die Abgaben wurden erfolgreich exportiert. Die generierte Zip-Datei wird jetzt heruntergeladen."
         },
-        "loadingStudents": "Lade die Ergebnisse aller Studenten..."
+        "loadingStudents": "Lade die Ergebnisse aller Studierenden..."
     }
 }

@@ -9,16 +9,23 @@ import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from
 import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Feedback } from 'app/entities/feedback.model';
+import { Complaint } from 'app/entities/complaint.model';
+import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
+
+export class SubmissionWithComplaintDTO {
+    public submission: Submission;
+    public complaint: Complaint;
+}
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionService {
     public resourceUrl = SERVER_API_URL + 'api/submissions';
     public resourceUrlParticipation = SERVER_API_URL + 'api/participations';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService) {}
 
     /**
      * Delete an existing submission
@@ -44,6 +51,40 @@ export class SubmissionService {
                 }),
             ),
         );
+    }
+
+    /**
+     * Find the submissions with complaints for a tutor for a specified exercise (complaintType == 'COMPLAINT').
+     * @param exerciseId
+     */
+    getSubmissionsWithComplaintsForTutor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
+        return this.http
+            .get<SubmissionWithComplaintDTO[]>(`api/exercises/${exerciseId}/submissions-with-complaints`, { observe: 'response' })
+            .pipe(map((res) => this.convertDTOsFromServer(res)));
+    }
+
+    protected convertDTOsFromServer(res: HttpResponse<SubmissionWithComplaintDTO[]>) {
+        if (res.body) {
+            res.body.forEach((dto) => {
+                dto.submission = this.convertSubmissionDateFromServer(dto.submission);
+                dto.complaint = this.convertDateFromServerComplaint(dto.complaint);
+            });
+        }
+        return res;
+    }
+
+    protected convertSubmissionDateFromServer(submission: Submission) {
+        submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : undefined;
+        this.reconnectSubmissionAndResult(submission);
+        return submission;
+    }
+
+    convertDateFromServerComplaint(complaint: Complaint) {
+        complaint.submittedTime = complaint.submittedTime ? moment(complaint.submittedTime) : undefined;
+        if (complaint.complaintResponse) {
+            this.complaintResponseService.convertDatesToMoment(complaint.complaintResponse);
+        }
+        return complaint;
     }
 
     /**

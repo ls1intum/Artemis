@@ -9,13 +9,13 @@ import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/ma
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { SinonStub } from 'sinon';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { Exam } from 'app/entities/exam.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -34,7 +34,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         scoreDistribution: [5, 0, 0, 0, 0, 0, 0, 0, 0, 5],
         numberOfExerciseScores: 10,
         numberOfParticipations: 10,
-        numberOfStudentsInCourse: 10,
+        numberOfStudentsOrTeamsInCourse: 10,
         participationsInPercent: 100,
         numberOfQuestions: 4,
         numberOfAnsweredQuestions: 2,
@@ -86,7 +86,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
     });
 
     describe('OnInit for exam exercise', () => {
-        const exerciseGroup = new ExerciseGroup();
+        const exam = { id: 4, course: { id: 6 } as Course } as Exam;
+        const exerciseGroup = { id: 9, exam };
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.id = 123;
         programmingExercise.exerciseGroup = exerciseGroup;

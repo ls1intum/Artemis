@@ -62,7 +62,7 @@ export class TextAssessmentAreaComponent implements OnChanges {
 
     @HostListener('document:keydown.alt', ['$event', 'false'])
     @HostListener('document:keyup.alt', ['$event', 'true'])
-    onAltToggle($event: KeyboardEvent, toggleValue: boolean) {
+    onAltToggle(event: KeyboardEvent, toggleValue: boolean) {
         this.autoTextBlockAssessment = toggleValue;
     }
 

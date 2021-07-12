@@ -4,7 +4,7 @@
         <span jhiTranslate="artemisApp.quizExercise.home.title">Quiz Exercises</span>
         <a
             *ngIf="course && course.isAtLeastEditor"
-            class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise"
+            class="btn me-2 btn-primary float-end jh-create-entity create-quiz-exercise"
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'new']"
             id="create-quiz-button"
         >
@@ -13,13 +13,13 @@
         </a>
         <a
             *ngIf="quizExercises && quizExercises.length > 0 && course.isAtLeastEditor"
-            class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise"
+            class="btn me-2 btn-primary float-end jh-create-entity create-quiz-exercise"
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'export']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.exportLabel"> Export Quiz Exercises </span>
         </a>
-        <a *ngIf="course && course.isAtLeastEditor" class="btn mr-2 btn-primary float-right" [routerLink]="['/course-management', courseId, 'apollon-diagrams']">
+        <a *ngIf="course && course.isAtLeastEditor" class="btn me-2 btn-primary float-end" [routerLink]="['/course-management', courseId, 'apollon-diagrams']">
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop"> Create new Drag and Drop Model Quiz </span>
         </a>
@@ -71,12 +71,12 @@
                     </td>
                     <td>{{ quizExercise.maxPoints }}</td>
                     <td>{{ exerciseService.isIncludedInScore(quizExercise) }}</td>
-                    <td class="text-right" *ngIf="quizExercise.isAtLeastEditor">
+                    <td class="text-end" *ngIf="quizExercise.isAtLeastEditor">
                         <div class="btn-group flex-btn-group-container">
                             <button
                                 type="submit"
                                 (click)="openForPractice(quizExercise.id!)"
-                                class="btn btn-warning btn-sm mr-1 mb-1"
+                                class="btn btn-warning btn-sm me-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.CLOSED"
                             >
                                 <fa-icon [icon]="'play-circle'"></fa-icon>
@@ -86,7 +86,7 @@
                                 id="instructor-quiz-start-{{ quizExercise.id }}"
                                 type="submit"
                                 (click)="startQuiz(quizExercise.id!)"
-                                class="btn btn-warning btn-sm mr-1 mb-1"
+                                class="btn btn-warning btn-sm me-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.VISIBLE"
                             >
                                 <fa-icon [icon]="'play-circle'"></fa-icon>
@@ -96,7 +96,7 @@
                                 id="quiz-set-visible-{{ quizExercise.id }}"
                                 type="submit"
                                 (click)="showQuiz(quizExercise.id!)"
-                                class="btn btn-warning btn-sm mr-1 mb-1"
+                                class="btn btn-warning btn-sm me-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.HIDDEN"
                             >
                                 <fa-icon [icon]="'eye'"></fa-icon>
@@ -104,13 +104,13 @@
                             </button>
                         </div>
                     </td>
-                    <td class="text-right">
+                    <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
-                            <div class="btn-group-vertical mr-1 mb-1">
+                            <div class="btn-group-vertical me-1 mb-1">
                                 <a
                                     *ngIf="quizExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'preview']"
-                                    class="btn btn-success btn-sm mr-1 mb-1"
+                                    class="btn btn-success btn-sm me-1 mb-1"
                                 >
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview">Preview</span>
@@ -118,17 +118,17 @@
                                 <a
                                     *ngIf="quizExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'solution']"
-                                    class="btn btn-success btn-sm mr-1 mb-1"
+                                    class="btn btn-success btn-sm me-1 mb-1"
                                 >
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
                                 </a>
                             </div>
-                            <div class="btn-group-vertical mr-1 mb-1">
+                            <div class="btn-group-vertical me-1 mb-1">
                                 <a
                                     *ngIf="quizExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'quiz-point-statistic']"
-                                    class="btn btn-info btn-sm mr-1 mb-1"
+                                    class="btn btn-info btn-sm me-1 mb-1"
                                 >
                                     <fa-icon [icon]="'signal'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.quizStatistic">Statistic</span>
@@ -136,18 +136,18 @@
                                 <a
                                     *ngIf="quizExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'scores']"
-                                    class="btn btn-info btn-sm mr-1 mb-1"
+                                    class="btn btn-info btn-sm me-1 mb-1"
                                 >
                                     <fa-icon [icon]="'table'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                                 </a>
                             </div>
-                            <div class="btn-group-vertical mr-1 mb-1">
+                            <div class="btn-group-vertical me-1 mb-1">
                                 <button
                                     *ngIf="quizExercise.isAtLeastInstructor"
                                     type="submit"
                                     (click)="exportQuizById(quizExercise.id!, true)"
-                                    class="btn btn-warning btn-sm mr-1 mb-1"
+                                    class="btn btn-warning btn-sm me-1 mb-1"
                                 >
                                     <fa-icon [icon]="'file-export'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.export">Export</span>
@@ -157,7 +157,7 @@
                                     [hidden]="quizIsOver(quizExercise)"
                                     [class.disabled]="quizExercise.status === QuizStatus.ACTIVE || quizIsOver(quizExercise)"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
-                                    class="btn btn-warning btn-sm mr-1 mb-1"
+                                    class="btn btn-warning btn-sm me-1 mb-1"
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
@@ -169,13 +169,13 @@
                                     *ngIf="quizExercise.isAtLeastInstructor"
                                     [hidden]="!quizIsOver(quizExercise)"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']"
-                                    class="btn btn-warning btn-sm mr-1 mb-1"
+                                    class="btn btn-warning btn-sm me-1 mb-1"
                                 >
                                     <fa-icon [icon]="'wrench'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
                                 </a>
                             </div>
-                            <div class="btn-group-vertical mr-1 mb-1">
+                            <div class="btn-group-vertical me-1 mb-1">
                                 <button
                                     *ngIf="quizExercise.isAtLeastInstructor"
                                     jhiDeleteButton

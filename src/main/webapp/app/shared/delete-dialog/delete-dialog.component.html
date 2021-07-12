@@ -8,7 +8,7 @@
             <span *ngSwitchCase="actionTypes.Unlink" jhiTranslate="entity.unlink.title">Confirm unlink operation</span>
             <span *ngSwitchCase="actionTypes.NoButtonTextDelete" jhiTranslate="entity.noButtonTextDelete.title">Confirm delete operation</span>
         </h4>
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
         <jhi-alert></jhi-alert>
@@ -38,7 +38,7 @@
             [disabled]="deleteForm.form.invalid || (deleteConfirmationText && confirmEntityName != entityTitle) || submitDisabled"
             [ngSwitch]="actionType"
         >
-            <fa-icon *ngIf="submitDisabled" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>&nbsp; <fa-icon [icon]="'times'"></fa-icon>&nbsp;
+            <span *ngIf="submitDisabled"><fa-icon [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>&nbsp;</span><fa-icon [icon]="'times'"></fa-icon>&nbsp;
             <span *ngSwitchCase="actionTypes.Delete" jhiTranslate="entity.action.delete">Delete</span>
             <span *ngSwitchCase="actionTypes.Reset" jhiTranslate="entity.action.reset">Reset</span>
             <span *ngSwitchCase="actionTypes.Cleanup" jhiTranslate="entity.action.cleanup">Cleanup</span>

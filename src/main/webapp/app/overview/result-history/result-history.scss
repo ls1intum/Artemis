@@ -48,7 +48,7 @@ $result-element-size: 25px;
         .result-divider {
             width: calc(100% - #{$result-element-size});
             border-top: 1px solid;
-            margin-top: $result-element-size / 2;
+            margin-top: $result-element-size * 0.5;
         }
 
         &:last-child {

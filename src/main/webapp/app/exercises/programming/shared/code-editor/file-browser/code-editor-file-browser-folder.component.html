@@ -1,10 +1,10 @@
 <!--Folder-->
 <li (click)="onCollapseExpand()" class="list-group-item list-group-item--folder">
-    <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'chevron-right' : 'chevron-down'" [fixedWidth]="true" class="mr-1" size="xs"></fa-icon>
+    <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'chevron-right' : 'chevron-down'" [fixedWidth]="true" class="me-1" size="xs"></fa-icon>
     <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'folder' : 'folder-open'" [fixedWidth]="true"></fa-icon>
-    <span class="ml-1 list-group-item__fileName" *ngIf="!isBeingRenamed">{{ item.text }}</span>
+    <span class="ms-1 list-group-item__fileName" *ngIf="!isBeingRenamed">{{ item.text }}</span>
     <!-- Renaming folder tree item -->
-    <span class="ml-1" *ngIf="isBeingRenamed"
+    <span class="ms-1" *ngIf="isBeingRenamed"
         ><input
             #renamingInput
             value="{{ item.text }}"

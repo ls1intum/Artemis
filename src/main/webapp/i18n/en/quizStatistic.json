@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Statistic",
                 "createOrEditLabel": "Create or edit a Statistic"
             },
-            "created": "A new Statistic is created with identifier {{ param }}",
-            "updated": "A Statistic is updated with identifier {{ param }}",
-            "deleted": "A Statistic is deleted with identifier {{ param }}",
+            "created": "Created new Statistic with identifier {{ param }}",
+            "updated": "Updated Statistic with identifier {{ param }}",
+            "deleted": "Deleted Statistic with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Statistic {{ id }}?"
             },

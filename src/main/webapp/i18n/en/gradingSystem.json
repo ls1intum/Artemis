@@ -1,10 +1,10 @@
 {
     "artemisApp": {
         "gradingSystem": {
-            "title": "Grade Key",
-            "titleCourse": "Grade Key for Course",
-            "titleExam": "Grade Key for Exam",
-            "defaultButton": "Generate Default Grade Key",
+            "title": "Grading Key",
+            "titleCourse": "Grading Key for Course",
+            "titleExam": "Grading Key for Exam",
+            "defaultButton": "Generate Default Grading Key",
             "gradeType": {
                 "title": "Grade Type",
                 "grade": "Grade",
@@ -17,22 +17,28 @@
             },
             "firstPassingGrade": "First Passing Grade",
             "min": "Min %",
+            "minPoints": "Min Points",
             "max": "Max %",
+            "maxPoints": "Max Points",
             "gradeName": "Grade Name",
             "bonusPoints": "Bonus Points",
             "delete": "Delete",
-            "deleteQuestion": "Do you really wish to delete the grade key?",
+            "deleteQuestion": "Do you really wish to delete the grading key?",
             "add": "Add Grade Step",
             "save": "Save",
             "info": {
-                "title": "Grade Key Help",
+                "title": "Grading Key Help",
                 "general": {
                     "title": "General Information",
-                    "explanation": "A grade key consists of grade steps that cover all possible percentages from 0 to 100. All adjacent grade steps should overlap on their boundaries (Example: grade steps (60, 70) and (70, 80) overlap at 70%). Which grade step includes that boundary is determined by the \"Lower Bound Inclusivity\". All grade steps also have either a name (1.0, Ausreichend, A,...) or a bonus point count (5, 10,..) depending on the \"Grade Type\""
+                    "explanation": "A grading key consists of grade steps that cover all possible percentages from 0 to 100. All adjacent grade steps should overlap on their boundaries (Example: grade steps (60, 70) and (70, 80) overlap at 70%). Which grade step includes that boundary is determined by the \"Lower Bound Inclusivity\". All grade steps also have either a name (1.0, Ausreichend, A,...) or a bonus point count (5, 10,..) depending on the \"Grade Type\""
+                },
+                "maxPoints": {
+                    "title": "Maximum Points",
+                    "explanation": "Determines the maximum points for the given course/exam. The value is necessary if a grading key with absolute points as boundaries instead of percentages is needed"
                 },
                 "gradeType": {
                     "title": "Grade Type",
-                    "explanation": "A grade key can either map directly to grades or to bonus points for the course or the final exam"
+                    "explanation": "A grading key can either map directly to grades or to bonus points for the course or the final exam"
                 },
                 "inclusivity": {
                     "title": "Inclusivity",
@@ -40,25 +46,36 @@
                 },
                 "firstPassingGrade": {
                     "title": "First Passing Grade",
-                    "explanation": "Sets the first passing grade for a grade key. Every grade with higher percentages will be considered passing as well"
+                    "explanation": "Sets the first passing grade for a grading key. Every grade with higher percentages will be considered passing as well"
                 }
             },
             "error": {
                 "empty": "Grade steps are empty!",
+                "negativeMaxPoints": "Maximum points can't be negative",
                 "emptyFields": "All grade step fields must be filled out!",
                 "invalidMinMaxPercentages": "The grade step percentages must be all between 0 and 100 (both inclusive) and the Min % must be less than the Max %!",
+                "invalidMinMaxPoints": "The grade step points must be all between 0 and the maximum points for the course/exam (both inclusive) and the Min Points must be less than the Max Points!",
                 "nonUniqueGradeNames": "All grade steps must have unique names!",
                 "unsetFirstPassingGrade": "The first passing grade must be set!",
                 "invalidBonusPoints": "The bonus points must be at least 0!",
                 "nonStrictlyIncreasingBonusPoints": "Consecutive grade steps must have increasing bonus point values!",
                 "invalidAdjacency": "The Max % of all grade steps (excluding the last one), must be equal to the Min % of their subsequent grade step!",
                 "invalidFirstAndLastStep": "The Min % of the first grade step must be 0 and the Max % of the last grade step must be 100!"
+            },
+            "overview": {
+                "info": "The grading key is based on the attainable points. It could change until the end of the course when more exercises have been assessed.",
+                "intervals": {
+                    "title": "Intervals:",
+                    "leftInclusiveRightExclusive": "Left boundary is included in and right is excluded from the interval",
+                    "leftExclusiveRightInclusive": "Left boundary is excluded from and right is included in the interval",
+                    "bothInclusive": "Both boundaries are included in the interval"
+                }
             }
         },
         "gradingScale": {
-            "created": "Grade key has been created",
-            "updated": "Grade key has been updated",
-            "deleted": "Grade key has been deleted"
+            "created": "Grading key has been created",
+            "updated": "Grading key has been updated",
+            "deleted": "Grading key has been deleted"
         }
     }
 }

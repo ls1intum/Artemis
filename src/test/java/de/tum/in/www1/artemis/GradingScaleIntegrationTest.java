@@ -17,12 +17,16 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 
 public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
+
+    @Autowired
+    private ExamRepository examRepository;
 
     private GradingScale courseGradingScale;
 
@@ -64,7 +68,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradingScaleForCourseNotFound() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/grading-scale", HttpStatus.NOT_FOUND, GradingScale.class);
+        request.get("/api/courses/" + course.getId() + "/grading-scale", HttpStatus.OK, Void.class);
     }
 
     /**
@@ -91,7 +95,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradingScaleForExamNotFound() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.NOT_FOUND, GradingScale.class);
+        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.OK, Void.class);
     }
 
     /**
@@ -203,6 +207,8 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveGradingScaleForExamInvalidGradeSteps() throws Exception {
+        exam.setMaxPoints(null);
+        examRepository.save(exam);
         gradeSteps = database.generateGradeStepSet(examGradingScale, false);
         examGradingScale.setGradeSteps(gradeSteps);
 
@@ -219,6 +225,8 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     public void testSaveGradingScaleForExam() throws Exception {
         gradeSteps = database.generateGradeStepSet(examGradingScale, true);
         examGradingScale.setGradeSteps(gradeSteps);
+        exam.setMaxPoints(null);
+        examRepository.save(exam);
 
         GradingScale savedGradingScale = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale,
                 GradingScale.class, HttpStatus.CREATED);
@@ -292,6 +300,8 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateGradingScaleForExamInvalidGradeSteps() throws Exception {
+        exam.setMaxPoints(null);
+        examRepository.save(exam);
         gradingScaleRepository.save(examGradingScale);
         gradeSteps = database.generateGradeStepSet(examGradingScale, false);
         examGradingScale.setGradeSteps(gradeSteps);
@@ -310,6 +320,8 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
         gradingScaleRepository.save(examGradingScale);
         gradeSteps = database.generateGradeStepSet(examGradingScale, true);
         examGradingScale.setGradeSteps(gradeSteps);
+        exam.setMaxPoints(null);
+        examRepository.save(exam);
 
         GradingScale savedGradingScale = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale,
                 GradingScale.class, HttpStatus.OK);

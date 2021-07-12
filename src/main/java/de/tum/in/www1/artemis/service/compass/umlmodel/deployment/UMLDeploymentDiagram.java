@@ -54,6 +54,7 @@ public class UMLDeploymentDiagram extends UMLComponentDiagram {
         List<UMLElement> modelElements = super.getModelElements();
         modelElements.addAll(nodeList);
         modelElements.addAll(artifactList);
+        modelElements.addAll(getComponentRelationshipList());
         return modelElements;
     }
 }

@@ -14,7 +14,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { DebugElement } from '@angular/core';
+import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
@@ -24,7 +24,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
@@ -85,6 +85,7 @@ describe('Component Tests', () => {
                 ],
                 declarations: [ModelingSubmissionComponent, MockComponent(ModelingEditorComponent), MockPipe(HtmlForMarkdownPipe)],
                 providers: [
+                    MockProvider(ChangeDetectorRef),
                     { provide: ComplaintService, useClass: MockComplaintService },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },

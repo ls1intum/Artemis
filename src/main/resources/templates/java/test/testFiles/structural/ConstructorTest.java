@@ -14,24 +14,25 @@ import de.tum.in.test.api.structural.ConstructorTestProvider;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 5.0 (11.11.2020)
+ * @version 5.1 (11.06.2021)
  * <br><br>
  * This test evaluates if the specified constructors in the structure oracle are correctly implemented with the expected parameter types and annotations,
  * based on its definition in the structure oracle (test.json).
  */
-@WhitelistPath("target")
-@BlacklistPath(value = "**Test*.{java,class}", type = PathType.GLOB)
 @Public
-public class ConstructorTest extends ConstructorTestProvider {
+@WhitelistPath("target") // mainly for Artemis
+@BlacklistPath("target/test-classes") // prevent access to test-related classes and resources
+class ConstructorTest extends ConstructorTestProvider {
 
     /**
      * This method collects the classes in the structure oracle file for which constructors are specified.
      * These classes are then transformed into JUnit 5 dynamic tests.
      * @return A dynamic test container containing the test for each class which is then executed by JUnit.
      */
+    @Override
     @StrictTimeout(10)
     @TestFactory
-    public DynamicContainer generateTestsForAllClasses() throws URISyntaxException {
+    protected DynamicContainer generateTestsForAllClasses() throws URISyntaxException {
         structureOracleJSON = retrieveStructureOracleJSON(this.getClass().getResource("test.json"));
         return super.generateTestsForAllClasses();
     }

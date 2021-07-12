@@ -144,5 +144,4 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
         }
         return gradingScales.get(0);
     }
-
 }

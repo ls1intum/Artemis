@@ -39,8 +39,10 @@ public class Complaint extends DomainObject {
     @Column(name = "complaint_type")
     private ComplaintType complaintType;
 
+    @Deprecated
     @Column(name = "result_before_complaint")
     @Lob
+    @JsonIgnore
     private String resultBeforeComplaint;
 
     @OneToOne(mappedBy = "complaint")
@@ -102,14 +104,6 @@ public class Complaint extends DomainObject {
 
     public void setComplaintType(ComplaintType complaintType) {
         this.complaintType = complaintType;
-    }
-
-    public String getResultBeforeComplaint() {
-        return resultBeforeComplaint;
-    }
-
-    public void setResultBeforeComplaint(String resultBeforeComplaint) {
-        this.resultBeforeComplaint = resultBeforeComplaint;
     }
 
     public Result getResult() {
@@ -183,6 +177,6 @@ public class Complaint extends DomainObject {
     @Override
     public String toString() {
         return "Complaint{" + "id=" + getId() + ", complaintText='" + getComplaintText() + "'" + ", accepted='" + isAccepted() + "'" + ", submittedTime='" + getSubmittedTime()
-                + "'" + ", resultBeforeComplaint='" + getResultBeforeComplaint() + "'" + "}";
+                + "'}";
     }
 }

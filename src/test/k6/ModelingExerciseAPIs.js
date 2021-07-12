@@ -1,17 +1,10 @@
 import { group, sleep } from 'k6';
 import { addUserToInstructorsInCourse, deleteCourse, newCourse } from './requests/course.js';
-import {
-    assessModelingSubmission,
-    deleteModelingExercise,
-    getAndLockModelingSubmission,
-    getExercise,
-    newModelingExercise,
-    startExercise,
-    startTutorParticipation,
-    submitRandomModelingAnswerExam,
-} from './requests/modeling.js';
+import { assessModelingSubmission, newModelingExercise, submitRandomModelingAnswerExam, updateModelingExerciseDueDate } from './requests/modeling.js';
+import { startExercise, getExercise, startTutorParticipation, deleteExercise, getAndLockSubmission } from './requests/exercises.js';
 import { login } from './requests/requests.js';
 import { createUsersIfNeeded } from './requests/user.js';
+import { MODELING_EXERCISE, MODELING_SUBMISSION_WITHOUT_ASSESSMENT } from './requests/endpoints.js';
 
 // Version: 1.1
 // Creator: Firefox
@@ -32,6 +25,8 @@ let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 let userOffset = parseInt(__ENV.USER_OFFSET);
 const onlyPrepare = __ENV.ONLY_PREPARE === true || __ENV.ONLY_PREPARE === 'true';
+// Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
+const userIdOffset = 99;
 
 export function setup() {
     console.log('__ENV.CREATE_USERS: ' + __ENV.CREATE_USERS);
@@ -46,7 +41,9 @@ export function setup() {
     let artemis;
     let exercise;
     const iterations = parseInt(__ENV.ITERATIONS);
-
+    // Create course
+    const instructorUsername = baseUsername.replace('USERID', '101');
+    const instructorPassword = basePassword.replace('USERID', '101');
     if (parseInt(__ENV.COURSE_ID) === 0 || parseInt(__ENV.EXERCISE_ID) === 0) {
         console.log('Creating new exercise as no parameters are given');
 
@@ -59,10 +56,6 @@ export function setup() {
         createUsersIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset);
         console.log('Create users with ids starting from ' + (userOffset + iterations) + ' and up to ' + (userOffset + iterations + iterations));
         createUsersIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset + iterations, true);
-
-        // Create course
-        const instructorUsername = baseUsername.replace('USERID', '1');
-        const instructorPassword = basePassword.replace('USERID', '1');
 
         console.log('Assigning ' + instructorUsername + 'to course ' + course.id + ' as the instructor');
         addUserToInstructorsInCourse(artemisAdmin, instructorUsername, course.id);
@@ -89,10 +82,10 @@ export function setup() {
         artemis = login(adminUsername, adminPassword);
 
         console.log('Getting exercise');
-        exercise = getExercise(artemis, exerciseId);
+        exercise = getExercise(artemis, exerciseId, MODELING_EXERCISE(exerciseId));
     }
 
-    for (let i = 1; i <= iterations; i++) {
+    for (let i = 1 + userIdOffset; i <= iterations + userIdOffset; i++) {
         console.log(userOffset);
         const userId = parseInt(__VU) + userOffset + i;
         const currentUsername = baseUsername.replace('USERID', userId);
@@ -115,6 +108,13 @@ export function setup() {
 
     sleep(2);
 
+    // Login to Artemis
+    artemis = login(instructorUsername, instructorPassword);
+
+    updateModelingExerciseDueDate(artemis, exercise);
+
+    sleep(30);
+
     console.log('Using existing course ' + courseId + ' and exercise ' + exerciseId);
     return { exerciseId, courseId };
 }
@@ -122,7 +122,7 @@ export function setup() {
 export default function (data) {
     // The user id (1, 2, 3) is stored in __VU
     const iterations = parseInt(__ENV.ITERATIONS);
-    const userId = parseInt(__VU) + userOffset + iterations;
+    const userId = parseInt(__VU) + userOffset + iterations + userIdOffset;
     const currentUsername = baseUsername.replace('USERID', userId);
     const currentPassword = basePassword.replace('USERID', userId);
 
@@ -139,7 +139,7 @@ export default function (data) {
         let participation = startTutorParticipation(artemis, exerciseId);
         if (participation) {
             console.log('Get and lock modeling submission for tutor ' + userId + ' and exercise');
-            const submission = getAndLockModelingSubmission(artemis, exerciseId);
+            const submission = getAndLockSubmission(artemis, exerciseId, MODELING_SUBMISSION_WITHOUT_ASSESSMENT(exerciseId));
             const submissionId = submission.id;
             console.log('Assess modeling submission ' + submissionId);
             console.log('Result before manual assessment ' + JSON.stringify(submission.results[0]));
@@ -158,7 +158,7 @@ export function teardown(data) {
         const courseId = data.courseId;
         const exerciseId = data.exerciseId;
 
-        deleteModelingExercise(artemis, exerciseId);
+        deleteExercise(artemis, exerciseId, MODELING_EXERCISE(exerciseId));
         deleteCourse(artemis, courseId);
     }
 }

@@ -24,7 +24,7 @@
             },
             "accountMenuClick": {
                 "headline": "Persönliche Einstellungen",
-                "content": "Klicke auf deinen Benutzernamen um das Menü für deine persönlichen Einstellungen anzuzeigen."
+                "content": "Klicke auf deinen Login, um das Menü für deine persönlichen Einstellungen anzuzeigen."
             },
             "accountMenu": {
                 "headline": "Persönliche Einstellungen",
@@ -32,7 +32,7 @@
             },
             "course": {
                 "headline": "Deine aktuellen Kurse",
-                "content": "Du bist für diesen Kurs angemeldet. Später kannst du dir die Kursdetailseite genauer anschauen, indem du auf diesen Kachel klickst."
+                "content": "Du bist für diesen Kurs angemeldet. Später kannst du dir die Kursdetailseite genauer anschauen, indem du auf diese Kachel klickst."
             },
             "courseFooter": {
                 "headline": "Nächste fällige Übungsabgabe",
@@ -48,7 +48,7 @@
             },
             "contact": {
                 "headline": "Kontaktiere das Artemis Team",
-                "content": "Du kannst dich gerne an uns wenden, um Feedback zu hinterlassen, neue Features vorzuschlagen oder Fehler zu melden.",
+                "content": "Du kannst dich gerne an uns wenden, um Feedback zu geben, neue Features vorzuschlagen oder Fehler zu melden.",
                 "hint": "Wenn du einen Beitrag zu Artemis leisten willst, dann schaue auf unserer <a href='https://github.com/ls1intum/Artemis' target='_blank'>Github Seite</a> vorbei und erstelle deinen ersten Pull Request."
             }
         }

@@ -200,6 +200,9 @@ public class ExamService {
         // Adding exam information to DTO
         ExamScoresDTO scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
 
+        // setting multiplicity of correction rounds
+        scores.hasSecondCorrectionAndStarted = false;
+
         // Counts how many participants each exercise has
         Map<Long, Long> exerciseIdToNumberParticipations = studentParticipations.stream()
                 .collect(Collectors.groupingBy(studentParticipation -> studentParticipation.getExercise().getId(), Collectors.counting()));
@@ -242,6 +245,7 @@ public class ExamService {
                     .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentResult.userId)).collect(Collectors.toList());
 
             studentResult.overallPointsAchieved = 0.0;
+            studentResult.overallPointsAchievedInFirstCorrection = 0.0;
             for (StudentParticipation studentParticipation : participationsOfStudent) {
                 Exercise exercise = studentParticipation.getExercise();
 
@@ -261,6 +265,27 @@ public class ExamService {
                         studentResult.overallPointsAchieved += achievedPoints;
                     }
 
+                    // collect points of first correction, if a second correction exists
+                    if (exam.getNumberOfCorrectionRoundsInExam() == 2 && !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
+                        Optional<Submission> latestSubmission = studentParticipation.findLatestSubmission();
+                        if (latestSubmission.isPresent()) {
+                            Submission submission = latestSubmission.get();
+                            // Check if second correction already started
+                            if (submission.getManualResults().size() > 1) {
+                                if (!scores.hasSecondCorrectionAndStarted) {
+                                    scores.hasSecondCorrectionAndStarted = true;
+                                }
+                                Result firstManualResult = submission.getFirstManualResult();
+                                double achievedPointsInFirstCorrection = 0.0;
+                                if (firstManualResult != null) {
+                                    Double resultScore = firstManualResult.getScore();
+                                    achievedPointsInFirstCorrection = resultScore != null ? round(resultScore / 100.0 * exercise.getMaxPoints()) : 0.0;
+                                }
+                                studentResult.overallPointsAchievedInFirstCorrection += achievedPointsInFirstCorrection;
+                            }
+                        }
+                    }
+
                     // Check whether the student attempted to solve the exercise
                     boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise, objectMapper);
                     studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
@@ -274,6 +299,7 @@ public class ExamService {
                 // Sets grading scale related properties for exam scores
                 Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
                 if (gradingScale.isPresent()) {
+                    // Calculate current student grade
                     GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(studentResult.overallScoreAchieved, gradingScale.get().getId());
                     studentResult.overallGrade = studentGrade.getGradeName();
                     studentResult.hasPassed = studentGrade.getIsPassingGrade();

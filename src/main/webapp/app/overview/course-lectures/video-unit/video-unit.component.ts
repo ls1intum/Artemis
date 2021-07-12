@@ -24,8 +24,8 @@ export class VideoUnitComponent implements OnInit {
         }
     }
 
-    handleCollapse($event: any) {
-        $event.stopPropagation();
+    handleCollapse(event: any) {
+        event.stopPropagation();
         this.isCollapsed = !this.isCollapsed;
     }
 }

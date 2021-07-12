@@ -8,11 +8,11 @@ import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/model
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import * as chai from 'chai';
-import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 chai.use(sinonChai);
@@ -21,6 +21,7 @@ const expect = chai.expect;
 describe('ModelingAssessmentComponent', () => {
     let fixture: ComponentFixture<ModelingAssessmentComponent>;
     let comp: ModelingAssessmentComponent;
+    let translatePipe: ArtemisTranslatePipe;
 
     const generateMockModel = (elementId: string, elementId2: string, relationshipId: string) => {
         return {
@@ -95,12 +96,13 @@ describe('ModelingAssessmentComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(FormsModule)],
             declarations: [ModelingAssessmentComponent, ScoreDisplayComponent, ModelingExplanationEditorComponent, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe)],
-            schemas: [],
+            providers: [MockProvider(ArtemisTranslatePipe)],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ModelingAssessmentComponent);
                 comp = fixture.componentInstance;
+                translatePipe = fixture.debugElement.injector.get(ArtemisTranslatePipe);
             });
     });
 
@@ -228,6 +230,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         comp.feedbacks = [mockFeedbackWithReference];
         comp.referencedFeedbacks = [mockFeedbackWithReference];
+        sinon.stub(translatePipe, 'transform').returns('Second correction round');
 
         comp.ngOnChanges(changes);
 
@@ -247,6 +250,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         comp.feedbacks = [mockFeedbackWithReferenceCopied];
         comp.referencedFeedbacks = [mockFeedbackWithReferenceCopied];
+        sinon.stub(translatePipe, 'transform').returns('First correction round');
 
         comp.ngOnChanges(changes);
 

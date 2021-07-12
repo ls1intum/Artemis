@@ -5,17 +5,18 @@
             <fa-icon [icon]="'arrow-left'" size="3x" class="col-md-4 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
         </div>
     </div>
-    <canvas
-        class="col-md-9"
-        baseChart
-        height="250"
-        width="1500"
-        [datasets]="chartData"
-        [labels]="barChartLabels"
-        [options]="barChartOptions"
-        [legend]="barChartLegend"
-        [chartType]="barChartType"
-    ></canvas>
+    <div class="col-md-9">
+        <canvas
+            baseChart
+            height="250"
+            width="1500"
+            [datasets]="chartData"
+            [labels]="barChartLabels"
+            [options]="barChartOptions"
+            [legend]="barChartLegend"
+            [chartType]="barChartType"
+        ></canvas>
+    </div>
     <fa-icon [icon]="'arrow-right'" size="3x" class="col-md-1 d-flex justify-content-start align-items-center" role="button" (click)="switchTimeSpan(RIGHT)"></fa-icon>
 </div>
 <h4 class="col-md-9 offset-md-2 text-center mt-3 mb-5">{{ chartTime }}</h4>

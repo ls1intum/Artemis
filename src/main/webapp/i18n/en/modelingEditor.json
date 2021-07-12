@@ -1,21 +1,21 @@
 {
     "artemisApp": {
         "modelingEditor": {
-            "title": "Modeling Editor",
+            "title": "Modelling Editor",
             "problemStatement": "<strong>Problem statement:</strong>",
             "maxScore": "<strong>Max. Points: {{maxScore}}</strong>",
             "saveSuccessful": "Your diagram was saved successfully!",
-            "submitSuccessful": "Your diagram was submitted successfully! You can still submit again or wait for your feedback.",
-            "submitSuccessfulWithAssessment": "Your diagram was submitted successfully! Now you can't edit your diagram anymore. Your feedback is shown below.",
-            "submitDeadlineMissed": "Your diagram was submitted successfully! You can still submit again or wait for your feedback. As you missed the deadline the score will not be counted.",
+            "submitSuccessful": "Your diagram was submitted successfully! You may submit again or wait for your feedback.",
+            "submitSuccessfulWithAssessment": "Your diagram was submitted successfully! You may no longer edit your diagram. Your feedback is shown below.",
+            "submitDeadlineMissed": "Your diagram was submitted successfully! You may submit again or wait for your feedback. As you missed the deadline, your score will not be counted.",
             "empty": "Unable to submit an empty diagram.",
             "fullscreen": {
                 "enterButtonText": "Fullscreen",
                 "exitButtonText": "Exit Fullscreen",
                 "tooltip": "Fullscreen"
             },
-            "autoSubmit": "The exercise has ended. Now you can't edit your diagram anymore.",
-            "newAssessment": "A new assessment for your submission was submitted.",
+            "autoSubmit": "The exercise has ended. You may no longer edit your diagram.",
+            "newAssessment": "A new assessment for your submission is available.",
             "error": "An error occurred. Please try again later.",
             "assessment": {
                 "title": "Assessment",
@@ -26,14 +26,14 @@
             },
             "helpModal": {
                 "help": "Help",
-                "title": "How to use the modeling editor",
+                "title": "How to use the modelling editor",
                 "createElement": {
                     "title": "Add Elements",
                     "text": "To add an element, simply drag and drop one of the elements from the right side into the editor area on the left side."
                 },
                 "createRelationship": {
                     "title": "Add Relationships",
-                    "text": "To add a relationship, select the source class with a single click and you will see four blue circles. Those are the possible connection points for relationships. Click and hold on one of those and drag it to another blue circle to create a relationship."
+                    "text": "To add a relationship, select the source class with a single click and you will see four blue semicircles. Those are the possible connection points for relationships. Click and hold on one of those and drag it to another blue semicircle to create a relationship."
                 },
                 "updateElement": {
                     "title": "Edit Elements/Relationships",
@@ -45,7 +45,7 @@
                 },
                 "moveElement": {
                     "title": "Move Elements",
-                    "text": "To move an element, select it with a single click and either use your keyboard arrows or drag and drop it."
+                    "text": "To move an element, either select it with a single click and use your keyboard arrow keys or drag and drop it."
                 },
                 "resizeElement": {
                     "title": "Resize Elements",

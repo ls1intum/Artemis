@@ -10,7 +10,6 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { now } from 'moment';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { filter } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -25,7 +24,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
+import { getFirstResultWithComplaint, getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
@@ -163,9 +162,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
         }
         this.hasAssessmentDueDatePassed = !!this.modelingExercise!.assessmentDueDate && moment(this.modelingExercise!.assessmentDueDate).isBefore(now());
-        if (this.result?.hasComplaint) {
-            this.getComplaint(this.result.id);
-        }
+
+        this.getComplaint();
+
         if (this.result?.feedbacks) {
             this.result = this.modelingAssessmentService.convertResult(this.result);
             this.handleFeedback(this.result.feedbacks);
@@ -197,20 +196,22 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.isLoading = false;
     }
 
-    private getComplaint(resultId?: number): void {
-        if (this.result && resultId) {
-            this.complaintService
-                .findByResultId(resultId)
-                .pipe(filter((res) => !!res.body))
-                .subscribe(
-                    (res) => {
-                        this.complaint = res.body!;
-                    },
-                    () => {
-                        this.onError();
-                    },
-                );
+    private getComplaint(): void {
+        const resultWithComplaint = getFirstResultWithComplaint(this.submission);
+        if (!resultWithComplaint) {
+            return;
         }
+        this.complaintService.findByResultId(resultWithComplaint.id!).subscribe(
+            (res) => {
+                if (!res.body) {
+                    return;
+                }
+                this.complaint = res.body;
+            },
+            () => {
+                this.onError();
+            },
+        );
     }
 
     /**
@@ -425,7 +426,15 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.router.onSameUrlNavigation = 'reload';
 
                 // navigate to root and then to new assessment page to trigger re-initialization of the components
-                const url = getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, unassessedSubmission.id!, this.examId, this.exerciseGroupId);
+                const url = getLinkToSubmissionAssessment(
+                    ExerciseType.MODELING,
+                    this.courseId,
+                    this.exerciseId,
+                    undefined,
+                    unassessedSubmission.id!,
+                    this.examId,
+                    this.exerciseGroupId,
+                );
                 this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } }));
             },
             (error: HttpErrorResponse) => {

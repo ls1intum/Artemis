@@ -14,7 +14,7 @@ import { ButtonType } from 'app/shared/components/button.component';
     template: `
         <jhi-button
             id="re-evaluate-button"
-            class="ml-3"
+            class="ms-3"
             [disabled]="disabled || isReEvaluationRunning"
             [btnType]="ButtonType.ERROR"
             [isLoading]="isReEvaluationRunning"

@@ -2,7 +2,7 @@
     "artemisApp": {
         "assessmentDashboard": {
             "home": {
-                "title": "Tutor Kurse Dashboard"
+                "title": "Kurs-Dashboard für Tutor:innen"
             },
             "title": "Bewertungsübersicht",
             "noSubmissionFound": "Keine Abgaben gefunden",
@@ -10,7 +10,7 @@
             "informationAboutExam": "Klausurinformationen",
             "submissions": "Einreichugen",
             "pageHeader": "Bewertungs-Dashboard für den Kurs",
-            "pageHeaderExam": "Tutor Klausur Dashboard für die Klausur",
+            "pageHeaderExam": "Klausur-Dashboard für Tutor:innen von",
             "pageHeaderExamTestRun": "Testlauf Bewertungs-Dashboard",
             "yourAssessments": "Deine Bewertungen",
             "totalAssessments": "Gesamtzahl der Bewertungen",
@@ -31,9 +31,9 @@
             "notReleased": "Nicht freigegeben",
             "readGradingInstructions": "Bewertungsanweisungen lesen",
             "trainOnExampleSubmissions": "Übung zu Beispiel Einreichungen",
-            "assessStudentsSubmissions": "Bewerte die Einreichungen der Studenten.",
-            "assessStudentsLateSubmissions": "Bewerte die verspäteten Einreichungen der Studenten",
-            "evaluateStudentsComplaints": "Evaluiere die Beschwerden und Feedback Anfragen der Studenten",
+            "assessStudentsSubmissions": "Bewerte die Einreichungen der Studierenden.",
+            "assessStudentsLateSubmissions": "Bewerte die verspäteten Einreichungen der Studierenden",
+            "evaluateStudentsComplaints": "Evaluiere die Beschwerden und Feedback Anfragen der Studierenden",
             "numberOfOpenComplaints": "Anzahl an offenen Beschwerden",
             "exerciseTeams": "Teams der Übung"
         }

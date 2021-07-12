@@ -17,8 +17,8 @@ export class AttachmentUnitComponent implements OnInit {
 
     ngOnInit(): void {}
 
-    handleCollapse($event: any) {
-        $event.stopPropagation();
+    handleCollapse(event: any) {
+        event.stopPropagation();
         this.isCollapsed = !this.isCollapsed;
     }
 

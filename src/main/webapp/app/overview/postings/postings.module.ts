@@ -10,6 +10,7 @@ import { PostVotesComponent } from 'app/overview/postings/post-votes/post-votes.
 import { RouterModule, Routes } from '@angular/router';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { PostingsButtonComponent } from 'app/overview/postings/postings-button/postings-button.component';
 
 const routes: Routes = [
     {
@@ -21,7 +22,7 @@ const routes: Routes = [
 
 @NgModule({
     imports: [RouterModule.forChild(routes), ArtemisSharedModule, ArtemisSidePanelModule, ArtemisConfirmIconModule, ArtemisMarkdownModule, ArtemisMarkdownEditorModule],
-    declarations: [PostingsComponent, PostRowComponent, PostComponent, AnswerPostComponent, PostVotesComponent],
-    exports: [PostingsComponent],
+    declarations: [PostingsComponent, PostRowComponent, PostComponent, AnswerPostComponent, PostVotesComponent, PostingsButtonComponent],
+    exports: [PostingsComponent, PostingsButtonComponent],
 })
 export class ArtemisPostingsModule {}

@@ -84,18 +84,15 @@ public class MetricsBean {
         for (HealthContributor healthContributor : healthContributors) {
             // For most HealthContributors, there is only one HealthIndicator that can directly be published.
             // The health status gets mapped to a double value, as only doubles can be returned by a Gauge.
-            if (healthContributor instanceof HealthIndicator) {
-                HealthIndicator healthIndicator = (HealthIndicator) healthContributor;
+            if (healthContributor instanceof HealthIndicator healthIndicator) {
                 Gauge.builder(ARTEMIS_HEALTH_NAME, healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description(ARTEMIS_HEALTH_DESCRIPTION)
                         .tag(ARTEMIS_HEALTH_TAG, healthIndicator.getClass().getSimpleName().toLowerCase()).register(meterRegistry);
             }
 
             // The DiscoveryCompositeHealthContributor can consist of several HealthIndicators, so they must all be published
-            if (healthContributor instanceof DiscoveryCompositeHealthContributor) {
-                DiscoveryCompositeHealthContributor discoveryCompositeHealthContributor = (DiscoveryCompositeHealthContributor) healthContributor;
+            if (healthContributor instanceof DiscoveryCompositeHealthContributor discoveryCompositeHealthContributor) {
                 for (NamedContributor<HealthContributor> discoveryHealthContributor : discoveryCompositeHealthContributor) {
-                    if (discoveryHealthContributor.getContributor() instanceof HealthIndicator) {
-                        HealthIndicator healthIndicator = (HealthIndicator) discoveryHealthContributor.getContributor();
+                    if (discoveryHealthContributor.getContributor() instanceof HealthIndicator healthIndicator) {
                         Gauge.builder(ARTEMIS_HEALTH_NAME, healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description(ARTEMIS_HEALTH_DESCRIPTION)
                                 .tag(ARTEMIS_HEALTH_TAG, discoveryHealthContributor.getName().toLowerCase()).register(meterRegistry);
                     }
@@ -111,8 +108,7 @@ public class MetricsBean {
     }
 
     private static double extractWebsocketUserCount(WebSocketHandler webSocketHandler) {
-        if (webSocketHandler instanceof SubProtocolWebSocketHandler) {
-            SubProtocolWebSocketHandler subProtocolWebSocketHandler = (SubProtocolWebSocketHandler) webSocketHandler;
+        if (webSocketHandler instanceof SubProtocolWebSocketHandler subProtocolWebSocketHandler) {
             return subProtocolWebSocketHandler.getStats().getWebSocketSessions();
         }
         return -1;

@@ -148,7 +148,7 @@
 
     .button-row {
         z-index: 1;
-        min-width: 132px;
+        width: 132px;
         align-items: center;
         justify-content: start;
         margin-right: 5px;
@@ -157,6 +157,10 @@
     .grading-icon {
         font-size: large;
         margin-left: 5px;
+    }
+
+    .details-container {
+        position: relative;
     }
 }
 
@@ -272,4 +276,17 @@
             max-width: 15ch;
         }
     }
+}
+
+/*
+HACK: Something is bogus with the scss of top-level pages
+      Redefine some rules with '!important' to prevent them from being overwritten bogusly
+*/
+.btn-primary,
+.btn-primary:hover,
+.btn-info,
+.btn-info:hover,
+.btn-success,
+.btn-success:hover {
+    color: #fff !important;
 }

@@ -5,7 +5,7 @@ import { of, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
-import { IWebsocketService } from 'app/core/websocket/websocket.service.ts';
+import { IWebsocketService } from 'app/core/websocket/websocket.service';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';

@@ -14,7 +14,7 @@
         },
         "table": {
             "header": {
-                "principal": "Benutzer",
+                "principal": "Nutzer:in",
                 "date": "Datum",
                 "status": "Stand",
                 "data": "Extra Informationen"

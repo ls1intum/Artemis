@@ -1,7 +1,7 @@
 {
     "global": {
         "title": "Artemis",
-        "browsehappy": "Du benutzt einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisiere deinen Browser</a>, um die Benutzerfreundlichkeit zu erhöhen.",
+        "browsehappy": "Du benutzt einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisiere deinen Browser</a>, um die Bedienbarkeit zu verbessern.",
         "generic": {
             "yes": "Ja",
             "no": "Nein",
@@ -83,11 +83,11 @@
             "admin": {
                 "main": "Server-Administration",
                 "upcomingExamsAndExercises": "Kommende Prüfungen & Übungen",
-                "userManagement": "Benutzerverwaltung",
+                "userManagement": "Verwaltung von Nutzer:innen",
                 "organizationManagement": "Organisationsverwaltung",
                 "systemNotifications": "Systemmitteilungen",
                 "featureToggles": "Feature Toggles",
-                "statistics": "Benutzerstatistiken",
+                "statistics": "Statistiken der Nutzer:innen",
                 "metrics": "Metriken",
                 "health": "Status",
                 "configuration": "Konfiguration",
@@ -104,12 +104,12 @@
             "continueTutorial": "Tutorial fortsetzen"
         },
         "form": {
-            "username": "Benutzername",
+            "username": "Login",
             "firstname": "Vorname",
             "firstname.placeholder": "Vorname",
             "lastname": "Nachname",
             "lastname.placeholder": "Nachname",
-            "username.placeholder": "Benutzername",
+            "username.placeholder": "Login",
             "currentpassword": "Aktuelles Passwort",
             "currentpassword.placeholder": "Aktuelles Passwort",
             "newpassword": "Neues Passwort",
@@ -127,7 +127,7 @@
                 "authenticated": {
                     "prefix": "Wenn du dich ",
                     "link": "melde",
-                    "suffix": " möchtest, versuche es mit <br>- Administrator (Name=\"admin\" und Passwort=\"admin\")<br>- Benutzer (Name=\"user\" und Passwort=\"user\")."
+                    "suffix": " möchtest, versuche es mit <br>- Administration (Name=\"admin\" und Passwort=\"admin\")<br>- Login (Name=\"user\" und Passwort=\"user\")."
                 },
                 "register": {
                     "noaccount": "Du hast noch keinen Zugang?",
@@ -221,7 +221,7 @@
             "saveAttachment": "Anhang speichern",
             "addAttachment": "Anhang hinzufügen",
             "assessmentDashboard": "Bewertungs-Dashboard",
-            "instructorDashboard": "Dozenten-Dashboard",
+            "instructorDashboard": "Dashboard für Lehrende",
             "exerciseDashboard": "Aufgaben-Dashboard",
             "newResult": "Neues Ergebnis",
             "updateResult": "Ergebnis bearbeiten",
@@ -234,9 +234,9 @@
             "manageHints": "Verwalte Hinweise",
             "addExternalSubmission": "Externe Einreichung anlegen",
             "addAuxiliaryRepository": "Hilfsrepository anlegen",
-            "questionsAndAnswers": "Q&A",
-            "toggleToUnsubmitted": "Setze Studentenklauszur auf nicht abgegeben",
-            "toggleToSubmitted": "Setze Studentenklauszur auf abgegeben"
+            "discussion": "Diskussion",
+            "toggleToUnsubmitted": "Setze Studierenden-Klausur auf nicht abgegeben",
+            "toggleToSubmitted": "Setze Studierenden-Klausur auf abgegeben"
         },
         "detail": {
             "field": "Feld",
@@ -276,7 +276,9 @@
             "maxbytes": "Dieses Feld sollte nicht mehr als {{max}} bytes haben.",
             "pattern": "Dieses Feld muss das Muster {{pattern}} erfüllen.",
             "number": "Dieses Feld muss eine Zahl sein.",
-            "datetimelocal": "Dieses Feld muss eine Datums- und Zeitangabe enthalten."
+            "datetimelocal": "Dieses Feld muss eine Datums- und Zeitangabe enthalten.",
+            "patternLogin": "Dieses Feld darf nur Buchstaben, Ziffern und E-Mail-Adressen enthalten.",
+            "invalidPattern": "Dieses Feld beinhaltet ein ungültiges E-Mail Muster."
         }
     },
     "error": {
@@ -285,7 +287,7 @@
         "url.not.found": "Nicht gefunden",
         "NotNull": "Feld {{fieldName}} kann nicht leer sein!",
         "Size": "Feld {{fieldName}} erfüllt nicht die minimalen/maximalen Voraussetzungen!",
-        "userexists": "Benutzername bereits vergeben!",
+        "userexists": "Login bereits vergeben!",
         "emailexists": "E-Mail wird bereits verwendet!",
         "idexists": "Ein neuer {{entityName}} kann noch keine ID haben",
         "invalid.template.build.plan.id": "Die Vorlagen-Build-Plan-ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",

@@ -24,9 +24,9 @@
             "updated": "Texteinheit aktualisiert",
             "tooltip": "Das ist eine Texteinheit.",
             "isolated": "Isoliert öffnen",
-            "notReleasedTooltip": "Text nur sichtbar für Tutoren und Dozenten. Veröffentlichungsdatum:",
-            "markdownHelp": "Hier kann Markdown eingegeben werden. Mehr informationen:",
-            "cachedMarkdown": "Artemis fand ungespeichertes Markdown im local storage. Möchtest du es laden? Speicherdatum:",
+            "notReleasedTooltip": "Text nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
+            "markdownHelp": "Hier kann Markdown eingegeben werden. Mehr Informationen:",
+            "cachedMarkdown": "Artemis hat ungespeichertes Markdown im local storage gefunden. Möchtest du es laden? Speicherdatum:",
             "createTextUnit": {
                 "title": "Erstelle Texteinheit",
                 "name": "Name",
@@ -49,7 +49,7 @@
             "updated": "Videoeinheit aktualisiert",
             "tooltip": "Das ist eine Videoeinheit.",
             "description": "Beschreibung",
-            "notReleasedTooltip": "Video nur sichtbar für Tutoren und Dozenten. Veröffentlichungsdatum:",
+            "notReleasedTooltip": "Video nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "createVideoUnit": {
                 "title": "Erstelle Videoeinheit",
                 "name": "Name",
@@ -64,7 +64,7 @@
                 "sourceRequiredValidationError": "Video URL ist ein Pflichtfeld",
                 "sourceURLValidationError": "Keine valide URL",
                 "urlVideoHelper": "Umwandlung in einbettbares Format ",
-                "urlHelperPlaceholder": "Du kannst hier eine Video URL eingeben und den Pfeil benutzen um sie in die korrekte einbettbare URL umzuwandeln",
+                "urlHelperPlaceholder": "Du kannst hier eine Video URL eingeben und den Pfeil benutzen, um sie in die korrekte einbettbare URL umzuwandeln",
                 "urlHelperValidationError": "Automatische Formatumwandlung ist nicht möglich für diese URL"
             },
             "editVideoUnit": {
@@ -79,14 +79,14 @@
         "attachmentUnit": {
             "created": "Eine neue Dateieinheit wurde erstellt",
             "updated": "Dateieinheit aktualisiert",
-            "notReleasedTooltip": "Nur sichtbar für Tutoren und Dozenten. Veröffentlichungsdatum:",
+            "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "createAttachmentUnit": {
                 "title": "Dateieinheit erstellen",
                 "name": "Name",
                 "namePlaceHolder": "Gib der Datei einen Namen",
                 "description": "Beschreibung",
                 "updateNotificationText": "Update Benachrichtigungstext",
-                "updateNotificationTextPlaceholder": "Optionaler Benachrichtigungstext für Studenten über Änderungen.",
+                "updateNotificationTextPlaceholder": "Optionaler Benachrichtigungstext für Studierende über Änderungen.",
                 "updateNotificationTextMaxLengthValidationError": "Der Benachrichtigungstext kann maximal 1000 Zeichen lang sein.",
                 "descriptionPlaceHolder": "Gib der Datei eine Beschreibung",
                 "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",

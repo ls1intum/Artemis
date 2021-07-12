@@ -11,14 +11,14 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
     template: `
         <button
             id="save-table-button"
-            class="btn btn-primary ml-3 my-1"
+            class="btn btn-primary ms-3 my-1"
             jhiTranslate="artemisApp.programmingExercise.configureGrading.save"
             (click)="onSave.emit()"
             [disabled]="isSaving || !hasUnsavedChanges"
         ></button>
         <button
             id="reset-table-button"
-            class="btn btn-secondary ml-3 my-1"
+            class="btn btn-secondary ms-3 my-1"
             (click)="onReset.emit()"
             [disabled]="isSaving"
             jhiTranslate="artemisApp.programmingExercise.configureGrading.reset"

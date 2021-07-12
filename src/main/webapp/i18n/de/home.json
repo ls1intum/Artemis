@@ -3,18 +3,18 @@
         "title": "Willkommen zu Artemis!",
         "login": "Login",
         "subtitle": "Interaktives Lernen mit Individuellem Feedback",
-        "pleaseSignInAccount": "Bitte melde dich mit deinem {{account}} Account an.",
-        "pleaseSignIn": "Bitte melde dich mit deinem Account an.",
+        "pleaseSignInAccount": "Bitte melde dich mit deinen {{account}} Zugangsdaten an.",
+        "pleaseSignIn": "Bitte melde dich mit deinen Zugangsdaten an.",
         "logged": {
-            "message": "Du bist als Benutzer \"{{username}}\" angemeldet."
+            "message": "Du bist als Nutzer:in \"{{username}}\" angemeldet."
         },
         "errors": {
-            "failedToLogin": "<span class='bold'>Fehler bei der Anmeldung!</span> Bitte überprüfe deinen Benutzernamen und dein Passwort und versuche es erneut.",
-            "usernameIncorrect": "<p class='text-primary small'>Ungültiger Benutzername</p>",
-            "tumWarning": "<p class='text-primary small'>Wenn du ein TUM Student bist, sollte deine Benutzerkennung das Format <b>ab12xyz</b> haben.<br />Füge <b>weder</b> '<b>@mytum.de</b>' noch '<b>@tum.de</b>' hinzu.</p>",
-            "externalUserManagementWarning": "<span class='bold'>Du hast dein Passwort zu oft falsch eingegeben. :-(</span><br />Bitte öffne <a href='{{ url }}' target='_blank'>{{ name }}</a>, melde dich mit deinem Konto an und löse das <a href='{{ url }}' target='_blank'>CAPTCHA</a>. Nachdem du es gelöst hast, versuche erneut dich hier einzuloggen.",
+            "failedToLogin": "<span class='bold'>Fehler bei der Anmeldung!</span> Bitte überprüfe deinen Login und dein Passwort und versuche es erneut.",
+            "usernameIncorrect": "<p class='text-primary small'>Ungültiger Login</p>",
+            "tumWarning": "<p class='text-primary small'>Wenn du Studierende:r an der TUM bist, sollte deine Kennung das Format <b>ab12xyz</b> haben.<br />Füge <b>weder</b> '<b>@mytum.de</b>' noch '<b>@tum.de</b>' hinzu.</p>",
+            "externalUserManagementWarning": "<span class='bold'>Du hast dein Passwort zu oft falsch eingegeben. :-(</span><br />Bitte öffne <a href='{{ url }}' target='_blank'>{{ name }}</a>, melde dich mit deinen Zugangsdaten an und löse das <a href='{{ url }}' target='_blank'>CAPTCHA</a>. Nachdem du es gelöst hast, versuche erneut dich hier einzuloggen.",
             "loginWarning": "Scheint so, als hättest du Probleme bei der Anmeldung :-(<br />Bitte besuche <a href='{{ url }}'>{{ name }}</a> und versuche dich dort anzumelden.<br />Danach versuche es hier noch einmal.",
-            "sessionExpired": "Du wurdest ausgeloggt, da die Sitzung abgelaufen ist. Bitte logge dich erneut ein um zur vorherigen Seite zurückzukehren."
+            "sessionExpired": "Du wurdest ausgeloggt, da die Sitzung abgelaufen ist. Bitte logge dich erneut ein, um zur vorherigen Seite zurückzukehren."
         }
     }
 }

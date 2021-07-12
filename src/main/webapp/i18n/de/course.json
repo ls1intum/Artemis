@@ -50,17 +50,21 @@
             },
             "customizeGroupNames": {
                 "title": "Passe Gruppennamen an",
-                "description": "Stelle sicher, dass die Gruppen in der externen Nutzerverwaltung existieren, wenn du diese Option aktivierst. Die Gruppen werden dann nicht automatisch erzeugt."
+                "description": "Stelle sicher, dass die Gruppen in der externen Verwaltung von Nutzer:innen existieren, wenn du diese Option aktivierst. Die Gruppen werden dann nicht automatisch erzeugt."
             },
-            "studentGroupName": "Studierendengruppe",
-            "teachingAssistantGroupName": "Tutorengruppe",
-            "editorGroupName": "Editorengruppe",
-            "instructorGroupName": "Dozentengruppe",
+            "studentGroupName": "Gruppe der Studierenden",
+            "teachingAssistantGroupName": "Gruppe der Tutor:innen",
+            "editorGroupName": "Gruppe der Editor:innen",
+            "instructorGroupName": "Gruppe der Lehrenden",
             "description": "Kursbeschreibung",
             "organizations": "Kurs Organisationen",
             "startDate": "Start",
             "endDate": "Ende",
             "semester": "Semester",
+            "maxPoints": {
+                "title": "Maximale Punktzahl",
+                "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für den Kurs aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl"
+            },
             "gradingSystem": "Notenschlüssel",
             "testCourse": {
                 "title": "Testkurs",
@@ -70,7 +74,7 @@
             "accessGroups": "Zugriffsrechte",
             "onlineCourse": {
                 "title": "Onlinekurs",
-                "description": "Aktiviere diese Checkbox für externe Onlinekurse (z.B. auf edX), damit Studierende diesen Artemis-Kurs (über die LTI Schnittstelle) nutzen können. Dies ermöglicht auch eine automatische Accounterstellung, sofern dies vom Artemis Systemadministrator eingestellt ist."
+                "description": "Aktiviere diese Checkbox für externe Onlinekurse (z.B. auf edX), damit Studierende diesen Artemis-Kurs (über die LTI Schnittstelle) nutzen können. Dies ermöglicht auch eine automatische Kontoerstellung, sofern dies vom Artemis Systemadministrator eingestellt ist."
             },
             "registrationEnabled": {
                 "title": "Kursregistrierung für Studierende aktiviert",
@@ -87,40 +91,40 @@
             "fileUploadExercises": "Dateiupload-Aufgabe",
             "students": "Studierende",
             "participations": "Teilnahmen",
-            "tutors": "Tutoren",
-            "editors": "Editoren",
-            "instructors": "Dozenten",
-            "student": "Student",
-            "tutor": "Tutor",
-            "editor": "Editor",
-            "instructor": "Dozent",
+            "tutors": "Tutor:innen",
+            "editors": "Editor:innen",
+            "instructors": "Lehrende",
+            "student": "Studierende:r",
+            "tutor": "Tutor:in",
+            "editor": "Editor:in",
+            "instructor": "Lehrkraft",
             "form": {
                 "shortname": {
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
                     "forbidden": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten."
                 }
             },
-            "courseDashboard": "Kurs Dashboard",
-            "instructorDashboard": "Dozenten-Kursdashboard",
+            "courseDashboard": "Kurs-Dashboard",
+            "instructorDashboard": "Dashboard für Lehrende",
             "presentationScoreEnabled": {
                 "title": "Präsentationsbewertung aktiviert",
-                "description": "Aktiviere diese Checkbox und definiere, wie viele Präsentationen ein Student halten muss, um den Notenbonus für die Vorlesung zu erhalten. Nach der Aktivierung kannst du bei der Erstellung jeder Übung definieren, ob dieses Feature dafür aktiviert sein soll."
+                "description": "Aktiviere diese Checkbox und definiere, wie viele Präsentationen Studierende halten müssen, um den Notenbonus für die Vorlesung zu erhalten. Nach der Aktivierung kannst du bei der Erstellung jeder Übung definieren, ob dieses Feature dafür aktiviert sein soll."
             },
             "presentationScore": "Benötigtes Präsentationsergebnis für den Bonus",
             "courseGroup": {
                 "outOf": "von",
-                "usersPerPage": "{{number}} Benutzer pro Seite",
-                "showAllUsers": "Alle Benutzer anzeigen",
-                "searchForUsers": "Benutzer zu dieser Kursgruppe hinzufügen durch Suchen nach Login oder Namen",
-                "searchNoResults": "Keine Benutzer gefunden",
+                "usersPerPage": "{{number}} Nutzer:innen pro Seite",
+                "showAllUsers": "Alle Nutzer:innen anzeigen",
+                "searchForUsers": "Nutzer:in zu dieser Kursgruppe hinzufügen durch Suchen nach Login oder Namen",
+                "searchNoResults": "Kein:e Nutzer:innen gefunden",
                 "login": "Login",
                 "name": "Name",
                 "email": "E-Mail",
                 "removeFromGroup": {
-                    "modalQuestion": "Soll der Nutzer mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Kursgruppe entfernt werden?"
+                    "modalQuestion": "Soll der Login <strong>{{ title }}</strong> wirklich aus dieser Kursgruppe entfernt werden?"
                 }
             },
-            "averageScore": "Punkte im Schnitt",
+            "averageScore": "Durchschnittliche Punktzahl",
             "releasedSoon": "Bald veröffentlicht",
             "currentWorking": "Derzeitig in Bearbeitung",
             "inAssessment": "Derzeitig in Bewertung",
@@ -132,14 +136,14 @@
             "assessmentDueDate": "Bewertung",
             "cleanup": {
                 "title": "Aufräumen",
-                "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studenten-Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
+                "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studierenden-Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
             },
             "detail": {
                 "title": "Kurs Details:",
                 "assessmentsTitle": "Insgesamte Bewertungen",
                 "complaintsTitle": "Insgesamte Beschwerden",
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",
-                "averageStudentScoreTitle": "Durchschnittliche Studentenpunktzahl"
+                "averageStudentScoreTitle": "Durchschnittliche Punktzahl der Studierenden"
             }
         },
         "courseStatistics": {
@@ -147,8 +151,8 @@
             "course": "Kurs",
             "courseAverage": "Kursdurchschnitt",
             "exerciseAverage": "Aufgabendurchschnitt",
-            "amountOfStudents": "# an Studenten",
-            "activeStudents": "Aktive Studenten"
+            "amountOfStudents": "# Studierende",
+            "activeStudents": "Aktive Studierende"
         }
     }
 }

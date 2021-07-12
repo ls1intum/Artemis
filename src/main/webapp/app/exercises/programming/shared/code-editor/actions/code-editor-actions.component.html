@@ -2,7 +2,7 @@
     <button
         id="resolve_conflict_button"
         type="button"
-        class="btn btn-danger navbar-btn mr-3"
+        class="btn btn-danger navbar-btn me-3"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [overwriteDisabled]="disableActions"
         (click)="resetRepository()"
@@ -20,7 +20,7 @@
     <button
         id="refresh_button"
         type="button"
-        class="btn btn-primary navbar-btn mr-3"
+        class="btn btn-primary navbar-btn me-3"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [overwriteDisabled]="disableActions || editorState === EditorState.REFRESHING || editorState === EditorState.SAVING || commitState === CommitState.COMMITTING"
         (click)="onRefresh()"
@@ -34,28 +34,6 @@
         <span *ngIf="editorState !== EditorState.REFRESHING"
             ><fa-icon [icon]="['fas', 'sync']"></fa-icon> <span jhiTranslate="artemisApp.editor.refresh.performRefresh">Refresh</span></span
         >
-    </button>
-    <button
-        id="save_button"
-        type="button"
-        class="guided-tour-save-button btn btn-primary navbar-btn mr-3"
-        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-        [overwriteDisabled]="
-            disableActions ||
-            editorState !== EditorState.UNSAVED_CHANGES ||
-            commitState === CommitState.COMMITTING ||
-            commitState === CommitState.COULD_NOT_BE_RETRIEVED ||
-            commitState === CommitState.UNDEFINED
-        "
-        (click)="onSave()"
-        data-toggle="tooltip"
-        data-placement="left"
-        title="Save all unsaved changes in your files."
-    >
-        <span *ngIf="editorState === EditorState.SAVING">
-            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.saving">Saving</span>
-        </span>
-        <span *ngIf="editorState !== EditorState.SAVING"><fa-icon [icon]="['far', 'save']"></fa-icon> <span jhiTranslate="artemisApp.editor.saveFiles">Save Files</span></span>
     </button>
     <button
         id="submit_button"

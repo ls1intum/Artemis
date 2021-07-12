@@ -2,8 +2,8 @@
     "tour": {
         "modelingExercise": {
             "editorArea": {
-                "headline": "Modeling Exercise",
-                "content": "On this page you solve a modeling exercise. We will guide you how to do that."
+                "headline": "Modelling Exercise",
+                "content": "On this page you will solve a modelling exercise. We will guide you on how to do that."
             },
             "addEditUmlElement": {
                 "headline": "Add and edit UML elements",
@@ -12,12 +12,12 @@
             },
             "createAssociation": {
                 "headline": "Create and edit associations",
-                "content": "Select the source class to see four blue circles. Click and hold on one of those and drag it to another blue circle to create a relationship.",
+                "content": "Select the source class to see four blue semicircles. Click and hold on one of those and drag it to another blue semicircle to create a relationship.",
                 "hint": "You can change the relationship type by double-clicking it."
             },
             "executeTasks": {
-                "headline": "Modeling exercise.",
-                "content": "Solve the exercise down below and proceed to the next step.",
+                "headline": "Modelling exercise.",
+                "content": "Solve the exercise below and proceed to the next step.",
                 "personClass": "Create the UML class <tt>Person</tt> with the attribute <tt>name: String</tt>",
                 "studentClass": "Create the UML class <tt>Student</tt> with the attribute <tt>major: String</tt> and method <tt>visitLecture()</tt>.",
                 "association": "Make sure that <tt>Student</tt> is a subclass of <tt>Person</tt>."

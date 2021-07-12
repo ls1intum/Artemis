@@ -6,11 +6,11 @@
                 [(ngModel)]="exercise.releaseDate"
                 (ngModelChange)="updateReleaseDate($event)"
                 [readOnly]="readOnly"
-                class="test-schedule-date mr-2"
+                class="test-schedule-date me-2"
                 label="artemisApp.exercise.releaseDate"
                 tooltipText="artemisApp.programmingExercise.timeline.releaseDateTooltip"
             ></jhi-programming-exercise-test-schedule-date-picker>
-            <div class="test-schedule-date mr-2">
+            <div class="test-schedule-date me-2">
                 <div class="mb-2">
                     <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"> Automatic Tests </span>
                     <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-help-icon>
@@ -26,14 +26,14 @@
                 [startAt]="exercise.releaseDate"
                 [min]="exercise.releaseDate"
                 [readOnly]="readOnly"
-                class="test-schedule-date mr-2"
+                class="test-schedule-date me-2"
                 label="artemisApp.exercise.dueDate"
                 tooltipText="artemisApp.programmingExercise.timeline.dueDateTooltip"
             >
             </jhi-programming-exercise-test-schedule-date-picker>
             <div *ngIf="isExamMode || exercise.dueDate">
                 <jhi-programming-exercise-test-schedule-date-picker
-                    class="test-schedule-date mr-2"
+                    class="test-schedule-date me-2"
                     [(ngModel)]="exercise.buildAndTestStudentSubmissionsAfterDueDate"
                     [startAt]="exercise.dueDate"
                     [min]="exercise.dueDate"
@@ -42,7 +42,7 @@
                     tooltipText="artemisApp.programmingExercise.timeline.afterDueDateTooltip"
                 >
                 </jhi-programming-exercise-test-schedule-date-picker>
-                <div *ngIf="isExamMode || exercise.dueDate" class="test-schedule-date mr-2">
+                <div *ngIf="isExamMode || exercise.dueDate" class="test-schedule-date me-2">
                     <div class="mb-2">
                         <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.manualReview"> Manual Review </span>
                         <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.manualReviewTooltip"></jhi-help-icon>

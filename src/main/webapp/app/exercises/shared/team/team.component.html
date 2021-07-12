@@ -3,7 +3,7 @@
         <div class="mb-2">
             <h2 class="d-flex align-items-baseline mb-2">
                 <span>{{ exercise.title }} - {{ team.name }}</span
-                ><code class="ml-2 team-short-name">{{ team.shortName }}</code>
+                ><code class="ms-2 team-short-name">{{ team.shortName }}</code>
             </h2>
             <div>
                 <span class="d-inline-block">
@@ -12,14 +12,14 @@
                     <a *ngIf="!isAdmin && team.owner" [href]="'mailto:' + team.owner.email">{{ team.owner?.name }}</a>
                     <span *ngIf="!team.owner" class="font-weight-bold" jhiTranslate="artemisApp.team.detail.noOwner">No tutor</span>
                 </span>
-                <span class="d-inline-block ml-2">
+                <span class="d-inline-block ms-2">
                     <span class="text-muted font-weight-bolder">Created:</span>
                     <span ngbTooltip="{{ team.createdDate | artemisDate }}" placement="top" tooltipClass="date-tooltip">
                         {{ team.createdDate!.fromNow() }}
                     </span>
                     <a *ngIf="isAdmin" [routerLink]="['/admin', 'user-management', team.createdBy]">({{ team.createdBy }})</a>
                 </span>
-                <span class="d-inline-block ml-2" *ngIf="team.lastModifiedDate && team.lastModifiedDate.isAfter(team.createdDate)">
+                <span class="d-inline-block ms-2" *ngIf="team.lastModifiedDate && team.lastModifiedDate.isAfter(team.createdDate)">
                     <span class="text-muted font-weight-bolder">Last modified:</span>
                     <span ngbTooltip="{{ team.lastModifiedDate | artemisDate }}" position="top" tooltipClass="date-tooltip">
                         {{ team.lastModifiedDate!.fromNow() }}
@@ -28,7 +28,7 @@
                 </span>
             </div>
         </div>
-        <div *ngIf="exercise.isAtLeastTutor" class="d-flex ml-auto">
+        <div *ngIf="exercise.isAtLeastTutor" class="d-flex ms-auto">
             <jhi-team-update-button
                 *ngIf="exercise.isAtLeastInstructor || team.owner?.id === currentUser.id"
                 [exercise]="exercise"
@@ -37,7 +37,7 @@
                 (save)="onTeamUpdate($event)"
             ></jhi-team-update-button>
             <jhi-team-delete-button
-                class="ml-1"
+                class="ms-1"
                 *ngIf="exercise.isAtLeastInstructor"
                 [exercise]="exercise"
                 [team]="team"
@@ -104,7 +104,7 @@
     <ng-container *ngIf="exercise && team">
         <h4 class="mt-4 d-flex align-items-baseline">
             {{ 'artemisApp.team.detail.participationsTable.title' | artemisTranslate: { courseTitle: exercise.course!.title } }}
-            <code class="ml-2 team-short-name">{{ team.shortName }}</code>
+            <code class="ms-2 team-short-name">{{ team.shortName }}</code>
         </h4>
         <jhi-team-participation-table
             [team]="team"

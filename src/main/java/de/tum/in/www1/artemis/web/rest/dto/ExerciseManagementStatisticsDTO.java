@@ -12,7 +12,7 @@ public class ExerciseManagementStatisticsDTO {
 
     private long numberOfParticipations;
 
-    private long numberOfStudentsInCourse;
+    private long numberOfStudentsOrTeamsInCourse;
 
     private long numberOfQuestions;
 
@@ -50,14 +50,6 @@ public class ExerciseManagementStatisticsDTO {
         this.numberOfParticipations = numberOfParticipations;
     }
 
-    public long getNumberOfStudentsInCourse() {
-        return numberOfStudentsInCourse;
-    }
-
-    public void setNumberOfStudentsInCourse(long numberOfStudentsInCourse) {
-        this.numberOfStudentsInCourse = numberOfStudentsInCourse;
-    }
-
     public long getNumberOfQuestions() {
         return numberOfQuestions;
     }
@@ -80,5 +72,13 @@ public class ExerciseManagementStatisticsDTO {
 
     public void setMaxPointsOfExercise(double maxPointsOfExercise) {
         this.maxPointsOfExercise = maxPointsOfExercise;
+    }
+
+    public long getNumberOfStudentsOrTeamsInCourse() {
+        return numberOfStudentsOrTeamsInCourse;
+    }
+
+    public void setNumberOfStudentsOrTeamsInCourse(long numberOfStudentsOrTeamsInCourse) {
+        this.numberOfStudentsOrTeamsInCourse = numberOfStudentsOrTeamsInCourse;
     }
 }

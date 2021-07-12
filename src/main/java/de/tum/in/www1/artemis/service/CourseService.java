@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
@@ -464,7 +463,7 @@ public class CourseService {
                 return;
             }
         }
-        catch (IOException e) {
+        catch (Exception e) {
             var error = "Failed to create course archives directory " + courseArchivesDirPath + ": " + e.getMessage();
             exportErrors.add(error);
             log.info(error);

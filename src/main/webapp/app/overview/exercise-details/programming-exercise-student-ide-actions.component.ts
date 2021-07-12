@@ -9,7 +9,7 @@ import { ParticipationStatus } from 'app/entities/exercise.model';
 import { isStartExerciseAvailable, participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { OrionState } from 'app/shared/orion/orion';
+import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { catchError, filter, finalize, tap } from 'rxjs/operators';
@@ -40,7 +40,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     constructor(
         private jhiAlertService: JhiAlertService,
         private courseExerciseService: CourseExerciseService,
-        private javaBridge: OrionConnectorService,
+        private orionConnectorService: OrionConnectorService,
         private ideBuildAndTestService: OrionBuildAndTestService,
         private route: ActivatedRoute,
     ) {}
@@ -49,7 +49,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      * get ideState and submit changes if withIdeSubmit set in route query
      */
     ngOnInit(): void {
-        this.javaBridge.state().subscribe((ideState: OrionState) => (this.ideState = ideState));
+        this.orionConnectorService.state().subscribe((ideState: OrionState) => (this.ideState = ideState));
         this.route.queryParams.subscribe((params) => {
             if (params['withIdeSubmit']) {
                 this.submitChanges();
@@ -106,27 +106,27 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      */
     importIntoIDE() {
         const repo = this.repositoryUrl(this.exercise.studentParticipations![0])!;
-        this.javaBridge.importParticipation(repo, this.exercise as ProgrammingExercise);
+        this.orionConnectorService.importParticipation(repo, this.exercise as ProgrammingExercise);
     }
 
     /**
      * Submits the changes made in the IDE by staging everything, committing the changes and pushing them to master.
      */
     submitChanges() {
-        this.javaBridge.submit();
+        this.orionConnectorService.submit();
         this.ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise as ProgrammingExercise);
     }
 
     get canImport(): boolean {
-        const notOpenedOrInstructor = this.ideState.inInstructorView || this.ideState.opened !== this.exercise.id;
+        const notOpenedOrNotStudent = this.ideState.view !== ExerciseView.STUDENT || this.ideState.opened !== this.exercise.id;
 
-        return this.hasInitializedParticipation() && notOpenedOrInstructor;
+        return this.hasInitializedParticipation() && notOpenedOrNotStudent;
     }
 
     get canSubmit(): boolean {
-        const openedAndNotInstructor = !this.ideState.inInstructorView && this.ideState.opened === this.exercise.id;
+        const openedAndStudent = this.ideState.view === ExerciseView.STUDENT && this.ideState.opened === this.exercise.id;
 
-        return this.hasInitializedParticipation() && openedAndNotInstructor;
+        return this.hasInitializedParticipation() && openedAndStudent;
     }
 
     private hasInitializedParticipation(): boolean {

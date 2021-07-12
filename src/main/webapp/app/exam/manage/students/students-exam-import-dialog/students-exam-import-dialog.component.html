@@ -4,7 +4,7 @@
             <span [jhiTranslate]="'artemisApp.examManagement.examStudents.importStudents.dialogTitle'"> Import students into: </span>
             <span>{{ exam.title }}</span>
         </h4>
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
@@ -17,9 +17,9 @@
             <div class="d-flex align-items-end">
                 <div>
                     <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.examManagement.examStudents.importStudents.csvFile.label">Select .csv file</label>
-                    <jhi-help-icon placement="right" text="artemisApp.examManagement.examStudents.importStudents.csvFile.tooltip" class="mr-1"></jhi-help-icon>
+                    <jhi-help-icon placement="right" text="artemisApp.examManagement.examStudents.importStudents.csvFile.tooltip" class="me-1"></jhi-help-icon>
                 </div>
-                <fa-icon class="loading-spinner ml-1" [icon]="'spinner'" [spin]="true" *ngIf="isParsing"></fa-icon>
+                <fa-icon class="loading-spinner ms-1" [icon]="'spinner'" [spin]="true" *ngIf="isParsing"></fa-icon>
             </div>
             <div class="mt-2">
                 <input type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
@@ -31,7 +31,7 @@
                 <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.examManagement.examStudents.importStudents.studentsForImport.label">
                     Students for import
                 </label>
-                <jhi-help-icon placement="right" text="artemisApp.examManagement.examStudents.importStudents.studentsForImport.tooltip" class="mr-1"></jhi-help-icon>
+                <jhi-help-icon placement="right" text="artemisApp.examManagement.examStudents.importStudents.studentsForImport.tooltip" class="me-1"></jhi-help-icon>
             </div>
             <table class="table table-striped table-sm header-fixed mt-2">
                 <thead>
@@ -56,7 +56,7 @@
         </div>
     </div>
     <div class="modal-footer justify-content-between">
-        <div *ngIf="studentsToImport && studentsToImport.length > 0" class="flex-shrink-0 mr-2 d-flex">
+        <div *ngIf="studentsToImport && studentsToImport.length > 0" class="flex-shrink-0 me-2 d-flex">
             <div *ngIf="!hasImported; else numbersAfterImport">
                 <strong>{{ 'artemisApp.examManagement.examStudents.importStudents.numberOfStudents' | artemisTranslate }}</strong>
                 <span>&nbsp;{{ studentsToImport.length }}</span>
@@ -66,7 +66,7 @@
                     <strong>{{ 'artemisApp.examManagement.examStudents.importStudents.numberOfStudentsImported' | artemisTranslate }}</strong>
                     <span>{{ numberOfStudentsImported }}</span>
                 </div>
-                <div class="ml-2">
+                <div class="ms-2">
                     <strong>{{ 'artemisApp.examManagement.examStudents.importStudents.numberOfStudentsNotImported' | artemisTranslate }}</strong>
                     <span>{{ numberOfStudentsNotImported }}</span>
                 </div>
@@ -85,13 +85,13 @@
                 [disabled]="isSubmitDisabled"
                 (click)="importStudents()"
             >
-                <fa-icon [icon]="'upload'" class="mr-2"></fa-icon>
+                <fa-icon [icon]="'upload'" class="me-2"></fa-icon>
                 <span jhiTranslate="entity.action.to-import">Import</span>
-                <fa-icon class="ml-1" [hidden]="!isImporting" [spin]="true" [icon]="'circle-notch'"></fa-icon>
+                <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="'circle-notch'"></fa-icon>
             </button>
             <ng-template #buttonAfterImport>
                 <button class="btn btn-success" id="finish-button" (click)="onFinish()">
-                    <fa-icon [icon]="'check'" class="mr-2"></fa-icon>
+                    <fa-icon [icon]="'check'" class="me-2"></fa-icon>
                     <span jhiTranslate="entity.action.finish">Finish</span>
                 </button>
             </ng-template>

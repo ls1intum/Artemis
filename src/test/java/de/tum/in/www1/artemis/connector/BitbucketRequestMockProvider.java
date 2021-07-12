@@ -19,8 +19,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.test.web.client.ExpectedCount;
-import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.test.web.client.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -32,6 +31,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
@@ -302,6 +302,32 @@ public class BitbucketRequestMockProvider {
                 .build().toUri();
         var status = shouldFail ? HttpStatus.BAD_REQUEST : HttpStatus.OK;
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(status));
+    }
+
+    public void mockDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException, IOException {
+        mockGetDefaultBranch(defaultBranch, projectKey);
+        mockPutDefaultBranch(projectKey);
+    }
+
+    public void mockDefaultBranch(String defaultBranch, VcsRepositoryUrl repoURL) throws BitbucketException, IOException {
+        String projectKey = urlService.getProjectKeyFromRepositoryUrl(repoURL);
+        mockGetDefaultBranch(defaultBranch, projectKey);
+        mockPutDefaultBranch(projectKey);
+    }
+
+    private void mockGetDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException, IOException {
+        var mockResponse = new BitbucketDefaultBranchDTO("refs/heads/" + defaultBranch);
+        mockResponse.setDisplayId(defaultBranch);
+        var getDefaultBranchPattern = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/default-branch";
+
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(mockResponse)).contentType(MediaType.APPLICATION_JSON));
+    }
+
+    private void mockPutDefaultBranch(String projectKey) throws BitbucketException {
+        var getDefaultBranchPattern = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/branches/default";
+
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockSetRepositoryPermissionsToReadOnly(String repositorySlug, String projectKey, Set<User> users) throws URISyntaxException {

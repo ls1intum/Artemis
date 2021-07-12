@@ -23,12 +23,12 @@ import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitt
 import { QuizExamSummaryComponent } from 'app/exam/participate/summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as chai from 'chai';
 import * as moment from 'moment';
 import { MockModule, MockProvider } from 'ng-mocks';
-import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
+import { MockPipe } from 'ng-mocks';
 import * as sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);

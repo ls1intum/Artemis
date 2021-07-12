@@ -23,7 +23,7 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
     orionState: OrionState;
 
     constructor(
-        private javaBridge: OrionConnectorService,
+        private orionConnectorService: OrionConnectorService,
         private orionBuildAndTestService: OrionBuildAndTestService,
         router: Router,
         exerciseService: ProgrammingExerciseService,
@@ -57,12 +57,12 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
      */
     ngOnInit(): void {
         super.ngOnInit();
-        this.javaBridge.state().subscribe((state) => (this.orionState = state));
+        this.orionConnectorService.state().subscribe((state) => (this.orionState = state));
     }
 
     protected applyDomainChange(domainType: any, domainValue: any) {
         super.applyDomainChange(domainType, domainValue);
-        this.javaBridge.selectRepository(this.selectedRepository);
+        this.orionConnectorService.selectRepository(this.selectedRepository);
     }
 
     /**
@@ -70,7 +70,7 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
      * Submitting means committing all changes and pushing them to the remote.
      */
     submit(): void {
-        this.javaBridge.submit();
+        this.orionConnectorService.submit();
         if (this.selectedRepository !== REPOSITORY.TEST) {
             this.orionState.building = true;
             this.orionBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise, this.selectedParticipation);
@@ -81,7 +81,7 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
      * Tells Orion to build and test the selected repository locally instead of committing and pushing the code to the remote
      */
     buildLocally(): void {
-        this.javaBridge.buildAndTestLocally();
+        this.orionConnectorService.buildAndTestLocally();
         this.orionState.building = true;
     }
 }

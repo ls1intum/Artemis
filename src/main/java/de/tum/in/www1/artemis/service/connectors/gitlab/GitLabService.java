@@ -93,7 +93,8 @@ public class GitLabService extends AbstractVersionControlService {
             }
         }
 
-        protectBranch(repositoryUrl, "master");
+        var defaultBranch = getDefaultBranchOfRepository(repositoryUrl);
+        protectBranch(repositoryUrl, defaultBranch);
     }
 
     @Override
@@ -132,6 +133,30 @@ public class GitLabService extends AbstractVersionControlService {
         catch (GitLabApiException e) {
             throw new GitLabException("Error while trying to remove user from repository: " + user.getLogin() + " from repo " + repositoryUrl, e);
         }
+    }
+
+    /**
+     * Get the default branch of the repository
+     *
+     * @param repositoryUrl The repository url to get the default branch for.
+     * @return the name of the default branch, e.g. 'main'
+     */
+    @Override
+    public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws GitLabException {
+        var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+
+        try {
+            return gitlab.getProjectApi().getProject(repositoryId).getDefaultBranch();
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Unable to get default branch for repository " + repositoryId, e);
+        }
+    }
+
+    private String getPathIDFromRepositoryURL(VcsRepositoryUrl repositoryUrl) {
+        final var namespaces = repositoryUrl.getURL().toString().split("/");
+        final var last = namespaces.length - 1;
+        return namespaces[last - 1] + "/" + namespaces[last].replace(".git", "");
     }
 
     /**

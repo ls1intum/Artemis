@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -21,7 +19,6 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @Service
 public class AssessmentService {
@@ -87,35 +84,32 @@ public class AssessmentService {
         // Save the complaint response
         ComplaintResponse complaintResponse = complaintResponseService.resolveComplaint(assessmentUpdate.getComplaintResponse());
 
-        try {
-            // Store the original result with the complaint
-            Complaint complaint = complaintResponse.getComplaint();
-            complaint.setResultBeforeComplaint(resultService.getOriginalResultAsString(originalResult));
-            complaintRepository.save(complaint);
-        }
-        catch (JsonProcessingException exception) {
-            throw new InternalServerErrorException("Failed to store original result");
-        }
+        // Create a new result which is a copy of the original result.
+        Result newResult = submissionService.createResultAfterComplaintResponse(originalResult.getSubmission(), originalResult, assessmentUpdate.getFeedbacks());
+        newResult.setAssessor(complaintResponse.getReviewer());
+        newResult.setAssessmentType(originalResult.getAssessmentType());
 
-        // Update the result that was complained about with the new feedback
-        originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks(), exercise instanceof ProgrammingExercise);
-        // persist feedback before result to prevent "null index column for collection" error
-        resultService.storeFeedbackInResult(originalResult, originalResult.getFeedbacks(), false);
+        resultRepository.save(newResult);
+
         if (exercise instanceof ProgrammingExercise) {
-            double points = ((ProgrammingAssessmentService) this).calculateTotalScore(originalResult);
-            originalResult.setScore(points, exercise.getMaxPoints());
+            double points = ((ProgrammingAssessmentService) this).calculateTotalScore(newResult);
+            newResult.setScore(points, exercise.getMaxPoints());
             /*
              * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
              * student has achieved have changed
              */
-            String[] resultStringParts = originalResult.getResultString().split(", ");
-            resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, exercise.getMaxPoints());
-            originalResult.setResultString(String.join(", ", resultStringParts));
-            Result savedResult = resultRepository.save(originalResult);
-            return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).get(); // to eagerly load assessor
+            String[] resultStringParts = newResult.getResultString().split(", ");
+            resultStringParts[resultStringParts.length - 1] = newResult.createResultString(points, exercise.getMaxPoints());
+            newResult.setResultString(String.join(", ", resultStringParts));
+            newResult.setCompletionDate(ZonedDateTime.now());
+            newResult.setHasFeedback(true);
+            newResult.setRated(true);
+
+            Result savedResult = resultRepository.save(newResult);
+            return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).orElseThrow(); // to eagerly load assessor
         }
         else {
-            return resultRepository.submitResult(originalResult, exercise);
+            return resultRepository.submitResult(newResult, exercise);
         }
     }
 

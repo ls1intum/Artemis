@@ -13,7 +13,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
-import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityDiagram;
 
 public class UMLDiagramTest {
@@ -39,9 +38,6 @@ public class UMLDiagramTest {
     @Spy
     private UMLElement referenceElement2;
 
-    @Spy
-    private CompassResult compassResult;
-
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -58,7 +54,7 @@ public class UMLDiagramTest {
 
     @AfterEach
     void tearDown() {
-        Mockito.reset(umlDiagram, umlElement1, umlElement2, umlElement3, referenceElement1, referenceElement2, referenceDiagram, compassResult);
+        reset(umlDiagram, umlElement1, umlElement2, umlElement3, referenceElement1, referenceElement2, referenceDiagram);
     }
 
     @Test

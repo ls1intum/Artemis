@@ -46,7 +46,7 @@ export class ColorSelectorComponent implements OnInit {
 
     /**
      * close colorSelector if click happens outside
-     * @param {any} event
+     * @param event
      */
     @HostListener('document:click', ['$event'])
     clickOutside(event: any) {

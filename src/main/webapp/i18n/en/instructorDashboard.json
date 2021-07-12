@@ -9,7 +9,7 @@
         "successful": "Successfully Exercises (%)",
         "quizPoints": "Quiz Points (%)",
         "programmingPoints": "Programming Points (%)",
-        "modelingPoints": "Modeling Points (%)",
+        "modelingPoints": "Modelling Points (%)",
         "textPoints": "Text Points (%)",
         "file-uploadPoints": "File Upload Points (%)",
         "overallScore": "Overall Points (%)",
@@ -29,8 +29,8 @@
             "title": "Download Repos",
             "titleSingle": "Download Repo",
             "questions": {
-                "individual": "Enter all logins seperated by ',' (e.g ga87fix,ga63dut) of students you want to download the repository from",
-                "team": "Enter all short names seperated by ',' (e.g team1,team2) of teams you want to download the repository from"
+                "individual": "Enter all logins separated by ',' (e.g ga87fix,ga63dut) of students you want to download the repository from",
+                "team": "Enter all short names separated by ',' (e.g team1,team2) of teams you want to download the repository from"
             },
             "timeWarning": "<b>Caution:</b> This action can take several minutes depending on number and size of repositories.",
             "currentlySelected": "You are about to download <strong>all teams'/students'</strong> submissions of the following exercises:"
@@ -39,7 +39,7 @@
         "exportSubmissions": {
             "title": "Export Submissions",
             "downloadAllStudents": "Or download the submissions of all students",
-            "question": "Enter all logins seperated by ',' (e.g ga87fix,ga63dut) of students you want to download the submission from",
+            "question": "Enter all logins separated by ',' (e.g ga87fix,ga63dut) of students you want to download the submission from",
             "filterLateSubmissions": "Filter late submissions",
             "filterLateSubmissionsDate": "Date for filter late submissions (defaults to exercise due date if not set)",
             "successMessage": "Export of submissions was successful. The exported zip file is currently being downloaded."

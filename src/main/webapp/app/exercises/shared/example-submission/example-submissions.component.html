@@ -1,13 +1,13 @@
 <div>
     <div class="row">
-        <div>
+        <div class="col-12 col-sm">
             <h4>
                 <span *ngIf="exercise && exercise.course"
                     >{{ exercise.course.title }} - {{ exercise.title }} - {{ 'artemisApp.exampleSubmission.exampleSubmissions' | artemisTranslate }}
                 </span>
             </h4>
         </div>
-        <div style="margin-left: auto">
+        <div class="col-12 col-sm-auto d-flex">
             <a
                 *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
                 class="btn btn-primary"

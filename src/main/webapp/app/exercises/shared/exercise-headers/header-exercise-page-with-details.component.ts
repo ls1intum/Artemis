@@ -19,7 +19,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     @Input() public isTestRun = false;
     @Input() public displayBackButton = true; // TODO: This can be removed once we are happy with the breadcrumb navigation
 
-    public exerciseStatusBadge = 'badge-success';
+    public exerciseStatusBadge = 'bg-success';
     public exerciseCategories: ExerciseCategory[];
     public isExamMode = false;
 
@@ -44,9 +44,9 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     private setExerciseStatusBadge(): void {
         if (this.exercise) {
             if (this.isExamMode) {
-                this.exerciseStatusBadge = moment(this.exam?.endDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+                this.exerciseStatusBadge = moment(this.exam?.endDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
             } else {
-                this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+                this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
             }
         }
     }

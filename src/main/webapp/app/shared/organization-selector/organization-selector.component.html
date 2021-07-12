@@ -1,7 +1,7 @@
 <div>
     <div class="modal-header">
         <h4 class="modal-title" jhiTranslate="organizationManagement.modalSelector.title">Organizations</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="closeModal(undefined)">&times;</button>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="closeModal(undefined)"></button>
     </div>
     <div class="modal-body">
         <div class="justify-content-center p-1">
@@ -34,7 +34,7 @@
                             </td>
                             <td>{{ organization.emailPattern }}</td>
                             <td>
-                                <button type="button" class="btn ml-2 btn-primary" (click)="closeModal(organization)" jhiTranslate="organizationManagement.modalSelector.select">
+                                <button type="button" class="btn ms-2 btn-primary" (click)="closeModal(organization)" jhiTranslate="organizationManagement.modalSelector.select">
                                     Select
                                 </button>
                             </td>

@@ -2,13 +2,13 @@
     <h3 class="col mb-3">
         {{ 'artemisApp.studentDashboard.examTitle' | artemisTranslate: { course: nextRelevantCourseForExam.title } }}
     </h3>
-    <div class="col-12 pl-4 pr-4 mb-5">
-        <div class="row justify-content-between align-items-center exam-container pl-3 pr-3" (click)="openExam()">
-            <div class="mb-4 mt-4 d-flex">
+    <div class="col-12 ps-4 pe-4 mb-5">
+        <div class="row justify-content-between align-items-center exam-container ps-3 pe-3" (click)="openExam()">
+            <div class="mb-4 mt-4 d-flex" style="width: unset">
                 <fa-icon [icon]="'pen-alt'" size="2x"></fa-icon>
-                <h4 class="ml-2">{{ nextRelevantExam.title }}</h4>
+                <h4 class="ms-2">{{ nextRelevantExam.title }}</h4>
             </div>
-            <div class="text-right mb-4 mt-4">
+            <div class="text-end mb-4 mt-4" style="width: unset">
                 <div *ngIf="nextRelevantExam.startDate">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: nextRelevantExam.startDate | artemisDate } }}</div>
                 <div *ngIf="nextRelevantExam.maxPoints">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate: { points: nextRelevantExam.maxPoints } }}</div>
             </div>
@@ -29,17 +29,17 @@
     </div>
 </div>
 <div class="row mb-3" *ngIf="nextRelevantExercise && nextRelevantCourse">
-    <div class="col-12 pl-4 pr-4">
+    <div class="col-12 ps-4 pe-4">
         <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="nextRelevantCourse" [extendedLink]="true"></jhi-course-exercise-row>
     </div>
 </div>
-<div class="row mb-3 align-items-center">
-    <div class="col-12 col-sm">
+<div class="row mb-3 justify-content-between">
+    <div class="col-sm-8">
         <h3 jhiTranslate="artemisApp.studentDashboard.title">Your current courses</h3>
     </div>
-    <jhi-course-registration-selector [courses]="courses" (courseRegistered)="loadAndFilterCourses()" class="col-12 col-sm-auto d-flex"></jhi-course-registration-selector>
+    <jhi-course-registration-selector [courses]="courses" (courseRegistered)="loadAndFilterCourses()" class="col-sm-auto d-flex"></jhi-course-registration-selector>
 </div>
 <div class="row">
-    <jhi-overview-course-card *ngFor="let course of courses" class="col-12 col-lg-6 col-xl-4 pr-2 pl-2 mb-2" [course]="course" [hasGuidedTour]="course === courseForGuidedTour">
+    <jhi-overview-course-card *ngFor="let course of courses" class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-2" [course]="course" [hasGuidedTour]="course === courseForGuidedTour">
     </jhi-overview-course-card>
 </div>

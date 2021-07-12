@@ -13,7 +13,7 @@
                         <div class="col-8"></div>
                         <div class="col-4">
                             {{ 'artemisApp.exerciseAssessmentDashboard.stats.intime' | artemisTranslate }}
-                            <span class="ml-1 result--late text-nowrap">| {{ 'artemisApp.exerciseAssessmentDashboard.stats.late' | artemisTranslate }} </span>
+                            <span class="ms-1 result--late text-nowrap">| {{ 'artemisApp.exerciseAssessmentDashboard.stats.late' | artemisTranslate }} </span>
                         </div>
                     </div>
 
@@ -21,14 +21,14 @@
                         <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfSubmissions' | artemisTranslate }}</div>
                         <div class="col-4">
                             {{ stats.numberOfSubmissions.inTime }}
-                            <span *ngIf="stats.numberOfSubmissions.late > 0" class="ml-1 result--late text-nowrap">| {{ stats.numberOfSubmissions.late }}</span>
+                            <span *ngIf="stats.numberOfSubmissions.late > 0" class="ms-1 result--late text-nowrap">| {{ stats.numberOfSubmissions.late }}</span>
                         </div>
                     </div>
                     <div class="row mb-1">
                         <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions' | artemisTranslate }}</div>
                         <div class="col-4">
                             {{ stats.totalNumberOfAssessments.inTime - stats.numberOfAutomaticAssistedAssessments.inTime }} ({{ totalManualAssessmentPercentage.inTime }}%)
-                            <span *ngIf="stats.numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
+                            <span *ngIf="stats.numberOfSubmissions.late > 0" class="ms-2 result--late text-nowrap"
                                 >| {{ stats.totalNumberOfAssessments.late - stats.numberOfAutomaticAssistedAssessments.late }} ({{ totalManualAssessmentPercentage.late }}%)</span
                             >
                         </div>
@@ -37,7 +37,7 @@
                         <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions' | artemisTranslate }}</div>
                         <div class="col-4">
                             {{ stats.numberOfAutomaticAssistedAssessments.inTime }} ({{ totalAutomaticAssessmentPercentage.inTime }}%)
-                            <span *ngIf="stats.numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
+                            <span *ngIf="stats.numberOfSubmissions.late > 0" class="ms-2 result--late text-nowrap"
                                 >| {{ stats.numberOfAutomaticAssistedAssessments.late }} ({{ totalAutomaticAssessmentPercentage.late }}%)</span
                             >
                         </div>
@@ -48,7 +48,7 @@
                             {{ stats.numberOfSubmissions.inTime - stats.totalNumberOfAssessments.inTime }} ({{
                                 100 - totalAutomaticAssessmentPercentage.inTime - totalManualAssessmentPercentage.inTime
                             }}%)
-                            <span *ngIf="stats.numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
+                            <span *ngIf="stats.numberOfSubmissions.late > 0" class="ms-2 result--late text-nowrap"
                                 >| {{ stats.numberOfSubmissions.late - stats.totalNumberOfAssessments.late }} ({{
                                     100 - totalAutomaticAssessmentPercentage.late - totalManualAssessmentPercentage.late
                                 }}%)</span

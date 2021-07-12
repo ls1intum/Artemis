@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Quiz Submission",
                 "createOrEditLabel": "Create or edit a Quiz Submission"
             },
-            "created": "A new Quiz Submission is created with identifier {{ param }}",
-            "updated": "A Quiz Submission is updated with identifier {{ param }}",
-            "deleted": "A Quiz Submission is deleted with identifier {{ param }}",
+            "created": "Created new Quiz Submission with identifier {{ param }}",
+            "updated": "Updated Quiz Submission with identifier {{ param }}",
+            "deleted": "Deleted Quiz Submission with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Quiz Submission {{ id }}?"
             },

@@ -7,17 +7,9 @@
     [class.bg-warning]="hasChanges"
 >
     <fa-icon aria-hidden="true" [icon]="'file'" [fixedWidth]="true"></fa-icon>
-    <fa-icon
-        *ngIf="hasUnsavedChanges"
-        aria-hidden="true"
-        [icon]="['fas', 'circle']"
-        class="d-flex align-items-center text-warning"
-        title="{{ 'artemisApp.editor.fileBrowser.unsavedChanges' | artemisTranslate }}"
-        size="xs"
-    ></fa-icon>
-    <span class="ml-1 list-group-item__fileName" *ngIf="!isBeingRenamed" [ngClass]="item.checked ? 'text-white' : 'primary'">{{ item.text }}</span>
+    <span class="ms-1 list-group-item__fileName" *ngIf="!isBeingRenamed" [ngClass]="item.checked ? 'text-white' : 'primary'">{{ item.text }}</span>
     <!-- Renaming file tree item -->
-    <span class="ml-1" *ngIf="isBeingRenamed"
+    <span class="ms-1" *ngIf="isBeingRenamed"
         ><input
             #renamingInput
             value="{{ item.text }}"

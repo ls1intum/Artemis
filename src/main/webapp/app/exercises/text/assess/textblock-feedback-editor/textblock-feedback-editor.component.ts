@@ -4,6 +4,13 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { FeedbackConflictType } from 'app/entities/feedback-conflict';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ActivatedRoute } from '@angular/router';
+import { lastValueFrom } from 'rxjs';
+import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -30,6 +37,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() isSelectedConflict: boolean;
     @Input() highlightDifferences: boolean;
     private textareaElement: HTMLTextAreaElement;
+    listOfBlocksWithFeedback: any[];
 
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
 
@@ -53,7 +61,15 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         return this.isSelectedConflict;
     }
 
-    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
+    constructor(
+        public structuredGradingCriterionService: StructuredGradingCriterionService,
+        protected modalService: NgbModal,
+        protected assessmentsService: TextAssessmentService,
+        protected route: ActivatedRoute,
+        public textAssessmentAnalytics: TextAssessmentAnalytics,
+    ) {
+        textAssessmentAnalytics.setComponentRoute(route);
+    }
 
     /**
      * Life cycle hook to indicate component initialization is done
@@ -67,6 +83,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
             this.disableEditScore = false;
         }
     }
+
     /**
      * Increase size of text area automatically
      */
@@ -95,6 +112,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      */
     dismiss(): void {
         this.close.emit();
+        this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.DELETE_FEEDBACK, this.feedback.type, this.textBlock.type);
     }
 
     /**
@@ -129,8 +147,13 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      * Hook to indicate changes in the feedback editor
      */
     didChange(): void {
+        const feedbackTypeBefore = this.feedback.type;
         Feedback.updateFeedbackTypeOnChange(this.feedback);
         this.feedbackChange.emit(this.feedback);
+        // send event to analytics if the feedback type changed
+        if (feedbackTypeBefore !== this.feedback.type) {
+            this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, this.feedback.type, this.textBlock.type);
+        }
     }
 
     connectFeedbackWithInstruction(event: Event) {
@@ -141,5 +164,64 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
             this.disableEditScore = false;
         }
         this.didChange();
+    }
+
+    /**
+     * Handles click event on the conflict label and sends an assessment event to save the click.
+     * @param feedbackId the id of the feedback
+     */
+    onConflictClicked(feedbackId: number | undefined) {
+        if (feedbackId) {
+            this.onConflictsClicked.emit(feedbackId);
+        }
+        this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT, this.feedback.type, this.textBlock.type);
+    }
+
+    // this method fires the modal service and shows a modal after connecting feedback with its respective blocks
+    async openOriginOfFeedbackModal(content: any) {
+        await this.connectAutomaticFeedbackOriginBlocksWithFeedback();
+        this.modalService.open(content, { size: 'lg' });
+        this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, this.feedback.type, this.textBlock.type);
+    }
+
+    /**
+     * This method is used to find the submission used for making the current Automatic Feedback and retrieve its blocks.
+     * The blocks are then structured and set as a local property of this component to be shown in a modal
+     */
+    async connectAutomaticFeedbackOriginBlocksWithFeedback() {
+        // retrieve participation and submission references for the Automatic Feedback generated
+        const participationId = this.feedback.suggestedFeedbackParticipationReference ? this.feedback.suggestedFeedbackParticipationReference : -1;
+        const submissionId = this.feedback.suggestedFeedbackOriginSubmissionReference ? this.feedback.suggestedFeedbackOriginSubmissionReference : -1;
+        if (participationId >= 0 && submissionId >= 0) {
+            // finds the corresponding submission where the automatic feedback came from
+            const participation: StudentParticipation = await lastValueFrom(this.assessmentsService.getFeedbackDataForExerciseSubmission(participationId, submissionId));
+
+            // connect the feedback with its respective block if any.
+            let blocks: any[] = participation.submissions?.values().next().value.blocks;
+            // Sort blocks to show them in order.
+            blocks = blocks.sort((a, b) => a!.startIndex! - b!.startIndex!);
+            const feedbacks: any[] = participation.submissions?.values().next().value.latestResult.feedbacks;
+
+            // set list of blocks to be shown in the modal
+            this.listOfBlocksWithFeedback = blocks
+                .map((block) => {
+                    const blockFeedback = feedbacks.find((feedback) => feedback.reference === block.id);
+                    return {
+                        text: block.text,
+                        feedback: blockFeedback && blockFeedback.detailText,
+                        credits: blockFeedback ? blockFeedback.credits : 0,
+                        reusedCount: blockFeedback && block.numberOfAffectedSubmissions,
+                        type: this.feedback.suggestedFeedbackReference === block.id ? 'AUTOMATIC' : 'MANUAL',
+                    };
+                })
+                .filter((item) => item.text);
+        }
+    }
+
+    /**
+     * Triggers an assessment event call to the analytics service when user enters the impact warning label.
+     */
+    mouseEnteredWarningLabel() {
+        this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING, this.feedback.type, this.textBlock.type);
     }
 }

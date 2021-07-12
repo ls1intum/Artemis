@@ -21,7 +21,7 @@ import { Result } from 'app/entities/result.model';
 import { setLatestSubmissionResult } from 'app/entities/submission.model';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { notUndefined } from 'app/shared/util/global.utils';
+import { notUndefined, onError } from 'app/shared/util/global.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
 import { filter } from 'rxjs/operators';
 
@@ -166,7 +166,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
             this.location.go(newUrl);
 
-            this.resultService.createNewExampleResult(this.submission.id!).subscribe((response: HttpResponse<Result>) => {
+            this.resultService.createNewExampleResult(this.exerciseId!, this.submission.id!).subscribe((response: HttpResponse<Result>) => {
                 this.result = response.body!;
                 this.state.edit();
                 this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
@@ -199,7 +199,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
-        this.assessmentsService.saveExampleAssessment(this.exampleSubmission.id!, this.assessments, this.textBlocksWithFeedback).subscribe((response) => {
+        this.assessmentsService.saveExampleAssessment(this.exerciseId, this.exampleSubmission.id!, this.assessments, this.textBlocksWithFeedback).subscribe((response) => {
             this.result = response.body!;
             this.areNewAssessments = false;
             this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
@@ -272,7 +272,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                         this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
                         break;
                     default:
-                        this.jhiAlertService.error(error.message);
+                        onError(this.jhiAlertService, error);
                         break;
                 }
             },
@@ -318,7 +318,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     editSubmission(): void {
-        this.assessmentsService.deleteExampleFeedback(this.exampleSubmission?.id!).subscribe();
+        this.assessmentsService.deleteExampleFeedback(this.exercise!.id!, this.exampleSubmission?.id!).subscribe();
         delete this.submission?.blocks;
         delete this.result?.feedbacks;
         this.textBlockRefs = [];

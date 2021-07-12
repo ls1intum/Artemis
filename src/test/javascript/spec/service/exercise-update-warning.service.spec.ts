@@ -13,16 +13,11 @@ describe('Exercise Update Warning Service', () => {
     let updateWarningService: ExerciseUpdateWarningService;
 
     const gradingInstruction = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 } as GradingInstruction;
-    const gradingInstructionCreditsChanged = {
-        id: 1,
-        credits: 3,
-        gradingScale: 'scale',
-        instructionDescription: 'description',
-        feedback: 'feedback',
-        usageCount: 0,
-    } as GradingInstruction;
+    const gradingInstructionCreditsChanged = { ...gradingInstruction, credits: 3 } as GradingInstruction;
+    const gradingInstructionUsageCountChanged = { ...gradingInstruction, usageCount: 2 } as GradingInstruction;
     const gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] } as GradingCriterion;
-    const gradingCriterionCreditsChanged = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstructionCreditsChanged] } as GradingCriterion;
+    const gradingCriterionCreditsChanged = { ...gradingCriterion, structuredGradingInstructions: [gradingInstructionCreditsChanged] } as GradingCriterion;
+    const gradingCriterionUsageCountChanged = { ...gradingCriterion, structuredGradingInstructions: [gradingInstructionUsageCountChanged] } as GradingCriterion;
     const gradingCriterionWithoutInstruction = { id: 1, title: 'testCriteria' } as GradingCriterion;
     const exercise = { id: 1 } as Exercise;
     const backupExercise = { id: 1 } as Exercise;
@@ -32,7 +27,8 @@ describe('Exercise Update Warning Service', () => {
         updateWarningService = injector.get(ExerciseUpdateWarningService);
 
         updateWarningService.instructionDeleted = false;
-        updateWarningService.scoringChanged = false;
+        updateWarningService.creditChanged = false;
+        updateWarningService.usageCountChanged = false;
     });
 
     it('should set instructionDeleted as true', () => {
@@ -42,10 +38,17 @@ describe('Exercise Update Warning Service', () => {
         expect(updateWarningService.instructionDeleted).to.equal(true);
     });
 
-    it('should set scoringChanged as true', () => {
+    it('should set creditChanged as true', () => {
         exercise.gradingCriteria = [gradingCriterionCreditsChanged];
         backupExercise.gradingCriteria = [gradingCriterion];
         updateWarningService.loadExercise(exercise, backupExercise);
-        expect(updateWarningService.scoringChanged).to.equal(true);
+        expect(updateWarningService.creditChanged).to.equal(true);
+    });
+
+    it('should set usageCountChanged as true', () => {
+        exercise.gradingCriteria = [gradingCriterionUsageCountChanged];
+        backupExercise.gradingCriteria = [gradingCriterion];
+        updateWarningService.loadExercise(exercise, backupExercise);
+        expect(updateWarningService.usageCountChanged).to.equal(true);
     });
 });

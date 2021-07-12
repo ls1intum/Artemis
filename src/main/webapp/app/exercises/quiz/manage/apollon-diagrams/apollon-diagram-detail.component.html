@@ -2,16 +2,16 @@
     <jhi-alert></jhi-alert>
 
     <div class="row">
-        <div class="col text-right">
-            <label class="mr-1">
+        <div class="col text-end">
+            <label class="me-1">
                 <input type="checkbox" name="keepOriginalSize" [(ngModel)]="crop" />&nbsp;<span jhiTranslate="artemisApp.apollonDiagram.detail.crop">Crop</span>
             </label>
-            <fa-icon class="mr-1" [icon]="'question-circle'" ngbTooltip="{{ 'artemisApp.apollonDiagram.detail.help' | artemisTranslate }}"></fa-icon>
-            <button class="btn btn-info mr-1" (click)="downloadSelection()" [hidden]="!apollonDiagram" [disabled]="!hasSelection">
+            <fa-icon class="me-1" [icon]="'question-circle'" ngbTooltip="{{ 'artemisApp.apollonDiagram.detail.help' | artemisTranslate }}"></fa-icon>
+            <button class="btn btn-info me-1" (click)="downloadSelection()" [hidden]="!apollonDiagram" [disabled]="!hasSelection">
                 <fa-icon [icon]="'download'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.download">Download</span>
             </button>
-            <span class="border-right border-secondary mr-2"></span>
-            <button class="btn btn-info mr-1" (click)="generateExercise()" [hidden]="!apollonDiagram" [disabled]="!hasInteractive">
+            <span class="border-right border-secondary me-2"></span>
+            <button class="btn btn-info me-1" (click)="generateExercise()" [hidden]="!apollonDiagram" [disabled]="!hasInteractive">
                 {{ 'artemisApp.apollonDiagram.detail.createLabel' | artemisTranslate }} &hellip;
             </button>
             <button class="btn btn-success" (click)="saveDiagram()" [hidden]="!apollonDiagram" jhiTranslate="entity.action.save">Save</button>

@@ -20,11 +20,11 @@
     <!--region Left Panel-->
     <div left-body class="submission-container d-flex flex-column w-100">
         <div class="d-flex flex-column flex-md-row" *ngIf="modelingExercise">
-            <div *ngIf="modelingExercise?.teamMode && (isActive || isLate)" class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ml-md-2 ml-lg-3">
+            <div *ngIf="modelingExercise?.teamMode && (isActive || isLate)" class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ms-md-2 ms-lg-3">
                 <jhi-team-participate-info-box
                     [exercise]="modelingExercise"
                     [participation]="participation"
-                    [typing$]="submissionStream$"
+                    [typing$]="submissionObservable"
                     [dockedToRightSide]="true"
                 ></jhi-team-participate-info-box>
             </div>
@@ -42,7 +42,7 @@
                     <jhi-team-submission-sync
                         *ngIf="modelingExercise.teamMode"
                         [exerciseType]="modelingExercise.type!"
-                        [submission$]="submissionStream$"
+                        [submissionObservable]="submissionObservable"
                         [participation]="participation"
                         (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
                     ></jhi-team-submission-sync>
@@ -114,7 +114,13 @@
         <div class="row" *ngIf="result">
             <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)"></jhi-rating>
         </div>
-        <jhi-complaint-interactions *ngIf="modelingExercise" [exercise]="modelingExercise" [participation]="participation" [result]="result!"> </jhi-complaint-interactions>
+        <jhi-complaint-interactions
+            *ngIf="modelingExercise && result"
+            [exercise]="modelingExercise"
+            [participation]="participation"
+            [result]="resultWithComplaint ? resultWithComplaint : result"
+        >
+        </jhi-complaint-interactions>
     </div>
     <!--endregion-->
     <!--region Right Panel-->

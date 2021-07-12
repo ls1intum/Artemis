@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Subject } from 'rxjs';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
@@ -6,24 +6,27 @@ import { JhiEventManager } from 'ng-jhipster';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
     templateUrl: './non-programming-exercise-detail-common-actions.component.html',
     styles: [],
 })
-export class NonProgrammingExerciseDetailCommonActionsComponent {
+export class NonProgrammingExerciseDetailCommonActionsComponent implements OnInit {
     @Input()
     exercise: Exercise;
 
     @Input()
-    courseId: number;
+    course: Course;
 
     @Input()
     isExamExercise = false;
 
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    baseResource: string;
+    shortBaseResource: string;
 
     constructor(
         private textExerciseService: TextExerciseService,
@@ -32,24 +35,15 @@ export class NonProgrammingExerciseDetailCommonActionsComponent {
         private eventManager: JhiEventManager,
     ) {}
 
-    /**
-     * Returns the route for editing the exercise. Exam and course exercises have different routes.
-     */
-    getEditRoute() {
-        if (this.isExamExercise) {
-            return [
-                '/course-management',
-                this.exercise.exerciseGroup?.exam?.course?.id,
-                'exams',
-                this.exercise.exerciseGroup?.exam?.id,
-                'exercise-groups',
-                this.exercise.exerciseGroup?.id,
-                this.exercise.type! + '-exercises',
-                this.exercise.id,
-                'edit',
-            ];
+    ngOnInit(): void {
+        if (!this.isExamExercise) {
+            this.baseResource = `/course-management/${this.course.id!}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+            this.shortBaseResource = `/course-management/${this.course.id!}/`;
         } else {
-            return ['/course-management', this.courseId, this.exercise.type! + '-exercises', this.exercise.id, 'edit'];
+            this.baseResource =
+                `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}` +
+                `/exercise-groups/${this.exercise.exerciseGroup?.id}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+            this.shortBaseResource = `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}/`;
         }
     }
 

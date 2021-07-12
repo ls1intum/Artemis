@@ -15,7 +15,7 @@
                     <span>{{ lecture!.title }}</span>
                 </h3>
                 <h4>
-                    <span class="mr-2" *ngIf="lecture!.startDate && lecture!.endDate">
+                    <span class="me-2" *ngIf="lecture!.startDate && lecture!.endDate">
                         {{ 'artemisApp.courseOverview.lectureDetails.date' | artemisTranslate }} {{ lecture!.startDate | artemisDate }} -
                         {{ lecture!.endDate | artemisDate: 'time' }}
                     </span>
@@ -26,7 +26,7 @@
     <!-- HEADER INFORMATION END -->
     <!-- LECTURE START -->
     <div class="row mt-2">
-        <div class="col pr-0 flex-grow-1">
+        <div class="col pe-0 flex-grow-1">
             <div class="row mb-2 mt-2 align-items-baseline" *ngIf="lecture!.description">
                 <div class="col-auto">
                     <h3>{{ 'artemisApp.courseOverview.lectureDetails.description' | artemisTranslate }}</h3>
@@ -40,6 +40,9 @@
                 <div class="col-auto">
                     <h3>{{ 'artemisApp.courseOverview.lectureDetails.lectureUnits' | artemisTranslate }}</h3>
                 </div>
+                <button id="downloadButton" *ngIf="hasPdfLectureUnit" class="col-auto btn btn-primary btn-sm rounded-pill" (click)="downloadMergedFiles()">
+                    {{ 'artemisApp.courseOverview.lectureDetails.downloadPdf' | artemisTranslate }}
+                </button>
             </div>
             <div class="row mb-4" *ngFor="let lectureUnit of lectureUnits">
                 <div class="col-11" [ngSwitch]="lectureUnit.type">
@@ -73,10 +76,10 @@
                             <a class="text-primary" *ngIf="isDownloadingLink === attachment.link">
                                 <fa-icon [icon]="'spinner'" [spin]="true"></fa-icon> {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}
                             </a>
-                            <span class="ml-1 badge badge-info">
+                            <span class="ms-1 badge bg-info">
                                 {{ attachmentExtension(attachment) | uppercase }}
                             </span>
-                            <span class="ml-1 badge badge-warning" *ngIf="attachmentNotReleased(attachment)">
+                            <span class="ms-1 badge bg-warning" *ngIf="attachmentNotReleased(attachment)">
                                 {{ 'artemisApp.courseOverview.lectureDetails.notReleased' | artemisTranslate }}
                             </span>
                         </h5>
@@ -89,6 +92,6 @@
             </div>
         </div>
         <!-- LECTURE END -->
-        <router-outlet *ngIf="lecture && lecture.course?.postsEnabled" class="ml-3" (activate)="onChildActivate($event)"></router-outlet>
+        <router-outlet *ngIf="lecture && lecture.course?.postsEnabled" class="ms-3" (activate)="onChildActivate($event)"></router-outlet>
     </div>
 </div>

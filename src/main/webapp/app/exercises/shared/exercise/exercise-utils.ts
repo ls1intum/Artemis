@@ -7,6 +7,80 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { hasResults } from 'app/overview/participation-utils';
+import { Observable, of, from } from 'rxjs';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
+import { ExerciseServicable } from 'app/exercises/shared/exercise/exercise.service';
+import { map, mergeWith, mergeMap, takeUntil } from 'rxjs/operators';
+import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
+
+export enum EditType {
+    IMPORT,
+    CREATE,
+    UPDATE,
+}
+
+export class SaveExerciseCommand<T extends Exercise> {
+    constructor(
+        private modalService: NgbModal,
+        private popupService: ExerciseUpdateWarningService,
+        private exerciseService: ExerciseServicable<T>,
+        private backupExercise: T,
+        private editType: EditType,
+    ) {}
+
+    save(exercise: T, notificationText?: string): Observable<T> {
+        const prepareRequestOptions = (): any => {
+            switch (this.editType) {
+                case EditType.UPDATE:
+                    return notificationText ? { notificationText } : {};
+                default:
+                    return {};
+            }
+        };
+
+        const callBackend = ([shouldReevaluate, requestOptions]: [boolean, any?]) => {
+            const ex = Exercise.sanitize(exercise);
+            switch (this.editType) {
+                case EditType.IMPORT:
+                    return this.exerciseService.import!(ex);
+                case EditType.CREATE:
+                    return this.exerciseService.create(ex);
+                case EditType.UPDATE:
+                    if (shouldReevaluate) {
+                        return this.exerciseService.reevaluateAndUpdate(ex, requestOptions);
+                    } else {
+                        return this.exerciseService.update(ex, requestOptions);
+                    }
+            }
+        };
+
+        let saveObservable = of([false, prepareRequestOptions()]);
+
+        if (exercise.gradingInstructionFeedbackUsed) {
+            const popupRefObs = from(this.popupService.checkExerciseBeforeUpdate(exercise, this.backupExercise));
+
+            if (this.modalService.hasOpenModals()) {
+                const confirmedCase = popupRefObs.pipe(
+                    mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).confirmed.pipe(map(() => [false, prepareRequestOptions()]))),
+                );
+                const reEvaluatedCase = popupRefObs.pipe(
+                    mergeMap((ref) =>
+                        (ref.componentInstance as ExerciseUpdateWarningComponent).reEvaluated.pipe(map(() => [true, { deleteFeedback: ref.componentInstance.deleteFeedback }])),
+                    ),
+                );
+                const canceledCase = popupRefObs.pipe(mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).canceled));
+
+                saveObservable = confirmedCase.pipe(mergeWith(reEvaluatedCase), takeUntil(canceledCase));
+            }
+        }
+
+        return saveObservable.pipe(
+            mergeMap(callBackend),
+            map((res) => res.body! as T),
+        );
+    }
+}
 
 export const hasExerciseChanged = (changes: SimpleChanges) => {
     return changes.exercise && changes.exercise.currentValue && (!changes.exercise.previousValue || changes.exercise.previousValue.id !== changes.exercise.currentValue.id);

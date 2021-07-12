@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
-import { debounceTime, map as rxMap, tap } from 'rxjs/operators';
+import { debounceTime, map, tap } from 'rxjs/operators';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
@@ -16,7 +16,7 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
     @Input() taskRegex: RegExp;
 
     @Output() problemStatementAnalysis = new EventEmitter<ProblemStatementAnalysis>();
-    delayedAnalysisSubject = new Subject<ProblemStatementAnalysis>();
+    delayedAnalysisSubject = new Subject<void>();
     analysisSubscription: Subscription;
 
     invalidTestCases: string[] = [];
@@ -30,7 +30,7 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
         this.analysisSubscription = this.delayedAnalysisSubject
             .pipe(
                 debounceTime(500),
-                rxMap(() => {
+                map(() => {
                     const { completeAnalysis, missingTestCases, invalidTestCases, invalidHints } = this.analysisService.analyzeProblemStatement(
                         this.problemStatement,
                         this.taskRegex,

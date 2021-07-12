@@ -1,4 +1,4 @@
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -15,7 +15,7 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import * as moment from 'moment';
-import { navigateBack } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -51,12 +51,12 @@ export class CourseUpdateComponent implements OnInit {
     constructor(
         private courseService: CourseManagementService,
         private activatedRoute: ActivatedRoute,
-        private router: Router,
         private fileUploaderService: FileUploaderService,
         private jhiAlertService: JhiAlertService,
         private profileService: ProfileService,
         private organizationService: OrganizationManagementService,
         private modalService: NgbModal,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     ngOnInit() {
@@ -124,6 +124,9 @@ export class CourseUpdateComponent implements OnInit {
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
+                maxPoints: new FormControl(this.course.maxPoints, {
+                    validators: [Validators.min(1)],
+                }),
                 maxComplaints: new FormControl(this.course.maxComplaints, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
@@ -161,11 +164,7 @@ export class CourseUpdateComponent implements OnInit {
      * Returns to the overview page if there is no previous state and we created a new course
      */
     previousState() {
-        if (this.course.id) {
-            navigateBack(this.router, ['course-management', this.course.id!.toString()]);
-        } else {
-            navigateBack(this.router, ['course-management']);
-        }
+        this.navigationUtilService.navigateBackWithOptional(['course-management'], this.course.id?.toString());
     }
 
     /**
@@ -213,22 +212,22 @@ export class CourseUpdateComponent implements OnInit {
 
     /**
      * @function set course icon
-     * @param $event {object} Event object which contains the uploaded file
+     * @param event {object} Event object which contains the uploaded file
      */
-    setCourseImage($event: any): void {
-        this.imageChangedEvent = $event;
-        if ($event.target.files.length) {
-            const fileList: FileList = $event.target.files;
+    setCourseImage(event: any): void {
+        this.imageChangedEvent = event;
+        if (event.target.files.length) {
+            const fileList: FileList = event.target.files;
             this.courseImageFile = fileList[0];
             this.courseImageFileName = this.courseImageFile['name'];
         }
     }
 
     /**
-     * @param $event
+     * @param event
      */
-    imageCropped($event: ImageCroppedEvent) {
-        this.croppedImage = $event.base64;
+    imageCropped(event: ImageCroppedEvent) {
+        this.croppedImage = event.base64;
     }
 
     imageLoaded() {

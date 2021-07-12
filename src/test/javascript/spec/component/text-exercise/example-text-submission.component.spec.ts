@@ -19,7 +19,7 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 import { State } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
 import { ExampleTextSubmissionComponent } from 'app/exercises/text/manage/example-text-submission/example-text-submission.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -90,7 +90,7 @@ describe('ExampleTextSubmissionComponent', () => {
         submission.id = SUBMISSION_ID;
     });
 
-    it('should fetch example submission with result for existing example submission and switch to edit state', fakeAsync(() => {
+    it('should fetch example submission with result for existing example submission and switch to edit state', async () => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
@@ -99,17 +99,16 @@ describe('ExampleTextSubmissionComponent', () => {
         spyOn(assessmentsService, 'getExampleResult').and.returnValue(of(result));
 
         // WHEN
-        fixture.detectChanges();
-        tick();
+        await comp.ngOnInit();
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
         expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
         expect(comp.state.constructor.name).toEqual('EditState');
-    }));
+    });
 
-    it('should fetch only fetch exercise for new example submission and stay in new state', fakeAsync(() => {
+    it('should fetch only fetch exercise for new example submission and stay in new state', async () => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: 'new' };
@@ -118,22 +117,20 @@ describe('ExampleTextSubmissionComponent', () => {
         spyOn(assessmentsService, 'getExampleResult').and.stub();
 
         // WHEN
-        fixture.detectChanges();
-        tick();
+        await comp.ngOnInit();
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
         expect(exampleSubmissionService.get).toHaveBeenCalledTimes(0);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledTimes(0);
         expect(comp.state.constructor.name).toEqual('NewState');
-    }));
+    });
 
-    it('should switch state when starting assessment', fakeAsync(() => {
+    it('should switch state when starting assessment', async () => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
-        fixture.detectChanges();
-        tick();
+        await comp.ngOnInit();
         comp.isAtLeastInstructor = true;
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
@@ -143,21 +140,18 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // WHEN
         fixture.detectChanges();
-        tick();
-        fixture.debugElement.query(By.css('#createNewAssessment')).nativeElement.click();
-        tick();
+        await comp.startAssessment();
 
         // THEN
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
         expect(comp.state.constructor.name).toEqual('NewAssessmentState');
-    }));
+    });
 
-    it('should save assessment', fakeAsync(() => {
+    it('should save assessment', async () => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
-        fixture.detectChanges();
-        tick();
+        await comp.ngOnInit();
         comp.isAtLeastInstructor = true;
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
@@ -184,13 +178,11 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // WHEN
         fixture.detectChanges();
-        tick();
         fixture.debugElement.query(By.css('#saveNewAssessment')).nativeElement.click();
-        tick();
 
         // THEN
-        expect(assessmentsService.saveExampleAssessment).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID, [feedback], [textBlock1]);
-    }));
+        expect(assessmentsService.saveExampleAssessment).toHaveBeenCalledWith(EXERCISE_ID, EXAMPLE_SUBMISSION_ID, [feedback], [textBlock1]);
+    });
 
     it('editing submission from assessment state switches state', fakeAsync(() => {
         // GIVEN
@@ -225,14 +217,14 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // THEN
         expect(comp.state.constructor.name).toEqual('EditState');
-        expect(assessmentsService.deleteExampleFeedback).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
+        expect(assessmentsService.deleteExampleFeedback).toHaveBeenCalledWith(EXERCISE_ID, EXAMPLE_SUBMISSION_ID);
         expect(comp.submission?.blocks).toBeUndefined();
         expect(comp.result?.feedbacks).toBeUndefined();
         expect(comp.textBlockRefs).toHaveLength(0);
         expect(comp.unusedTextBlockRefs).toHaveLength(0);
     }));
 
-    it('it should verify correct tutorial submission', fakeAsync(() => {
+    it('it should verify correct tutorial submission', async () => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
@@ -252,8 +244,7 @@ describe('ExampleTextSubmissionComponent', () => {
         textBlock2.computeId();
         submission.blocks = [textBlock1, textBlock2];
         spyOn(assessmentsService, 'getExampleResult').and.returnValue(of(result));
-        fixture.detectChanges();
-        tick();
+        await comp.ngOnInit();
 
         comp.textBlockRefs[0].initFeedback();
         comp.textBlockRefs[0].feedback!.credits = 2;
@@ -263,16 +254,14 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // WHEN
         fixture.detectChanges();
-        tick();
         fixture.debugElement.query(By.css('#checkAssessment')).nativeElement.click();
-        tick();
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
         expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
         expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalled();
-    }));
+    });
 
     const httpResponse = (body: any) => of(new HttpResponse({ body }));
 });
