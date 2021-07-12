@@ -111,12 +111,16 @@ export class ExamNavigationBarComponent implements OnInit {
     /**
      * calculate the exercise status (also see exam-exercise-overview-page.component.ts --> make sure the logic is consistent)
      * also determines the used icon and its color
+     * TODO: we should try to extract a method for the common logic which avoids side effects (i.e. changing this.icon)
+     *  this method could e.g. return the sync status and the icon
      *
      * @param exerciseIndex index of the exercise
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
     setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
         // start with a yellow status (edit icon)
+        // TODO: it's a bit weired, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
+        //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
         this.icon = 'edit';
         const exercise = this.exercises[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
