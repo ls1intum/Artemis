@@ -121,7 +121,7 @@ info:
             - tutor_assessment_tour: 'Patterns in Software Engineering'
     contact: artemis.in@tum.de  #default value, can be overridden if needed
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
-    # default value set to false
+    # default value set to true for development environment
     text-assessment-analytics-enabled: true
 
 # Eureka configuration

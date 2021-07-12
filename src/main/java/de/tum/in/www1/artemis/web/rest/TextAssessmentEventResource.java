@@ -81,7 +81,7 @@ public class TextAssessmentEventResource {
     public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssessmentEvent event) throws URISyntaxException {
         log.debug("REST request to save assessmentEvent : {}", event);
 
-        if (isTextAssessmentAnalyticsEnabled()) {
+        if (!isTextAssessmentAnalyticsEnabled()) {
             return forbidden();
         }
 

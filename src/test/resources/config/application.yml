@@ -154,8 +154,8 @@ info:
     # Allowed Orion version range. Should only be changed on major version releases
     allowed-minimum-orion-version: 1.0.0
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
-    # default value set to false
-    text-assessment-analytics-enabled: false
+    # default value set to true for tests
+    text-assessment-analytics-enabled: true
 
 jhipster:
     clientApp:
