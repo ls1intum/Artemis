@@ -103,7 +103,7 @@ public class ProgrammingExerciseImportService {
         setupExerciseForImport(newExercise);
 
         programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise);
-        programmingExerciseParticipationService.setupInitalTemplateParticipation(newExercise);
+        programmingExerciseParticipationService.setupInitialTemplateParticipation(newExercise);
         setupTestRepository(newExercise);
         programmingExerciseService.initParticipations(newExercise);
 
@@ -121,7 +121,7 @@ public class ProgrammingExerciseImportService {
         }
 
         // An exam exercise can only be in individual mode
-        if (!newExercise.isCourseExercise()) {
+        if (newExercise.isExamExercise()) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
             newExercise.setTeamAssignmentConfig(null);
         }
@@ -335,6 +335,12 @@ public class ProgrammingExerciseImportService {
         newExercise.setExampleSubmissions(null);
         newExercise.setPosts(null);
         newExercise.setStudentParticipations(null);
+        // copy the grading instructions to avoid issues with references to the original exercise
+        newExercise.setGradingCriteria(newExercise.copyGradingCriteria());
+        // only copy the config for team programming exercise in courses
+        if (newExercise.getMode() == ExerciseMode.TEAM && newExercise.isCourseExercise()) {
+            newExercise.setTeamAssignmentConfig(newExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());
+        }
         // We have to rebuild the auxiliary repositories
         newExercise.setAuxiliaryRepositories(new ArrayList<>());
 

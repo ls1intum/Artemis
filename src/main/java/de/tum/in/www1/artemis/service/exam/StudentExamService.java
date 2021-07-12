@@ -28,7 +28,9 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -70,11 +72,13 @@ public class StudentExamService {
 
     private final ExamRepository examRepository;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, InstanceMessageSendService instanceMessageSendService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -89,6 +93,7 @@ public class StudentExamService {
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examRepository = examRepository;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -455,14 +460,19 @@ public class StudentExamService {
             if (studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
                     && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                 try {
-                    if (exercise instanceof ProgrammingExercise && !Hibernate.isInitialized(((ProgrammingExercise) exercise).getTemplateParticipation())) {
-                        // Load lazy property
-                        final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                        ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
+                    // Load lazy property
+                    if (exercise instanceof ProgrammingExercise programmingExercise && !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
+                        final var programmingExerciseReloaded = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                        programmingExercise.setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
                     }
                     // this will also create initial (empty) submissions for quiz, text, modeling and file upload
                     var participation = participationService.startExercise(exercise, student, true);
                     generatedParticipations.add(participation);
+                    // Unlock Repositories if the exam starts within 5 minutes
+                    if (exercise instanceof ProgrammingExercise programmingExercise
+                            && ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
+                        instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
+                    }
                 }
                 catch (Exception ex) {
                     log.warn("Start exercise for student exam {} and exercise {} and student {} failed with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),

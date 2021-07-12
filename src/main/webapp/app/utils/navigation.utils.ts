@@ -94,32 +94,66 @@ export const getLinkToSubmissionAssessment = (
     exerciseType: ExerciseType,
     courseId: number,
     exerciseId: number,
+    participationId: number | undefined,
     submissionId: number | 'new',
     examId: number,
     exerciseGroupId: number,
     resultId?: number,
 ): string[] => {
     if (examId > 0) {
-        const route = [
-            '/course-management',
-            courseId.toString(),
-            'exams',
-            examId.toString(),
-            'exercise-groups',
-            exerciseGroupId.toString(),
-            exerciseType + '-exercises',
-            exerciseId.toString(),
-            'submissions',
-            submissionId.toString(),
-            'assessment',
-        ];
+        let route;
+        if (exerciseType === ExerciseType.TEXT && submissionId !== 'new' && participationId !== undefined) {
+            route = [
+                '/course-management',
+                courseId.toString(),
+                'exams',
+                examId.toString(),
+                'exercise-groups',
+                exerciseGroupId.toString(),
+                exerciseType + '-exercises',
+                exerciseId.toString(),
+                'participations',
+                participationId.toString(),
+                'submissions',
+                submissionId.toString(),
+                'assessment',
+            ];
+        } else {
+            route = [
+                '/course-management',
+                courseId.toString(),
+                'exams',
+                examId.toString(),
+                'exercise-groups',
+                exerciseGroupId.toString(),
+                exerciseType + '-exercises',
+                exerciseId.toString(),
+                'submissions',
+                submissionId.toString(),
+                'assessment',
+            ];
+        }
         if (resultId) {
             route[route.length - 1] += 's';
             route.push(resultId.toString());
         }
         return route;
     } else {
-        return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'submissions', submissionId.toString(), 'assessment'];
+        if (exerciseType === ExerciseType.TEXT && submissionId !== 'new' && participationId !== undefined) {
+            return [
+                '/course-management',
+                courseId.toString(),
+                exerciseType + '-exercises',
+                exerciseId.toString(),
+                'participations',
+                participationId.toString(),
+                'submissions',
+                submissionId.toString(),
+                'assessment',
+            ];
+        } else {
+            return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'submissions', submissionId.toString(), 'assessment'];
+        }
     }
 };
 

@@ -25,6 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -211,11 +212,12 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             examEndDate = ZonedDateTime.now().plusHours(3);
         }
         else {
-            examStartDate = ZonedDateTime.now().plusMinutes(1);
-            examEndDate = ZonedDateTime.now().plusMinutes(3);
+            // If the exam is prepared only 5 minutes before the release date, the repositories of the students are unlocked as well.
+            examStartDate = ZonedDateTime.now().plusMinutes(1 + Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS);
+            examEndDate = ZonedDateTime.now().plusMinutes(3 + Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS);
         }
 
-        examVisibleDate = ZonedDateTime.now().minusMinutes(10);
+        examVisibleDate = ZonedDateTime.now().minusMinutes(10 + Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS);
         // --> 2 min = 120s working time
 
         bambooRequestMockProvider.enableMockingOfRequests(true);
@@ -277,7 +279,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetStudentExamForConduction() throws Exception {
-
         List<StudentExam> studentExams = prepareStudentExamsForConduction(false);
 
         for (var studentExam : studentExams) {

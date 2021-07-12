@@ -1865,6 +1865,9 @@ public class DatabaseUtilService {
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             programmingExercise.setProjectType(ProjectType.ECLIPSE);
         }
+        else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+            programmingExercise.setProjectType(ProjectType.PLAIN);
+        }
         else {
             programmingExercise.setProjectType(null);
         }
@@ -2554,18 +2557,14 @@ public class DatabaseUtilService {
 
     public Submission addSubmissionWithFinishedResultsWithAssessor(StudentParticipation participation, Exercise exercise, Submission submission, String login,
             String assessorLogin) {
-        participation.addSubmission(submission);
-        submission = saveSubmissionToRepo(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setCompletionDate(ZonedDateTime.now());
-        result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
         submission.getParticipation().addResult(result);
         submission = saveSubmissionToRepo(submission);
-        result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
     }

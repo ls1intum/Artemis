@@ -67,8 +67,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     highlightDifferences = false;
 
     /*
-     * Non-resetted properties:
-     * These properties are not resetted on purpose, as they cannot change between assessments.
+     * Non-reset properties:
+     * These properties are not reset on purpose, as they cannot change between assessments.
      */
     private cancelConfirmationText: string;
 
@@ -161,7 +161,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private setPropertiesFromServerResponse(studentParticipation: StudentParticipation) {
         this.resetComponent();
         this.loadingInitialSubmission = false;
-
         if (studentParticipation == undefined) {
             // Show "No New Submission" banner on .../submissions/new/assessment route
             this.noNewSubmissions = this.isNewAssessmentRoute;
@@ -200,7 +199,17 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         if (this.isNewAssessmentRoute) {
             // Update the url with the new id, without reloading the page, to make the history consistent
             const newUrl = this.router
-                .createUrlTree(getLinkToSubmissionAssessment(ExerciseType.TEXT, this.courseId, this.exerciseId, this.submission!.id!, this.examId, this.exerciseGroupId))
+                .createUrlTree(
+                    getLinkToSubmissionAssessment(
+                        ExerciseType.TEXT,
+                        this.courseId,
+                        this.exerciseId,
+                        this.participation!.id!,
+                        this.submission!.id!,
+                        this.examId,
+                        this.exerciseGroupId,
+                    ),
+                )
                 .toString();
             this.location.go(newUrl);
         }
@@ -285,7 +294,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Go to next submission
      */
     async nextSubmission(): Promise<void> {
-        const url = getLinkToSubmissionAssessment(ExerciseType.TEXT, this.courseId, this.exerciseId, 'new', this.examId, this.exerciseGroupId);
+        const url = getLinkToSubmissionAssessment(ExerciseType.TEXT, this.courseId, this.exerciseId, this.participation!.id!, 'new', this.examId, this.exerciseGroupId);
         this.nextSubmissionBusy = true;
         await this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
     }
@@ -302,7 +311,18 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         latestSubmissionResult.participation = undefined;
 
         const url = !this.isExamMode
-            ? ['/course-management', this.courseId, 'text-exercises', this.exerciseId, 'submissions', this.submission!.id, 'text-feedback-conflict', feedbackId]
+            ? [
+                  '/course-management',
+                  this.courseId,
+                  'text-exercises',
+                  this.exerciseId,
+                  'participations',
+                  tempSubmission.participation!.id,
+                  'submissions',
+                  this.submission!.id,
+                  'text-feedback-conflict',
+                  feedbackId,
+              ]
             : [
                   '/course-management',
                   this.courseId,
@@ -312,6 +332,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                   this.exerciseGroupId,
                   'text-exercises',
                   this.exerciseId,
+                  'participations',
+                  tempSubmission.participation!.id,
                   'submissions',
                   this.submission!.id,
                   'text-feedback-conflict',
