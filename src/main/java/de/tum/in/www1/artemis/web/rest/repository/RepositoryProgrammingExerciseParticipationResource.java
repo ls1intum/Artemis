@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest.repository;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.security.Principal;
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -236,12 +235,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param participationId id of participation to which the files belong
      * @param submissions     information about the file updates
      * @param commit          whether to commit after updating the files
-     * @param principal       used to check if the user can update the files
      * @return {Map<String, String>} file submissions or the appropriate http error
      */
     @PutMapping(value = "/repository/{participationId}/files")
     public ResponseEntity<Map<String, String>> updateParticipationFiles(@PathVariable("participationId") Long participationId, @RequestBody List<FileSubmission> submissions,
-            @RequestParam(defaultValue = "false") boolean commit, Principal principal) {
+            @RequestParam(defaultValue = "false") boolean commit) {
         Participation participation;
         try {
             participation = participationRepository.findByIdElseThrow(participationId);
@@ -250,16 +248,15 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             FileSubmissionError error = new FileSubmissionError(participationId, "participationNotFound");
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, error.getMessage(), error);
         }
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+        if (!(participation instanceof final ProgrammingExerciseParticipation programmingExerciseParticipation)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "notAProgrammingExerciseParticipation");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error.getMessage(), error);
         }
-        final ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
 
         // User must have the necessary permissions to update a file.
         // When the buildAndTestAfterDueDate is set, the student can't change the repository content anymore after the due date.
         boolean repositoryIsLocked = programmingExerciseParticipation.isLocked();
-        if (repositoryIsLocked || !participationService.canAccessParticipation(programmingExerciseParticipation, principal)) {
+        if (repositoryIsLocked || !participationService.canAccessParticipation(programmingExerciseParticipation)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
@@ -283,7 +280,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         }
         // Apply checks for exam (submission is in time & user's student exam has the exercise)
         // Checks only apply to students, tutors and editors, otherwise template, solution and assignment participation can't be edited using the code editor
-        User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastEditorForExercise(programmingExerciseParticipation.getProgrammingExercise())
                 && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExerciseParticipation.getProgrammingExercise(), user, false)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");
