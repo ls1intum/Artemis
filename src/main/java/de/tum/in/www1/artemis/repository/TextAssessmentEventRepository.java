@@ -21,4 +21,6 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
     List<TextAssessmentEvent> findAllByEventType(TextAssessmentEvent type);
 
     List<TextAssessmentEvent> findAllBySegmentType(TextBlockType type);
+
+    List<TextAssessmentEvent> findAllByCourseId(Long id);
 }

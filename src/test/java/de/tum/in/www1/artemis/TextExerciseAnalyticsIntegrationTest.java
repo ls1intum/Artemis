@@ -82,7 +82,7 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testGetAllEvents() throws Exception {
+    public void testGetAllEventsByCourseId() throws Exception {
         User user = new User();
         user.setLogin("admin");
         user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
@@ -91,7 +91,7 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
         ResponseEntity<Void> responseAddEvent = textAssessmentEventResource.addAssessmentEvent(event);
         assertThat(responseAddEvent.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        ResponseEntity<List<TextAssessmentEvent>> responseFindEvents = textAssessmentEventResource.getAllEvents();
+        ResponseEntity<List<TextAssessmentEvent>> responseFindEvents = textAssessmentEventResource.getEventsByCourseId(course.getId());
         assertThat(responseFindEvents.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(responseFindEvents.getBody()).isEqualTo(List.of(event));
     }
