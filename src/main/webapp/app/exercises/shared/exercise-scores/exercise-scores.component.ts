@@ -23,10 +23,11 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { SubmissionExerciseType } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
+import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 /**
  * Filter properties for a result
@@ -186,6 +187,14 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 return true;
         }
     };
+
+    getAssessmentLink(exercise: Exercise, submissionId: number, participationId: number, resultId?: number) {
+        if (!exercise || !exercise.type) {
+            return;
+        }
+        const examId = this.exercise.exerciseGroup?.exam ? this.exercise.exerciseGroup!.exam!.id! : 0;
+        return getLinkToSubmissionAssessment(exercise.type, this.exercise.course!.id!, exercise.id!, participationId, submissionId, examId, exercise.exerciseGroup?.id!, resultId);
+    }
 
     /**
      * Update the number of filtered results

@@ -13,6 +13,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-assessment-locks',
@@ -77,6 +78,18 @@ export class AssessmentLocksComponent implements OnInit {
                 this.submissions.push(...(response.body ?? []));
             },
             (response: string) => this.onError(response),
+        );
+    }
+
+    getAssessmentLink(courseId: number, submission: Submission) {
+        return getLinkToSubmissionAssessment(
+            submission.participation!.exercise!.type!,
+            courseId,
+            submission.participation!.exercise!.id!,
+            submission.participation!.id!,
+            submission.id!,
+            0,
+            0,
         );
     }
 
