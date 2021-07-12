@@ -10,7 +10,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +39,6 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
@@ -102,7 +100,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @BeforeEach
     public void setup() throws Exception {
-        database.addUsers(1, 1, 0, 1);
+        database.addUsers(1, 1, 1, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
@@ -146,21 +144,21 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl()), eq(true), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl()), eq(true), any());
+                .getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), eq(true), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl()), eq(false), any());
+                .getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), eq(false), any());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(), true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(), true);
+                .getOrCheckoutRepository(participation.getVcsRepositoryUrl(), true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(), false);
+                .getOrCheckoutRepository(participation.getVcsRepositoryUrl(), false);
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participation);
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl());
+        bitbucketRequestMockProvider.mockDefaultBranch("master", participation.getVcsRepositoryUrl());
         bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExercise.getVcsTemplateRepositoryUrl());
 
         logs.add(buildLogEntry);
@@ -207,7 +205,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         for (String key : files.keySet()) {
             assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + key))).isTrue();
         }
-        assertThat(files.get(currentLocalFileName).equals(currentLocalFileContent));
+        assertThat(files.get(currentLocalFileName)).isEqualTo(currentLocalFileContent);
     }
 
     @Test
@@ -730,34 +728,22 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        // Check for canAccessParticipation(participation)
-        var response = programmingExerciseParticipationService.canAccessParticipation(participation);
-        assertThat(response).isTrue();
+        checkCanAccessParticipation(programmingExercise, participation, true, true);
+    }
 
-        var responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
-        assertThat(responseSolution).isTrue();
+    void checkCanAccessParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation, boolean shouldBeAllowed,
+            boolean shouldBeAllowedTemplateSolution) {
+        var isAllowed = programmingExerciseParticipationService.canAccessParticipation(participation);
+        assertThat(isAllowed).isEqualTo(shouldBeAllowed);
 
-        var responseTemplate = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
-        assertThat(responseTemplate).isTrue();
+        var isAllowedSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
+        assertThat(isAllowedSolution).isEqualTo(shouldBeAllowedTemplateSolution);
+
+        var isAllowedTemplate = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
+        assertThat(isAllowedTemplate).isEqualTo(shouldBeAllowedTemplateSolution);
 
         var responseOther = programmingExerciseParticipationService.canAccessParticipation(null);
         assertThat(responseOther).isFalse();
-
-        // Check for canAccessParticipation(participation, principal)
-        final var username = "instructor1";
-        final Principal principal = () -> username;
-
-        response = programmingExerciseParticipationService.canAccessParticipation(participation, principal);
-        assertThat(response).isFalse();
-
-        responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation(), principal);
-        assertThat(responseSolution).isTrue();
-
-        responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation(), principal);
-        assertThat(responseSolution).isTrue();
-
-        responseSolution = programmingExerciseParticipationService.canAccessParticipation(null, principal);
-        assertThat(responseSolution).isFalse();
     }
 
     @Test
@@ -772,14 +758,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         programmingExercise.getSolutionParticipation().setExercise(null);
         programmingExercise.getTemplateParticipation().setExercise(null);
 
-        var response1 = programmingExerciseParticipationService.canAccessParticipation(participation);
-        assertThat(response1).isTrue();
-
-        var responseSolution1 = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
-        assertThat(responseSolution1).isTrue();
-
-        var responseTemplate1 = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
-        assertThat(responseTemplate1).isTrue();
+        checkCanAccessParticipation(programmingExercise, participation, true, true);
 
         // Check with exercise and programmingExercise null (and set everything again)
         participation.setExercise(null);
@@ -790,14 +769,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         programmingExercise.getSolutionParticipation().setProgrammingExercise(null);
         programmingExercise.getTemplateParticipation().setProgrammingExercise(null);
 
-        var response2 = programmingExerciseParticipationService.canAccessParticipation(participation);
-        assertThat(response2).isTrue();
-
-        var responseSolution2 = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
-        assertThat(responseSolution2).isTrue();
-
-        var responseTemplate2 = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
-        assertThat(responseTemplate2).isTrue();
+        checkCanAccessParticipation(programmingExercise, participation, true, true);
     }
 
     @Test
@@ -812,14 +784,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         programmingExercise.getSolutionParticipation().setProgrammingExercise(null);
         programmingExercise.getTemplateParticipation().setProgrammingExercise(null);
 
-        var response = programmingExerciseParticipationService.canAccessParticipation(participation);
-        assertThat(response).isTrue();
-
-        var responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
-        assertThat(responseSolution).isTrue();
-
-        var responseTemplate = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
-        assertThat(responseTemplate).isTrue();
+        checkCanAccessParticipation(programmingExercise, participation, true, true);
     }
 
     @Test
@@ -829,33 +794,27 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        // Check for canAccessParticipation(participation)
-        var response = programmingExerciseParticipationService.canAccessParticipation(participation);
-        assertThat(response).isTrue();
+        checkCanAccessParticipation(programmingExercise, participation, true, false);
+    }
 
-        var responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
-        assertThat(responseSolution).isFalse();
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void testCanAccessParticipation_asTutor() {
+        // Set solution and template participation
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        var responseTemplate = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
-        assertThat(responseTemplate).isFalse();
+        checkCanAccessParticipation(programmingExercise, participation, true, true);
+    }
 
-        var responseOther = programmingExerciseParticipationService.canAccessParticipation(null);
-        assertThat(responseOther).isFalse();
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    void testCanAccessParticipation_asEditor() {
+        // Set solution and template participation
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        // Check for canAccessParticipation(participation, principal)
-        final var username = "student1";
-        final Principal principal = () -> username;
-        response = programmingExerciseParticipationService.canAccessParticipation(participation, principal);
-        assertThat(response).isTrue();
-
-        responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation(), principal);
-        assertThat(responseSolution).isFalse();
-
-        responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation(), principal);
-        assertThat(responseSolution).isFalse();
-
-        responseSolution = programmingExerciseParticipationService.canAccessParticipation(null, principal);
-        assertThat(responseSolution).isFalse();
+        checkCanAccessParticipation(programmingExercise, participation, true, true);
     }
 
     @Test
@@ -872,8 +831,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         doAnswer((Answer<Void>) invocation -> {
             ((ProgrammingExercise) participation.getExercise()).setBuildAndTestStudentSubmissionsAfterDueDate(null);
             return null;
-        }).when(versionControlService).configureRepository(programmingExercise, ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(),
-                participation.getStudents(), true);
+        }).when(versionControlService).configureRepository(programmingExercise, participation.getVcsRepositoryUrl(), participation.getStudents(), true);
 
         programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
 
@@ -899,8 +857,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         doAnswer((Answer<Void>) invocation -> {
             participation.getExercise().setDueDate(ZonedDateTime.now().minusHours(1));
             return null;
-        }).when(versionControlService).setRepositoryPermissionsToReadOnly(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(),
-                programmingExercise.getProjectKey(), participation.getStudents());
+        }).when(versionControlService).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation.getStudents());
 
         programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
         assertThat(participation.isLocked()).isTrue();
