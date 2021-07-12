@@ -164,7 +164,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         posts: 'artemisApp.metis.overview.title',
         scores: 'entity.action.scores',
         assessment: 'artemisApp.assessment.assessment',
-        export: 'artemisApp.quizExercise.export.title',
+        export: 'artemisApp.quizExercise.export.export',
         re_evaluate: 'entity.action.re-evaluate',
         solution: 'artemisApp.quizExercise.solution',
         preview: 'artemisApp.quizExercise.previewMode',
