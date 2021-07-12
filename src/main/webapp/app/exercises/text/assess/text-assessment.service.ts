@@ -64,7 +64,7 @@ export class TextAssessmentService {
     public addTextAssessmentEvent(assessmentEvent: TextAssessmentEvent): Observable<EntityResponseEventType> {
         const body = Object.assign({}, assessmentEvent);
         return this.http
-            .post<TextAssessmentEvent>('analytics/text-assessment-event/add', body, { observe: 'response' })
+            .post<TextAssessmentEvent>('analytics/text-assessment-events/add', body, { observe: 'response' })
             .pipe(map((res: EntityResponseEventType) => Object.assign({}, res)));
     }
 
