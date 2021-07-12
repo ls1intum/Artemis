@@ -94,7 +94,7 @@ describe('Modeling Exercise Spec', () => {
             cy.visit(`/course-management/${testCourse.id}/exercises`);
             cy.contains('Cypress Modeling Exercise').click();
             cy.get('.card-body').contains('Edit').click();
-            cy.contains('Create Example Solution').click();
+            // cy.contains('Create Example Solution').click();
             cy.get('.sc-kstrdz > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
             cy.get('.card-body').contains('Save Example Solution').click();
             cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
@@ -103,8 +103,8 @@ describe('Modeling Exercise Spec', () => {
         });
 
         it('Creates Example Submission', () => {
-            cy.visit(`/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
-            cy.get('.card-body').contains('Create Example Submission').click();
+            cy.visit(`/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
+            cy.contains('Create Example Submission').click();
             cy.get('.sc-kstrdz > :nth-child(2) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
             cy.get('.sc-kstrdz > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
             cy.get('.sc-kstrdz > :nth-child(3) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
