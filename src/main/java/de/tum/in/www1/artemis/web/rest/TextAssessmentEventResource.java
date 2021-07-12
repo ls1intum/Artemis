@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * REST controller for managing TextAssessmentEventResource.
  */
 @RestController
-@RequestMapping("/analytics/text-assessment-events")
+@RequestMapping("/analytics/text-assessment")
 public class TextAssessmentEventResource {
 
     private final Logger log = LoggerFactory.getLogger(TextAssessmentEventResource.class);
@@ -63,7 +63,7 @@ public class TextAssessmentEventResource {
      * This function retrieves all of the events from the 'text_assessment_event' table
      * @return returns a List of TextAssessmentEvent's
      */
-    @GetMapping("/all")
+    @GetMapping("/events")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<TextAssessmentEvent>> getAllEvents() {
         List<TextAssessmentEvent> events = textAssessmentEventRepository.findAll();
@@ -76,7 +76,7 @@ public class TextAssessmentEventResource {
      * @return the status of the finished request
      * @throws URISyntaxException
      */
-    @PostMapping("/add")
+    @PostMapping("/events")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssessmentEvent event) throws URISyntaxException {
         log.debug("REST request to save assessmentEvent : {}", event);

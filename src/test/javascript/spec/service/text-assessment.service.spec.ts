@@ -87,7 +87,7 @@ describe('TextAssessment Service', () => {
         service.addTextAssessmentEvent(assessmentEvent).subscribe((response) => {
             expect(response.status).toBe(200);
         });
-        const mockRequest = httpMock.expectOne({ url: `${SERVER_API_URL}/analytics/text-assessment-events/add`, method: 'POST' });
+        const mockRequest = httpMock.expectOne({ url: `${SERVER_API_URL}/analytics/text-assessment/events`, method: 'POST' });
         mockRequest.flush(mockResponse);
         tick();
     }));
