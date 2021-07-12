@@ -37,7 +37,7 @@
 
     <!-- Example Submission -->
     <a
-        *ngIf="course.isAtLeastEditor"
+        *ngIf="course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ && exercise.type !== exerciseType.PROGRAMMING"
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'example-submissions']"
         class="btn btn-success btn-sm me-1"
     >
@@ -64,7 +64,7 @@
     </a>
 
     <!-- The route expects a preferred participationId. As we only have Exercises and not ProgrammingExercises with
-    participations, we pass a hardcoded number. The code editor component will load the proper ProgrammingExercise, choose
+    participation, we pass a hardcoded number. The code editor component will load the proper ProgrammingExercise, choose
     a participation and update the url displayed in the browser -->
     <a
         *ngIf="course.isAtLeastEditor && exercise.type === exerciseType.PROGRAMMING"
@@ -77,7 +77,7 @@
 
     <a
         *ngIf="course.isAtLeastEditor && exercise.type === exerciseType.QUIZ"
-        [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'preview']"
+        [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'quiz-exercises', exercise.id, 'preview']"
         class="btn btn-success btn-sm me-1"
     >
         <fa-icon [icon]="'eye'"></fa-icon>
@@ -86,7 +86,7 @@
 
     <a
         *ngIf="course.isAtLeastEditor && exercise.type === exerciseType.QUIZ"
-        [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'solution']"
+        [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'quiz-exercises', exercise.id, 'solution']"
         class="btn btn-success btn-sm me-1"
     >
         <fa-icon [icon]="'eye'"></fa-icon>
@@ -103,7 +103,7 @@
         <!-- Only show the re-evaluate button after the exam has ended -->
         <a
             *ngIf="isExamOver() && course.isAtLeastInstructor"
-            [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 're-evaluate']"
+            [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'quiz-exercises', exercise.id, 're-evaluate']"
             class="btn btn-warning btn-sm me-1"
         >
             <fa-icon [icon]="'wrench'"></fa-icon>

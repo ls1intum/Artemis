@@ -55,6 +55,8 @@ import { GradingSystemComponent } from 'app/grading-system/grading-system.compon
 import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
+import { QuizParticipationComponent } from 'app/exercises/quiz/participate/quiz-participation.component';
+import { QuizReEvaluateComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -585,6 +587,36 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/preview',
+        component: QuizParticipationComponent,
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+            mode: 'preview',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/solution',
+        component: QuizParticipationComponent,
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+            mode: 'solution',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/re-evaluate',
+        component: QuizReEvaluateComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+            mode: 'solution',
         },
         canActivate: [UserRouteAccessService],
     },
