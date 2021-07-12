@@ -2,14 +2,30 @@
     height: 500px;
 }
 
-.label-timeline {
-    font-size: 11.5pt;
-}
-
 .label-preview {
     font-size: 9pt;
 }
 
 .markdown-editor {
     height: 350px;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label,
+jhi-team-config-form-group {
+    font-size: 17px;
+    font-weight: bolder;
+}
+
+datatable-header-cell span {
+    font-size: 17px;
+    font-weight: bolder;
+}
+
+jhi-programming-exercise-lifecycle span {
+    font-size: 17px;
+    font-weight: bolder;
 }

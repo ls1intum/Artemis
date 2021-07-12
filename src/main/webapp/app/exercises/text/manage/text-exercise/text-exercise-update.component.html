@@ -144,7 +144,7 @@
                 [shouldDisplayAlert]="false"
             ></jhi-markdown-editor>
         </div>
-        <div class="form-group" name="gradingInstructions" id="field_gradingInstructions">
+        <div class="form-group" id="field_gradingInstructions">
             <jhi-slide-toggle (checkedEmitter)="getCheckedFlag($event)"></jhi-slide-toggle>
             <jhi-markdown-editor
                 *ngIf="this.checkedFlag === false"
@@ -157,7 +157,7 @@
             <jhi-grading-instructions-details *ngIf="this.checkedFlag" [exercise]="textExercise"></jhi-grading-instructions-details>
         </div>
         <div class="form-group" *ngIf="isImport || !textExercise.id">
-            <span jhiTranslate="artemisApp.textExercise.exampleSubmissions">Example submissions</span>
+            <label class="form-control-label" jhiTranslate="artemisApp.textExercise.exampleSubmissions">Example submissions</label>
             <div class="alert alert-info" *ngIf="!textExercise.id || isImport" jhiTranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise"></div>
         </div>
         <div class="form-group" *ngIf="textExercise.id && !isExamMode && !isImport">

@@ -1,3 +1,15 @@
 .markdown-editor {
     height: 350px;
 }
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label,
+jhi-slide-toggle,
+jhi-date-time-picker,
+jhi-team-config-form-group {
+    font-size: 17px;
+    font-weight: bolder;
+}
