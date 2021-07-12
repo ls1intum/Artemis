@@ -205,7 +205,7 @@ public class PostService extends PostingService {
      * retrieves all posts for a course by its id
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId id of the course the post belongs to
+     * @param courseId  id of the course the post belongs to
      * @return list of posts that belong to the course
      */
     public List<Post> getAllCoursePosts(Long courseId) {
@@ -241,6 +241,22 @@ public class PostService extends PostingService {
 
         // delete
         postRepository.deleteById(postId);
+    }
+
+    /**
+     * Checks course and user validity,
+     * retrieves all tags for posts in a certain course
+     *
+     * @param courseId  id of the course the tags belongs to
+     * @return tags of all posts that belong to the course
+     */
+    public List<String> getAllCourseTags(Long courseId) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        Course course = preCheckUserAndCourse(user, courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        return postRepository.findPostTagsForCourse(courseId);
     }
 
     /**

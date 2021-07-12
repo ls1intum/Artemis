@@ -112,18 +112,16 @@ public class PostResource {
 
     // TODO: add test and comply with other endpoints
     /**
-     * GET /courses/{courseId}/posts/tags : get all tags for posts in a certain course.
+     * GET /courses/{courseId}/posts/tags : Get all tags for posts in a certain course
      *
-     * @param courseId course the postTags belongs to
-     * @return the ResponseEntity with status 200 (OK) and with body all tags for posts in that course
+     * @param courseId  id of the course the post belongs to
+     * @return the ResponseEntity with status 200 (OK) and with body all tags for posts in that course,
+     * or 400 (Bad Request) if the checks on user or course validity fail
      */
     @GetMapping("courses/{courseId}/posts/tags")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<String>> getAllPostTagsForCourse(@PathVariable Long courseId) {
-        var course = courseRepository.findByIdElseThrow(courseId);
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        List<String> tags = postRepository.findPostTagsForCourse(courseId);
+        List<String> tags = postService.getAllCourseTags(courseId);
         return new ResponseEntity<>(tags, null, HttpStatus.OK);
     }
 
