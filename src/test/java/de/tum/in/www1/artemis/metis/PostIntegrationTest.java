@@ -227,6 +227,16 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
+    public void testEditPost_asStudent_forbidden() throws Exception {
+        // update post from another student (index 1)--> forbidden
+        Post postToNotUpdate = editExistingPost(existingPosts.get(1));
+
+        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToNotUpdate, Post.class, HttpStatus.FORBIDDEN);
+        assertThat(notUpdatedPost).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     public void testEditPostWithIdIsNull_badRequest() throws Exception {
         Post postToUpdate = existingPosts.get(0);
         postToUpdate.setId(null);
@@ -318,12 +328,16 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToDelete.getId(), HttpStatus.OK);
         assertThat(postRepository.count()).isEqualTo(existingPosts.size() - 1);
+    }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testDeletePosts_asStudent_forbidden() throws Exception {
         // delete post from another student (index 1) --> forbidden
         Post postToNotDelete = existingPosts.get(1);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.FORBIDDEN);
-        assertThat(postRepository.count()).isEqualTo(existingPosts.size() - 1);
+        assertThat(postRepository.count()).isEqualTo(existingPosts.size());
     }
 
     @Test
@@ -344,9 +358,13 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToDelete.getId(), HttpStatus.OK);
         assertThat(postRepository.count()).isEqualTo(existingPosts.size() - 3);
+    }
 
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDeleteNonExistentPosts_asTutor_notFound() throws Exception {
         // try to delete non-existing post
-        request.delete("/api/courses/" + courseId + "/posts/99999", HttpStatus.NOT_FOUND);
+        request.delete("/api/courses/" + courseId + "/posts/" + 9999L, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -384,7 +402,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testEditPostVotesWithWrongCourseId() throws Exception {
+    public void testEditPostVotesWithWrongCourseId_badRequest() throws Exception {
         Post post = existingPosts.get(0);
         Course dummyCourse = database.createCourse();
 
