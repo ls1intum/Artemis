@@ -101,7 +101,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCreateExamExercisePost_badRequest() throws Exception {
-        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course);
+        Exam exam = database.setupSimpleExamWithExerciseGroupExercise(course);
         Post postToSave = createPostWithoutContext();
         Exercise examExercise = exam.getExerciseGroups().get(0).getExercises().stream().findFirst().orElseThrow();
         postToSave.setExercise(examExercise);
