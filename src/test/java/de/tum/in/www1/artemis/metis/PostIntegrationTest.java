@@ -250,6 +250,10 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetPostsForCourse() throws Exception {
+        // add tag to existing post
+        Post postToUpdate = existingPosts.get(0);
+        postToUpdate.addTag("New Tag");
+
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class);
         assertThat(returnedPosts.size()).isEqualTo(existingPosts.size());
     }
@@ -287,6 +291,21 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         List<Post> returnedPosts = request.getList("/api/courses/" + dummyCourse.getId() + "/lectures/" + lectureId + "/posts", HttpStatus.BAD_REQUEST, Post.class);
         assertThat(returnedPosts).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostTagsForCourse() throws Exception {
+        List<String> returnedTags = request.getList("/api/courses/" + courseId + "/posts/tags", HttpStatus.OK, String.class);
+        // 4 different tags were used for the posts
+        assertThat(returnedTags.size()).isEqualTo(postRepository.findPostTagsForCourse(courseId).size());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostTagsForCourseWithNonExistentCourseId_notFound() throws Exception {
+        List<String> returnedTags = request.getList("/api/courses/" + 9999L + "/posts/tags", HttpStatus.NOT_FOUND, String.class);
+        assertThat(returnedTags).isNull();
     }
 
     // DELETE
