@@ -42,8 +42,8 @@ export class OnlineEditorPage {
             this.focusCodeEditor().type('{selectall}{backspace}', { delay: 100 });
             cy.fixture(newFile.path).then(($fileContent) => {
                 this.focusCodeEditor().type(this.sanitizeInput($fileContent, packageName) + '{shift}{pagedown}{backspace}');
+                cy.wait(1000);
             });
-            this.submit(false);
         }
     }
 
@@ -66,16 +66,8 @@ export class OnlineEditorPage {
     /**
      * Submits the currently saved files by clicking on the submit button.
      */
-    submit(waitForQuery: boolean) {
-        if (waitForQuery) {
-            // Wait until previous submission have finished
-            this.getResultPanel().contains('GRADED', { timeout: 80000 }).should('be.visible');
-            cy.intercept({ method: 'POST', path: '/api/repository/*/commit' }).as('submit');
-        }
+    submit() {
         cy.get('#submit_button').click();
-        if (waitForQuery) {
-            cy.wait('@submit');
-        }
     }
 
     /**
