@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * REST controller for managing TextAssessmentEventResource.
  */
 @RestController
-@RequestMapping("/analytics/text-assessment-event")
+@RequestMapping("/analytics/text-assessment-events")
 public class TextAssessmentEventResource {
 
     private final Logger log = LoggerFactory.getLogger(TextAssessmentEventResource.class);
