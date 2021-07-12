@@ -120,8 +120,6 @@ public final class Constants {
 
     public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were unlocked successfully.";
 
-    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_COMBINE_OF_TEMPLATE_COMMITS = "The template commits for this programming exercise were combined successfully.";
-
     public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = 5000;
 
     public static final String ASSIGNMENT_CHECKOUT_PATH = "assignment";
