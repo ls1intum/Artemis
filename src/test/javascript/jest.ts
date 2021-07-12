@@ -1,6 +1,7 @@
 import 'jest-preset-angular/setup-jest';
 import './jest-global-mocks';
 import 'jest-canvas-mock';
+import 'app/shared/util/global.utils';
 
 const noop = () => {};
 
@@ -15,19 +16,3 @@ Object.defineProperty(window, 'getComputedStyle', {
         },
     }),
 });
-
-// Same as in global.utils.ts
-declare global {
-    interface Array<T> {
-        last(): T | undefined;
-    }
-}
-
-if (!Array.prototype.last) {
-    Array.prototype.last = function () {
-        if (!this.length) {
-            return undefined;
-        }
-        return this[this.length - 1];
-    };
-}
