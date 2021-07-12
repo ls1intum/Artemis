@@ -1,10 +1,8 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, of, Subject } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { Result } from 'app/entities/result.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';

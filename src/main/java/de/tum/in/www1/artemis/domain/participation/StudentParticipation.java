@@ -121,7 +121,7 @@ public class StudentParticipation extends Participation {
     @Override
     public String toString() {
         String participantString = getStudent().map(student -> "student=" + student).orElse("team=" + team);
-        return getClass().getSimpleName() + "" + "id=" + getId() + ", presentationScore=" + presentationScore + ", " + participantString + "}";
+        return getClass().getSimpleName() + "{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", " + participantString + "}";
     }
 
     @Override
