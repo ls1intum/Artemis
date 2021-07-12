@@ -454,7 +454,7 @@ public abstract class Exercise extends DomainObject {
      * @return exam, to which the exercise belongs
      */
     @JsonIgnore
-    public Exam getExamIdViaExerciseGroupOrCourseMember() {
+    public Exam getExamViaExerciseGroupOrCourseMember() {
         if (isExamExercise()) {
             return this.getExerciseGroup().getExam();
         }

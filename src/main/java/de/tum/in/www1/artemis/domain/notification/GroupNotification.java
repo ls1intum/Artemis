@@ -122,7 +122,7 @@ public class GroupNotification extends Notification {
         JsonObject target = new JsonObject();
         target.addProperty("problemStatement", exercise.getProblemStatement());
         target.addProperty("exercise", exercise.getId());
-        target.addProperty("exam", exercise.getExamIdViaExerciseGroupOrCourseMember().getId());
+        target.addProperty("exam", exercise.getExamViaExerciseGroupOrCourseMember().getId());
         target.addProperty("entity", "exams");
         target.addProperty("course", exercise.getCourseViaExerciseGroupOrCourseMember().getId());
         target.addProperty("mainPage", "courses");
