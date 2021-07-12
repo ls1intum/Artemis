@@ -57,6 +57,7 @@ import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-over
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 import { QuizParticipationComponent } from 'app/exercises/quiz/participate/quiz-participation.component';
 import { QuizReEvaluateComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate.component';
+import { QuizPointStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-point-statistic/quiz-point-statistic.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
