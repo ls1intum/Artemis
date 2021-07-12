@@ -209,8 +209,14 @@ public abstract class Exercise extends DomainObject {
         return this;
     }
 
+    /**
+     * Sets the title of the exercise
+     * all consecutive, trailing or preceding whitespaces are replaced with a single space.
+     *
+     * @param title the new (unsanitized) title to be set
+     */
     public void setTitle(String title) {
-        this.title = title != null ? title.strip() : null;
+        this.title = title != null ? title.strip().replaceAll("\\s+", " ") : null;
     }
 
     public String getShortName() {
@@ -915,6 +921,44 @@ public abstract class Exercise extends DomainObject {
         else {
             return 1;
         }
+    }
+
+    /** Helper method which does a hard copy of the Grading Criteria
+     *
+     * @return A clone of the grading criteria list
+     */
+    public List<GradingCriterion> copyGradingCriteria() {
+        List<GradingCriterion> newGradingCriteria = new ArrayList<>();
+        for (GradingCriterion originalGradingCriterion : getGradingCriteria()) {
+            GradingCriterion newGradingCriterion = new GradingCriterion();
+            newGradingCriterion.setExercise(this);
+            newGradingCriterion.setTitle(originalGradingCriterion.getTitle());
+            newGradingCriterion.setStructuredGradingInstructions(copyGradingInstruction(originalGradingCriterion, newGradingCriterion));
+            newGradingCriteria.add(newGradingCriterion);
+        }
+        return newGradingCriteria;
+    }
+
+    /** Helper method which does a hard copy of the Grading Instructions
+     *
+     * @param originalGradingCriterion The original grading criterion which contains the grading instructions
+     * @param newGradingCriterion The cloned grading criterion in which we insert the grading instructions
+     * @return A clone of the grading instruction list of the grading criterion
+     */
+    private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion) {
+        List<GradingInstruction> newGradingInstructions = new ArrayList<>();
+        for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
+            GradingInstruction newGradingInstruction = new GradingInstruction();
+            newGradingInstruction.setCredits(originalGradingInstruction.getCredits());
+            newGradingInstruction.setFeedback(originalGradingInstruction.getFeedback());
+            newGradingInstruction.setGradingScale(originalGradingInstruction.getGradingScale());
+            newGradingInstruction.setInstructionDescription(originalGradingInstruction.getInstructionDescription());
+            newGradingInstruction.setUsageCount(originalGradingInstruction.getUsageCount());
+            newGradingInstruction.setGradingCriterion(newGradingCriterion);
+
+            newGradingInstructions.add(newGradingInstruction);
+        }
+        return newGradingInstructions;
     }
 
     /**

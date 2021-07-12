@@ -29,7 +29,8 @@
                 "bonus": "Bonuspunkte für die Klausur",
                 "interval": "Intervall (%)",
                 "intervalPoints": "Intervall (Punkte)",
-                "gradeKeyButton": "Notenschlüssel ansehen"
+                "gradeKeyButton": "Notenschlüssel ansehen",
+                "gradeKeyButtonBonus": "Bonusregeln ansehen"
             },
             "title": "Klausur",
             "startExam": "Starten",
@@ -132,6 +133,12 @@
             "finishExam": "Beenden",
             "progress": "Aufgabe {{ current }} von {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
+            "exerciseType": "Typ",
+            "examOverview": "Klausur Übersicht",
+            "examStatus": "Status",
+            "examExercises": "Klausur Aufgaben:",
+            "exercisePoints": "Punkte",
+            "exerciseName": "Name",
             "noStudentExam": "Du bist nicht für die Klausur {{ examTitle }} angemeldet. Bitte wende dich an die entsprechende Lehrkraft.",
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",

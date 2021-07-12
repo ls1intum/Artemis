@@ -9,6 +9,7 @@ import { filter } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-complaint-form',
@@ -53,8 +54,8 @@ export class ComplaintsComponent implements OnInit {
                         this.complaintResponseService.findByComplaintId(complaint.id!).subscribe((complaintResponse) => (this.complaintResponse = complaintResponse.body!));
                     }
                 },
-                () => {
-                    this.onError();
+                (error: HttpErrorResponse) => {
+                    onError(this.jhiAlertService, error);
                 },
             );
     }
@@ -85,13 +86,9 @@ export class ComplaintsComponent implements OnInit {
                 if (err && err.error && err.error.errorKey === 'toomanycomplaints') {
                     this.jhiAlertService.error('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintsPerCourse });
                 } else {
-                    this.onError();
+                    onError(this.jhiAlertService, err);
                 }
             },
         );
-    }
-
-    private onError() {
-        this.jhiAlertService.error('error.http.400');
     }
 }

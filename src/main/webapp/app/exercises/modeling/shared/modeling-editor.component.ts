@@ -91,17 +91,22 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
             this.apollonEditor.unsubscribeFromModelChange(this.modelSubscription);
             this.apollonEditor.destroy();
         }
+
         // Apollon doesn't need assessments in Modeling mode
         this.removeAssessments(this.umlModel);
-        this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-            model: this.umlModel,
-            mode: ApollonMode.Modelling,
-            readonly: this.readOnly,
-            type: this.diagramType || UMLDiagramType.ClassDiagram,
-        });
-        this.modelSubscription = this.apollonEditor.subscribeToModelChange((model: UMLModel) => {
-            this.onModelChanged.emit(model);
-        });
+
+        if (this.editorContainer) {
+            this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
+                model: this.umlModel,
+                mode: ApollonMode.Modelling,
+                readonly: this.readOnly,
+                type: this.diagramType || UMLDiagramType.ClassDiagram,
+            });
+
+            this.modelSubscription = this.apollonEditor.subscribeToModelChange((model: UMLModel) => {
+                this.onModelChanged.emit(model);
+            });
+        }
     }
 
     get isApollonEditorMounted(): boolean {

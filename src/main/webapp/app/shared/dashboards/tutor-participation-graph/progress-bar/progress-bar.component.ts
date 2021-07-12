@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-progress-bar',
@@ -11,7 +12,7 @@ export class ProgressBarComponent implements OnInit {
     @Input() public denominator: number;
 
     ngOnInit() {
-        this.percentage = Math.round(this.percentage);
+        this.percentage = round(this.percentage);
     }
 
     /**

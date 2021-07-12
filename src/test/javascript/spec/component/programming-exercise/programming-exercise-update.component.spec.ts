@@ -342,7 +342,7 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 plagiarismCheckSupported: false,
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: false,
-                projectTypes: [],
+                projectTypes: [ProjectType.PLAIN, ProjectType.XCODE],
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.JAVA:
             return {

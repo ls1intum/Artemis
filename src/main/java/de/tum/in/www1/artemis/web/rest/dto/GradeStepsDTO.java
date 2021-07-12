@@ -5,7 +5,7 @@ import de.tum.in.www1.artemis.domain.GradeType;
 
 public class GradeStepsDTO {
 
-    public String examTitle;
+    public String title;
 
     public GradeType gradeType;
 
@@ -17,14 +17,14 @@ public class GradeStepsDTO {
         // empty constructor for Jackson
     }
 
-    public GradeStepsDTO(String examTitle, GradeType gradeType, GradeStep[] gradeSteps) {
-        this.examTitle = examTitle;
+    public GradeStepsDTO(String title, GradeType gradeType, GradeStep[] gradeSteps) {
+        this.title = title;
         this.gradeType = gradeType;
         this.gradeSteps = gradeSteps;
     }
 
-    public GradeStepsDTO(String examTitle, GradeType gradeType, GradeStep[] gradeSteps, Integer maxPoints) {
-        this.examTitle = examTitle;
+    public GradeStepsDTO(String title, GradeType gradeType, GradeStep[] gradeSteps, Integer maxPoints) {
+        this.title = title;
         this.gradeType = gradeType;
         this.gradeSteps = gradeSteps;
         this.maxPoints = maxPoints;

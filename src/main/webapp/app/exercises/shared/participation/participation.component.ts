@@ -182,7 +182,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             return;
         }
         participation.presentationScore = 1;
-        this.participationService.update(participation).subscribe(
+        this.participationService.update(this.exercise.id!, participation).subscribe(
             () => {},
             () => {
                 this.jhiAlertService.error('artemisApp.participation.addPresentation.error');
@@ -195,7 +195,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             return;
         }
         participation.presentationScore = 0;
-        this.participationService.update(participation).subscribe(
+        this.participationService.update(this.exercise.id!, participation).subscribe(
             () => {},
             () => {
                 this.jhiAlertService.error('artemisApp.participation.removePresentation.error');

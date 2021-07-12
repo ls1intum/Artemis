@@ -32,6 +32,8 @@ const basePassword = __ENV.BASE_PASSWORD;
 const userOffset = parseInt(__ENV.USER_OFFSET);
 const programmingLanguage = __ENV.PROGRAMMING_LANGUAGE;
 const enableSCA = __ENV.ENABLE_SCA === 'true';
+// Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
+const userIdOffset = 99;
 
 export function setup() {
     console.log('__ENV.CREATE_USERS: ' + __ENV.CREATE_USERS);
@@ -51,8 +53,8 @@ export function setup() {
 
         createUsersIfNeeded(artemis, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset);
 
-        const instructorUsername = baseUsername.replace('USERID', '1');
-        const instructorPassword = basePassword.replace('USERID', '1');
+        const instructorUsername = baseUsername.replace('USERID', '101');
+        const instructorPassword = basePassword.replace('USERID', '101');
 
         // Login to Artemis
         artemis = login(instructorUsername, instructorPassword);
@@ -88,7 +90,7 @@ export function setup() {
 
 export default function (data) {
     // The user id (1, 2, 3) is stored in __VU
-    const userId = parseInt(__VU) + userOffset;
+    const userId = parseInt(__VU) + userOffset + userIdOffset;
     const currentUsername = baseUsername.replace('USERID', userId);
     const currentPassword = basePassword.replace('USERID', userId);
     const artemis = login(currentUsername, currentPassword);

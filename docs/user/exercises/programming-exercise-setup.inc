@@ -15,23 +15,23 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+--------+---------+
   | Programming Language | Bamboo | Jenkins |
   +======================+========+=========+
-  | Java                 | yes   | yes      |
+  | Java                 | yes    | yes     |
   +----------------------+--------+---------+
-  | Python               | yes   | yes      |
+  | Python               | yes    | yes     |
   +----------------------+--------+---------+
-  | C                    | yes   | yes      |
+  | C                    | yes    | yes     |
   +----------------------+--------+---------+
-  | Haskell              | yes   | yes      |
+  | Haskell              | yes    | yes     |
   +----------------------+--------+---------+
-  | Kotlin               | yes   | no       |
+  | Kotlin               | yes    | no      |
   +----------------------+--------+---------+
-  | VHDL                 | yes   | no       |
+  | VHDL                 | yes    | no      |
   +----------------------+--------+---------+
-  | Assembler            | yes   | no       |
+  | Assembler            | yes    | no      |
   +----------------------+--------+---------+
-  | Swift                | yes   | no       |
+  | Swift                | yes    | yes     |
   +----------------------+--------+---------+
-  | OCaml                | yes   | no       |
+  | OCaml                | yes    | no      |
   +----------------------+--------+---------+
 
 - Not all ``templates`` support the same feature set.

@@ -290,22 +290,35 @@ public class ProgrammingExerciseService {
         String projectTypeSolutionPrefix = null;
 
         // Find the project type specific files if present
-        if (programmingExercise.getProjectType() != null) {
+        if (programmingExercise.getProjectType() != null && !ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
             // Get path, files and prefix for the project-type dependent files. They are copied last and can overwrite the resources from the programming language.
             String programmingLanguageProjectTypePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType());
             String projectType = programmingExercise.getProjectType().name().toLowerCase();
-
-            projectTypeExercisePrefix = programmingLanguage + "/" + projectType + "/exercise";
-            projectTypeTestPrefix = programmingLanguage + "/" + projectType + "/test";
-            projectTypeSolutionPrefix = programmingLanguage + "/" + projectType + "/solution";
+            String projectTypePrefix = programmingLanguage + "/" + projectType;
 
             exercisePath = programmingLanguageProjectTypePath + "/exercise/**/*.*";
             solutionPath = programmingLanguageProjectTypePath + "/solution/**/*.*";
             testPath = programmingLanguageProjectTypePath + "/test/**/*.*";
 
-            projectTypeExerciseResources = resourceLoaderService.getResources(exercisePath);
-            projectTypeTestResources = resourceLoaderService.getResources(testPath);
-            projectTypeSolutionResources = resourceLoaderService.getResources(solutionPath);
+            if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
+                // For Xcode we don't share source code, so we only copy files once
+                exercisePrefix = projectTypePrefix + "/exercise";
+                testPrefix = projectTypePrefix + "/test";
+                solutionPrefix = projectTypePrefix + "/solution";
+
+                exerciseResources = resourceLoaderService.getResources(exercisePath);
+                testResources = resourceLoaderService.getResources(testPath);
+                solutionResources = resourceLoaderService.getResources(solutionPath);
+            }
+            else {
+                projectTypeExercisePrefix = projectTypePrefix + "/exercise";
+                projectTypeTestPrefix = projectTypePrefix + "/test";
+                projectTypeSolutionPrefix = projectTypePrefix + "/solution";
+
+                projectTypeExerciseResources = resourceLoaderService.getResources(exercisePath);
+                projectTypeTestResources = resourceLoaderService.getResources(testPath);
+                projectTypeSolutionResources = resourceLoaderService.getResources(solutionPath);
+            }
         }
 
         try {
@@ -512,7 +525,6 @@ public class ProgrammingExerciseService {
                 }
 
                 // Copy static code analysis config files
-                // TODO: rene: SWIFT - if we keep the parent folder, we need to enable showing the hidden .swiftlint.yml file otherwise the OE shows an empty folder
                 if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                     String staticCodeAnalysisConfigPath = templatePath + "/staticCodeAnalysisConfig/**/*.*";
                     Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
@@ -587,6 +599,7 @@ public class ProgrammingExerciseService {
         }
         else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageName());
+            fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
         }
 
         Map<String, String> replacements = new HashMap<>();

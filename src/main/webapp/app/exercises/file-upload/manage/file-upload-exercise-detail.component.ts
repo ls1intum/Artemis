@@ -11,6 +11,8 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import * as moment from 'moment';
+import { onError } from 'app/shared/util/global.utils';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
@@ -19,6 +21,7 @@ import * as moment from 'moment';
 export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     fileUploadExercise: FileUploadExercise;
     isExamExercise: boolean;
+    course: Course | undefined;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
 
@@ -58,8 +61,9 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
                 (fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
                     this.fileUploadExercise = fileUploadExerciseResponse.body!;
                     this.isExamExercise = this.fileUploadExercise.exerciseGroup !== undefined;
+                    this.course = this.isExamExercise ? this.fileUploadExercise.exerciseGroup?.exam?.course : this.fileUploadExercise.course;
                 },
-                (res: HttpErrorResponse) => this.onError(res),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
@@ -79,9 +83,5 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
      */
     registerChangeInFileUploadExercises() {
         this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', () => this.load(this.fileUploadExercise.id!));
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 }

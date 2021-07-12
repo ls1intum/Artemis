@@ -24,6 +24,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { getLatestSubmissionResult, getFirstResultWithComplaint } from 'app/entities/submission.model';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 import { Feedback } from 'app/entities/feedback.model';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -120,9 +121,10 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 }
                 this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation);
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
+
     /**
      * Uploads a submission file and submits File Upload Exercise
      */
@@ -194,10 +196,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      */
     get unreferencedFeedback(): Feedback[] | undefined {
         return this.result ? getUnreferencedFeedback(this.result.feedbacks) : undefined;
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     private setSubmittedFile() {

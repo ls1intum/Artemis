@@ -26,10 +26,10 @@ export class ParticipationService {
 
     constructor(private http: HttpClient, private submissionService: SubmissionService) {}
 
-    update(participation: StudentParticipation): Observable<EntityResponseType> {
+    update(exerciseId: number, participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(participation);
         return this.http
-            .put<StudentParticipation>(this.resourceUrl, copy, { observe: 'response' })
+            .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
             .pipe(map((res: EntityResponseType) => this.adjustRepositoryUrlFromServer(res)));
     }
