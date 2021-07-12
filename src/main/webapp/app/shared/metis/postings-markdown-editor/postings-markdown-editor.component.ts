@@ -6,6 +6,7 @@ import { ReferenceCommand } from 'app/shared/markdown-editor/commands/reference.
 import { UnderlineCommand } from 'app/shared/markdown-editor/commands/underline.command';
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
 import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
+import { LinkCommand } from 'app/shared/markdown-editor/commands/link.command';
 
 @Component({
     selector: 'jhi-postings-markdown-editor',
@@ -20,7 +21,15 @@ export class PostingsMarkdownEditorComponent implements OnInit {
     constructor() {}
 
     ngOnInit(): void {
-        this.defaultCommands = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand(), new ReferenceCommand(), new CodeCommand(), new CodeBlockCommand()];
+        this.defaultCommands = [
+            new BoldCommand(),
+            new ItalicCommand(),
+            new UnderlineCommand(),
+            new ReferenceCommand(),
+            new CodeCommand(),
+            new CodeBlockCommand(),
+            new LinkCommand(),
+        ];
     }
 
     markdownChange(value: string) {
