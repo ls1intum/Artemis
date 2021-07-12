@@ -32,8 +32,8 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     private textEditorInput = new Subject<string>();
 
     subscriptionToLiveExamExerciseUpdates: Subscription;
-    //previousProblemStatementUpdate: string; //TODO replace one below
-    previousProblemStatementUpdate: string = 'debug'; //TODO remove
+    previousProblemStatementUpdate: string;
+    //previousProblemStatementUpdate: string = 'debug'; //TODO remove
     updatedProblemStatementWithHighlightedDifferences: string;
     updatedProblemStatement: string;
     showHighlightedDifferences: boolean = true;
