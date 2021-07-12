@@ -45,6 +45,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                 tap((plantUmlSvg: string) => {
                     const plantUmlHtmlContainer = document.getElementById(`plantUml-${index}`);
                     if (plantUmlHtmlContainer) {
+                        // We need to sanitize the received svg as it could contain malicious code in a script tag.
                         plantUmlHtmlContainer.innerHTML = DOMPurify.sanitize(plantUmlSvg);
                     }
                 }),
