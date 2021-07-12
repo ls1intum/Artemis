@@ -51,11 +51,6 @@ describe('Programming exercise participations', () => {
         registerQueries();
     });
 
-    it('Makes a failing submission', function () {
-        startParticipationInProgrammingExercise(student1, passwordStudent1);
-        makeFailingSubmission();
-    });
-
     it('Makes a partially successful submission', function () {
         startParticipationInProgrammingExercise(student2, passwordStudent2);
         makePartiallySuccessfulSubmission();
@@ -64,6 +59,11 @@ describe('Programming exercise participations', () => {
     it('Makes a successful submission', function () {
         startParticipationInProgrammingExercise(student3, passwordStudent3);
         makeSuccessfulSubmission();
+    });
+
+    it('Makes a failing submission', function () {
+        startParticipationInProgrammingExercise(student1, passwordStudent1);
+        makeFailingSubmission();
     });
 
     after(() => {
@@ -106,10 +106,10 @@ function makeFailingSubmission() {
     makeSubmissionAndVerifyResults(submission, () => {
         editorPage.getResultPanel().contains('Build Failed').should(beVisible);
         editorPage.getResultPanel().contains('0%').should(beVisible);
+        editorPage.getBuildOutput().contains('[ERROR] COMPILATION ERROR').should(beVisible);
         editorPage.getInstructionSymbols().each(($el) => {
             cy.wrap($el).find('[data-icon="question"]').should(beVisible);
         });
-        editorPage.getBuildOutput().contains('[ERROR] COMPILATION ERROR').should(beVisible);
     });
 }
 
@@ -119,7 +119,7 @@ function makeFailingSubmission() {
 function makePartiallySuccessfulSubmission() {
     editorPage.createFileInRootPackage('SortStrategy.java');
     makeSubmissionAndVerifyResults(partiallySuccessful, () => {
-        editorPage.getResultPanel().contains('46%', { timeout: 60000 }).should(beVisible);
+        editorPage.getResultPanel().contains('46%').should(beVisible);
         editorPage.getResultPanel().contains('6 of 13 passed').should(beVisible);
         editorPage.getBuildOutput().contains('No build results available').should(beVisible);
         editorPage.getInstructionSymbols().each(($el, $index) => {
@@ -140,7 +140,7 @@ function makeSuccessfulSubmission() {
     editorPage.createFileInRootPackage('Context.java');
     editorPage.createFileInRootPackage('Policy.java');
     makeSubmissionAndVerifyResults(allSuccessful, () => {
-        editorPage.getResultPanel().contains('100%', { timeout: 60000 }).should(beVisible);
+        editorPage.getResultPanel().contains('100%').should(beVisible);
         editorPage.getResultPanel().contains('13 of 13 passed').should(beVisible);
         editorPage.getBuildOutput().contains('No build results available').should(beVisible);
         editorPage.getInstructionSymbols().each(($el) => {

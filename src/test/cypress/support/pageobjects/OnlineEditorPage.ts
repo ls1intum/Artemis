@@ -1,4 +1,5 @@
-import { beVisible } from '../constants';
+import { delay } from 'rxjs/operators';
+import { beVisible, GET } from '../constants';
 
 const buildingAndTesting = 'Building and testing...';
 
@@ -15,7 +16,7 @@ export class OnlineEditorPage {
      * Waits for the first query (student participation) on the online editor page to improve test stability.
      */
     waitForPageLoad() {
-        return cy.wait('@initialQuery');
+        return cy.wait('@initialQuery').wait(2000);
     }
 
     /**
@@ -41,12 +42,11 @@ export class OnlineEditorPage {
     typeSubmission(submission: ProgrammingExerciseSubmission, packageName: string) {
         for (const newFile of submission.files) {
             cy.log(`Entering content for file ${newFile.name}`);
-            // This works for the current solutions because all files are in the
             this.openFileWithName(newFile.name);
             this.focusCodeEditor().type('{selectall}{backspace}', { delay: 100 });
             cy.fixture(newFile.path).then(($fileContent) => {
-                this.focusCodeEditor().type(this.sanitizeInput($fileContent, packageName) + '{shift}{pagedown}{backspace}');
-                cy.wait(1000);
+                this.focusCodeEditor().type(this.sanitizeInput($fileContent, packageName), { delay: 2 });
+                cy.focused().type('{shift}{pagedown}{del}', { delay: 100 });
             });
         }
     }
@@ -64,7 +64,7 @@ export class OnlineEditorPage {
      * Opens a file in the file browser by clicking on it.
      */
     openFileWithName(name: string) {
-        this.findFileBrowser().contains(name).click();
+        this.findFileBrowser().contains(name).click().wait(2000);
     }
 
     /**
