@@ -37,7 +37,12 @@
 
                 <dt>
                     <span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span>
-                    <button *ngIf="modelingExercise && modelingExercise.sampleSolutionModel" (click)="downloadAsPDf()" class="btn btn-primary" jhiTranslate="entity.action.export">
+                    <button
+                        *ngIf="modelingExercise && modelingExercise.sampleSolutionModel"
+                        (click)="downloadAsPDf()"
+                        class="btn btn-primary m-2"
+                        jhiTranslate="entity.action.export"
+                    >
                         Export
                     </button>
                 </dt>
@@ -49,6 +54,10 @@
                         [umlModel]="sampleSolutionUML!"
                     ></jhi-modeling-editor>
                 </dd>
+
+                <dt>
+                    {{ 'artemisApp.modelingExercise.exampleSolutionExplanation' | artemisTranslate }}
+                </dt>
                 <dd class="editor-outline-background">
                     <span [innerHTML]="sampleSolution"></span>
                 </dd>

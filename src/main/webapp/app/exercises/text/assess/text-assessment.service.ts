@@ -15,10 +15,8 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, getSubmissionResultById, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { TextAssessmentEvent } from 'app/entities/text-assesment-event.model';
 
 type EntityResponseType = HttpResponse<Result>;
-type EntityResponseEventType = HttpResponse<TextAssessmentEvent>;
 type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
 
 @Injectable({
@@ -55,17 +53,6 @@ export class TextAssessmentService {
         return this.http
             .post<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/submit-text-assessment`, body, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
-    }
-
-    /**
-     * Submits an assessment event to the artemis analytics for text exercises.
-     * @param assessmentEvent an event of type {TextAssessmentEvent}
-     */
-    public submitTextAssessmentEvent(assessmentEvent: TextAssessmentEvent): Observable<EntityResponseEventType> {
-        const body = Object.assign({}, assessmentEvent);
-        return this.http
-            .post<TextAssessmentEvent>(`${this.resourceUrl}/text-assessment-event/add-event`, body, { observe: 'response' })
-            .pipe(map((res: EntityResponseEventType) => Object.assign({}, res)));
     }
 
     /**

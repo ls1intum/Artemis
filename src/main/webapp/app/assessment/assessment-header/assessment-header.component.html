@@ -91,11 +91,7 @@
                 <fa-icon [icon]="'save'"></fa-icon>
                 <span jhiTranslate="entity.action.save">Save</span>
             </button>
-            <button
-                class="btn ms-2 btn-success"
-                (click)="submit.emit(); sendSubmitAssessmentEventToAnalytics()"
-                [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy"
-            >
+            <button class="btn ms-2 btn-success" (click)="submit.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">
                 <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="entity.action.submit">Submit</span>
             </button>
@@ -118,7 +114,7 @@
             id="assessNextButton"
             *ngIf="result?.completionDate && (isAssessor || isAtLeastInstructor) && !hasComplaint && !isTeamMode && !isTestRun"
             [disabled]="nextSubmissionBusy || submitBusy"
-            (click)="nextSubmission.emit(); sendAssessNextEventToAnalytics()"
+            (click)="nextSubmission.emit()"
         >
             <fa-icon *ngIf="nextSubmissionBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.assessment.button.nextSubmission"> Next Submission</span>
