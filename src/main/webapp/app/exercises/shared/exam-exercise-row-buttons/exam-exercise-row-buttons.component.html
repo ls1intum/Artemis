@@ -37,7 +37,7 @@
 
     <!-- Example Submission -->
     <a
-        *ngIf="course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ && exercise.type !== exerciseType.PROGRAMMING"
+        *ngIf="course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ && exercise.type !== exerciseType.PROGRAMMING && exercise.type !== exerciseType.FILE_UPLOAD"
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'example-submissions']"
         class="btn btn-success btn-sm me-1"
     >
