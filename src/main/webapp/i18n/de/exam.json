@@ -385,7 +385,7 @@
                 "textitems": {
                     "leastoneexercisegroup": "Mindestens eine Aufgabengruppe",
                     "numberofexercisegroupsequal": "Anzahl der Aufgaben der Klausur entspricht Anzahl der Aufgabengruppen",
-                    "numberofexercisegroupsinbetween": "Anzahl der Aufgaben der Klausur liegt zwischen der Anzahl der verpflichtenden Aufgaben und der Gesamtanzahl der Aufgaben",
+                    "numberofexercisegroupsinbetween": "Anzahl der Aufgaben der Klausur liegt zwischen der Anzahl der verpflichtenden Aufgabengruppen und der Gesamtanzahl der Aufgabengruppen",
                     "eachexercisegroup": "Jede Aufgabengruppe hat mindestens eine Aufgabe",
                     "pointsexercisegroupequal": "Gleiche Anzahl Punkte in jeder Aufgabe in einer Aufgabengruppe",
                     "totalpointspossible": "Gesamtpunktzahl der Klausur kann mit der aktuellen Aufgabenkonfiguration erreicht werden",
