@@ -16,7 +16,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit {
 
     // Only allow certain html tags and attributes
     allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p', 'blockquote', 'pre', 'code', 'span', 'li', 'ul', 'ol'];
-    allowedHtmlAttributes: string[] = ['href', 'class', 'id'];
+    allowedHtmlAttributes: string[] = ['href'];
 
     protected constructor() {}
 
