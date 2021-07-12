@@ -595,7 +595,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/preview',
         component: QuizParticipationComponent,
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'preview',
         },
@@ -605,7 +605,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/solution',
         component: QuizParticipationComponent,
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'solution',
         },
