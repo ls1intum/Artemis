@@ -272,7 +272,7 @@
                         </a>
                         <a
                             *ngIf="exercise.course && newManualResultAllowed"
-                            [routerLink]="getAssessmentLink(exercise, value.submission.id, value.participation.id)"
+                            [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
@@ -285,7 +285,19 @@
                                 exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&
                                 exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2
                             "
-                            [routerLink]="getAssessmentLink(exercise, value.submission.id, value.participation.id)"
+                            [routerLink]="[
+                                '/course-management',
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id,
+                                'programming-exercises',
+                                exercise.id,
+                                'submissions',
+                                value.submission.id,
+                                'assessment'
+                            ]"
                             class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
@@ -302,7 +314,11 @@
                     [width]="180"
                 >
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a *ngIf="exercise.course" [routerLink]="getAssessmentLink(exercise, value.submission.id, value.participation.id)" class="btn btn-primary btn-sm me-1">
+                        <a
+                            *ngIf="exercise.course"
+                            [routerLink]="['/course-management', exercise.course?.id, 'file-upload-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            class="btn btn-primary btn-sm me-1"
+                        >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.fileUploadSubmission.view' | artemisTranslate }}
                         </a>
@@ -312,7 +328,19 @@
                                 exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&
                                 exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2
                             "
-                            [routerLink]="getAssessmentLink(exercise, value.submission.id, value.participation.id)"
+                            [routerLink]="[
+                                '/course-management',
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id,
+                                'file-upload-exercises',
+                                exercise.id,
+                                'submissions',
+                                value.submission.id,
+                                'assessment'
+                            ]"
                             class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
@@ -325,7 +353,7 @@
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <a
                             *ngIf="exercise.course"
-                            [routerLink]="getAssessmentLink(exercise, value.submission.id, value.participation.id)"
+                            [routerLink]="['/course-management', exercise.course?.id, 'modeling-exercises', exercise.id, 'submissions', value.submission.id, 'assessment'])"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-primary btn-sm me-1"
                         >
@@ -338,7 +366,19 @@
                                 exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&
                                 exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2
                             "
-                            [routerLink]="getAssessmentLink(exercise, value.submission.id, value.participation.id)"
+                            [routerLink]="[
+                                '/course-management',
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id,
+                                'modeling-exercises',
+                                exercise.id,
+                                'submissions',
+                                value.submission.id,
+                                'assessment'
+                            ]"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-primary btn-sm me-1"
                         >
@@ -350,7 +390,21 @@
 
                 <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.TEXT && exercise.isAtLeastInstructor" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a *ngIf="exercise.course" [routerLink]="getAssessmentLink(exercise, value.submission.id, value.participation.id)" class="btn btn-primary btn-sm me-1">
+                        <a
+                            *ngIf="exercise.course"
+                            [routerLink]="[
+                                '/course-management',
+                                exercise.course.id,
+                                'text-exercises',
+                                exercise.id,
+                                'participations',
+                                value.participation.id,
+                                'submissions',
+                                value.submission.id,
+                                'assessment'
+                            ]"
+                            class="btn btn-primary btn-sm me-1"
+                        >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.textSubmission.view' | artemisTranslate }}
                         </a>
@@ -360,7 +414,21 @@
                                 exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&
                                 exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2
                             "
-                            [routerLink]="getAssessmentLink(exercise, value.submission.id, value.participation.id)"
+                            [routerLink]="[
+                                '/course-management',
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup.exam.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup.id,
+                                'text-exercises',
+                                exercise.id,
+                                'participations',
+                                value.participation.id,
+                                'submissions',
+                                value.submission.id,
+                                'assessment'
+                            ]"
                             class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
