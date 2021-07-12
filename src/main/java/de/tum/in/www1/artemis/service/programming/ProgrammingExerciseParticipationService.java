@@ -134,6 +134,8 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
+     * NOTE: do not use this method any more, because loading the participation reliably with their exercise does not work with Hibernate/Hazelcast in a multi node server setup
+     *
      * Check if the currently logged in user can access a given participation by accessing the exercise and course connected to this participation
      * The method will treat the participation types differently:
      * - ProgrammingExerciseStudentParticipations should only be accessible by its owner (student) or users with at least the role TA in the courses.
@@ -142,8 +144,8 @@ public class ProgrammingExerciseParticipationService {
      * @param participation to check permissions for.
      * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
      */
+    @Deprecated(since = "5.0.6", forRemoval = true)
     public boolean canAccessParticipation(ProgrammingExerciseParticipation participation) {
-        log.info("canAccessParticipation (generic): {}, progExercise: {}, exercise: {}", participation, participation.getProgrammingExercise(), participation.getExercise());
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             // If the current user is owner of the participation, they are allowed to access it
@@ -162,6 +164,8 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
+     * NOTE: do not use this method any more, because loading the participation reliably with their exercise does not work with Hibernate/Hazelcast in a multi node server setup
+     *
      * Returns whether a user is allowed to access a given participation (as owner or at least as tutor of the course).
      *
      * @param <T>           The {@link ProgrammingExerciseParticipation} sub-class
@@ -170,10 +174,10 @@ public class ProgrammingExerciseParticipationService {
      * @param user          The user, may be null, in which case the current user is fetched and used.
      * @return <code>true</code> if the current user is allowed to access the given participation, <code>false</code> otherwise
      */
+    @Deprecated(since = "5.0.6", forRemoval = true)
     private <T extends ProgrammingExerciseParticipation> boolean canAccessParticipation(@NotNull T participation, JpaRepository<T, Long> repository, User user) {
         // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
         // To prevent null pointer exceptions, we therefore retrieve it again as concrete sub-class instance by using the provided repository
-        log.info("canAccessParticipation (concrete): {}, progExercise: {}, exercise: {}", participation, participation.getProgrammingExercise(), participation.getExercise());
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
             log.warn("canAccessParticipation: reload participation, because programming exercise is null or a proxy object");
             T participationFromDatabase = repository.findById(participation.getId()).get();
@@ -184,7 +188,6 @@ public class ProgrammingExerciseParticipationService {
             participation.setProgrammingExercise(participationFromDatabase.getProgrammingExercise());
         }
         // TODO: I think we should higher the following permissions to editor
-        log.info("canAccessParticipation (after reload): {}, progExercise: {}, exercise: {}", participation, participation.getProgrammingExercise(), participation.getExercise());
         return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), user);
     }
 
