@@ -27,8 +27,6 @@ public class ProgrammingExerciseGradingResource {
 
     public static final String RE_EVALUATE = "/programming-exercise/{exerciseId}/grading/re-evaluate";
 
-    public static final String TRIGGER_ALL = "/programming-exercise/{exerciseId}/trigger-instructor-build-all";
-
     public static final String STATISTICS = "/programming-exercise/{exerciseId}/grading/statistics";
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
