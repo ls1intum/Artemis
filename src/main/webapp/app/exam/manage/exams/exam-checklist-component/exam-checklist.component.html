@@ -52,9 +52,9 @@
                                     "
                                 ></jhi-exam-checklist-check>
                                 <span>{{
-                                    !hasOptionalExercises
+                                    ((!hasOptionalExercises
                                         ? 'artemisApp.examManagement.checklist.textitems.numberofexercisegroupsequal'
-                                        : ('artemisApp.examManagement.checklist.textitems.numberofexercisegroupsinbetween' | artemisTranslate)
+                                        : 'artemisApp.examManagement.checklist.textitems.numberofexercisegroupsinbetween') | artemisTranslate)
                                 }}</span>
                             </span>
                         </li>

@@ -55,6 +55,7 @@ import { GradingSystemComponent } from 'app/grading-system/grading-system.compon
 import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
+import { ExampleModelingSubmissionComponent } from 'app/exercises/modeling/manage/example-modeling/example-modeling-submission.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -728,6 +729,15 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
             pageTitle: 'artemisApp.exampleSubmission.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
+        component: ExampleModelingSubmissionComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            pageTitle: 'artemisApp.exampleSubmission.home.editor',
         },
         canActivate: [UserRouteAccessService],
     },
