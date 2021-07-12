@@ -48,7 +48,7 @@
                                 <!-- assert amount mandatory exercises <= number in settings <= amount total exercises -->
                                 <jhi-exam-checklist-check
                                     [checkAttribute]="
-                                        exam.exerciseGroups && countMandatoryExercises <= exam.numberOfExercisesInExam && exam.numberOfExercisesInExam <= exam.exerciseGroups.length
+                                        exam.exerciseGroups && countMandatoryExercises <= (exam.numberOfExercisesInExam ?? 0) && (exam.numberOfExercisesInExam ?? 0) <= exam.exerciseGroups.length
                                     "
                                 ></jhi-exam-checklist-check>
                                 <span>{{
