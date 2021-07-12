@@ -35,7 +35,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -3584,18 +3583,5 @@ public class DatabaseUtilService {
 
     public Course saveCourse(Course course) {
         return courseRepo.save(course);
-    }
-
-    public Course createCourseWithTutor(String login) {
-        Course course = this.createCourse();
-        User user = new User();
-        user.setLogin(login);
-        user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
-        userRepo.save(user);
-        return course;
-    }
-
-    public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId) {
-        return ModelFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId);
     }
 }
