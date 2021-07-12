@@ -190,7 +190,9 @@ info:
         dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029 # Leave empty to disable Sentry, must be a valid URI
     # Allowed Orion version range. Should only be changed on major version releases
     allowed-minimum-orion-version: 1.0.0
-    text-assessment-analytics-enabled: true
+    # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
+    # default value set to false
+    text-assessment-analytics-enabled: false
 
 # ===================================================================
 # JHipster specific properties
