@@ -383,6 +383,12 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
+    public Course createCourseWithPostsDisabled() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course.setPostsEnabled(false);
+        return courseRepo.save(course);
+    }
+
     public Course createCourseWithOrganizations(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
         Course course = createCourse();
         Set<Organization> organizations = new HashSet<>();
@@ -1037,7 +1043,7 @@ public class DatabaseUtilService {
 
         exam.setRegisteredUsers(registeredUsers);
         exam = examRepository.save(exam);
-        return exam;
+        return examRepository.findOneWithEagerExercisesGroupsAndStudentExams(exam.getId());
     }
 
     public Exam addExam(Course course) {
