@@ -188,6 +188,13 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         }
     };
 
+    /**
+     * returns the route for the assessment page for all types of exercises
+     * @param exercise exercise of the submission
+     * @param submissionId id of the submission to be assessed
+     * @param participationId id of the participation to the submission
+     * @param resultId id of the result
+     */
     getAssessmentLink(exercise: Exercise, submissionId: number, participationId: number, resultId?: number) {
         if (!exercise || !exercise.type) {
             return;
