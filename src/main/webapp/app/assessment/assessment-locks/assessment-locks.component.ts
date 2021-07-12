@@ -22,6 +22,8 @@ import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 export class AssessmentLocksComponent implements OnInit {
     PROGRAMMING_EXERCISE = ExerciseType.PROGRAMMING;
 
+    readonly ExerciseType = ExerciseType;
+
     course: Course;
     courseId: number;
     tutorId: number;
@@ -78,18 +80,6 @@ export class AssessmentLocksComponent implements OnInit {
                 this.submissions.push(...(response.body ?? []));
             },
             (response: string) => this.onError(response),
-        );
-    }
-
-    getAssessmentLink(courseId: number, submission: Submission) {
-        return getLinkToSubmissionAssessment(
-            submission.participation!.exercise!.type!,
-            courseId,
-            submission.participation!.exercise!.id!,
-            submission.participation!.id!,
-            submission.id!,
-            0,
-            0,
         );
     }
 
