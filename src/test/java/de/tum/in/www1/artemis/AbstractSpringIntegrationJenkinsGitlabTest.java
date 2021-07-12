@@ -224,10 +224,17 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockRepositoryWritePermissions(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws Exception {
+    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws Exception {
         final var repositorySlug = (exercise.getProjectKey() + "-" + team.getParticipantIdentifier()).toLowerCase();
         final var repositoryPath = exercise.getProjectKey() + "/" + repositorySlug;
         gitlabRequestMockProvider.mockAddMemberToRepository(repositoryPath, newStudent.getLogin(), !status.is2xxSuccessful());
+    }
+
+    @Override
+    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) throws Exception {
+        final var repositorySlug = (exercise.getProjectKey() + "-" + student.getParticipantIdentifier()).toLowerCase();
+        final var repositoryPath = exercise.getProjectKey() + "/" + repositorySlug;
+        gitlabRequestMockProvider.mockAddMemberToRepository(repositoryPath, student.getLogin(), !status.is2xxSuccessful());
     }
 
     @Override

@@ -2,7 +2,6 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, O
 import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { OtherModelElementCount } from 'app/entities/modeling-submission.model';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import interact from 'interactjs';
 import * as $ from 'jquery';
@@ -182,9 +181,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 }
                 existingFeedback.credits = assessment.score;
                 existingFeedback.text = assessment.feedback;
-                if (assessment.dropInfo) {
-                    existingFeedback.gradingInstruction = new GradingInstruction();
-                    existingFeedback.gradingInstruction.id = assessment.dropInfo.instructionId;
+                if (assessment.dropInfo && assessment.dropInfo.instruction.id) {
+                    existingFeedback.gradingInstruction = assessment.dropInfo.instruction;
                 }
             } else {
                 this.elementFeedback.set(
