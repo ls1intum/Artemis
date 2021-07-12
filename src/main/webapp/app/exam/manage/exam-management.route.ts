@@ -617,7 +617,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
-            mode: 'solution',
         },
         canActivate: [UserRouteAccessService],
     },
