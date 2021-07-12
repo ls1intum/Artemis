@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsHeaderDirective } from 'app/shared/metis/postings-header/postings-header.directive';
 import { PostService } from 'app/shared/metis/post/post.service';
@@ -9,6 +9,7 @@ import { PostService } from 'app/shared/metis/post/post.service';
     styleUrls: ['../../../../overview/discussion/discussion.scss'],
 })
 export class PostHeaderComponent extends PostingsHeaderDirective<Post> {
+    @Input() existingPostTags: string[];
     @Output() toggledAnswersChange: EventEmitter<void> = new EventEmitter<void>();
 
     constructor(protected postService: PostService) {

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, filter } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsService } from 'app/shared/metis/postings.service';
@@ -71,7 +71,16 @@ export class PostService extends PostingsService<Post> {
         return this.http.delete<any>(`${this.resourceUrl}${courseId}/posts/${post.id}`, { observe: 'response' });
     }
 
-    getAllPostTags(courseId: number): Observable<HttpResponse<String[]>> {
-        return this.http.get<String[]>(`api/courses/${courseId}/posts/tags`, { observe: 'response' });
+    /**
+     * get all tags for course
+     * @param {number} courseId
+     * @return {Observable<string[]>}
+     */
+    getAllPostTags(courseId: number): Observable<string[]> {
+        return this.http.get<string[]>(`api/courses/${courseId}/posts/tags`, { observe: 'response' }).pipe(
+            map((tagsResponse: HttpResponse<string[]>) => {
+                return tagsResponse.body!.filter((t) => !!t);
+            }),
+        );
     }
 }

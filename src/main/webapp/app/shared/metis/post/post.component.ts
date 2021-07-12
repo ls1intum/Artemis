@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostVotesAction, PostVotesActionName } from 'app/shared/metis/post/post-votes/post-votes.component';
 import { PostService } from 'app/shared/metis/post/post.service';
@@ -22,22 +22,10 @@ export enum PostActionName {
 export class PostComponent extends PostingDirective<Post> implements OnInit {
     @Output() toggledAnswersChange: EventEmitter<void> = new EventEmitter<void>();
     @Output() interactPost: EventEmitter<PostAction> = new EventEmitter<PostAction>();
-    existingPostTags: string[];
+    @Input() existingPostTags: string[];
 
     constructor(protected postService: PostService) {
         super();
-    }
-
-    ngOnInit(): void {
-        super.ngOnInit();
-        this.postService.getAllPostTags(this.courseId).subscribe({
-            next: (tagRes: HttpResponse<string[]>) => {
-                this.existingPostTags = tagRes.body!;
-            },
-            error: () => {
-                console.log('error');
-            },
-        });
     }
 
     /**

@@ -6,6 +6,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { PostAction, PostActionName } from 'app/shared/metis/post/post.component';
 import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
 import { PostService } from 'app/shared/metis/post/post.service';
+import { HttpResponse } from '@angular/common/http';
 
 export interface PostRowAction {
     name: PostRowActionName;
@@ -26,6 +27,7 @@ export class PostingsThreadComponent implements OnInit {
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
     @Input() courseId: number;
+    @Input() existingPostTags: string[];
     @Output() onDelete: EventEmitter<Post> = new EventEmitter<Post>();
     @Output() interactPostRow: EventEmitter<PostRowAction> = new EventEmitter<PostRowAction>();
     toggledAnswers: boolean;

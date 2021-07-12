@@ -4,8 +4,8 @@
     </div>
     <div class="modal-body">
         <div class="form-group-narrow position-relative">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
-            <jhi-post-tag-selector [postTags]="posting.tags" (selectedPostTags)="updateTags($event)"></jhi-post-tag-selector>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.tags">Tags</label>
+            <jhi-post-tag-selector [postTags]="posting.tags" (postTagsChange)="updateTags($event)" [existingPostTags]="existingPostTags"></jhi-post-tag-selector>
         </div>
         <div class="row mb-2">
             <jhi-postings-markdown-editor [(content)]="content"></jhi-postings-markdown-editor>

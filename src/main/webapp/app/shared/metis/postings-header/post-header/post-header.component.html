@@ -10,7 +10,7 @@
             [icon]="'pencil-alt'"
             (click)="createEditModal.open()"
         ></fa-icon>
-        <jhi-post-create-edit-modal #createEditModal [posting]="posting" [courseId]="courseId"></jhi-post-create-edit-modal>
+        <jhi-post-create-edit-modal #createEditModal [posting]="posting" [courseId]="courseId" [existingPostTags]="existingPostTags"></jhi-post-create-edit-modal>
         <jhi-confirm-icon
             *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
             iconSize="xs"

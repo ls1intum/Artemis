@@ -23,6 +23,7 @@ export class DiscussionComponent implements OnInit, AfterViewInit {
     user: User;
     isAtLeastTutorInCourse: boolean;
     courseId: number;
+    existingPostTags: string[];
 
     constructor(private route: ActivatedRoute, private accountService: AccountService, private exerciseService: ExerciseService, private postService: PostService) {}
 
@@ -34,6 +35,7 @@ export class DiscussionComponent implements OnInit, AfterViewInit {
             this.user = user!;
         });
         this.loadPosts();
+        this.loadExistingPostTags();
     }
 
     loadPosts() {
@@ -46,6 +48,12 @@ export class DiscussionComponent implements OnInit, AfterViewInit {
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.lecture.course!);
             this.courseId = this.lecture.course!.id!;
         }
+    }
+
+    loadExistingPostTags() {
+        this.postService.getAllPostTags(this.courseId).subscribe((tags: string[]) => {
+            this.existingPostTags = tags;
+        });
     }
 
     /**

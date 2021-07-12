@@ -1,38 +1,23 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { TagModel } from 'ngx-chips/core/accessor';
-import { PostTag } from 'app/entities/metis/post-tag.model';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { TagModel, TagModelClass } from 'ngx-chips/core/accessor';
 
 @Component({
     selector: 'jhi-post-tag-selector',
     templateUrl: './post-tag-selector.component.html',
-    styleUrls: ['../../../category-selector/category-selector.scss'],
+    styleUrls: ['../../../../overview/discussion/discussion.scss'],
 })
 export class PostTagSelectorComponent {
-    @Input() postTags?: string[];
     @Input() existingPostTags: string[];
-    @Output() selectedPostTags = new EventEmitter<string[]>();
+    @Input() postTags?: string[];
+    @Output() postTagsChange = new EventEmitter<string[]>();
 
-    /**
-     * set color if not selected and add exerciseCategory
-     * @param postTagItem the tag of the exercise category
-     */
-    onItemAdded(postTagItem: TagModel) {
-        const postTag = postTagItem as string;
-        if (this.postTags) {
-            this.postTags.push(postTag);
-        } else {
-            this.postTags = [postTag];
-        }
-        this.selectedPostTags.emit(this.postTags);
+    addTag(tagModel: TagModel) {
+        const tag = (tagModel as TagModelClass).value;
+        this.postTagsChange.emit(this.postTags ? [...this.postTags, tag] : [tag]);
     }
 
-    /**
-     * cancel colorSelector and remove exerciseCategory
-     * @param {PostTag} postTagItem
-     */
-    onItemRemove(postTagItem: TagModel) {
-        const postTagToRemove = postTagItem as string;
-        this.postTags = this.postTags?.filter((postTag) => postTag !== postTagToRemove);
-        this.selectedPostTags.emit(this.postTags);
+    removeTag(tagModel: TagModel) {
+        const tag = (tagModel as TagModelClass).value;
+        this.postTagsChange.emit(this.postTags!.splice(this.postTags!.indexOf(tag), 1));
     }
 }
