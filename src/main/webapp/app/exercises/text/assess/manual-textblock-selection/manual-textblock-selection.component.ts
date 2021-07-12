@@ -51,7 +51,7 @@ export class ManualTextblockSelectionComponent {
         }
 
         if (textBlock) {
-            textBlock.startIndex = baseIndex + startIndexInGroup;
+            textBlock.startIndex = baseIndex! + startIndexInGroup;
             textBlock.endIndex = textBlock.startIndex + text.length;
             textBlock.setTextFromSubmission(this.submission);
             textBlock.computeId();
@@ -83,11 +83,12 @@ class TextBlockRefGroup {
         return this.hasFeedback ? this.refs[0] : null;
     }
 
-    get startIndex(): number {
-        return this.refs[0].block!.startIndex!;
+    get startIndex() {
+        return this.refs[0].block?.startIndex;
     }
-    private get endIndex(): number {
-        return this.refs.last().block!.endIndex!;
+
+    private get endIndex() {
+        return this.refs.last()?.block?.endIndex;
     }
 
     getText(submission: TextSubmission): string {
