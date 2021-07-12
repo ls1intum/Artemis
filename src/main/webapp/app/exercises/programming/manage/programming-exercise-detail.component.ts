@@ -1,10 +1,8 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, of, Subject } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { Result } from 'app/entities/result.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -75,22 +73,26 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.programmingExercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.programmingExercise);
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
 
-            if (this.programmingExercise.templateParticipation) {
-                this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
-                this.loadLatestResultWithFeedbackAndSubmission(this.programmingExercise.templateParticipation.id!).subscribe((results) => {
-                    this.programmingExercise.templateParticipation!.results = results;
-                    this.loadingTemplateParticipationResults = false;
-                });
-            }
+            this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
+                // TODO: the feedback would be missing here, is that a problem?
+                this.programmingExercise = updatedProgrammingExercise.body!;
+                // get the latest results for further processing
+                if (this.programmingExercise.templateParticipation) {
+                    const templateSubmissions = this.programmingExercise.templateParticipation.submissions;
+                    if (templateSubmissions && templateSubmissions.length > 0) {
+                        this.programmingExercise.templateParticipation.results = templateSubmissions[templateSubmissions.length - 1].results;
+                    }
+                }
+                if (this.programmingExercise.solutionParticipation) {
+                    const solutionSubmissions = this.programmingExercise.solutionParticipation.submissions;
+                    if (solutionSubmissions && solutionSubmissions.length > 0) {
+                        this.programmingExercise.solutionParticipation.results = solutionSubmissions[solutionSubmissions.length - 1].results;
+                    }
+                }
+                this.loadingTemplateParticipationResults = false;
+                this.loadingSolutionParticipationResults = false;
+            });
 
-            if (this.programmingExercise.solutionParticipation) {
-                this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
-
-                this.loadLatestResultWithFeedbackAndSubmission(this.programmingExercise.solutionParticipation.id!).subscribe((results) => {
-                    this.programmingExercise.solutionParticipation!.results = results;
-                    this.loadingSolutionParticipationResults = false;
-                });
-            }
             this.statisticsService.getExerciseStatistics(programmingExercise.id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
                 this.doughnutStats = statistics;
             });
@@ -114,20 +116,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
-    }
-
-    /**
-     * Load the latest result for the given participation. Will return [result] if there is a result, [] if not.
-     * @param participationId of the given participation.
-     * @return an empty array if there is no result or an array with the single latest result.
-     */
-    private loadLatestResultWithFeedbackAndSubmission(participationId: number): Observable<Result[]> {
-        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(participationId, true).pipe(
-            catchError(() => of(null)),
-            map((result: Result | null) => {
-                return result ? [result] : [];
-            }),
-        );
     }
 
     combineTemplateCommits() {
