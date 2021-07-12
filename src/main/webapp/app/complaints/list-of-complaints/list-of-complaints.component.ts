@@ -13,8 +13,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
-import { Exercise } from 'app/entities/exercise.model';
-import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-complaint-list',

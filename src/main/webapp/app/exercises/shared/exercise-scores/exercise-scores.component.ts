@@ -23,11 +23,11 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
-import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 /**
  * Filter properties for a result
