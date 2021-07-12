@@ -16,7 +16,7 @@ export const quizManagementRoute: Routes = [
         path: ':courseId/quiz-exercises/new',
         component: QuizExerciseDetailComponent,
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -26,7 +26,7 @@ export const quizManagementRoute: Routes = [
         path: ':courseId/quiz-exercises/export',
         component: QuizExerciseExportComponent,
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -54,7 +54,7 @@ export const quizManagementRoute: Routes = [
         path: ':courseId/quiz-exercises/:exerciseId/edit',
         component: QuizExerciseDetailComponent,
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
