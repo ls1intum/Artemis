@@ -746,6 +746,26 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         request.postWithoutLocation("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK, null);
     }
 
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void saveExercise_beforeDueDate() throws Exception {
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", unsubmittedSubmission,
+                ModelingSubmission.class, HttpStatus.OK);
+        assertThat(storedSubmission.isSubmitted()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void saveExercise_afterDueDateWithParticipationStartAfterDueDate() throws Exception {
+        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
+        studentParticipationRepository.saveAndFlush(afterDueDateParticipation);
+
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", unsubmittedSubmission,
+                ModelingSubmission.class, HttpStatus.OK);
+        assertThat(storedSubmission.isSubmitted()).isFalse();
+    }
+
     private void checkDetailsHidden(ModelingSubmission submission, boolean isStudent) {
         assertThat(submission.getParticipation().getSubmissions()).isNullOrEmpty();
         assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
