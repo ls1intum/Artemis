@@ -119,7 +119,7 @@ function makeFailingSubmission() {
 function makePartiallySuccessfulSubmission() {
     editorPage.createFileInRootPackage('SortStrategy.java');
     makeSubmissionAndVerifyResults(partiallySuccessful, () => {
-        editorPage.getResultPanel().contains('46%').should(beVisible);
+        editorPage.getResultPanel().contains('46%', { timeout: 60000 }).should(beVisible);
         editorPage.getResultPanel().contains('6 of 13 passed').should(beVisible);
         editorPage.getBuildOutput().contains('No build results available').should(beVisible);
         editorPage.getInstructionSymbols().each(($el, $index) => {
@@ -140,7 +140,7 @@ function makeSuccessfulSubmission() {
     editorPage.createFileInRootPackage('Context.java');
     editorPage.createFileInRootPackage('Policy.java');
     makeSubmissionAndVerifyResults(allSuccessful, () => {
-        editorPage.getResultPanel().contains('100%').should(beVisible);
+        editorPage.getResultPanel().contains('100%', { timeout: 60000 }).should(beVisible);
         editorPage.getResultPanel().contains('13 of 13 passed').should(beVisible);
         editorPage.getBuildOutput().contains('No build results available').should(beVisible);
         editorPage.getInstructionSymbols().each(($el) => {
