@@ -13,7 +13,6 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-assessment-locks',
