@@ -267,8 +267,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param result - result to which instructions will be attached.
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
-        const currentParticipation = result.participation ? result.participation : this.participation;
-        return this.resultService.getFeedbackDetailsForResult(currentParticipation.id!, result.id!).pipe(
+        return this.resultService.getFeedbackDetailsForResult(result.participation!.id!, result.id!).pipe(
             map((res) => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;

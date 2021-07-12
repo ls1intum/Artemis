@@ -119,7 +119,8 @@ info:
             - programming_exercise_fail_tour: 'test'
             - programming_exercise_success_tour: 'test'
             - tutor_assessment_tour: 'Patterns in Software Engineering'
-    contact: artemis.in@tum.de                                                                  #default value, can be overridden if needed
+    contact: artemis.in@tum.de  #default value, can be overridden if needed
+    text-assessment-analytics-enabled: true
 
 # Eureka configuration
 eureka:
