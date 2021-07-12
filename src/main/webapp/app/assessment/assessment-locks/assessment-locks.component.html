@@ -41,18 +41,7 @@
                     </td>
                     <td>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR', 'ROLE_TA']">
-                            <a
-                                [routerLink]="[
-                                    '/course-management',
-                                    courseId,
-                                    submission.participation!.exercise!.type + '-exercises',
-                                    submission.participation!.exercise!.id!,
-                                    'submissions',
-                                    submission.id,
-                                    'assessment'
-                                ]"
-                                class="btn btn-outline-secondary btn-sm mb-1"
-                            >
+                            <a [routerLink]="getAssessmentLink(courseId, submission)" class="btn btn-outline-secondary btn-sm mb-1">
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
                             </a>
                         </span>
