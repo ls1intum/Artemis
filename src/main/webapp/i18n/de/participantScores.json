@@ -30,10 +30,10 @@
             "searchForStudentsOrTeam": "Suche nach Studierende:r oder Team",
             "averageScore": "Durchschnittliches Ergebnis: {{avg}}%",
             "averageRatedScore": "Durchschnittliches bewertetes Ergebnis: {{avg}}%",
-            "averageGrade": "Average Grade",
-            "averageRatedGrade": "Average Rated Grade",
-            "averageBonus": "Average Bonus",
-            "averageRatedBonus": "Average Rated Bonus",
+            "averageGrade": "Notendurchschnitt",
+            "averageRatedGrade": "Gewerteter Notendurchschnitt",
+            "averageBonus": "Durchschnittlicher Bonus",
+            "averageRatedBonus": "Gewerteter durchschnittlicher Bonus",
             "notIncluded": "Optionale Aufgaben nicht miteingerechnet!"
         }
     }
