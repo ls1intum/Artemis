@@ -10,14 +10,14 @@ import { ArtemisRequests } from './../support/requests/ArtemisRequests';
 // Environmental variables
 const adminUsername = Cypress.env('adminUsername');
 const adminPassword = Cypress.env('adminPassword');
-let usernameTemplate = Cypress.env('username');
-let passwordTemplate = Cypress.env('password');
-let student1 = usernameTemplate.replace('USERID', '3');
-let passwordStudent1 = passwordTemplate.replace('USERID', '3');
-let student2 = usernameTemplate.replace('USERID', '4');
-let passwordStudent2 = passwordTemplate.replace('USERID', '4');
-let student3 = usernameTemplate.replace('USERID', '5');
-let passwordStudent3 = passwordTemplate.replace('USERID', '5');
+const usernameTemplate = Cypress.env('username');
+const passwordTemplate = Cypress.env('password');
+const student1 = usernameTemplate.replace('USERID', '3');
+const passwordStudent1 = passwordTemplate.replace('USERID', '3');
+const student2 = usernameTemplate.replace('USERID', '4');
+const passwordStudent2 = passwordTemplate.replace('USERID', '4');
+const student3 = usernameTemplate.replace('USERID', '5');
+const passwordStudent3 = passwordTemplate.replace('USERID', '5');
 
 // Requests
 let artemisRequests: ArtemisRequests;
