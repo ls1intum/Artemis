@@ -67,10 +67,10 @@ describe('Programming exercise participations', () => {
     });
 
     after(() => {
-        // if (!!course) {
-        //     cy.login(adminUsername, adminPassword);
-        //     artemisRequests.courseManagement.deleteCourse(course.id);
-        // }
+        if (!!course) {
+            cy.login(adminUsername, adminPassword);
+            artemisRequests.courseManagement.deleteCourse(course.id);
+        }
     });
 });
 
