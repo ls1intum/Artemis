@@ -29,10 +29,11 @@
                 <jhi-difficulty-picker [exercise]="modelingExercise"></jhi-difficulty-picker>
             </div>
         </div>
-        <jhi-team-config-form-group [exercise]="modelingExercise" [isImport]="isImport"></jhi-team-config-form-group>
+        <jhi-team-config-form-group class="form-element" [exercise]="modelingExercise" [isImport]="isImport"></jhi-team-config-form-group>
         <div class="d-flex" *ngIf="!isExamMode">
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker
+                    class="form-element"
                     labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
                     [(ngModel)]="modelingExercise.releaseDate"
                     (valueChange)="validateDate()"
@@ -42,6 +43,7 @@
             </div>
             <div class="form-group flex-grow-1 ms-3">
                 <jhi-date-time-picker
+                    class="form-element"
                     name="dueDate"
                     [error]="!!modelingExercise.dueDateError"
                     labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
@@ -53,6 +55,7 @@
         </div>
         <div class="form-group" *ngIf="!isExamMode">
             <jhi-date-time-picker
+                class="form-element"
                 name="assessmentDueDate"
                 [error]="!!modelingExercise.assessmentDueDateError"
                 labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
@@ -161,7 +164,7 @@
             ></jhi-markdown-editor>
         </div>
         <div class="form-group" name="gradingInstructions" id="field_gradingInstructions">
-            <jhi-slide-toggle (checkedEmitter)="getCheckedFlag($event)"></jhi-slide-toggle>
+            <jhi-slide-toggle class="form-element" (checkedEmitter)="getCheckedFlag($event)"></jhi-slide-toggle>
             <jhi-markdown-editor
                 *ngIf="this.checkedFlag === false"
                 class="markdown-editor background-editor-color"

@@ -1,0 +1,16 @@
+@mixin form-element-font-style() {
+    font-size: 17px;
+    font-weight: bolder;
+}
+
+.form-element {
+    @include form-element-font-style();
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.markdown-editor {
+    height: 350px;
+}
