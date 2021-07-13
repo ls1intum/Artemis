@@ -330,6 +330,21 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         }
     }
 
+    get yourStatusTitle(): string {
+        switch (this.tutorParticipationStatus) {
+            case TutorParticipationStatus.TRAINED:
+                // If we are in 'TRAINED' state, but never really "trained" on example submissions, display the
+                // 'REVIEWED_INSTRUCTIONS' state text instead.
+                if (!this.exercise.exampleSubmissions || this.exercise.exampleSubmissions.length == 0) {
+                    return TutorParticipationStatus.REVIEWED_INSTRUCTIONS.toString();
+                }
+
+                return TutorParticipationStatus.TRAINED.toString();
+            default:
+                return this.tutorParticipationStatus.toString();
+        }
+    }
+
     language(submission: Submission): string {
         if (submission.submissionExerciseType === SubmissionExerciseType.TEXT) {
             return (submission as TextSubmission).language || 'UNKNOWN';

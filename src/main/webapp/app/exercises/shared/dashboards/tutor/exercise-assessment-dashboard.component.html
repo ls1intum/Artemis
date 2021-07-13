@@ -11,7 +11,7 @@
             <div>
                 <p class="h3" style="text-align: left">
                     {{ 'artemisApp.exerciseAssessmentDashboard.yourStatus' | artemisTranslate }}:
-                    {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.title.' + tutorParticipation.status!.toString() | artemisTranslate }}
+                    {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.title.' + yourStatusTitle | artemisTranslate }}
                 </p>
                 <jhi-tutor-participation-graph
                     [exercise]="exercise"
@@ -150,7 +150,7 @@
         </jhi-info-panel>
 
         <jhi-info-panel
-            *ngIf="exercise.type === ExerciseType.MODELING && exampleSolutionModel"
+            *ngIf="exercise.type === ExerciseType.MODELING && modelingExercise.sampleSolutionExplanation"
             [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exampleSolutionExplanation' | artemisTranslate"
         >
             <div [innerHTML]="formattedSampleSolution" style="margin-bottom: -15px"></div>

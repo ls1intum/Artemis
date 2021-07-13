@@ -20,7 +20,7 @@
                 "description": {
                     "NOT_PARTICIPATED": "Bitte lies die Bewertungsrichtlinien vorsichtig und bestätige, dass du sie verstanden hast",
                     "REVIEWED_INSTRUCTIONS": "Bitte öffne die Beispielabgaben und beginn das Training",
-                    "TRAINED": "Das Bewertungs-Training ist beendet. Du kannst nun beginnen die Abgaben der Studierenden zu bewerten",
+                    "TRAINED": "Du kannst nun beginnen die Abgaben der Studierenden zu bewerten",
                     "COMPLETED": ""
                 }
             },

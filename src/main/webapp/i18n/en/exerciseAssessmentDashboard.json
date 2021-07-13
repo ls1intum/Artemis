@@ -20,7 +20,7 @@
                 "description": {
                     "NOT_PARTICIPATED": "Please read the assessment instructions carefully and confirm that you have understood them",
                     "REVIEWED_INSTRUCTIONS": "Please open Example Submissions and start training",
-                    "TRAINED": "The assessment training is finished, now you can start assessing students submissions",
+                    "TRAINED": "Now you can start assessing students submissions",
                     "COMPLETED": ""
                 }
             },
