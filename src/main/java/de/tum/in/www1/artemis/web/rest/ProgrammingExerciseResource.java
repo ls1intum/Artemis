@@ -516,7 +516,6 @@ public class ProgrammingExerciseResource {
         }
 
         final var importedProgrammingExercise = programmingExerciseImportService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
-        HttpHeaders responseHeaders;
         programmingExerciseImportService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
 
         // Update the template files
@@ -525,6 +524,7 @@ public class ProgrammingExerciseResource {
             upgradeService.upgradeTemplate(importedProgrammingExercise);
         }
 
+        HttpHeaders responseHeaders;
         // Copy or recreate the build plans
         try {
             if (recreateBuildPlans) {
@@ -700,7 +700,6 @@ public class ProgrammingExerciseResource {
     @GetMapping(Endpoints.PROGRAMMING_EXERCISE)
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
-        // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
         // Fetch grading criterion into exercise of participation

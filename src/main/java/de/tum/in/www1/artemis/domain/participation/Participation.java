@@ -274,8 +274,8 @@ public abstract class Participation extends DomainObject implements Participatio
 
     @Override
     public String toString() {
-        return "Participation{" + "id=" + getId() + ", initializationState=" + initializationState + ", initializationDate=" + initializationDate + ", results=" + results
-                + ", submissions=" + submissions + ", submissionCount=" + submissionCount + "}";
+        return getClass().getSimpleName() + "{" + "id=" + getId() + ", initializationState=" + initializationState + ", initializationDate=" + initializationDate + ", results="
+                + results + ", submissions=" + submissions + ", submissionCount=" + submissionCount + "}";
     }
 
     /**

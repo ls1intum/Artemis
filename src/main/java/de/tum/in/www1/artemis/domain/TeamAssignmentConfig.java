@@ -63,4 +63,15 @@ public class TeamAssignmentConfig extends DomainObject {
     public String toString() {
         return "TeamAssignmentConfig{" + "id=" + getId() + ", minTeamSize='" + getMinTeamSize() + "'" + ", maxTeamSize='" + getMaxTeamSize() + "'" + "}";
     }
+
+    /** Helper method which does a hard copy of the Team Assignment Configurations.
+     *
+     * @return The cloned configuration
+     */
+    public TeamAssignmentConfig copyTeamAssignmentConfig() {
+        TeamAssignmentConfig newConfig = new TeamAssignmentConfig();
+        newConfig.setMinTeamSize(getMinTeamSize());
+        newConfig.setMaxTeamSize(getMaxTeamSize());
+        return newConfig;
+    }
 }

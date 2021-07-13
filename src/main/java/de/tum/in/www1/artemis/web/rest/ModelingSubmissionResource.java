@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.security.Principal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -25,7 +24,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
@@ -239,7 +237,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     /**
      * GET /modeling-submission-without-assessment : get one modeling submission without assessment, for course exercises with first correction round and automatic
-     * assessment enabled, this will consult compass for an optimal modeling submission
+     * assessment enabled
      *
      * @param exerciseId id of the exercise for which the modeling submission should be returned
      * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
@@ -281,54 +279,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         modelingSubmission.getParticipation().setExercise(modelingExercise);
         this.modelingSubmissionService.hideDetails(modelingSubmission, user);
         return ResponseEntity.ok(modelingSubmission);
-    }
-
-    /**
-     * Given an exerciseId, find a modeling submission for that exercise which still doesn't have a manual result. If the diagram type is supported by Compass we get an array of
-     * ids of the next optimal submissions from Compass, i.e. the submissions for which an assessment means the most knowledge gain for the automatic assessment mechanism. If it's
-     * not supported by Compass we just get an array with the id of a random submission without manual assessment.
-     *
-     * @param exerciseId the id of the modeling exercise for which we want to get a submission without manual result
-     * @param correctionRound correction round for which we prepare the submission
-     * @return an array of modeling submission id(s) without a manual result
-     */
-    @Deprecated(since = "4.9.0", forRemoval = true)
-    @GetMapping("/exercises/{exerciseId}/optimal-model-submissions")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
-        final ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
-        // Check if the limit of simultaneously locked submissions has been reached
-        modelingSubmissionService.checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        // Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for
-        // the
-        // corresponding submission yet.
-        var participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
-        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
-                .collect(Collectors.toList());
-
-        if (submissionsWithoutResult.isEmpty()) {
-            return ResponseEntity.ok(new Long[] {}); // empty
-        }
-
-        Random random = new Random();
-        return ResponseEntity.ok(new Long[] { submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size())).getId() });
-
-    }
-
-    /**
-     * DELETE /exercises/{exerciseId}/optimal-model-submissions: Reset models waiting for assessment by Compass by emptying the waiting list
-     *
-     * @param exerciseId id of the exercise
-     * @return the response entity with status 200 (OK) if reset was performed successfully, otherwise appropriate error code
-     */
-    @Deprecated(since = "4.9.0", forRemoval = true)
-    @DeleteMapping("/exercises/{exerciseId}/optimal-model-submissions")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
-        final ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
-        return ResponseEntity.noContent().build();
     }
 
     /**

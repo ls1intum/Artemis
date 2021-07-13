@@ -11,6 +11,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { PostingsButtonComponent } from 'app/overview/postings/postings-button/postings-button.component';
 import { MockDirective } from 'ng-mocks';
+import { PostingsMarkdownEditorComponent } from 'app/overview/postings/postings-markdown-editor/postings-markdown-editor.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -46,7 +47,7 @@ describe('AnswerPostComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
-            declarations: [AnswerPostComponent, MockDirective(PostingsButtonComponent)],
+            declarations: [AnswerPostComponent, MockDirective(PostingsButtonComponent), MockDirective(PostingsMarkdownEditorComponent)],
             providers: [{ provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects }],
         })
             .overrideTemplate(AnswerPostComponent, '')
@@ -84,9 +85,9 @@ describe('AnswerPostComponent', () => {
     it('should toggle edit mode and reset editor Text', () => {
         component.answerPost = approvedAnswerPost;
         component.isEditMode = true;
-        component.editText = 'test';
+        component.content = 'test';
         component.toggleEditMode();
-        expect(component.editText).to.deep.equal('approved');
+        expect(component.content).to.deep.equal('approved');
         expect(component.isEditMode).to.be.false;
         component.toggleEditMode();
         expect(component.isEditMode).to.be.true;
@@ -95,7 +96,7 @@ describe('AnswerPostComponent', () => {
     it('should update answerText', () => {
         component.answerPost = approvedAnswerPost;
         component.isEditMode = true;
-        component.editText = 'test';
+        component.content = 'test';
         component.saveAnswerPost();
         expect(component.answerPost.content).to.deep.equal('test');
     });
