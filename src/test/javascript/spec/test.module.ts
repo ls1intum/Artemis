@@ -22,6 +22,7 @@ import * as moment from 'moment';
 import { MockComponent } from 'ng-mocks';
 import { MockAlertService } from './helpers/mocks/service/mock-alert.service';
 import { MockSyncStorage } from './helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 @NgModule({
     imports: [HttpClientTestingModule, FontAwesomeModule],
