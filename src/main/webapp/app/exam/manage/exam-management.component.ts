@@ -53,9 +53,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
         this.courseService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe(
             (res: HttpResponse<Course>) => {
                 this.course = res.body!;
-                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
-                this.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.course);
-                this.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
+                this.accountService.setAccessRightsForCourse(this.course);
                 this.loadAllExamsForCourse();
                 this.registerChangeInExams();
             },

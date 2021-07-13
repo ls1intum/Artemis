@@ -235,7 +235,7 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Sets the approproate access rights for the passed exercise.
+     * Sets the appropriate access rights for the passed exercise.
      *
      * @param exercise for which the access rights shall be set
      */
@@ -243,6 +243,17 @@ export class AccountService implements IAccountService {
         exercise.isAtLeastTutor = this.isAtLeastTutorForExercise(exercise);
         exercise.isAtLeastEditor = this.isAtLeastEditorForExercise(exercise);
         exercise.isAtLeastInstructor = this.isAtLeastInstructorForExercise(exercise);
+    }
+
+    /**
+     * Sets the appropriate access rights for the passed exercise.
+     *
+     * @param course for which the access rights shall be set
+     */
+    setAccessRightsForCourse(course: Course): void {
+        course.isAtLeastTutor = this.isAtLeastTutorInCourse(course);
+        course.isAtLeastEditor = this.isAtLeastEditorInCourse(course);
+        course.isAtLeastInstructor = this.isAtLeastInstructorInCourse(course);
     }
 
     /**
