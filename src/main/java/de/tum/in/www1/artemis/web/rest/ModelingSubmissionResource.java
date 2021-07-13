@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCasesService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -61,27 +62,24 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
-    private final CompassService compassService;
-
     private final GradingCriterionRepository gradingCriterionRepository;
 
     private final ExamSubmissionService examSubmissionService;
 
-    private final PlagiarismComparisonRepository plagiarismComparisonRepository;
+    private final PlagiarismCasesService plagiarismCasesService;
 
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ModelingSubmissionService modelingSubmissionService,
-            ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, CompassService compassService, UserRepository userRepository,
+            ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
             ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ModelingSubmissionRepository modelingSubmissionRepository,
-            PlagiarismComparisonRepository plagiarismComparisonRepository) {
+            PlagiarismCasesService plagiarismCasesService) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
-        this.compassService = compassService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examSubmissionService = examSubmissionService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
-        this.plagiarismComparisonRepository = plagiarismComparisonRepository;
+        this.plagiarismCasesService = plagiarismCasesService;
     }
 
     /**
@@ -203,26 +201,11 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
         modelingExercise.setGradingCriteria(gradingCriteria);
-        var anonymize = false;
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToAssesExercise(modelingExercise, user, resultId)) {
             // request is made by student for plagiarism, make sure they are affected by this case:
-            withoutResults = true;
-            // Check if this text submission is for a plagiarism case and can therefore be retrieved by normal users
-            var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
-            // disallow requests from users who are not notified about this case:
-            boolean isUserNotified = false;
-            if (comparisonOptional.isPresent()) {
-                var comparisons = comparisonOptional.get();
-                isUserNotified = comparisons.stream().anyMatch(c -> (c.getNotificationA() != null && ((SingleUserNotification) c.getNotificationA()).getRecipient().equals(user)
-                        || c.getNotificationB() != null && ((SingleUserNotification) c.getNotificationB()).getRecipient().equals(user)));
-            }
-            if (!isUserNotified) {
-                return forbidden();
-            }
-            // anonymize for plagiarism assessment:
-            anonymize = true;
+            plagiarismCasesService.anonymizeSubmissionForStudentOrThrow(modelingSubmission, user);
         }
 
         if (!withoutResults) {
@@ -254,11 +237,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         if (!withoutResults) {
             modelingSubmission.removeNotNeededResults(correctionRound, resultId);
         }
-        if (anonymize) {
-            modelingSubmission.setParticipation(null);
-            modelingSubmission.setSubmissionDate(null);
-        }
-
         return ResponseEntity.ok(modelingSubmission);
     }
 

@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCasesService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -61,13 +62,13 @@ public class TextSubmissionResource {
 
     private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
 
-    private final PlagiarismComparisonRepository plagiarismComparisonRepository;
+    private final PlagiarismCasesService plagiarismCasesService;
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository, TextExerciseRepository textExerciseRepository,
-            AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
-            GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, Optional<AtheneScheduleService> atheneScheduleService,
-            ExamSubmissionService examSubmissionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider,
-            PlagiarismComparisonRepository plagiarismComparisonRepository) {
+                                  AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
+                                  GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, Optional<AtheneScheduleService> atheneScheduleService,
+                                  ExamSubmissionService examSubmissionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider,
+                                  PlagiarismCasesService plagiarismCasesService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
         this.textExerciseRepository = textExerciseRepository;
@@ -79,7 +80,7 @@ public class TextSubmissionResource {
         this.textAssessmentService = textAssessmentService;
         this.examSubmissionService = examSubmissionService;
         this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
-        this.plagiarismComparisonRepository = plagiarismComparisonRepository;
+        this.plagiarismCasesService = plagiarismCasesService;
     }
 
     /**
@@ -173,23 +174,8 @@ public class TextSubmissionResource {
         }
         final var textSubmission = optionalTextSubmission.get();
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
-            var user = userRepository.getUser();
-            // Check if this text submission is for a plagiarism case and can therefore be retrieved by normal users
-            var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
-            // disallow requests from users who are not notified about this case:
-            boolean isUserNotified = false;
-            if (comparisonOptional.isPresent()) {
-                var comparisons = comparisonOptional.get();
-                isUserNotified = comparisons.stream().anyMatch(c -> (c.getNotificationA() != null && ((SingleUserNotification) c.getNotificationA()).getRecipient().equals(user)
-                        || c.getNotificationB() != null && ((SingleUserNotification) c.getNotificationB()).getRecipient().equals(user)));
-            }
-            if (!isUserNotified) {
-                return forbidden();
-            }
-            // we are a student notified about plagiarism, anonymize:
-            textSubmission.setParticipation(null);
-            textSubmission.setResults(null);
-            textSubmission.setSubmissionDate(null);
+            // anonymize and throw exception if not authorized to view submission
+            plagiarismCasesService.anonymizeSubmissionForStudentOrThrow(textSubmission, userRepository.getUser());
         }
 
         // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
