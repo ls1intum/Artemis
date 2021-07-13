@@ -8,12 +8,12 @@
             </h4>
         </div>
         <div class="col-12 col-sm-auto d-flex">
-            <button
+            <a
                 *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
                 class="btn btn-primary"
                 (click)="navigateToExampleSubmission('new')"
                 jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"
-            ></button>
+            ></a>
         </div>
     </div>
     <jhi-alert></jhi-alert>
@@ -32,22 +32,14 @@
             <tbody class="markdown-preview">
                 <tr *ngFor="let exampleSubmission of exercise.exampleSubmissions; let i = index">
                     <td>
-                        <button
-                            *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
-                            (click)="navigateToExampleSubmission(exampleSubmission.id!)"
-                            class="btn-link"
-                        >
+                        <a *ngIf="exercise && exercise.id && exercise.course && exercise.course.id" (click)="navigateToExampleSubmission(exampleSubmission.id!)" class="btn-link">
                             {{ exampleSubmission.id }}
-                        </button>
+                        </a>
                     </td>
                     <td>
-                        <button
-                            *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
-                            (click)="navigateToExampleSubmission(exampleSubmission.id!)"
-                            class="btn-link"
-                        >
+                        <a *ngIf="exercise && exercise.id && exercise.course && exercise.course.id" (click)="navigateToExampleSubmission(exampleSubmission.id!)" class="btn-link">
                             {{ 'artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate }} {{ i + 1 }}
-                        </button>
+                        </a>
                     </td>
                     <td>{{ exampleSubmission.usedForTutorial ? 'Yes' : 'No' }}</td>
                     <td>

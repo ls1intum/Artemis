@@ -50,6 +50,21 @@ export class ExampleSubmissionsComponent implements OnInit {
      * @param id id of the submission or new for a new submission
      */
     navigateToExampleSubmission(id: number | 'new') {
-        this.router.navigate([id], { relativeTo: this.activatedRoute });
+        if (!this.exercise.exerciseGroup) {
+            this.router.navigate(['/course-management', this.exercise.course!.id, this.exercise.type + '-exercises', this.exercise.id, 'example-submissions', id]);
+        } else {
+            this.router.navigate([
+                '/course-management',
+                this.exercise.course!.id,
+                'exams',
+                this.exercise.exerciseGroup!.exam!.id,
+                'exercise-groups',
+                this.exercise.exerciseGroup!.id,
+                this.exercise.type + '-exercises',
+                this.exercise.id,
+                'example-submissions',
+                id,
+            ]);
+        }
     }
 }
