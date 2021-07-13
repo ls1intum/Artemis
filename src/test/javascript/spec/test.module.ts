@@ -21,6 +21,7 @@ import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
 import * as moment from 'moment';
 import { MockComponent } from 'ng-mocks';
 import { MockAlertService } from './helpers/mocks/service/mock-alert.service';
+import { MockSyncStorage } from './helpers/mocks/service/mock-sync-storage.service';
 
 @NgModule({
     imports: [HttpClientTestingModule, FontAwesomeModule],
@@ -74,6 +75,8 @@ import { MockAlertService } from './helpers/mocks/service/mock-alert.service';
             provide: NgbModal,
             useValue: null,
         },
+        { provide: LocalStorageService, useClass: MockSyncStorage },
+        { provide: SessionStorageService, useClass: MockSyncStorage },
     ],
     declarations: [MockComponent(FaIconComponent)],
     exports: [MockComponent(FaIconComponent)],
