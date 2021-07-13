@@ -21,6 +21,7 @@
 <div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam">
     <jhi-exam-points-summary [exercises]="studentExam.exercises" [exam]="studentExam.exam" [courseId]="courseId"></jhi-exam-points-summary>
 </div>
+<jhi-alert></jhi-alert>
 <h4 class="mb-0">{{ 'artemisApp.exam.exercises' | artemisTranslate }}</h4>
 <div *ngFor="let exercise of studentExam.exercises; let i = index">
     <div class="question card">
