@@ -17,6 +17,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PostingsButtonComponent } from 'app/overview/postings/postings-button/postings-button.component';
+import { PostingsMarkdownEditorComponent } from 'app/overview/postings/postings-markdown-editor/postings-markdown-editor.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -75,6 +76,7 @@ describe('PostComponent', () => {
                 MockDirective(PostVotesComponent),
                 MockDirective(NgbTooltip),
                 MockDirective(PostingsButtonComponent),
+                MockDirective(PostingsMarkdownEditorComponent),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
                 // Don't mock this since we want to test this pipe, too
@@ -105,9 +107,9 @@ describe('PostComponent', () => {
     it('should toggle edit mode and reset editor Text', () => {
         component.post = post;
         component.isEditMode = true;
-        component.editText = 'test';
+        component.content = 'test';
         component.toggleEditMode();
-        expect(component.editText).to.deep.equal('post');
+        expect(component.content).to.deep.equal('post');
         expect(component.isEditMode).to.be.false;
         component.toggleEditMode();
         expect(component.isEditMode).to.be.true;
@@ -116,7 +118,7 @@ describe('PostComponent', () => {
     it('should update content', () => {
         component.post = post;
         component.isEditMode = true;
-        component.editText = 'test';
+        component.content = 'test';
         component.savePost();
         expect(component.post.content).to.deep.equal('test');
     });

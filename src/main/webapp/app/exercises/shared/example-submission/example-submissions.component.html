@@ -11,10 +11,9 @@
             <a
                 *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
                 class="btn btn-primary"
-                [routerLink]="['/course-management', exercise.course.id, exercise.type + '-exercises', exercise.id, 'example-submissions', 'new']"
+                [routerLink]="getLinkToExampleSubmission('new')"
                 jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"
-            >
-            </a>
+            ></a>
         </div>
     </div>
     <jhi-alert></jhi-alert>
@@ -35,20 +34,20 @@
                     <td>
                         <a
                             *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
-                            [routerLink]="['/course-management', exercise.course.id, exercise.type + '-exercises', exercise.id, 'example-submissions', exampleSubmission.id]"
+                            [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)"
                             class="btn-link"
                         >
-                            {{ exampleSubmission.id }}</a
-                        >
+                            {{ exampleSubmission.id }}
+                        </a>
                     </td>
                     <td>
                         <a
                             *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
-                            [routerLink]="['/course-management', exercise.course.id, exercise.type + '-exercises', exercise.id, 'example-submissions', exampleSubmission.id]"
+                            [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)"
                             class="btn-link"
                         >
-                            {{ 'artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate }} {{ i + 1 }}</a
-                        >
+                            {{ 'artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate }} {{ i + 1 }}
+                        </a>
                     </td>
                     <td>{{ exampleSubmission.usedForTutorial ? 'Yes' : 'No' }}</td>
                     <td>
