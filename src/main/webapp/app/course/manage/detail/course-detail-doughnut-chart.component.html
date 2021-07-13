@@ -1,5 +1,5 @@
 <div class="doughnut mx-3">
-    <a *ngIf="titleLink" [routerLink]="['/course-management', courseId, titleLink]">
+    <a *ngIf="titleLink" [routerLink]="['/course-management', course.id, titleLink]">
         <h4 class="text-center">{{ 'artemisApp.course.detail.' + doughnutChartTitle + 'Title' | artemisTranslate }}</h4>
     </a>
     <h4 *ngIf="!titleLink" class="text-center">{{ 'artemisApp.course.detail.' + doughnutChartTitle + 'Title' | artemisTranslate }}</h4>

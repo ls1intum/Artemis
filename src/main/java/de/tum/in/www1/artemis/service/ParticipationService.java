@@ -577,8 +577,7 @@ public class ParticipationService {
         StudentParticipation participation = studentParticipationRepository.findWithEagerLegalSubmissionsResultsFeedbacksById(participationId).get();
         log.info("Request to delete Participation : {}", participation);
 
-        if (participation instanceof ProgrammingExerciseStudentParticipation) {
-            ProgrammingExerciseStudentParticipation programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) participation;
+        if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseParticipation) {
             var repositoryUrl = programmingExerciseParticipation.getVcsRepositoryUrl();
             String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
 

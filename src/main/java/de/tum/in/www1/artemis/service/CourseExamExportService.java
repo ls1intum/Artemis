@@ -214,7 +214,7 @@ public class CourseExamExportService {
         exportedFiles.addAll(new ArrayList<>(exportedExercises));
 
         // Add total to report
-        reportData.add(new ArchivalReportEntry(-1, "Total Exercises", totalExercises, exportedFiles.size()));
+        reportData.add(new ArchivalReportEntry(null, "Total Exercises", totalExercises, exportedFiles.size(), 0));
 
         return exportedFiles;
     }

@@ -198,7 +198,7 @@ describe('Participation Service', () => {
 
         const expected = Object.assign({}, returnedFromService);
         service
-            .update(expected)
+            .update(1, expected)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'PUT' });

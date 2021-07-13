@@ -41,3 +41,13 @@ Main page styles
 .btn-space {
     margin-right: 5px;
 }
+
+@media (max-width: 768px) {
+    .col-md-8 {
+        width: 100% !important;
+    }
+
+    .col-md-6 {
+        width: 100% !important;
+    }
+}

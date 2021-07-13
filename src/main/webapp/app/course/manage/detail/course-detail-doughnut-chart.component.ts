@@ -4,6 +4,7 @@ import { ChartType } from 'chart.js';
 import { round } from 'app/shared/util/utils';
 import { DoughnutChartType } from './course-detail.component';
 import { Router } from '@angular/router';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-course-detail-doughnut-chart',
@@ -11,11 +12,11 @@ import { Router } from '@angular/router';
     styleUrls: ['./course-detail-doughnut-chart.component.scss'],
 })
 export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
-    @Input() courseId: number;
     @Input() contentType: DoughnutChartType;
     @Input() currentPercentage: number | undefined;
     @Input() currentAbsolute: number | undefined;
     @Input() currentMax: number | undefined;
+    @Input() course: Course;
 
     receivedStats = false;
     doughnutChartTitle: string;
@@ -81,7 +82,10 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
                 break;
             case DoughnutChartType.AVERAGE_COURSE_SCORE:
                 this.doughnutChartTitle = 'averageStudentScore';
-                this.titleLink = 'scores';
+                this.titleLink = undefined;
+                if (this.course.isAtLeastInstructor) {
+                    this.titleLink = 'scores';
+                }
                 break;
             default:
                 this.doughnutChartTitle = '';
@@ -93,8 +97,8 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
      * handles clicks onto the graph, which then redirects the user to the corresponding page, e.g. complaints page for the complaints chart
      */
     openCorrespondingPage() {
-        if (this.courseId && this.titleLink) {
-            this.router.navigate(['/course-management', this.courseId, this.titleLink]);
+        if (this.course.id && this.titleLink) {
+            this.router.navigate(['/course-management', this.course.id, this.titleLink]);
         }
     }
 }

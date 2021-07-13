@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import * as moment from 'moment';
@@ -12,6 +12,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-complaint-list',
@@ -93,7 +94,7 @@ export class ListOfComplaintsComponent implements OnInit {
                     this.hasStudentInformation = true;
                 }
             },
-            () => this.onError(),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             () => (this.loading = false),
         );
     }
@@ -117,10 +118,6 @@ export class ListOfComplaintsComponent implements OnInit {
         }
         const url = [`/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/assessment`];
         this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
-    }
-
-    private onError() {
-        this.jhiAlertService.error('error.http.400');
     }
 
     sortRows() {

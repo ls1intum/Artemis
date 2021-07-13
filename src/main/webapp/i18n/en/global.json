@@ -278,7 +278,8 @@
             "pattern": "This field must fulfill the pattern {{ pattern }}.",
             "number": "This field must be a number.",
             "datetimelocal": "This field must be a date and time.",
-            "patternLogin": "This field may only contain letters, digits and e-mail addresses."
+            "patternLogin": "This field may only contain letters, digits and e-mail addresses.",
+            "invalidPattern": "This field contains an invalid e-mail pattern."
         }
     },
     "error": {

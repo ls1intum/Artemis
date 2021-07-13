@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -104,6 +105,11 @@ public class Course extends DomainObject {
     @Column(name = "posts_enabled")
     @JsonView(QuizView.Before.class)
     private boolean postsEnabled;
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("course")
+    private Set<Post> posts = new HashSet<>();
 
     @Column(name = "max_request_more_feedback_time_days")
     @JsonView(QuizView.Before.class)
@@ -335,6 +341,14 @@ public class Course extends DomainObject {
 
     public void setPostsEnabled(boolean postsEnabled) {
         this.postsEnabled = postsEnabled;
+    }
+
+    public Set<Post> getPosts() {
+        return posts;
+    }
+
+    public void setPosts(Set<Post> posts) {
+        this.posts = posts;
     }
 
     public boolean getRequestMoreFeedbackEnabled() {

@@ -83,6 +83,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     private String validModel;
 
+    private String validSameModel;
+
     private TextExercise textExercise;
 
     private Course course;
@@ -101,6 +103,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
         emptyModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
         validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        validSameModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727-copy.json");
         submittedSubmission = generateSubmittedSubmission();
         unsubmittedSubmission = generateUnsubmittedSubmission();
 
@@ -454,6 +457,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     public void getModelSubmissionWithoutAssessment() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmission(classExercise, submission, "student1");
+
         database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         ModelingSubmission storedSubmission = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
@@ -465,6 +469,26 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results");
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getModelSubmissionWithSimilarElements() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmission(classExercise, submission, "student1");
+        ModelingSubmission submission2 = ModelFactory.generateModelingSubmission(validSameModel, true);
+        database.addModelingSubmission(classExercise, submission2, "student2");
+
+        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        compassService.build(classExercise);
+
+        ModelingSubmission storedSubmission = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment?lock=true", HttpStatus.OK,
+                ModelingSubmission.class);
+
+        assertThat(storedSubmission).as("submission was found").isNotNull();
+        assertThat(storedSubmission.getSimilarElements()).as("similarity count is set").isNotNull();
+        assertThat(storedSubmission.getSimilarElements().size()).as("similarity count is set").isEqualTo(10);
     }
 
     @Test
@@ -487,7 +511,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         // set dates to UTC and round to milliseconds for comparison
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results");
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results", "similarElementCounts");
         assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);
@@ -720,6 +744,26 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         studentParticipationRepository.saveAndFlush(afterDueDateParticipation);
 
         request.postWithoutLocation("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK, null);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void saveExercise_beforeDueDate() throws Exception {
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", unsubmittedSubmission,
+                ModelingSubmission.class, HttpStatus.OK);
+        assertThat(storedSubmission.isSubmitted()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void saveExercise_afterDueDateWithParticipationStartAfterDueDate() throws Exception {
+        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
+        studentParticipationRepository.saveAndFlush(afterDueDateParticipation);
+
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", unsubmittedSubmission,
+                ModelingSubmission.class, HttpStatus.OK);
+        assertThat(storedSubmission.isSubmitted()).isFalse();
     }
 
     private void checkDetailsHidden(ModelingSubmission submission, boolean isStudent) {

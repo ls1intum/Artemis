@@ -247,7 +247,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(modelingExercise);
         modelingSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
-
+        modelingSubmissionService.setNumberOfAffectedSubmissionsPerElement(modelingSubmission);
         // prepare modelingSubmission for response
         modelingSubmissionService.hideDetails(modelingSubmission, user);
         // Don't remove results when they were not requested in the first place

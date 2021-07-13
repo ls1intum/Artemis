@@ -1,4 +1,4 @@
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -15,7 +15,7 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import * as moment from 'moment';
-import { navigateBack } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -51,12 +51,12 @@ export class CourseUpdateComponent implements OnInit {
     constructor(
         private courseService: CourseManagementService,
         private activatedRoute: ActivatedRoute,
-        private router: Router,
         private fileUploaderService: FileUploaderService,
         private jhiAlertService: JhiAlertService,
         private profileService: ProfileService,
         private organizationService: OrganizationManagementService,
         private modalService: NgbModal,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     ngOnInit() {
@@ -164,11 +164,7 @@ export class CourseUpdateComponent implements OnInit {
      * Returns to the overview page if there is no previous state and we created a new course
      */
     previousState() {
-        if (this.course.id) {
-            navigateBack(this.router, ['course-management', this.course.id!.toString()]);
-        } else {
-            navigateBack(this.router, ['course-management']);
-        }
+        this.navigationUtilService.navigateBackWithOptional(['course-management'], this.course.id?.toString());
     }
 
     /**

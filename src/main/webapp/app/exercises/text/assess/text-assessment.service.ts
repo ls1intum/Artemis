@@ -37,7 +37,7 @@ export class TextAssessmentService {
     public save(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
-            .put<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/assessment`, body, { observe: 'response' })
+            .put<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/text-assessment`, body, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
 
@@ -95,15 +95,16 @@ export class TextAssessmentService {
 
     /**
      * Deletes an assessment.
+     * @param participationId id of the participation, to which the assessment and the submission belong to
      * @param submissionId id of the submission, to which the assessment belongs to
      * @param resultId     id of the result which is deleted
      */
-    deleteAssessment(submissionId: number, resultId: number): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/text-submissions/${submissionId}/delete/${resultId}`);
+    deleteAssessment(participationId: number, submissionId: number, resultId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/participations/${participationId}/text-submissions/${submissionId}/results/${resultId}`);
     }
 
     /**
-     * Get all feedback items for a submission.
+     * @param participationId id of the participation the submission belongs to
      * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
      * @param correctionRound
      * @param resultId instructors can results by id

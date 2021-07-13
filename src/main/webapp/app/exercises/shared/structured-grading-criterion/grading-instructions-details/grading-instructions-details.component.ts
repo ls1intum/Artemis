@@ -351,18 +351,22 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     resetInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
         const criterionIndex = this.findCriterionIndex(criterion, this.exercise);
         const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
+        const instructionIndex = this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
+        let backupInstructionIndex = undefined;
 
         if (backupCriterionIndex >= 0) {
-            const instructionIndex = this.findInstructionIndex(instruction, this.exercise, criterionIndex);
-            const backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriterionIndex);
+            backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriterionIndex);
 
-            if (backupInstructionIndex >= 0) {
+            if (backupInstructionIndex != undefined && backupInstructionIndex >= 0) {
                 this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions![instructionIndex] = cloneDeep(
                     this.backupExercise.gradingCriteria![backupCriterionIndex].structuredGradingInstructions![backupInstructionIndex],
                 );
-                this.initializeMarkdown();
             }
         }
+        if (backupCriterionIndex < 0 || backupInstructionIndex == undefined || backupInstructionIndex < 0) {
+            this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions![instructionIndex] = new GradingInstruction();
+        }
+        this.initializeMarkdown();
     }
 
     findCriterionIndex(criterion: GradingCriterion, exercise: Exercise) {
@@ -372,8 +376,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     findInstructionIndex(instruction: GradingInstruction, exercise: Exercise, criterionIndex: number) {
-        return exercise.gradingCriteria![criterionIndex].structuredGradingInstructions?.findIndex((sgi) => {
-            return sgi.id === instruction.id;
+        return exercise.gradingCriteria![criterionIndex].structuredGradingInstructions?.findIndex((gradingInstruction) => {
+            return gradingInstruction.id === instruction.id;
         });
     }
 
@@ -441,6 +445,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
         if (backupCriterionIndex >= 0) {
             this.exercise.gradingCriteria![criterionIndex].title = cloneDeep(this.backupExercise.gradingCriteria![backupCriterionIndex].title);
+        } else {
+            criterion.title = '';
         }
     }
 

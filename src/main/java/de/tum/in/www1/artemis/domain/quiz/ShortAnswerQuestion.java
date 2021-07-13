@@ -193,8 +193,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
      */
     @Override
     public void undoUnallowedChanges(QuizQuestion originalQuizQuestion) {
-        if (originalQuizQuestion instanceof ShortAnswerQuestion) {
-            ShortAnswerQuestion shortAnswerOriginalQuestion = (ShortAnswerQuestion) originalQuizQuestion;
+        if (originalQuizQuestion instanceof ShortAnswerQuestion shortAnswerOriginalQuestion) {
             undoUnallowedSpotChanges(shortAnswerOriginalQuestion);
             checkInvalidSolutions(shortAnswerOriginalQuestion);
         }
@@ -251,8 +250,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
 
     @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
-        if (originalQuizQuestion instanceof ShortAnswerQuestion) {
-            ShortAnswerQuestion shortAnswerOriginalQuestion = (ShortAnswerQuestion) originalQuizQuestion;
+        if (originalQuizQuestion instanceof ShortAnswerQuestion shortAnswerOriginalQuestion) {
             return checkSolutionsIfRecalculationIsNecessary(shortAnswerOriginalQuestion) || checkSpotsIfRecalculationIsNecessary(shortAnswerOriginalQuestion)
                     || !getCorrectMappings().equals(shortAnswerOriginalQuestion.getCorrectMappings());
         }

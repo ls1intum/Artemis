@@ -926,7 +926,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         Result lastResult = submission.getLatestResult();
         // we will only delete the middle automatic result at index 2
-        request.delete("/api/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/delete/" + midResult.getId(),
+        request.delete("/api/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/" + midResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
         assertThat(submission.getResults().size()).isEqualTo(4);

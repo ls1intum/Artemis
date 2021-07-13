@@ -2,10 +2,11 @@ package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,27 +17,52 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
-import de.tum.in.www1.artemis.repository.metis.PostRepository;
 
 public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    private PostRepository postRepository;
-
-    @Autowired
     private AnswerPostRepository answerPostRepository;
 
-    @Autowired
-    private LectureRepository lectureRepository;
+    private List<Post> existingPostsWithAnswers;
+
+    private List<Post> existingPostsWithAnswersInExercise;
+
+    private List<Post> existingPostsWithAnswersInLecture;
+
+    private List<Post> existingPostsWithAnswersCourseWide;
+
+    private List<AnswerPost> existingAnswerPosts;
+
+    private Long courseId;
 
     @BeforeEach
     public void initTestCase() {
+
         database.addUsers(5, 5, 0, 1);
+
+        // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
+        // student1)
+        existingPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse().stream().filter(coursePost -> (coursePost.getAnswers() != null)).collect(Collectors.toList());
+
+        // get all answerPosts
+        existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).collect(Collectors.toList());
+
+        // get all existing posts with answers in exercise context
+        existingPostsWithAnswersInExercise = existingPostsWithAnswers.stream().filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getExercise() != null)
+                .collect(Collectors.toList());
+
+        // get all existing posts with answers in lecture context
+        existingPostsWithAnswersInLecture = existingPostsWithAnswers.stream().filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getLecture() != null)
+                .collect(Collectors.toList());
+
+        // get all existing posts with answers in lecture context
+        existingPostsWithAnswersCourseWide = existingPostsWithAnswers.stream().filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getCourseWideContext() != null)
+                .collect(Collectors.toList());
+
+        courseId = existingPostsWithAnswers.get(0).getCourse().getId();
     }
 
     @AfterEach
@@ -44,332 +70,249 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.resetDatabase();
     }
 
+    // CREATE
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCreateAnswerPostInLecture() throws Exception {
+        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
+
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        // should not be automatically approved
+        assertThat(createdAnswerPost.isTutorApproved()).isFalse();
+        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
+        assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCreateAnswerPostInExercise() throws Exception {
+        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
+
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        // should not be automatically approved
+        assertThat(createdAnswerPost.isTutorApproved()).isFalse();
+        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
+        assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCreateAnswerPostCourseWide() throws Exception {
+        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
+
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        // should not be automatically approved
+        assertThat(createdAnswerPost.isTutorApproved()).isFalse();
+        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
+        assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
+    }
+
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateAnswerPostAsInstructor() throws Exception {
-        Post post = database.createCourseWithExerciseAndPosts().get(0);
+    public void testCreateAnswerPostInLecture_asInstructor() throws Exception {
+        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
 
-        AnswerPost answerPost = new AnswerPost();
-        answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("instructor1"));
-        answerPost.setContent("Test Answer");
-        answerPost.setCreationDate(ZonedDateTime.now());
-        answerPost.setPost(post);
-        AnswerPost response = request.postWithResponseBody("/api/courses/" + post.getCourse().getId() + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.CREATED);
-
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
         // should be automatically approved
-        assertThat(response.isTutorApproved()).isTrue();
-        // trying to create same answerPost again --> bad request
-        request.postWithResponseBody("/api/courses/" + post.getCourse().getId() + "/answer-posts", response, AnswerPost.class, HttpStatus.BAD_REQUEST);
+        assertThat(createdAnswerPost.isTutorApproved()).isTrue();
+        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
+        assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateAnswerPostWithWrongCourseId() throws Exception {
-        Post post = database.createCourseWithExerciseAndPosts().get(0);
-        Course courseDummy = database.createCourse();
+    public void testCreateAnswerPostInExercise_asInstructor() throws Exception {
+        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
 
-        AnswerPost answerPost = new AnswerPost();
-        answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("instructor1"));
-        answerPost.setContent("Test Answer");
-        answerPost.setCreationDate(ZonedDateTime.now());
-        answerPost.setPost(post);
-
-        AnswerPost response = request.postWithResponseBody("/api/courses/" + courseDummy.getId() + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.BAD_REQUEST);
-
-        assertThat(response).isNull();
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        // should be automatically approved
+        assertThat(createdAnswerPost.isTutorApproved()).isTrue();
+        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
+        assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateAnswerPostWithLectureNotNullAndExerciseNull() throws Exception {
-        List<Post> posts = database.createCourseWithExerciseAndLectureAndPosts();
-        Post post = posts.get(0);
-        AnswerPost answerPost = new AnswerPost();
-        answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("instructor1"));
-        answerPost.setContent("Test Answer");
-        answerPost.setCreationDate(ZonedDateTime.now());
-        answerPost.setPost(post);
-        Lecture lecture = new Lecture();
-        lecture.setCourse(post.getCourse());
-        // this basically moves the post from the exercise to the lecture
-        post.setLecture(lecture);
-        post.setExercise(null);
-        lectureRepository.save(lecture);
-        postRepository.save(post);
-        // remove some values not required for the json
-        var course = post.getCourse();
-        course.setExercises(Set.of());
-        course.setLectures(Set.of());
-        AnswerPost response = request.postWithResponseBody("/api/courses/" + course.getId() + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.CREATED);
-        assertThat(response).isNotNull();
-    }
+    public void testCreateAnswerPostCourseWide_asInstructor() throws Exception {
+        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testCreateAnswerPost_asTA() throws Exception {
-        Post post = database.createCourseWithExerciseAndPosts().get(0);
-
-        AnswerPost answerPost = new AnswerPost();
-        answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("tutor1"));
-        answerPost.setContent("Test Answer");
-        answerPost.setCreationDate(ZonedDateTime.now());
-        answerPost.setPost(post);
-        AnswerPost response = request.postWithResponseBody("/api/courses/" + post.getCourse().getId() + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.CREATED);
-
-        // shouldn't be automatically approved
-        assertThat(response.isTutorApproved()).isFalse();
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        // should be automatically approved
+        assertThat(createdAnswerPost.isTutorApproved()).isTrue();
+        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
+        assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateAnswerPost_asStudent() throws Exception {
-        Post post = database.createCourseWithExerciseAndPosts().get(0);
-
-        AnswerPost answerPost = new AnswerPost();
-        answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
-        answerPost.setContent("Test Answer");
-        answerPost.setCreationDate(ZonedDateTime.now());
-        answerPost.setPost(post);
-        AnswerPost response = request.postWithResponseBody("/api/courses/" + post.getCourse().getId() + "/answer-posts", answerPost, AnswerPost.class, HttpStatus.CREATED);
-
-        // shouldn't be automatically approved
-        assertThat(response.isTutorApproved()).isFalse();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testEditAnswerPost_asInstructor() throws Exception {
-        AnswerPost answerPost = createAnswerPostsOnServer().get(0);
-
-        answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("tutor2"));
-        answerPost.setContent("New Answer Text");
-        answerPost.setCreationDate(ZonedDateTime.now().minusHours(1));
-        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + answerPost.getPost().getCourse().getId() + "/answer-posts", answerPost, AnswerPost.class,
-                HttpStatus.OK);
-        assertThat(updatedAnswerPostServer).isEqualTo(answerPost);
-
-        // try to update answer which is not yet on the server (no id) --> bad request
-        AnswerPost newAnswerPost = new AnswerPost();
-        AnswerPost newAnswerPostServer = request.putWithResponseBody("/api/courses/" + answerPost.getPost().getCourse().getId() + "/answer-posts", newAnswerPost, AnswerPost.class,
-                HttpStatus.BAD_REQUEST);
-        assertThat(newAnswerPostServer).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testEditAnswerPostWithWrongCourseId() throws Exception {
-        AnswerPost answerPost = createAnswerPostsOnServer().get(0);
-        Course courseDummy = database.createCourse();
-
-        answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("tutor2"));
-        answerPost.setContent("New Answer Text");
-        answerPost.setCreationDate(ZonedDateTime.now().minusHours(1));
-        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + courseDummy.getId() + "/answer-posts", answerPost, AnswerPost.class,
-                HttpStatus.BAD_REQUEST);
-        assertThat(updatedAnswerPostServer).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testEditAnswerPost_asTA() throws Exception {
-        List<AnswerPost> answers = createAnswerPostsOnServer();
-        AnswerPost answerPost_tutor1 = answers.get(0);
-        AnswerPost answerPost_tutor2 = answers.get(1);
-        AnswerPost answerPost_student1 = answers.get(2);
-
-        // edit own answer --> OK
-        answerPost_tutor1.setContent("New Answer Text");
-        answerPost_tutor1.setCreationDate(ZonedDateTime.now().minusHours(1));
-        AnswerPost updatedAnswerPostServer1 = request.putWithResponseBody("/api/courses/" + answerPost_tutor1.getPost().getCourse().getId() + "/answer-posts", answerPost_tutor1,
-                AnswerPost.class, HttpStatus.OK);
-        assertThat(updatedAnswerPostServer1).isEqualTo(answerPost_tutor1);
-
-        // edit answer of other TA --> OK
-        answerPost_tutor2.setContent("New Answer Text");
-        answerPost_tutor2.setCreationDate(ZonedDateTime.now().minusHours(1));
-        AnswerPost updatedAnswerPostServer2 = request.putWithResponseBody("/api/courses/" + answerPost_tutor2.getPost().getCourse().getId() + "/answer-posts", answerPost_tutor2,
-                AnswerPost.class, HttpStatus.OK);
-        assertThat(updatedAnswerPostServer2).isEqualTo(answerPost_tutor2);
-
-        // edit answer of other student --> OK
-        answerPost_student1.setContent("New Answer Text");
-        answerPost_student1.setCreationDate(ZonedDateTime.now().minusHours(1));
-        AnswerPost updatedAnswerPostServer3 = request.putWithResponseBody("/api/courses/" + answerPost_student1.getPost().getCourse().getId() + "/answer-posts",
-                answerPost_student1, AnswerPost.class, HttpStatus.OK);
-        assertThat(updatedAnswerPostServer3).isEqualTo(answerPost_student1);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testEditAnswerPost_asStudent() throws Exception {
-        List<AnswerPost> answers = createAnswerPostsOnServer();
-        AnswerPost answerPost_tutor1 = answers.get(0);
-        AnswerPost answerPost_student1 = answers.get(2);
-
-        // update own answer --> OK
-        answerPost_student1.setContent("New Answer Text");
-        answerPost_student1.setCreationDate(ZonedDateTime.now().minusHours(1));
-        AnswerPost updatedAnswerPostServer1 = request.putWithResponseBody("/api/courses/" + answerPost_student1.getPost().getCourse().getId() + "/answer-posts",
-                answerPost_student1, AnswerPost.class, HttpStatus.OK);
-        assertThat(updatedAnswerPostServer1).isEqualTo(answerPost_student1);
-
-        // update answer of other user --> forbidden
-        answerPost_tutor1.setContent("New Answer Text");
-        answerPost_tutor1.setCreationDate(ZonedDateTime.now().minusHours(1));
-        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + answerPost_tutor1.getPost().getCourse().getId() + "/answer-posts", answerPost_tutor1,
-                AnswerPost.class, HttpStatus.FORBIDDEN);
-        assertThat(updatedAnswerPostServer).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteAnswerPost_asInstructor() throws Exception {
-        List<AnswerPost> answers = createAnswerPostsOnServer();
-        AnswerPost answerPost_tutor1 = answers.get(0);
-        AnswerPost answerPost_tutor2 = answers.get(1);
-
-        request.delete("/api/courses/" + answerPost_tutor1.getPost().getCourse().getId() + "/answer-posts/" + answerPost_tutor1.getId(), HttpStatus.OK);
-        assertThat(answerPostRepository.findById(answerPost_tutor1.getId())).isEmpty();
-
-        // try to delete not existing answer --> not found
-        request.delete("/api/courses/" + answerPost_tutor1.getPost().getCourse().getId() + "/answer-posts/999", HttpStatus.NOT_FOUND);
-
-        // delete answer without lecture id --> OK
-        Post post = answerPost_tutor2.getPost();
-        post.setLecture(null);
-        postRepository.save(post);
-        request.delete("/api/courses/" + answerPost_tutor2.getPost().getCourse().getId() + "/answer-posts/" + answerPost_tutor2.getId(), HttpStatus.OK);
-        assertThat(answerPostRepository.findById(answerPost_tutor2.getId())).isEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteAnswerPostWithWrongCourseId() throws Exception {
-        List<AnswerPost> answers = createAnswerPostsOnServer();
+    public void testCreateAnswerPostWithWrongCourseId_badRequest() throws Exception {
+        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
         Course dummyCourse = database.createCourse();
-        AnswerPost answerPost_tutor1 = answers.get(0);
 
-        request.delete("/api/courses/" + dummyCourse.getId() + "/answer-posts/" + answerPost_tutor1.getId(), HttpStatus.BAD_REQUEST);
-        assertThat(answerPostRepository.findById(answerPost_tutor1.getId())).isNotEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteAnswerPostWithLectureNotNullAndExerciseNull() throws Exception {
-        List<AnswerPost> answers = createAnswerPostsOnServer();
-        AnswerPost answerPost = answers.get(0);
-        Course course = answerPost.getPost().getCourse();
-        answerPost.getPost().setExercise(null);
-        Lecture notNullLecture = new Lecture();
-        notNullLecture.setCourse(course);
-        lectureRepository.save(notNullLecture);
-        answerPost.getPost().setLecture(notNullLecture);
-        postRepository.save(answerPost.getPost());
-
-        request.delete("/api/courses/" + course.getId() + "/answer-posts/" + answerPost.getId(), HttpStatus.OK);
-        assertThat(answerPostRepository.findById(answerPost.getId())).isEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteAnswerPostWithWithCourseNull() throws Exception {
-        List<AnswerPost> answers = createAnswerPostsOnServer();
-        AnswerPost answerPost = answers.get(0);
-        Course course = answerPost.getPost().getCourse();
-        answerPost.getPost().setExercise(null);
-        postRepository.save(answerPost.getPost());
-
-        request.delete("/api/courses/" + course.getId() + "/answer-posts/" + answerPost.getId(), HttpStatus.BAD_REQUEST);
-        assertThat(answerPostRepository.findById(answerPost.getId())).isNotEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testDeleteAnswerPost_AsTA() throws Exception {
-        List<AnswerPost> answers = createAnswerPostsOnServer();
-        AnswerPost answerPost_tutor1 = answers.get(0);
-        AnswerPost answerPost_student2 = answers.get(3);
-
-        // delete own answer --> OK
-        request.delete("/api/courses/" + answerPost_tutor1.getPost().getCourse().getId() + "/answer-posts/" + answerPost_tutor1.getId(), HttpStatus.OK);
-        assertThat(answerPostRepository.findById(answerPost_tutor1.getId())).isEmpty();
-
-        // delete answer of other student --> OK
-        request.delete("/api/courses/" + answerPost_student2.getPost().getCourse().getId() + "/answer-posts/" + answerPost_student2.getId(), HttpStatus.OK);
-        assertThat(answerPostRepository.findById(answerPost_student2.getId())).isEmpty();
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + dummyCourse.getId() + "/answer-posts", answerPostToSave, AnswerPost.class,
+                HttpStatus.BAD_REQUEST);
+        assertThat(createdAnswerPost).isNull();
+        assertThat(existingAnswerPosts.size()).isEqualTo(answerPostRepository.count());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testDeleteAnswerPost_AsStudent() throws Exception {
-        List<AnswerPost> answers = createAnswerPostsOnServer();
-        AnswerPost answerPost_student1 = answers.get(2);
-        AnswerPost answerPost_student2 = answers.get(3);
+    public void testCreateExistingAnswerPost_badRequest() throws Exception {
+        AnswerPost existingAnswerPostToSave = existingAnswerPosts.get(0);
 
-        // delete own answer --> OK
-        request.delete("/api/courses/" + answerPost_student1.getPost().getCourse().getId() + "/answer-posts/" + answerPost_student1.getId(), HttpStatus.OK);
-        assertThat(answerPostRepository.findById(answerPost_student1.getId())).isEmpty();
+        request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", existingAnswerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
+        assertThat(existingAnswerPosts.size()).isEqualTo(answerPostRepository.count());
+    }
 
-        // delete answer of other student --> forbidden
-        request.delete("/api/courses/" + answerPost_student2.getPost().getCourse().getId() + "/answer-posts/" + answerPost_student2.getId(), HttpStatus.FORBIDDEN);
-        assertThat(answerPostRepository.findById(answerPost_student2.getId())).isNotEmpty();
+    // UPDATE
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testEditAnswerPost_asTutor() throws Exception {
+        // update post of student1 (index 0)--> OK
+        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
+
+        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToUpdate, AnswerPost.class, HttpStatus.OK);
+        assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testEditAnswerPost_asStudent1() throws Exception {
+        // update own post (index 0)--> OK
+        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
+
+        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToUpdate, AnswerPost.class, HttpStatus.OK);
+        assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    public void testEditAnswerPost_asStudent2_forbidden() throws Exception {
+        // update post from another student (index 1)--> forbidden
+        AnswerPost answerPostNotToUpdate = editExistingAnswerPost(existingAnswerPosts.get(1));
+
+        AnswerPost notUpdatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostNotToUpdate, AnswerPost.class, HttpStatus.FORBIDDEN);
+        assertThat(notUpdatedAnswerPost).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testEditAnswerPostWithIdIsNull_badRequest() throws Exception {
+        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
+
+        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToUpdate, AnswerPost.class,
+                HttpStatus.BAD_REQUEST);
+        assertThat(updatedAnswerPostServer).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
+        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
+        Course dummyCourse = database.createCourse();
+
+        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/answer-posts", answerPostToUpdate, AnswerPost.class,
+                HttpStatus.BAD_REQUEST);
+        assertThat(updatedAnswerPostServer).isNull();
+    }
+
+    // DELETE
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testDeleteAnswerPosts_asStudent1() throws Exception {
+        // delete own post (index 0)--> OK
+        AnswerPost answerPostToDelete = existingAnswerPosts.get(0);
+
+        request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDelete.getId(), HttpStatus.OK);
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    public void testDeleteAnswerPosts_asStudent2_forbidden() throws Exception {
+        // delete post from another student (index 0) --> forbidden
+        AnswerPost answerPostToNotDelete = existingAnswerPosts.get(0);
+
+        request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.FORBIDDEN);
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDeleteAnswerPost_asTutor() throws Exception {
+        // delete post from another student (index 0) --> ok
+        AnswerPost answerPostToDelete = existingAnswerPosts.get(0);
+
+        request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDelete.getId(), HttpStatus.OK);
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDeleteAnswerPost_asTutor_notFound() throws Exception {
+        request.delete("/api/courses/" + courseId + "/answer-posts/" + 9999L, HttpStatus.NOT_FOUND);
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteWithWrongCourseId_badRequest() throws Exception {
+        AnswerPost answerPostToNotDelete = existingAnswerPosts.get(0);
+        Course dummyCourse = database.createCourse();
+
+        request.delete("/api/courses/" + dummyCourse.getId() + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.BAD_REQUEST);
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testToggleAnswerPostApproved() throws Exception {
-        List<AnswerPost> answers = createAnswerPostsOnServer();
-        AnswerPost answerPost = answers.get(0);
+        AnswerPost answerPostToApprove = existingAnswerPosts.get(0);
 
         // approve answer
-        answerPost.setTutorApproved(true);
-        AnswerPost updatedAnswerPost1 = request.putWithResponseBody("/api/courses/" + answerPost.getPost().getCourse().getId() + "/answer-posts", answerPost, AnswerPost.class,
-                HttpStatus.OK);
-        assertThat(updatedAnswerPost1).isEqualTo(answerPost);
+        answerPostToApprove.setTutorApproved(true);
+        AnswerPost approvedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToApprove, AnswerPost.class, HttpStatus.OK);
+        assertThat(approvedAnswerPost).isEqualTo(answerPostToApprove);
 
         // unapprove answer
-        answerPost.setTutorApproved(false);
-        AnswerPost updatedAnswerPost2 = request.putWithResponseBody("/api/courses/" + answerPost.getPost().getCourse().getId() + "/answer-posts", answerPost, AnswerPost.class,
-                HttpStatus.OK);
-        assertThat(updatedAnswerPost2).isEqualTo(answerPost);
+        approvedAnswerPost.setTutorApproved(false);
+        AnswerPost unapprovedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", approvedAnswerPost, AnswerPost.class, HttpStatus.OK);
+        assertThat(unapprovedAnswerPost).isEqualTo(answerPostToApprove);
     }
 
-    private List<AnswerPost> createAnswerPostsOnServer() {
-        Post post = database.createCourseWithExerciseAndPosts().get(0);
-        List<AnswerPost> answers = new ArrayList<>();
+    // HELPER METHODS
 
+    private AnswerPost createAnswerPost(Post post) {
         AnswerPost answerPost = new AnswerPost();
-        answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("tutor1"));
-        answerPost.setContent("Test Answer");
-        answerPost.setCreationDate(ZonedDateTime.now());
+        answerPost.setContent("Content Answer Post");
+        answerPost.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
         answerPost.setPost(post);
-        answerPostRepository.save(answerPost);
-        answers.add(answerPost);
+        post.addAnswerPost(answerPost);
+        return answerPost;
+    }
 
-        AnswerPost answerPost1 = new AnswerPost();
-        answerPost1.setAuthor(database.getUserByLoginWithoutAuthorities("tutor2"));
-        answerPost1.setContent("Test Answer");
-        answerPost1.setCreationDate(ZonedDateTime.now());
-        answerPost1.setPost(post);
-        answerPostRepository.save(answerPost1);
-        answers.add(answerPost1);
+    private AnswerPost editExistingAnswerPost(AnswerPost answerPostToUpdate) {
+        answerPostToUpdate.setContent("New Test Answer Post");
+        return answerPostToUpdate;
+    }
 
-        AnswerPost answerPost2 = new AnswerPost();
-        answerPost2.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
-        answerPost2.setContent("Test Answer");
-        answerPost2.setCreationDate(ZonedDateTime.now());
-        answerPost2.setPost(post);
-        answerPostRepository.save(answerPost2);
-        answers.add(answerPost2);
+    private void checkCreatedAnswerPost(AnswerPost expectedAnswerPost, AnswerPost createdAnswerPost) {
+        // check if answerPost was created with id
+        assertThat(createdAnswerPost).isNotNull();
+        assertThat(createdAnswerPost.getId()).isNotNull();
 
-        AnswerPost answerPost3 = new AnswerPost();
-        answerPost3.setAuthor(database.getUserByLoginWithoutAuthorities("student2"));
-        answerPost3.setContent("Test Answer");
-        answerPost3.setCreationDate(ZonedDateTime.now());
-        answerPost3.setPost(post);
-        answerPostRepository.save(answerPost3);
-        answers.add(answerPost3);
+        // check if associated post, answerPost content, and creation date are set correctly on creation
+        assertThat(expectedAnswerPost.getPost()).isEqualTo(createdAnswerPost.getPost());
+        assertThat(expectedAnswerPost.getContent()).isEqualTo(createdAnswerPost.getContent());
+        assertThat(expectedAnswerPost.getCreationDate()).isEqualTo(createdAnswerPost.getCreationDate());
 
-        return answers;
+        // check if default values are set correctly on creation
+        assertThat(expectedAnswerPost.getReactions()).isEmpty();
+
+        // check if associated course is set correctly on creation
+        assertThat(expectedAnswerPost.getCourse()).isEqualTo(expectedAnswerPost.getCourse());
     }
 }

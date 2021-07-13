@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang.mutable.MutableInt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -178,6 +179,9 @@ public abstract class SubmissionExportService {
             return Optional.empty();
         }
 
+        // Create counter for log entry
+        MutableInt skippedEntries = new MutableInt();
+
         // Save all Submissions
         List<Path> submissionFilePaths = participations.stream().map((participation) -> {
 
@@ -198,6 +202,7 @@ public abstract class SubmissionExportService {
             }
 
             if (latestSubmission == null) {
+                skippedEntries.increment();
                 return Optional.<Path>empty();
             }
 
@@ -221,7 +226,8 @@ public abstract class SubmissionExportService {
         }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
         // Add report entry
-        reportData.add(new ArchivalReportEntry(exercise.getId(), fileService.removeIllegalCharacters(exercise.getTitle()), participations.size(), submissionFilePaths.size()));
+        reportData.add(new ArchivalReportEntry(exercise, fileService.removeIllegalCharacters(exercise.getTitle()), participations.size(), submissionFilePaths.size(),
+                skippedEntries.intValue()));
 
         if (submissionFilePaths.isEmpty()) {
             return Optional.empty();

@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.domain.modeling;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.*;
 
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,6 +29,10 @@ public class ModelingSubmission extends Submission {
     @Column(name = "explanation_text")
     @Lob
     private String explanationText;
+
+    @Transient
+    @JsonSerialize
+    private Set<SimilarElementCount> similarElementCounts = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
@@ -84,5 +92,17 @@ public class ModelingSubmission extends Submission {
         catch (JsonProcessingException ex) {
             return false;
         }
+    }
+
+    public Set<SimilarElementCount> getSimilarElements() {
+        return similarElementCounts;
+    }
+
+    public void addSimilarElement(SimilarElementCount element) {
+        this.similarElementCounts.add(element);
+    }
+
+    public void setSimilarElements(Set<SimilarElementCount> elementCounts) {
+        this.similarElementCounts = elementCounts;
     }
 }
