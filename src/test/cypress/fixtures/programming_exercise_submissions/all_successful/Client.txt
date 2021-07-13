@@ -23,12 +23,9 @@ private Client() {
 */
 public static void main(String[] args) throws ParseException {
 
-// Init Context and Policy
-
 Context sortingContext = new Context();
 Policy policy = new Policy(sortingContext);
 
-// Run multiple times to simulate different sorting strategies
 for (int i = 0; i < ITERATIONS; i++) {
 List<Date> dates = createRandomDatesList();
 

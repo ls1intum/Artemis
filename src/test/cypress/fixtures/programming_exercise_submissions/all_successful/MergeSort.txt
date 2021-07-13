@@ -13,7 +13,6 @@ public void performSort(List<Date> input) {
 mergesort(input, 0, input.size() - 1);
 }
 
-// Recursive merge sort method
 private void mergesort(List<Date> input, int low, int high) {
 if (high - low < 1) {
 return;
@@ -24,7 +23,6 @@ mergesort(input, mid + 1, high);
 merge(input, low, mid, high);
 }
 
-// Merge method
 private void merge(List<Date> input, int low, int middle, int high) {
 
 Date[] temp = new Date[high - low + 1];
