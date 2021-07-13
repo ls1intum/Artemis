@@ -63,7 +63,7 @@
         <ng-content select="[editorSidebar]"></ng-content>
     </jhi-code-editor-instructions>
     -->
-        <jhi-code-editor-instructions *ngIf="showEditorInstructions" (onError)="onError($event)">
+        <jhi-code-editor-instructions *ngIf="showEditorInstructions" (click)="collapsed = !collapsed" (onError)="onError($event)">
             <ng-content select="[editorSidebar]"></ng-content>
         </jhi-code-editor-instructions>
     </ng-template>
@@ -78,10 +78,6 @@
             </div>
             <fa-icon [icon]="'chevron-left'"></fa-icon>
         </div>
-    </ng-template>
-
-    <ng-template #rightHeaderSpan>
-        <ng-content select="span[right-header]"></ng-content>
     </ng-template>
 
     <jhi-code-editor-build-output
