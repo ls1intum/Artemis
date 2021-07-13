@@ -36,6 +36,7 @@ describe('Course Management Service', () => {
     let lectureService: LectureService;
     let httpMock: HttpTestingController;
     let isAtLeastTutorInCourseStub: sinon.SinonStub;
+    let isAtLeastEditorInCourseStub: sinon.SinonStub;
     let isAtLeastInstructorInCourseStub: sinon.SinonStub;
     let convertExercisesDateFromServerStub: sinon.SinonStub;
     let convertDatesForLecturesFromServerStub: sinon.SinonStub;
@@ -63,6 +64,7 @@ describe('Course Management Service', () => {
         lectureService = injector.get(LectureService);
 
         isAtLeastTutorInCourseStub = sinon.stub(accountService, 'isAtLeastTutorInCourse').returns(false);
+        isAtLeastEditorInCourseStub = sinon.stub(accountService, 'isAtLeastEditorInCourse').returns(false);
         isAtLeastInstructorInCourseStub = sinon.stub(accountService, 'isAtLeastInstructorInCourse').returns(false);
         syncGroupsStub = sinon.stub(accountService, 'syncGroups');
         convertDatesForLecturesFromServerStub = sinon.stub(lectureService, 'convertDatesForLecturesFromServer');
@@ -86,6 +88,7 @@ describe('Course Management Service', () => {
 
     const expectAccessRightsToBeCalled = () => {
         expect(isAtLeastTutorInCourseStub).to.have.been.called;
+        expect(isAtLeastEditorInCourseStub).to.have.been.called;
         expect(isAtLeastInstructorInCourseStub).to.have.been.called;
     };
 
