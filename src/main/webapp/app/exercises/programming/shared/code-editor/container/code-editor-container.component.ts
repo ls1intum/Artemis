@@ -55,6 +55,9 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     @Input()
     highlightDifferences: boolean;
 
+    @Input()
+    collapsed = false;
+
     @Output()
     onResizeEditorInstructions = new EventEmitter<void>();
     @Output()

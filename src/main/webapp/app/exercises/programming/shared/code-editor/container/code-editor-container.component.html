@@ -54,15 +54,35 @@
         <ng-content select="[editorSidebar]"></ng-content>
     </jhi-code-editor-instructions>
     -->
-    <!-- Just testing -->
-    <jhi-resizeable-container class="col-12">
-        <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
-        <span right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
-        <p right-body class="markdown-preview mb-3" *ngIf="showEditorInstructions">
-            <!--<span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>-->
+
+    <ng-container editorSidebarRight *ngIf="collapsed; then collapsedBody; else expandedBody"></ng-container>
+
+    <ng-template #expandedBody>
+        <!--
+    <jhi-code-editor-instructions *ngIf="showEditorInstructions" editorSidebarRight (onToggleCollapse)="onToggleCollapse($event)" (onError)="onError($event)">
+        <ng-content select="[editorSidebar]"></ng-content>
+    </jhi-code-editor-instructions>
+    -->
+        <jhi-code-editor-instructions *ngIf="showEditorInstructions" (onError)="onError($event)">
             <ng-content select="[editorSidebar]"></ng-content>
-        </p>
-    </jhi-resizeable-container>
+        </jhi-code-editor-instructions>
+    </ng-template>
+
+    <ng-template #collapsedBody>
+        <div class="collapsed right text-white bg-primary" (click)="collapsed = !collapsed">
+            <fa-icon [icon]="'chevron-left'"></fa-icon>
+            <div class="header">
+                <!--<ng-container *ngTemplateOutlet="rightHeaderSpan"></ng-container>-->
+                <!--<span  jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>-->
+                <span> ProblemStatement </span>
+            </div>
+            <fa-icon [icon]="'chevron-left'"></fa-icon>
+        </div>
+    </ng-template>
+
+    <ng-template #rightHeaderSpan>
+        <ng-content select="span[right-header]"></ng-content>
+    </ng-template>
 
     <jhi-code-editor-build-output
         editorBottomArea
