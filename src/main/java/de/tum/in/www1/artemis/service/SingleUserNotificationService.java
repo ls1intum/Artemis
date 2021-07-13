@@ -40,6 +40,11 @@ public class SingleUserNotificationService {
         saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_POST_FOR_LECTURE));
     }
 
+    /**
+     * notifyUserAboutPlagiarismCase creates a plagiarismNotification saves it to the database and returns it.
+     * @param plagiarismNotification A singleUserNotification
+     * @return converted plagiarism notification
+     */
     public SingleUserNotification notifyUserAboutPlagiarismCase(SingleUserNotification plagiarismNotification) {
         var res = singleUserNotificationRepository.save(plagiarismNotification);
         messagingTemplate.convertAndSend(plagiarismNotification.getTopic(), plagiarismNotification);

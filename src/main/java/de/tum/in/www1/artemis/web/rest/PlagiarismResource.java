@@ -112,6 +112,14 @@ public class PlagiarismResource {
         }
     }
 
+    /**
+     * Retrieves the plagiarismComparison specified by its Id. The submissions are anonymized for the student.
+     * StudentIds are replaced with "Your Submission" and "Other Submission" based on the requesting user.
+     *
+     * @param comparisonId the id of the PlagiarismComparison
+     * @return the PlagiarismComparison
+     * @throws AccessForbiddenException if the requesting user is not affected by the plagiarism case.
+     */
     @GetMapping("/plagiarism-comparisons/{comparisonId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<PlagiarismCaseDTO> getAnonymousPlagiarismComparison(@PathVariable("comparisonId") Long comparisonId) {
@@ -135,6 +143,12 @@ public class PlagiarismResource {
         return ResponseEntity.ok(new PlagiarismCaseDTO(comparison.getPlagiarismResult().getExercise(), Set.of(comparison)));
     }
 
+    /**
+     * Retrieves all plagiarismCases related to a course that were previously confirmed.
+     *
+     * @param courseId the id of the course
+     * @return all plagiarism cases
+     */
     @GetMapping("/plagiarism-cases/{courseId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<PlagiarismCaseDTO>> getPlagiarismCasesForCourse(@PathVariable long courseId) {
@@ -169,6 +183,13 @@ public class PlagiarismResource {
         public String statement;
     }
 
+    /**
+     * Creates a students statement on the plagiarismComparison.
+     *
+     * @param plagiarismComparisonId Id of the comparison
+     * @param statement              the students statement
+     * @return nothing
+     */
     @PutMapping("/plagiarism-cases/{plagiarismComparisonId}/statement")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> sendStatement(@PathVariable("plagiarismComparisonId") long plagiarismComparisonId, @RequestBody PlagiarismStatementDTO statement) {
@@ -186,6 +207,12 @@ public class PlagiarismResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Creates a Plagiarism Notification. Requesting user is the sender.
+     *
+     * @param plagiarismNotificationDTO contains the required information to build the plagiarismNotification
+     * @return the created notification (if any)
+     */
     @PutMapping("/plagiarism-cases/notification")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Notification> sendPlagiarismNotification(@RequestBody PlagiarismNotificationDTO plagiarismNotificationDTO) {
