@@ -26,7 +26,7 @@ public class PlantUmlService {
      * @return The generated PNG as a byte array
      * @throws IOException if generateImage can't create the PNG
      */
-    @Cacheable(value = "plantUmlPng", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "plantUmlPng", unless = "#result == null || #result.length == 0")
     public byte[] generatePng(final String plantUml) throws IOException {
         validateInput(plantUml);
         try (final var bos = new ByteArrayOutputStream()) {
