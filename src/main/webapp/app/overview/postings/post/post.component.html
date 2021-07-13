@@ -47,16 +47,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 px-2">
-            <jhi-markdown-editor
-                class="markdown-editor background-editor-color w-100"
-                [(markdown)]="editText"
-                [editorMode]="EditorMode.LATEX"
-                [enableResize]="true"
-                [metaCommands]="[]"
-                [enableFileUpload]="false"
-            ></jhi-markdown-editor>
-        </div>
+        <jhi-postings-markdown-editor [(content)]="content"></jhi-postings-markdown-editor>
         <div class="col-12 mt-2 d-flex">
             <button class="btn btn-sm me-1 btn-outline-secondary" (click)="toggleEditMode()">
                 {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}
@@ -65,7 +56,7 @@
                 class="btn btn-sm btn-outline-secondary"
                 jhi-postings-button
                 [buttonLoading]="isLoading"
-                [disabled]="!editText || editText.length === 0"
+                [disabled]="!content || content.length === 0"
                 [buttonLabel]="'artemisApp.metis.sidebar.savePost' | artemisTranslate"
                 (click)="savePost()"
             ></button>

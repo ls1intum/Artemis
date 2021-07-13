@@ -226,10 +226,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId, boolean filterGraded) throws EntityNotFoundException, IllegalArgumentException {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+        if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
             throw new IllegalArgumentException("Participation with id " + participationId + " is not a programming exercise participation!");
         }
-        if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
+        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
             throw new AccessForbiddenException("Participation with id " + participationId + " can't be accessed by user " + SecurityUtils.getCurrentUserLogin());
         }
 

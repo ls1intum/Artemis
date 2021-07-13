@@ -94,6 +94,6 @@ public class TutorParticipation extends DomainObject {
 
     @Override
     public String toString() {
-        return "TutorParticipation{" + "id=" + getId() + ", status='" + getStatus() + "}";
+        return getClass().getSimpleName() + "{" + "id=" + getId() + ", status='" + getStatus() + "}";
     }
 }
