@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { PlagiarismCase } from 'app/course/plagiarism-cases/types/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-plagiarism-cases-list',

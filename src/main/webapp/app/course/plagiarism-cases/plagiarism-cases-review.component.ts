@@ -3,7 +3,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
 import { ActivatedRoute } from '@angular/router';
 
