@@ -35,7 +35,9 @@ export class ExamPointsSummaryComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.calculateExamGrade();
+        if (this.exam.publishResultsDate && moment(this.exam.publishResultsDate).isBefore(this.serverDateService.now())) {
+            this.calculateExamGrade();
+        }
     }
 
     /**
@@ -57,7 +59,7 @@ export class ExamPointsSummaryComponent implements OnInit {
             .matchPercentageToGradeStepForExam(this.courseId, this.exam!.id!, achievedPointsRelative)
             .pipe(
                 catchError((error: HttpErrorResponse) => {
-                    if (error.status === 404) {
+                    if (error.status === 404 || error.status === 403) {
                         return of(undefined);
                     }
                     return throwError(error);
