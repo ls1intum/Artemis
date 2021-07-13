@@ -1,0 +1,18 @@
+.collapsed {
+    width: 50px;
+    justify-content: space-between;
+    flex-flow: column nowrap;
+    margin-left: 15px;
+    cursor: pointer;
+
+    .header {
+        writing-mode: vertical-rl;
+        margin: auto;
+    }
+
+    fa-icon {
+        display: flex;
+        justify-content: center;
+        padding: 15px 0;
+    }
+}

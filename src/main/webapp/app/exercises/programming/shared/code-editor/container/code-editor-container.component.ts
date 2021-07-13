@@ -29,7 +29,7 @@ import { Feedback } from 'app/entities/feedback.model';
 @Component({
     selector: 'jhi-code-editor-container',
     templateUrl: './code-editor-container.component.html',
-    styleUrls: ['./code-editor-container.component.scss.css'],
+    styleUrls: ['./code-editor-container.component.scss'],
 })
 export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     readonly CommitState = CommitState;
