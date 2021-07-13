@@ -107,7 +107,7 @@ Welcome Screen
 
 Exam Conduction
 ^^^^^^^^^^^^^^^
-- Once the exam working time starts and you have confirmed your participation, the *Exercise Overview* screen will appear. This screen lists all exercises that are part of your exam with their respective amount of points, title and type of exercise. The status column indicates the status of each exercises and whether you have a submission in them or not.
+- Once the exam working time starts and you have confirmed your participation, the *Exercise Overview* screen will appear. This screen lists all exercises that are part of your exam with their respective amount of points, title and exercise type. The status column indicates the status of each exercise and whether you have a submission in them or not.
 .. figure:: student/exercise_overview_after_start.png
    :alt: Exercise Overview Screen
    :align: center
@@ -120,7 +120,7 @@ Exam Conduction
 - You can also navigate through the exercises when you are done with one by clicking |save_continue|. This action will save and submit your changes and move to the next exercise.
 
     .. warning::
-        For programming exercises, there is no save button. You must manually press |submit| otherwise your solution will **not** be counted!
+        For programming exercises, there is no save button. You must manually press |submit| otherwise your solution will **not** be graded!
 
 - On the header, you will also find the |hand_in_early| button. If you press this, you will be sent to the exam `End Screen`_.
 - The *time left* until the end of the exam is also shown next to the action buttons, or below, depending on your screen size.
