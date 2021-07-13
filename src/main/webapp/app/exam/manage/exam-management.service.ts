@@ -16,6 +16,7 @@ import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -24,7 +25,7 @@ type EntityArrayResponseType = HttpResponse<Exam[]>;
 export class ExamManagementService {
     public resourceUrl = SERVER_API_URL + 'api/courses';
 
-    constructor(private router: Router, private http: HttpClient) {}
+    constructor(private router: Router, private http: HttpClient, private accountService: AccountService) {}
 
     /**
      * Create an exam on the server using a POST request.
@@ -61,7 +62,14 @@ export class ExamManagementService {
         const options = createRequestOption({ withStudents, withExerciseGroups });
         return this.http
             .get<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { params: options, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)))
+            .pipe(
+                tap((res: EntityResponseType) => {
+                    if (res.body) {
+                        this.accountService.setAccessRightsForCourse(res.body);
+                    }
+                }),
+            );
     }
 
     /**

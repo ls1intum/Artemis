@@ -292,7 +292,7 @@ export class CourseManagementService {
         this.fetchingCoursesForNotifications = true;
         return this.http
             .get<Course[]>(`${this.resourceUrl}/course-management-overview`, { params: options, observe: 'response' })
-            .pipe(tap((res: HttpResponse<Course[]>) => res.body!.forEach((course) => this.checkAndSetCourseRights(course))));
+            .pipe(tap((res: HttpResponse<Course[]>) => res.body!.forEach((course) => this.accountService.setAccessRightsForCourse(course))));
     }
 
     /**
@@ -417,12 +417,6 @@ export class CourseManagementService {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}/${courseGroup}/${login}`, { observe: 'response' });
     }
 
-    checkAndSetCourseRights(course: Course) {
-        course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
-        course.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(course);
-        course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
-    }
-
     /**
      * Gets the cached courses. If there none the courses for the current user will be fetched.
      * @returns {BehaviorSubject<Course[] | undefined>}
@@ -510,7 +504,7 @@ export class CourseManagementService {
 
     private checkAccessRightsCourse(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.checkAndSetCourseRights(res.body);
+            this.accountService.setAccessRightsForCourse(res.body);
         }
         return res;
     }
@@ -518,7 +512,7 @@ export class CourseManagementService {
     private checkAccessRights(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((course: Course) => {
-                this.checkAndSetCourseRights(course);
+                this.accountService.setAccessRightsForCourse(course);
             });
         }
         return res;
