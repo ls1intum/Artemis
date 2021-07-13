@@ -403,7 +403,7 @@
                             [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
                         <jhi-programming-exercise-instructor-trigger-build-button
-                            *ngIf="programmingExercise.templateParticipation?.results && programmingExercise.isAtLeastEditor"
+                            *ngIf="programmingExercise.templateParticipation?.results"
                             [exercise]="programmingExercise"
                             [participation]="programmingExercise.templateParticipation!"
                         ></jhi-programming-exercise-instructor-trigger-build-button>
@@ -445,7 +445,7 @@
                             [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
                         <jhi-programming-exercise-instructor-trigger-build-button
-                            *ngIf="programmingExercise.solutionParticipation?.results && programmingExercise.isAtLeastEditor"
+                            *ngIf="programmingExercise.solutionParticipation?.results"
                             [exercise]="programmingExercise"
                             [participation]="programmingExercise.solutionParticipation!"
                         ></jhi-programming-exercise-instructor-trigger-build-button>
