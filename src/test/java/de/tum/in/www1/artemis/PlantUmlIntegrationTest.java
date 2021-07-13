@@ -25,8 +25,6 @@ public class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @BeforeEach
     public void setUp() throws IOException {
         database.addUsers(1, 0, 0, 0);
-        doReturn(UML_PNG).when(plantUmlService).generatePng(UML_DIAGRAM_STRING);
-        doReturn(UML_SVG).when(plantUmlService).generateSvg(UML_DIAGRAM_STRING);
     }
 
     @AfterEach
@@ -37,20 +35,20 @@ public class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void generatePng_asStudent_success() throws Exception {
+        doReturn(UML_PNG).when(plantUmlService).generatePng(UML_DIAGRAM_STRING);
         final var paramMap = new LinkedMultiValueMap<String, String>();
         paramMap.setAll(Map.of("plantuml", UML_DIAGRAM_STRING));
         final var pngResponse = request.getPng(ROOT + GENERATE_PNG, HttpStatus.OK, paramMap);
-
         assertThat(UML_PNG).isEqualTo(pngResponse);
     }
 
     @Test
     @WithMockUser
     public void generateSvg_asStudent_success() throws Exception {
+        doReturn(UML_SVG).when(plantUmlService).generateSvg(UML_DIAGRAM_STRING);
         final var paramMap = new LinkedMultiValueMap<String, String>();
         paramMap.setAll(Map.of("plantuml", UML_DIAGRAM_STRING));
         final var svgResponse = request.get(ROOT + GENERATE_SVG, HttpStatus.OK, String.class, paramMap);
-
         assertThat(UML_SVG).isEqualTo(svgResponse);
     }
 }
