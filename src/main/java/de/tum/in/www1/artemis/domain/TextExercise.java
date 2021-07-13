@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
  */
 @Entity
 @DiscriminatorValue(value = "T")
-@SecondaryTable(name = "text_assessment_knowledge")
+@SecondaryTable(name = "text_exercise_details")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextExercise extends Exercise {
 
@@ -28,7 +28,7 @@ public class TextExercise extends Exercise {
     private List<TextCluster> clusters;
 
     @ManyToOne
-    @JoinColumn(table = "text_assessment_knowledge")
+    @JoinColumn(table = "text_exercise_details")
     @JsonIgnoreProperties("exercises")
     private TextAssessmentKnowledge knowledge;
 
