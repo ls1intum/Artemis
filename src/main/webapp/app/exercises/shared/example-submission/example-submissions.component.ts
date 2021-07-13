@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
@@ -11,12 +11,7 @@ import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 export class ExampleSubmissionsComponent implements OnInit {
     exercise: Exercise;
 
-    constructor(
-        private jhiAlertService: JhiAlertService,
-        private exampleSubmissionService: ExampleSubmissionService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-    ) {}
+    constructor(private jhiAlertService: JhiAlertService, private exampleSubmissionService: ExampleSubmissionService, private activatedRoute: ActivatedRoute) {}
 
     /**
      * Initializes all relevant data for the exercise
