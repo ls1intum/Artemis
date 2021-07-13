@@ -135,7 +135,6 @@ public class GroupNotificationFactory {
         switch (notificationType) {
             case NEW_POST_FOR_EXERCISE -> {
                 Exercise exercise = post.getExercise();
-                // vorschlag: if(exercise == null) return null;
                 title = "New Post";
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new post.";
                 course = exercise.getCourseViaExerciseGroupOrCourseMember();
