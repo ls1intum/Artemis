@@ -140,7 +140,7 @@ export class StudentExamsComponent implements OnInit {
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
-                this.handleError(err);
+                this.handleError('artemisApp.studentExams.missingStudentExamGenerationError', err);
                 this.isLoading = false;
             },
         );
@@ -166,7 +166,7 @@ export class StudentExamsComponent implements OnInit {
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
-                this.handleError(err);
+                this.handleError('artemisApp.studentExams.missingStudentExamGenerationError', err);
                 this.isLoading = false;
             },
         );
@@ -191,7 +191,7 @@ export class StudentExamsComponent implements OnInit {
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
-                this.handleError(err);
+                this.handleError('artemisApp.studentExams.startExerciseFailure', err);
                 this.isLoading = false;
             },
         );
@@ -216,7 +216,7 @@ export class StudentExamsComponent implements OnInit {
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
-                this.handleError(err);
+                this.handleError('artemisApp.studentExams.evaluateQuizExerciseFailure', err);
                 this.isLoading = false;
             },
         );
@@ -237,9 +237,9 @@ export class StudentExamsComponent implements OnInit {
                 );
                 this.isLoading = false;
             },
-            () => {
+            (err: HttpErrorResponse) => {
+                this.handleError('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure', err);
                 this.isLoading = false;
-                this.jhiAlertService.error('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure');
             },
         );
     }
@@ -275,7 +275,7 @@ export class StudentExamsComponent implements OnInit {
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
-                this.handleError(err);
+                this.handleError('artemisApp.studentExams.unlockAllRepositoriesFailure', err);
                 this.isLoading = false;
             },
         );
@@ -312,7 +312,7 @@ export class StudentExamsComponent implements OnInit {
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
-                this.handleError(err);
+                this.jhiAlertService.error('artemisApp.studentExams.lockAllRepositoriesFailure', { message: err?.error?.message });
                 this.isLoading = false;
             },
         );
@@ -363,12 +363,18 @@ export class StudentExamsComponent implements OnInit {
 
     /**
      * Shows the translated error message if an error key is available in the error response. Otherwise it defaults to the generic alert.
+     * @param translationString the string identifier in the translation service for the text. This is ignored if the response does not contain an error message or error key.
      * @param err the error response
      */
-    private handleError(err: HttpErrorResponse) {
+    private handleError(translationString: string, err: HttpErrorResponse) {
+        let message = err?.error?.message;
         if (err?.error && err.error.errorKey) {
-            this.jhiAlertService.error(err.error.errorKey);
+            message = this.translateService.instant(err.error.errorKey);
+        }
+        if (message) {
+            this.jhiAlertService.error(translationString, { message: message });
         } else {
+            // Sometimes the response does not have an error field, so we default to generic error handling
             onError(this.jhiAlertService, err);
         }
     }
