@@ -15,6 +15,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { Submission } from 'app/entities/submission.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -32,7 +33,7 @@ export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION
 export class ProgrammingExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService, private accountService: AccountService) {}
 
     /**
      * Sets a new programming exercise up
@@ -233,6 +234,7 @@ export class ProgrammingExerciseService {
                         this.reconnectSubmissionAndResult(templateSubmissions);
                         const solutionSubmissions = res.body.solutionParticipation?.submissions;
                         this.reconnectSubmissionAndResult(solutionSubmissions);
+                        this.accountService.setAccessRightsForExercise(res.body);
                     }
                     return res;
                 }),

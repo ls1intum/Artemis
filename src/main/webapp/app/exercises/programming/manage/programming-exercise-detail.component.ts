@@ -74,11 +74,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
 
             this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
-                // copying access rights from old exercise to updated exercise since they set to false by default
-                updatedProgrammingExercise.body!.isAtLeastTutor = this.programmingExercise.isAtLeastTutor;
-                updatedProgrammingExercise.body!.isAtLeastEditor = this.programmingExercise.isAtLeastEditor;
-                updatedProgrammingExercise.body!.isAtLeastInstructor = this.programmingExercise.isAtLeastInstructor;
-
                 // TODO: the feedback would be missing here, is that a problem?
                 this.programmingExercise = updatedProgrammingExercise.body!;
                 // get the latest results for further processing
