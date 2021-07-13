@@ -153,7 +153,7 @@ public class ProgrammingSubmissionResource {
             return forbidden();
         }
 
-        // The editor is allowed to trigger an instructor type build for template and solution participations,
+        // The editor is allowed to trigger an instructor build for template and solution participations,
         // but not for student participations. The instructor however, might trigger student participations.
         if (submissionType == SubmissionType.INSTRUCTOR && !authCheckService.isAtLeastInstructorForExercise(participation.getExercise())
                 && !(authCheckService.isAtLeastEditorForExercise(participation.getExercise())
