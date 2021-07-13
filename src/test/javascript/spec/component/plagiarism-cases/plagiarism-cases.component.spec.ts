@@ -18,7 +18,4 @@ describe('PlagiarismCasesComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
 });
