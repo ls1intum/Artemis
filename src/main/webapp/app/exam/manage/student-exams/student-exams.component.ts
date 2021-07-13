@@ -140,7 +140,7 @@ export class StudentExamsComponent implements OnInit {
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
-                onError(this.jhiAlertService, err);
+                this.handleError(err);
                 this.isLoading = false;
             },
         );
@@ -166,7 +166,7 @@ export class StudentExamsComponent implements OnInit {
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
-                onError(this.jhiAlertService, err);
+                this.handleError(err);
                 this.isLoading = false;
             },
         );
@@ -191,7 +191,7 @@ export class StudentExamsComponent implements OnInit {
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
-                onError(this.jhiAlertService, err);
+                this.handleError(err);
                 this.isLoading = false;
             },
         );
@@ -216,8 +216,8 @@ export class StudentExamsComponent implements OnInit {
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
+                this.handleError(err);
                 this.isLoading = false;
-                onError(this.jhiAlertService, err);
             },
         );
     }
@@ -275,7 +275,7 @@ export class StudentExamsComponent implements OnInit {
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
-                onError(this.jhiAlertService, err);
+                this.handleError(err);
                 this.isLoading = false;
             },
         );
@@ -312,7 +312,7 @@ export class StudentExamsComponent implements OnInit {
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
-                onError(this.jhiAlertService, err);
+                this.handleError(err);
                 this.isLoading = false;
             },
         );
@@ -359,5 +359,17 @@ export class StudentExamsComponent implements OnInit {
     formatDate(date: Moment | Date | undefined) {
         // TODO: we should try to use the artemis date pipe here
         return date ? moment(date).format(defaultLongDateTimeFormat) : '';
+    }
+
+    /**
+     * Shows the translated error message if an error key is available in the error response. Otherwise it defaults to the generic alert.
+     * @param err the error response
+     */
+    private handleError(err: HttpErrorResponse) {
+        if (err?.error && err.error.errorKey) {
+            this.jhiAlertService.error(err.error.errorKey);
+        } else {
+            onError(this.jhiAlertService, err);
+        }
     }
 }
