@@ -51,7 +51,14 @@
                 "dismissFeedbackConfirmation": "Please confirm that you want to delete this feedback!",
                 "feedbackCommentPlaceholder": "Enter your feedback comment here ...",
                 "impactWarning": "This feedback might affect <strong style=\"color:blue\">{{affectedSubmissionsCount}}</strong> other similar submission/s.",
-                "impactWarningTooltip": "The number of times that your feedback will be reused as an automatic suggestion in other submissions that were found to have a similar text block."
+                "impactWarningTooltip": "The number of times that your feedback will be reused as an automatic suggestion in other submissions that were found to have a similar text block.",
+                "automaticFeedbackInformationModal": {
+                    "heading": "Automatic Feedback Tracing",
+                    "introduction": "This automatic suggestion comes from a previously graded submission shown below.<br />The <span style='background-color: #d8e8f5'>highlighted feedback</span> has been reused:<br/><br/>",
+                    "trace": "Find out where this suggestion comes from",
+                    "points": "Points",
+                    "reused": "Reused {{reusedCount}} times"
+                }
             },
             "assessmentInstruction": "Please hover over and click on the text block you want to assess.<br>Hold <code>alt</code>/<code>option</code> while selecting a piece of text to assess custom blocks.",
             "conflict": {

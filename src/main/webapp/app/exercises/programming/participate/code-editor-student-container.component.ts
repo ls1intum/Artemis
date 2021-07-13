@@ -20,16 +20,16 @@ import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 import { SubmissionType } from 'app/entities/submission.model';
+import { Participation } from 'app/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-code-editor-student',
     templateUrl: './code-editor-student-container.component.html',
 })
-export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
@@ -127,7 +127,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
         return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
             flatMap((participation: ProgrammingExerciseStudentParticipation) =>
                 participation.results?.length
-                    ? this.loadResultDetails(participation.results[0]).pipe(
+                    ? this.loadResultDetails(participation, participation.results[0]).pipe(
                           map((feedbacks) => {
                               participation.results![0].feedbacks = feedbacks;
                               return participation;
@@ -143,16 +143,12 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
      * Fetches details for the result (if we received one) and attach them to the result.
      * Mutates the input parameter result.
      */
-    loadResultDetails(result: Result): Observable<Feedback[]> {
-        return this.resultService.getFeedbackDetailsForResult(result.id!).pipe(
+    loadResultDetails(participation: Participation, result: Result): Observable<Feedback[]> {
+        return this.resultService.getFeedbackDetailsForResult(participation.id!, result.id!).pipe(
             map((res) => {
                 return res.body || [];
             }),
         );
-    }
-
-    canDeactivate() {
-        return this.codeEditorContainer?.canDeactivate() ?? true;
     }
 
     checkForTutorAssessment(dueDateHasPassed: boolean) {

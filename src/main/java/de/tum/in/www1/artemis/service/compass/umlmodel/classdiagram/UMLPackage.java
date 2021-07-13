@@ -23,8 +23,7 @@ public class UMLPackage extends UMLContainerElement implements Serializable {
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (reference instanceof UMLPackage) {
-            UMLPackage referencePackage = (UMLPackage) reference;
+        if (reference instanceof UMLPackage referencePackage) {
             similarity += NameSimilarity.levenshteinSimilarity(getName(), referencePackage.getName());
         }
 

@@ -106,9 +106,9 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
-        Result result = resultRepository.findOne(resultId);
+        Result result = resultRepository.findOneElseThrow(resultId);
         if (!result.getParticipation().getId().equals(participationId)) {
-            badRequest("participationId", "400", "participationId in Result of resultId " + resultId + "doesn't match the paths participationId!");
+            return badRequest("participationId", "400", "participationId in Result of resultId " + resultId + "doesn't match the paths participationId!");
         }
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, result.getParticipation().getExercise(), null);
         final var textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
@@ -139,7 +139,7 @@ public class TextAssessmentResource extends AssessmentResource {
         if (optionalExampleSubmission.isPresent()) {
             ExampleSubmission exampleSubmission = optionalExampleSubmission.get();
             if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
-                badRequest("exerciseId", "400", "exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + "doesn't match the paths exerciseId!");
+                return badRequest("exerciseId", "400", "exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + "doesn't match the paths exerciseId!");
             }
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
         }
@@ -174,7 +174,7 @@ public class TextAssessmentResource extends AssessmentResource {
         Exercise exercise = exampleSubmission.getExercise();
         checkAuthorization(exercise, user);
         if (!exercise.getId().equals(exerciseId)) {
-            badRequest("exerciseId", "400", "exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + "doesn't match the paths exerciseId!");
+            return badRequest("exerciseId", "400", "exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + "doesn't match the paths exerciseId!");
         }
 
         if (!(submission instanceof TextSubmission)) {
@@ -213,12 +213,12 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
-        Result result = resultRepository.findOne(resultId);
+        Result result = resultRepository.findOneElseThrow(resultId);
         if (!(result.getParticipation().getExercise() instanceof TextExercise)) {
-            badRequest("Exercise", "400", "This exercise isn't a TextExercise!");
+            return badRequest("Exercise", "400", "This exercise isn't a TextExercise!");
         }
         else if (!result.getParticipation().getId().equals(participationId)) {
-            badRequest("participationId", "400", "participationId in Result of resultId " + resultId + "doesn't match the paths participationId!");
+            return badRequest("participationId", "400", "participationId in Result of resultId " + resultId + "doesn't match the paths participationId!");
         }
         final TextExercise exercise = (TextExercise) result.getParticipation().getExercise();
         checkAuthorization(exercise, null);
@@ -256,7 +256,7 @@ public class TextAssessmentResource extends AssessmentResource {
         TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         if (!studentParticipation.getId().equals(participationId)) {
-            badRequest("participationId", "400", "participationId in Submission of submissionId " + submissionId + "doesn't match the paths participationId!");
+            return badRequest("participationId", "400", "participationId in Submission of submissionId " + submissionId + "doesn't match the paths participationId!");
         }
         long exerciseId = studentParticipation.getExercise().getId();
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
@@ -284,7 +284,7 @@ public class TextAssessmentResource extends AssessmentResource {
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long participationId, @PathVariable Long submissionId) {
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
         if (!submission.getParticipation().getId().equals(participationId)) {
-            badRequest("participationId", "400", "The Submission with Id " + submissionId + " doesnt belong to Participation with Id " + participationId + " !");
+            return badRequest("participationId", "400", "The Submission with Id " + submissionId + " doesnt belong to Participation with Id " + participationId + " !");
         }
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, submission.getParticipation().getExercise(), null);
         return super.cancelAssessment(submissionId);
@@ -298,7 +298,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param resultId     - the id of the result which should get deleted
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
-    @DeleteMapping("participations/{participationId}/submissions/{submissionId}/results/{resultId}")
+    @DeleteMapping("participations/{participationId}/text-submissions/{submissionId}/results/{resultId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
         return super.deleteAssessment(participationId, submissionId, resultId);
@@ -327,7 +327,8 @@ public class TextAssessmentResource extends AssessmentResource {
         final var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(submissionId);
         final Participation participation = textSubmission.getParticipation();
         if (!participation.getId().equals(participationId)) {
-            badRequest("participationId", "400", "Submission with submissionId " + submissionId + "doesnt fit to participation with participationId" + participationId + " !");
+            return badRequest("participationId", "400",
+                    "Submission with submissionId " + submissionId + "doesnt fit to participation with participationId" + participationId + " !");
         }
         final var exercise = participation.getExercise();
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -411,7 +412,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
         final var textExercise = exampleSubmission.getExercise();
         if(!textExercise.getId().equals(exerciseId)){
-            badRequest("exerciseId", "400", "Exercise to submission with submissionId " + submissionId + "doesnt have the exerciseId "+ exerciseId +" !");
+            return badRequest("exerciseId", "400", "Exercise to submission with submissionId " + submissionId + "doesnt have the exerciseId "+ exerciseId +" !");
         }
 
         // If the user is not at least a tutor for this exercise, return error
@@ -465,7 +466,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final Result result = textSubmission.getLatestResult();
 
         if (!textSubmission.getParticipation().getId().equals(participationId)) {
-            badRequest("participationId", "400", "The participationId in the path doesnt match the participationId to the submission " + submissionId + " !");
+            return badRequest("participationId", "400", "The participationId in the path doesnt match the participationId to the submission " + submissionId + " !");
         }
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -504,13 +505,13 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Automatic text assessment conflict service is not available!", "automaticTextAssessmentConflictService",
                     "AutomaticTextAssessmentConflictServiceNotFound");
         }
-        final TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         final FeedbackConflict feedbackConflict = feedbackConflictRepository.findByFeedbackConflictIdElseThrow(feedbackConflictId);
         if (!feedbackConflict.getFirstFeedback().getResult().getParticipation().getExercise().getId().equals(exerciseId)) {
-            badRequest("exerciseId", "400", "The exerciseId in the path doesnt match the exerciseId to the feedbackConflict " + feedbackConflictId + " !");
+            return badRequest("exerciseId", "400", "The exerciseId in the path doesnt match the exerciseId to the feedbackConflict " + feedbackConflictId + " !");
         }
+        final TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         final User firstAssessor = feedbackConflict.getFirstFeedback().getResult().getAssessor();
         final User secondAssessor = feedbackConflict.getSecondFeedback().getResult().getAssessor();
 

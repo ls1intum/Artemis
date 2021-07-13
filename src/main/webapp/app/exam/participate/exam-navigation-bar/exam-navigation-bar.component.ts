@@ -5,6 +5,7 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -15,8 +16,9 @@ export class ExamNavigationBarComponent implements OnInit {
     @Input() exercises: Exercise[] = [];
     @Input() exerciseIndex = 0;
     @Input() endDate: Moment;
+    @Input() overviewPageOpen: boolean;
 
-    @Output() onExerciseChanged = new EventEmitter<{ exercise: Exercise; forceSave: boolean }>();
+    @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise?: Exercise; forceSave: boolean }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
     @Output() onExamHandInEarly = new EventEmitter<void>();
 
@@ -26,8 +28,9 @@ export class ExamNavigationBarComponent implements OnInit {
     criticalTime = moment.duration(5, 'minutes');
 
     icon: IconProp;
+    getExerciseButtonTooltip = this.examParticipationService.getExerciseButtonTooltip;
 
-    constructor(private layoutService: LayoutService) {}
+    constructor(private layoutService: LayoutService, private examParticipationService: ExamParticipationService) {}
 
     ngOnInit(): void {
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
@@ -49,15 +52,27 @@ export class ExamNavigationBarComponent implements OnInit {
         this.examAboutToEnd.emit();
     }
 
-    changeExercise(exerciseIndex: number, forceSave: boolean) {
-        // out of index -> do nothing
-        if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
-            return;
+    /**
+     * @param overviewPage: user wants to switch to the overview page
+     * @param exerciseIndex: index of the exercise to switch to, if it should not be used, you can pass -1
+     * @param forceSave: true if forceSave shall be used.
+     */
+    changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean) {
+        if (!overviewPage) {
+            // out of index -> do nothing
+            if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
+                return;
+            }
+            // set index and emit event
+            this.exerciseIndex = exerciseIndex;
+            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave });
+        } else if (overviewPage) {
+            // set index and emit event
+            this.exerciseIndex = -1;
+            // save current exercise
+            this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
         }
-        // set index and emit event
-        this.exerciseIndex = exerciseIndex;
-        this.onExerciseChanged.emit({ exercise: this.exercises[exerciseIndex], forceSave });
-        this.setExerciseButtonStatus(exerciseIndex);
+        this.setExerciseButtonStatus(this.exerciseIndex);
     }
 
     /**
@@ -66,7 +81,7 @@ export class ExamNavigationBarComponent implements OnInit {
      */
     saveExercise(changeExercise = true) {
         const newIndex = this.exerciseIndex + 1;
-        const submission = this.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
+        const submission = ExamParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
         // we do not submit programming exercises on a save
         if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
@@ -74,9 +89,9 @@ export class ExamNavigationBarComponent implements OnInit {
         if (changeExercise) {
             if (newIndex > this.exercises.length - 1) {
                 // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
-                this.changeExercise(this.exerciseIndex, true);
+                this.changePage(false, this.exerciseIndex, true);
             } else {
-                this.changeExercise(newIndex, true);
+                this.changePage(false, newIndex, true);
             }
         }
     }
@@ -89,57 +104,44 @@ export class ExamNavigationBarComponent implements OnInit {
         return this.exercises[this.exerciseIndex].type === ExerciseType.FILE_UPLOAD;
     }
 
-    setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
-        this.icon = 'edit';
-        const exercise = this.exercises[exerciseIndex];
-        const submission = this.getSubmissionForExercise(exercise);
-        if (submission) {
-            if (submission.submitted) {
-                this.icon = 'check';
-            }
-            if (submission.isSynced) {
-                // make button blue
-                if (exerciseIndex === this.exerciseIndex) {
-                    return 'synced active';
-                } else {
-                    return 'synced';
-                }
-            } else {
-                // make button yellow
-                this.icon = 'edit';
-                return 'notSynced';
-            }
-        } else {
-            // in case no participation yet exists -> display synced
-            return 'synced';
-        }
+    getOverviewStatus(): 'active' | '' {
+        return this.overviewPageOpen ? 'active' : '';
     }
 
-    getExerciseButtonTooltip(exerciseIndex: number): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' {
-        const submission = this.getSubmissionForExercise(this.exercises[exerciseIndex]);
-        if (submission) {
-            if (this.exercises[exerciseIndex].type === ExerciseType.PROGRAMMING) {
-                if (submission.submitted && submission.isSynced) {
-                    return 'submitted'; // You have submitted an exercise. You can submit again
-                } else if (submission.submitted && !submission.isSynced) {
-                    return 'notSavedOrSubmitted'; // You have unsaved and/or unsubmitted changes
-                } else if (!submission.submitted && submission.isSynced) {
-                    return 'notSubmitted'; // starting point
-                } else {
-                    return 'notSavedOrSubmitted';
-                }
+    /**
+     * calculate the exercise status (also see exam-exercise-overview-page.component.ts --> make sure the logic is consistent)
+     * also determines the used icon and its color
+     * TODO: we should try to extract a method for the common logic which avoids side effects (i.e. changing this.icon)
+     *  this method could e.g. return the sync status and the icon
+     *
+     * @param exerciseIndex index of the exercise
+     * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
+     */
+    setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
+        // start with a yellow status (edit icon)
+        // TODO: it's a bit weired, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
+        //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
+        this.icon = 'edit';
+        const exercise = this.exercises[exerciseIndex];
+        const submission = ExamParticipationService.getSubmissionForExercise(exercise);
+        if (!submission) {
+            // in case no participation/submission yet exists -> display synced
+            return 'synced';
+        }
+        if (submission.submitted) {
+            this.icon = 'check';
+        }
+        if (submission.isSynced) {
+            // make button blue (except for the current page)
+            if (exerciseIndex === this.exerciseIndex && !this.overviewPageOpen) {
+                return 'synced active';
             } else {
-                if (submission.isSynced) {
-                    return 'synced';
-                } else {
-                    return 'notSynced';
-                }
+                return 'synced';
             }
         } else {
-            // submission does not yet exist for this exercise.
-            // When the participant navigates to the exercise the submissions are created.
-            // Until then show, that the exercise is synced
-            return 'synced';
+            // make button yellow
+            this.icon = 'edit';
+            return 'notSynced';
         }
     }
 
@@ -149,20 +151,5 @@ export class ExamNavigationBarComponent implements OnInit {
     handInEarly() {
         this.saveExercise(false);
         this.onExamHandInEarly.emit();
-    }
-
-    // TODO: find usages of similar logic -> put into utils method
-    getSubmissionForExercise(exercise: Exercise) {
-        if (
-            exercise &&
-            exercise.studentParticipations &&
-            exercise.studentParticipations.length > 0 &&
-            exercise.studentParticipations[0].submissions &&
-            exercise.studentParticipations[0].submissions.length > 0
-        ) {
-            return exercise.studentParticipations[0].submissions[0];
-        } else {
-            return undefined;
-        }
     }
 }

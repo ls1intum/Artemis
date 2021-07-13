@@ -153,7 +153,7 @@ export default function () {
         req = [
             {
                 method: 'get',
-                url: baseUrl + '/public/images/favicon.ico',
+                url: baseUrl + '/favicon.svg',
                 params: {
                     cookies: {
                         'XSRF-TOKEN': defaultXSRFToken,

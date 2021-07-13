@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.modeling.SimilarElementCount;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
@@ -33,15 +37,19 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final SubmissionVersionService submissionVersionService;
 
+    private final ModelElementRepository modelElementRepository;
+
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             CompassService compassService, UserRepository userRepository, SubmissionVersionService submissionVersionService, ParticipationService participationService,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository,
-            ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository) {
+            ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository, ModelElementRepository modelElementRepository,
+            ComplaintRepository complaintRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
                 courseRepository, participationRepository, complaintRepository);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.compassService = compassService;
         this.submissionVersionService = submissionVersionService;
+        this.modelElementRepository = modelElementRepository;
     }
 
     /**
@@ -93,8 +101,10 @@ public class ModelingSubmissionService extends SubmissionService {
         modelingSubmission.setResults(new ArrayList<>());
 
         // update submission properties
-        // NOTE: from now on we always set submitted to true to prevent problems here!
-        modelingSubmission.setSubmitted(true);
+        // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
+        if (modelingExercise.isExamExercise() || !modelingExercise.isEnded()) {
+            modelingSubmission.setSubmitted(true);
+        }
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
         modelingSubmission.setType(SubmissionType.MANUAL);
         modelingSubmission.setParticipation(participation);
@@ -147,6 +157,7 @@ public class ModelingSubmissionService extends SubmissionService {
         if (lockSubmission) {
             if (compassService.isSupported(modelingExercise) && correctionRound == 0L) {
                 modelingSubmission = assignResultWithFeedbackSuggestionsToSubmission(modelingSubmission, modelingExercise);
+                setNumberOfAffectedSubmissionsPerElement(modelingSubmission);
             }
             lockSubmission(modelingSubmission, correctionRound);
         }
@@ -187,7 +198,25 @@ public class ModelingSubmissionService extends SubmissionService {
             modelingSubmission.addResult(automaticResult);
             modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
         }
-
         return modelingSubmission;
+    }
+
+    /**
+     * Sets number of potential automatic Feedback's for each model element belonging to the `Result`'s submission.
+     * This number determines how many other submissions would be affected if the user were to submit a certain element feedback.
+     * For each ModelElement of the submission, this method finds how many other ModelElements exist in the same cluster.
+     * This number is represented with the `numberOfAffectedSubmissions` field which is set here for each
+     * ModelElement of this submission
+     *
+     * @param submission Result for the Submission acting as a reference for the modeling submission to be searched.
+     */
+    public void setNumberOfAffectedSubmissionsPerElement(@NotNull ModelingSubmission submission) {
+        List<ModelElementRepository.ModelElementCount> elementCounts = modelElementRepository.countOtherElementsInSameClusterForSubmissionId(submission.getId());
+        submission.setSimilarElements(elementCounts.stream().map(modelElementCount -> {
+            SimilarElementCount similarElementCount = new SimilarElementCount();
+            similarElementCount.setElementId(modelElementCount.getElementId());
+            similarElementCount.setNumberOfOtherElements(modelElementCount.getNumberOfOtherElements());
+            return similarElementCount;
+        }).collect(Collectors.toSet()));
     }
 }

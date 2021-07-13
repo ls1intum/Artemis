@@ -16,10 +16,7 @@ public class ScoringStrategyDragAndDropProportionalWithoutPenalty implements Sco
             return quizQuestion.getPoints();
         }
 
-        if (submittedAnswer instanceof DragAndDropSubmittedAnswer && quizQuestion instanceof DragAndDropQuestion) {
-            DragAndDropSubmittedAnswer dndAnswer = (DragAndDropSubmittedAnswer) submittedAnswer;
-            DragAndDropQuestion dndQuestion = (DragAndDropQuestion) quizQuestion;
-
+        if (submittedAnswer instanceof DragAndDropSubmittedAnswer dndAnswer && quizQuestion instanceof DragAndDropQuestion dndQuestion) {
             double mappedDropLocations = 0;
             double correctMappings = 0;
 

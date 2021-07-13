@@ -1,4 +1,4 @@
-import { PARTICIPATIONS, TUTOR_PARTICIPATIONS } from './endpoints';
+import { PARTICIPATIONS, TUTOR_PARTICIPATIONS } from './endpoints.js';
 
 export function startExercise(artemis, courseId, exerciseId) {
     console.log('Try to start exercise for test user ' + __VU);

@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.deployment;
 
-import java.util.Objects;
-
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLContainerElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
+import de.tum.in.www1.artemis.service.compass.utils.SimilarityUtils;
 
 public class UMLNode extends UMLContainerElement {
 
@@ -33,7 +32,7 @@ public class UMLNode extends UMLContainerElement {
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceNode.getName()) * CompassConfiguration.NODE_NAME_WEIGHT;
         similarity += NameSimilarity.levenshteinSimilarity(stereotype, referenceNode.getStereotype()) * CompassConfiguration.NODE_STEREOTYPE_WEIGHT;
 
-        if (Objects.equals(getParentElement(), referenceNode.getParentElement())) {
+        if (SimilarityUtils.parentsSimilarOrEqual(getParentElement(), referenceNode.getParentElement())) {
             similarity += CompassConfiguration.NODE_PARENT_WEIGHT;
         }
 

@@ -573,8 +573,7 @@ public class QuizExercise extends Exercise {
                     quizQuestion.getQuizQuestionStatistic().setQuizQuestion(quizQuestion);
                 }
                 // do the same for answerOptions (if quizQuestion is multiple choice)
-                if (quizQuestion instanceof MultipleChoiceQuestion) {
-                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizQuestion;
+                if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
                     MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
                     // reconnect answerCounters
                     for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
@@ -589,8 +588,7 @@ public class QuizExercise extends Exercise {
                         }
                     }
                 }
-                if (quizQuestion instanceof DragAndDropQuestion) {
-                    DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
+                if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                     DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
                     // reconnect dropLocations
                     for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
@@ -618,8 +616,7 @@ public class QuizExercise extends Exercise {
                         }
                     }
                 }
-                if (quizQuestion instanceof ShortAnswerQuestion) {
-                    ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
+                if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
                     ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
                     // reconnect spots
                     for (ShortAnswerSpot spot : shortAnswerQuestion.getSpots()) {

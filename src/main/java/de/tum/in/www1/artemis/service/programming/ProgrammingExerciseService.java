@@ -124,7 +124,7 @@ public class ProgrammingExerciseService {
     @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
-        final var user = userRepository.getUser();
+        final User user = userRepository.getUser();
 
         createRepositoriesForNewExercise(programmingExercise);
         initParticipations(programmingExercise);
@@ -290,28 +290,43 @@ public class ProgrammingExerciseService {
         String projectTypeSolutionPrefix = null;
 
         // Find the project type specific files if present
-        if (programmingExercise.getProjectType() != null) {
+        if (programmingExercise.getProjectType() != null && !ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
             // Get path, files and prefix for the project-type dependent files. They are copied last and can overwrite the resources from the programming language.
             String programmingLanguageProjectTypePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType());
             String projectType = programmingExercise.getProjectType().name().toLowerCase();
-
-            projectTypeExercisePrefix = programmingLanguage + "/" + projectType + "/exercise";
-            projectTypeTestPrefix = programmingLanguage + "/" + projectType + "/test";
-            projectTypeSolutionPrefix = programmingLanguage + "/" + projectType + "/solution";
+            String projectTypePrefix = programmingLanguage + "/" + projectType;
 
             exercisePath = programmingLanguageProjectTypePath + "/exercise/**/*.*";
             solutionPath = programmingLanguageProjectTypePath + "/solution/**/*.*";
             testPath = programmingLanguageProjectTypePath + "/test/**/*.*";
 
-            projectTypeExerciseResources = resourceLoaderService.getResources(exercisePath);
-            projectTypeTestResources = resourceLoaderService.getResources(testPath);
-            projectTypeSolutionResources = resourceLoaderService.getResources(solutionPath);
+            if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
+                // For Xcode we don't share source code, so we only copy files once
+                exercisePrefix = projectTypePrefix + "/exercise";
+                testPrefix = projectTypePrefix + "/test";
+                solutionPrefix = projectTypePrefix + "/solution";
+
+                exerciseResources = resourceLoaderService.getResources(exercisePath);
+                testResources = resourceLoaderService.getResources(testPath);
+                solutionResources = resourceLoaderService.getResources(solutionPath);
+            }
+            else {
+                projectTypeExercisePrefix = projectTypePrefix + "/exercise";
+                projectTypeTestPrefix = projectTypePrefix + "/test";
+                projectTypeSolutionPrefix = projectTypePrefix + "/solution";
+
+                projectTypeExerciseResources = resourceLoaderService.getResources(exercisePath);
+                projectTypeTestResources = resourceLoaderService.getResources(testPath);
+                projectTypeSolutionResources = resourceLoaderService.getResources(solutionPath);
+            }
         }
 
         try {
             setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, projectTypeExerciseResources, projectTypeExercisePrefix, "Exercise", programmingExercise, user);
-            // The template repo can be re-written so we can unprotect the master branch.
-            versionControlService.get().unprotectBranch(programmingExercise.getVcsTemplateRepositoryUrl(), "master");
+            // The template repo can be re-written so we can unprotect the default branch.
+            var templateVcsRepositoryUrl = programmingExercise.getVcsTemplateRepositoryUrl();
+            String templateVcsRepositoryDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(templateVcsRepositoryUrl);
+            versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryDefaultBranch);
 
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix, "Solution", programmingExercise, user);
             setupTestTemplateAndPush(testRepo, testResources, testPrefix, projectTypeTestResources, projectTypeTestPrefix, "Test", programmingExercise, user);
@@ -336,7 +351,7 @@ public class ProgrammingExerciseService {
     }
 
     private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) throws GitAPIException, InterruptedException {
-        final var projectKey = programmingExercise.getProjectKey();
+        final String projectKey = programmingExercise.getProjectKey();
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests repository
@@ -510,7 +525,6 @@ public class ProgrammingExerciseService {
                 }
 
                 // Copy static code analysis config files
-                // TODO: rene: SWIFT - if we keep the parent folder, we need to enable showing the hidden .swiftlint.yml file otherwise the OE shows an empty folder
                 if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                     String staticCodeAnalysisConfigPath = templatePath + "/staticCodeAnalysisConfig/**/*.*";
                     Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
@@ -585,6 +599,7 @@ public class ProgrammingExerciseService {
         }
         else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageName());
+            fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
         }
 
         Map<String, String> replacements = new HashMap<>();
@@ -677,11 +692,11 @@ public class ProgrammingExerciseService {
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);
         Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL, true);
 
-        gitService.resetToOriginMaster(solutionRepository);
+        gitService.resetToOriginHead(solutionRepository);
         gitService.pullIgnoreConflicts(solutionRepository);
-        gitService.resetToOriginMaster(exerciseRepository);
+        gitService.resetToOriginHead(exerciseRepository);
         gitService.pullIgnoreConflicts(exerciseRepository);
-        gitService.resetToOriginMaster(testRepository);
+        gitService.resetToOriginHead(testRepository);
         gitService.pullIgnoreConflicts(testRepository);
 
         Path solutionRepositoryPath = solutionRepository.getLocalPath().toRealPath();

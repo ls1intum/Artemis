@@ -1,10 +1,9 @@
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
 import { HttpResponse } from '@angular/common/http';
-import { Location } from '@angular/common';
 import * as moment from 'moment';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
@@ -12,7 +11,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExercisePopupService } from 'app/exercises/quiz/manage/quiz-exercise-popup.service';
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 import { cloneDeep } from 'lodash';
-import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
 @Component({
@@ -33,7 +32,6 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     quizExercise: QuizExercise;
     modalService: NgbModal;
     popupService: QuizExercisePopupService;
-    router: Router;
 
     isSaving: boolean;
     duration: Duration;
@@ -43,10 +41,9 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     constructor(
         private quizExerciseService: QuizExerciseService,
         private route: ActivatedRoute,
-        private routerC: Router,
         private modalServiceC: NgbModal,
         private quizExercisePopupService: QuizExercisePopupService,
-        private location: Location,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     ngOnInit(): void {
@@ -60,7 +57,6 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
 
         this.modalService = this.modalServiceC;
         this.popupService = this.quizExercisePopupService;
-        this.router = this.routerC;
 
         /** Initialize constants **/
         this.isSaving = false;
@@ -126,11 +122,10 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the overview page if there is no previous state
+     * Return to the previous page or a default if no previous page exists
      */
     back(): void {
-        navigateBackFromExerciseUpdate(this.router, this.quizExercise);
+        this.navigationUtilService.navigateBackFromExerciseUpdate(this.quizExercise);
     }
 
     /**

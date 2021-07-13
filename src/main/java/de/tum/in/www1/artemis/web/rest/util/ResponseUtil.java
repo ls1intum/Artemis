@@ -1,7 +1,14 @@
 package de.tum.in.www1.artemis.web.rest.util;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 public final class ResponseUtil implements io.github.jhipster.web.util.ResponseUtil {
@@ -48,5 +55,21 @@ public final class ResponseUtil implements io.github.jhipster.web.util.ResponseU
 
     public static <X> ResponseEntity<X> conflict(String entityName, String errorKey, String message) {
         return ResponseEntity.status(HttpStatus.CONFLICT).headers(HeaderUtil.createFailureAlert(applicationName, true, entityName, errorKey, message)).build();
+    }
+
+    /**
+     * Sends an OK response entity that contains a file. Returns a not found response
+     * if the file doesn't exist.
+     * @param file the file to send as a response
+     * @return the response
+     */
+    public static ResponseEntity<Resource> ok(File file) {
+        try {
+            InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
+            return ResponseEntity.ok().contentLength(file.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", file.getName()).body(resource);
+        }
+        catch (FileNotFoundException e) {
+            return notFound();
+        }
     }
 }

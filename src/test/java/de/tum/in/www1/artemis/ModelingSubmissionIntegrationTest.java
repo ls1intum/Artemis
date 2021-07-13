@@ -83,6 +83,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     private String validModel;
 
+    private String validSameModel;
+
     private TextExercise textExercise;
 
     private Course course;
@@ -101,6 +103,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
         emptyModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
         validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        validSameModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727-copy.json");
         submittedSubmission = generateSubmittedSubmission();
         unsubmittedSubmission = generateUnsubmittedSubmission();
 
@@ -218,6 +221,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         database.addTeamParticipationForExercise(useCaseExercise, team.getId());
         String emptyUseCaseModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyUseCaseModel, false);
+        submission.setExplanationText("This is a use case diagram.");
         ModelingSubmission returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(), submission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyUseCaseModel);
 
@@ -225,7 +229,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         Optional<SubmissionVersion> version = submissionVersionRepository.findLatestVersion(returnedSubmission.getId());
         assertThat(version).as("submission version was created").isNotEmpty();
         assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo("student1");
-        assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(returnedSubmission.getModel());
+        assertThat(version.get().getContent()).as("submission version has correct content")
+                .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
         assertThat(version.get().getCreatedDate()).isNotNull();
         assertThat(version.get().getLastModifiedDate()).isNotNull();
 
@@ -241,7 +246,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         version = submissionVersionRepository.findLatestVersion(returnedSubmission.getId());
         assertThat(version).as("submission version was created").isNotEmpty();
         assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo("student2");
-        assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(returnedSubmission.getModel());
+        assertThat(version.get().getContent()).as("submission version has correct content")
+                .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
 
         returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission);
         database.changeUser("student2");
@@ -451,6 +457,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     public void getModelSubmissionWithoutAssessment() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmission(classExercise, submission, "student1");
+
         database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         ModelingSubmission storedSubmission = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
@@ -462,6 +469,26 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results");
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getModelSubmissionWithSimilarElements() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmission(classExercise, submission, "student1");
+        ModelingSubmission submission2 = ModelFactory.generateModelingSubmission(validSameModel, true);
+        database.addModelingSubmission(classExercise, submission2, "student2");
+
+        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        compassService.build(classExercise);
+
+        ModelingSubmission storedSubmission = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment?lock=true", HttpStatus.OK,
+                ModelingSubmission.class);
+
+        assertThat(storedSubmission).as("submission was found").isNotNull();
+        assertThat(storedSubmission.getSimilarElements()).as("similarity count is set").isNotNull();
+        assertThat(storedSubmission.getSimilarElements().size()).as("similarity count is set").isEqualTo(10);
     }
 
     @Test
@@ -484,7 +511,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         // set dates to UTC and round to milliseconds for comparison
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results");
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results", "similarElementCounts");
         assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);
@@ -640,40 +667,6 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void getNextOptimalModelSubmission() throws Exception {
-        ModelingSubmission submission1 = ModelFactory.generateModelingSubmission(validModel, true);
-        submission1 = database.addModelingSubmission(classExercise, submission1, "student1");
-        List<Long> optimalSubmissionIds = request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
-        assertThat(optimalSubmissionIds).as("optimal submission was found").containsExactly(submission1.getId());
-
-        // test with an exercise that does not support semi-automatic assessment (i.e. Compass), the REST call should still find the submission
-        ModelingSubmission submission2 = ModelFactory.generateModelingSubmission(validModel, true);
-        submission2 = database.addModelingSubmission(useCaseExercise, submission2, "student1");
-        List<Long> optimalSubmissionIds2 = request.getList("/api/exercises/" + useCaseExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
-        assertThat(optimalSubmissionIds2).as("optimal submission was found").containsExactly(submission2.getId());
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void getNextOptimalModelSubmission_noSubmissions() throws Exception {
-        List<Long> optimalSubmissionIds = request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
-        assertThat(optimalSubmissionIds).as("No submissions found").isEmpty();
-        optimalSubmissionIds = request.getList("/api/exercises/" + objectExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
-        assertThat(optimalSubmissionIds).as("No submissions found").isEmpty();
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void getNextOptimalModelSubmission_lockLimitReached() throws Exception {
-        createTenLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmission(useCaseExercise, submission, "student2");
-
-        request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.BAD_REQUEST, Long.class);
-    }
-
-    @Test
     @WithMockUser(value = "student1")
     public void getSubmissionForModelingEditor_unfinishedAssessment() throws Exception {
         StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(classExercise, "student1");
@@ -717,6 +710,26 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         studentParticipationRepository.saveAndFlush(afterDueDateParticipation);
 
         request.postWithoutLocation("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK, null);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void saveExercise_beforeDueDate() throws Exception {
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", unsubmittedSubmission,
+                ModelingSubmission.class, HttpStatus.OK);
+        assertThat(storedSubmission.isSubmitted()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void saveExercise_afterDueDateWithParticipationStartAfterDueDate() throws Exception {
+        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
+        studentParticipationRepository.saveAndFlush(afterDueDateParticipation);
+
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", unsubmittedSubmission,
+                ModelingSubmission.class, HttpStatus.OK);
+        assertThat(storedSubmission.isSubmitted()).isFalse();
     }
 
     private void checkDetailsHidden(ModelingSubmission submission, boolean isStudent) {

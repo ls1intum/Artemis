@@ -7,26 +7,24 @@
 >
     <div class="m-2">
         <div *ngIf="!viewOnly; else readOnlyFeedback" class="row align-items-start" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
-            <div class="form-group col-8" [style.max-width]="'500px'">
+            <div class="form-group col-8 p-2">
                 <label jhiTranslate="artemisApp.assessment.detail.feedback"></label>
                 <textarea class="form-control" rows="5" [(ngModel)]="feedback.detailText" [readOnly]="viewOnly"></textarea>
             </div>
-            <div class="form-group col-1" [style.max-width]="'100px'">
+            <div class="form-group col-3 p-2">
                 <label jhiTranslate="artemisApp.exercise.score"></label>
-                <input class="form-control" type="number" step="0.5" [(ngModel)]="feedback.credits" [readOnly]="viewOnly || disableEditScore" />
+                <input class="form-control px-1" type="number" step="0.5" [(ngModel)]="feedback.credits" [readOnly]="viewOnly || disableEditScore" />
             </div>
-            <div *ngIf="feedback.type === MANUAL" class="form-group col-2">
-                <button type="submit" (click)="deleteFeedback()" class="btn btn-danger btn-sm me-1">
-                    <fa-icon [icon]="'trash-alt'"></fa-icon> <span jhiTranslate="entity.action.delete">Delete</span>
-                </button>
-            </div>
-            <div class="form-group col-1" *ngIf="feedback.gradingInstruction!">
+            <div class="form-group col-1 p-2" *ngIf="feedback.gradingInstruction!">
                 <jhi-grading-instruction-link-icon [assessment]="feedback"></jhi-grading-instruction-link-icon>
             </div>
         </div>
         <div *ngIf="!viewOnly">
             <button type="button" class="btn btn-secondary btn-sm" (click)="cancelFeedback()">
                 <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            </button>
+            <button *ngIf="feedback.type === MANUAL" type="submit" (click)="deleteFeedback()" class="btn btn-danger btn-sm me-1">
+                <fa-icon [icon]="'trash-alt'"></fa-icon> <span jhiTranslate="entity.action.delete">Delete</span>
             </button>
             <button type="submit" [disabled]="feedback.credits == null" class="btn btn-primary btn-sm" (click)="updateFeedback()">
                 <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>

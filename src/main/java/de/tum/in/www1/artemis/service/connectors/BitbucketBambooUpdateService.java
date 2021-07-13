@@ -67,7 +67,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
 
     @Override
     public void updatePlanRepository(String bambooProjectKey, String buildPlanKey, String bambooRepositoryName, String bitbucketProjectKey, String bitbucketRepositoryName,
-            Optional<List<String>> optionalTriggeredByRepositories) {
+            String defaultBranchName, Optional<List<String>> optionalTriggeredByRepositories) {
         try {
             log.debug("Update plan repository for build plan {}", buildPlanKey);
             BambooRepositoryDTO bambooRepository = findBambooRepository(bambooRepositoryName, OLD_ASSIGNMENT_REPO_NAME, buildPlanKey);
@@ -76,7 +76,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
                         + " to the student repository : Could not find assignment nor Assignment repository");
             }
 
-            updateBambooPlanRepository(bambooRepository, bitbucketRepositoryName, bitbucketProjectKey, buildPlanKey);
+            updateBambooPlanRepository(bambooRepository, bitbucketRepositoryName, bitbucketProjectKey, buildPlanKey, defaultBranchName);
 
             // Overwrite triggers if needed, incl workaround for different repo names, triggered by is present means that the exercise (the BASE build plan) is imported from a
             // previous exercise
@@ -103,7 +103,8 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
      * @param bitbucketProjectKey the key of the corresponding bitbucket project
      * @param buildPlanKey the complete name of the plan
      */
-    private void updateBambooPlanRepository(@Nonnull BambooRepositoryDTO bambooRepository, String bitbucketRepositoryName, String bitbucketProjectKey, String buildPlanKey) {
+    private void updateBambooPlanRepository(@Nonnull BambooRepositoryDTO bambooRepository, String bitbucketRepositoryName, String bitbucketProjectKey, String buildPlanKey,
+            String defaultBranchName) {
 
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("planKey", buildPlanKey);
@@ -114,7 +115,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         parameters.add("confirm", "true");
         parameters.add("save", "Save repository");
         parameters.add("bamboo.successReturnMode", "json");
-        parameters.add("repository.stash.branch", "master");
+        parameters.add("repository.stash.branch", defaultBranchName);
 
         BitbucketRepositoryDTO bitbucketRepository = getBitbucketRepository(bitbucketProjectKey, bitbucketRepositoryName);
         parameters.add("repository.stash.repositoryId", bitbucketRepository.getId());

@@ -1,11 +1,11 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { JhiAlertService } from 'ng-jhipster';
-import interact from 'interactjs';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import * as $ from 'jquery';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { OtherModelElementCount } from 'app/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import interact from 'interactjs';
+import * as $ from 'jquery';
+import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -26,6 +26,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() explanation: string;
     @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
     @Input() centeredElementId: string;
+    @Input() elementCounts?: OtherModelElementCount[];
 
     feedbacks: Feedback[];
     @Input() set resultFeedbacks(feedback: Feedback[]) {
@@ -60,6 +61,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         this.initializeApollonEditor();
         if (this.highlightedElements) {
             this.updateHighlightedElements(this.highlightedElements);
+        }
+        if (this.elementCounts) {
+            this.updateElementCounts(this.elementCounts);
         }
         this.applyStateConfiguration();
         if (this.resizeOptions) {
@@ -177,9 +181,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 }
                 existingFeedback.credits = assessment.score;
                 existingFeedback.text = assessment.feedback;
-                if (assessment.dropInfo) {
-                    existingFeedback.gradingInstruction = new GradingInstruction();
-                    existingFeedback.gradingInstruction.id = assessment.dropInfo.instructionId;
+                if (assessment.dropInfo && assessment.dropInfo.instruction.id) {
+                    existingFeedback.gradingInstruction = assessment.dropInfo.instruction;
                 }
             } else {
                 this.elementFeedback.set(
@@ -262,6 +265,32 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
     }
 
+    /**
+     * Sets the corresponding highlight color in the apollon model of all elements contained in the given element map.
+     *
+     * @param newElements a map of elementIds -> highlight color
+     */
+    private updateElementCounts(newElementCounts: OtherModelElementCount[]) {
+        if (!newElementCounts) {
+            return;
+        }
+
+        const elementCountMap = new Map<String, Number>();
+
+        newElementCounts.forEach((elementCount) => elementCountMap.set(elementCount.elementId, elementCount.numberOfOtherElements));
+
+        if (this.apollonEditor != undefined) {
+            const model: UMLModel = this.apollonEditor!.model;
+            for (const element of model.elements) {
+                element.assessmentNote = this.calculateNote(elementCountMap.get(element.id));
+            }
+            for (const relationship of model.relationships) {
+                relationship.assessmentNote = this.calculateNote(elementCountMap.get(relationship.id));
+            }
+            this.apollonEditor!.model = model;
+        }
+    }
+
     private scrollIntoView(elementId: string) {
         const element = this.editorContainer.nativeElement as HTMLElement;
         const matchingElement = $(element).find(`#${elementId}`).get(0);
@@ -305,5 +334,13 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             return feedback.copiedFeedbackId ? this.firstCorrectionRoundColor : this.secondCorrectionRoundColor;
         }
         return '';
+    }
+
+    private calculateNote(count: Number | undefined) {
+        if (count) {
+            return this.artemisTranslatePipe.transform('modelingAssessment.impactWarning', { affectedSubmissionsCount: count });
+        }
+
+        return undefined;
     }
 }

@@ -192,8 +192,8 @@ export class ExamManagementService {
      * @param examId
      * @return studentDtos of students that were not found in the system
      */
-    addAllStudentsOfCourseToExam(courseId: number, examId: number): Observable<HttpResponse<StudentDTO[]>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, { observe: 'response' });
+    addAllStudentsOfCourseToExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
+        return this.http.post<HttpResponse<void>>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, { observe: 'response' });
     }
 
     /**

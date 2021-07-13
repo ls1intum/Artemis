@@ -9,7 +9,6 @@ import { map } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
-import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
@@ -96,7 +95,6 @@ export const routes: Routes = [
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        canDeactivate: [CanDeactivateGuard],
     },
     {
         path: ':courseId/programming-exercises',

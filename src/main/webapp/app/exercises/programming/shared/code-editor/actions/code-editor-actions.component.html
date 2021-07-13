@@ -36,28 +36,6 @@
         >
     </button>
     <button
-        id="save_button"
-        type="button"
-        class="guided-tour-save-button btn btn-primary navbar-btn me-3"
-        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-        [overwriteDisabled]="
-            disableActions ||
-            editorState !== EditorState.UNSAVED_CHANGES ||
-            commitState === CommitState.COMMITTING ||
-            commitState === CommitState.COULD_NOT_BE_RETRIEVED ||
-            commitState === CommitState.UNDEFINED
-        "
-        (click)="onSave()"
-        data-toggle="tooltip"
-        data-placement="left"
-        title="Save all unsaved changes in your files."
-    >
-        <span *ngIf="editorState === EditorState.SAVING">
-            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.saving">Saving</span>
-        </span>
-        <span *ngIf="editorState !== EditorState.SAVING"><fa-icon [icon]="['far', 'save']"></fa-icon> <span jhiTranslate="artemisApp.editor.saveFiles">Save Files</span></span>
-    </button>
-    <button
         id="submit_button"
         type="button"
         class="guided-tour-submit-button btn btn-success navbar-btn"

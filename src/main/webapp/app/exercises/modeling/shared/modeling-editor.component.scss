@@ -19,5 +19,6 @@ $draggable-width: 15px;
 
 .apollon-container {
     height: 100%;
+    min-height: 600px;
     overflow: hidden;
 }

@@ -15,6 +15,7 @@ import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { getCourseId } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',
@@ -66,7 +67,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         // update displayed times in UI regularly
         this.interval = setInterval(() => {
             this.updateDisplayedTimes();
-        }, 200);
+        }, UI_RELOAD_TIME);
     }
 
     /**
@@ -144,7 +145,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
                 this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-statistic`);
             } else {
                 // go to previous question-statistic
-                this.quizStatisticUtil.navigateToStatisticOf(this.quizExercise, this.quizExercise.quizQuestions[this.quizExercise.quizQuestions.length - 1]);
+                this.quizStatisticUtil.navigateToStatisticOf(this.quizExercise, this.quizExercise.quizQuestions.last()!);
             }
         } else {
             this.quizStatisticUtil.previousStatistic(this.quizExercise, this.question);

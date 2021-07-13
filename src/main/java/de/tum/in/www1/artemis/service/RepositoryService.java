@@ -303,6 +303,20 @@ public class RepositoryService {
     }
 
     /**
+     * Retrieve the status of the repository. Also pulls the repository.
+     *
+     * @param repositoryUrl of the repository to check the status for.
+     * @param defaultBranch the already used default branch in the remote repository
+     * @return a dto to determine the status of the repository.
+     * @throws InterruptedException if the repository can't be checked out on the server.
+     * @throws GitAPIException if the repository status can't be retrieved.
+     */
+    public boolean isClean(VcsRepositoryUrl repositoryUrl, String defaultBranch) throws GitAPIException, InterruptedException {
+        Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true, defaultBranch);
+        return gitService.isClean(repository);
+    }
+
+    /**
      * Retrieve a repository by its name.
      *
      * @param exercise to which the repository belongs.

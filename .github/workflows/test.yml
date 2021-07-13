@@ -2,10 +2,20 @@ name: Test
 
 on:
   pull_request:
+    paths-ignore:
+    - 'README.md'
+    - 'CODE_OF_CONDUCT.md'
+    - 'CONTRIBUTING.md'
+    - 'LICENSE'
+    - 'SECURITY.md'
+    - 'docs/**'
+    - '.github/**'
+    - '!.github/workflows/test.yml'
   push:
     branches:
     - develop
     - main
+    - release/*
     tags: '[0-9]+.[0-9]+.[0-9]+'
     paths-ignore:
     - 'README.md'
@@ -16,8 +26,11 @@ on:
     - 'docs/**'
     - '.github/**'
     - '!.github/workflows/test.yml'
+  release:
+    types:
+    - created
 
-# Keep in sync with codeql-analysis.yml and build.yml
+# Keep in sync with codeql-analysis.yml and build-deploy.yml
 env:
   CI: true
   node: 14.x
@@ -27,6 +40,7 @@ jobs:
 
   server-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
     - name: Setup Java
       uses: actions/setup-java@v2.1.0
@@ -59,6 +73,7 @@ jobs:
 
   server-style:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
     - name: Setup Java
       uses: actions/setup-java@v2.1.0
@@ -81,9 +96,10 @@ jobs:
 
   client-tests-fast:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
         - name: Setup Node.js
-          uses: actions/setup-node@v2.1.5
+          uses: actions/setup-node@v2.2.0
           with:
               node-version: '${{ env.node }}'
         - uses: actions/checkout@v2
@@ -114,9 +130,10 @@ jobs:
 
   client-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
         - name: Setup Node.js
-          uses: actions/setup-node@v2.1.5
+          uses: actions/setup-node@v2.2.0
           with:
               node-version: '${{ env.node }}'
         - uses: actions/checkout@v2
@@ -141,9 +158,10 @@ jobs:
 
   client-style:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
     - name: Setup Node.js
-      uses: actions/setup-node@v2.1.5
+      uses: actions/setup-node@v2.2.0
       with:
         node-version: '${{ env.node }}'
     - uses: actions/checkout@v2

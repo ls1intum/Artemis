@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -142,11 +143,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         if (exercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
             return true;
         }
+        ZonedDateTime now = ZonedDateTime.now();
         // Exercises with a release date in the future must be scheduled as well
-        if (exercise.getReleaseDate() != null && ZonedDateTime.now().isBefore(exercise.getReleaseDate())) {
+        if (exercise.getReleaseDate() != null && now.isBefore(exercise.getReleaseDate())) {
             return true;
         }
-        final ZonedDateTime now = ZonedDateTime.now();
         // If tests are run after due date and that due date lies in the future, we need to schedule that as well
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && now.isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
             return true;
@@ -193,10 +194,12 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             SecurityUtils.setAuthorizationObject();
         }
 
+        ZonedDateTime now = ZonedDateTime.now();
+
         // For any course exercise that needsToBeScheduled (dueDate and/or manual assessment)
 
         // For any course exercise with a valid release date
-        if (exercise.getReleaseDate() != null && ZonedDateTime.now().isBefore(exercise.getReleaseDate())) {
+        if (exercise.getReleaseDate() != null && now.isBefore(exercise.getReleaseDate())) {
             var scheduledRunnable = Set.of(new Tuple<>(exercise.getReleaseDate().minusSeconds(Constants.SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS),
                     combineTemplateCommitsForExercise(exercise)));
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, scheduledRunnable);
@@ -208,7 +211,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
 
         // For any course exercise that needsToBeScheduled (buildAndTestAfterDueDate and/or manual assessment)
-        if (exercise.getDueDate() != null && ZonedDateTime.now().isBefore(exercise.getDueDate())) {
+        if (exercise.getDueDate() != null && now.isBefore(exercise.getDueDate())) {
             boolean updateScores;
             if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null) {
                 // no rebuild date is set but test cases marked with AFTER_DUE_DATE exist: they have to become visible by recalculation of the scores
@@ -232,7 +235,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
 
         // For exercises with buildAndTestAfterDueDate
-        if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
+        if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && now.isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
             log.debug("Scheduled build and test for student submissions after due date for Programming Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(),
                     exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
@@ -243,33 +246,34 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleExamExercise(ProgrammingExercise exercise) {
-        var exam = exercise.getExerciseGroup().getExam();
-        var visibleDate = exam.getVisibleDate();
-        var startDate = exam.getStartDate();
+        Exam exam = exercise.getExerciseGroup().getExam();
+        ZonedDateTime visibleDate = exam.getVisibleDate();
+        ZonedDateTime startDate = exam.getStartDate();
+        ZonedDateTime now = ZonedDateTime.now();
         if (visibleDate == null || startDate == null) {
             log.error("Programming exercise {} for exam {} cannot be scheduled properly, visible date is {}, start date is {}", exercise.getId(), exam.getId(), visibleDate,
                     startDate);
             return;
         }
-        var unlockDate = getExamProgrammingExerciseUnlockDate(exercise);
 
         // BEFORE EXAM
-        if (unlockDate.isAfter(ZonedDateTime.now())) {
+        ZonedDateTime unlockDate = getExamProgrammingExerciseUnlockDate(exercise);
+        if (now.isBefore(unlockDate)) {
             // Use the custom date from the exam rather than the of the exercise's lifecycle
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(unlockDate, unlockAllStudentRepositories(exercise))));
         }
         // DURING EXAM
-        else if (examDateService.getLatestIndividualExamEndDate(exam).isAfter(ZonedDateTime.now())) {
+        else if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
             // This is only a backup (e.g. a crash of this node and restart during the exam)
             // TODO: Christian Femers: this can lead to a weired edge case after the normal exam end date and before the last individual exam end date (in case of working time
             // extensions)
-            var scheduledRunnable = Set.of(
-                    new Tuple<>(ZonedDateTime.now().plusSeconds(Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS), unlockAllStudentRepositories(exercise)));
+            var scheduledRunnable = Set
+                    .of(new Tuple<>(now.plusSeconds(Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS), unlockAllStudentRepositories(exercise)));
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, scheduledRunnable);
         }
         // NOTHING TO DO AFTER EXAM
 
-        if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && exercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
+        if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && now.isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
         }
         else {
@@ -287,8 +291,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                         .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
                 gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
                 log.debug("Combined template repository commits of programming exercise {}.", programmingExerciseWithTemplateParticipation.getId());
-                groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExerciseWithTemplateParticipation,
-                        Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_COMBINE_OF_TEMPLATE_COMMITS);
             }
             catch (InterruptedException e) {
                 log.error("Failed to schedule combining of template commits of exercise " + exercise.getId(), e);
@@ -428,7 +430,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     if (dueDate != null) {
                         individualDueDates.add(new Tuple<>(dueDate, participation));
                     }
-                    programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
+
+                    programmingExerciseParticipationService.unlockStudentRepository(
+                            programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId()), participation);
                 };
                 List<ProgrammingExerciseStudentParticipation> failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId,
                         unlockAndCollectOperation, participation -> true, "add write permissions to all student repositories");
@@ -485,7 +489,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, tasks);
     }
 
-    private static ZonedDateTime getExamProgrammingExerciseUnlockDate(ProgrammingExercise exercise) {
+    public static ZonedDateTime getExamProgrammingExerciseUnlockDate(ProgrammingExercise exercise) {
         // using start date minus 5 minutes here because unlocking will take some time (it is invoked synchronously).
         return exercise.getExerciseGroup().getExam().getStartDate().minusMinutes(EXAM_START_WAIT_TIME_MINUTES);
     }

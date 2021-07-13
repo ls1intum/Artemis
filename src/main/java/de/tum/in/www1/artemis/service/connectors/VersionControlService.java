@@ -149,6 +149,25 @@ public interface VersionControlService {
     void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws VersionControlException;
 
     /**
+     * Get the default branch of the repository
+     *
+     * @param repositoryUrl The repository url to get the default branch for.
+     * @return the name of the default branch, e.g. 'main'
+     */
+    String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws VersionControlException;
+
+    /**
+     * Get the default branch of the repository
+     *
+     * @param projectKey The project key to which the repository slug belongs
+     * @param repositorySlug The repository slug of the repository for which the default branch shall be retrieved
+     * @return the name of the default branch, e.g. 'main'
+     */
+    default String getDefaultBranchOfRepository(String projectKey, String repositorySlug) throws VersionControlException {
+        return getDefaultBranchOfRepository(getCloneRepositoryUrl(projectKey, repositorySlug));
+    }
+
+    /**
      * Unprotects a branch from the repository, so that the history can be changed (important for combine template commits).
      *
      * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.

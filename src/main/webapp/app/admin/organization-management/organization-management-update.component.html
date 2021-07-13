@@ -70,7 +70,13 @@
                         >
                     </div>
                     <label jhiTranslate="organizationManagement.emailPattern">Email Pattern</label>
-                    <input type="text" required class="form-control" name="emailPattern" #emailPatternInput="ngModel" [(ngModel)]="organization.emailPattern" />
+                    <input type="text" required class="form-control" name="emailPattern" validPattern #emailPattern="ngModel" [(ngModel)]="organization.emailPattern" />
+
+                    <div *ngIf="emailPattern?.dirty && emailPattern?.invalid">
+                        <small class="form-text text-danger" *ngIf="emailPattern.errors?.validPattern" jhiTranslate="entity.validation.invalidPattern">
+                            This field contains an invalid pattern
+                        </small>
+                    </div>
                 </div>
             </div>
             <div>

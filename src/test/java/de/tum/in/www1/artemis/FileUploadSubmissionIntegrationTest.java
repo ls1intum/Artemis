@@ -37,6 +37,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     private FileUploadExercise assessedFileUploadExercise;
 
+    private FileUploadExercise noDueDateFileUploadExercise;
+
     private FileUploadSubmission submittedFileUploadSubmission;
 
     private FileUploadSubmission notSubmittedFileUploadSubmission;
@@ -50,10 +52,11 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(3, 1, 0, 1);
-        Course course = database.addCourseWithThreeFileUploadExercise();
+        Course course = database.addCourseWithFourFileUploadExercise();
         releasedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         finishedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "finished");
         assessedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
+        noDueDateFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "noDueDate");
         submittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         notSubmittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(false);
         lateFileUploadSubmission = ModelFactory.generateLateFileUploadSubmission();
@@ -69,28 +72,67 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(value = "student3")
     public void submitFileUploadSubmission() throws Exception {
-        submitFile();
+        submitFile("file.png", false);
     }
 
-    private void submitFile() throws Exception {
+    @Test
+    @WithMockUser(value = "student3")
+    public void submitFileUploadSubmissionWithShortName() throws Exception {
+        submitFile(".png", false);
+    }
+
+    @Test
+    @WithMockUser(value = "student3")
+    public void submitFileUploadSubmissionWithDoubleBackslash() throws Exception {
+        submitFile("file\\file.png", false);
+    }
+
+    @Test
+    @WithMockUser(value = "student3")
+    public void submitFileUploadSubmissionDifferentFile() throws Exception {
+        submitFile("file2.png", true);
+    }
+
+    @Test
+    @WithMockUser(value = "student3")
+    public void submitFileUploadSubmissionTwiceSameFile() throws Exception {
+        submitFile("file.png", false);
+        submitFile("file.png", false);
+
+        // TODO: upload a real file from the file system twice with the same and with different names and test both works correctly
+    }
+
+    private void submitFile(String filename, boolean differentFilePath) throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
-        FileUploadSubmission returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission);
-        String actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file.png").toString();
+
+        if (differentFilePath) {
+            submission.setFilePath("/api/files/file-upload-exercises/1/submissions/1/file1.png");
+        }
+        FileUploadSubmission returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission, filename);
+
+        String actualFilePath;
+
+        if (differentFilePath) {
+            actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
+        }
+        else {
+            if (filename.length() < 5) {
+                actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file" + filename).toString();
+            }
+            else if (filename.contains("\\")) {
+                actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file.png").toString();
+            }
+            else {
+                actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
+            }
+        }
+
         String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
         var fileBytes = Files.readAllBytes(Paths.get(actualFilePath));
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
         checkDetailsHidden(returnedSubmission, true);
-    }
-
-    @Test
-    @WithMockUser(value = "student3")
-    public void submitFileUploadSubmissionTwiceSameFile() throws Exception {
-        submitFile();
-        submitFile();
-
-        // TODO: upload a real file from the file system twice with the same and with different names and test both works correctly
     }
 
     @Test
@@ -191,6 +233,18 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
+    public void getSubmissionWithoutAssessmentWithoutSubmission() throws Exception {
+        database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
+        assertThat(releasedFileUploadExercise.getNumberOfSubmissions()).as("no submissions").isNull();
+
+        FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment",
+                HttpStatus.NOT_FOUND, FileUploadSubmission.class);
+
+        assertThat(storedSubmission).as("no submission eligible for new assessment").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void getSubmissionWithoutAssessment() throws Exception {
         FileUploadSubmission submission = database.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission, "student1");
         database.addFileUploadSubmission(releasedFileUploadExercise, lateFileUploadSubmission, "student2"); // tests prioritizing in-time submissions over late submissions
@@ -246,6 +300,19 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "results", "submissionDate", "fileService");
         assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
         checkDetailsHidden(storedSubmission, false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetSubmissionWithoutAssessmentWithoutSubmissionLock() throws Exception {
+        database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        assertThat(releasedFileUploadExercise.getNumberOfSubmissions()).as("no submissions").isNull();
+
+        FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment?lock=true",
+                HttpStatus.NOT_FOUND, FileUploadSubmission.class);
+
+        assertThat(storedSubmission).as("no submission present and therefore none locked").isNull();
     }
 
     @Test
@@ -319,7 +386,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(value = "student1")
-    public void getDataForFileUpload_wrongExcerciseType() throws Exception {
+    public void getDataForFileUpload_wrongExerciseType() throws Exception {
         Course course = database.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         Participation modelingExerciseParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
@@ -354,8 +421,36 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(value = "student3", roles = "USER")
+    public void submitExerciseWithSubmissionID() throws Exception {
+        FileUploadSubmission submission = performInitialSubmission(releasedFileUploadExercise.getId(), submittedFileUploadSubmission, validFile.getOriginalFilename());
+        request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", validFile,
+                FileUploadSubmission.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
     public void submitExercise_beforeDueDate_allowed() throws Exception {
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
+                FileUploadSubmission.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitExercise_afterDueDate() throws Exception {
+        StudentParticipation studentParticipation = database.createAndSaveParticipationForExerciseInTheFuture(releasedFileUploadExercise, "student3");
+        submittedFileUploadSubmission.setParticipation(studentParticipation);
+
+        request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
+                FileUploadSubmission.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitExercise_withoutDueDate() throws Exception {
+        StudentParticipation studentParticipation = database.createAndSaveParticipationForExerciseInTheFuture(noDueDateFileUploadExercise, "student3");
+        submittedFileUploadSubmission.setParticipation(studentParticipation);
+
+        request.postWithMultipartFile("/api/exercises/" + noDueDateFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
                 FileUploadSubmission.class, HttpStatus.OK);
     }
 
@@ -364,6 +459,23 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     public void submitExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
         request.postWithMultipartFile("/api/exercises/" + finishedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
                 FileUploadSubmission.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void saveExercise_beforeDueDate() throws Exception {
+        FileUploadSubmission storedSubmission = request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions",
+                notSubmittedFileUploadSubmission, "submission", validFile, FileUploadSubmission.class, HttpStatus.OK);
+        assertThat(storedSubmission.isSubmitted()).isTrue();
+
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void saveExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
+        FileUploadSubmission storedSubmission = request.postWithMultipartFile("/api/exercises/" + finishedFileUploadExercise.getId() + "/file-upload-submissions",
+                notSubmittedFileUploadSubmission, "submission", validFile, FileUploadSubmission.class, HttpStatus.OK);
+        assertThat(storedSubmission.isSubmitted()).isFalse();
     }
 
     @Test
@@ -378,8 +490,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         assertThat(submissionInDb.get().getFilePath()).contains("ffile.png");
     }
 
-    private FileUploadSubmission performInitialSubmission(Long exerciseId, FileUploadSubmission submission) throws Exception {
-        var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+    private FileUploadSubmission performInitialSubmission(Long exerciseId, FileUploadSubmission submission, String originalFilename) throws Exception {
+        var file = new MockMultipartFile("file", originalFilename, "application/json", "some data".getBytes());
         return request.postWithMultipartFile("/api/exercises/" + exerciseId + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,
                 HttpStatus.OK);
     }
@@ -401,6 +513,35 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
 
         assertThat(receivedSubmission.getId()).isEqualTo(submissionID);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getSubmissionByID_asTA_withResult() throws Exception {
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = database.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, "student1");
+        Participation studentParticipation = database.createAndSaveParticipationForExercise(releasedFileUploadExercise, "student1");
+        Result result = database.addResultToParticipation(studentParticipation, fileUploadSubmission);
+
+        long submissionID = fileUploadSubmission.getId();
+        FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
+
+        assertThat(receivedSubmission.getId()).isEqualTo(submissionID);
+        assertThat(receivedSubmission.getLatestResult()).as("submission has latest result").isEqualTo(result);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getSubmissionByID_asTA_withResultAndAssessor() throws Exception {
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, fileUploadSubmission, "student1", "tutor1");
+        User assessor = database.getUserByLogin("tutor1");
+
+        long submissionID = fileUploadSubmission.getId();
+        FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
+
+        assertThat(receivedSubmission.getId()).isEqualTo(submissionID);
+        assertThat(receivedSubmission.getLatestResult().getAssessor()).as("latest result has assessor").isEqualTo(assessor);
     }
 
     @Test

@@ -109,9 +109,9 @@ public interface ContinuousIntegrationService {
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key of the build
-     * @throws Exception if the Body could not be parsed
+     * @throws ContinuousIntegrationException if the Body could not be parsed
      */
-    String getPlanKey(Object requestBody) throws Exception;
+    String getPlanKey(Object requestBody) throws ContinuousIntegrationException;
 
     /**
      * Get the result of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the

@@ -144,7 +144,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
      * get the link for the assessment of a specific submission of the current exercise
      * @param submissionId
      */
-    getAssessmentLink(submissionId: number) {
-        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
+    getAssessmentLink(participationId: number, submissionId: number) {
+        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, submissionId, this.examId, this.exerciseGroupId);
     }
 }

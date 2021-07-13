@@ -92,13 +92,6 @@ public class CompassService {
             List<Feedback> feedbacksForSuggestion = new ArrayList<>();
             ModelClusterFactory clusterBuilder = new ModelClusterFactory();
             List<UMLElement> elements = clusterBuilder.getModelElements(modelingSubmission);
-            // TODO: the following for loop has too many database calls and will be very inefficient, because those are done for each model element and a model can easily have 100
-            // model elements
-            // we should instead fetch all elements with only 3 database calls
-            // 1x modelElementRepository.findAllModelElementsByIds
-            // 1x modelClusterRepository.findAllClustersWithEagerElementsByIds
-            // 1x feedbackRepository.findByReferenceInAndResult_Submission_Participation_Exercise with all references of all model elements.
-            // The for loop can then search in the retrieved Lists without additional database queries
             List<ModelElement> modelElements = modelElementRepository.findByModelElementIdIn(elements.stream().map(UMLElement::getJSONElementID).collect(Collectors.toList()));
             List<Long> clusterIds = modelElements.stream().map(ModelElement::getCluster).map(ModelCluster::getId).collect(Collectors.toList());
             List<ModelCluster> modelClusters = modelClusterRepository.findAllByIdInWithEagerElements(clusterIds);
@@ -168,14 +161,13 @@ public class CompassService {
         // NOTE: Currently, this is only possible for for exercises with class or activity diagrams
         DiagramType diagramType = modelingExercise.getDiagramType();
         if (modelingExercise.getAssessmentType() != null) {
-            return (modelingExercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC)
-                    && (diagramType == DiagramType.ClassDiagram || diagramType == DiagramType.ActivityDiagram);
+            return (modelingExercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC);
         }
         // if the assessment mode is not specified (e.g. for legacy exercises), team exercises are not supported
         if (modelingExercise.isTeamMode()) {
             return false;
         }
-        return diagramType == DiagramType.ClassDiagram || diagramType == DiagramType.ActivityDiagram;
+        return true;
     }
 
     /**

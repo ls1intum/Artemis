@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -126,15 +127,13 @@ public class ModelFactory {
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             programmingExercise.setProjectType(ProjectType.ECLIPSE);
         }
+        else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+            programmingExercise.setProjectType(ProjectType.PLAIN);
+        }
         else {
             programmingExercise.setProjectType(null);
         }
-        if (programmingLanguage == ProgrammingLanguage.SWIFT) {
-            programmingExercise.setPackageName("swiftTest");
-        }
-        else {
-            programmingExercise.setPackageName("de.test");
-        }
+        programmingExercise.setPackageName(programmingLanguage == ProgrammingLanguage.SWIFT ? "swiftTest" : "de.test");
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
         String testRepoUrl = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUrl(testRepoUrl);
@@ -1160,5 +1159,14 @@ public class ModelFactory {
         organization.setLogoUrl(logoUrl);
         organization.setEmailPattern(emailPattern);
         return organization;
+    }
+
+    public static AttachmentUnit generateAttachmentUnit(ZonedDateTime startDate, Lecture lecture) {
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        attachmentUnit.setReleaseDate(startDate);
+        attachmentUnit.setName("TestAttachementUnit");
+        attachmentUnit.setLecture(lecture);
+        attachmentUnit.setDescription("Test description");
+        return attachmentUnit;
     }
 }

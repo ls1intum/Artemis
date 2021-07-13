@@ -7,6 +7,7 @@ import { FileService } from 'app/shared/http/file.service';
 import { Attachment } from 'app/entities/attachment.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { PostingsComponent } from 'app/overview/postings/postings.component';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
@@ -24,6 +25,7 @@ export class CourseLectureDetailsComponent implements OnInit {
     isDownloadingLink?: string;
     lectureUnits: LectureUnit[] = [];
     postings?: PostingsComponent;
+    hasPdfLectureUnit: boolean;
 
     readonly LectureUnitType = LectureUnitType;
 
@@ -52,6 +54,12 @@ export class CourseLectureDetailsComponent implements OnInit {
                     this.lecture = findLectureResult.body!;
                     if (this.lecture?.lectureUnits) {
                         this.lectureUnits = this.lecture.lectureUnits;
+
+                        // Check if PDF attachments exist in lecture units
+                        this.hasPdfLectureUnit =
+                            (<AttachmentUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT)).filter(
+                                (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
+                            ).length > 0;
                     }
                     if (this.postings) {
                         // We need to manually update the lecture property of the student questions component
@@ -79,6 +87,12 @@ export class CourseLectureDetailsComponent implements OnInit {
             this.isDownloadingLink = downloadUrl;
             this.fileService.downloadFileWithAccessToken(downloadUrl);
             this.isDownloadingLink = undefined;
+        }
+    }
+
+    downloadMergedFiles(): void {
+        if (this.lecture?.course?.id && this.lectureId) {
+            this.fileService.downloadMergedFileWithAccessToken(this.lecture.course.id, this.lectureId);
         }
     }
 

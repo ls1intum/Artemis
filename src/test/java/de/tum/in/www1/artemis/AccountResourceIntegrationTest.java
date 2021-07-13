@@ -168,8 +168,8 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
             ManagedUserVM userVM = new ManagedUserVM(user);
             userVM.setPassword(getValidPassword());
 
-            // make request
-            request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
+            // make request -> validation fails due to empty email is validated against min size
+            request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
         });
     }
 

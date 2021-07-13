@@ -52,4 +52,17 @@ public class UMLCommunicationDiagram extends UMLDiagram {
         modelElements.addAll(communicationLinkList);
         return modelElements;
     }
+
+    @Override
+    public List<UMLElement> getAllModelElements() {
+        List<UMLElement> modelElements = super.getAllModelElements();
+
+        for (UMLObject umlObject : objectList) {
+            modelElements.addAll(umlObject.getAttributes());
+            modelElements.addAll(umlObject.getMethods());
+        }
+
+        return modelElements;
+    }
+
 }

@@ -21,8 +21,9 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
         return nextHandler.handle(request).pipe(
             tap((response) => {
                 if (response instanceof HttpResponse) {
+                    const isTranslationStringsRequest = response.url?.includes('/i18n/');
                     const serverVersion = response.headers.get(ARTEMIS_VERSION_HEADER);
-                    if (VERSION && serverVersion && VERSION !== serverVersion) {
+                    if (VERSION && serverVersion && VERSION !== serverVersion && !isTranslationStringsRequest) {
                         this.showAlert.next();
                     }
                     // only invoke the time call if the call was not already the time call to prevent recursion here

@@ -28,7 +28,7 @@
         {
             "id": "a66e1617-7875-428d-a878-924bf55dd1b6",
             "name": "Controller",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "57d932fb-e2bd-4c60-9195-7beab7e8f72a",
             "bounds": {
                 "x": 20,
@@ -40,7 +40,7 @@
         {
             "id": "ef0e78cb-f09a-4ae9-983f-b7f6c0a1fc97",
             "name": "KeyboardSteering",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "a66e1617-7875-428d-a878-924bf55dd1b6",
             "bounds": {
                 "x": 60,
@@ -52,7 +52,7 @@
         {
             "id": "7109a608-cc4b-454c-be1e-846023d46f4c",
             "name": "Collision",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "a66e1617-7875-428d-a878-924bf55dd1b6",
             "bounds": {
                 "x": 60,
@@ -64,7 +64,7 @@
         {
             "id": "ba4c05f0-203e-4a0a-88ac-f0db3d4bedf8",
             "name": "Model",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "57d932fb-e2bd-4c60-9195-7beab7e8f72a",
             "bounds": {
                 "x": 490,
@@ -76,7 +76,7 @@
         {
             "id": "f2b3de7c-cadb-407e-829a-c4d9883a4139",
             "name": "Spacecraft",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "ba4c05f0-203e-4a0a-88ac-f0db3d4bedf8",
             "bounds": {
                 "x": 550,
@@ -88,7 +88,7 @@
         {
             "id": "b9ebb783-8cde-4a34-bbaf-7a146cf7347d",
             "name": "Debris",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "ba4c05f0-203e-4a0a-88ac-f0db3d4bedf8",
             "bounds": {
                 "x": 540,
@@ -100,7 +100,7 @@
         {
             "id": "c4a70c29-18d1-4baf-8d49-7ac2c30aeec2",
             "name": "Obstacle",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "ba4c05f0-203e-4a0a-88ac-f0db3d4bedf8",
             "bounds": {
                 "x": 540,
@@ -112,7 +112,7 @@
         {
             "id": "d868c517-0287-40bb-916d-b1bc1328e4f0",
             "name": "Space",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "ba4c05f0-203e-4a0a-88ac-f0db3d4bedf8",
             "bounds": {
                 "x": 900,
@@ -196,7 +196,7 @@
         {
             "id": "88ca0b77-a47a-416a-98c7-6a5be0b15a0c",
             "name": "View",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": null,
             "bounds": {
                 "x": 1050,
@@ -208,7 +208,7 @@
         {
             "id": "63aa80f9-d736-45f1-aca7-a65b5f66d69e",
             "name": "SpaceUI",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "88ca0b77-a47a-416a-98c7-6a5be0b15a0c",
             "bounds": {
                 "x": 1080,

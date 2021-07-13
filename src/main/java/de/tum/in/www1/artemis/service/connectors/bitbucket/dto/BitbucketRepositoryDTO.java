@@ -26,6 +26,8 @@ public class BitbucketRepositoryDTO {
 
     private LinksDTO links;
 
+    private String defaultBranch;
+
     /**
      * needed for Jackson
      */
@@ -119,6 +121,14 @@ public class BitbucketRepositoryDTO {
 
     public void setLinks(LinksDTO links) {
         this.links = links;
+    }
+
+    public String getDefaultBranch() {
+        return defaultBranch;
+    }
+
+    public void setDefaultBranch(String defaultBranch) {
+        this.defaultBranch = defaultBranch;
     }
 
     /**

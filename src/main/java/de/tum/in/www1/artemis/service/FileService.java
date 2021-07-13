@@ -8,7 +8,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.regex.Pattern;
@@ -19,6 +21,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.pdfbox.io.MemoryUsageSetting;
+import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -348,6 +352,11 @@ public class FileService implements DisposableBean {
             if (targetFilePath.endsWith("dune.file")) {
                 targetFilePath = targetFilePath.replace("dune.file", "dune");
             }
+            // special case for Xcode where directories get falsely scanned as files
+            if (targetFilePath.endsWith(".xcassets/") || targetFilePath.endsWith(".colorset/") || targetFilePath.endsWith(".appiconset/")
+                    || targetFilePath.endsWith(".xcworkspace/") || targetFilePath.endsWith(".xcodeproj/")) {
+                continue;
+            }
 
             Path copyPath = Paths.get(targetDirectoryPath + targetFilePath);
             File parentFolder = copyPath.toFile().getParentFile();
@@ -499,6 +508,32 @@ public class FileService implements DisposableBean {
     }
 
     /**
+     * This replace all occurrences of the target String with the replacement String within a source file of a given directory (recursive!)
+     *
+     * @param startPath         the path where the file is located
+     * @param targetString      the string that should be replaced
+     * @param replacementString the string that should be used to replace the target
+     * @throws IOException if an issue occurs on file access for the replacement of the variables.
+     */
+    public void replaceVariablesInFileName(String startPath, String targetString, String replacementString) throws IOException {
+        log.debug("Replacing {} with {} in directory {}", targetString, replacementString, startPath);
+        File directory = new File(startPath);
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new RuntimeException("Files in the directory " + startPath + " should be replaced but it does not exist.");
+        }
+
+        // rename all files in the file tree
+        Files.find(Paths.get(startPath), Integer.MAX_VALUE, (filePath, fileAttr) -> fileAttr.isRegularFile() && filePath.toString().contains(targetString)).forEach(filePath -> {
+            try {
+                Files.move(new File(filePath.toString()).toPath(), new File(filePath.toString().replace(targetString, replacementString)).toPath());
+            }
+            catch (IOException e) {
+                throw new RuntimeException("File " + filePath + " should be replaced but does not exist.");
+            }
+        });
+    }
+
+    /**
      * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file
      * <p>
      * {@link #replaceVariablesInFile(String, Map) replaceVariablesInFile}
@@ -518,7 +553,6 @@ public class FileService implements DisposableBean {
         String[] files = directory.list((current, name) -> new File(current, name).isFile());
         if (files != null) {
             for (String file : files) {
-
                 replaceVariablesInFile(Paths.get(directory.getAbsolutePath(), file).toString(), replacements);
             }
         }
@@ -798,5 +832,51 @@ public class FileService implements DisposableBean {
             log.warn("Could not write given object in file {}", path);
         }
         return path;
+    }
+
+    /**
+     * Merge the PDF files located in the given paths.
+     *
+     * @param paths list of paths to merge
+     * @return byte array of the merged file
+     */
+    public Optional<byte[]> mergePdfFiles(List<String> paths) {
+        if (paths == null || paths.isEmpty()) {
+            return Optional.empty();
+        }
+        PDFMergerUtility pdfMerger = new PDFMergerUtility();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try {
+            for (String path : paths) {
+                File file = new File(path);
+                if (file.exists()) {
+                    pdfMerger.addSource(new File(path));
+                }
+            }
+            pdfMerger.setDestinationStream(outputStream);
+            pdfMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
+        }
+        catch (IOException e) {
+            log.warn("Could not merge files");
+            return Optional.empty();
+        }
+
+        return Optional.of(outputStream.toByteArray());
+    }
+
+    /**
+     * Deletes all specified files.
+     * @param filePaths A list of all paths to the files that should be deleted
+     */
+    public void deleteFiles(List<Path> filePaths) {
+        for (Path filePath : filePaths) {
+            try {
+                Files.delete(filePath);
+            }
+            catch (Exception ex) {
+                log.warn("Could not delete file {}. Error message: {}", filePath, ex.getMessage());
+            }
+        }
     }
 }

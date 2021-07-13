@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Post } from 'app/entities/metis/post.model';
@@ -27,14 +27,14 @@ export class PostComponent implements OnInit {
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactPost = new EventEmitter<PostAction>();
-    editText?: string;
+    content?: string;
     isEditMode: boolean;
     isLoading = false;
     EditorMode = EditorMode;
     courseId: number;
 
-    // Only allow certain html tags and no attributes
-    allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p'];
+    // Only allow certain html tags and attributes
+    allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p', 'blockquote', 'pre', 'code', 'span', 'li', 'ul', 'ol'];
     allowedHtmlAttributes: string[] = ['href'];
 
     constructor(private postService: PostService, private route: ActivatedRoute) {}
@@ -45,7 +45,7 @@ export class PostComponent implements OnInit {
      */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.editText = this.post.content;
+        this.content = this.post.content;
     }
 
     /**
@@ -63,10 +63,13 @@ export class PostComponent implements OnInit {
      */
     savePost(): void {
         this.isLoading = true;
-        this.post.content = this.editText;
+        this.post.content = this.content;
         this.postService.update(this.courseId, this.post).subscribe({
             next: () => {
                 this.isEditMode = false;
+            },
+            error: () => {
+                this.isLoading = false;
             },
             complete: () => {
                 this.isLoading = false;
@@ -80,7 +83,7 @@ export class PostComponent implements OnInit {
      */
     toggleEditMode(): void {
         this.isEditMode = !this.isEditMode;
-        this.editText = this.post.content;
+        this.content = this.post.content;
     }
 
     /**

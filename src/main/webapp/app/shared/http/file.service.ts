@@ -46,4 +46,23 @@ export class FileService {
         );
         return newWindow;
     }
+
+    /**
+     * Requests an access token from the server to download the file. If the access token was generated successfully, the merged PDF file is then downloaded.
+     *
+     * @param courseId: the id of the course
+     * @param lectureId: the id of the lecture
+     */
+    downloadMergedFileWithAccessToken(courseId: number, lectureId: number) {
+        const newWindow = window.open('about:blank');
+        lastValueFrom(this.http.get(`api/files/attachments/course/${courseId}/access-token`, { observe: 'response', responseType: 'text' })).then(
+            (result: HttpResponse<String>) => {
+                newWindow!.location.href = `api/files/attachments/lecture/${lectureId}/merge-pdf?access_token=${result.body}`;
+            },
+            () => {
+                newWindow!.close();
+            },
+        );
+        return newWindow;
+    }
 }

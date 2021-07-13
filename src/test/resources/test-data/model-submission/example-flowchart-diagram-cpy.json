@@ -1,0 +1,104 @@
+{
+    "version": "2.0.0",
+    "type": "Flowchart",
+    "size": { "width": 1060, "height": 1260 },
+    "interactive": { "elements": [], "relationships": [] },
+    "elements": [
+        {
+            "id": "d74f798a-5a1d-4a45-a924-810eeb2a5e74",
+            "name": "Terminal",
+            "type": "FlowchartTerminal",
+            "owner": null,
+            "bounds": { "x": 0, "y": 170, "width": 150, "height": 75 }
+        },
+        {
+            "id": "f47952c4-8760-400a-a8ea-d18f9c327cd4",
+            "name": "Process",
+            "type": "FlowchartProcess",
+            "owner": null,
+            "bounds": { "x": 40, "y": 400, "width": 150, "height": 75 }
+        },
+        {
+            "id": "d57161a9-7d4b-4673-a1fb-1529cb393924",
+            "name": "Decision",
+            "type": "FlowchartDecision",
+            "owner": null,
+            "bounds": { "x": 400, "y": 230, "width": 150, "height": 75 }
+        },
+        {
+            "id": "e1dfee84-b78a-48f6-8db7-1051da8607c4",
+            "name": "Input Output",
+            "type": "FlowchartInputOutput",
+            "owner": null,
+            "bounds": { "x": 610, "y": 0, "width": 150, "height": 75 }
+        },
+        {
+            "id": "50280dd9-15ee-4477-89d7-1d3ade2ccd24",
+            "name": "Function Call",
+            "type": "FlowchartFunctionCall",
+            "owner": null,
+            "bounds": { "x": 690, "y": 390, "width": 150, "height": 75 }
+        }
+    ],
+    "relationships": [
+        {
+            "id": "d86bf9cf-2f19-4c0d-9879-503f43e09bc4",
+            "name": "",
+            "type": "FlowchartFlowline",
+            "owner": null,
+            "bounds": { "x": 150, "y": 207.5, "width": 250, "height": 60 },
+            "path": [
+                { "x": 0, "y": 0 },
+                { "x": 125, "y": 0 },
+                { "x": 125, "y": 60 },
+                { "x": 250, "y": 60 }
+            ],
+            "source": { "direction": "Right", "element": "d74f798a-5a1d-4a45-a924-810eeb2a5e74" },
+            "target": { "direction": "Left", "element": "d57161a9-7d4b-4673-a1fb-1529cb393924" }
+        },
+        {
+            "id": "925c0d32-e46d-43f6-b6d0-713c0fd92314",
+            "name": "",
+            "type": "FlowchartFlowline",
+            "owner": null,
+            "bounds": { "x": 190, "y": 305, "width": 285, "height": 132.5 },
+            "path": [
+                { "x": 0, "y": 132.5 },
+                { "x": 285, "y": 132.5 },
+                { "x": 285, "y": 0 }
+            ],
+            "source": { "direction": "Right", "element": "f47952c4-8760-400a-a8ea-d18f9c327cd4" },
+            "target": { "direction": "Down", "element": "d57161a9-7d4b-4673-a1fb-1529cb393924" }
+        },
+        {
+            "id": "49e82320-7084-4024-838f-ec5552bc4384",
+            "name": "",
+            "type": "FlowchartFlowline",
+            "owner": null,
+            "bounds": { "x": 550, "y": 267.5, "width": 215, "height": 237.5 },
+            "path": [
+                { "x": 0, "y": 0 },
+                { "x": 40, "y": 0 },
+                { "x": 40, "y": 237.5 },
+                { "x": 215, "y": 237.5 },
+                { "x": 215, "y": 197.5 }
+            ],
+            "source": { "direction": "Right", "element": "d57161a9-7d4b-4673-a1fb-1529cb393924" },
+            "target": { "direction": "Down", "element": "50280dd9-15ee-4477-89d7-1d3ade2ccd24" }
+        },
+        {
+            "id": "ef29eef1-1ffe-4b49-9b21-d6a9ea19e2d4",
+            "name": "",
+            "type": "FlowchartFlowline",
+            "owner": null,
+            "bounds": { "x": 475, "y": 37.5, "width": 135, "height": 192.5 },
+            "path": [
+                { "x": 0, "y": 192.5 },
+                { "x": 0, "y": 0 },
+                { "x": 135, "y": 0 }
+            ],
+            "source": { "direction": "Up", "element": "d57161a9-7d4b-4673-a1fb-1529cb393924" },
+            "target": { "direction": "Left", "element": "e1dfee84-b78a-48f6-8db7-1051da8607c4" }
+        }
+    ]
+}

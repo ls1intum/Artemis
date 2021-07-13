@@ -93,7 +93,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
         exerciseGroup.setExam(null);
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CONFLICT);
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup1, HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, course1.getId(), exam1.getId(), exerciseGroup1.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, course1.getId(), exam1.getId(), exerciseGroup1);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     public void testGetExerciseGroup_asEditor() throws Exception {
         ExerciseGroup result = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK,
                 ExerciseGroup.class);
-        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, course1.getId(), exam1.getId(), exerciseGroup1.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, course1.getId(), exam1.getId(), exerciseGroup1);
         assertThat(result.getExam()).isEqualTo(exam1);
     }
 
@@ -120,7 +120,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteExerciseGroup_asInstructor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(course1.getId(), exam1.getId(), exerciseGroup1.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(Role.INSTRUCTOR, course1.getId(), exam1.getId(), exerciseGroup1);
         assertThat(textExerciseRepository.findById(textExercise1.getId()).isEmpty()).isTrue();
     }
 

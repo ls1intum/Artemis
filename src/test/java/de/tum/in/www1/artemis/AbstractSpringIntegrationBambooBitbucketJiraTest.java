@@ -109,11 +109,15 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         mockUpdatePlanRepositoryForParticipation(exercise, username);
         // Step 1c)
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
+
+        // Mock Default Branch
+        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
     }
 
     @Override
     public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
             throws IOException, URISyntaxException {
+        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
         // Step 2a)
         bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
         // Step 2b)
@@ -179,6 +183,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, testRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
+        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
         for (var auxiliaryRepository : exercise.getAuxiliaryRepositories()) {
             final var auxiliaryRepoName = exercise.generateRepositoryName(auxiliaryRepository.getName());
             bitbucketRequestMockProvider.mockCreateRepository(exercise, auxiliaryRepoName);
@@ -242,6 +247,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, templateRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, solutionRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, testsRepoName);
+        bitbucketRequestMockProvider.mockDefaultBranch("master", exerciseToBeImported.getProjectKey());
         for (AuxiliaryRepository repository : sourceExercise.getAuxiliaryRepositories()) {
             final var auxRepoName = exerciseToBeImported.generateRepositoryName(repository.getName());
             bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, auxRepoName);
@@ -288,9 +294,15 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockRepositoryWritePermissions(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws URISyntaxException {
+    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws URISyntaxException {
         final var repositorySlug = (exercise.getProjectKey() + "-" + team.getParticipantIdentifier()).toLowerCase();
         bitbucketRequestMockProvider.mockGiveWritePermission(exercise, repositorySlug, newStudent.getLogin(), status);
+    }
+
+    @Override
+    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) throws URISyntaxException {
+        final var repositorySlug = (exercise.getProjectKey() + "-" + student.getParticipantIdentifier()).toLowerCase();
+        bitbucketRequestMockProvider.mockGiveWritePermission(exercise, repositorySlug, student.getLogin(), status);
     }
 
     @Override
@@ -498,6 +510,11 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     @Override
     public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean ltiUserExists) throws Exception {
         bitbucketRequestMockProvider.mockConfigureRepository(exercise, participantIdentifier, students, ltiUserExists);
+    }
+
+    @Override
+    public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException {
+        bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExercise.getProjectKey());
     }
 
     @Override

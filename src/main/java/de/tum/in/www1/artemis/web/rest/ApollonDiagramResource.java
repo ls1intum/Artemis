@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.conflict;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,16 +15,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing ApollonDiagram.
@@ -44,15 +41,11 @@ public class ApollonDiagramResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserRepository userRepository;
-
     private final CourseRepository courseRepository;
 
-    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            CourseRepository courseRepository) {
+    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository) {
         this.apollonDiagramRepository = apollonDiagramRepository;
         this.authCheckService = authCheckService;
-        this.userRepository = userRepository;
         this.courseRepository = courseRepository;
     }
 
@@ -69,17 +62,18 @@ public class ApollonDiagramResource {
     public ResponseEntity<ApollonDiagram> createApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to save ApollonDiagram : {}", apollonDiagram);
 
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
-        }
-
         if (apollonDiagram.getId() != null) {
             throw new BadRequestAlertException("A new apollonDiagram cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
 
+        if (!Objects.equals(apollonDiagram.getCourseId(), courseId)) {
+            return conflict();
+        }
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+
+        ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
         return ResponseEntity.created(new URI("/api/apollon-diagrams/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -98,17 +92,17 @@ public class ApollonDiagramResource {
     public ResponseEntity<ApollonDiagram> updateApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to update ApollonDiagram : {}", apollonDiagram);
 
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
-        }
-
         if (apollonDiagram.getId() == null) {
             return createApollonDiagram(apollonDiagram, courseId);
         }
-        ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
 
+        if (!Objects.equals(apollonDiagram.getCourseId(), courseId)) {
+            return conflict();
+        }
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+
+        ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, apollonDiagram.getId().toString())).body(result);
     }
 
@@ -126,18 +120,6 @@ public class ApollonDiagramResource {
     }
 
     /**
-     * GET /apollon-diagrams : get all the apollonDiagrams.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of apollonDiagrams in body
-     */
-    @GetMapping("/apollon-diagrams")
-    @PreAuthorize("hasRole('TA')")
-    public List<ApollonDiagram> getAllApollonDiagrams() {
-        log.debug("REST request to get all ApollonDiagrams");
-        return apollonDiagramRepository.findAll();
-    }
-
-    /**
      * GET /course/{courseId}/apollon-diagrams : get all the apollonDiagrams for current course.
      *
      * @param courseId id of current course
@@ -149,59 +131,48 @@ public class ApollonDiagramResource {
         log.debug("REST request to get ApollonDiagrams matching current course");
 
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
         return apollonDiagramRepository.findDiagramsByCourseId(courseId);
     }
 
     /**
-     * GET /course/{courseId}/apollon-diagrams/:id : get the "id" apollonDiagram.
+     * GET /course/{courseId}/apollon-diagrams/:apollonDiagramId : get the apollonDiagram for the given id
      *
-     * @param id the id of the apollonDiagram to retrieve
+     * @param apollonDiagramId the id of the apollonDiagram to retrieve
      * @param courseId the id of the current course
      * @return the ResponseEntity with status 200 (OK) and with body the apollonDiagram, or with status 404 (Not Found)
      */
-    @GetMapping("/course/{courseId}/apollon-diagrams/{id}")
+    @GetMapping("/course/{courseId}/apollon-diagrams/{apollonDiagramId}")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<ApollonDiagram> getApollonDiagram(@PathVariable Long id, @PathVariable Long courseId) {
-        log.debug("REST request to get ApollonDiagram : {}", id);
-        Optional<ApollonDiagram> apollonDiagram = apollonDiagramRepository.findById(id);
+    public ResponseEntity<ApollonDiagram> getApollonDiagram(@PathVariable Long apollonDiagramId, @PathVariable Long courseId) {
+        log.debug("REST request to get ApollonDiagram : {}", apollonDiagramId);
+        ApollonDiagram apollonDiagram = apollonDiagramRepository.findByIdElseThrow(apollonDiagramId);
 
-        if (apollonDiagram.isPresent()) {
-            Course course = courseRepository.findByIdElseThrow(courseId);
-            User user = userRepository.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-                throw new AccessForbiddenException(NOT_ALLOWED);
-            }
-        }
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
-        return ResponseUtil.wrapOrNotFound(apollonDiagram);
+        return ResponseEntity.ok().body(apollonDiagram);
     }
 
     /**
-     * DELETE /course/{courseId}/apollon-diagrams/:id : delete the "id" apollonDiagram.
+     * DELETE /course/{courseId}/apollon-diagrams/:apollonDiagramId : delete the apollonDiagram for the given id
      *
-     * @param id the id of the apollonDiagram to delete
+     * @param apollonDiagramId the id of the apollonDiagram to delete
      * @param courseId the id of the current course
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/course/{courseId}/apollon-diagrams/{id}")
+    @DeleteMapping("/course/{courseId}/apollon-diagrams/{apollonDiagramId}")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long id, @PathVariable Long courseId) {
-        log.debug("REST request to delete ApollonDiagram : {}", id);
+    public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long apollonDiagramId, @PathVariable Long courseId) {
+        log.debug("REST request to delete ApollonDiagram : {}", apollonDiagramId);
 
-        Optional<ApollonDiagram> apollonDiagram = apollonDiagramRepository.findById(id);
+        ApollonDiagram apollonDiagram = apollonDiagramRepository.findByIdElseThrow(apollonDiagramId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
-        apollonDiagramRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        apollonDiagramRepository.deleteById(apollonDiagramId);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, apollonDiagramId.toString())).build();
     }
 }

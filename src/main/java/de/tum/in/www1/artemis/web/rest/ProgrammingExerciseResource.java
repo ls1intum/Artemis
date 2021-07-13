@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -104,8 +105,6 @@ public class ProgrammingExerciseResource {
 
     private final CourseRepository courseRepository;
 
-    private final FeedbackRepository feedbackRepository;
-
     private final GitService gitService;
 
     private final ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService;
@@ -122,7 +121,7 @@ public class ProgrammingExerciseResource {
      * Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
      * with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
      */
-    private static final String packageNameRegexForSwift = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_)$)[A-Za-z][0-9A-Za-z]*$";
+    private static final String packageNameRegexForSwift = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][0-9A-Za-z]*$";
 
     private final Pattern packageNamePattern = Pattern.compile(packageNameRegex);
 
@@ -136,8 +135,8 @@ public class ProgrammingExerciseResource {
             PlagiarismResultRepository plagiarismResultRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
-            CourseRepository courseRepository, FeedbackRepository feedbackRepository, GitService gitService,
-            ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+            CourseRepository courseRepository, GitService gitService, ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
 
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
@@ -156,7 +155,6 @@ public class ProgrammingExerciseResource {
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.templateUpgradePolicy = templateUpgradePolicy;
         this.courseRepository = courseRepository;
-        this.feedbackRepository = feedbackRepository;
         this.gitService = gitService;
         this.programmingPlagiarismDetectionService = programmingPlagiarismDetectionService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
@@ -272,6 +270,11 @@ public class ProgrammingExerciseResource {
             throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", "Exercise", "noParticipationModeAllowed");
         }
 
+        // Check if Xcode has no online code editor enabled
+        if (ProjectType.XCODE.equals(programmingExercise.getProjectType()) && Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor())) {
+            throw new BadRequestAlertException("The online editor is not allowed for Xcode programming exercises", "Exercise", "noParticipationModeAllowed");
+        }
+
         // Check if programming language is set
         if (programmingExercise.getProgrammingLanguage() == null) {
             throw new BadRequestAlertException("No programming language was specified", "Exercise", "programmingLanguageNotSet");
@@ -304,6 +307,12 @@ public class ProgrammingExerciseResource {
         // Check if the programming language supports static code analysis
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.isStaticCodeAnalysis()) {
             throw new BadRequestAlertException("The static code analysis is not supported for this programming language", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
+        }
+
+        // Check that Xcode has no SCA enabled
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
+            throw new BadRequestAlertException("The static code analysis is not supported for Xcode programming exercises", "Exercise",
+                    "staticCodeAnalysisNotSupportedForLanguage");
         }
 
         // Static code analysis max penalty must only be set if static code analysis is enabled
@@ -507,7 +516,6 @@ public class ProgrammingExerciseResource {
         }
 
         final var importedProgrammingExercise = programmingExerciseImportService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
-        HttpHeaders responseHeaders;
         programmingExerciseImportService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
 
         // Update the template files
@@ -516,6 +524,7 @@ public class ProgrammingExerciseResource {
             upgradeService.upgradeTemplate(importedProgrammingExercise);
         }
 
+        HttpHeaders responseHeaders;
         // Copy or recreate the build plans
         try {
             if (recreateBuildPlans) {
@@ -691,18 +700,13 @@ public class ProgrammingExerciseResource {
     @GetMapping(Endpoints.PROGRAMMING_EXERCISE)
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
-        // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
         // Fetch grading criterion into exercise of participation
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
 
-        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
-
-        if (!feedbackList.isEmpty()) {
-            programmingExercise.setGradingInstructionFeedbackUsed(true);
-        }
+        exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, programmingExercise);
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
         if (programmingExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
@@ -1374,6 +1378,40 @@ public class ProgrammingExerciseResource {
         validateAuxiliaryRepositoryDescriptionLength(auxiliaryRepository);
     }
 
+    /**
+     * PUT /programming-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing ProgrammingExercise.
+     *
+     * @param exerciseId                                   of the exercise
+     * @param programmingExercise                          the ProgrammingExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or
+     * with status 400 (Bad Request) if the ProgrammingExercise is not valid, or with status 409 (Conflict)
+     * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
+     * Server Error) if the ProgrammingExercise couldn't be updated
+     */
+    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
+    @PreAuthorize("hasRole('EDITOR')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody ProgrammingExercise programmingExercise,
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
+        log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);
+
+        // check that the exercise is exist for given id
+        programmingExerciseRepository.findByIdElseThrow(exerciseId);
+
+        authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, programmingExercise);
+
+        // fetch course from database to make sure client didn't change groups
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
+        exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
+
+        return updateProgrammingExercise(programmingExercise, null);
+    }
+
     public static final class Endpoints {
 
         public static final String ROOT = "/api";
@@ -1425,6 +1463,8 @@ public class ProgrammingExerciseResource {
         public static final String AUXILIARY_REPOSITORY = PROGRAMMING_EXERCISE + "/auxiliary-repository";
 
         public static final String RECREATE_BUILD_PLANS = PROGRAMMING_EXERCISE + "/recreate-build-plans";
+
+        public static final String REEVALUATE_EXERCISE = PROGRAMMING_EXERCISE + "/re-evaluate";
 
         private Endpoints() {
         }

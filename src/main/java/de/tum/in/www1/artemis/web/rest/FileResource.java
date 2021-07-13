@@ -10,12 +10,14 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -26,14 +28,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
@@ -55,11 +61,15 @@ public class FileResource {
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
+    private final CourseRepository courseRepository;
+
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     private final TokenProvider tokenProvider;
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
+
+    private final AuthorizationCheckService authCheckService;
 
     // NOTE: this list has to be the same as in file-uploader.service.ts
     private final List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip"));
@@ -74,7 +84,7 @@ public class FileResource {
 
     public FileResource(FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, TokenProvider tokenProvider,
             FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
-            AttachmentUnitRepository attachmentUnitRepository) {
+            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -82,6 +92,8 @@ public class FileResource {
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.attachmentUnitRepository = attachmentUnitRepository;
+        this.authCheckService = authCheckService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -271,6 +283,27 @@ public class FileResource {
     }
 
     /**
+     * GET /files/attachments/access-token/{courseId} : Generates an access token that is valid for 30 seconds and given course
+     *
+     * @param courseId the course id the access token is for
+     * @return The generated access token, 403 if the user has no access to the course
+     */
+    @GetMapping("files/attachments/course/{courseId}/access-token")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<String> getTemporaryFileAccessTokenForCourse(@PathVariable Long courseId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), null);
+
+        try {
+            String temporaryAccessToken = tokenProvider.createFileTokenForCourseWithCustomDuration(authentication, 30, courseId);
+            return ResponseEntity.ok(temporaryAccessToken);
+        }
+        catch (IllegalAccessException e) {
+            return forbidden();
+        }
+    }
+
+    /**
      * GET /files/course/icons/:lectureId/:filename : Get the lecture attachment
      *
      * @param lectureId ID of the lecture, the attachment belongs to
@@ -292,6 +325,45 @@ public class FileResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
         return buildFileResponse(Paths.get(FilePathService.getLectureAttachmentFilePath(), String.valueOf(optionalLecture.get().getId())).toString(), filename);
+    }
+
+    /**
+     * GET /files/attachments/lecture/{lectureId}/merge-pdf : Get the lecture units
+     * PDF attachments merged
+     *
+     * @param lectureId            ID of the lecture, the lecture units belongs to
+     * @param temporaryAccessToken The access token is required to authenticate the
+     *                             user that accesses it
+     * @return The merged PDF file, 403 if the logged in user is not allowed to
+     *         access it, or 404 if the files to be merged do not exist
+     */
+    @GetMapping("files/attachments/lecture/{lectureId}/merge-pdf")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<byte[]> getLecturePdfAttachmentsMerged(@PathVariable Long lectureId, @RequestParam("access_token") String temporaryAccessToken) {
+        log.debug("REST request to get merged pdf files for a lecture with id : {}", lectureId);
+
+        if (!validateTemporaryAccessTokenForCourse(temporaryAccessToken, lectureRepository.findByIdElseThrow(lectureId).getCourse())) {
+            // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
+            String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding attachmentUnit";
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
+        }
+
+        Set<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE);
+
+        List<String> attachmentLinks = lectureAttachments.stream()
+                .filter(unit -> unit.isVisibleToStudents() && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
+                .map(unit -> Paths
+                        .get(FilePathService.getAttachmentUnitFilePath(), String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))
+                        .toString())
+                .collect(Collectors.toList());
+
+        Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks);
+        if (file.isEmpty()) {
+            log.error("Failed to merge PDF lecture units for lecture with id : " + lectureId);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file.get());
+
     }
 
     /**
@@ -328,6 +400,21 @@ public class FileResource {
      */
     private boolean validateTemporaryAccessToken(String temporaryAccessToken, String filename) {
         if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndFile(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE, filename)) {
+            log.info("Attachment with invalid token was accessed");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Validates temporary access token for course files access
+     *
+     * @param temporaryAccessToken token to be validated
+     * @param course               the course
+     * @return true if temporaryAccessToken is valid for this course, false otherwise
+     */
+    private boolean validateTemporaryAccessTokenForCourse(String temporaryAccessToken, Course course) {
+        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndCourse(temporaryAccessToken, course.getId())) {
             log.info("Attachment with invalid token was accessed");
             return false;
         }
@@ -391,10 +478,7 @@ public class FileResource {
             File newFile;
 
             do {
-                if (keepFileName) {
-                    filename = file.getOriginalFilename().replaceAll("\\s", "");
-                }
-                else {
+                if (!keepFileName) {
                     filename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8)
                             + "." + fileExtension;
                 }
@@ -439,7 +523,7 @@ public class FileResource {
 
             HttpHeaders headers = new HttpHeaders();
 
-            if (filename.endsWith("htm") || filename.endsWith("html") || filename.endsWith("svg")) {
+            if (filename.endsWith("htm") || filename.endsWith("html") || filename.endsWith("svg") || filename.endsWith("svgz")) {
                 // attachment will force the user to download the file
                 ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(filename).build();
                 headers.setContentDisposition(contentDisposition);

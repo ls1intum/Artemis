@@ -89,7 +89,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository.findOneWithEagerResultAndAssessorAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
-        FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findOne(exerciseId);
+        FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findOneByIdElseThrow(exerciseId);
         checkAuthorization(fileUploadExercise, user);
 
         Result result = assessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getLatestResult(), fileUploadExercise, assessmentUpdate);
@@ -123,7 +123,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @param resultId     - the id of the result which should get deleted
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
-    @DeleteMapping("/participations/{participationId}/file-upload-submissions/{submissionId}/delete/{resultId}")
+    @DeleteMapping("/participations/{participationId}/file-upload-submissions/{submissionId}/results/{resultId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
         return super.deleteAssessment(participationId, submissionId, resultId);

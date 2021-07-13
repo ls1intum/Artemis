@@ -1,17 +1,14 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.component;
 
-import java.util.Objects;
-
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
+import de.tum.in.www1.artemis.service.compass.utils.SimilarityUtils;
 
 public class UMLComponentInterface extends UMLElement {
 
     public static final String UML_COMPONENT_INTERFACE_TYPE = "ComponentInterface";
-
-    public static final String UML_DEPLOYMENT_INTERFACE_TYPE = "DeploymentInterface";
 
     private final String name;
 
@@ -37,7 +34,7 @@ public class UMLComponentInterface extends UMLElement {
         UMLComponentInterface referenceComponentInterface = (UMLComponentInterface) reference;
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceComponentInterface.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
 
-        if (Objects.equals(getParentElement(), referenceComponentInterface.getParentElement())) {
+        if (SimilarityUtils.parentsSimilarOrEqual(getParentElement(), referenceComponentInterface.getParentElement())) {
             similarity += CompassConfiguration.COMPONENT_PARENT_WEIGHT;
         }
 
@@ -75,7 +72,6 @@ public class UMLComponentInterface extends UMLElement {
     }
 
     @Override
-    // TODO: in case of deployment diagrams, this is not really correct, it should then be UML_DEPLOYMENT_INTERFACE_TYPE
     public String getType() {
         return UML_COMPONENT_INTERFACE_TYPE;
     }

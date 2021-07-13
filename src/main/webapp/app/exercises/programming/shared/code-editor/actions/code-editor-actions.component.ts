@@ -10,6 +10,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CommitState, EditorState, FileSubmission, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConfirmRefreshModalComponent } from './code-editor-confirm-refresh-modal.component';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 
 @Component({
     selector: 'jhi-code-editor-actions',
@@ -55,6 +56,10 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     conflictStateSubscription: Subscription;
     submissionSubscription: Subscription;
 
+    // autoTimerInterval in seconds
+    autoSaveTimer = 0;
+    autoSaveInterval: number;
+
     set commitState(commitState: CommitState) {
         this.commitStateValue = commitState;
         this.commitStateChange.emit(commitState);
@@ -89,6 +94,14 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
             .getBuildingState()
             .pipe(tap((isBuilding: boolean) => (this.isBuilding = isBuilding)))
             .subscribe();
+
+        this.autoSaveInterval = window.setInterval(() => {
+            this.autoSaveTimer++;
+            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
+                this.autoSaveTimer = 0;
+                this.onSave();
+            }
+        }, AUTOSAVE_CHECK_INTERVAL);
     }
 
     /**
@@ -110,6 +123,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     ngOnDestroy(): void {
+        clearInterval(this.autoSaveInterval);
+        this.onSave();
+
         if (this.conflictStateSubscription) {
             this.conflictStateSubscription.unsubscribe();
         }

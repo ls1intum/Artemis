@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
+import de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore;
 import de.tum.in.www1.artemis.domain.statistics.ScoreDistribution;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.repository.*;
@@ -128,11 +129,12 @@ public class StatisticsService {
      */
     public CourseManagementStatisticsDTO getCourseStatistics(Long courseId) {
         var courseManagementStatisticsDTO = new CourseManagementStatisticsDTO();
-        var exercises = statisticsRepository.findExercisesByCourseId(courseId);
+        Set<Exercise> exercises = statisticsRepository.findExercisesByCourseId(courseId);
         var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
-        var averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
-        var averageScoreForExercises = statisticsRepository.findAvgPointsForExercises(includedExercises);
+        Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
+        List<CourseStatisticsAverageScore> averageScoreForExercises = statisticsRepository.findAvgPointsForExercises(includedExercises);
+        sortAfterReleaseDate(averageScoreForExercises);
         averageScoreForExercises.forEach(exercise -> {
             var roundedAverageScore = round(exercise.getAverageScore());
             exercise.setAverageScore(roundedAverageScore);
@@ -218,5 +220,31 @@ public class StatisticsService {
         exerciseManagementStatisticsDTO.setNumberOfExerciseScores(scores.size());
 
         return exerciseManagementStatisticsDTO;
+    }
+
+    /**
+     * Sorting averageScores for release dates
+     * @param exercises the exercises which we want to sort
+     */
+    private void sortAfterReleaseDate(List<CourseStatisticsAverageScore> exercises) {
+        exercises.sort((exerciseA, exerciseB) -> {
+            var releaseDateA = exerciseA.getReleaseDate();
+            var releaseDateB = exerciseB.getReleaseDate();
+            if (releaseDateA == null) {
+                // If A has no release date, sort B first
+                return 1;
+            }
+            else if (releaseDateB == null) {
+                // If B has no release date, sort A first
+                return -1;
+            }
+            else if (releaseDateA.isEqual(releaseDateB)) {
+                return 0;
+            }
+            else {
+                // Sort the one with the earlier release date first
+                return releaseDateA.isBefore(releaseDateB) ? -1 : 1;
+            }
+        });
     }
 }

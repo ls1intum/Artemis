@@ -28,7 +28,7 @@
         {
             "id": "31f4386e-6026-4f5a-bd0a-7a0349ff84d7",
             "name": "View",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "b55ec5ea-f138-4b3a-bc68-3653834d0011",
             "bounds": {
                 "x": 90,
@@ -40,7 +40,7 @@
         {
             "id": "bd078690-adad-4aa1-90fb-7e411ecc1c0e",
             "name": "PlayingFieldView",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "31f4386e-6026-4f5a-bd0a-7a0349ff84d7",
             "bounds": {
                 "x": 270,
@@ -52,7 +52,7 @@
         {
             "id": "cc82c8a4-6782-4d8b-b72f-ef62d9555455",
             "name": "Controller",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "b55ec5ea-f138-4b3a-bc68-3653834d0011",
             "bounds": {
                 "x": 90,
@@ -64,7 +64,7 @@
         {
             "id": "4b274b24-37c2-41c5-a421-c4232f5e979f",
             "name": "ArrowKeySteering",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "cc82c8a4-6782-4d8b-b72f-ef62d9555455",
             "bounds": {
                 "x": 430,
@@ -76,7 +76,7 @@
         {
             "id": "fa096a7f-1a86-4f30-8a38-269fad1bca79",
             "name": "PlayingField",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "cc82c8a4-6782-4d8b-b72f-ef62d9555455",
             "bounds": {
                 "x": 120,
@@ -88,7 +88,7 @@
         {
             "id": "a920d1c1-787c-461e-8a1f-9e30c9c7487a",
             "name": "AudioPlayer",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "cc82c8a4-6782-4d8b-b72f-ef62d9555455",
             "bounds": {
                 "x": 120,
@@ -100,7 +100,7 @@
         {
             "id": "21cf9f19-d62e-49df-a2e3-39dd1a17d36a",
             "name": "Collision",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "cc82c8a4-6782-4d8b-b72f-ef62d9555455",
             "bounds": {
                 "x": 420,
@@ -148,7 +148,7 @@
         {
             "id": "e3db54f5-cfc0-4887-a4c6-8ee539e8e9b6",
             "name": "Model",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "b55ec5ea-f138-4b3a-bc68-3653834d0011",
             "bounds": {
                 "x": 740,
@@ -160,7 +160,7 @@
         {
             "id": "50c85aef-910b-4119-b6d8-8ff79ee8f829",
             "name": "Person",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "e3db54f5-cfc0-4887-a4c6-8ee539e8e9b6",
             "bounds": {
                 "x": 990,
@@ -172,7 +172,7 @@
         {
             "id": "b830c184-9e6f-4063-88bc-ac55452cf1dc",
             "name": "Building",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "e3db54f5-cfc0-4887-a4c6-8ee539e8e9b6",
             "bounds": {
                 "x": 990,

@@ -184,8 +184,6 @@ public class ProgrammingPlagiarismDetectionService {
             options.setBaseCodeSubmissionName(templateRepoName);
         }
 
-        // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
-        // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
         options.setSimilarityThreshold(similarityThreshold);
 
         log.info("Start JPlag programming comparison for programming exercise {}", programmingExerciseId);
@@ -325,7 +323,7 @@ public class ProgrammingPlagiarismDetectionService {
                 plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
 
                 Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
-                gitService.resetToOriginMaster(repo); // start with clean state
+                gitService.resetToOriginHead(repo); // start with clean state
                 downloadedRepositories.add(repo);
             }
             catch (GitException | GitAPIException | InterruptedException | InvalidPathException ex) {
@@ -337,7 +335,7 @@ public class ProgrammingPlagiarismDetectionService {
         // clone the template repo
         try {
             Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath);
-            gitService.resetToOriginMaster(templateRepo); // start with clean state
+            gitService.resetToOriginHead(templateRepo); // start with clean state
             downloadedRepositories.add(templateRepo);
         }
         catch (GitException | GitAPIException | InterruptedException ex) {

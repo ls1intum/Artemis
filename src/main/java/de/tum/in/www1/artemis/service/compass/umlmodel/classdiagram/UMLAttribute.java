@@ -56,7 +56,7 @@ public class UMLAttribute extends UMLElement implements Serializable {
      *
      * @return the attribute type as String
      */
-    String getAttributeType() {
+    public String getAttributeType() {
         return attributeType;
     }
 

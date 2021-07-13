@@ -40,6 +40,9 @@
                 <div class="col-auto">
                     <h3>{{ 'artemisApp.courseOverview.lectureDetails.lectureUnits' | artemisTranslate }}</h3>
                 </div>
+                <button id="downloadButton" *ngIf="hasPdfLectureUnit" class="col-auto btn btn-primary btn-sm rounded-pill" (click)="downloadMergedFiles()">
+                    {{ 'artemisApp.courseOverview.lectureDetails.downloadPdf' | artemisTranslate }}
+                </button>
             </div>
             <div class="row mb-4" *ngFor="let lectureUnit of lectureUnits">
                 <div class="col-11" [ngSwitch]="lectureUnit.type">

@@ -14,6 +14,7 @@
                 "open": "Assess model"
             }
         },
-        "notFound": "We couldn't find any unassessed modelling submissions. Please return to the dashboard."
+        "notFound": "We couldn't find any unassessed modelling submissions. Please return to the dashboard.",
+        "impactWarning": "This feedback might affect {{affectedSubmissionsCount}} other similar submission/s."
     }
 }

@@ -3,7 +3,7 @@ import { addTextAtCursor } from 'app/shared/util/markdown-util';
 
 export class GradingScaleCommand extends DomainTagCommand {
     public static readonly identifier = '[gradingScale]';
-    public static readonly text = ' Add instruction grading scale here (only visible for tutors)';
+    public static readonly text = 'Add instruction grading scale here (only visible for tutors)';
     displayCommandButton = false;
 
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addGradingScale';

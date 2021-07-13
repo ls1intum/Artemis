@@ -212,7 +212,7 @@ public class GitlabRequestMockProvider {
     public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<de.tum.in.www1.artemis.domain.User> users, boolean ltiUserExists)
             throws GitLabApiException {
         var repositoryUrl = exercise.getVcsTemplateRepositoryUrl();
-        for (de.tum.in.www1.artemis.domain.User user : users) {
+        for (var user : users) {
             String loginName = user.getLogin();
             if ((userPrefixEdx.isPresent() && loginName.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && loginName.startsWith((userPrefixU4I.get())))) {
                 mockUserExists(loginName, ltiUserExists);
@@ -223,7 +223,9 @@ public class GitlabRequestMockProvider {
 
             mockAddMemberToRepository(repositoryUrl, user.getLogin());
         }
-        mockProtectBranch("master", repositoryUrl);
+        var defaultBranch = "main";
+        mockGetDefaultBranch(defaultBranch, repositoryUrl);
+        mockProtectBranch(defaultBranch, repositoryUrl);
     }
 
     private void mockUserExists(String username, boolean exists) throws GitLabApiException {
@@ -259,6 +261,12 @@ public class GitlabRequestMockProvider {
         else {
             doReturn(new Member()).when(projectApi).addMember(repositoryPath, mockedUserId, DEVELOPER);
         }
+    }
+
+    public void mockGetDefaultBranch(String defaultBranch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {
+        var mockProject = new Project();
+        mockProject.setDefaultBranch(defaultBranch);
+        doReturn(mockProject).when(projectApi).getProject(notNull());
     }
 
     private void mockProtectBranch(String branch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {

@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service Implementation for managing Participation.
@@ -464,6 +465,11 @@ public class ParticipationService {
         return studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
+    public StudentParticipation findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(Exercise exercise, String username) {
+        return findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, username)
+                .orElseThrow(() -> new EntityNotFoundException("Could not find a participation to exercise " + exercise.getId() + " and username " + username + "!"));
+    }
+
     /**
      * Get one participation (in any state) by its student and exercise with eager submissions.
      *
@@ -571,8 +577,7 @@ public class ParticipationService {
         StudentParticipation participation = studentParticipationRepository.findWithEagerLegalSubmissionsResultsFeedbacksById(participationId).get();
         log.info("Request to delete Participation : {}", participation);
 
-        if (participation instanceof ProgrammingExerciseStudentParticipation) {
-            ProgrammingExerciseStudentParticipation programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) participation;
+        if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseParticipation) {
             var repositoryUrl = programmingExerciseParticipation.getVcsRepositoryUrl();
             String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
 

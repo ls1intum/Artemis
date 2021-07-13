@@ -255,6 +255,7 @@ public class ProgrammingExerciseTestService {
                 .getOrCheckoutRepository(solutionRepoTestUrl, true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(auxRepoTestUrl, true);
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any(), any());
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
         // we need separate mocks with VcsRepositoryUrl here because MockFileRepositoryUrl and VcsRepositoryUrl do not seem to be compatible here
@@ -1214,7 +1215,7 @@ public class ProgrammingExerciseTestService {
         team.addStudents(newStudent);
 
         // Mock repository write permission give call
-        mockDelegate.mockRepositoryWritePermissions(team, newStudent, exercise, HttpStatus.OK);
+        mockDelegate.mockRepositoryWritePermissionsForTeam(team, newStudent, exercise, HttpStatus.OK);
 
         // Start participation with original team
         participationService.startExercise(exercise, team, false);
@@ -1304,7 +1305,7 @@ public class ProgrammingExerciseTestService {
 
         // test for internal server error
         mockDelegate.mockCopyRepositoryForParticipation(exercise, team.getParticipantIdentifier());
-        mockDelegate.mockRepositoryWritePermissions(team, student1, exercise, HttpStatus.BAD_REQUEST);
+        mockDelegate.mockRepositoryWritePermissionsForTeam(team, student1, exercise, HttpStatus.BAD_REQUEST);
         return team;
     }
 

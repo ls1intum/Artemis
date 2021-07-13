@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLControlFlow;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
+import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 public class UMLModelParserTest {
 
@@ -211,7 +212,7 @@ public class UMLModelParserTest {
         UMLActivityNode finalNode = new UMLActivityNode("", "5019a714-3bef-4e4e-b649-b759c2b8778a", ACTIVITY_FINAL_NODE);
         elements.add(finalNode);
 
-        UMLActivityNode decisionNode = new UMLActivityNode("Decision", "02c342c2-53d4-4bd7-9e08-774dbaa97ca6", ACTIVITY_DECISION_NODE);
+        UMLActivityNode decisionNode = new UMLActivityNode("Decision", "02c342c2-53d4-4bd7-9e08-774dbaa97ca6", ACTIVITY_MERGE_NODE);
         elements.add(decisionNode);
 
         UMLActivityNode mergeNode = new UMLActivityNode("Merge", "e81a38a1-9ceb-46c9-b9e4-f8d274c76085", ACTIVITY_MERGE_NODE);
@@ -219,9 +220,6 @@ public class UMLModelParserTest {
 
         UMLActivityNode forkNode = new UMLActivityNode("", "06c289b0-0a7d-4f9b-abef-3027a06330aa", ACTIVITY_FORK_NODE);
         elements.add(forkNode);
-
-        UMLActivityNode joinNode = new UMLActivityNode("", "295d7ebe-81f8-44a4-9e61-1984d900ddb0", ACTIVITY_JOIN_NODE);
-        elements.add(joinNode);
 
         UMLActivityNode actionNode1 = new UMLActivityNode("Action1", "1c0576f6-89b0-4b13-96d9-e1a0a227e8e1", ACTIVITY_ACTION_NODE);
         elements.add(actionNode1);
@@ -232,7 +230,7 @@ public class UMLModelParserTest {
         UMLActivityNode objectNode = new UMLActivityNode("Object", "525b1697-6f48-4b07-9504-8feddb48a882", ACTIVITY_OBJECT_NODE);
         elements.add(objectNode);
 
-        UMLActivity activity2 = new UMLActivity("Activity2", List.of(initialNode, finalNode, decisionNode, mergeNode, forkNode, joinNode, actionNode1, actionNode2, objectNode),
+        UMLActivity activity2 = new UMLActivity("Activity2", List.of(initialNode, finalNode, decisionNode, mergeNode, forkNode, actionNode1, actionNode2, objectNode),
                 "f85b009b-3320-4c73-9c7b-0d4bbe7e74f9");
         elements.add(activity2);
 
@@ -242,9 +240,9 @@ public class UMLModelParserTest {
         UMLControlFlow controlFlow4 = new UMLControlFlow(decisionNode, forkNode, "50a3baf7-7678-446a-ac5b-e491210ea673");
         UMLControlFlow controlFlow5 = new UMLControlFlow(forkNode, actionNode1, "98368d15-25a3-4572-a6b6-3fc97e0d532f");
         UMLControlFlow controlFlow6 = new UMLControlFlow(forkNode, actionNode2, "7e59aded-6e55-4241-ac61-ab306ea23ecd");
-        UMLControlFlow controlFlow7 = new UMLControlFlow(actionNode1, joinNode, "9fb27fb7-153c-4938-92a7-3f79722cf5c0");
-        UMLControlFlow controlFlow8 = new UMLControlFlow(actionNode2, joinNode, "a14b46df-64aa-401a-87f1-82076ba20e9c");
-        UMLControlFlow controlFlow9 = new UMLControlFlow(joinNode, objectNode, "fa9b870d-2b4b-47e1-946a-abf365dc0f15");
+        UMLControlFlow controlFlow7 = new UMLControlFlow(actionNode1, activity2, "9fb27fb7-153c-4938-92a7-3f79722cf5c0");
+        UMLControlFlow controlFlow8 = new UMLControlFlow(actionNode2, activity2, "a14b46df-64aa-401a-87f1-82076ba20e9c");
+        UMLControlFlow controlFlow9 = new UMLControlFlow(activity2, objectNode, "fa9b870d-2b4b-47e1-946a-abf365dc0f15");
         UMLControlFlow controlFlow10 = new UMLControlFlow(objectNode, mergeNode, "d268d8d8-8785-4f54-9777-4fa15e008728");
         UMLControlFlow controlFlow11 = new UMLControlFlow(mergeNode, finalNode, "84cb94c0-dc0a-4794-b8b1-83c44b3be13e");
         elements.add(controlFlow1);

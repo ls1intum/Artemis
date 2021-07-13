@@ -427,6 +427,12 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
         programmingExerciseIntegrationServiceTest.createProgrammingExercise_projectTypeNotExpected_badRequest();
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_onlineCodeEditorNotExpected_badRequest() throws Exception {
+        programmingExerciseIntegrationServiceTest.createProgrammingExercise_onlineCodeEditorNotExpected_badRequest();
+    }
+
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     // It should fail for all ProgrammingExercises except Haskell
@@ -866,5 +872,23 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @WithMockUser(value = "editor1", roles = "EDITOR")
     public void testExportAuxiliaryRepositoryRepositoryNotFound() throws Exception {
         programmingExerciseIntegrationServiceTest.testExportAuxiliaryRepositoryRepositoryNotFound();
+    }
+
+    @Test
+    @WithMockUser(value = "instructoralt1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        programmingExerciseIntegrationServiceTest.testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
+        programmingExerciseIntegrationServiceTest.testReEvaluateAndUpdateProgrammingExercise_notFound();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
+        programmingExerciseIntegrationServiceTest.testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict();
     }
 }

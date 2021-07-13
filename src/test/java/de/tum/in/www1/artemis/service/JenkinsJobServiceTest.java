@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.service.util.XmlFileUtils.getDocumentBuilderFactory;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
@@ -33,11 +34,18 @@ public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitla
 
     private static MockedStatic<XmlFileUtils> mockedXmlFileUtils;
 
+    private Document document;
+
     @BeforeEach
     public void initTestCase() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
+        // create the document before the mock so that it still works correctly
+        document = createEmptyDOMDocument();
+
+        // mock the file utils
         mockedXmlFileUtils = mockStatic(XmlFileUtils.class);
+        mockedXmlFileUtils.when(() -> XmlFileUtils.writeToString(eq(document))).thenThrow(TransformerException.class);
     }
 
     @AfterEach
@@ -49,38 +57,25 @@ public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitla
 
     @Test
     @WithMockUser(username = "student1")
-    public void testCreateJobInFolderJenkinsExceptionOnXmlError() throws IOException, ParserConfigurationException {
-        Document document = createEmptyDOMDocument();
-
+    public void testCreateJobInFolderJenkinsExceptionOnXmlError() throws IOException {
         jenkinsRequestMockProvider.mockGetFolderJob("JenkinsFolder", new FolderJob());
-
-        mockedXmlFileUtils.when(() -> XmlFileUtils.writeToString(eq(document))).thenThrow(TransformerException.class);
-
         assertThrows(JenkinsException.class, () -> jenkinsJobService.createJobInFolder(document, "JenkinsFolder", "JenkinsJob"));
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testUpdateJobThrowIOExceptionOnXmlError() throws IOException, ParserConfigurationException {
-        Document document = createEmptyDOMDocument();
-
-        mockedXmlFileUtils.when(() -> XmlFileUtils.writeToString(eq(document))).thenThrow(TransformerException.class);
-
+    public void testUpdateJobThrowIOExceptionOnXmlError() {
         assertThrows(IOException.class, () -> jenkinsJobService.updateJob("JenkinsFolder", "JenkinsJob", document));
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testUpdateFolderJobThrowIOExceptionOnXmlError() throws IOException, ParserConfigurationException {
-        Document document = createEmptyDOMDocument();
-
-        mockedXmlFileUtils.when(() -> XmlFileUtils.writeToString(eq(document))).thenThrow(TransformerException.class);
-
+    public void testUpdateFolderJobThrowIOExceptionOnXmlError() {
         assertThrows(IOException.class, () -> jenkinsJobService.updateFolderJob("JenkinsFolder", document));
     }
 
     private Document createEmptyDOMDocument() throws ParserConfigurationException {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory dbf = getDocumentBuilderFactory();
         DocumentBuilder builder = dbf.newDocumentBuilder();
         return builder.newDocument();
     }

@@ -15,6 +15,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { blueColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { BaseChartDirective, Color } from 'ng2-charts';
+import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -100,7 +101,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         // update displayed times in UI regularly
         this.interval = setInterval(() => {
             this.updateDisplayedTimes();
-        }, 200);
+        }, UI_RELOAD_TIME);
     }
 
     /**

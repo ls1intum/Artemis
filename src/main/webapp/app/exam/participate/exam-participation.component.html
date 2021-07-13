@@ -19,7 +19,8 @@
                 [exercises]="studentExam.exercises!"
                 [exerciseIndex]="exerciseIndex"
                 [endDate]="individualStudentEndDate"
-                (onExerciseChanged)="onExerciseChange($event)"
+                [overviewPageOpen]="activePageIndex === -1"
+                (onPageChanged)="onPageChange($event)"
                 (examAboutToEnd)="examEnded()"
                 (onExamHandInEarly)="toggleHandInEarly()"
             ></jhi-exam-navigation-bar>
@@ -27,11 +28,14 @@
                 <jhi-alert></jhi-alert>
             </div>
             <!-- exercises -->
+            <div [hidden]="activePageIndex !== -1">
+                <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)"> </jhi-exam-exercise-overview-page>
+            </div>
             <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
-                <ng-container *ngIf="exercise.studentParticipations && exercise.studentParticipations[0]">
-                    <ng-container *ngIf="submissionComponentVisited[i]">
+                <ng-container *ngIf="exercise && exercise.studentParticipations && exercise.studentParticipations[0]">
+                    <ng-container *ngIf="pageComponentVisited[i]">
                         <ng-container [ngSwitch]="exercise.type">
-                            <div [hidden]="i !== activeExerciseIndex">
+                            <div [hidden]="i !== activePageIndex">
                                 <jhi-quiz-submission-exam
                                     *ngSwitchCase="QUIZ"
                                     [exercise]="exercise"
@@ -74,7 +78,7 @@
             <ng-container *ngIf="(generateParticipationStatus | async) === 'failed'">
                 <div class="d-flex justify-content-center align-items-center">
                     <p class="mb-0" jhiTranslate="artemisApp.examParticipation.generateParticipationFailed"></p>
-                    <button class="btn btn-sm btn-primary px-3 ms-2" (click)="createParticipationForExercise(this.activeExercise).subscribe()">
+                    <button class="btn btn-sm btn-primary px-3 ms-2" (click)="createParticipationForExercise(this.activeExamPage.exercise!).subscribe()">
                         {{ 'artemisApp.examParticipation.generateParticipationRetry' | artemisTranslate }}
                     </button>
                 </div>

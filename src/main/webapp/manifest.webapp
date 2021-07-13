@@ -1,9 +1,21 @@
 {
-  "name": "Artemis",
-  "short_name": "Artemis",
-  "theme_color": "#000000",
-  "background_color": "#e0e0e0",
-  "start_url": ".",
-  "display": "standalone",
-  "orientation": "portrait"
+    "name": "Artemis",
+    "short_name": "Artemis",
+    "icons": [
+        {
+            "src": "/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "theme_color": "#000000",
+    "start_url": ".",
+    "background_color": "#e0e0e0",
+    "display": "standalone",
+    "orientation": "portrait"
 }
