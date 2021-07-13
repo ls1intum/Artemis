@@ -6,3 +6,12 @@
     writing-mode: vertical-rl;
     margin: auto; /*margin-left: 15px;*/
 }
+
+.collapsed.right.text-white.bg-primary {
+    width: 50px;
+    justify-content: space-between;
+    flex-flow: column nowrap;
+    cursor: pointer;
+    writing-mode: vertical-rl;
+    margin: auto; /*margin-left: 15px;*/
+}
