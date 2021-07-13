@@ -9,7 +9,7 @@
     </a>
 
     <a
-        *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING"
+        *ngIf="course.isAtLeastEditor && exercise.type === exerciseType.PROGRAMMING"
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'programming-exercises', exercise.id, 'grading', 'test-cases']"
         class="btn btn-info btn-sm me-1"
     >
