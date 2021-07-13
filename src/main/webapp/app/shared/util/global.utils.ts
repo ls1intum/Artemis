@@ -4,10 +4,10 @@ import { JhiAlertService } from 'ng-jhipster';
 /**
  * Prepares a string for insertion into a regex.
  * Example: [test].*[/test] -> \[test\].*\[\/test\]
- * @param s
+ * @param text
  */
-export const escapeStringForUseInRegex = (s: string) => {
-    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export const escapeStringForUseInRegex = (text: string) => {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
 
 type StringPositions = Array<{ start: number; end: number; word: string }>;
@@ -24,7 +24,7 @@ export const getStringSegmentPositions = (stringToSegment: string, delimiter: st
         return [...result, { start: 0, end: 0, word: '' }];
     }
     const nextComma = stringToSegment.indexOf(delimiter);
-    const lastElement = result.length ? result[result.length - 1] : null;
+    const lastElement = result.last();
     // End condition: the string does not have any more segments.
     if (nextComma === -1) {
         return [
