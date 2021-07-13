@@ -272,6 +272,7 @@ public class StudentExamService {
 
     /**
      * Assess the modeling-, file upload and text submissions of an exam which are empty.
+     * Also create automatic submissions and assessments for programming exercises without submissions.
      * Also sets the state of all participations for all student exams which were submitted to FINISHED
      *
      * @param exam the exam
@@ -313,7 +314,7 @@ public class StudentExamService {
     }
 
     /**
-     * Helper method to return a map for each user to their exercises
+     * Helper method to return a map for each user to their exercises. Filters out quiz exercises as they are assessed differently.
      *
      * @param studentExams the student exams of the users containing the exercises
      * @return a map of the User as key, and a list of the users exercises as value
