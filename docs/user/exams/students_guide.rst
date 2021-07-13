@@ -25,7 +25,7 @@ Prerequisites
 
     - **Java IDE with JDK 16**
 
-        **Recommendation:** Eclipse IDE 2021‑03.
+        **Recommendation:** Eclipse IDE 2021‑06.
 
     - **Git Client**
 
@@ -91,7 +91,7 @@ Welcome Screen
 ^^^^^^^^^^^^^^
 - The welcome screen gives you an overview of all the important information you need about the exam.
 - Carefully read through the instructions.
-- Once you have read them, confirm that you will follow the rules, sign with your full name and click |start|.
+- Once you have read them, confirm that you will follow the rules by ticking the corresponding checkbox, sign with your full name and click |start|.
 
     .. note::
         Your full name represents your signature. You can find your full name as registered on Artemis below the input field.
@@ -107,7 +107,10 @@ Welcome Screen
 
 Exam Conduction
 ^^^^^^^^^^^^^^^
-- Once the exam working time starts and you have confirmed your participation, the *Conduction* screen will appear.
+- Once the exam working time starts and you have confirmed your participation, the *Exercise Overview* screen will appear. This screen lists all exercises that are part of your exam with their respective amount of points, title and type of exercise. The status column indicates the status of each exercises and whether you have a submission in them or not.
+.. figure:: student/exercise_overview_after_start.png
+   :alt: Exercise Overview Screen
+   :align: center
 - On the header, you will find the *Exam Navigation Bar*. You can use this bar to navigate between different exercises. For each exercise an icon will display your current status.
 
     - When there are unsaved **or** unsubmitted changes, the exercise representation on the navigation bar becomes |unsaved|.
@@ -117,7 +120,7 @@ Exam Conduction
 - You can also navigate through the exercises when you are done with one by clicking |save_continue|. This action will save and submit your changes and move to the next exercise.
 
     .. warning::
-        For programming exercises, you must manually press |submit| otherwise your solution will **not** be counted!
+        For programming exercises, there is no save button. You must manually press |submit| otherwise your solution will **not** be counted!
 
 - On the header, you will also find the |hand_in_early| button. If you press this, you will be sent to the exam `End Screen`_.
 - The *time left* until the end of the exam is also shown next to the action buttons, or below, depending on your screen size.
@@ -216,9 +219,6 @@ Participating in Programming Exercises
 
     - You can add new files and directories using the |add_file|  and |add_folder| buttons.
     - You also have the ability to rename |rename| and delete |delete| files and folders, therefore **caution** is advised.
-
-        .. note::
-            If you accidentally delete or remove a file, you can use |refresh_files|, to load the last saved version from the server.
 
 - The code editor allows you to edit the content of specific files. It shows the line numbers and will also annotate the appropriate line, if a compilation error occurs.
 - The instructions are docked to the right.
