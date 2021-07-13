@@ -385,7 +385,8 @@
                 },
                 "textitems": {
                     "leastoneexercisegroup": "At least one exercise group",
-                    "numberofexercisegroupsequal": "Number of exercise groups equals number of exercises in exam",
+                    "numberofexercisegroupsequal": "Number of exercises in the exam equals the number of exercise groups",
+                    "numberofexercisegroupsinbetween": "Number of exercises in the exam is between the number of mandatory exercise groups and the total number of exercise groups",
                     "eachexercisegroup": "Each exercise group contains at least one exercise",
                     "pointsexercisegroupequal": "Points in exercises of each exercise group are identical",
                     "totalpointspossible": "Maximum number of points in exam can be attained with the current exercise group configuration",
