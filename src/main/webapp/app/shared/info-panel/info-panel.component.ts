@@ -5,14 +5,9 @@ import { Component, Input } from '@angular/core';
     templateUrl: './info-panel.component.html',
     styleUrls: ['./info-panel.scss'],
 })
-export class InfoPanelComponent implements OnInit {
+export class InfoPanelComponent {
     @Input() panelHeader: string;
     @Input() panelDescriptionHeader: string;
 
     constructor() {}
-
-    /**
-     * Do nothing on initialization.
-     */
-    ngOnInit() {}
 }
