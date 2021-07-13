@@ -225,12 +225,12 @@ public class ExamAccessService {
      * @param role            The role of the callee
      * @param courseId        The id of the course
      * @param examId          The id of the exam
-     * @param exerciseGroupId The id of the exercise group
+     * @param exerciseGroup   The exercise group
      * @param <X>             The type of the return type of the requesting route so that the
      *                        response can be returned there
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
-    public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndExerciseGroupAccess(Role role, Long courseId, Long examId, Long exerciseGroupId) {
+    public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndExerciseGroupAccess(Role role, Long courseId, Long examId, ExerciseGroup exerciseGroup) {
         Optional<ResponseEntity<X>> courseAndExamAccessFailure = switch (role) {
             case INSTRUCTOR -> checkCourseAndExamAccessForInstructor(courseId, examId);
             case EDITOR -> checkCourseAndExamAccessForEditor(courseId, examId);
@@ -239,31 +239,11 @@ public class ExamAccessService {
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure;
         }
-        Optional<ExerciseGroup> exerciseGroup = exerciseGroupRepository.findById(exerciseGroupId);
-        if (exerciseGroup.isEmpty()) {
-            return Optional.of(notFound());
-        }
-        if (!exerciseGroup.get().getExam().getId().equals(examId)) {
-            return Optional.of(conflict());
+        Exam exam = exerciseGroup.getExam();
+        if (exam == null || !exam.getId().equals(examId) || !exam.getCourse().getId().equals(courseId)) {
+            return Optional.of(badRequest());
         }
         return Optional.empty();
-    }
-
-    /**
-     * Checks if the current user is allowed to manage exams of the given course, that the exam exists,
-     * that the exam belongs to the given course and the exercise group belongs to the given exam.
-     *
-     * @param courseId        The id of the course
-     * @param examId          The id of the exam
-     * @param exerciseGroupId The id of the exercise group
-     * @param <X>             The type of the return type of the requesting route so that the
-     *                        response can be returned there
-     * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
-     */
-    // TODO: This method is replaced by checkCourseAndExamAndExerciseGroupAccess(), should be removed once all callees are refacored
-    @Deprecated
-    public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndExerciseGroupAccess(Long courseId, Long examId, Long exerciseGroupId) {
-        return checkCourseAndExamAndExerciseGroupAccess(Role.INSTRUCTOR, courseId, examId, exerciseGroupId);
     }
 
     /**
