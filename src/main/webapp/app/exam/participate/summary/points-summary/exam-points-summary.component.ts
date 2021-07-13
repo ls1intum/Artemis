@@ -59,7 +59,7 @@ export class ExamPointsSummaryComponent implements OnInit {
             .matchPercentageToGradeStepForExam(this.courseId, this.exam!.id!, achievedPointsRelative)
             .pipe(
                 catchError((error: HttpErrorResponse) => {
-                    if (error.status === 404 || error.status === 403) {
+                    if (error.status === 404) {
                         return of(undefined);
                     }
                     return throwError(error);
