@@ -101,8 +101,10 @@ public class ModelingSubmissionService extends SubmissionService {
         modelingSubmission.setResults(new ArrayList<>());
 
         // update submission properties
-        // NOTE: from now on we always set submitted to true to prevent problems here!
-        modelingSubmission.setSubmitted(true);
+        // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
+        if (modelingExercise.isExamExercise() || !modelingExercise.isEnded()) {
+            modelingSubmission.setSubmitted(true);
+        }
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
         modelingSubmission.setType(SubmissionType.MANUAL);
         modelingSubmission.setParticipation(participation);

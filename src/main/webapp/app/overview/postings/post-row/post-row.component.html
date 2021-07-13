@@ -21,16 +21,7 @@
                     </div>
                 </div>
                 <ng-container *ngIf="isAnswerMode">
-                    <div class="col-12 px-2">
-                        <jhi-markdown-editor
-                            class="markdown-editor background-editor-color w-100"
-                            [(markdown)]="answerPostContent"
-                            [editorMode]="EditorMode.LATEX"
-                            [enableResize]="true"
-                            [metaCommands]="[]"
-                            [enableFileUpload]="false"
-                        ></jhi-markdown-editor>
-                    </div>
+                    <jhi-postings-markdown-editor [(content)]="answerPostContent"></jhi-postings-markdown-editor>
                     <div class="col-12 d-flex">
                         <button class="btn btn-sm me-1 btn-outline-secondary" (click)="isAnswerMode = false">
                             {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}
@@ -93,18 +84,7 @@
                         <div class="col line my-1"></div>
                         <ng-container *ngIf="isExpanded && isAnswerMode">
                             <div class="row mb-2">
-                                <div class="col-12">
-                                    <div class="row px-0">
-                                        <jhi-markdown-editor
-                                            class="markdown-editor background-editor-color w-100"
-                                            [(markdown)]="answerPostContent"
-                                            [editorMode]="EditorMode.LATEX"
-                                            [enableResize]="true"
-                                            [metaCommands]="[]"
-                                            [enableFileUpload]="false"
-                                        ></jhi-markdown-editor>
-                                    </div>
-                                </div>
+                                <jhi-postings-markdown-editor [(content)]="answerPostContent"></jhi-postings-markdown-editor>
                             </div>
                             <div class="col-12 d-flex">
                                 <button class="btn btn-sm me-1 btn-outline-secondary" (click)="isAnswerMode = false">

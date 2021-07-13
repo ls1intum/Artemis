@@ -10,7 +10,6 @@ import { PostService } from 'app/overview/postings/post/post.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import interact from 'interactjs';
 import { ActivatedRoute } from '@angular/router';
 
@@ -32,7 +31,6 @@ export class PostingsComponent implements OnInit, AfterViewInit {
     currentUser: User;
     isAtLeastTutorInCourse: boolean;
     EditorMode = EditorMode;
-    domainCommands = [new KatexCommand()];
     courseId: number;
 
     constructor(private route: ActivatedRoute, private accountService: AccountService, private postService: PostService, private exerciseService: ExerciseService) {}
