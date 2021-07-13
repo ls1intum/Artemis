@@ -23,4 +23,6 @@ export class MockAccountService implements IAccountService {
     isOwnerOfParticipation = () => true;
     isAdmin = () => true;
     save = (account: any) => ({} as any);
+    setAccessRightsForExercise = (exercise: Exercise) => ({} as any);
+    setAccessRightsForCourse = (course: Course) => ({} as any);
 }
