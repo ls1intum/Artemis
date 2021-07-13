@@ -145,7 +145,7 @@ export class CourseScoreCalculationService {
                 chosenResult = new Result();
                 chosenResult.score = 0;
             } else {
-                chosenResult = resultsArray[resultsArray.length - 1];
+                chosenResult = resultsArray.last()!;
             }
         } else {
             chosenResult = new Result();
