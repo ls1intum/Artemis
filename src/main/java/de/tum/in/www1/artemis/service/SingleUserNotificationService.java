@@ -40,13 +40,19 @@ public class SingleUserNotificationService {
         saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_POST_FOR_LECTURE));
     }
 
+    public SingleUserNotification notifyUserAboutPlagiarismCase(SingleUserNotification plagiarismNotification) {
+        var res = singleUserNotificationRepository.save(plagiarismNotification);
+        messagingTemplate.convertAndSend(plagiarismNotification.getTopic(), plagiarismNotification);
+        return res;
+    }
+
     /**
      * Saves the given notification in database and sends it to the client via websocket.
      *
      * @param notification that should be saved and sent
      */
     private void saveAndSend(SingleUserNotification notification) {
-        singleUserNotificationRepository.save(notification);
+        var res = singleUserNotificationRepository.save(notification);
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
     }
 }

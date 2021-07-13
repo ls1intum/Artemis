@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
@@ -66,10 +67,13 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
+    private final PlagiarismComparisonRepository plagiarismComparisonRepository;
+
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, CompassService compassService, UserRepository userRepository,
             ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService,
-            StudentParticipationRepository studentParticipationRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
+            StudentParticipationRepository studentParticipationRepository, ModelingSubmissionRepository modelingSubmissionRepository,
+            PlagiarismComparisonRepository plagiarismComparisonRepository) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
@@ -77,6 +81,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examSubmissionService = examSubmissionService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.plagiarismComparisonRepository = plagiarismComparisonRepository;
     }
 
     /**
@@ -187,7 +192,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      *         found
      */
     @GetMapping("/modeling-submissions/{submissionId}")
-    @PreAuthorize("hasRole('TA')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId,
             @RequestParam(value = "withoutResults", defaultValue = "false") boolean withoutResults) {
@@ -198,10 +203,26 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
         modelingExercise.setGradingCriteria(gradingCriteria);
+        var anonymize = false;
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToAssesExercise(modelingExercise, user, resultId)) {
-            return forbidden();
+            // request is made by student for plagiarism, make sure they are affected by this case:
+            withoutResults = true;
+            // Check if this text submission is for a plagiarism case and can therefore be retrieved by normal users
+            var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
+            // disallow requests from users who are not notified about this case:
+            boolean isUserNotified = false;
+            if (comparisonOptional.isPresent()) {
+                var comparisons = comparisonOptional.get();
+                isUserNotified = comparisons.stream().anyMatch(c -> (c.getNotificationA() != null && ((SingleUserNotification) c.getNotificationA()).getRecipient().equals(user)
+                        || c.getNotificationB() != null && ((SingleUserNotification) c.getNotificationB()).getRecipient().equals(user)));
+            }
+            if (!isUserNotified) {
+                return forbidden();
+            }
+            // anonymize for plagiarism assessment:
+            anonymize = true;
         }
 
         if (!withoutResults) {
@@ -232,6 +253,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // Don't remove results when they were not requested in the first place
         if (!withoutResults) {
             modelingSubmission.removeNotNeededResults(correctionRound, resultId);
+        }
+        if (anonymize) {
+            modelingSubmission.setParticipation(null);
+            modelingSubmission.setSubmissionDate(null);
         }
 
         return ResponseEntity.ok(modelingSubmission);

@@ -99,6 +99,10 @@ public class CourseResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final TextExerciseRepository textExerciseRepository;
+
+    private final ModelingExerciseRepository modelingExerciseRepository;
+
     private final AssessmentDashboardService assessmentDashboardService;
 
     private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
@@ -123,6 +127,8 @@ public class CourseResource {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
+    private final PlagiarismResultRepository plagiarismResultRepository;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
@@ -130,7 +136,8 @@ public class CourseResource {
             ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            ParticipantScoreRepository participantScoreRepository) {
+            ParticipantScoreRepository participantScoreRepository, PlagiarismResultRepository plagiarismResultRepository, TextExerciseRepository textExerciseRepository,
+            ModelingExerciseRepository modelingExerciseRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -154,6 +161,9 @@ public class CourseResource {
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participantScoreRepository = participantScoreRepository;
+        this.plagiarismResultRepository = plagiarismResultRepository;
+        this.textExerciseRepository = textExerciseRepository;
+        this.modelingExerciseRepository = modelingExerciseRepository;
     }
 
     /**

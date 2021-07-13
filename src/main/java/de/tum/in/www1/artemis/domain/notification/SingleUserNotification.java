@@ -78,6 +78,16 @@ public class SingleUserNotification extends Notification {
         return target.toString();
     }
 
+    public String targetForPlagiarismCase(Long plagiarismComparisonId, Long courseID) {
+        JsonObject target = new JsonObject();
+        target.addProperty("message", "plagiarismDetected");
+        target.addProperty("id", plagiarismComparisonId);
+        target.addProperty("entity", "plagiarism");
+        target.addProperty("course", courseID);
+        target.addProperty("mainPage", "courses");
+        return target.toString();
+    }
+
     @Override
     public String toString() {
         return "SingleUserNotification{" + "id=" + getId() + "}";

@@ -31,7 +31,30 @@
             "detect": "Plagiate finden",
             "rerun": "Erneut Plagiate finden",
             "loading": "Laden...",
-            "fetching-results": "Plagiate werden geladen..."
+            "fetching-results": "Plagiate werden geladen...",
+            "cases": {
+                "plagiarism-review": "Plagiate Prüfen",
+                "plagiarism-cases": "Plagiatsfälle",
+                "page-subtitle": "Bestätigte plagiatsfälle verwalten, Studierende benachrichtigen und Stellungnahmen bearbeiten.",
+                "your-statement": "Du kannst ein Statement hierzu abgeben:",
+                "plagiarism-explanation": "Deine Abgabe wurde als Plagiat identifiziert, bitte überprüfe dies.",
+                "instructor-message": "Nachricht deiner Übungsleitung:",
+                "affected-exercise": "Betroffene Aufgabe:",
+                "assess": "Öffnen",
+                "close": "Schließen",
+                "notify": "Benachrichtigen",
+                "notification-for": "Benachrichtigung für",
+                "cancel": "Abbrechen",
+                "send-notification": "Benachrichtigung senden",
+                "new-statement": "Neues Statement",
+                "statement": "Statement:",
+                "assessed": "Bearbeitet",
+                "open": "Offen",
+                "hide-finished": "Bearbeitete Fälle verstecken",
+                "export-csv": "CSV exportieren",
+                "notifications-sent": "Gesendete Benachrichtigungen",
+                "responses-assessed": "Antworten Bearbeitet"
+            }
         }
     }
 }

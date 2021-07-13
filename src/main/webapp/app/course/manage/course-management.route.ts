@@ -19,6 +19,7 @@ import { EditLearningGoalComponent } from 'app/course/learning-goals/edit-learni
 import { CourseParticipantScoresComponent } from 'app/course/course-participant-scores/course-participant-scores.component';
 import { CourseManagementStatisticsComponent } from './course-management-statistics.component';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
+import { PlagiarismCasesComponent } from 'app/course/plagiarism-cases/plagiarism-cases.component';
 
 @Injectable({ providedIn: 'root' })
 export class CourseResolve implements Resolve<Course> {
@@ -77,6 +78,15 @@ export const courseManagementState: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.participantScores.pageTitle',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/plagiarism-cases',
+        component: PlagiarismCasesComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.plagiarism.cases.plagiarism-cases',
         },
         canActivate: [UserRouteAccessService],
     },

@@ -1,0 +1,31 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.6.xsd">
+    <changeSet id="20210625113000" author="joschahenningsen">
+        <!-- new columns for students statements on the case: -->
+        <addColumn tableName="plagiarism_comparison">
+            <column name="statement_a" type="VARCHAR(2000)"/>
+            <column name="statement_b" type="VARCHAR(2000)"/>
+
+            <!-- new column for whether their statements are rejected or not: -->
+            <column name="status_a" type="int"/>
+            <column name="status_b" type="int"/>
+
+            <column name="notification_a_id" type="bigint"/>
+            <column name="notification_b_id" type="bigint"/>
+
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="notification_a_id"
+                                 baseTableName="plagiarism_comparison"
+                                 constraintName="fk_plagiarism_comparison_notification_a"
+                                 referencedColumnNames="id"
+                                 referencedTableName="notification"/>
+        <addForeignKeyConstraint baseColumnNames="notification_b_id"
+                                 baseTableName="plagiarism_comparison"
+                                 constraintName="fk_plagiarism_comparison_notification_b"
+                                 referencedColumnNames="id"
+                                 referencedTableName="notification"/>
+    </changeSet>
+</databaseChangeLog>

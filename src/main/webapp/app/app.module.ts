@@ -26,6 +26,8 @@ import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
+import { PlagiarismCasesReviewComponent } from './course/plagiarism-cases/plagiarism-cases-review.component';
+import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 
 // NOTE: this module should only include the most important modules for normal users, all course management, admin and account functionality should be lazy loaded if possible
 @NgModule({
@@ -44,6 +46,7 @@ import { NotificationPopupComponent } from 'app/shared/notification/notification
         ArtemisSystemNotificationModule,
         ArtemisComplaintsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
+        ArtemisPlagiarismModule,
     ],
     declarations: [
         JhiMainComponent,
@@ -57,6 +60,7 @@ import { NotificationPopupComponent } from 'app/shared/notification/notification
         NotificationSidebarComponent,
         SystemNotificationComponent,
         LoadingNotificationComponent,
+        PlagiarismCasesReviewComponent,
     ],
     bootstrap: [JhiMainComponent],
 })

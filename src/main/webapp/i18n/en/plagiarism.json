@@ -31,7 +31,30 @@
             "detect": "Detect plagiarism",
             "rerun": "Rerun plagiarism detection",
             "loading": "Loading...",
-            "fetching-results": "Fetching plagiarism results..."
+            "fetching-results": "Fetching plagiarism results...",
+            "cases": {
+                "plagiarism-review": "Review Plagiarism",
+                "plagiarism-cases": "Plagiarism Cases",
+                "page-subtitle": "Manage confirmed cases of plagiarism, notify students and assess their statements.",
+                "your-statement": "You can submit a statement on this case once:",
+                "plagiarism-explanation": "Your submission was flagged as plagiarism, please review this.",
+                "instructor-message": "Message from your instructor:",
+                "affected-exercise": "Affected exercise:",
+                "assess": "Assess",
+                "close": "Close",
+                "notify": "Notify",
+                "notification-for": "Notification for",
+                "cancel": "Cancel",
+                "send-notification": "Send Notification",
+                "new-statement": "New Statement",
+                "statement": "Statement:",
+                "assessed": "Assessed",
+                "open": "Open",
+                "hide-finished": "Hide finished cases",
+                "export-csv": "Export CSV",
+                "notifications-sent": "Notifications Sent",
+                "responses-assessed": "Responses Assessed"
+            }
         }
     }
 }

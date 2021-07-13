@@ -436,6 +436,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     List<ProgrammingExercise> findAllByCourse(Course course);
 
+    @Query("SELECT e FROM ProgrammingExercise e WHERE e.course.id = :#{#courseId}")
+    List<ProgrammingExercise> findByCourseId(@Param("courseId") Long courseId);
+
     long countByShortNameAndCourse(String shortName, Course course);
 
     long countByTitleAndCourse(String shortName, Course course);

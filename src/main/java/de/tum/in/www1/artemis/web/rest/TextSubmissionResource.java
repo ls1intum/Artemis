@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
@@ -60,10 +61,13 @@ public class TextSubmissionResource {
 
     private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
 
+    private final PlagiarismComparisonRepository plagiarismComparisonRepository;
+
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository, TextExerciseRepository textExerciseRepository,
             AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, Optional<AtheneScheduleService> atheneScheduleService,
-            ExamSubmissionService examSubmissionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
+            ExamSubmissionService examSubmissionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider,
+            PlagiarismComparisonRepository plagiarismComparisonRepository) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
         this.textExerciseRepository = textExerciseRepository;
@@ -75,6 +79,7 @@ public class TextSubmissionResource {
         this.textAssessmentService = textAssessmentService;
         this.examSubmissionService = examSubmissionService;
         this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
+        this.plagiarismComparisonRepository = plagiarismComparisonRepository;
     }
 
     /**
@@ -158,7 +163,7 @@ public class TextSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the textSubmission, or with status 404 (Not Found)
      */
     @GetMapping("/text-submissions/{submissionId}")
-    @PreAuthorize("hasRole('TA')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<TextSubmission> getTextSubmissionWithResults(@PathVariable Long submissionId) {
         log.debug("REST request to get TextSubmission : {}", submissionId);
         Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findWithEagerResultsById(submissionId);
@@ -168,7 +173,23 @@ public class TextSubmissionResource {
         }
         final var textSubmission = optionalTextSubmission.get();
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
-            return forbidden();
+            var user = userRepository.getUser();
+            // Check if this text submission is for a plagiarism case and can therefore be retrieved by normal users
+            var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
+            // disallow requests from users who are not notified about this case:
+            boolean isUserNotified = false;
+            if (comparisonOptional.isPresent()) {
+                var comparisons = comparisonOptional.get();
+                isUserNotified = comparisons.stream().anyMatch(c -> (c.getNotificationA() != null && ((SingleUserNotification) c.getNotificationA()).getRecipient().equals(user)
+                        || c.getNotificationB() != null && ((SingleUserNotification) c.getNotificationB()).getRecipient().equals(user)));
+            }
+            if (!isUserNotified) {
+                return forbidden();
+            }
+            // we are a student notified about plagiarism, anonymize:
+            textSubmission.setParticipation(null);
+            textSubmission.setResults(null);
+            textSubmission.setSubmissionDate(null);
         }
 
         // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set

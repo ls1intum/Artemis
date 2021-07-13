@@ -1,0 +1,108 @@
+<div *ngFor="let comparison of plagiarismCase.comparisons; let i = index" [class.border-top]="i !== 0" class="py-3 px-1">
+    <div class="row" *ngIf="!hideFinished || !(comparison.statusA && comparison.statusB)">
+        <div class="col-6">
+            <span class="ms-2" *ngIf="activeSplitViewComparison !== comparison.id">{{ comparison.submissionA.studentLogin }}</span>
+            <span class="badge text-white bg-primary" *ngIf="comparison.statementA && !comparison.statusA">
+                {{ 'artemisApp.plagiarism.cases.new-statement' | artemisTranslate }}</span
+            >
+            <span *ngIf="comparison.statusA" class="badge text-white bg-success"> {{ 'artemisApp.plagiarism.cases.assessed' | artemisTranslate }}</span>
+            <span class="badge text-white bg-danger" *ngIf="!((comparison.statementA && !comparison.statusA) || comparison.statusA)">
+                {{ 'artemisApp.plagiarism.cases.open' | artemisTranslate }}</span
+            >
+        </div>
+        <div class="col">
+            <span *ngIf="activeSplitViewComparison !== comparison.id">{{ comparison.submissionB.studentLogin }}</span>
+            <span class="badge text-white bg-primary" *ngIf="comparison.statementB && !comparison.statusB">
+                {{ 'artemisApp.plagiarism.cases.new-statement' | artemisTranslate }}</span
+            >
+            <span *ngIf="comparison.statusB" class="badge text-white bg-success"> {{ 'artemisApp.plagiarism.cases.assessed' | artemisTranslate }}</span>
+            <span class="badge text-white bg-danger" *ngIf="!((comparison.statementB && !comparison.statusB) || comparison.statusB)">
+                {{ 'artemisApp.plagiarism.cases.open' | artemisTranslate }}</span
+            >
+        </div>
+        <div class="col-md-auto">
+            <button
+                *ngIf="activeSplitViewComparison !== comparison.id"
+                (click)="showComparison(comparison.id); hideNotificationForm()"
+                class="tab-item btn btn-primary btn-sm me-1"
+            >
+                {{ 'artemisApp.plagiarism.cases.assess' | artemisTranslate }}
+            </button>
+            <button *ngIf="activeSplitViewComparison === comparison.id" (click)="showComparison(-1); hideNotificationForm()" class="tab-item btn btn-primary btn-sm me-1">
+                {{ 'artemisApp.plagiarism.cases.close' | artemisTranslate }}
+            </button>
+            <button
+                *ngIf="!isStudentANotified(i) && comparison.id == activeSplitViewComparison"
+                [disabled]="activeComparisonId === comparison.id && activeStudentLogin === comparison.submissionA.studentLogin"
+                (click)="showNotificationForm(comparison.submissionA.studentLogin, comparison.id)"
+                class="tab-item btn btn-info btn-sm me-1"
+            >
+                {{ 'artemisApp.plagiarism.cases.notify' | artemisTranslate }} {{ comparison.submissionA.studentLogin }}
+            </button>
+            <button
+                *ngIf="!isStudentBNotified(i) && comparison.id == activeSplitViewComparison"
+                [disabled]="activeComparisonId === comparison.id && activeStudentLogin === comparison.submissionB.studentLogin"
+                (click)="showNotificationForm(comparison.submissionB.studentLogin, comparison.id)"
+                class="tab-item btn btn-info btn-sm me-1"
+            >
+                {{ 'artemisApp.plagiarism.cases.notify' | artemisTranslate }} {{ comparison.submissionB.studentLogin }}
+            </button>
+        </div>
+    </div>
+    <div>
+        <div *ngIf="!isStudentANotified(i) && activeComparisonId === comparison.id && activeStudentLogin === comparison.submissionA.studentLogin">
+            <span class="d-none"> {{ 'artemisApp.plagiarism.cases.notification-for' | artemisTranslate }} {{ comparison.submissionA.studentLogin }}</span>
+            <div class="form-group">
+                <textarea class="form-control" rows="3" [(ngModel)]="notificationText"></textarea>
+                <button (click)="hideNotificationForm()" class="tab-item btn btn-danger btn-md ms-1 mt-2">
+                    {{ 'artemisApp.plagiarism.cases.cancel' | artemisTranslate }}
+                </button>
+                <button [disabled]="!notificationText" (click)="sendNotification('A', i)" class="tab-item btn btn-primary btn-md ms-1 mt-2">
+                    {{ 'artemisApp.plagiarism.cases.send-notification' | artemisTranslate }}
+                </button>
+            </div>
+        </div>
+        <div class="row mt-2" *ngIf="comparison.id == activeSplitViewComparison">
+            <div class="col">
+                <div *ngIf="!comparison.statusA && comparison.statementA">
+                    <span>{{ 'artemisApp.plagiarism.cases.statement' | artemisTranslate }}</span>
+                    <textarea class="form-control" disabled>{{ comparison.statementA }}</textarea>
+                    <button (click)="updateStatus(true, comparison.id, comparison.submissionA.studentLogin)" class="btn btn-success btn-sm mt-1">
+                        {{ 'artemisApp.plagiarism.confirm' | artemisTranslate }}
+                    </button>
+                    <button (click)="updateStatus(false, comparison.id, comparison.submissionA.studentLogin)" class="btn btn-danger btn-sm mt-1">
+                        {{ 'artemisApp.plagiarism.deny' | artemisTranslate }}
+                    </button>
+                </div>
+            </div>
+            <div class="col">
+                <div *ngIf="!comparison.statusB && comparison.statementA">
+                    <span>{{ 'artemisApp.plagiarism.cases.statement' | artemisTranslate }}</span>
+                    <textarea class="form-control" disabled>{{ comparison.statementB }}</textarea>
+                    <button (click)="updateStatus(true, comparison.id, comparison.submissionB.studentLogin)" class="btn btn-success btn-sm mt-1">
+                        {{ 'artemisApp.plagiarism.confirm' | artemisTranslate }}
+                    </button>
+                    <button (click)="updateStatus(false, comparison.id, comparison.submissionB.studentLogin)" class="btn btn-danger btn-sm mt-1">
+                        {{ 'artemisApp.plagiarism.deny' | artemisTranslate }}
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div *ngIf="!isStudentBNotified(i) && activeComparisonId === comparison.id && activeStudentLogin === comparison.submissionB.studentLogin">
+            <span class="d-none"> {{ 'artemisApp.plagiarism.cases.notification-for' | artemisTranslate }} {{ activeStudentLogin }} </span>
+            <div class="form-group">
+                <textarea class="form-control" rows="3" [(ngModel)]="notificationText"></textarea>
+                <button (click)="hideNotificationForm()" class="tab-item btn btn-danger btn-md ms-1 mt-2">Cancel</button>
+                <button [disabled]="!notificationText" (click)="sendNotification('B', i)" class="tab-item btn btn-primary btn-md ms-1 mt-2">
+                    {{ 'artemisApp.plagiarism.cases.send-notification' | artemisTranslate }}
+                </button>
+            </div>
+        </div>
+        <jhi-plagiarism-split-view
+            *ngIf="comparison.id == activeSplitViewComparison"
+            [exercise]="plagiarismCase.exercise"
+            [comparison]="comparison"
+            [splitControlSubject]="splitControlSubject"
+        ></jhi-plagiarism-split-view>
+    </div>
+</div>
