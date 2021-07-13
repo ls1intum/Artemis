@@ -295,8 +295,12 @@ public class StudentExamService {
                     studentParticipationRepository.save(studentParticipation);
                 }
                 var latestSubmission = studentParticipation.findLatestSubmission();
-                latestSubmission = prepareProgrammingSubmission(latestSubmission, studentParticipation);
-                if (latestSubmission.isPresent() && (latestSubmission.get().isEmpty() || studentParticipation.getExercise() instanceof ProgrammingExercise)) {
+                boolean wasEmptyProgrammingParticipation = false;
+                if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise) {
+                    wasEmptyProgrammingParticipation = true;
+                    latestSubmission = prepareProgrammingSubmission(latestSubmission, studentParticipation);
+                }
+                if ((latestSubmission.isPresent() && latestSubmission.get().isEmpty()) || wasEmptyProgrammingParticipation) {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
                         // required so that the submission is counted in the assessment dashboard
                         latestSubmission.get().submitted(true);
