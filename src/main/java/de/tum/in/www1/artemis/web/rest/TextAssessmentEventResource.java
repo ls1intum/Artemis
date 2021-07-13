@@ -60,13 +60,13 @@ public class TextAssessmentEventResource {
     }
 
     /**
-     * This function retrieves all of the events from the 'text_assessment_event' table
+     * This function retrieves all of the events from the 'text_assessment_event' table by course id
+     * @param courseId the id of the course to filter by
      * @return returns a List of TextAssessmentEvent's
      */
     @GetMapping("/events/{courseId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<TextAssessmentEvent>> getEventsByCourseId(@PathVariable Long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
         List<TextAssessmentEvent> events = textAssessmentEventRepository.findAllByCourseId(courseId);
         return ResponseEntity.ok().body(events);
     }
