@@ -1,0 +1,8 @@
+.collapsed.header {
+    width: 50px;
+    justify-content: space-between;
+    flex-flow: column nowrap;
+    cursor: pointer;
+    writing-mode: vertical-rl;
+    margin: auto; /*margin-left: 15px;*/
+}
