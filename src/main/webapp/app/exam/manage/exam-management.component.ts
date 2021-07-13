@@ -22,9 +22,6 @@ import * as moment from 'moment';
 export class ExamManagementComponent implements OnInit, OnDestroy {
     course: Course;
     exams: Exam[];
-    isAtLeastInstructor = false;
-    isAtLeastEditor = false;
-    isAtLeastTutor = false;
     predicate: string;
     ascending: boolean;
     eventSubscriber: Subscription;
