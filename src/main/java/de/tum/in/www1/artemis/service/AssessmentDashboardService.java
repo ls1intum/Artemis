@@ -52,7 +52,7 @@ public class AssessmentDashboardService {
      * @param examMode flag should be set for exam dashboard
      */
     public void generateStatisticsForExercisesForAssessmentDashboard(Set<Exercise> exercises, List<TutorParticipation> tutorParticipations, boolean examMode) {
-        log.info("generateStatisticsForExercisesForAssessmentDashboard invoked");
+        log.debug("generateStatisticsForExercisesForAssessmentDashboard invoked");
         // start measures performance of each individual query, start2 measures performance of one loop iteration
         long start = System.nanoTime();
         long start2 = System.nanoTime();
@@ -61,11 +61,11 @@ public class AssessmentDashboardService {
         Set<Exercise> nonProgrammingExerciseIds = exercises.stream().filter(exercise -> !(exercise instanceof ProgrammingExercise)).collect(Collectors.toSet());
 
         complaintService.calculateNrOfOpenComplaints(exercises, examMode);
-        log.info("Finished >> complaintService.calculateNrOfOpenComplaints all << in {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("Finished >> complaintService.calculateNrOfOpenComplaints all << in {}", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();
 
         calculateNumberOfSubmissions(programmingExerciseIds, nonProgrammingExerciseIds, examMode);
-        log.info("Finished >> assessmentDashboardService.calculateNumberOfSubmissions all << in {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("Finished >> assessmentDashboardService.calculateNumberOfSubmissions all << in {}", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();
 
         // NOTE: similar to calculateNumberOfSubmissions the number of assessments could be calculated outside of the loop for a performance boost.
@@ -77,13 +77,13 @@ public class AssessmentDashboardService {
 
             if (exercise instanceof ProgrammingExercise) {
                 totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
-                log.info("Finished >> programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted << call for exercise {} in {}", exercise.getId(),
+                log.debug("Finished >> programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted << call for exercise {} in {}", exercise.getId(),
                         TimeLogUtil.formatDurationFrom(start));
                 start = System.nanoTime();
             }
             else {
                 totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), examMode);
-                log.info("Finished >> resultRepository.countNumberOfFinishedAssessmentsForExercise << call for exercise {} in {}", exercise.getId(),
+                log.debug("Finished >> resultRepository.countNumberOfFinishedAssessmentsForExercise << call for exercise {} in {}", exercise.getId(),
                         TimeLogUtil.formatDurationFrom(start));
                 start = System.nanoTime();
             }
@@ -93,7 +93,7 @@ public class AssessmentDashboardService {
                 // set number of corrections specific to each correction round
                 int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
                 numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds);
-                log.info("Finished >> resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds << call for exercise {} in {}", exercise.getId(),
+                log.debug("Finished >> resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds << call for exercise {} in {}", exercise.getId(),
                         TimeLogUtil.formatDurationFrom(start));
                 start = System.nanoTime();
             }
@@ -107,7 +107,7 @@ public class AssessmentDashboardService {
             start = System.nanoTime();
             Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
 
-            log.info("Finished >> exampleSubmissionRepository.findAllWithResultByExerciseId << call for course {} in {}", exercise.getId(), TimeLogUtil.formatDurationFrom(start));
+            log.debug("Finished >> exampleSubmissionRepository.findAllWithResultByExerciseId << call for course {} in {}", exercise.getId(), TimeLogUtil.formatDurationFrom(start));
             start = System.nanoTime();
 
             // Do not provide example submissions without any assessment
@@ -122,9 +122,9 @@ public class AssessmentDashboardService {
                     });
             exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
 
-            log.info("Finished >> assessmentDashboardLoopIteration << call for exercise {} in {}", exercise.getId(), TimeLogUtil.formatDurationFrom(start2));
+            log.debug("Finished >> assessmentDashboardLoopIteration << call for exercise {} in {}", exercise.getId(), TimeLogUtil.formatDurationFrom(start2));
         }
-        log.info("Finished >> generateStatisticsForExercisesForAssessmentDashboard << call in {}", TimeLogUtil.formatDurationFrom(startComplete));
+        log.debug("Finished >> generateStatisticsForExercisesForAssessmentDashboard << call in {}", TimeLogUtil.formatDurationFrom(startComplete));
     }
 
     /**
