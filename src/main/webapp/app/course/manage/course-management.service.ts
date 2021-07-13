@@ -213,6 +213,11 @@ export class CourseManagementService {
         return this.http.get<Course>(url, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
             tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+            tap((res: EntityResponseType) => {
+                if (res.body) {
+                    this.accountService.setAccessRightsForCourse(res.body);
+                }
+            }),
         );
     }
 

@@ -164,7 +164,6 @@ export class AssessmentDashboardComponent implements OnInit {
             this.courseService.getCourseWithInterestingExercisesForTutors(this.courseId).subscribe(
                 (res: HttpResponse<Course>) => {
                     this.course = Course.from(res.body!);
-                    this.accountService.setAccessRightsForCourse(this.course);
                     this.extractExercises(this.course.exercises);
                 },
                 (response: string) => this.onError(response),
