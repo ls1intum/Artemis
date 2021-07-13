@@ -35,7 +35,7 @@
             <ng-template #renderedHint>
                 <div [innerHTML]="renderedQuestion.hint"></div>
             </ng-template>
-            <br />
+            <br/>
             <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="auto" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
                 <fa-icon [icon]="'exclamation-circle'"></fa-icon>
                 <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
