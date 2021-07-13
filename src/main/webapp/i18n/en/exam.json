@@ -186,7 +186,7 @@
             "lockAllRepositoriesModalText": "All repositories will be immediately locked! Students will be no longer be able to push even if the exam is still running!\nThis will also affect students with extended working time!\n\nThis operation is automatically performed once the exam is over, therefore this operation should only be used manually if the automatic lock failed!",
             "searchForStudents": "Search for students by login or name (comma separated)",
             "student": "Student",
-            "workingTime": "Working time (mm:ss)",
+            "workingTime": "Working time",
             "started": "Started",
             "submitted": "Submitted",
             "submissionDate": "Submission date",

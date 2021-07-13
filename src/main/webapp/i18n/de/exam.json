@@ -184,7 +184,7 @@
             "lockAllRepositoriesModalText": "Alle Repositories werden sofort gesperrt! Studierende werden nicht mehr pushen können, auch wenn die Klausur noch läuft!\nDies betrifft auch Studierende mit Nachteilsausgleich!\n\nDie Operation wird automatisch mit dem Ende der Klausur ausgeführt und sollte daher nur genutzt werden, falls das automatische Sperren nicht korrekt ausgeführt wurde!",
             "searchForStudents": "Suche nach Studierenden-Logins oder Namen (Komma getrennt)",
             "student": "Studierende:r",
-            "workingTime": "Bearbeitungszeit (mm:ss)",
+            "workingTime": "Bearbeitungszeit",
             "started": "Gestartet",
             "submitted": "Abgegeben",
             "submissionDate": "Abgabedatum",
