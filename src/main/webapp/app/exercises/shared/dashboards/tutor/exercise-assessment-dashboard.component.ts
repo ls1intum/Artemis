@@ -335,7 +335,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             case TutorParticipationStatus.TRAINED:
                 // If we are in 'TRAINED' state, but never really "trained" on example submissions, display the
                 // 'REVIEWED_INSTRUCTIONS' state text instead.
-                if (!this.exercise.exampleSubmissions || this.exercise.exampleSubmissions.length == 0) {
+                if (!this.exercise.exampleSubmissions || this.exercise.exampleSubmissions.length === 0) {
                     return TutorParticipationStatus.REVIEWED_INSTRUCTIONS.toString();
                 }
 

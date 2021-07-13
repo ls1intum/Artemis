@@ -58,9 +58,9 @@
                         {{ 'artemisApp.assessmentDashboard.submissions' | artemisTranslate }}
                     </div>
                     <div class="col-5">
-                        <span class="success">{{ numberOfSubmissions.inTime }}</span>
+                        <span class="text-success">{{ numberOfSubmissions.inTime }}</span>
                         <span *ngIf="numberOfSubmissions.late > 0"> | </span>
-                        <span *ngIf="numberOfSubmissions.late > 0" class="danger">{{ numberOfSubmissions.late }}</span>
+                        <span *ngIf="numberOfSubmissions.late > 0" class="text-danger">{{ numberOfSubmissions.late }}</span>
                         /
                         <a
                             [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'submissions']"
@@ -104,11 +104,11 @@
 
             <div class="me-2" style="display: block; float: right">
                 <div>
-                    <div class="square success-background" style="display: inline-block"></div>
+                    <div class="square bg-success" style="display: inline-block"></div>
                     <span>{{ 'artemisApp.exerciseAssessmentDashboard.stats.intime' | artemisTranslate }}</span>
                 </div>
                 <div *ngIf="numberOfSubmissions.late > 0">
-                    <div class="square danger-background" style="display: inline-block"></div>
+                    <div class="square bg-danger" style="display: inline-block"></div>
                     <span>{{ 'artemisApp.exerciseAssessmentDashboard.stats.late' | artemisTranslate }}</span>
                 </div>
             </div>
@@ -238,7 +238,7 @@
                             >
                                 {{ 'artemisApp.exerciseAssessmentDashboard.reviewExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                             </button>
-                            <fa-icon class="success" [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id!)"></fa-icon>
+                            <fa-icon class="text-success" [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id!)"></fa-icon>
                         </li>
                     </ul>
                 </div>
@@ -269,7 +269,7 @@
                             >
                                 {{ 'artemisApp.exerciseAssessmentDashboard.assessExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                             </button>
-                            <fa-icon class="success" [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id!)"></fa-icon>
+                            <fa-icon class="text-success" [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id!)"></fa-icon>
                         </li>
                     </ul>
                 </div>
@@ -476,7 +476,7 @@
                 <h4 class="d-inline-block">
                     {{ 'artemisApp.exerciseAssessmentDashboard.complaints' | artemisTranslate }}
                 </h4>
-                <fa-icon class="primary" [icon]="'question-circle'" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate"></fa-icon>
+                <fa-icon class="text-primary" [icon]="'question-circle'" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate"></fa-icon>
                 <div class="table-responsive">
                     <table class="table table-striped exercise-table" *ngIf="submissionsWithComplaints && submissionsWithComplaints!.length > 0; else noComplaints">
                         <thead>
@@ -538,7 +538,11 @@
                 <h4 class="d-inline-block">
                     {{ 'artemisApp.exerciseAssessmentDashboard.moreFeedback' | artemisTranslate }}
                 </h4>
-                <fa-icon class="primary" [icon]="'question-circle'" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestHint' | artemisTranslate"></fa-icon>
+                <fa-icon
+                    class="text-primary"
+                    [icon]="'question-circle'"
+                    [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestHint' | artemisTranslate"
+                ></fa-icon>
                 <div class="table-responsive">
                     <table class="table table-striped exercise-table" *ngIf="moreFeedbackRequests && moreFeedbackRequests!.length > 0; else noComplaints">
                         <thead>
