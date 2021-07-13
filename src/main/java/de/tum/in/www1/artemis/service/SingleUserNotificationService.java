@@ -52,7 +52,7 @@ public class SingleUserNotificationService {
      * @param notification that should be saved and sent
      */
     private void saveAndSend(SingleUserNotification notification) {
-        var res = singleUserNotificationRepository.save(notification);
+        singleUserNotificationRepository.save(notification);
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
     }
 }
