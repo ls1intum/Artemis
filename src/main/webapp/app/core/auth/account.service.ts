@@ -246,7 +246,7 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Sets the appropriate access rights for the passed exercise.
+     * Sets the appropriate access rights for the passed course.
      *
      * @param course for which the access rights shall be set
      */
