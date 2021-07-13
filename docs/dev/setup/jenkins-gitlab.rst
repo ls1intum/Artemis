@@ -397,6 +397,8 @@ starting a new container with the old volumes:
 See https://hub.docker.com/r/gitlab/gitlab-ce/ for the latest version.
 You can also specify an earlier one.
 
+Note that **upgrading to a major version** may require following an upgrade path. You can view supported paths `here <https://docs.gitlab.com/ee/update/#upgrade-paths>`__.
+
 Start a GitLab container just as described in `Start-Gitlab <#start-gitlab>`__ and wait for a couple of minutes. GitLab
 should configure itself automatically. If there are no issues, you can
 delete the old container using ``docker rm gitlab_old`` and the olf
@@ -921,6 +923,51 @@ the following steps:
 
        jenkins:
            use-crumb: false
+
+Upgrading Jenkins
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In order to upgrade Jenkins to a newer version, you need to rebuild the docker image targeting the new version.
+The stable lts versions can be through viewed through the `changelog <https://www.jenkins.io/changelog-stable/>`__. and the corresponding
+docker image can be found on `dockerhub <https://hub.docker.com/r/jenkins/jenkins/tags?page=1&ordering=last_updated>`__.
+
+1. Open the Jenkins Dockerfile and replace ``jenkins/jenkins:lts`` with the version you want to use.
+   For example, if you want to upgrade Jenkins to version ``2.289.2``, you will need to use the ``jenkins/jenkins:2.289.2-lts`` image.
+
+2. Build the new docker image:
+
+   ::
+
+        docker build --no-cache -t jenkins-artemis .
+
+   The name of the image is called ``jenkins-artemis``.
+
+3. Stop the current Jenkins container (change jenkins to the name of your container):
+
+   ::
+
+        docker stop jenkins
+
+4. Rename the container to ``jenkins_old`` so that it can be used as a backup:
+
+   ::
+
+        docker rename jenkins jenkins_old
+
+5. Run the new Jenkins instance:
+
+   ::
+
+        docker run -itd --name jenkins --restart always \
+         -v jenkins_data:/var/jenkins_home \
+         -v /var/run/docker.sock:/var/run/docker.sock \
+         -p 9080:8080 jenkins-artemis \
+
+6. You can remove the backup container if it's no longer needed:
+
+   ::
+
+        docker rm jenkins_old
+
 
 Build agents
 ^^^^^^^^^^^^
