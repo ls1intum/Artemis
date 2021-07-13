@@ -331,7 +331,7 @@ public class StudentExamService {
      *
      * @param latestSubmission the optional latest submission of the participation
      * @param studentParticipation the provided ProgrammingStudentParticipation
-     * @return
+     * @return the latestSubmission
      */
     public Optional<Submission> prepareProgrammingSubmission(Optional<Submission> latestSubmission, StudentParticipation studentParticipation) {
         if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise
