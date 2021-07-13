@@ -135,8 +135,10 @@ public class FileUploadSubmissionService extends SubmissionService {
             }
         }
         // update submission properties
-        // NOTE: from now on we always set submitted to true to prevent problems here!
-        fileUploadSubmission.setSubmitted(true);
+        // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
+        if (exercise.isExamExercise() || !exercise.isEnded()) {
+            fileUploadSubmission.setSubmitted(true);
+        }
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
         fileUploadSubmission.setType(SubmissionType.MANUAL);
         fileUploadSubmission.setParticipation(participation);

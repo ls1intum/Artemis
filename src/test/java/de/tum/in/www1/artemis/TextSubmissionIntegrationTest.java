@@ -54,6 +54,8 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     private TextSubmission lateTextSubmission;
 
+    private TextSubmission notSubmittedTextSubmission;
+
     private StudentParticipation lateParticipation;
 
     @BeforeEach
@@ -70,6 +72,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         lateTextSubmission = ModelFactory.generateLateTextSubmission("example text 2", Language.ENGLISH);
+        notSubmittedTextSubmission = ModelFactory.generateTextSubmission("example text 2", Language.ENGLISH, false);
 
         // Add users that are not in exercise/course
         userRepository.save(ModelFactory.generateActivatedUser("tutor2"));
@@ -332,6 +335,27 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         participationRepository.save(lateParticipation);
 
         request.put("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void saveExercise_beforeDueDate() throws Exception {
+        TextSubmission storedSubmission = request.putWithResponseBody("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", notSubmittedTextSubmission,
+                TextSubmission.class, HttpStatus.OK);
+        assertThat(storedSubmission.isSubmitted()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void saveExercise_afterDueDateWithParticipationStartAfterDueDate() throws Exception {
+        database.updateExerciseDueDate(releasedTextExercise.getId(), ZonedDateTime.now().minusHours(1));
+        lateParticipation.setInitializationDate(ZonedDateTime.now());
+        participationRepository.save(lateParticipation);
+
+        TextSubmission storedSubmission = request.putWithResponseBody("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", notSubmittedTextSubmission,
+                TextSubmission.class, HttpStatus.OK);
+        assertThat(storedSubmission.isSubmitted()).isFalse();
+
     }
 
     @Test

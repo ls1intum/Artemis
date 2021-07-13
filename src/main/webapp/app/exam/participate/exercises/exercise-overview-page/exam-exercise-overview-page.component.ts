@@ -28,7 +28,6 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
         this.studentExam.exercises?.forEach((exercise) => {
             const item = new ExamExerciseOverviewItem();
             item.exercise = exercise;
-            item.submission = this.getSubmissionForExercise(exercise);
             item.icon = 'edit';
             this.examExerciseOverviewItems.push(item);
         });
@@ -44,14 +43,27 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
         this.onPageChanged.emit({ overViewChange: false, exercise, forceSave: false });
     }
 
+    /**
+     * calculate the exercise status (also see exam-navigation-bar.component.ts --> make sure the logic is consistent)
+     * also determines the used icon and its color
+     * TODO: we should try to extract a method for the common logic which avoids side effects (i.e. changing this.icon)
+     *  this method could e.g. return the sync status and the icon
+     *
+     * @param item the item for which the exercise status should be calculated
+     * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
+     */
     setExerciseIconStatus(item: ExamExerciseOverviewItem): 'synced' | 'notSynced' {
-        if (!item?.submission) {
+        // start with a yellow status (edit icon)
+        item.icon = 'edit';
+        const submission = ExamParticipationService.getSubmissionForExercise(item.exercise);
+        if (!submission) {
+            // in case no participation/submission yet exists -> display synced
             return 'synced';
         }
-        if (item.submission.submitted) {
+        if (submission.submitted) {
             item.icon = 'check';
         }
-        if (item.submission.isSynced) {
+        if (submission.isSynced) {
             // make status blue
             return 'synced';
         } else {
