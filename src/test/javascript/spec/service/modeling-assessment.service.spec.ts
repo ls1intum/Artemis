@@ -219,22 +219,6 @@ describe('Modeling Assessment Service', () => {
             });
         });
 
-        it('should get optimal submissions', async () => {
-            const elem = 1;
-            const exerciseId = 187;
-            const returnedFromService = Object.assign([], [elem]);
-            service
-                .getOptimalSubmissions(exerciseId)
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({
-                url: `${SERVER_API_URL}api/exercises/${exerciseId}/optimal-model-submissions`,
-                method: 'GET',
-            });
-            req.flush(returnedFromService);
-            expect(expectedResult).to.deep.equal([elem]);
-        });
-
         it('tests validFeedback check', async () => {
             const emptyfeedback: Feedback[] = [];
             const feedbacks = [

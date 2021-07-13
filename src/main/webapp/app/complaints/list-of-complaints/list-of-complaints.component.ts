@@ -13,6 +13,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-complaint-list',
@@ -116,7 +117,16 @@ export class ListOfComplaintsComponent implements OnInit {
         if (complaint.accepted != undefined) {
             this.correctionRound += 1;
         }
-        const url = [`/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/assessment`];
+        const url = getLinkToSubmissionAssessment(
+            exercise.type,
+            this.courseId,
+            exercise.id!,
+            studentParticipation.id,
+            submissionId,
+            this.examId ? this.examId : 0,
+            exercise.exerciseGroup?.id!,
+            complaint.result.id,
+        );
         this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
     }
 
