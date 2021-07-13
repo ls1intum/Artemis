@@ -362,7 +362,7 @@ export class DataTableComponent implements OnInit, OnChanges {
                 // For autocomplete.
                 map(({ text, searchWords }) => {
                     // We only execute the autocomplete for the last keyword in the provided list.
-                    const lastSearchWord = searchWords.length ? searchWords[searchWords.length - 1] : null;
+                    const lastSearchWord = searchWords.last();
                     // Don't execute autocomplete for less then two inputted characters.
                     if (!lastSearchWord || lastSearchWord.length < this.minSearchQueryLength) {
                         this.searchQueryTooShort = true;
@@ -408,8 +408,6 @@ export class DataTableComponent implements OnInit, OnChanges {
 
     /**
      * Method updates the displayed entities (will be only one entity if the search text is unique per entity).
-     *
-     * @param entity Entity that was selected via autocomplete
      */
     filterAfterAutocompleteSelect = () => {
         this.updateEntities();
