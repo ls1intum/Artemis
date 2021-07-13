@@ -3,7 +3,7 @@ import * as moment from 'moment';
 import { Moment } from 'moment';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { omit as _omit } from 'lodash';
 import { SERVER_API_URL } from 'app/app.constants';
 
@@ -198,6 +198,11 @@ export class ProgrammingExerciseService {
         return this.http.get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            tap((res: EntityResponseType) => {
+                if (res.body) {
+                    this.accountService.setAccessRightsForCourse(res.body);
+                }
+            }),
         );
     }
 

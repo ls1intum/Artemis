@@ -69,7 +69,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.programmingExercise = programmingExercise;
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
             this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
-            this.accountService.setAccessRightsForExercise(this.programmingExercise);
 
             this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
                 // TODO: the feedback would be missing here, is that a problem?
