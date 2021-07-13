@@ -4,6 +4,7 @@ import { distinctUntilChanged, first, map, takeUntil } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { cloneDeep } from 'lodash';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
@@ -37,7 +38,9 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$),
     );
 
-    constructor(private serverDateService: ArtemisServerDateService, private timePipe: ArtemisDurationFromSecondsPipe) {
+    timePipe: ArtemisDurationFromSecondsPipe;
+
+    constructor(private serverDateService: ArtemisServerDateService, private translateService: TranslateService) {
         this.timer$
             .pipe(
                 map((timeLeft: moment.Duration) => timeLeft.asSeconds()),
@@ -51,6 +54,8 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
                 // -> display at least one display time, that's why we use setTimeout
                 setTimeout(() => this.destroy$.next(true));
             });
+
+        this.timePipe = new ArtemisDurationFromSecondsPipe(translateService);
     }
 
     ngOnInit(): void {
@@ -65,10 +70,15 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
     updateDisplayTime(timeDiff: moment.Duration) {
         // update isCriticalTime
         this.setIsCriticalTime(timeDiff);
+
         if (timeDiff.asMilliseconds() < 0) {
             return '00 : 00';
         } else {
-            return this.timePipe.transform(timeDiff.asSeconds());
+            let secondsLeft = timeDiff.asSeconds();
+            if (timeDiff.asMinutes() > 10) {
+                secondsLeft = Math.round(timeDiff.asSeconds() / 60) * 60;
+            }
+            return this.timePipe.transform(secondsLeft);
         }
     }
 

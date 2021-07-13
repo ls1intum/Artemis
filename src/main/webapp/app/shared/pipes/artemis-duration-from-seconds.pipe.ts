@@ -62,7 +62,8 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy 
     }
 
     private getDayString(days: number): string {
-        return days > 1 ? this.translateService.instant('timeFormat.days') : this.translateService.instant('timeFormat.day');
+        const dayString = days > 1 ? this.translateService.instant('timeFormat.days') : this.translateService.instant('timeFormat.day');
+        return ' ' + dayString + ' ';
     }
 
     private cleanUpSubscription(): void {
