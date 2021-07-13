@@ -10,6 +10,7 @@ import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/cou
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
+import { Course } from 'app/entities/course.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -18,6 +19,7 @@ describe('CourseDetailDoughnutChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailDoughnutChartComponent>;
     let component: CourseDetailDoughnutChartComponent;
 
+    const course = { id: 1 } as Course;
     const absolute = 80;
     const percentage = 80;
     const max = 100;
@@ -39,7 +41,7 @@ describe('CourseDetailDoughnutChartComponent', () => {
     });
 
     beforeEach(() => {
-        component.courseId = 1;
+        component.course = course;
         component.contentType = DoughnutChartType.ASSESSMENT;
         component.currentPercentage = absolute;
         component.currentAbsolute = percentage;

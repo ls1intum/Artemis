@@ -27,17 +27,7 @@
             <!-- new post editor -->
             <div *ngIf="isEditMode">
                 <div class="row ps-2">
-                    <div class="col-12 px-0">
-                        <jhi-markdown-editor
-                            class="markdown-editor background-editor-color w-100"
-                            [domainCommands]="domainCommands"
-                            [(markdown)]="postContent"
-                            [editorMode]="EditorMode.LATEX"
-                            [enableResize]="true"
-                            [metaCommands]="[]"
-                            [enableFileUpload]="false"
-                        ></jhi-markdown-editor>
-                    </div>
+                    <jhi-postings-markdown-editor [(content)]="postContent"></jhi-postings-markdown-editor>
                     <div class="col-12 d-flex">
                         <button class="btn btn-sm me-1 btn-outline-secondary" (click)="isEditMode = false">
                             {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}
