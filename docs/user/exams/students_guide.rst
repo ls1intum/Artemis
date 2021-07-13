@@ -97,7 +97,7 @@ Welcome Screen
         Your full name represents your signature. You can find your full name as registered on Artemis below the input field.
 
 - After you confirm, if the exam working time has started, the `Exam Conduction`_ screen will automatically appear.
-- Otherwise, you must wait until the exam begins, this wont be longer than 5 minutes. A popup will appear which will notify you how much time is left before the planned start.
+- Otherwise, you must wait until the exam begins. This wont be longer than 5 minutes. A popup will appear which will notify you how much time is left before the planned start.
 
 .. figure:: student/welcome_screen.png
    :alt: Welcome Screen
