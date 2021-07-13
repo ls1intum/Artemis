@@ -55,9 +55,9 @@ Suggestions
 
     - If you reload the browser, the `Welcome Screen`_ screen opens and you must enter your name and confirm the checkbox again.
     - You should only reload if an error occurs that cannot be recovered otherwise!
-2. Participate in **ONE** browser window!
+2. Participate in **ONE** browser window and only one browser tab!
 
-    - Working in multiple browser windows at the same time is **not** allowed!
+    - Working in multiple browser windows or tabs at the same time is **not** allowed! Having multiple Artemis windows or tabs open is ok, as long as only one of them accesses the exam.
     - It will lead to synchronization issues and is seen as suspicious behaviour that can be flagged as cheating.
 
     .. figure:: student/reload.png
@@ -97,7 +97,7 @@ Welcome Screen
         Your full name represents your signature. You can find your full name as registered on Artemis below the input field.
 
 - After you confirm, if the exam working time has started, the `Exam Conduction`_ screen will automatically appear.
-- Otherwise, you must wait until the exam begins. A popup will appear which will notify you how much time is left before the planned start.
+- Otherwise, you must wait until the exam begins, this wont be longer than 5 minutes. A popup will appear which will notify you how much time is left before the planned start.
 
 .. figure:: student/welcome_screen.png
    :alt: Welcome Screen
@@ -144,7 +144,7 @@ Participating in Quiz Exercises
 
 - All questions are listed in the main screen below one another.
 - To navigate between them you can either scroll or use the ``question overview`` on the left. When you click on one of the question representations, your view will automatically scroll to the respective question.
-- To submit your solution, simply press |save_continue|.
+- To submit your solution, press |save_continue|.
 
     .. note::
         Your submission will automatically be saved every 30 seconds.
@@ -162,7 +162,7 @@ Participating in Text Exercises
     .. note::
         On small screens, the problem statement is shown above the text editor.
 
-- If you want to focus only on the text editor, you can collapse the problem statement by pressing on |right_arrow|. This can be reverted by pressing the arrow again.
+- If you want to focus only on the text editor, you can collapse the problem statement by pressing on |right_arrow| in the top right of the image below. This can be reverted by pressing the arrow again.
 
     .. note::
         You can also choose to resize the problem statement by dragging the outline box |outline_box|.
@@ -189,11 +189,11 @@ Participating in Modeling Exercises
 
 - Within the editor you can model your solution. Depending on the diagram type, you will find the available elements on the right side of the editor. Simply drag and drop them into the editing field.
 - When you click on a dropped element, you can configure it by setting it's ``name``, it's ``attributes``, ``methods`` etc.
-- To connect elements you can simply drag an element's edges to another element. The editor will then automatically connect those two.
+- To connect elements you can drag an element's edges to another element. The editor will then automatically connect those two.
 - If you are unclear about how to use the modeling editor, you can click on |help|. It will provide further information about how to use the modeling editor.
 
     .. note::
-        If you need more space, you can work in fullscreen by clicking on |fullscreen|. This mode will use your whole screen for the modeling exercise thereby giving you more space to model your solution. To exit the fullscreen mode simply click |exit_fullscreen|.
+        If you need more space, you can work in fullscreen by clicking on |fullscreen|. This mode will use your whole screen for the modeling exercise thereby giving you more space to model your solution. To exit the fullscreen mode, click |exit_fullscreen|.
 
 .. figure:: student/modeling_exercises.png
    :alt: Participating in Modeling Exercises
@@ -227,8 +227,7 @@ Participating in Programming Exercises
     .. note::
         You can also choose to resize any of the three sections by dragging the |outline_box|.
 
-- When you press |save|, your files are saved on the Artemis server. However, you must press |submit| for your solution to be counted!
-- When you press |submit|, your changes are pushed to the version control (VC) server and a build is started on the continuous integration (CI) server. This is indicated by the results changing from |no_results_found| to |building_and_testing|.
+- When you press |submit|, your changes are pushed to the version control (VC) server and a build is started on the continuous integration (CI) server. This is indicated by the results changing from |no_results_found| to |building_and_testing|. You need to first press |submit| to get feedback on your submissions build status.
 
     .. warning::
         There is no auto-submit!
@@ -259,7 +258,7 @@ Participating in Programming Exercises
    Clone the Repository
 
     .. warning::
-        You are responsible for pushing/submitting your code. Your instructors **cannot** help you if you have saved, but did not submit.
+        You are responsible for pushing/submitting your code. Your instructors **cannot** help you if you did not submit.
 
 - Your instructors can decide to limit the real-time feedback in programming exercises during the online exam.
 - In that case, you will only see if your code compiles or not:
@@ -309,7 +308,7 @@ Summary
    Summary before the results are published
 
 - Once the results have been published, you can view your score in the summary.
-- Additionally, if within the student review period, you have the option to complain about manual assessments made. To do this, simply click on |complain| and explain your rationale.
+- Additionally, if within the student review period, you have the option to complain about manual assessments made. To do this, click on |complain| and explain your rationale.
 - A second assessor, different from the original one will have the opportunity to review your complaint and respond to it.
 - The complaint response will become visible to you as soon as it has been assessed.
 - Again, you can export the summary including your score as a PDF file by clicking on |export_pdf|. The PDF will also contain any complaints and complaint assessments.
