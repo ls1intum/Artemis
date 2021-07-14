@@ -12,6 +12,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import * as moment from 'moment';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -31,6 +32,8 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly moment = moment;
     doughnutStats: ExerciseManagementStatisticsDto;
 
+    isAdmin = false;
+
     constructor(
         private eventManager: JhiEventManager,
         private modelingExerciseService: ModelingExerciseService,
@@ -38,9 +41,11 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         private artemisMarkdown: ArtemisMarkdownService,
         private jhiAlertService: JhiAlertService,
         private statisticsService: StatisticsService,
+        private accountService: AccountService,
     ) {}
 
     ngOnInit() {
+        this.isAdmin = this.accountService.isAdmin();
         this.subscription = this.route.params.subscribe((params) => {
             this.load(params['exerciseId']);
         });
@@ -60,7 +65,9 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         this.statisticsService.getExerciseStatistics(id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
         });
-        this.countModelClusters(id);
+        if (this.isAdmin) {
+            this.countModelClusters(id);
+        }
     }
 
     downloadAsPDf() {
