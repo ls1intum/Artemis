@@ -700,7 +700,6 @@ public class ProgrammingExerciseResource {
     @GetMapping(Endpoints.PROGRAMMING_EXERCISE)
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
-        // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
         // Fetch grading criterion into exercise of participation
