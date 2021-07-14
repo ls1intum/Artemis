@@ -4,14 +4,11 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BehaviorSubject, of } from 'rxjs';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
-import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -40,12 +37,12 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, OrionModule, ArtemisSharedModule, FeatureToggleModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), OrionModule, ArtemisSharedModule],
             declarations: [OrionExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent), MockComponent(ExerciseDetailsStudentActionsComponent)],
             providers: [
                 MockProvider(OrionBuildAndTestService),
                 MockProvider(OrionConnectorService),
-                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                MockProvider(FeatureToggleService),
                 { provide: ActivatedRoute, useValue: { queryParams: of({ withIdeSubmit: true }) } },
             ],
         })

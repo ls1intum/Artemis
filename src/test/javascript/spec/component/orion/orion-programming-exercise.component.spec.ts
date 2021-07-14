@@ -36,7 +36,6 @@ describe('OrionProgrammingExerciseComponent', () => {
             .then(() => {
                 comp = TestBed.createComponent(OrionProgrammingExerciseComponent).componentInstance;
                 orionConnectorService = TestBed.inject(OrionConnectorService);
-                comp.programmingExercises = [programmingExercise];
             });
     });
 
