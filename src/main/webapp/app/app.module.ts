@@ -46,7 +46,6 @@ import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiar
         ArtemisSystemNotificationModule,
         ArtemisComplaintsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
-        ArtemisPlagiarismModule,
     ],
     declarations: [
         JhiMainComponent,
@@ -60,7 +59,6 @@ import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiar
         NotificationSidebarComponent,
         SystemNotificationComponent,
         LoadingNotificationComponent,
-        PlagiarismCasesReviewComponent,
     ],
     bootstrap: [JhiMainComponent],
 })

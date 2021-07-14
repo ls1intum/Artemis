@@ -31,6 +31,9 @@ import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exer
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 import { CourseExerciseDetailsModule } from 'app/overview/exercise-details/course-exercise-details.module';
 import { ArtemisExerciseScoresChartModule } from 'app/overview/visualizations/exercise-scores-chart.module';
+import { PlagiarismCasesModule } from "app/course/plagiarism-cases/plagiarism-cases.module";
+import { PlagiarismCasesReviewComponent } from "app/course/plagiarism-cases/plagiarism-cases-review.component";
+import { PlagiarismCasesComponent } from "app/course/plagiarism-cases/plagiarism-cases.component";
 
 @NgModule({
     imports: [
@@ -55,6 +58,7 @@ import { ArtemisExerciseScoresChartModule } from 'app/overview/visualizations/ex
         RatingModule,
         ArtemisLearningGoalsModule,
         CourseExerciseDetailsModule, // Important: at the moment, we cannot lazy load this module, because otherwise the LTI integration won't work any more
+        PlagiarismCasesModule,
     ],
     declarations: [
         CoursesComponent,
