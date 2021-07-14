@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -416,6 +417,23 @@ public class SubmissionService {
                 result.setFeedbacks(List.of(feedback));
                 resultRepository.save(result);
             }
+        }
+    }
+
+    /**
+     * Adds a new and empty programmingSubmission to the provided studentParticipation.
+     *
+     * @param studentParticipation the studentParticipation a new empty programming submission is created for
+     */
+    public void addEmptyProgrammingSubmissionToParticipation(StudentParticipation studentParticipation) {
+        if (studentParticipation.getExercise().isExamExercise()) {
+            Submission submission = new ProgrammingSubmission();
+            submission.setSubmissionDate(ZonedDateTime.now());
+            submission.setType(SubmissionType.INSTRUCTOR);
+            submission = submissionRepository.save(submission);
+            studentParticipation.setSubmissions(Set.of(submission));
+            submission.setParticipation(studentParticipation);
+            participationRepository.save(studentParticipation);
         }
     }
 

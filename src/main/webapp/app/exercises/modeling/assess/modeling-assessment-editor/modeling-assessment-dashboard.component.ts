@@ -36,7 +36,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     paramSub: Subscription;
     predicate: string;
     reverse: boolean;
-    nextOptimalSubmissionIds: number[] = [];
     courseId: number;
     examId: number;
     exerciseId: number;
@@ -48,13 +47,9 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     // all available submissions
     submissions: ModelingSubmission[];
     filteredSubmissions: ModelingSubmission[];
-    optimalSubmissions: ModelingSubmission[];
-    // non optimal submissions
-    otherSubmissions: ModelingSubmission[];
 
     eventSubscriber: Subscription;
     assessedSubmissions: number;
-    allSubmissionsVisible: boolean;
     busy: boolean;
     userId: number;
     canOverrideAssessments: boolean;
@@ -78,8 +73,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.predicate = 'id';
         this.submissions = [];
         this.filteredSubmissions = [];
-        this.optimalSubmissions = [];
-        this.otherSubmissions = [];
         this.canOverrideAssessments = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -98,7 +91,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                 if (res.body!.type === ExerciseType.MODELING) {
                     this.exercise = res.body as ModelingExercise;
                     this.courseId = this.exercise.course ? this.exercise.course.id! : this.exercise.exerciseGroup!.exam!.course!.id!;
-                    this.getSubmissions(true);
+                    this.getSubmissions();
                     this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
                     this.setPermissions();
                 } else {
@@ -113,15 +106,14 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     registerChangeInResults() {
-        this.eventSubscriber = this.eventManager.subscribe('resultListModification', () => this.getSubmissions(true));
+        this.eventSubscriber = this.eventManager.subscribe('resultListModification', () => this.getSubmissions());
     }
 
     /**
      * Get all results for the current modeling exercise, this includes information about all submitted models ( = submissions)
      *
-     * @param {boolean} forceReload force REST call to update nextOptimalSubmissionIds
      */
-    getSubmissions(forceReload: boolean) {
+    getSubmissions() {
         this.modelingSubmissionService
             .getModelingSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
             .subscribe((res: HttpResponse<ModelingSubmission[]>) => {
@@ -141,7 +133,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                     }
                 });
                 this.filteredSubmissions = this.submissions;
-                this.filterSubmissions(forceReload);
                 this.assessedSubmissions = this.submissions.filter((submission) => {
                     const result = getLatestSubmissionResult(submission);
                     setLatestSubmissionResult(submission, result);
@@ -152,115 +143,10 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     updateFilteredSubmissions(filteredSubmissions: Submission[]) {
         this.filteredSubmissions = filteredSubmissions as ModelingSubmission[];
-        this.applyFilter();
-    }
-
-    /**
-     * Check if nextOptimalSubmissionIds are needed then applyFilter
-     *
-     * @param {boolean} forceReload force REST call to update nextOptimalSubmissionIds
-     */
-    filterSubmissions(forceReload: boolean) {
-        if (this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && (this.nextOptimalSubmissionIds.length < 3 || forceReload)) {
-            this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id!).subscribe(
-                (optimal: number[]) => {
-                    this.nextOptimalSubmissionIds = optimal;
-                    this.applyFilter();
-                },
-                () => {
-                    this.applyFilter();
-                },
-            );
-        } else {
-            this.applyFilter();
-        }
-    }
-
-    /**
-     * Mark results as optimal and split them up in all, optimal and not optimal sets
-     */
-    applyFilter() {
-        // A submission is optimal if it is part of nextOptimalSubmissionIds and (nobody is currently assessing it or you are currently assessing it)
-        this.submissions.forEach((submission) => {
-            const tmpResult = getLatestSubmissionResult(submission);
-            submission.optimal =
-                this.nextOptimalSubmissionIds.includes(submission.id!) &&
-                (!(tmpResult && tmpResult!.assessor) || (tmpResult && tmpResult!.assessor && tmpResult!.assessor!.id === this.userId));
-        });
-        this.optimalSubmissions = this.filteredSubmissions.filter((submission) => {
-            return submission.optimal;
-        });
-        this.otherSubmissions = this.filteredSubmissions.filter((submission) => {
-            return !submission.optimal;
-        });
-    }
-
-    refresh() {
-        this.getSubmissions(true);
-    }
-
-    /**
-     * Reset optimality attribute of models
-     */
-    resetOptimality() {
-        if (this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
-            this.modelingAssessmentService.resetOptimality(this.exercise.id!).subscribe(() => {
-                this.filterSubmissions(true);
-            });
-        }
-    }
-
-    makeAllSubmissionsVisible() {
-        if (!this.busy) {
-            this.allSubmissionsVisible = true;
-        }
-    }
-
-    /**
-     * Select the next optimal submission to assess or otherwise trigger the REST call
-     */
-    assessNextOptimal(): void {
-        this.busy = true;
-        if (this.nextOptimalSubmissionIds.length === 0) {
-            this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id!).subscribe(
-                (optimal: number[]) => {
-                    this.busy = false;
-                    if (optimal.length === 0) {
-                        this.jhiAlertService.clear();
-                        this.jhiAlertService.info('artemisApp.assessmentDashboard.noSubmissionFound');
-                    } else {
-                        this.nextOptimalSubmissionIds = optimal;
-                        this.navigateToNextRandomOptimalSubmission();
-                    }
-                },
-                () => {
-                    this.busy = false;
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.info('artemisApp.assessmentDashboard.noSubmissionFound');
-                },
-            );
-        } else {
-            this.navigateToNextRandomOptimalSubmission();
-        }
     }
 
     getAssessmentRouterLink(participationId: number, submissionId: number): string[] {
         return getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, participationId, submissionId, this.examId, this.exerciseGroupId);
-    }
-
-    private navigateToNextRandomOptimalSubmission(): void {
-        const randomInt = Math.floor(Math.random() * this.nextOptimalSubmissionIds.length);
-        const url = getLinkToSubmissionAssessment(
-            ExerciseType.MODELING,
-            this.courseId,
-            this.exerciseId,
-            0, // this works for now, since modeling assessment doesnt yet use the participationId for forming the assessment path
-            this.nextOptimalSubmissionIds[randomInt],
-            this.examId,
-            this.exerciseGroupId,
-        );
-        this.router.onSameUrlNavigation = 'reload';
-        this.router.navigate(url);
     }
 
     private setPermissions() {
@@ -278,7 +164,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
             this.modelingAssessmentService.cancelAssessment(submission.id!).subscribe(() => {
-                this.refresh();
+                this.getSubmissions();
             });
         }
     }
@@ -289,7 +175,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     public sortRows() {
-        this.sortService.sortByProperty(this.otherSubmissions, this.predicate, this.reverse);
+        this.sortService.sortByProperty(this.filteredSubmissions, this.predicate, this.reverse);
     }
 
     /**

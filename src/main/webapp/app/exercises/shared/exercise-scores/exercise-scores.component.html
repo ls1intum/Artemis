@@ -392,7 +392,17 @@
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <a
                             *ngIf="exercise.course"
-                            [routerLink]="['/course-management', exercise.course?.id, 'text-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            [routerLink]="[
+                                '/course-management',
+                                exercise.course.id,
+                                'text-exercises',
+                                exercise.id,
+                                'participations',
+                                value.participation.id,
+                                'submissions',
+                                value.submission.id,
+                                'assessment'
+                            ]"
                             class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
@@ -410,9 +420,11 @@
                                 'exams',
                                 exercise.exerciseGroup!.exam!.id,
                                 'exercise-groups',
-                                exercise.exerciseGroup!.id,
+                                exercise.exerciseGroup.id,
                                 'text-exercises',
                                 exercise.id,
+                                'participations',
+                                value.participation.id,
                                 'submissions',
                                 value.submission.id,
                                 'assessment'

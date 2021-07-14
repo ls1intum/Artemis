@@ -10,45 +10,80 @@
                     </button>
                     <div ngbDropdownMenu *ngIf="quizExercise">
                         <button
+                            *ngIf="!quizExercise.exerciseGroup"
                             class="dropdown-item"
-                            routerLink="/course-management/{{ quizExercise.course ? quizExercise.course!.id : quizExercise.exerciseGroup?.exam?.course?.id }}/quiz-exercises/{{
-                                quizExercise.id
-                            }}/quiz-point-statistic"
+                            routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/quiz-point-statistic"
                             jhiTranslate="showStatistic.quizPointStatisticTitle"
                         ></button>
                         <button
+                            *ngIf="quizExercise.exerciseGroup"
                             class="dropdown-item"
-                            routerLink="/course-management/{{ quizExercise.course ? quizExercise.course!.id : quizExercise.exerciseGroup?.exam?.course?.id }}/quiz-exercises/{{
-                                quizExercise.id
-                            }}/quiz-statistic"
+                            routerLink="/course-management/{{ quizExercise.exerciseGroup.exam!.course!.id }}/exams/{{ quizExercise.exerciseGroup.exam!.id }}/exercise-groups/{{
+                                quizExercise.exerciseGroup.id
+                            }}/quiz-exercises/{{ quizExercise.id }}/quiz-point-statistic"
+                            jhiTranslate="showStatistic.quizPointStatisticTitle"
+                        ></button>
+                        <button
+                            *ngIf="!quizExercise.exerciseGroup"
+                            class="dropdown-item"
+                            routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/quiz-statistic"
+                            jhiTranslate="showStatistic.quizStatisticTitle"
+                        ></button>
+                        <button
+                            *ngIf="quizExercise.exerciseGroup"
+                            class="dropdown-item"
+                            routerLink="/course-management/{{ quizExercise.exerciseGroup.exam!.course!.id }}/exams/{{ quizExercise.exerciseGroup.exam!.id }}/exercise-groups/{{
+                                quizExercise.exerciseGroup.id
+                            }}/quiz-exercises/{{ quizExercise.id }}/quiz-statistic"
                             jhiTranslate="showStatistic.quizStatisticTitle"
                         ></button>
                         <div *ngIf="quizExercise.quizQuestions">
                             <div *ngFor="let question of quizExercise.quizQuestions; let i = index">
                                 <button
-                                    *ngIf="question.type === MULTIPLE_CHOICE"
+                                    *ngIf="question.type === MULTIPLE_CHOICE && !quizExercise.exerciseGroup"
                                     class="dropdown-item"
-                                    routerLink="/course-management/{{
-                                        quizExercise.course ? quizExercise.course.id : quizExercise.exerciseGroup?.exam?.course?.id
-                                    }}/quiz-exercises/{{ quizExercise.id }}/mc-question-statistic/{{ question.id }}"
+                                    routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/mc-question-statistic/{{ question.id }}"
                                 >
                                     {{ i + 1 }}. {{ question.title || '' | truncate }}
                                 </button>
                                 <button
-                                    *ngIf="question.type === DRAG_AND_DROP"
+                                    *ngIf="question.type === MULTIPLE_CHOICE && quizExercise.exerciseGroup"
                                     class="dropdown-item"
-                                    routerLink="/course-management/{{
-                                        quizExercise.course ? quizExercise.course.id : quizExercise.exerciseGroup?.exam?.course?.id
-                                    }}/quiz-exercises/{{ quizExercise.id }}/dnd-question-statistic/{{ question.id }}"
+                                    routerLink="/course-management/{{ quizExercise.exerciseGroup.exam!.course!.id }}/exams/{{
+                                        quizExercise.exerciseGroup.exam!.id
+                                    }}/exercise-groups/{{ quizExercise.exerciseGroup.id }}/quiz-exercises/{{ quizExercise.id }}/mc-question-statistic/{{ question.id }}"
                                 >
                                     {{ i + 1 }}. {{ question.title || '' | truncate }}
                                 </button>
                                 <button
-                                    *ngIf="question.type === SHORT_ANSWER"
+                                    *ngIf="question.type === DRAG_AND_DROP && !quizExercise.exerciseGroup"
                                     class="dropdown-item"
-                                    routerLink="/course-management/{{
-                                        quizExercise.course ? quizExercise.course.id : quizExercise.exerciseGroup?.exam?.course?.id
-                                    }}/quiz-exercises/{{ quizExercise.id }}/sa-question-statistic/{{ question.id }}"
+                                    routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/dnd-question-statistic/{{ question.id }}"
+                                >
+                                    {{ i + 1 }}. {{ question.title || '' | truncate }}
+                                </button>
+                                <button
+                                    *ngIf="question.type === DRAG_AND_DROP && quizExercise.exerciseGroup"
+                                    class="dropdown-item"
+                                    routerLink="/course-management/{{ quizExercise.exerciseGroup.exam!.course!.id }}/exams/{{
+                                        quizExercise.exerciseGroup.exam!.id
+                                    }}/exercise-groups/{{ quizExercise.exerciseGroup.id }}/quiz-exercises/{{ quizExercise.id }}/dnd-question-statistic/{{ question.id }}"
+                                >
+                                    {{ i + 1 }}. {{ question.title || '' | truncate }}
+                                </button>
+                                <button
+                                    *ngIf="question.type === SHORT_ANSWER && !quizExercise.exerciseGroup"
+                                    class="dropdown-item"
+                                    routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/sa-question-statistic/{{ question.id }}"
+                                >
+                                    {{ i + 1 }}. {{ question.title || '' | truncate }}
+                                </button>
+                                <button
+                                    *ngIf="question.type === SHORT_ANSWER && quizExercise.exerciseGroup"
+                                    class="dropdown-item"
+                                    routerLink="/course-management/{{ quizExercise.exerciseGroup.exam!.course!.id }}/exams/{{
+                                        quizExercise.exerciseGroup.exam!.id
+                                    }}/exercise-groups/{{ quizExercise.exerciseGroup.id }}/quiz-exercises/{{ quizExercise.id }}/sa-question-statistic/{{ question.id }}"
                                 >
                                     {{ i + 1 }}. {{ question.title || '' | truncate }}
                                 </button>
