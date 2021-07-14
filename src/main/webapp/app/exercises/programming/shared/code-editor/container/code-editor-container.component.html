@@ -69,7 +69,7 @@
     </ng-template>
 
     <ng-template #collapsedBody>
-        <div class="collapsed right text-white bg-primary" (click)="collapsed = !collapsed" (onToggleCollapse)="onToggleCollapse($event)" (onError)="onError($event)">
+        <div class="collapsed right text-white bg-primary" (click)="collapsed = !collapsed" (onError)="onError($event)">
             <fa-icon [icon]="'chevron-left'"></fa-icon>
             <div class="header">
                 <!--<ng-container *ngTemplateOutlet="rightHeaderSpan"></ng-container>-->
