@@ -140,7 +140,7 @@ export class StudentExamsComponent implements OnInit {
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
-                this.handleError('artemisApp.studentExams.missingStudentExamGenerationError', err);
+                this.handleError('artemisApp.studentExams.studentExamGenerationError', err);
                 this.isLoading = false;
             },
         );
@@ -367,12 +367,12 @@ export class StudentExamsComponent implements OnInit {
      * @param err the error response
      */
     private handleError(translationString: string, err: HttpErrorResponse) {
-        let message = err?.error?.message;
+        let errorDetail = err?.error?.message;
         if (err?.error && err.error.errorKey) {
-            message = this.translateService.instant(err.error.errorKey);
+            errorDetail = this.translateService.instant(err.error.errorKey);
         }
-        if (message) {
-            this.jhiAlertService.error(translationString, { message: message });
+        if (errorDetail) {
+            this.jhiAlertService.error(translationString, { message: errorDetail });
         } else {
             // Sometimes the response does not have an error field, so we default to generic error handling
             onError(this.jhiAlertService, err);
