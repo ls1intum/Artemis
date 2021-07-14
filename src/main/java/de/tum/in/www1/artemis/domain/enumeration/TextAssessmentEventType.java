@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.domain.enumeration;
 
 /**
  * The TextAssessmentEventType enumeration.
- * Contains a list of enumerations denoting the names of the events that are tracked when users interact with the assessment
+ * Enumerates the names of events that are tracked when users interact with the assessment
  * system in Text exercises
  */
 public enum TextAssessmentEventType {
