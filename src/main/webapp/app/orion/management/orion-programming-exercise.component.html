@@ -3,12 +3,14 @@
         <!-- No replacement, just not visible in Orion -->
     </ng-template>
     <ng-template #overrideRepositoryAndBuildPlan>
-    <!-- No replacement, just not visible in Orion -->
+        <!-- No replacement, just not visible in Orion -->
     </ng-template>
     <ng-template #overrideButtons let-exercise="exercise" class="align-middle">
         <jhi-ide-button
-            *ngIf="orionState.view === ExerciseView.INSTRUCTOR && orionState.opened === exercise.id &&
-                   exercise.isAtLeastEditor && exercise.templateParticipation; else importAsInstructor"
+            *ngIf="
+                orionState.view === ExerciseView.INSTRUCTOR && orionState.opened === exercise.id && exercise.isAtLeastEditor && exercise.templateParticipation;
+                else importAsInstructor
+            "
             buttonLabel="{{ 'artemisApp.programmingExercise.intellij.openEditor' | artemisTranslate }}"
             [smallButton]="false"
             (clickHandler)="openOrionEditor(exercise)"

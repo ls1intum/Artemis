@@ -31,7 +31,16 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, OrionModule],
-            declarations: [CodeEditorInstructorAndEditorOrionContainerComponent, MockComponent(UpdatingResultComponent), MockComponent(AlertComponent), MockComponent(ProgrammingExerciseInstructorExerciseStatusComponent), MockComponent(ExerciseHintStudentComponent), MockComponent(ProgrammingExerciseEditableInstructionComponent), MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent), MockPipe(ArtemisTranslatePipe)],
+            declarations: [
+                CodeEditorInstructorAndEditorOrionContainerComponent,
+                MockComponent(UpdatingResultComponent),
+                MockComponent(AlertComponent),
+                MockComponent(ProgrammingExerciseInstructorExerciseStatusComponent),
+                MockComponent(ExerciseHintStudentComponent),
+                MockComponent(ProgrammingExerciseEditableInstructionComponent),
+                MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
+                MockPipe(ArtemisTranslatePipe),
+            ],
             providers: [
                 MockProvider(OrionConnectorService),
                 MockProvider(OrionBuildAndTestService),
@@ -53,7 +62,7 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
         // @ts-ignore
         comp.applyDomainChange({}, {});
 
-        expect(selectRepositorySpy).to.have.been.calledOnceWithExactly(REPOSITORY.TEST)
+        expect(selectRepositorySpy).to.have.been.calledOnceWithExactly(REPOSITORY.TEST);
     });
     it('ngOnInit should subscribe to orionState', () => {
         const orionStateStub = stub(orionConnectorService, 'state');
@@ -89,6 +98,6 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
 
         expect(submitSpy).to.have.been.calledOnceWithExactly();
         expect(isBuildingSpy).to.have.been.calledOnceWithExactly(true);
-        expect(listenOnBuildOutputSpy).to.have.been.calledOnceWithExactly(exercise, participation)
+        expect(listenOnBuildOutputSpy).to.have.been.calledOnceWithExactly(exercise, participation);
     });
 });

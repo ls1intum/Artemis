@@ -30,11 +30,7 @@ describe('OrionProgrammingExerciseComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, OrionModule],
             declarations: [OrionProgrammingExerciseComponent, MockComponent(ProgrammingExerciseComponent), MockPipe(ArtemisTranslatePipe)],
-            providers: [
-                MockProvider(TranslateService),
-                MockProvider(OrionConnectorService),
-                { provide: Router, useValue: router },
-            ],
+            providers: [MockProvider(TranslateService), MockProvider(OrionConnectorService), { provide: Router, useValue: router }],
         })
             .compileComponents()
             .then(() => {

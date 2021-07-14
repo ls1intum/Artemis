@@ -15,8 +15,7 @@ export class OrionProgrammingExerciseComponent implements OnInit {
 
     orionState: OrionState;
 
-    constructor(private orionConnectorService: OrionConnectorService, private router: Router,) {
-    }
+    constructor(private orionConnectorService: OrionConnectorService, private router: Router) {}
 
     ngOnInit() {
         this.orionConnectorService.state().subscribe((state) => {
