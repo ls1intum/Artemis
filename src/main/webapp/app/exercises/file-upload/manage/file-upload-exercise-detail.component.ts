@@ -12,6 +12,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import * as moment from 'moment';
 import { onError } from 'app/shared/util/global.utils';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
@@ -20,6 +21,7 @@ import { onError } from 'app/shared/util/global.utils';
 export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     fileUploadExercise: FileUploadExercise;
     isExamExercise: boolean;
+    course: Course | undefined;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
 
@@ -59,6 +61,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
                 (fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
                     this.fileUploadExercise = fileUploadExerciseResponse.body!;
                     this.isExamExercise = this.fileUploadExercise.exerciseGroup !== undefined;
+                    this.course = this.isExamExercise ? this.fileUploadExercise.exerciseGroup?.exam?.course : this.fileUploadExercise.course;
                 },
                 (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );

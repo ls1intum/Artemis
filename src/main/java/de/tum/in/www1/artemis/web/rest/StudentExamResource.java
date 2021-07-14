@@ -396,8 +396,8 @@ public class StudentExamResource {
     /**
      * POST /courses/{courseId}/exams/{examId}/student-exams/assess-unsubmitted-and-empty-student-exams : Assess unsubmitted student exams and empty submissions.
      *
-     * Finds student exams which the students did not submit on time i.e {@link StudentExam#isSubmitted()} is false and assesses all modeling- and text exercises with 0 points in {@link StudentExamService#assessUnsubmittedStudentExams}.
-     * Additionally assess all empty modeling and text exercises with 0 points in {@link StudentExamService#assessEmptySubmissionsOfStudentExams}.
+     * Finds student exams which the students did not submit on time i.e {@link StudentExam#isSubmitted()} is false and assesses all exercises with 0 points in {@link StudentExamService#assessUnsubmittedStudentExams}.
+     * Additionally assess all empty exercises with 0 points in {@link StudentExamService#assessEmptySubmissionsOfStudentExams}.
      *
      * NOTE: A result with 0 points is only added if no other result is present for the latest submission of a relevant StudentParticipation.
      *
@@ -424,9 +424,7 @@ public class StudentExamResource {
 
         // delete all test runs if the instructor forgot to delete them
         List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(examId);
-        for (final var testRun : testRuns) {
-            studentExamService.deleteTestRun(testRun.getId());
-        }
+        testRuns.forEach(testRun -> studentExamService.deleteTestRun(testRun.getId()));
 
         final var instructor = userRepository.getUser();
         var assessedUnsubmittedStudentExams = studentExamService.assessUnsubmittedStudentExams(exam, instructor);

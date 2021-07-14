@@ -99,7 +99,7 @@
                 <div class="row">
                     <jhi-course-detail-doughnut-chart
                         class="doughnut-container col-md-6 my-3"
-                        [courseId]="course.id!"
+                        [course]="course"
                         [contentType]="DoughnutChartType.ASSESSMENT"
                         [currentPercentage]="courseDTO?.currentPercentageAssessments"
                         [currentAbsolute]="courseDTO?.currentAbsoluteAssessments"
@@ -107,7 +107,7 @@
                     ></jhi-course-detail-doughnut-chart>
                     <jhi-course-detail-doughnut-chart
                         class="doughnut-container col-md-6 my-3"
-                        [courseId]="course.id!"
+                        [course]="course"
                         [contentType]="DoughnutChartType.COMPLAINTS"
                         [currentPercentage]="courseDTO?.currentPercentageComplaints"
                         [currentAbsolute]="courseDTO?.currentAbsoluteComplaints"
@@ -117,7 +117,7 @@
                 <div class="row">
                     <jhi-course-detail-doughnut-chart
                         class="doughnut-container col-md-6 my-3"
-                        [courseId]="course.id!"
+                        [course]="course"
                         [contentType]="DoughnutChartType.FEEDBACK"
                         [currentPercentage]="courseDTO?.currentPercentageMoreFeedbacks"
                         [currentAbsolute]="courseDTO?.currentAbsoluteMoreFeedbacks"
@@ -125,7 +125,7 @@
                     ></jhi-course-detail-doughnut-chart>
                     <jhi-course-detail-doughnut-chart
                         class="doughnut-container col-md-6 my-3"
-                        [courseId]="course.id!"
+                        [course]="course"
                         [contentType]="DoughnutChartType.AVERAGE_COURSE_SCORE"
                         [currentPercentage]="courseDTO?.currentPercentageAverageScore"
                         [currentAbsolute]="courseDTO?.currentAbsoluteAverageScore"

@@ -7,10 +7,10 @@
             <jhi-alert-error></jhi-alert-error>
             <div class="text-start">
                 <jhi-non-programming-exercise-detail-common-actions
-                    *ngIf="modelingExercise.course"
+                    *ngIf="course"
+                    [isExamExercise]="isExamExercise"
+                    [course]="course"
                     [exercise]="modelingExercise"
-                    [courseId]="modelingExercise.course.id!"
-                    [isExamExercise]="false"
                 ></jhi-non-programming-exercise-detail-common-actions>
                 <a *ngIf="modelingExercise.isAtLeastEditor" class="btn btn-outline-primary btn-sm me-1" id="check-plagiarism-download" routerLink="plagiarism">
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
@@ -37,7 +37,12 @@
 
                 <dt>
                     <span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span>
-                    <button *ngIf="modelingExercise && modelingExercise.sampleSolutionModel" (click)="downloadAsPDf()" class="btn btn-primary" jhiTranslate="entity.action.export">
+                    <button
+                        *ngIf="modelingExercise && modelingExercise.sampleSolutionModel"
+                        (click)="downloadAsPDf()"
+                        class="btn btn-primary m-2"
+                        jhiTranslate="entity.action.export"
+                    >
                         Export
                     </button>
                 </dt>
@@ -49,6 +54,10 @@
                         [umlModel]="sampleSolutionUML!"
                     ></jhi-modeling-editor>
                 </dd>
+
+                <dt>
+                    {{ 'artemisApp.modelingExercise.exampleSolutionExplanation' | artemisTranslate }}
+                </dt>
                 <dd class="editor-outline-background">
                     <span [innerHTML]="sampleSolution"></span>
                 </dd>
