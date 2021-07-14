@@ -59,6 +59,7 @@ import { OrionCourseManagementExercisesComponent } from 'app/orion/management/or
         FormDateTimePickerModule,
         ReactiveFormsModule,
         ImageCropperModule,
+        OrionModule,
         MomentModule,
         TagInputModule,
         ArtemisExerciseModule,
