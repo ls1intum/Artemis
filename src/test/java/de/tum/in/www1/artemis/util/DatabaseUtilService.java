@@ -384,6 +384,12 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
+    public Course createCourseWithPostsDisabled() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course.setPostsEnabled(false);
+        return courseRepo.save(course);
+    }
+
     public Course createCourseWithOrganizations(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
         Course course = createCourse();
         Set<Organization> organizations = new HashSet<>();
@@ -982,6 +988,28 @@ public class DatabaseUtilService {
             studentParticipationRepo.save(studentParticipation);
         }
         return testRun;
+    }
+
+    public Exam setupSimpleExamWithExerciseGroupExercise(Course course) {
+        var exam = ModelFactory.generateExam(course);
+        exam.setNumberOfExercisesInExam(1);
+        exam.setRandomizeExerciseOrder(true);
+        exam.setStartDate(ZonedDateTime.now().plusHours(2));
+        exam.setEndDate(ZonedDateTime.now().plusHours(4));
+        exam.setMaxPoints(20);
+        exam = examRepository.save(exam);
+
+        // add exercise group: 1 mandatory
+        ModelFactory.generateExerciseGroup(true, exam);
+        exam = examRepository.save(exam);
+
+        // add exercises
+        var exercise1a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        var exercise1b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        var exercise1c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        exerciseRepo.saveAll(List.of(exercise1a, exercise1b, exercise1c));
+
+        return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
     }
 
     public Exam setupExamWithExerciseGroupsExercisesRegisteredStudents(Course course) {

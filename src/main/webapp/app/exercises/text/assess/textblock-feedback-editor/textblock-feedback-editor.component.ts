@@ -77,11 +77,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         this.textareaElement = this.textareaRef.nativeElement as HTMLTextAreaElement;
         setTimeout(() => this.textareaAutogrow());
-        if (this.feedback.gradingInstruction && this.feedback.gradingInstruction.usageCount !== 0) {
-            this.disableEditScore = true;
-        } else {
-            this.disableEditScore = false;
-        }
+        this.disableEditScore = !!(this.feedback.gradingInstruction && this.feedback.gradingInstruction.usageCount !== 0);
     }
 
     /**
@@ -158,11 +154,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
 
     connectFeedbackWithInstruction(event: Event) {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
-        if (this.feedback.gradingInstruction && this.feedback.gradingInstruction.usageCount !== 0) {
-            this.disableEditScore = true;
-        } else {
-            this.disableEditScore = false;
-        }
+        this.disableEditScore = !!(this.feedback.gradingInstruction && this.feedback.gradingInstruction.usageCount !== 0);
         this.didChange();
     }
 
@@ -197,15 +189,16 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
             const participation: StudentParticipation = await lastValueFrom(this.assessmentsService.getFeedbackDataForExerciseSubmission(participationId, submissionId));
 
             // connect the feedback with its respective block if any.
-            let blocks: any[] = participation.submissions?.values().next().value.blocks;
+            let blocks: TextBlock[] = participation.submissions?.values().next().value.blocks;
             // Sort blocks to show them in order.
             blocks = blocks.sort((a, b) => a!.startIndex! - b!.startIndex!);
-            const feedbacks: any[] = participation.submissions?.values().next().value.latestResult.feedbacks;
+            const feedbacks: Feedback[] = participation.submissions?.values().next().value.latestResult.feedbacks;
 
             // set list of blocks to be shown in the modal
             this.listOfBlocksWithFeedback = blocks
                 .map((block) => {
                     const blockFeedback = feedbacks.find((feedback) => feedback.reference === block.id);
+                    // TODO: define a proper type
                     return {
                         text: block.text,
                         feedback: blockFeedback && blockFeedback.detailText,

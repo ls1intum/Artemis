@@ -463,6 +463,23 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(value = "student3", roles = "USER")
+    public void saveExercise_beforeDueDate() throws Exception {
+        FileUploadSubmission storedSubmission = request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions",
+                notSubmittedFileUploadSubmission, "submission", validFile, FileUploadSubmission.class, HttpStatus.OK);
+        assertThat(storedSubmission.isSubmitted()).isTrue();
+
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void saveExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
+        FileUploadSubmission storedSubmission = request.postWithMultipartFile("/api/exercises/" + finishedFileUploadExercise.getId() + "/file-upload-submissions",
+                notSubmittedFileUploadSubmission, "submission", validFile, FileUploadSubmission.class, HttpStatus.OK);
+        assertThat(storedSubmission.isSubmitted()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
     public void submitExercise_beforeDueDateSecondSubmission_allowed() throws Exception {
         var file = new MockMultipartFile("file", "ffile.png", "application/json", "some data".getBytes());
         submittedFileUploadSubmission = request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions",
