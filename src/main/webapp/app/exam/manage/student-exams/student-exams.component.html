@@ -1,222 +1,198 @@
 <div>
-    <div class="d-flex">
-        <div class="mb-3">
-            <h2>
-                <span jhiTranslate="artemisApp.studentExams.title">Student exams</span>
-            </h2>
-        </div>
-        <div class="ms-auto">
-            <div class="d-flex mb-1">
-                <button
-                    id="generateStudentExamsButton"
-                    class="btn btn-primary"
-                    style="height: 40px"
-                    (click)="handleGenerateStudentExams()"
-                    *ngIf="course?.isAtLeastInstructor"
-                    [disabled]="isLoading || isExamStarted"
-                >
-                    <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <span jhiTranslate="artemisApp.studentExams.generateStudentExams">Generate student exams</span>
-                </button>
-                <button
-                    id="generateMissingStudentExamsButton"
-                    class="btn btn-primary ms-1"
-                    style="height: 40px"
-                    (click)="generateMissingStudentExams()"
-                    *ngIf="course?.isAtLeastInstructor"
-                    [disabled]="isLoading || !hasStudentsWithoutExam || isExamStarted"
-                >
-                    <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <span jhiTranslate="artemisApp.studentExams.generateMissingStudentExams">Generate missing individual exams</span>
-                </button>
-                <button
-                    id="startExercisesButton"
-                    class="btn btn-primary ms-1"
-                    style="height: 40px"
-                    (click)="startExercises()"
-                    *ngIf="course?.isAtLeastInstructor"
-                    [disabled]="isLoading || isExamStarted"
-                >
-                    <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <span jhiTranslate="artemisApp.studentExams.startExercises">Start Exercises</span>
-                </button>
-                <button
-                    id="handleUnlockAllRepositoriesButton"
-                    class="btn btn-danger ms-1"
-                    style="height: 40px"
-                    (click)="handleUnlockAllRepositories()"
-                    *ngIf="course?.isAtLeastInstructor"
-                    [disabled]="isLoading"
-                >
-                    <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <fa-icon [icon]="'exclamation-triangle'" class="text-warning"></fa-icon>
-                    <span jhiTranslate="artemisApp.studentExams.unlockAllRepositories">Unlock all repositories</span>
-                </button>
-                <button
-                    id="lockAllRepositoriesButton"
-                    class="btn btn-danger ms-1"
-                    style="height: 40px"
-                    (click)="handleLockAllRepositories()"
-                    *ngIf="course?.isAtLeastInstructor"
-                    [disabled]="isLoading"
-                >
-                    <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <fa-icon [icon]="'exclamation-triangle'" class="text-warning"></fa-icon>
-                    <span jhiTranslate="artemisApp.studentExams.lockAllRepositories">Lock all repositories</span>
-                </button>
-                <button
-                    id="evaluateQuizExercisesButton"
-                    class="btn btn-primary ms-1"
-                    style="height: 40px"
-                    (click)="evaluateQuizExercises()"
-                    *ngIf="course?.isAtLeastInstructor"
-                    [disabled]="isLoading || !isExamOver"
-                >
-                    <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises">Evaluate Quizzes</span>
-                </button>
-                <button
-                    class="btn btn-primary ms-1"
-                    id="assessUnsubmittedExamModelingAndTextParticipationsButton"
-                    style="height: 40px"
-                    (click)="assessUnsubmittedExamModelingAndTextParticipations()"
-                    *ngIf="course?.isAtLeastInstructor"
-                    [disabled]="isLoading || !isExamOver"
-                >
-                    <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams">Assess unsubmitted student exams</span>
-                </button>
-            </div>
-            <jhi-student-exam-status *ngIf="!isLoading" [hasStudentsWithoutExam]="hasStudentsWithoutExam"></jhi-student-exam-status>
-        </div>
+    <h2>
+        <span jhiTranslate="artemisApp.studentExams.title">Student exams</span>
+    </h2>
+    <hr />
+    <div>
+        <button
+            id="generateStudentExamsButton"
+            class="btn btn-primary mt-1"
+            (click)="handleGenerateStudentExams()"
+            *ngIf="course?.isAtLeastInstructor"
+            [disabled]="isLoading || isExamStarted"
+        >
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span jhiTranslate="artemisApp.studentExams.generateStudentExams">Generate student exams</span>
+        </button>
+        <button
+            id="generateMissingStudentExamsButton"
+            class="btn btn-primary mt-1"
+            (click)="generateMissingStudentExams()"
+            *ngIf="course?.isAtLeastInstructor"
+            [disabled]="isLoading || !hasStudentsWithoutExam || isExamStarted"
+        >
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span jhiTranslate="artemisApp.studentExams.generateMissingStudentExams">Generate missing individual exams</span>
+        </button>
+        <button id="startExercisesButton" class="btn btn-primary mt-1" (click)="startExercises()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading || isExamStarted">
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span jhiTranslate="artemisApp.studentExams.startExercises">Start Exercises</span>
+        </button>
+        <button
+            id="handleUnlockAllRepositoriesButton"
+            class="btn btn-danger mt-1"
+            (click)="handleUnlockAllRepositories()"
+            *ngIf="course?.isAtLeastInstructor"
+            [disabled]="isLoading"
+        >
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <fa-icon [icon]="'exclamation-triangle'" class="text-warning"></fa-icon>
+            <span jhiTranslate="artemisApp.studentExams.unlockAllRepositories">Unlock all repositories</span>
+        </button>
+        <button id="lockAllRepositoriesButton" class="btn btn-danger mt-1" (click)="handleLockAllRepositories()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <fa-icon [icon]="'exclamation-triangle'" class="text-warning"></fa-icon>
+            <span jhiTranslate="artemisApp.studentExams.lockAllRepositories">Lock all repositories</span>
+        </button>
+        <button
+            id="evaluateQuizExercisesButton"
+            class="btn btn-primary mt-1"
+            (click)="evaluateQuizExercises()"
+            *ngIf="course?.isAtLeastInstructor"
+            [disabled]="isLoading || !isExamOver"
+        >
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises">Evaluate Quizzes</span>
+        </button>
+        <button
+            class="btn btn-primary mt-1"
+            id="assessUnsubmittedExamModelingAndTextParticipationsButton"
+            (click)="assessUnsubmittedExamModelingAndTextParticipations()"
+            *ngIf="course?.isAtLeastInstructor"
+            [disabled]="isLoading || !isExamOver"
+        >
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams">Assess unsubmitted student exams</span>
+        </button>
     </div>
-    <jhi-alert></jhi-alert>
-    <jhi-data-table
-        [isLoading]="isLoading"
-        entityType="studentExam"
-        [allEntities]="studentExams"
-        entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
-        showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
-        [searchPlaceholderTranslation]="'artemisApp.studentExams.searchForStudents'"
-        [searchFields]="['user.login', 'user.name']"
-        [searchTextFromEntity]="searchTextFromStudentExam"
-        [searchResultFormatter]="searchResultFormatter"
-        (entitiesSizeChange)="handleStudentExamsSizeChange($event)"
-    >
-        <ng-template let-settings="settings" let-controls="controls">
-            <ngx-datatable
-                class="bootstrap"
-                [limit]="settings.limit"
-                [sortType]="settings.sortType"
-                [columnMode]="settings.columnMode"
-                [headerHeight]="settings.headerHeight"
-                [footerHeight]="settings.footerHeight"
-                [rowHeight]="settings.rowHeight"
-                [rows]="settings.rows"
-                [rowClass]="settings.rowClass"
-                [scrollbarH]="settings.scrollbarH"
-            >
-                <ngx-datatable-column prop="id" [minWidth]="60" [width]="80" [maxWidth]="100">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.id"> ID </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <div>
-                            <a routerLink="/course-management/{{ courseId }}/exams/{{ examId }}/student-exams/{{ value }}">{{ value }}</a>
-                        </div>
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="studentExam" [minWidth]="80" [width]="80">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('studentExam')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.exam"> Exam </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('studentExam')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <a routerLink="/course-management/{{ courseId }}/exams/{{ examId }}">{{ exam?.title }}</a>
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="user" [minWidth]="120" [width]="120">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('user.name')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.student"> Student </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('user.name')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <a *ngIf="isAdmin; else showName" routerLink="/admin/user-management/{{ value?.login }}">{{ value?.name }}</a>
-                        <ng-template #showName>
-                            {{ value?.name }}
-                        </ng-template>
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="workingTime" [minWidth]="170" [width]="170">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('workingTime')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.workingTime"> Working time </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('workingTime')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ value | artemisDurationFromSeconds }}</span>
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="started" [minWidth]="80" [width]="80">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('started')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.started"> Started </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('started')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ (value ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="submitted" [minWidth]="80" [width]="80">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submitted')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submitted"> Started </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('submitted')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ (value ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="submissionDate" [minWidth]="130" [width]="130">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionDate')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submissionDate"> Submission Date </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('submissionDate')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ formatDate(value) }}</span>
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="" [minWidth]="100" [width]="100">
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <div class="w-100 text-end">
-                            <div class="btn-group" *ngIf="course?.isAtLeastTutor">
-                                <a class="btn btn-primary btn-sm me-1 mb-1" [routerLink]="['/course-management', courseId, 'exams', examId, 'student-exams', value?.id]">
-                                    <span jhiTranslate="artemisApp.studentExams.view">View</span>
-                                </a>
-                            </div>
-                        </div>
-                    </ng-template>
-                </ngx-datatable-column>
-            </ngx-datatable>
-        </ng-template>
-    </jhi-data-table>
+    <jhi-student-exam-status *ngIf="!isLoading" [hasStudentsWithoutExam]="hasStudentsWithoutExam"> </jhi-student-exam-status>
 </div>
+<jhi-alert></jhi-alert>
+<jhi-data-table
+    [isLoading]="isLoading"
+    entityType="studentExam"
+    [allEntities]="studentExams"
+    entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
+    showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
+    [searchPlaceholderTranslation]="'artemisApp.studentExams.searchForStudents'"
+    [searchFields]="['user.login', 'user.name']"
+    [searchTextFromEntity]="searchTextFromStudentExam"
+    [searchResultFormatter]="searchResultFormatter"
+    (entitiesSizeChange)="handleStudentExamsSizeChange($event)"
+>
+    <ng-template let-settings="settings" let-controls="controls">
+        <ngx-datatable
+            class="bootstrap"
+            [limit]="settings.limit"
+            [sortType]="settings.sortType"
+            [columnMode]="settings.columnMode"
+            [headerHeight]="settings.headerHeight"
+            [footerHeight]="settings.footerHeight"
+            [rowHeight]="settings.rowHeight"
+            [rows]="settings.rows"
+            [rowClass]="settings.rowClass"
+            [scrollbarH]="settings.scrollbarH"
+        >
+            <ngx-datatable-column prop="id" [minWidth]="60" [width]="80" [maxWidth]="100">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.id"> ID </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <div>
+                        <a routerLink="/course-management/{{ courseId }}/exams/{{ examId }}/student-exams/{{ value }}">{{ value }}</a>
+                    </div>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="studentExam" [minWidth]="80" [width]="80">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('studentExam')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.exam"> Exam </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('studentExam')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <a routerLink="/course-management/{{ courseId }}/exams/{{ examId }}">{{ exam?.title }}</a>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="user" [minWidth]="120" [width]="120">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('user.name')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.student"> Student </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('user.name')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <a *ngIf="isAdmin; else showName" routerLink="/admin/user-management/{{ value?.login }}">{{ value?.name }}</a>
+                    <ng-template #showName>
+                        {{ value?.name }}
+                    </ng-template>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="workingTime" [minWidth]="170" [width]="170">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('workingTime')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.workingTime"> Working time </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('workingTime')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>{{ value | artemisDurationFromSeconds }}</span>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="started" [minWidth]="80" [width]="80">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('started')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.started"> Started </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('started')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>{{ (value ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="submitted" [minWidth]="80" [width]="80">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submitted')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submitted"> Started </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('submitted')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>{{ (value ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="submissionDate" [minWidth]="130" [width]="130">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionDate')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submissionDate"> Submission Date </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('submissionDate')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>{{ formatDate(value) }}</span>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="" [minWidth]="100" [width]="100">
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <div class="w-100 text-end">
+                        <div class="btn-group" *ngIf="course?.isAtLeastTutor">
+                            <a class="btn btn-primary btn-sm me-1 mb-1" [routerLink]="['/course-management', courseId, 'exams', examId, 'student-exams', value?.id]">
+                                <span jhiTranslate="artemisApp.studentExams.view">View</span>
+                            </a>
+                        </div>
+                    </div>
+                </ng-template>
+            </ngx-datatable-column>
+        </ngx-datatable>
+    </ng-template>
+</jhi-data-table>
