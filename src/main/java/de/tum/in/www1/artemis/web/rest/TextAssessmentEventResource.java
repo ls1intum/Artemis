@@ -116,8 +116,6 @@ public class TextAssessmentEventResource {
     private boolean validateEvent(TextAssessmentEvent event) {
         // avoid access from tutor if they are not part of the course
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request user: {}", user);
-        log.debug("REST request user: {}", event);
         // check that logged in user id and sent event user id match
         if (!user.getId().equals(event.getUserId())) {
             return false;
@@ -125,14 +123,11 @@ public class TextAssessmentEventResource {
         try {
             // check if user has enough roles to access the course
             Course course = courseRepository.findByIdElseThrow(event.getCourseId());
-            log.debug("REST request course: {}", course);
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 return false;
             }
-            log.debug("REST request is TA: true");
             // check if the sent exercise id is valid
             List<Long> listOfExerciseIdsInCourse = exerciseRepository.getExerciseIdsByCourseId(course.getId());
-            log.debug("REST request listOfExerciseIdsInCourse: {}", listOfExerciseIdsInCourse);
             return listOfExerciseIdsInCourse.contains(event.getTextExerciseId());
         }
         catch (EntityNotFoundException exception) {
