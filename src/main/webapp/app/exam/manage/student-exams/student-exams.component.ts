@@ -367,9 +367,11 @@ export class StudentExamsComponent implements OnInit {
      * @param err the error response
      */
     private handleError(translationString: string, err: HttpErrorResponse) {
-        let errorDetail = err?.error?.message;
+        let errorDetail;
         if (err?.error && err.error.errorKey) {
             errorDetail = this.translateService.instant(err.error.errorKey);
+        } else {
+            errorDetail = err?.error?.message;
         }
         if (errorDetail) {
             this.jhiAlertService.error(translationString, { message: errorDetail });
