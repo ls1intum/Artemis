@@ -1,17 +1,18 @@
 <div class="row align-items-center mb-2 mt-2">
     <div class="card unit-card">
-        <h5 class="card-header unit-card-header" [class.rounded]="isCollapsed" (click)="handleCollapse($event)">
-            <fa-icon class="me-2" [icon]="'video'" [ngbTooltip]="'artemisApp.videoUnit.tooltip' | artemisTranslate"></fa-icon>
-            {{ videoUnit?.name ? videoUnit.name : '' }}
-            <span
-                *ngIf="!videoUnit?.visibleToStudents"
-                class="badge bg-warning ms-2"
-                placement="right"
-                ngbTooltip="{{ 'artemisApp.videoUnit.notReleasedTooltip' | artemisTranslate }} {{ videoUnit?.releaseDate | artemisDate }}"
-            >
-                {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}</span
-            >
-        </h5>
+        <div class="card-header unit-card-header row align-content-center" (click)="handleCollapse($event)">
+            <h5 class="m-0">
+                <fa-icon class="col-auto me-2" [icon]="'video'" [ngbTooltip]="'artemisApp.videoUnit.tooltip' | artemisTranslate"> </fa-icon>
+                {{ videoUnit?.name ? videoUnit.name : '' }}
+                <span
+                    *ngIf="!videoUnit?.visibleToStudents"
+                    class="badge bg-warning ms-2"
+                    ngbTooltip="{{ 'artemisApp.videoUnit.notReleasedTooltip' | artemisTranslate }} {{ videoUnit?.releaseDate | artemisDate }}"
+                >
+                    {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
+                </span>
+            </h5>
+        </div>
         <div class="card-body unit-card-body" [ngbCollapse]="isCollapsed">
             <div class="embed-responsive embed-responsive-16by9">
                 <iframe id="videoFrame" class="embed-responsive-item rounded" [src]="videoUrl" allow="fullscreen"></iframe>
