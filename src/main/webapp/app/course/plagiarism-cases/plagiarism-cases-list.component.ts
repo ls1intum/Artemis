@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { PlagiarismCase } from 'app/course/plagiarism-cases/types/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
 import { Subject } from 'rxjs';
+import { PlagiarismStatus } from "app/exercises/shared/plagiarism/types/PlagiarismStatus";
 
 @Component({
     selector: 'jhi-plagiarism-cases-list',
@@ -21,9 +22,11 @@ export class PlagiarismCasesListComponent implements OnInit {
     splitControlSubject: Subject<string> = new Subject<string>();
     activeStudentLogin: string | undefined;
 
-    constructor(private plagiarismCasesService: PlagiarismCasesService) {}
+    constructor(private plagiarismCasesService: PlagiarismCasesService) {
+    }
 
-    ngOnInit(): void {}
+    ngOnInit(): void {
+    }
 
     isStudentANotified(comparisonIndex: number): boolean {
         return this.plagiarismCase.comparisons[comparisonIndex].notificationA !== undefined;
@@ -67,7 +70,13 @@ export class PlagiarismCasesListComponent implements OnInit {
         });
     }
 
-    updateStatus(confirm: boolean, comparisonId: number, studentLogin: string) {
-        this.plagiarismCasesService.updatePlagiarismStatus(confirm, comparisonId, studentLogin).subscribe(() => {});
+    updateStatus(confirm: boolean, comparisonIndex: number, studentLogin: string) {
+        this.plagiarismCasesService.updatePlagiarismStatus(confirm, this.plagiarismCase.comparisons[comparisonIndex].id, studentLogin).subscribe(() => {
+            if (this.plagiarismCase.comparisons[comparisonIndex].submissionA.studentLogin === studentLogin) {
+                this.plagiarismCase.comparisons[comparisonIndex].statusA = confirm ? PlagiarismStatus.CONFIRMED : PlagiarismStatus.DENIED;
+            } else {
+                this.plagiarismCase.comparisons[comparisonIndex].statusB = confirm ? PlagiarismStatus.CONFIRMED : PlagiarismStatus.DENIED;
+            }
+        });
     }
 }

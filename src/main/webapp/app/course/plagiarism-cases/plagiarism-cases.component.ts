@@ -14,7 +14,6 @@ export class PlagiarismCasesComponent implements OnInit {
     confirmedPlagiarismCases: PlagiarismCase[] | undefined;
     courseId: number;
     hideFinished = false;
-    progress = 50;
 
     constructor(private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {
         this.plagiarismCasesService = plagiarismCasesService;

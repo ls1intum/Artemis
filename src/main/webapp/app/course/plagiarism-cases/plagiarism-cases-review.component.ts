@@ -6,6 +6,7 @@ import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types
 import { Subject } from 'rxjs';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
 import { ActivatedRoute } from '@angular/router';
+import { PlagiarismStatus } from "app/exercises/shared/plagiarism/types/PlagiarismStatus";
 
 @Component({
     selector: 'jhi-plagiarism-cases-review',
@@ -27,7 +28,8 @@ export class PlagiarismCasesReviewComponent implements OnInit {
     response: string;
     instructorMessage: string | undefined;
 
-    constructor(private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {}
+    constructor(private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {
+    }
 
     ngOnInit(): void {
         this.comparisonId = Number(this.route.snapshot.paramMap.get('plagiarismComparisonId'));
@@ -68,5 +70,19 @@ export class PlagiarismCasesReviewComponent implements OnInit {
                 this.comparison.statementA = undefined;
                 this.comparison.statementB = undefined;
             });
+    }
+
+    isConfirmed() {
+        if (this.isStudentA) {
+            return this.comparison.statusA ? this.comparison.statusA === PlagiarismStatus.CONFIRMED : false;
+        }
+        return this.comparison.statusB ? this.comparison.statusB === PlagiarismStatus.CONFIRMED : false;
+    }
+
+    hasStatus() {
+        if (this.isStudentA) {
+            return this.comparison.statusA ? this.comparison.statusA !== PlagiarismStatus.NONE : false;
+        }
+        return this.comparison.statusB ? this.comparison.statusB !== PlagiarismStatus.NONE : false;
     }
 }

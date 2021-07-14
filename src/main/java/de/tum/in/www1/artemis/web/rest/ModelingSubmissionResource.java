@@ -199,13 +199,15 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
         modelingExercise.setGradingCriteria(gradingCriteria);
 
+        boolean forplagiarism = false;
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToAssesExercise(modelingExercise, user, resultId)) {
             // request is made by student for plagiarism, make sure they are affected by this case:
             plagiarismCasesService.anonymizeSubmissionForStudentOrThrow(modelingSubmission, user);
+            forplagiarism = true;
         }
 
-        if (!withoutResults) {
+        if (forplagiarism || !withoutResults) {
             // load submission with results either by resultId or by correctionRound
             if (resultId != null) {
                 // load the submission with additional needed properties

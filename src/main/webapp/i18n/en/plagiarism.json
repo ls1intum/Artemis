@@ -53,7 +53,12 @@
                 "hide-finished": "Hide finished cases",
                 "export-csv": "Export CSV",
                 "notifications-sent": "Notifications Sent",
-                "responses-assessed": "Responses Assessed"
+                "responses-assessed": "Responses Assessed",
+                "status-changed": "Status updated:",
+                "finally-confirmed": "This case was confirmed to be plagiarism.",
+                "finally-denied": "This case was confirmed to be no plagiarism.",
+                "confirm": "Confirm case",
+                "discard": "Discard case"
             }
         }
     }

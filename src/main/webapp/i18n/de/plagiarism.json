@@ -53,7 +53,12 @@
                 "hide-finished": "Bearbeitete Fälle verstecken",
                 "export-csv": "CSV exportieren",
                 "notifications-sent": "Gesendete Benachrichtigungen",
-                "responses-assessed": "Antworten Bearbeitet"
+                "responses-assessed": "Antworten Bearbeitet",
+                "status-changed": "Status aktuallisiert:",
+                "finally-confirmed": "Dieser Fall wurde endgültig als Plagiat markiert.",
+                "finally-denied": "Dieser Fall wurde als kein Plagiat markiert.",
+                "confirm": "Fall bestätigen",
+                "discard": "Fall verwerfen"
             }
         }
     }
