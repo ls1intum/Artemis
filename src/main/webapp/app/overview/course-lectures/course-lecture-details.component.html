@@ -33,7 +33,7 @@
                 </div>
             </div>
             <div class="row mb-2 markdown-preview" *ngIf="lecture!.description">
-                <div class="col-12 col-md-12 markdown-preview editor-outline-background" [innerHTML]="lecture.description | htmlForMarkdown"></div>
+                <div class="col-12 col-md-12 markdown-preview" [innerHTML]="lecture.description | htmlForMarkdown"></div>
             </div>
             <!-- LECTURE UNITS START-->
             <div class="row mb-2 mt-2 align-items-baseline" *ngIf="lecture!.lectureUnits">
@@ -44,7 +44,7 @@
                     {{ 'artemisApp.courseOverview.lectureDetails.downloadPdf' | artemisTranslate }}
                 </button>
             </div>
-            <div class="row mb-4" *ngFor="let lectureUnit of lectureUnits">
+            <div class="row m-0" *ngFor="let lectureUnit of lectureUnits">
                 <div class="col-11" [ngSwitch]="lectureUnit.type">
                     <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [course]="lecture!.course!"></jhi-exercise-unit>
                     <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
@@ -66,7 +66,7 @@
                     <h3>{{ 'artemisApp.courseOverview.lectureDetails.attachments' | artemisTranslate }}</h3>
                 </div>
             </div>
-            <div class="row mb-2" *ngIf="lecture!.attachments">
+            <div class="mb-2" *ngIf="lecture!.attachments">
                 <ul>
                     <li class="mb-3" *ngFor="let attachment of lecture!.attachments">
                         <h5 class="mb-1">
@@ -92,6 +92,8 @@
             </div>
         </div>
         <!-- LECTURE END -->
-        <router-outlet *ngIf="lecture && lecture.course?.postsEnabled" class="ms-3" (activate)="onChildActivate($event)"></router-outlet>
+        <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
+            <router-outlet *ngIf="lecture && lecture.course?.postsEnabled" class="ms-3" (activate)="onChildActivate($event)"></router-outlet>
+        </div>
     </div>
 </div>
