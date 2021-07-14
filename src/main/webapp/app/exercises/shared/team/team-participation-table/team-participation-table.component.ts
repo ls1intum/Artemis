@@ -14,6 +14,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
+import { Participation } from 'app/entities/participation/participation.model';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 
@@ -119,9 +120,9 @@ export class TeamParticipationTableComponent implements OnInit {
      * @param exercise Exercise to which the submission belongs
      * @param submission Either submission or 'new'
      */
-    async openAssessmentEditor(exercise: Exercise, submission: Submission | 'new'): Promise<void> {
+    async openAssessmentEditor(exercise: Exercise, participation: Participation, submission: Submission | 'new'): Promise<void> {
         const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
-        const route = `/course-management/${this.course.id}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionUrlParameter}/assessment`;
+        const route = `/course-management/${this.course.id}/${exercise.type}-exercises/${exercise.id}/participations/${participation.id}/submissions/${submissionUrlParameter}/assessment`;
         await this.router.navigate([route]);
     }
 
