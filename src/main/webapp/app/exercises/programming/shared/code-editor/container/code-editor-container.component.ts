@@ -237,6 +237,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
 
     onToggleCollapse(event: InteractableEvent) {
         this.grid.toggleCollapse(event);
+        this.collapsed = !this.collapsed;
     }
 
     onGridResize(type: ResizeType) {
