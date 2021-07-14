@@ -312,7 +312,7 @@ export class StudentExamsComponent implements OnInit {
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
-                this.jhiAlertService.error('artemisApp.studentExams.lockAllRepositoriesFailure', { message: err?.error?.message });
+                this.handleError('artemisApp.studentExams.lockAllRepositoriesFailure', err);
                 this.isLoading = false;
             },
         );
