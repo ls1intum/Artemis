@@ -1,15 +1,18 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { Router } from '@angular/router';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-orion-programming-exercise',
     templateUrl: './orion-programming-exercise.component.html',
 })
 export class OrionProgrammingExerciseComponent implements OnInit {
-    @Input() programmingExercises: ProgrammingExercise[];
+    @Input() embedded = false;
+    @Input() course: Course;
+    @Output() exerciseCount = new EventEmitter<number>();
 
     readonly ExerciseView = ExerciseView;
 

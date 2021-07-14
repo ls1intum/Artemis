@@ -50,6 +50,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { CourseManagementStatisticsComponent } from 'app/course/manage/course-management-statistics.component';
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
 import { CourseDetailBarChartComponent } from 'app/course/manage/detail/course-detail-bar-chart.component';
+import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 
 @NgModule({
     imports: [
@@ -58,7 +59,6 @@ import { CourseDetailBarChartComponent } from 'app/course/manage/detail/course-d
         FormDateTimePickerModule,
         ReactiveFormsModule,
         ImageCropperModule,
-        OrionModule,
         MomentModule,
         TagInputModule,
         ArtemisExerciseModule,
@@ -98,6 +98,7 @@ import { CourseDetailBarChartComponent } from 'app/course/manage/detail/course-d
         CourseUpdateComponent,
         CourseExerciseCardComponent,
         CourseManagementExercisesComponent,
+        OrionCourseManagementExercisesComponent,
         CourseManagementStatisticsComponent,
         CourseGroupComponent,
         CourseManagementCardComponent,

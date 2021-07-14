@@ -1,0 +1,8 @@
+<jhi-course-management-exercises>
+    <ng-template #overrideNonProgrammingExerciseCard>
+        <!-- Nothing, only programming exercises are shown -->
+    </ng-template>
+    <ng-template #overrideProgrammingExerciseCard let-course="course" let-embedded="embedded" let-callback="callback">
+        <jhi-orion-programming-exercise [course]="course" [embedded]="embedded" (exerciseCount)="callback($event)"> </jhi-orion-programming-exercise>
+    </ng-template>
+</jhi-course-management-exercises>
