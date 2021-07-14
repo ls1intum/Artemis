@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +16,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -39,15 +39,18 @@ public class TextAssessmentEventResource {
 
     private final CourseRepository courseRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     @Value("${info.text-assessment-analytics-enabled}")
     private Optional<Boolean> textAssessmentAnalyticsEnabled;
 
     public TextAssessmentEventResource(TextAssessmentEventRepository textAssessmentEventRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            CourseRepository courseRepository) {
+            CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
         this.textAssessmentEventRepository = textAssessmentEventRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -75,13 +78,13 @@ public class TextAssessmentEventResource {
      * This function adds an assessment event into the text_assessment_event table.
      * @param event to be added
      * @return the status of the finished request
-     * @throws URISyntaxException
      */
     @PostMapping("/events")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssessmentEvent event) throws URISyntaxException {
+    public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssessmentEvent event) {
         log.debug("REST request to save assessmentEvent : {}", event);
 
+        // check if the text assessment analytics feature is enabled
         if (!isTextAssessmentAnalyticsEnabled()) {
             return forbidden();
         }
@@ -91,19 +94,50 @@ public class TextAssessmentEventResource {
             return ResponseEntity.badRequest().build();
         }
 
-        // avoid access from tutor if they are not part of the course
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        try {
-            Course course = courseRepository.findByIdElseThrow(event.getCourseId());
-            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-                return forbidden();
-            }
+        // Save the event if it is valid. All other requests are considered bad requests.
+        if (validateEvent(event)) {
             textAssessmentEventRepository.save(event);
             return ResponseEntity.ok().build();
         }
+        else {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * This method checks that the event parameter is valid.
+     * - The user id received should match the logged in users id.
+     * - The user should be at least tutor of the course
+     * - The course id received should exist
+     * - The exercise id received should be an exercise of the course.
+     * @param event the event to be validated
+     * @return whether the event is valid or not
+     */
+    private boolean validateEvent(TextAssessmentEvent event) {
+        // avoid access from tutor if they are not part of the course
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request user: {}", user);
+        log.debug("REST request user: {}", event);
+        // check that logged in user id and sent event user id match
+        if (!user.getId().equals(event.getUserId())) {
+            return false;
+        }
+        try {
+            // check if user has enough roles to access the course
+            Course course = courseRepository.findByIdElseThrow(event.getCourseId());
+            log.debug("REST request course: {}", course);
+            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+                return false;
+            }
+            log.debug("REST request is TA: true");
+            // check if the sent exercise id is valid
+            List<Long> listOfExerciseIdsInCourse = exerciseRepository.getExerciseIdsByCourseId(course.getId());
+            log.debug("REST request listOfExerciseIdsInCourse: {}", listOfExerciseIdsInCourse);
+            return listOfExerciseIdsInCourse.contains(event.getTextExerciseId());
+        }
         catch (EntityNotFoundException exception) {
             // catch exception when event course id is malformed, or doesn't exist
-            return ResponseEntity.badRequest().build();
+            return false;
         }
     }
 }

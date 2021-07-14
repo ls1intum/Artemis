@@ -5,9 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,9 +27,15 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
 
     private Course course;
 
+    private User tutor;
+
+    private Exercise exercise;
+
     @BeforeEach
     public void initTestCase() {
         course = database.createCourseWithTutor("tutor1");
+        tutor = userRepository.getUserByLoginElseThrow("tutor1");
+        exercise = course.getExercises().iterator().next();
     }
 
     @AfterEach
@@ -42,7 +46,7 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testAddMultipleCompleteAssessmentEvents() throws Exception {
-        List<TextAssessmentEvent> events = ModelFactory.generateMultipleTextAssessmentEvents(course.getId());
+        List<TextAssessmentEvent> events = ModelFactory.generateMultipleTextAssessmentEvents(course.getId(), tutor.getId(), exercise.getId());
         for (TextAssessmentEvent event : events) {
             ResponseEntity<Void> responseEntity = textAssessmentEventResource.addAssessmentEvent(event);
             assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -52,29 +56,26 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testAddSingleCompleteAssessmentEvent() throws Exception {
-        expectEventAddedWithResponse(HttpStatus.OK);
+        expectEventAddedWithResponse(HttpStatus.OK, tutor.getId());
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testAddSingleCompleteAssessmentEvent_withTutorNotInCourse() throws Exception {
-        User user = new User();
-        user.setLogin("tutor2");
-        userRepository.save(user);
-        // 'tutor2' is not part of the course, therefore forbidden to access this resource
-        expectEventAddedWithResponse(HttpStatus.FORBIDDEN);
+        // Tutor with tutor1 id incremented is not part of the course, therefore forbidden to access this resource
+        expectEventAddedWithResponse(HttpStatus.BAD_REQUEST, tutor.getId() + 1);
     }
 
-    private void expectEventAddedWithResponse(HttpStatus expected) throws Exception {
-        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId());
+    private void expectEventAddedWithResponse(HttpStatus expected, Long userId) {
+        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), userId, exercise.getId());
         ResponseEntity<Void> responseEntity = textAssessmentEventResource.addAssessmentEvent(event);
         assertThat(responseEntity.getStatusCode()).isEqualTo(expected);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAddSingleCompleteAssessmentEvent_withNotNullEventId() throws Exception {
-        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId());
+    public void testAddSingleCompleteAssessmentEvent_withNotNullEventId() {
+        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId());
         event.setId(1L);
         ResponseEntity<Void> responseEntity = textAssessmentEventResource.addAssessmentEvent(event);
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -82,12 +83,12 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testGetAllEventsByCourseId() throws Exception {
+    public void testGetAllEventsByCourseId() {
         User user = new User();
         user.setLogin("admin");
         user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
         userRepository.save(user);
-        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId());
+        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), user.getId(), exercise.getId());
         ResponseEntity<Void> responseAddEvent = textAssessmentEventResource.addAssessmentEvent(event);
         assertThat(responseAddEvent.getStatusCode()).isEqualTo(HttpStatus.OK);
 

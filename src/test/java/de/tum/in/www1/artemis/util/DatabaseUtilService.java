@@ -3616,14 +3616,18 @@ public class DatabaseUtilService {
 
     public Course createCourseWithTutor(String login) {
         Course course = this.createCourse();
+        TextExercise textExercise = createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        course.addExercises(textExercise);
         User user = new User();
         user.setLogin(login);
+        user.setId(1L);
         user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
         userRepo.save(user);
         return course;
     }
 
-    public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId) {
-        return ModelFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId);
+    public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId, Long userId, Long exerciseId) {
+        return ModelFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
+                exerciseId);
     }
 }
