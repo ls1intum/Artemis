@@ -17,7 +17,7 @@
                 </button>
             </div>
             <div class="navigation-item">
-                <button class="btn btn-secondary w-100" (click)="changePage(false, exerciseIndex - 1, false)">
+                <button class="btn btn-secondary w-100" (click)="changePage(false, exerciseIndex - 1, false)" [disabled]="exerciseIndex <= 0">
                     <span aria-hidden="true">&laquo;</span>
                     <span class="sr-only">Previous</span>
                 </button>
@@ -45,7 +45,11 @@
                 </div>
             </ng-container>
             <div class="navigation-item">
-                <button class="btn btn-secondary w-100" (click)="changePage(false, overviewPageOpen ? 0 : exerciseIndex + 1, false)">
+                <button
+                    class="btn btn-secondary w-100"
+                    (click)="changePage(false, overviewPageOpen ? 0 : exerciseIndex + 1, false)"
+                    [disabled]="exerciseIndex >= exercises.length - 1 || exerciseIndex < 0"
+                >
                     <span aria-hidden="true">&raquo;</span>
                     <span class="sr-only">Next</span>
                 </button>
