@@ -927,7 +927,7 @@ the following steps:
 Upgrading Jenkins
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In order to upgrade Jenkins to a newer version, you need to rebuild the docker image targeting the new version.
-The stable lts versions can be through viewed through the `changelog <https://www.jenkins.io/changelog-stable/>`__. and the corresponding
+The stable LTS versions can be viewed through the `changelog <https://www.jenkins.io/changelog-stable/>`__. and the corresponding
 docker image can be found on `dockerhub <https://hub.docker.com/r/jenkins/jenkins/tags?page=1&ordering=last_updated>`__.
 
 1. Open the Jenkins Dockerfile and replace ``jenkins/jenkins:lts`` with the version you want to use.
