@@ -409,13 +409,10 @@
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
                 </dd>
-                <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastEditor && programmingExercise?.templateParticipation">
+                <dd *ngIf="programmingExercise.isAtLeastEditor && programmingExercise?.templateParticipation">
                     <a
                         [routerLink]="[
-                            '/course-management',
-                            programmingExercise.course.id,
-                            'programming-exercises',
-                            programmingExercise.id,
+                            this.baseResource,
                             'participations',
                             programmingExercise.templateParticipation?.id,
                             'submissions'
@@ -451,13 +448,10 @@
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
                 </dd>
-                <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastEditor && programmingExercise?.solutionParticipation">
+                <dd *ngIf="programmingExercise.isAtLeastEditor && programmingExercise?.solutionParticipation">
                     <a
                         [routerLink]="[
-                            '/course-management',
-                            programmingExercise.course.id,
-                            'programming-exercises',
-                            programmingExercise.id,
+                            this.baseResource,
                             'participations',
                             programmingExercise.solutionParticipation?.id,
                             'submissions'
