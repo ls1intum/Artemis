@@ -310,7 +310,7 @@ The Text Assessment Analytics is an internal analytics service used to gather da
 8. Clicking the Submit button when assessing a text submission
 9. Clicking the Assess Next button when assessing a text submission
 
-These events are tracked by attaching a POST call to the respective DOM elements in the client side.
+These events are tracked by attaching a POST call to the respective DOM elements on the client side.
 The POST call accesses the **TextAssessmentEventResource** which then adds the events in its respective table.
 This feature is disabled by default. We can enable it by modifying the configuration in the file:
 ``src/main/resources/config/application-artemis.yml`` like so:
