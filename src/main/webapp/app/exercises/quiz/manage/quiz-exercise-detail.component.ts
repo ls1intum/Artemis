@@ -82,7 +82,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     @ViewChildren('editShortAnswer')
     editShortAnswerQuestionComponents: QueryList<ShortAnswerQuestionEditComponent>;
 
-    course: Course;
+    course?: Course;
     quizExercise: QuizExercise;
     exerciseGroup?: ExerciseGroup;
     courseRepository: CourseManagementService;
