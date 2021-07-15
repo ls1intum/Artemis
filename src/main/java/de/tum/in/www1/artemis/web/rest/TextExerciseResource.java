@@ -205,6 +205,11 @@ public class TextExerciseResource {
         }
         TextExercise textExerciseBeforeUpdate = textExerciseRepository.findByIdElseThrow(textExercise.getId());
 
+        // Forbid changes of course exercise belongs to.
+        if (textExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId() != textExercise.getCourseViaExerciseGroupOrCourseMember().getId()) {
+            return conflict("The text exercise course cannot be changed", ENTITY_NAME, "cannotChangeCourseId");
+        }
+
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 

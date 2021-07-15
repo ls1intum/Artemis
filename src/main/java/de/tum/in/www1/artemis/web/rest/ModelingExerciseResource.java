@@ -171,6 +171,12 @@ public class ModelingExerciseResource {
         exerciseService.validateGeneralSettings(modelingExercise);
 
         ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
+
+        // Forbid changes of course exercise belongs to.
+        if (modelingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId() != modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId()) {
+            return conflict("The modeling exercise course cannot be changed", ENTITY_NAME, "cannotChangeCourseId");
+        }
+
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
