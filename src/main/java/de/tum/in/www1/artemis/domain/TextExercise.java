@@ -29,7 +29,7 @@ public class TextExercise extends Exercise {
 
     @ManyToOne
     @JoinColumn(table = "text_exercise_details")
-    @JsonIgnoreProperties("exercises")
+    @JsonIgnore
     private TextAssessmentKnowledge knowledge;
 
     public String getSampleSolution() {
