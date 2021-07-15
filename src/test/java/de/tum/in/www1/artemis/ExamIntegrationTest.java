@@ -758,6 +758,37 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateExam_rescheduleModeling_endDateChanged() throws Exception {
+        var modelingExercise = database.addCourseExamExerciseGroupWithOneModelingExercise();
+        var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
+        examWithModelingEx.setEndDate(examWithModelingEx.getEndDate().plusSeconds(2));
+        request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
+        verify(instanceMessageSendService, times(1)).sendModelingExerciseSchedule(modelingExercise.getId());
+
+        StudentExam studentExam = database.addStudentExam(examWithModelingEx);
+        request.patch("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams/" + examWithModelingEx.getId() + "/student-exams/" + studentExam.getId() + "/working-time",
+                3, HttpStatus.OK);
+        verify(instanceMessageSendService, times(1)).sendModelingExerciseSchedule(modelingExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateExam_rescheduleModeling_workingTimeChanged() throws Exception {
+        var modelingExercise = database.addCourseExamExerciseGroupWithOneModelingExercise();
+        var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
+        examWithModelingEx.setVisibleDate(ZonedDateTime.now().plusHours(1));
+        examWithModelingEx.setStartDate(ZonedDateTime.now().plusHours(2));
+        examWithModelingEx.setEndDate(ZonedDateTime.now().plusHours(3));
+        request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
+
+        StudentExam studentExam = database.addStudentExam(examWithModelingEx);
+        request.patch("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams/" + examWithModelingEx.getId() + "/student-exams/" + studentExam.getId() + "/working-time",
+                3, HttpStatus.OK);
+        verify(instanceMessageSendService, times(2)).sendModelingExerciseSchedule(modelingExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExam_asInstructor() throws Exception {
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, Exam.class);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForEditor(course1.getId(), exam1.getId());
