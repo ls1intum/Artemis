@@ -12,7 +12,7 @@ import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-ro
 import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
 import { MockDirective } from 'ng-mocks';
 import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
-import { AnswerPostHeaderComponent } from 'app/shared/metis/answer-post/answer-post-header/answer-post-header.component';
+import { AnswerPostHeaderComponent } from 'app/shared/metis/postings-header/answer-post-header/answer-post-header.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
