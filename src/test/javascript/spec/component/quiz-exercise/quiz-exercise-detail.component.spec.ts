@@ -497,7 +497,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.addMultipleChoiceQuestion();
 
                 expect(comp.quizExercise.quizQuestions).to.have.lengthOf(amountQuizQuestions + 1);
-                expect(comp.quizExercise.quizQuestions![comp.quizExercise.quizQuestions!.length - 1].type).to.equal(QuizQuestionType.MULTIPLE_CHOICE);
+                expect(comp.quizExercise.quizQuestions?.last()?.type).to.equal(QuizQuestionType.MULTIPLE_CHOICE);
             });
 
             it('should add empty DnD question', () => {
@@ -505,7 +505,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.addDragAndDropQuestion();
 
                 expect(comp.quizExercise.quizQuestions).to.have.lengthOf(amountQuizQuestions + 1);
-                expect(comp.quizExercise.quizQuestions![comp.quizExercise.quizQuestions!.length - 1].type).to.equal(QuizQuestionType.DRAG_AND_DROP);
+                expect(comp.quizExercise.quizQuestions?.last()?.type).to.equal(QuizQuestionType.DRAG_AND_DROP);
             });
 
             it('should add empty SA question', () => {
@@ -513,7 +513,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.addShortAnswerQuestion();
 
                 expect(comp.quizExercise.quizQuestions).to.have.lengthOf(amountQuizQuestions + 1);
-                expect(comp.quizExercise.quizQuestions![comp.quizExercise.quizQuestions!.length - 1].type).to.equal(QuizQuestionType.SHORT_ANSWER);
+                expect(comp.quizExercise.quizQuestions?.last()?.type).to.equal(QuizQuestionType.SHORT_ANSWER);
             });
 
             afterAll(() => {

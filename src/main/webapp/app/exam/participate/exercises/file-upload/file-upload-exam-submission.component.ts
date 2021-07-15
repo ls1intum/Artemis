@@ -121,9 +121,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
             // clear submitted file so that it is not displayed in the input (this might be confusing)
             this.submissionFile = undefined;
             const filePath = this.studentSubmission!.filePath!.split('/');
-            this.submittedFileName = filePath[filePath.length - 1];
+            this.submittedFileName = filePath.last()!;
             const fileName = this.submittedFileName.split('.');
-            this.submittedFileExtension = fileName[fileName.length - 1];
+            this.submittedFileExtension = fileName.last()!;
         }
     }
 
@@ -149,7 +149,6 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     /**
      * Pass on an error to the browser console and the jhiAlertService.
-     * @param error
      */
     private onError() {
         this.jhiAlertService.error(this.translateService.instant('error.fileUploadSavingError'));

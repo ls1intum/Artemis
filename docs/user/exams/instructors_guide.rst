@@ -62,7 +62,7 @@ During the exam creation and configuration, you can create your exam and configu
 - Artemis selects one exercise per exercise group randomly, to generate the individual :ref:`student exams <student_exams>`.
 - You can distinguish between mandatory exercise groups and non-mandatory exercise groups.
 - Artemis always includes mandatory exercise groups in the individual exam of a student.
-- non-mandatory exercise groups can be left out, if there are more exercise groups than the ``number of exercises`` defined in the :ref:`exam configuration <exam_creation_and_configuration>`.
+- Non-mandatory exercise groups can be left out, if there are more exercise groups than the ``number of exercises`` defined in the :ref:`exam configuration <exam_creation_and_configuration>`.
 - By default, every exercise group is mandatory. You can set the ``mandatory`` flag when you add an exercise group initially, or later by clicking |edit| on the exercise group.
 
 .. figure:: instructor/exercise_variants.png
@@ -75,8 +75,8 @@ During the exam creation and configuration, you can create your exam and configu
 ^^^^^^^^^^^^^^^^^
 - Exercise groups can contain multiple exercises. For every :ref:`student exam <student_exams>`, Artemis will randomly select one exercise per :ref:`exercise group <exercise_groups>`.
 
-    .. note::
-        If you want all student to have the same exam, define only one exercise per :ref:`exercise group <exercise_groups>`.
+.. note::
+    If you want all student to have the same exam, define only one exercise per :ref:`exercise group <exercise_groups>`.
 
 - To add exercises navigate to the *Exercise Groups* of the exam. On the header of each :ref:`exercise group <exercise_groups>` you will find the available exercise types. You can choose between ``creating a new exercise`` or ``importing an existing one`` from your courses.
 
@@ -99,36 +99,36 @@ During the exam creation and configuration, you can create your exam and configu
 
     - You can check the option to ``allow manual assessment``.
 
-        .. note::
-            If you do not set this flag, your assessors will not be able to manually assess the student's submissions during the :ref:`assessment process <exam_assessment>`.
+    .. note::
+        If you do not set this flag, your assessors will not be able to manually assess the student's submissions during the :ref:`assessment process <exam_assessment>`.
 
     - You can activate ``Run Tests once after Due Date``. This will compile and run the test suite on all the student submissions once after the set date.
     - After you add a programming exercise you can configure the grading via |configure_grading_button|.
 
-    .. |configure_grading_button| image:: instructor/buttons/configure_grading.png
 
-    - In the *Configure Grading* screen, you can tweak the ``weight`` of the tests, the ``bonus multiplier`` and add, ``bonus points``.
+    - In the *Configure Grading* screen, you can tweak the ``weight`` of the tests, the ``bonus multiplier`` and add ``bonus points``.
     - You can hide tests so that they are not executed during the exam conduction. Students can not receive feedback from hidden tests during the exam conduction.
 
-        .. note::
-            If you hide all tests, the students will only be able to see if their submission compiles during the conduction. Set the ``Run Tests once after Due Date`` after the
-            exam end date to achieve this effect.
+    .. note::
+        If you hide all tests, the students will only be able to see if their submission compiles during the conduction. Set the ``Run Tests once after Due Date`` after the
+        exam end date to achieve this effect.
 
-        .. figure:: instructor/configure_grading.png
-            :alt: Configure Grading
-            :align: center
+    .. figure:: instructor/configure_grading.png
+        :alt: Configure Grading
+        :align: center
 
-            Configure the Grading of a Programming Exercise
+        Configure the Grading of a Programming Exercise
 
 1.5 Register Students
 ^^^^^^^^^^^^^^^^^^^^^
 - To register students to the exam, navigate from the exam management to the *Students* page. Artemis offers two options to register students. You can:
 
     1. Add students manually by searching via the search bar.
-    2. Bulk import students using a ``CSV`` file. You can do this by pressing the ``Import students`` button.
+    2. Bulk import students using a ``CSV`` file. You can do this by pressing the |import_students| button.
+    3. Register every student in the course. You can do this by pressing the |register_course_students| button.
 
-    .. note::
-        Just registering the students to the exam will not allow them to participate in the exam. First, individual :ref:`student exams <student_exams>` must be generated.
+.. note::
+    Just registering the students to the exam will not allow them to participate in the exam. First, individual :ref:`student exams <student_exams>` must be generated.
 
 - You can also remove students from the exam. When you do so, you have the option to also delete their participations and submissions linked to the user’s :ref:`student exam <student_exams>`.
 
@@ -146,39 +146,39 @@ During the exam creation and configuration, you can create your exam and configu
 ^^^^^^^^^^^^^^^^^^^^^^^^
 - Student exams represent the exam of a student. It consists of an individual set of exercises based on the configured :ref:`exercise groups <exercise_groups>`.
 - Student exams are managed via the *Student Exams* page.
-- Here you can have an overview of all student exams. When you press ``View`` on a student exam, you can view the ``details of the student``, the allocated ``working time``, his/her ``participation status``, their ``summary``, as well as their ``scores``. Additionally, you will also be able to view which assessor is responsible for each exercise.
+- Here you can have an overview of all student exams. When you press ``View`` on a student exam, you can view the ``details of the student``, the allocated ``working time``, their ``participation status``, their ``summary``, as well as their ``scores``. Additionally, you will also be able to view which assessor is responsible for each exercise.
 
-    .. note::
-        You can change the individual working time of students from here. The screenshot *Individual Working Time* below shows where you can do that.
+.. note::
+    You can change the individual working time of students from here. The screenshot *Individual Working Time* below shows where you can do that.
 
 - To generate student exams you must click on |generate_individual_exams|. This will trigger Artemis to create a student exam for every registered user.
 - Artemis determines the number of exercises from the :ref:`exam configuration <exam_creation_and_configuration>` and randomly selects one exercise per :ref:`exercise group <exercise_groups>`.
 
-    .. note::
-        |generate_individual_exams| button will be locked once the exam becomes visible to the students. You cannot perform changes to student exams once the :ref:`exam conduction <exam_conduction>` has started.
+.. note::
+    |generate_individual_exams| button will be locked once the exam becomes visible to the students. You cannot perform changes to student exams once the :ref:`exam conduction <exam_conduction>` has started.
 
 - If you have added more students recently, you can choose to |generate_missing_exams|.
 - |prepare_exercise_start| creates a participation for each exercise for every registered user, based on their assigned exercises. It also creates the individual repositories and build plans for programming exercises. This action can take a while if there are many registered students due to the communication between the version control (VC) and continuous integration (CI) server.
 
-    .. warning::
-        You must trigger |prepare_exercise_start| before the :ref:`exam conduction <exam_conduction>` begins.
+.. warning::
+    You must trigger |prepare_exercise_start| before the :ref:`exam conduction <exam_conduction>` begins.
 
 - On the *Student Exams* page, you can also maintain the repositories of student exams. This functionality only affects programming exercises. You can choose to |lock_repo| and |unlock_repo| all student repositories.
 
-    .. note::
-        Artemis locks and unlocks the student repositories automatically based on the individual exam start and end date. These buttons are typically not necessary unless something went wrong.
+.. note::
+    Artemis locks and unlocks the student repositories automatically based on the individual exam start and end date. These buttons are typically not necessary unless something went wrong.
 
 .. _evaluate_quiz_exercises:
 
 - Additionally, once the :ref:`exam conduction <exam_conduction>` ends, you can click on |evaluate_quizzes|. This action will evaluate all student exam submissions for all quiz exercises and assign an automatic result.
 
-    .. note::
-       If you do not press this button, the students quiz exercises will not be graded.
+.. note::
+    If you do not press this button, the students quiz exercises will not be graded.
 
 - After the :ref:`exam conduction <exam_conduction>` ends, you can click on |assess_unsubmitted_student_exams|. This action will automatically evaluate all submissions with 0 points for unsubmitted student exams. Additionally, empty submissions will be automatically graded with 0 points.
 
-    .. note::
-        If you do not press this button, the unsubmitted student submissions and the empty submissions will appear in the assessment dashboard of the exam, which leads to unnecessary effort during grading.
+.. note::
+    If you do not press this button, the unsubmitted student submissions and the empty submissions will appear in the assessment dashboard of the exam, which leads to unnecessary effort during grading.
 
 .. figure:: instructor/student_exams.png
    :alt: Student Exam Page
@@ -206,8 +206,8 @@ During the exam creation and configuration, you can create your exam and configu
 - You can manage your test runs from the *Test Run* page.
 - To create a new test run you can press |create_test_run_button|. This will open a popup where you can select an exercise for each :ref:`exercise group <exercise_groups>`. You can also set the ``working time``. A test run will have as many exercises as there are :ref:`exercise groups <exercise_groups>`. It does consider the ``number of exercises`` set in the :ref:`exam configuration <exam_creation_and_configuration>`.
 
-    .. note::
-        Exercise groups with no exercises are ignored.
+.. note::
+    Exercise groups with no exercises are ignored.
 
 .. figure:: instructor/create_test_run.png
    :alt: Create Test Run
@@ -225,8 +225,8 @@ During the exam creation and configuration, you can create your exam and configu
 
    Test run conduction marked with the banner on the top left.
 
-    .. note::
-        Only the creator of the test run is able to assess his submissions.
+.. note::
+    Only the creator of the test run is able to assess his submissions.
 
 - You can view the results of the assessment of the test run by clicking on |summary|. This page simulates the *Student Exam Summary* where the students can view their submissions and the results once they are published.
 - Here instructors can also use the ``complaint`` feature and respond to it to conclude the full  :ref:`exam timeline <timeline>`.
@@ -238,7 +238,7 @@ During the exam creation and configuration, you can create your exam and configu
 
 2. **Conduction**
 -----------------
-The exam conduction starts when the exam becomes visible to the students and ends when the latest working time is over. When the exam conduction begins, you cannot make any changes anymore to the :ref:`exam configuration <exam_creation_and_configuration>` or individual :ref:`student exams <student_exams>`. When the conduction starts, the students can access and start their exam. They can submit their solutions to the exercises within the given individual working time. When a student submits the exam, he cannot make any changes anymore to his exercise submissions. For more information, see :ref:`participating in the online exam <participation_guide>`.
+The exam conduction starts when the exam becomes visible to the students and ends when the latest working time is over. When the exam conduction begins, you cannot make any changes anymore to the :ref:`exam configuration <exam_creation_and_configuration>` or individual :ref:`student exams <student_exams>`. When the conduction starts, the students can access and start their exam. They can submit their solutions to the exercises within the given individual working time. When a student submits the exam, they cannot make any changes anymore to his exercise submissions. For more information, see :ref:`participating in the online exam <participation_guide>`.
 
     .. _exam_assessment:
 
@@ -256,10 +256,10 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 - Once the :ref:`exam conduction <exam_conduction>` is over and the latest individual working time has passed, your team can begin the :ref:`assessment <exam_assessment>` process.
 - This is done through the *Assessment Dashboard*.
 
-    .. note::
-        If the :ref:`exam conduction <exam_conduction>` is not over, you will not be able to access this page.
+.. note::
+    If the :ref:`exam conduction <exam_conduction>` is not over, you will not be able to access this page.
 
-- The :ref:`assessment <exam_assessment>` process is anonymised. Artemis omits personal student data from the assessors.
+- The :ref:`assessment <exam_assessment>` process is anonymized. Artemis omits personal student data from the assessors.
 - The *Assessment Dashboard* provides an overview over the current assessment progress per exercise. For each exercise, you can view how many submissions have already been assessed and how many are still left. The status of the student complaints is also displayed here.
 
 .. figure:: instructor/assessment_dashboard.png
@@ -348,7 +348,7 @@ You can specify the moment when Artemis publishes the results of the exam, see `
 - Additionally, you can choose to modify the dataset by selecting ``only include submitted exams`` or ``only include exercises with at least one non-empty submission``.
 
 .. note::
-        Unsubmitted exams are not eligible for the assessment process.
+    Unsubmitted exams are not eligible for the assessment process.
 
 - Review student performance using various metrics such as average, median and standard deviation.
 - Unsubmitted exams are not eligible for assessment and thereby appear as having no score. It can happen that an exercise is not part of any :ref:`student exam <student_exams>`. This is the case when Artemis selects a different exercise of the same exercise group for every :ref:`student exam <student_exams>`. Similarly to the unsubmitted exams, they can warp the results and statistics of the exam. By eliminating unsubmitted exams and exercises which were not part of the :ref:`exam conduction <exam_conduction>`, you can gain a more realistic overview of the performance of the students.
@@ -375,8 +375,8 @@ During the review period, students have the opportunity to review the assessment
 - Students cannot submit complaints for automatically assessed exercises like quiz and programming exercises.
 - Students will be able to submit a complaint for programming exercises, if the automatic result has been reviewed manually by an assessor. This is only possible if :ref:`manual assessment <manual_assessment>` is enabled for the programming exercise.
 
-    .. note::
-            If you have found a mistake in the automatic assessment of quiz and programming exercises, you can edit those and re-trigger the evaluation for all participants.
+.. note::
+    If you have found a mistake in the automatic assessment of quiz and programming exercises, you can edit those and re-trigger the evaluation for all participants.
 
 - For more information on how students can participate in the student review and submit complaints, see :ref:`student summary guide <summary_guide>`.
 
@@ -385,7 +385,7 @@ During the review period, students have the opportunity to review the assessment
 
 6. **Complaint Assessment**
 ---------------------------
-Artemis collects the complaints submitted by the students during the :ref:`student review <student_review>`. You can access and review the complaints similar to the :ref:`submissions <exam_assessment>` from the *Assessment Dashboard*. Every assessor can evaluate a complaint about the assessment of his/her peers and either accept or reject the complaint. Artemis will automatically update the results of accepted complaints. You can view the updated scores immediately in the *Scores* page. There you can also export the updated data in ``CSV`` format, see `4.1 Exam Scores`_.
+Artemis collects the complaints submitted by the students during the :ref:`student review <student_review>`. You can access and review the complaints similar to the :ref:`submissions <exam_assessment>` from the *Assessment Dashboard*. Every assessor can evaluate a complaint about the assessment of their peers and either accept or reject the complaint. Artemis will automatically update the results of accepted complaints. You can view the updated scores immediately in the *Scores* page. There you can also export the updated data in ``CSV`` format, see `4.1 Exam Scores`_.
 
 - The complaints appear below the exercise submissions.
 - The original assessor of an assessment cannot respond to the complaint. A second assessor must review the complaint and respond to it.
@@ -420,3 +420,6 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
 .. |unlock_repo| image:: instructor/buttons/unlock_repo.png
 .. |view| image:: instructor/buttons/view.png
 .. |submissions| image:: instructor/buttons/submissions.png
+.. |import_students| image:: instructor/buttons/import_students.png
+.. |register_course_students| image:: instructor/buttons/register_course_students.png
+.. |configure_grading_button| image:: instructor/buttons/configure_grading.png
