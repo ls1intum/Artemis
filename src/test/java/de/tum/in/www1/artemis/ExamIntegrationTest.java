@@ -776,9 +776,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testUpdateExam_rescheduleModeling_workingTimeChanged() throws Exception {
         var modelingExercise = database.addCourseExamExerciseGroupWithOneModelingExercise();
         var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
-        examWithModelingEx.setVisibleDate(ZonedDateTime.now().plusHours(1));
-        examWithModelingEx.setStartDate(ZonedDateTime.now().plusHours(2));
-        examWithModelingEx.setEndDate(ZonedDateTime.now().plusHours(3));
+        examWithModelingEx.setVisibleDate(now().plusHours(1));
+        examWithModelingEx.setStartDate(now().plusHours(2));
+        examWithModelingEx.setEndDate(now().plusHours(3));
         request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
 
         StudentExam studentExam = database.addStudentExam(examWithModelingEx);
