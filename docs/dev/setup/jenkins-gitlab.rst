@@ -940,7 +940,7 @@ Docker image can be found on `dockerhub <https://hub.docker.com/r/jenkins/jenkin
 
         docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build -d
 
-2. Build the new Docker image:
+3. Build the new Docker image:
 
    ::
 
@@ -948,19 +948,19 @@ Docker image can be found on `dockerhub <https://hub.docker.com/r/jenkins/jenkin
 
    The name of the image is called ``jenkins-artemis``.
 
-3. Stop the current Jenkins container (change jenkins to the name of your container):
+4. Stop the current Jenkins container (change jenkins to the name of your container):
 
    ::
 
         docker stop jenkins
 
-4. Rename the container to ``jenkins_old`` so that it can be used as a backup:
+5. Rename the container to ``jenkins_old`` so that it can be used as a backup:
 
    ::
 
         docker rename jenkins jenkins_old
 
-5. Run the new Jenkins instance:
+6. Run the new Jenkins instance:
 
    ::
 
@@ -969,7 +969,7 @@ Docker image can be found on `dockerhub <https://hub.docker.com/r/jenkins/jenkin
          -v /var/run/docker.sock:/var/run/docker.sock \
          -p 9080:8080 jenkins-artemis \
 
-6. You can remove the backup container if it's no longer needed:
+7. You can remove the backup container if it's no longer needed:
 
    ::
 
