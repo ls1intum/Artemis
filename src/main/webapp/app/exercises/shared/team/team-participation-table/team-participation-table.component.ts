@@ -125,7 +125,7 @@ export class TeamParticipationTableComponent implements OnInit {
     async openAssessmentEditor(exercise: Exercise, participation: Participation, submission: Submission | 'new'): Promise<void> {
         const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
         const route = getLinkToSubmissionAssessment(exercise.type!, this.course.id!, exercise.id!, participation.id, submissionUrlParameter, 0, 0);
-        await this.router.navigate([route]);
+        await this.router.navigate(route);
     }
 
     /**

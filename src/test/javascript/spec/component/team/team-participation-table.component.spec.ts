@@ -226,7 +226,13 @@ describe('TeamParticipationTableComponent', () => {
         expect(router.navigate).to.have.been.calledOnce;
         const navigationUrl = router.navigate.getCall(0).args[0];
         expect(navigationUrl).to.deep.equal([
-            ['/course-management', course.id!.toString(), exercise2.type! + '-exercises', exercise2.id!.toString(), 'submissions', 'new', 'assessment'],
+            '/course-management',
+            course.id!.toString(),
+            exercise2.type! + '-exercises',
+            exercise2.id!.toString(),
+            'submissions',
+            'new',
+            'assessment',
         ]);
     }));
 
