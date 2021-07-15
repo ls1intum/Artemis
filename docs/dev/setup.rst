@@ -300,8 +300,8 @@ Configure Text Assessment Analytics Service:
 
 The Text Assessment Analytics is an internal analytics service used to gather data regarding the features of the text assessment process. Certain assessment events are tracked:
 
-1. Adding a new feedback on a manually selected block
-2. Adding a new feedback on an automatically selected block
+1. Adding new feedback on a manually selected block
+2. Adding new feedback on an automatically selected block
 3. Deleting a feedback
 4. Clicking to resolve feedback conflicts
 5. Clicking to view origin submission of automatically generated feedback
