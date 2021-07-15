@@ -94,40 +94,35 @@ describe('Modeling Exercise Spec', () => {
             cy.visit(`/course-management/${testCourse.id}/exercises`);
             cy.contains('Cypress Modeling Exercise').click();
             cy.get('.card-body').contains('Edit').click();
-            // cy.contains('Create Example Solution').click();
-            cy.get('.sc-kstrdz > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
-            cy.get('.card-body').contains('Save Example Solution').click();
-            cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
-            cy.get('.col-lg-1 > .btn').click();
-            cy.get('ul > .ng-star-inserted > .btn').should('contain.text', 'Example Solution');
+            cy.get('.sc-ksdxAp > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-furvIG', { position: 'bottomLeft', force: true });
+            cy.contains('Save').click();
+            cy.get('.row-md > :nth-child(4)').should('contain.text', 'Export');
+            cy.get('.sc-furvIG > :nth-child(1)').should('exist');
         });
 
         it('Creates Example Submission', () => {
             cy.visit(`/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
             cy.contains('Create Example Submission').click();
-            cy.get('.sc-kstrdz > :nth-child(2) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
-            cy.get('.sc-kstrdz > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
-            cy.get('.sc-kstrdz > :nth-child(3) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
+            cy.get('.sc-ksdxAp > :nth-child(2) > :nth-child(1) > :nth-child(1)').drag('.sc-furvIG', { position: 'bottomLeft', force: true });
+            cy.get('.sc-ksdxAp > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-furvIG', { position: 'bottomLeft', force: true });
+            cy.get('.sc-ksdxAp > :nth-child(3) > :nth-child(1) > :nth-child(1)').drag('.sc-furvIG', { position: 'bottomLeft', force: true });
             cy.contains('Create new Example Submission').click();
             cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
-            cy.get('.col-lg-1 > .btn').click();
-            cy.get(':nth-child(2) > :nth-child(18)').should('contain.text', 'Example Submission 1');
-            cy.log('Assess Example Submission');
-            cy.get(':nth-child(2) > :nth-child(18)').contains('Example Submission 1').click();
-            cy.get('.col-lg-4 > :nth-child(2) > :nth-child(1)').click();
-            cy.wait(500);
-            cy.get('.sc-fubCfw > :nth-child(1) > :nth-child(1) > :nth-child(1)').dblclick('top');
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('-1');
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(3) ').type('Wrong');
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(13)').click();
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('1');
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(3) ').type('Good');
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(5)').click();
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('0');
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(3)').type('Unnecessary');
+            cy.contains('Show Assessment').click();
+            // cy.get('.sc-furvIG >> :nth-child(1)').should('contain.text', 'Class');
+            // cy.get('.sc-furvIG').contains('Class').dblclick('top');
+            cy.getSettled(`.sc-furvIG >> :nth-child(1)`).dblclick('top');
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('-1');
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(3) ').type('Wrong');
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(13)').click();
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('1');
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(3) ').type('Good');
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(5)').click();
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('0');
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(3)').type('Unnecessary');
             cy.get('.card-body').click('top');
-            cy.get('.sc-fubCfw > :nth-child(1) > :nth-child(1) > :nth-child(2) > :nth-child(1)').should('exist');
-            cy.get('.col-lg-4 > :nth-child(1)').click();
+            cy.get('.sc-furvIG > :nth-child(1) > :nth-child(1) > :nth-child(2) > :nth-child(1)').should('exist');
+            cy.contains('Save Example Assessment').click();
         });
 
         it('Edit Existing Modeling Exercise', () => {
@@ -139,11 +134,11 @@ describe('Modeling Exercise Spec', () => {
             cy.get('#field_categories >>>>>>>:nth-child(2)>').click();
             cy.get('jhi-difficulty-picker > :nth-child(1) > :nth-child(4)').click({ force: true });
             cy.get(':nth-child(1) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').type('01.01.2030', { force: true });
-            cy.get('.ml-3 > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').type('02.01.2030', { force: true });
+            cy.get('.ms-3 > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').type('02.01.2030', { force: true });
             cy.get(':nth-child(9) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').type('03.01.2030', { force: true });
             cy.get('jhi-included-in-overall-score-picker > .btn-group > :nth-child(3)').click({ force: true });
             cy.get('#field_points').clear().type('100');
-            cy.get(':nth-child(3) > .btn-primary').click();
+            cy.contains('Save').click();
             cy.wait('@editModelingExercise');
             cy.visit(`/course-management/${testCourse.id}/exercises`);
             cy.get('tbody > tr > :nth-child(2)').should('contain.text', 'Cypress EDITED ME');
@@ -175,7 +170,7 @@ describe('Modeling Exercise Spec', () => {
         it('Release a Modeling Exercise', () => {
             cy.login(instructorUsername, instructorPassword, `/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
             cy.get(':nth-child(1) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(dayjs().subtract(1, 'hour').toString(), { force: true });
-            cy.get(':nth-child(3) > .btn-primary').click();
+            cy.contains('Save').click();
         });
 
         it('Student can start and submit their model', () => {
@@ -184,12 +179,11 @@ describe('Modeling Exercise Spec', () => {
             cy.get('.col-lg-8').contains(`Cypress Modeling Exercise ${uid}`).click();
             cy.get('jhi-exercise-details-student-actions.col > >').contains('Start exercise').click();
             cy.wait('@createModelingParticipation');
-            cy.get('.btn').should('contain.text', 'Open modeling editor');
+            cy.get('.btn').should('contain.text', 'Open modelling editor');
             cy.get('.btn').click();
-            cy.wait(10000);
-            cy.get('.sc-kstrdz > :nth-child(2) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
-            cy.get('.sc-kstrdz > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
-            cy.get('.sc-kstrdz > :nth-child(3) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
+            cy.get('.sc-ksdxAp > :nth-child(2) > :nth-child(1) > :nth-child(1)').drag('.sc-furvIG', { position: 'bottomLeft', force: true });
+            cy.get('.sc-ksdxAp > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-furvIG', { position: 'bottomLeft', force: true });
+            cy.get('.sc-ksdxAp > :nth-child(3) > :nth-child(1) > :nth-child(1)').drag('.sc-furvIG', { position: 'bottomLeft', force: true });
             cy.get('.jhi-btn').click();
             cy.get('.alerts').should('contain.text', 'Your submission was successful! You can change your submission or wait for your feedback.');
             cy.get('.col-auto').should('contain.text', 'No graded result');
@@ -198,34 +192,30 @@ describe('Modeling Exercise Spec', () => {
         it('Close exercise for submissions', () => {
             cy.login(instructorUsername, instructorPassword, `/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
             cy.get(':nth-child(2) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(dayjs().toString(), { force: true });
-            cy.get(':nth-child(3) > .btn-primary').click();
+            cy.contains('Save').click();
         });
 
         it('Tutor can assess the submission', () => {
             cy.login(tutorUsername, tutorPassword, '/course-management');
-            cy.get(`[ng-reflect-router-link="/course-management,${testCourse.id},assessm"]`).click();
+            cy.get(`[href="/course-management/${testCourse.id}/assessment-dashboard"]`).click();
             cy.get('#field_showFinishedExercise').click();
             cy.get('tbody > tr > :nth-child(6) >').click();
             cy.get('.btn').click();
             cy.wait(10000);
             cy.get('.btn').click();
-            cy.get('.alerts').should(
-                'contain.text',
-                'You do now have the lock on this submission. Only you can assess this model. Please assess this model before opening other submissions.',
-            );
             cy.get('#assessmentLockedCurrentUser').should('contain.text', 'You have the lock for this assessment');
             cy.get('jhi-unreferenced-feedback > .btn').click();
             cy.get('jhi-assessment-detail > .card > .card-body > :nth-child(1) > :nth-child(2)').clear().type('1');
             cy.get('jhi-assessment-detail > .card > .card-body > :nth-child(2) > :nth-child(2)').clear().type('thanks, i hate it');
-            cy.get('.sc-fubCfw >> :nth-child(1)').dblclick('top');
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('-1');
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(3) > ').type('Wrong', { force: true });
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(13) >').click('right', { force: true });
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('1');
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(3) >').type('Good', { force: true });
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(5)').click();
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('0');
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(3) >').type('Unnecessary', { force: true });
+            cy.get('.sc-furvIG >> :nth-child(1)').dblclick('top');
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('-1');
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(3) > ').type('Wrong', { force: true });
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(13) >').click('right', { force: true });
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('1');
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(3) >').type('Good', { force: true });
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(5)').click();
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('0');
+            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(3) >').type('Unnecessary', { force: true });
             cy.get('.top-container > :nth-child(3) > :nth-child(4)').click();
             cy.get('.alerts').should('contain.text', 'Your assessment was submitted successfully!');
         });
@@ -233,7 +223,7 @@ describe('Modeling Exercise Spec', () => {
         it('Close assessment period', () => {
             cy.login(instructorUsername, instructorPassword, `/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
             cy.get(':nth-child(9) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(dayjs().toString(), { force: true });
-            cy.get(':nth-child(3) > .btn-primary').click();
+            cy.contains('Save').click();
         });
 
         it('Student can view the assessment and complain', () => {
