@@ -35,7 +35,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     previousProblemStatementUpdate: string;
     updatedProblemStatementWithHighlightedDifferences: string;
     updatedProblemStatement: string;
-    showHighlightedDifferences: boolean = true;
+    showHighlightedDifferences = true;
 
     constructor(
         private textService: TextEditorService,
@@ -50,8 +50,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     ngOnInit(): void {
-        debugger;
-
         // show submission answers in UI
         this.updateViewFromSubmission();
 
@@ -81,13 +79,15 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     highlightProblemStatementDifferences() {
-        if (!this.updatedProblemStatement) return;
+        if (!this.updatedProblemStatement) {
+            return;
+        }
 
-        //creates the diffMatchPatch library object to be able to modify strings
+        // creates the diffMatchPatch library object to be able to modify strings
         const dmp = new DiffMatchPatch();
         let outdatedProblemStatement: string;
 
-        //checks if first update i.e. no highlight
+        // checks if first update i.e. no highlight
         if (!this.previousProblemStatementUpdate) {
             outdatedProblemStatement = this.getExercise().problemStatement!;
             this.previousProblemStatementUpdate = this.updatedProblemStatement;
@@ -96,10 +96,10 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
             outdatedProblemStatement = this.previousProblemStatementUpdate;
         }
 
-        //finds the initial difference then cleans the text with added html & css elements
+        // finds the initial difference then cleans the text with added html & css elements
         const diff = dmp.diff_main(outdatedProblemStatement!, this.updatedProblemStatement);
         dmp.diff_cleanupEfficiency(diff);
-        //remove ¶; (= &para;) symbols
+        // remove ¶; (= &para;) symbols
         this.updatedProblemStatementWithHighlightedDifferences = dmp.diff_prettyHtml(diff).replace(/&para;/g, '');
         return this.updatedProblemStatementWithHighlightedDifferences;
     }
