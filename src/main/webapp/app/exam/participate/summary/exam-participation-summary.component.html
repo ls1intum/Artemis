@@ -125,7 +125,7 @@
                     ></jhi-programming-exam-summary>
                 </ng-container>
                 <jhi-complaint-interactions
-                    *ngIf="exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && getSubmissionForExercise(exercise) && isAfterStudentReviewStart()"
+                    *ngIf="getSubmissionForExercise(exercise) && isAfterStudentReviewStart()"
                     class="mb-2 mt-2 ms-3"
                     [exercise]="exercise"
                     [participation]="getParticipationForExercise(exercise)!"
