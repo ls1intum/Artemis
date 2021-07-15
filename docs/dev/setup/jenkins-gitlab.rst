@@ -933,7 +933,7 @@ Docker image can be found on `dockerhub <https://hub.docker.com/r/jenkins/jenkin
 1. Open the Jenkins Dockerfile and replace ``jenkins/jenkins:lts`` with the version you want to use.
    For example, if you want to upgrade Jenkins to version ``2.289.2``, you will need to use the ``jenkins/jenkins:2.289.2-lts`` image.
 
-2. Build the new docker image:
+2. Build the new Docker image:
 
    ::
 
