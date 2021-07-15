@@ -410,15 +410,7 @@
                     </div>
                 </dd>
                 <dd *ngIf="programmingExercise.isAtLeastEditor && programmingExercise?.templateParticipation">
-                    <a
-                        [routerLink]="[
-                            this.baseResource,
-                            'participations',
-                            programmingExercise.templateParticipation?.id,
-                            'submissions'
-                        ]"
-                        [queryParams]="{ isTmpOrSolutionProgrParticipation: true }"
-                    >
+                    <a [routerLink]="getParticipationSubmissionLink(programmingExercise.templateParticipation!.id)" [queryParams]="{ isTmpOrSolutionProgrParticipation: true }">
                         <span jhiTranslate="artemisApp.programmingExercise.detail.showTemplateSubmissions">Show Submissions</span>
                     </a>
                 </dd>
@@ -449,15 +441,7 @@
                     </div>
                 </dd>
                 <dd *ngIf="programmingExercise.isAtLeastEditor && programmingExercise?.solutionParticipation">
-                    <a
-                        [routerLink]="[
-                            this.baseResource,
-                            'participations',
-                            programmingExercise.solutionParticipation?.id,
-                            'submissions'
-                        ]"
-                        [queryParams]="{ isTmpOrSolutionProgrParticipation: true }"
-                    >
+                    <a [routerLink]="getParticipationSubmissionLink(programmingExercise.solutionParticipation!.id)" [queryParams]="{ isTmpOrSolutionProgrParticipation: true }">
                         <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions">Show Submissions</span>
                     </a>
                 </dd>
