@@ -11,6 +11,8 @@
             "confirmDeletePost": "Please confirm that you want to delete your post!",
             "deleteAnswer": "Do you want to delete your reply?",
             "confirmDeleteAnswer": "Please confirm that you want to delete your reply!",
+            "createModalTitlePost": "Create post",
+            "createModalTitleAnswer": "Create reply",
             "editPosting": "Edit content",
             "approvedLabel": "Approved by a tutor",
             "approveAnswer": "Approve reply",

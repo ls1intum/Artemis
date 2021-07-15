@@ -16,6 +16,6 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     }
 
     updateTags(tags: string[]): void {
-        this.posting.tags = tags;
+        this.onUpdate.emit({ ...this.posting, tags });
     }
 }

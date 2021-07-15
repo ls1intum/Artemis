@@ -1,10 +1,10 @@
 <ng-template #postingEditor let-c="close">
     <div class="modal-header">
-        <h4 class="modal-title">{{ 'artemisApp.metis.editPosting' | artemisTranslate }}</h4>
+        <h4 class="modal-title">{{ modalTitle | artemisTranslate }}</h4>
     </div>
     <div class="modal-body">
         <div class="form-group-narrow position-relative">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.tags">Tags</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.metis.tags">Tags</label>
             <jhi-post-tag-selector [postTags]="posting.tags" (postTagsChange)="updateTags($event)" [existingPostTags]="existingPostTags"></jhi-post-tag-selector>
         </div>
         <div class="row mb-2">

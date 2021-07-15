@@ -24,13 +24,13 @@
                     ></jhi-answer-post>
                 </ng-container>
                 <!-- new answer -->
-                <button *ngIf="toggledAnswers || sortedAnswerPosts.length === 0" class="btn btn-sm btn-outline-secondary m-1" (click)="createEditModal.open()">
+                <button *ngIf="toggledAnswers || sortedAnswerPosts.length === 0" class="btn btn-sm btn-outline-secondary m-1" (click)="createAnswerPostModal.open()">
                     <fa-icon [icon]="'comments'"></fa-icon>
                     <span class="d-none d-md-inline">{{ 'artemisApp.metis.answerNow' | artemisTranslate }}</span>
                 </button>
                 <jhi-answer-post-create-edit-modal
-                    #createEditModal
-                    [posting]="createEmptyAnswerPost()"
+                    #createAnswerPostModal
+                    [posting]="createdAnswerPost"
                     [courseId]="courseId"
                     (onCreate)="onCreateAnswerPost($event)"
                 ></jhi-answer-post-create-edit-modal>

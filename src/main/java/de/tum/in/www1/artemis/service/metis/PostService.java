@@ -255,7 +255,6 @@ public class PostService extends PostingService {
 
         // checks
         Course course = preCheckUserAndCourse(user, courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         return postRepository.findPostTagsForCourse(courseId);
     }
 

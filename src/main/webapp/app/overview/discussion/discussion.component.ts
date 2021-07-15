@@ -24,6 +24,7 @@ export class DiscussionComponent implements OnInit, AfterViewInit {
     isAtLeastTutorInCourse: boolean;
     courseId: number;
     existingPostTags: string[];
+    createdPost: Post;
 
     constructor(private route: ActivatedRoute, private accountService: AccountService, private exerciseService: ExerciseService, private postService: PostService) {}
 
@@ -36,6 +37,7 @@ export class DiscussionComponent implements OnInit, AfterViewInit {
         });
         this.loadPosts();
         this.loadExistingPostTags();
+        this.createdPost = this.createEmptyPost();
     }
 
     loadPosts() {
@@ -116,6 +118,7 @@ export class DiscussionComponent implements OnInit, AfterViewInit {
 
     onCreatePost(post: Post): void {
         this.posts.push(post);
+        this.createdPost = this.createEmptyPost();
     }
 
     createEmptyPost(): Post {

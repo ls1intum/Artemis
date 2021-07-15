@@ -1,19 +1,22 @@
-import { Directive, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Posting } from 'app/entities/metis/posting.model';
 import { PostingsService } from 'app/shared/metis/postings.service';
 import moment from 'moment';
+import { Post } from 'app/entities/metis/post.model';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 const MAX_CONTENT_LENGTH = 1000;
 
 @Directive()
-export abstract class PostingsCreateEditModalDirective<T extends Posting> implements OnInit {
+export abstract class PostingsCreateEditModalDirective<T extends Posting> implements OnInit, OnChanges {
     @Input() posting: T;
     @Input() courseId: number;
     @Output() onUpdate: EventEmitter<T> = new EventEmitter<T>();
     @Output() onCreate: EventEmitter<T> = new EventEmitter<T>();
     @ViewChild('postingEditor') postingEditor: TemplateRef<any>;
     modalRef?: NgbModalRef;
+    modalTitle: string;
     isLoading = false;
     maxContentLength = MAX_CONTENT_LENGTH;
     content: string;
@@ -22,6 +25,23 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
 
     ngOnInit() {
         this.content = this.posting.content ?? '';
+        this.updateModalTitle();
+    }
+
+    ngOnChanges() {
+        this.updateModalTitle();
+    }
+
+    private updateModalTitle() {
+        if (this.posting.id) {
+            this.modalTitle = 'artemisApp.metis.editPosting';
+        } else {
+            if (this.posting instanceof Post) {
+                this.modalTitle = 'artemisApp.metis.createModalTitlePost';
+            } else if (this.posting instanceof AnswerPost) {
+                this.modalTitle = 'artemisApp.metis.createModalTitleAnswer';
+            }
+        }
     }
 
     confirm() {

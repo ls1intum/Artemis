@@ -11,6 +11,8 @@
             "confirmDeletePost": "Bitte bestätige, dass du deinen Beitrag löschen möchtest!",
             "deleteAnswer": "Möchtest du deine Antwort löschen?",
             "confirmDeleteAnswer": "Bitte bestätige, dass du deine Antwort löschen möchtest!",
+            "createModalTitlePost": "Beitrag erstellen",
+            "createModalTitleAnswer": "Antwort erstellen",
             "editPosting": "Inhalt bearbeiten",
             "approvedLabel": "Von Tutor:in bestätigt",
             "approveAnswer": "Antwort bestätigen",

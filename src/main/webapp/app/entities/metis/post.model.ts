@@ -2,7 +2,6 @@ import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Course } from 'app/entities/course.model';
-import { PostTag } from 'app/entities/metis/post-tag.model';
 import { Posting } from 'app/entities/metis/posting.model';
 
 export enum CourseWideContext {

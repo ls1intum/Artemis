@@ -6,7 +6,6 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { PostAction, PostActionName } from 'app/shared/metis/post/post.component';
 import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
 import { PostService } from 'app/shared/metis/post/post.service';
-import { HttpResponse } from '@angular/common/http';
 
 export interface PostRowAction {
     name: PostRowActionName;
@@ -32,6 +31,7 @@ export class PostingsThreadComponent implements OnInit {
     @Output() interactPostRow: EventEmitter<PostRowAction> = new EventEmitter<PostRowAction>();
     toggledAnswers: boolean;
     sortedAnswerPosts: AnswerPost[];
+    createdAnswerPost: AnswerPost;
 
     constructor(private answerPostService: AnswerPostService, private postService: PostService, private localStorage: LocalStorageService) {}
 
@@ -40,6 +40,7 @@ export class PostingsThreadComponent implements OnInit {
      */
     ngOnInit(): void {
         this.sortAnswerPosts();
+        this.createdAnswerPost = this.createEmptyAnswerPost();
     }
 
     /**
@@ -82,6 +83,7 @@ export class PostingsThreadComponent implements OnInit {
         }
         this.post.answers.push(answerPost);
         this.sortAnswerPosts();
+        this.createdAnswerPost = this.createEmptyAnswerPost();
     }
 
     deleteAnswerPost(answerPost: AnswerPost): void {
