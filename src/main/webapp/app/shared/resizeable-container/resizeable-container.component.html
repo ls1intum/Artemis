@@ -30,7 +30,6 @@
                     <ng-container *ngTemplateOutlet="rightHeaderButton"></ng-container>
                 </h3>
                 <fa-icon id="right-header-icon" [icon]="'chevron-right'" (click)="collapsed = !collapsed"></fa-icon>
-                <!-- TODO scheint zu passen, jedoch ist das icon recht klein, also vermutlich muss ich das mit padding oder so vergrößern, also nicht das icon sonder die clickbare are-->
             </div>
             <div class="card-body">
                 <ng-content select="[right-body]"></ng-content>
