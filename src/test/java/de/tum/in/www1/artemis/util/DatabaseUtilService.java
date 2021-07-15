@@ -379,7 +379,11 @@ public class DatabaseUtilService {
     }
 
     public Course createCourse() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        return createCourse(null);
+    }
+
+    public Course createCourse(Long id) {
+        Course course = ModelFactory.generateCourse(id, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         return courseRepo.save(course);
     }
 

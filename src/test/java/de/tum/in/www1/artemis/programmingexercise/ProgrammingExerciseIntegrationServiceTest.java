@@ -86,6 +86,9 @@ public class ProgrammingExerciseIntegrationServiceTest {
     private GitUtilService gitUtilService;
 
     @Autowired
+    private DatabaseUtilService databaseUtilService;
+
+    @Autowired
     private CourseRepository courseRepository;
 
     @Autowired
@@ -639,6 +642,23 @@ public class ProgrammingExerciseIntegrationServiceTest {
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, true);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), true);
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
+    }
+
+    public void updateProgrammingExercise_updatingCourseId_conflict() throws Exception {
+        // Create a programming exercise.
+        testRecreateBuildPlansExerciseSuccess();
+
+        // Create a new course with different id.
+        Long oldCourseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        Long newCourseId = oldCourseId + 1;
+        Course newCourse = databaseUtilService.createCourse(newCourseId);
+
+        // Assign new course to the programming exercise.
+        ProgrammingExercise newProgrammingExercise = programmingExercise;
+        newProgrammingExercise.setCourse(newCourse);
+
+        // Programming exercise update with the new course should fail.
+        request.put(ROOT + PROGRAMMING_EXERCISES, newProgrammingExercise, HttpStatus.CONFLICT);
     }
 
     public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {

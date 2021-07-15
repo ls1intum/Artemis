@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -37,6 +38,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Autowired
     private ModelingExerciseRepository modelingExerciseRepository;
+
+    @Autowired
+    private DatabaseUtilService databaseUtilService;
 
     @Autowired
     private UserRepository userRepo;
@@ -207,6 +211,27 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         // use an arbitrary course id that was not yet stored on the server to get a bad request in the PUT call
         modelingExercise = modelingExerciseUtilService.createModelingExercise(100L, classExercise.getId());
         request.put("/api/modeling-exercises", modelingExercise, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateModelingExercise_updatingCourseId_conflict() throws Exception {
+        // Create a modeling exercise.
+        Long oldCourseId = 1L;
+        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(oldCourseId);
+        ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+
+        // Create a new course with different id.
+        Long newCourseId = 2L;
+        Course newCourse = databaseUtilService.createCourse(newCourseId);
+
+        // Assing new course to the modeling exercise.
+        ModelingExercise updatedModelingExercise = createdModelingExercise;
+        updatedModelingExercise.setCourse(newCourse);
+
+        // Modeling exercise update with the new course should fail.
+        ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling-exercises", createdModelingExercise, ModelingExercise.class, HttpStatus.CONFLICT);
+        assertThat(returnedModelingExercise).isNull();
     }
 
     @Test

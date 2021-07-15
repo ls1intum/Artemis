@@ -224,6 +224,12 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercise_updatingCourseId_conflict() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateProgrammingExercise_updatingCourseId_conflict();
+    }
+
+    @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationServiceTest.updateTimeline_intructorNotInCourse_forbidden();

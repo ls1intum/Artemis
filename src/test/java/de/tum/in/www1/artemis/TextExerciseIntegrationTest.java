@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
@@ -38,6 +39,9 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private DatabaseUtilService databaseUtilService;
 
     @Autowired
     private TextClusterRepository textClusterRepository;
@@ -298,6 +302,27 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         textExercise.setId(null);
 
         request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExercise_updatingCourseId_asInstructor() throws Exception {
+        // Create a text exercise.
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise existingTextExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        // Create a new course with different id.
+        Long oldCourseId = course.getId();
+        Long newCourseId = oldCourseId + 1L;
+        Course newCourse = databaseUtilService.createCourse(newCourseId);
+
+        // Assign new course to the text exercise.
+        TextExercise updatedTextExercise = existingTextExercise;
+        updatedTextExercise.setCourse(newCourse);
+
+        // Text exercise update with the new course should fail.
+        TextExercise returnedTextExercise = request.putWithResponseBody("/api/text-exercises", updatedTextExercise, TextExercise.class, HttpStatus.CONFLICT);
+        assertThat(returnedTextExercise).isNull();
     }
 
     @Test
