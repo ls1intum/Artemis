@@ -16,7 +16,7 @@
         <div class="form-group">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
-                <jhi-help-icon placement="top" text="artemisApp.programmingExercise.titleTooltip"></jhi-help-icon>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.titleTooltip"></jhi-help-icon>
             </div>
             <input required type="text" class="form-control" name="title" id="field_title" [pattern]="titleNamePattern" [(ngModel)]="programmingExercise.title" #title="ngModel" />
             <ng-container *ngFor="let e of title.errors! | keyvalue | removekeys: ['required']">
@@ -28,7 +28,7 @@
         <div class="form-group">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName">Short Name</label>
-                <jhi-help-icon placement="top" text="artemisApp.programmingExercise.shortNameTooltip"></jhi-help-icon>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.shortNameTooltip"></jhi-help-icon>
             </div>
             <input
                 required
@@ -50,7 +50,7 @@
         </div>
         <div class="form-group mt-2">
             <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label" for="preview"></label>
-            <jhi-help-icon placement="top" text="artemisApp.programmingExercise.preview.tooltip"></jhi-help-icon>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.preview.tooltip"></jhi-help-icon>
         </div>
         <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise"></jhi-programming-exercise-plans-and-repositories-preview>
         <div *ngIf="!isImport" class="form-group">
@@ -141,7 +141,7 @@
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories">Categories</label>
-                <jhi-help-icon placement="top" text="artemisApp.programmingExercise.categoriesTooltip"></jhi-help-icon>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.categoriesTooltip"></jhi-help-icon>
             </div>
             <jhi-category-selector
                 [exerciseCategories]="exerciseCategories"
@@ -222,7 +222,7 @@
         <div class="form-group mt-2">
             <div>
                 <label jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline"> Timeline for the whole programming exercise </label>
-                <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.timelineTooltip"></jhi-help-icon>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeline.timelineTooltip"></jhi-help-icon>
             </div>
             <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise" [isExamMode]="isExamMode" [readOnly]="false"></jhi-programming-exercise-lifecycle>
         </div>
@@ -299,7 +299,7 @@
                 <fa-icon
                     icon="question-circle"
                     class="text-secondary"
-                    placement="top"
+                    placement="auto"
                     ngbTooltip="{{ 'artemisApp.programmingExercise.enableStaticCodeAnalysis.description' | artemisTranslate }}"
                 ></fa-icon>
             </div>
@@ -310,7 +310,7 @@
                 <fa-icon
                     icon="question-circle"
                     class="text-secondary"
-                    placement="top"
+                    placement="auto"
                     ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | artemisTranslate }}"
                 ></fa-icon>
                 <div class="input-group">
@@ -335,7 +335,7 @@
             </ng-container>
         </div>
         <jhi-presentation-score-checkbox [exercise]="programmingExercise"></jhi-presentation-score-checkbox>
-        <div class="form-group" id="field_problemStatement" name="problemStatement">
+        <div class="form-group mb-0" id="field_problemStatement" name="problemStatement">
             <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
             <ng-container *ngIf="isImport">
                 <ngb-alert [dismissible]="false">
@@ -371,8 +371,8 @@
             ></jhi-markdown-editor>
             <jhi-grading-instructions-details *ngIf="this.checkedFlagForStructuredGradingInstructions" [exercise]="programmingExercise"></jhi-grading-instructions-details>
         </div>
-        <!--        It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
-        <div class="form-group" *ngIf="sequentialTestRunsAllowed">
+        <!-- It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
+        <div class="form-group mb-0" *ngIf="sequentialTestRunsAllowed">
             <div class="form-check">
                 <label class="form-check-label" for="field_sequentialTestRuns">
                     <input
@@ -385,12 +385,12 @@
                         checked
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Differentiate Test Case Execution</span>
-                    <jhi-help-icon placement="top" text="artemisApp.programmingExercise.sequentialTestRuns.description"></jhi-help-icon>
+                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.sequentialTestRuns.description"></jhi-help-icon>
                 </label>
             </div>
         </div>
         <!-- Setting whether the solution repository should be checked out is only supported for Haskell exercises and is only available for new exercises -->
-        <div class="form-group" *ngIf="!programmingExercise.id && programmingExercise.programmingLanguage && checkoutSolutionRepositoryAllowed">
+        <div class="form-group mb-0" *ngIf="!programmingExercise.id && programmingExercise.programmingLanguage && checkoutSolutionRepositoryAllowed">
             <div class="form-check">
                 <label class="form-check-label" for="field_checkoutSolutionRepository">
                     <input
@@ -401,11 +401,11 @@
                         [(ngModel)]="programmingExercise.checkoutSolutionRepository"
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.checkoutSolutionRepository.title">Checkout Solution repository</span>
-                    <jhi-help-icon placement="top" text="artemisApp.programmingExercise.checkoutSolutionRepository.description"></jhi-help-icon>
+                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutSolutionRepository.description"></jhi-help-icon>
                 </label>
             </div>
         </div>
-        <div class="form-group">
+        <div class="form-group mb-0">
             <div class="form-check">
                 <label [class]="!validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOfflineIde">
                     <input class="form-check-input" type="checkbox" name="allowOfflineIde" id="field_allowOfflineIde" [(ngModel)]="programmingExercise.allowOfflineIde" checked />
@@ -420,7 +420,7 @@
                 </label>
             </div>
         </div>
-        <div class="form-group" *ngIf="ProjectType.XCODE !== selectedProjectType">
+        <div class="form-group mb-0" *ngIf="ProjectType.XCODE !== selectedProjectType">
             <div class="form-check">
                 <label [class]="!validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineEditor">
                     <input
@@ -442,7 +442,7 @@
                 </label>
             </div>
         </div>
-        <div class="form-group">
+        <div class="form-group mb-0">
             <div class="form-check">
                 <label class="form-check-label" for="field_showTestNamesToStudents">
                     <input
@@ -457,7 +457,7 @@
                     <fa-icon
                         icon="question-circle"
                         class="text-secondary"
-                        placement="top"
+                        placement="auto"
                         ngbTooltip="{{ 'artemisApp.programmingExercise.showTestNamesToStudentsTooltip' | artemisTranslate }}"
                     ></fa-icon>
                 </label>
@@ -466,7 +466,7 @@
         <!--This checkbox is only visible in the dev environment. If the checkbox is checked and the user clicks on the generate button
              a programming exercise without a connection to the VCS and CI will be generated
              This functionality is only for testing purposes-->
-        <div class="form-group" *ngIf="!inProductionEnvironment">
+        <div class="form-group mb-0" *ngIf="!inProductionEnvironment">
             <div class="form-check">
                 <label class="form-check-label" for="field_noVersionControlAndContinuousIntegrationAvailable">
                     <input
@@ -481,7 +481,7 @@
                 </label>
             </div>
         </div>
-        <div class="form-group">
+        <div class="form-group mb-0">
             <div class="form-check">
                 <label class="form-check-label" for="field_publishBuildPlanUrl">
                     <input
@@ -496,7 +496,7 @@
                 </label>
             </div>
         </div>
-        <div *ngIf="isImport" class="form-group">
+        <div *ngIf="isImport" class="form-group mb-0">
             <div class="form-check">
                 <label class="form-check-label" for="field_recreateBuildPlans">
                     <input
@@ -508,11 +508,11 @@
                         (change)="onRecreateBuildPlanOrUpdateTemplateChange()"
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title">Recreate Build Plans</span>
-                    <jhi-help-icon placement="top" text="artemisApp.programmingExercise.recreateBuildPlans.description"></jhi-help-icon>
+                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recreateBuildPlans.description"></jhi-help-icon>
                 </label>
             </div>
         </div>
-        <div *ngIf="isImport" class="form-group">
+        <div *ngIf="isImport" class="form-group mb-0">
             <div class="form-check">
                 <label class="form-check-label" for="field_updateTemplateFiles">
                     <input
@@ -524,10 +524,11 @@
                         (change)="onRecreateBuildPlanOrUpdateTemplateChange()"
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.updateTemplate.title">Update template</span>
-                    <jhi-help-icon placement="top" text="artemisApp.programmingExercise.updateTemplate.description"></jhi-help-icon>
+                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.updateTemplate.description"></jhi-help-icon>
                 </label>
             </div>
         </div>
+        <div class="pt-4"></div>
         <div class="form-group" *ngIf="programmingExercise.id && !isImport && !isExamMode">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
             <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
