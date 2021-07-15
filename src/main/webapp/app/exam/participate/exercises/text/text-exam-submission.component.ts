@@ -33,7 +33,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     subscriptionToLiveExamExerciseUpdates: Subscription;
     previousProblemStatementUpdate: string;
-    //previousProblemStatementUpdate: string = 'debug'; //TODO remove
     updatedProblemStatementWithHighlightedDifferences: string;
     updatedProblemStatement: string;
     showHighlightedDifferences: boolean = true;
@@ -57,13 +56,8 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.updateViewFromSubmission();
 
         this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
-            debugger;
-            if (update.problemStatement !== '') {
-                this.updateExerciseProblemStatementById(update.exerciseId, update.problemStatement);
-            }
+            this.updateExerciseProblemStatementById(update.exerciseId, update.problemStatement);
         });
-
-        //if(this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.source.)
     }
 
     toggleHighlightedProblemStatement(): void {

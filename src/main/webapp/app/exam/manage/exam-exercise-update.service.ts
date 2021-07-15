@@ -6,19 +6,25 @@ export interface ExamExerciseUpdate {
     problemStatement: string;
 }
 
+export interface ExamExerciseNavigation {
+    exerciseId: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ExamExerciseUpdateService {
-    private examExerciseIdAndProblemStatementSource = new BehaviorSubject<ExamExerciseUpdate>({ exerciseId: -1, problemStatement: '' });
+    private examExerciseIdAndProblemStatementSource = new BehaviorSubject<ExamExerciseUpdate>({ exerciseId: -1, problemStatement: 'initialProblemStatementValue' });
     currentExerciseIdAndProblemStatement = this.examExerciseIdAndProblemStatementSource.asObservable();
+
+    private examExerciseIdForNavigationSource = new BehaviorSubject<ExamExerciseNavigation>({ exerciseId: -1 });
+    currentExerciseIdForNavigation = this.examExerciseIdForNavigationSource.asObservable();
 
     constructor() {}
 
     navigateToExamExercise(exerciseId: number) {
-        this.examExerciseIdAndProblemStatementSource.next({ exerciseId, problemStatement: '' });
+        this.examExerciseIdForNavigationSource.next({ exerciseId });
     }
 
     updateLiveExamExercise(exerciseId: number, problemStatement: string) {
-        debugger;
         this.examExerciseIdAndProblemStatementSource.next({ exerciseId, problemStatement });
     }
 }

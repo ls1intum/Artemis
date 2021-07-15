@@ -8,7 +8,6 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { DiffMatchPatch } from 'diff-match-patch-typescript';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -40,15 +39,9 @@ export class ExamNavigationBarComponent implements OnInit {
     constructor(private layoutService: LayoutService, private examExerciseUpdateService: ExamExerciseUpdateService, private examParticipationService: ExamParticipationService) {}
 
     ngOnInit(): void {
-        this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
-            debugger;
-            if (update.problemStatement === '') {
-                // another exercise will only be displayed if the student clicks on the corresponding pop-up notification
-                this.changeExerciseById(update.exerciseId);
-            }
-            //  else {
-            //      this.updateExerciseProblemStatementById(update.exerciseId, update.problemStatement);
-            //  }
+        this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdForNavigation.subscribe((update) => {
+            // another exercise will only be displayed if the student clicks on the corresponding pop-up notification
+            this.changeExerciseById(update.exerciseId);
         });
 
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
