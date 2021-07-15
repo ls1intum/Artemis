@@ -34,6 +34,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
     allChecked = false;
 
+    // extension points, see shared/extension-point
     @ContentChild('overrideGenerateAndImportButton') overrideGenerateAndImportButton: TemplateRef<any>;
     @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
     @ContentChild('overrideButtons') overrideButtons: TemplateRef<any>;

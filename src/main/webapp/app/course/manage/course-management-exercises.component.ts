@@ -16,6 +16,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     modelingExercisesCount = 0;
     fileUploadExercisesCount = 0;
 
+    // extension points, see shared/extension-point
     @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;
     @ContentChild('overrideNonProgrammingExerciseCard') overrideNonProgrammingExerciseCard: TemplateRef<any>;
 
@@ -29,6 +30,11 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
     }
 
+    /**
+     * Sets the programming exercise count. Required to pass a callback to the
+     * overrideProgrammingExerciseCard extension since extensions don't support @Output
+     * @param count count to set the programmingExerciseCount to
+     */
     setProgrammingExerciseCount(count: number) {
         this.programmingExercisesCount = count;
     }

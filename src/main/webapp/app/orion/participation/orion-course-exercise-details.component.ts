@@ -5,5 +5,5 @@ import { Component } from '@angular/core';
     templateUrl: './orion-course-exercise-details.component.html',
 })
 export class OrionCourseExerciseDetailsComponent {
-    // Only replaces the student actions with Orion student actions in the overview
+    // only replaces the student actions with Orion student actions in the overview
 }

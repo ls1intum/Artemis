@@ -9,7 +9,7 @@
     <jhi-alert></jhi-alert>
     <jhi-course-exercise-card headingJhiTranslate="artemisApp.course.programmingExercises">
         <jhi-programming-exercise
-            *jhiExtensionPoint="overrideProgrammingExerciseCard; context: { embedded: true, course: course, callback: setProgrammingExerciseCount.bind(this) }"
+            *jhiExtensionPoint="overrideProgrammingExerciseCard; context: { embedded: true, course: course, exerciseCountCallback: setProgrammingExerciseCount.bind(this) }"
             [embedded]="true"
             [course]="course"
             (exerciseCount)="programmingExercisesCount = $event"
