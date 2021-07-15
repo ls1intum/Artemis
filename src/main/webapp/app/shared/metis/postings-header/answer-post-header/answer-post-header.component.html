@@ -1,5 +1,5 @@
 <div class="row justify-content-between my-1">
-    <div class="col-auto">
+    <div class="col-auto pe-0">
         <span class="posting-header">{{ posting.author!.name }} • {{ posting.creationDate | artemisDate: 'short' }}</span>
         <fa-icon
             *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"

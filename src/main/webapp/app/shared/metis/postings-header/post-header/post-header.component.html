@@ -1,6 +1,7 @@
 <div class="row justify-content-between my-1 me-0">
-    <div class="col-auto">
-        <span class="posting-header">{{ posting.author!.name }} • {{ posting.creationDate | artemisDate: 'short' }}</span>
+    <div class="col-auto pe-0">
+        <span *ngIf="postingIsOfToday" class="posting-header">{{ posting.author!.name }} • Today {{ posting.creationDate | artemisDate: 'time' }}</span>
+        <span *ngIf="!postingIsOfToday" class="posting-header">{{ posting.author!.name }} • {{ posting.creationDate | artemisDate: 'short-date' }}</span>
         <fa-icon
             *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
             size="xs"
@@ -22,7 +23,7 @@
         </jhi-confirm-icon>
     </div>
     <div
-        class="col-auto px-1"
+        class="col-auto ps-0 pe-1"
         (click)="toggleAnswers()"
         [ngClass]="getNumberOfAnswerPosts() > 0 ? 'clickable' : ''"
         [ngbTooltip]="'artemisApp.metis.toggleThread' | artemisTranslate"
