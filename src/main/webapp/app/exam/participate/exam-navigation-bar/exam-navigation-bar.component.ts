@@ -57,7 +57,7 @@ export class ExamNavigationBarComponent implements OnInit {
      * @param exerciseIndex: index of the exercise to switch to, if it should not be used, you can pass -1
      * @param forceSave: true if forceSave shall be used.
      */
-    changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean) {
+    changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean): void {
         if (!overviewPage) {
             // out of index -> do nothing
             if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
