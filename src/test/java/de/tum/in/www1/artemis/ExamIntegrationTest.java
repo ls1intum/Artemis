@@ -764,11 +764,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         examWithModelingEx.setEndDate(examWithModelingEx.getEndDate().plusSeconds(2));
         request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendModelingExerciseSchedule(modelingExercise.getId());
-
-        StudentExam studentExam = database.addStudentExam(examWithModelingEx);
-        request.patch("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams/" + examWithModelingEx.getId() + "/student-exams/" + studentExam.getId() + "/working-time",
-                3, HttpStatus.OK);
-        verify(instanceMessageSendService, times(1)).sendModelingExerciseSchedule(modelingExercise.getId());
     }
 
     @Test
