@@ -11,11 +11,12 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     @Output()
     onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight?: number }>();
 
-    @Input() collapsed: boolean;
     /** Resizable constants **/
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
     interactResizable: Interactable;
+
+    collapsed: boolean;
 
     constructor() {}
 
@@ -25,6 +26,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
      * The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
+        this.collapsed = false;
         this.initialInstructionsWidth = window.screen.width - 300 / 2;
         this.minInstructionsWidth = window.screen.width / 4 - 50;
         this.interactResizable = interact('.resizable-instructions');
@@ -35,6 +37,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
      * @param event - any event
      */
     toggleEditorCollapse(event: any) {
+        this.collapsed = !this.collapsed;
         this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.minInstructionsWidth });
     }
 }

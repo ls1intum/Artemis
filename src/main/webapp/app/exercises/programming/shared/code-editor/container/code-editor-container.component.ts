@@ -56,9 +56,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     @Input()
     highlightDifferences: boolean;
 
-    @Input()
-    collapsed = false;
-
     @Output()
     onResizeEditorInstructions = new EventEmitter<void>();
     @Output()
@@ -237,7 +234,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
 
     onToggleCollapse(event: InteractableEvent) {
         this.grid.toggleCollapse(event);
-        this.collapsed = !this.collapsed;
     }
 
     onGridResize(type: ResizeType) {

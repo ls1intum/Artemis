@@ -8,7 +8,8 @@ Code-Editor Layout Styles
     grid-row-gap: 10px;
 
     .collapsed--horizontal {
-        width: 75px !important;
+        width: 50px !important;
+        border: 2px solid red;
     }
     .collapsed--vertical {
         height: 42px !important;
@@ -147,13 +148,9 @@ Collapsable styling
 // Instructions
 .editor-sidebar-right.collapsed--horizontal {
     flex: none !important;
-
     .card-header {
         height: 100%;
-        width: 100%;
-        > fa-icon {
-            display: none;
-        }
+        width: 75%;
     }
     .instructions-wrapper__content {
         height: auto !important;
@@ -162,22 +159,29 @@ Collapsable styling
         .editable-instruction-container__editor {
             display: none;
         }
-        /*.instructions__content {
-            display: none;
-        }
-
-         */
     }
 
     .card-second-header {
         display: none !important;
     }
-    /*
-    .card-title span {
-        display: none !important;
-    }
 
-     */
+    .collapsed-instructions-card {
+        width: 50px;
+        justify-content: space-between;
+        flex-flow: column nowrap;
+        margin-left: 15px;
+        cursor: pointer;
+        .header {
+            writing-mode: vertical-rl;
+            margin: auto;
+        }
+        fa-icon {
+            display: flex;
+            justify-content: center;
+            padding: 15px 0;
+            padding-right: 20px;
+        }
+    }
 
     .editable-instruction-container__status {
         display: none !important;
@@ -190,7 +194,7 @@ Collapsable styling
         grid-template-columns: minmax(max-content, 1fr) minmax(max-content, 2fr);
 
         > :not(:first-child) {
-            border-left: 1px solid rgba(0, 0, 0, 0.125);
+            border-left: 3px solid ;
             padding-left: 20px;
         }
 
