@@ -298,7 +298,7 @@ internal user management in Artemis, then you would use the profiles:
 Configure Text Assessment Analytics Service:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Text Assessment Analytics is an internal analytics service used to gather data regarding the features of the text assessment process. Certain assessment events are tracked:
+Text Assessment Analytics is an internal analytics service used to gather data regarding the features of the text assessment process. Certain assessment events are tracked:
 
 1. Adding new feedback on a manually selected block
 2. Adding new feedback on an automatically selected block
