@@ -1198,7 +1198,7 @@ This section explains the changes required in Jenkins in order to set up build p
 
 
 Caching
--------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can configure caching for e.g. Maven repositories.
 See :doc:`programming-exercises` for more details.
