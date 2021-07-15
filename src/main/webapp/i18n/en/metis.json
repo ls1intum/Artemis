@@ -29,6 +29,12 @@
                 "hideApproved": "Hide posts with approved replies"
             },
             "post": {
+                "title": "Title",
+                "titleTooltip": "Add a precise and summarizing title your post",
+                "tags": "Tags",
+                "tagsTooltip": "Add up to three descriptive and reusable tags to your post",
+                "content": "Content",
+                "contentTooltip": "Describe your issue or request as precise as possible. Use markdown formatting where it improves readability.",
                 "created": "New post successfully created",
                 "updated": "Post successfully updated",
                 "deleted": "Post successfully deleted",

@@ -18,9 +18,19 @@ import { PostFooterComponent } from 'app/shared/metis/postings-footer/post-foote
 import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-tag-selector.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TagInputModule } from 'ngx-chips';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisConfirmIconModule, ArtemisMarkdownModule, ArtemisMarkdownEditorModule, ReactiveFormsModule, FormsModule, TagInputModule],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisConfirmIconModule,
+        ArtemisMarkdownModule,
+        ArtemisMarkdownEditorModule,
+        ReactiveFormsModule,
+        FormsModule,
+        TagInputModule,
+        ArtemisSharedComponentModule,
+    ],
     declarations: [
         PostingsThreadComponent,
         PostHeaderComponent,

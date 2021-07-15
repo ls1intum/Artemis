@@ -3,12 +3,32 @@
         <h4 class="modal-title">{{ modalTitle | artemisTranslate }}</h4>
     </div>
     <div class="modal-body">
-        <div class="form-group-narrow position-relative">
-            <label class="form-control-label" jhiTranslate="artemisApp.metis.tags">Tags</label>
-            <jhi-post-tag-selector [postTags]="posting.tags" (postTagsChange)="updateTags($event)" [existingPostTags]="existingPostTags"></jhi-post-tag-selector>
+        <div class="position-relative mb-3">
+            <div>
+                <label class="mb-1" jhiTranslate="artemisApp.metis.post.title">Title</label>
+                <jhi-help-icon placement="top auto" text="artemisApp.metis.post.titleTooltip"></jhi-help-icon>
+            </div>
+            <div>
+                <input type="text" class="form-control" id="title" name="title" />
+            </div>
         </div>
-        <div class="row mb-2">
-            <jhi-postings-markdown-editor [(content)]="content"></jhi-postings-markdown-editor>
+        <div class="position-relative mb-3">
+            <div>
+                <label class="mb-1" jhiTranslate="artemisApp.metis.post.tags">Tags</label>
+                <jhi-help-icon placement="top auto" text="artemisApp.metis.post.tagsTooltip"></jhi-help-icon>
+            </div>
+            <div>
+                <jhi-post-tag-selector [postTags]="posting.tags" (postTagsChange)="updateTags($event)" [existingPostTags]="existingPostTags"></jhi-post-tag-selector>
+            </div>
+        </div>
+        <div class="position-relative mb-1">
+            <div>
+                <label class="mb-1" jhiTranslate="artemisApp.metis.post.content">Content</label>
+                <jhi-help-icon placement="top auto" text="artemisApp.metis.post.contentTooltip"></jhi-help-icon>
+            </div>
+            <div>
+                <jhi-postings-markdown-editor [(content)]="content"></jhi-postings-markdown-editor>
+            </div>
         </div>
         <div class="col text-end">
             <p class="small my-0 ms-2">{{ content.length }} / {{ maxContentLength }}</p>
