@@ -976,6 +976,10 @@ Docker image can be found on `dockerhub <https://hub.docker.com/r/jenkins/jenkin
         docker rm jenkins_old
 
 
+You should also update the Jenkins plugins regularly due to security
+reasons. You can update them directly in the Web User Interface in the
+Plugin Manager.
+
 Build agents
 ^^^^^^^^^^^^
 
@@ -1199,31 +1203,6 @@ Caching
 You can configure caching for e.g. Maven repositories.
 See :doc:`programming-exercises` for more details.
 
-
-Upgrade Jenkins
-~~~~~~~~~~~~~~~
-
-Build the latest version of the ``jenkins-artemis`` Docker image, stop
-the running container and mount the Jenkins data volume to the new LTS
-container. Make sure to perform this command in the folder where the
-``Dockerfile`` was created (e.g. ``/opt/jenkins/``):
-
-    ::
-
-        docker stop jenkins
-        docker rename jenkins jenkins_old
-        docker build --no-cache -t jenkins-artemis .
-
-Now start a new Jenkins container just as described in `Start-Jenkins <#start-jenkins>`__.
-
-Jenkins should be up and running again. If there are no issues, you can
-delete the old container using ``docker rm jenkins_old`` and the old
-image (see ``docker images``) using ``docker rmi <old-image-id>``.
-You can also remove all old images using ``docker image prune -a``
-
-You should also update the Jenkins plugins regularly due to security
-reasons. You can update them directly in the Web User Interface in the
-Plugin Manager.
 
 Separate NGINX Configurations
 -----------------------------
