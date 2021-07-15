@@ -220,11 +220,14 @@ describe('TeamParticipationTableComponent', () => {
     }));
 
     it('Navigate to assessment editor when opening exercise submission', fakeAsync(() => {
-        comp.openAssessmentEditor(exercise1, 'new');
+        const participation = exercise2.studentParticipations![0];
+        comp.openAssessmentEditor(exercise2, participation, 'new');
         tick();
         expect(router.navigate).to.have.been.calledOnce;
         const navigationUrl = router.navigate.getCall(0).args[0];
-        expect(navigationUrl).to.deep.equal([`/course-management/${course.id}/${exercise1.type}-exercises/${exercise1.id}/submissions/new/assessment`]);
+        expect(navigationUrl).to.deep.equal([
+            ['/course-management', course.id!.toString(), exercise2.type! + '-exercises', exercise2.id!.toString(), 'submissions', 'new', 'assessment'],
+        ]);
     }));
 
     it('Check enabled assessment button for exercises without due date', fakeAsync(() => {
