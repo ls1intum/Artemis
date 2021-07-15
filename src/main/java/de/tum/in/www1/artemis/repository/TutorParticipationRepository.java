@@ -30,7 +30,7 @@ public interface TutorParticipationRepository extends JpaRepository<TutorPartici
     List<TutorParticipation> findAllByAssessedExercise_Course_IdAndTutor_Id(long courseId, long tutorId);
 
     @EntityGraph(type = LOAD, attributePaths = { "trainedExampleSubmissions", "trainedExampleSubmissions.submission.results" })
-    List<TutorParticipation> findAllByAssessedExerciseExerciseGroupIdAndTutorId(long exerciseGroupId, long tutorId);
+    List<TutorParticipation> findAllByAssessedExercise_ExerciseGroup_Exam_IdAndTutor_Id(long examId, long tutorId);
 
     void deleteAllByAssessedExerciseId(long assessedExerciseId);
 }

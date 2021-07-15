@@ -340,13 +340,12 @@ public class ExamResource {
         }
 
         Set<Exercise> exercises = new HashSet<>();
-        List<TutorParticipation> tutorParticipations = new ArrayList<>();
         // extract all exercises for all the exam
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             exerciseGroup.setExercises(courseRepository.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
             exercises.addAll(exerciseGroup.getExercises());
-            tutorParticipations.addAll(tutorParticipationRepository.findAllByAssessedExerciseExerciseGroupIdAndTutorId(exerciseGroup.getId(), user.getId()));
         }
+        List<TutorParticipation> tutorParticipations = tutorParticipationRepository.findAllByAssessedExercise_ExerciseGroup_Exam_IdAndTutor_Id(examId, user.getId());
 
         assessmentDashboardService.generateStatisticsForExercisesForAssessmentDashboard(exercises, tutorParticipations, true);
 
