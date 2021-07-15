@@ -38,6 +38,7 @@
             "date": "Datum",
             "time": "Zeit",
             "durationWithFormat": "Dauer (mm:ss)",
+            "resultInformation": "Dein Ergebnis wird nach Abschluss der Korrektur an dieser Stelle für dich veröffentlicht. Du kommst zu dieser Seite, indem du in der Klausuren Übersicht des Kurses auf diese Klausur klickst.",
             "course": "Kurs",
             "exercises": "Aufgaben",
             "points": "Punkte",
@@ -384,7 +385,8 @@
                 },
                 "textitems": {
                     "leastoneexercisegroup": "Mindestens eine Aufgabengruppe",
-                    "numberofexercisegroupsequal": "Anzahl der Aufgabengruppen entspricht Anzahl der Aufgaben der Klausur",
+                    "numberofexercisegroupsequal": "Anzahl der Aufgaben der Klausur entspricht Anzahl der Aufgabengruppen",
+                    "numberofexercisegroupsinbetween": "Anzahl der Aufgaben der Klausur liegt zwischen der Anzahl der verpflichtenden Aufgabengruppen und der Gesamtanzahl der Aufgabengruppen",
                     "eachexercisegroup": "Jede Aufgabengruppe hat mindestens eine Aufgabe",
                     "pointsexercisegroupequal": "Gleiche Anzahl Punkte in jeder Aufgabe in einer Aufgabengruppe",
                     "totalpointspossible": "Gesamtpunktzahl der Klausur kann mit der aktuellen Aufgabenkonfiguration erreicht werden",
@@ -441,6 +443,7 @@
         }
     },
     "studentExam": {
+        "submitSuccessful": "Deine Klausur wurde erfolgreich abgegeben. Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden. Halte dich an die Klausuranweisungen deiner Lehrenden.",
         "alreadySubmitted": "Du hast bereits abgegeben.",
         "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
         "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"

@@ -3,12 +3,15 @@ package de.tum.in.www1.artemis.service.metis;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
@@ -28,17 +31,20 @@ public class AnswerPostService extends PostingService {
 
     private final PostRepository postRepository;
 
+    private final LectureRepository lectureRepository;
+
     private final GroupNotificationService groupNotificationService;
 
     private final SingleUserNotificationService singleUserNotificationService;
 
     protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, GroupNotificationService groupNotificationService,
-            SingleUserNotificationService singleUserNotificationService) {
+            AnswerPostRepository answerPostRepository, PostRepository postRepository, LectureRepository lectureRepository, ExerciseRepository exerciseRepository,
+            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService) {
         super(courseRepository, exerciseRepository, postRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
+        this.lectureRepository = lectureRepository;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
     }
@@ -129,8 +135,8 @@ public class AnswerPostService extends PostingService {
      * Checks course and user validity,
      * determines authority to delete post and deletes the post
      *
-     * @param courseId      id of the course the answer post belongs to
-     * @param answerPostId  id of the answer post to delete
+     * @param courseId     id of the course the answer post belongs to
+     * @param answerPostId id of the answer post to delete
      */
     public void deleteAnswerPostById(Long courseId, Long answerPostId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -153,6 +159,11 @@ public class AnswerPostService extends PostingService {
     void sendNotification(AnswerPost answerPost) {
         // notify via exercise
         if (answerPost.getPost().getExercise() != null) {
+            Post post = answerPost.getPost();
+            // set exercise retrieved from database to show title in notification
+            Exercise exercise = exerciseRepository.findByIdElseThrow(post.getExercise().getId());
+            post.setExercise(exercise);
+            answerPost.setPost(post);
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(answerPost);
             singleUserNotificationService.notifyUserAboutNewAnswerForExercise(answerPost);
 
@@ -161,6 +172,11 @@ public class AnswerPostService extends PostingService {
         }
         // notify via lecture
         if (answerPost.getPost().getLecture() != null) {
+            Post post = answerPost.getPost();
+            // set lecture retrieved from database to show title in notification
+            Lecture lecture = lectureRepository.findByIdElseThrow(post.getLecture().getId());
+            post.setLecture(lecture);
+            answerPost.setPost(post);
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(answerPost);
             singleUserNotificationService.notifyUserAboutNewAnswerForLecture(answerPost);
         }

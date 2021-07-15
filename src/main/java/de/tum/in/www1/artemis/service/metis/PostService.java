@@ -299,12 +299,18 @@ public class PostService extends PostingService {
     void sendNotification(Post post) {
         // notify via exercise
         if (post.getExercise() != null) {
+            // set exercise retrieved from database to show title in notification
+            Exercise exercise = exerciseRepository.findByIdElseThrow(post.getExercise().getId());
+            post.setExercise(exercise);
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForExercise(post);
             // protect sample solution, grading instructions, etc.
             post.getExercise().filterSensitiveInformation();
         }
         // notify via lecture
         if (post.getLecture() != null) {
+            // set lecture retrieved from database to show title in notification
+            Lecture lecture = lectureRepository.findByIdElseThrow(post.getLecture().getId());
+            post.setLecture(lecture);
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForLecture(post);
         }
     }
