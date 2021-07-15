@@ -59,6 +59,9 @@ export class ExamNavigationBarComponent implements OnInit {
      */
     changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean): void {
         if (!overviewPage) {
+            if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
+                return;
+            }
             // set index and emit event
             this.exerciseIndex = exerciseIndex;
             this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave });
