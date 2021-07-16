@@ -63,7 +63,7 @@ div {
     }
 }
 
-.btn-diff-highlight {
+#highlightDiffButton {
     background-color: #fbc107;
     border: none;
     padding: 0px 10px;
@@ -75,8 +75,13 @@ div {
     margin-left: 10px;
     font-size: 16px;
     color: #353d47;
-}
 
-.btn-diff-highlight:hover {
+    :hover {
+        color: #ffffff;
+    }
+}
+/*
+#highlightDiffButton:hover {
     color: #ffffff;
 }
+ */
