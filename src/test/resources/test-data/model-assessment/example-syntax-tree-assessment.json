@@ -1,6 +1,5 @@
 [
     {
-        "id": 2378,
         "text": "correct activity, but missing elements",
         "reference": "SyntaxTreeNonterminal:99c3538a-cc7c-4d79-9eec-8368aa7be6dc",
         "credits": 0.0,
@@ -8,14 +7,12 @@
         "type": "MANUAL"
     },
     {
-        "id": 2379,
         "reference": "SyntaxTreeTerminal:c441d34a-2202-458c-b8b0-3ac7c67ae77f",
         "credits": 0.5,
         "positive": true,
         "type": "MANUAL"
     },
     {
-        "id": 2380,
         "text": "good",
         "reference": "SyntaxTreeLink:0756d15f-c038-4224-b278-3997554edab4",
         "credits": 0.5,
