@@ -1,0 +1,13 @@
+{
+    "artemisApp": {
+        "consistencyCheck": {
+            "button": "Check consistency",
+            "title": "Consistency checks",
+            "text": "Checks on programming exercises are being performed and occurring consistency errors will be displayed below.<br><small>This will require some time to complete for courses with many programming exercises</small>",
+            "error": {
+                "type": "Error Type"
+            },
+            "noErrors": "No errors found"
+        }
+    }
+}

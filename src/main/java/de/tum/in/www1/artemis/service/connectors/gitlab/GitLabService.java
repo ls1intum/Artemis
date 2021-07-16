@@ -135,6 +135,15 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
+    @Override
+    public List<Member> getAllMembersOfRepository(VcsRepositoryUrl repositoryUrl) {
+        try {
+            return gitlab.getProjectApi().getAllMembers(urlService.getPathFromRepositoryUrl(repositoryUrl));
+        } catch (GitLabApiException e) {
+            throw new GitLabException("Error while retrieving all members of  repository: From repo " + repositoryUrl, e);
+        }
+    }
+
     /**
      * Get the default branch of the repository
      *

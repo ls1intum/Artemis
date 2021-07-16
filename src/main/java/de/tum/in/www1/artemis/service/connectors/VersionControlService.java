@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -137,6 +138,14 @@ public interface VersionControlService {
      * @param user              User which to remove from the repository
      */
     void removeMemberFromRepository(VcsRepositoryUrl repositoryUrl, User user);
+
+    /**
+     * Retrieve all members of a given repository
+     *
+     * @param repositoryUrl     The repository url to retrieve the members from
+     * @return                  List of members contained in the given repository
+     */
+    List<?> getAllMembersOfRepository(VcsRepositoryUrl repositoryUrl);
 
     /**
      * Removes the user's write permissions for a repository.

@@ -1,0 +1,13 @@
+{
+    "artemisApp": {
+        "consistencyCheck": {
+            "button": "Konsistenz Check",
+            "title": "Konsistenz Checks",
+            "text": "Überprüfungen der Programmierübungen werden durchgeführt und im Fall von auftretende Konsistenzfehler, werden diese unten angezeigt.<br><small>Dies wird bei Kursen mit vielen Programmierübungen einige Zeit in Anspruch nehmen</small>",
+            "error": {
+                "type": "Fehler Typ"
+            },
+            "noErrors": "Keine Inkonsistenzen gefunden"
+        }
+    }
+}

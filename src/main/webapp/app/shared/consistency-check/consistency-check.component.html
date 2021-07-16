@@ -1,0 +1,46 @@
+<div>
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="artemisApp.consistencyCheck.title">Consistency checks</h4>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="closeModal()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="justify-content-center p-1">
+            <jhi-alert></jhi-alert>
+            <jhi-alert-error></jhi-alert-error>
+            <span jhiTranslate="artemisApp.consistencyCheck.text">Checks on programming exercises are performed and occurring consistency errors will be displayed below.</span>
+            <div *ngIf="isLoadingResults()" class="d-flex justify-content-center m-5">
+                <div class="spinner-border" role="status">
+                    <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+                </div>
+            </div>
+            <div class="table-responsive p-1 my-5" *ngIf="!isLoadingResults()">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span></th>
+                        <th><span jhiTranslate="artemisApp.consistencyCheck.error.type">Error type</span></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr *ngFor="let error of errors">
+                        <td>
+                            <a *ngIf="courseId != undefined" (click)="closeModal()" [routerLink]="['/course-management', courseId, 'programming-exercises', error.programmingExercise!.id]">
+                                <ngb-highlight [result]="error.programmingExercise!.title!"></ngb-highlight>
+                            </a>
+                            <ngb-highlight *ngIf="courseId == undefined" [result]="error.programmingExercise!.title!"></ngb-highlight>
+                        </td>
+                        <td>
+                            <ngb-highlight [result]="error.type"></ngb-highlight>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div *ngIf="errors !== undefined && errors.length < 1" class="text-center">
+                    <span class="h1 text-success"><fa-icon [icon]="'check'"></fa-icon></span>
+                    <br>
+                    <span jhiTranslate="artemisApp.consistencyCheck.noErrors">No errors found</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

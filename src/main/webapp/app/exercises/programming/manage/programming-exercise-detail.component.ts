@@ -21,6 +21,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import * as moment from 'moment';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { CheckType, ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -46,6 +47,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     lockingOrUnlockingRepositories = false;
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
+    isAdmin: boolean;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -105,6 +107,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/programming-exercises/${this.programmingExercise.id}/`;
                 this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
             }
+            this.isAdmin = this.accountService.isAdmin();
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -262,6 +265,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.onError(err);
             },
         );
+    }
+
+    /**
+     * Opens modal and executes a consistency check for the given programming exercise
+     * @param exerciseId id of the programming exercise to check
+     */
+    checkConsistencies(exerciseId: number) {
+        const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.id = exerciseId;
+        modalRef.componentInstance.checkType = CheckType.PROGRAMMING_EXERCISE;
     }
 
     private onError(error: HttpErrorResponse) {
