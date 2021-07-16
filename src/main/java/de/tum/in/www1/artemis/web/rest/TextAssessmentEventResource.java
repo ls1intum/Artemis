@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * REST controller for managing TextAssessmentEventResource.
@@ -119,28 +118,45 @@ public class TextAssessmentEventResource {
         if (!user.getId().equals(event.getUserId())) {
             return false;
         }
-        try {
-            // check if user has enough roles to access the course
-            Course course = courseRepository.findByIdElseThrow(event.getCourseId());
-            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-                return false;
-            }
-            // Fetch the text submission by the received event submission id
-            Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(event.getSubmissionId());
-            if (textSubmission.isEmpty()) {
-                return false;
-            }
-            // fetch all the relevant id's to be checked
-            Long fetchedParticipationId = textSubmission.get().getParticipation().getId();
-            Exercise fetchedExercise = textSubmission.get().getParticipation().getExercise();
-            Long fetchedExerciseId = fetchedExercise.getId();
-            Long fetchedCourseId = fetchedExercise.getCourseViaExerciseGroupOrCourseMember().getId();
-            // check if ids of the event ids match with the actual datas id in the repository.
-            return fetchedCourseId.equals(event.getCourseId()) && fetchedExerciseId.equals(event.getTextExerciseId()) && fetchedParticipationId.equals(event.getParticipationId());
-        }
-        catch (EntityNotFoundException exception) {
-            // catch exception when event course id is malformed, or doesn't exist
+
+        // check if user has enough roles to access the course
+        if (!isUserInCourseWithId(user, event.getCourseId())) {
             return false;
         }
+
+        // check if the received event submission data is valid
+        return isEventSubmissionValid(event);
+    }
+
+    /**
+     * Checks if the given user is at least a tutor in the course with the given id
+     * @param user the user to be checked
+     * @param courseId the id of the course that the user should be at least tutor of
+     * @return whether the user is or isn't in the course specified
+     */
+    private boolean isUserInCourseWithId(User user, Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+    }
+
+    /**
+     * Checks if the data corresponding to the submission in the given TextAssessmentEvent corresponds to an actual
+     * submission that exists in the database. In case such a submission doesn't exist in the database it should be ignored.
+     * @param event the event to be checked against the database
+     * @return whether the event is valid or not
+     */
+    private boolean isEventSubmissionValid(TextAssessmentEvent event) {
+        // Fetch the text submission by the received event submission id
+        Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(event.getSubmissionId());
+        if (textSubmission.isEmpty()) {
+            return false;
+        }
+        // fetch all the relevant id's to be checked
+        Long fetchedParticipationId = textSubmission.get().getParticipation().getId();
+        Exercise fetchedExercise = textSubmission.get().getParticipation().getExercise();
+        Long fetchedExerciseId = fetchedExercise.getId();
+        Long fetchedCourseId = fetchedExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        // check if ids of the event ids match with the actual datas id in the repository.
+        return fetchedCourseId.equals(event.getCourseId()) && fetchedExerciseId.equals(event.getTextExerciseId()) && fetchedParticipationId.equals(event.getParticipationId());
     }
 }
