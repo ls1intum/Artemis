@@ -130,11 +130,12 @@ public class TextAssessmentEventResource {
             if (textSubmission.isEmpty()) {
                 return false;
             }
+            // fetch all the relevant id's to be checked
             Long fetchedParticipationId = textSubmission.get().getParticipation().getId();
             Exercise fetchedExercise = textSubmission.get().getParticipation().getExercise();
             Long fetchedExerciseId = fetchedExercise.getId();
             Long fetchedCourseId = fetchedExercise.getCourseViaExerciseGroupOrCourseMember().getId();
-            // check if the sent exercise id is valid
+            // check if ids of the event ids match with the actual datas id in the repository.
             return fetchedCourseId.equals(event.getCourseId()) && fetchedExerciseId.equals(event.getTextExerciseId()) && fetchedParticipationId.equals(event.getParticipationId());
         }
         catch (EntityNotFoundException exception) {
