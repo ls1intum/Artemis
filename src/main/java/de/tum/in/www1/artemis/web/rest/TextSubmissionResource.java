@@ -316,7 +316,7 @@ public class TextSubmissionResource {
      */
     private void checkTextLength(TextSubmission textSubmission) {
         if (textSubmission.getText() != null && textSubmission.getText().length() > 30000) {
-            throw new IllegalArgumentException("Text Submission cannot contain more than 30000 characters");
+            throw new BadRequestAlertException("Submission cannot contain more than 30000 characters", ENTITY_NAME, "textSubmissionTooLong");
         }
     }
 }
