@@ -74,6 +74,10 @@
             },
             "error": {
                 "cannotRegisterInstructor": "Du kannst keine Personen aus der Lehr- oder Administrationsgruppe zu Klausuren anmelden."
+            },
+            "problemStatementUpdate": {
+                "showDiff": "zeige Unterschiede",
+                "showNew": "zeige nur neue Version"
             }
         },
         "examScores": {

@@ -2,13 +2,15 @@ import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { DiffMatchPatch } from 'diff-match-patch-typescript';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -29,12 +31,19 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     answer: string;
     private textEditorInput = new Subject<string>();
 
+    subscriptionToLiveExamExerciseUpdates: Subscription;
+    previousProblemStatementUpdate: string;
+    updatedProblemStatementWithHighlightedDifferences: string;
+    updatedProblemStatement: string;
+    showHighlightedDifferences = true;
+
     constructor(
         private textService: TextEditorService,
         private jhiAlertService: JhiAlertService,
         private artemisMarkdown: ArtemisMarkdownService,
         private translateService: TranslateService,
         private stringCountService: StringCountService,
+        private examExerciseUpdateService: ExamExerciseUpdateService,
         changeDetectorReference: ChangeDetectorRef,
     ) {
         super(changeDetectorReference);
@@ -43,10 +52,56 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     ngOnInit(): void {
         // show submission answers in UI
         this.updateViewFromSubmission();
+
+        this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
+            this.updateExerciseProblemStatementById(update.exerciseId, update.problemStatement);
+        });
+    }
+
+    toggleHighlightedProblemStatement(): void {
+        if (this.showHighlightedDifferences) {
+            this.getExercise().problemStatement = this.updatedProblemStatement;
+        } else {
+            this.getExercise().problemStatement = this.updatedProblemStatementWithHighlightedDifferences;
+        }
+        this.showHighlightedDifferences = !this.showHighlightedDifferences;
     }
 
     getExercise(): Exercise {
         return this.exercise;
+    }
+
+    updateExerciseProblemStatementById(exerciseId: number, updatedProblemStatement: string) {
+        if (updatedProblemStatement != undefined && exerciseId === this.getExercise().id) {
+            this.updatedProblemStatement = updatedProblemStatement;
+            this.getExercise().problemStatement = this.highlightProblemStatementDifferences();
+        }
+    }
+
+    highlightProblemStatementDifferences() {
+        if (!this.updatedProblemStatement) {
+            return;
+        }
+
+        // creates the diffMatchPatch library object to be able to modify strings
+        const dmp = new DiffMatchPatch();
+        let outdatedProblemStatement: string;
+
+        // checks if first update i.e. no highlight
+        if (!this.previousProblemStatementUpdate) {
+            outdatedProblemStatement = this.getExercise().problemStatement!;
+            this.previousProblemStatementUpdate = this.updatedProblemStatement;
+            // else use previousProblemStatementUpdate as new outdatedProblemStatement to avoid inserted HTML elements
+        } else {
+            outdatedProblemStatement = this.previousProblemStatementUpdate;
+        }
+
+        // finds the initial difference then cleans the text with added html & css elements
+        const diff = dmp.diff_main(outdatedProblemStatement!, this.updatedProblemStatement);
+        dmp.diff_cleanupEfficiency(diff);
+        // remove ¶; (= &para;) symbols
+        this.updatedProblemStatementWithHighlightedDifferences = dmp.diff_prettyHtml(diff).replace(/&para;/g, '');
+        return this.updatedProblemStatementWithHighlightedDifferences;
     }
 
     getSubmission(): Submission {
