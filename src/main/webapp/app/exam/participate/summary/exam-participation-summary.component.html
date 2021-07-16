@@ -125,7 +125,6 @@
                     ></jhi-programming-exam-summary>
                 </ng-container>
                 <jhi-complaint-interactions
-                    *ngIf="getSubmissionForExercise(exercise) && isAfterStudentReviewStart()"
                     class="mb-2 mt-2 ms-3"
                     [exercise]="exercise"
                     [participation]="getParticipationForExercise(exercise)!"
