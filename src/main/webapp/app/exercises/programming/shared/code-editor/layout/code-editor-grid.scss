@@ -9,7 +9,7 @@ Code-Editor Layout Styles
 
     .collapsed--horizontal {
         width: 50px !important;
-        border: 2px solid red;
+        margin-right: 10px !important;
     }
     .collapsed--vertical {
         height: 42px !important;
@@ -150,7 +150,10 @@ Collapsable styling
     flex: none !important;
     .card-header {
         height: 100%;
-        width: 75%;
+        width: 100%;
+        > fa-icon {
+            display: none;
+        }
     }
     .instructions-wrapper__content {
         height: auto !important;
@@ -169,7 +172,6 @@ Collapsable styling
         width: 50px;
         justify-content: space-between;
         flex-flow: column nowrap;
-        margin-left: 15px;
         cursor: pointer;
         .header {
             writing-mode: vertical-rl;
