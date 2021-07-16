@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -82,24 +80,13 @@ public class TextAssessmentEventResource {
     public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssessmentEvent event) {
         log.debug("REST request to save assessmentEvent : {}", event);
 
-        // check if the text assessment analytics feature is enabled
-        if (!isTextAssessmentAnalyticsEnabled()) {
-            return forbidden();
-        }
-
-        // A new assessmentEvent cannot already have an ID
-        if (event.getId() != null) {
-            return ResponseEntity.badRequest().build();
-        }
-
+        // Check if the text assessment analytics feature is enabled
         // Save the event if it is valid. All other requests are considered bad requests.
-        if (validateEvent(event)) {
+        if (isTextAssessmentAnalyticsEnabled() && validateEvent(event)) {
             textAssessmentEventRepository.save(event);
             return ResponseEntity.ok().build();
         }
-        else {
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.badRequest().build();
     }
 
     /**
@@ -114,8 +101,10 @@ public class TextAssessmentEventResource {
     private boolean validateEvent(TextAssessmentEvent event) {
         // avoid access from tutor if they are not part of the course
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        // check that logged in user id and sent event user id match
-        if (!user.getId().equals(event.getUserId())) {
+
+        // make sure that the received event doesn't already have an ID
+        // reject if the logged in user id and received event user id do not match
+        if (event.getId() != null || !user.getId().equals(event.getUserId())) {
             return false;
         }
 
