@@ -13,12 +13,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -41,16 +40,19 @@ public class TextAssessmentEventResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final TextSubmissionRepository textSubmissionRepository;
+
     @Value("${info.text-assessment-analytics-enabled}")
     private Optional<Boolean> textAssessmentAnalyticsEnabled;
 
     public TextAssessmentEventResource(TextAssessmentEventRepository textAssessmentEventRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
+            CourseRepository courseRepository, ExerciseRepository exerciseRepository, TextSubmissionRepository textSubmissionRepository) {
         this.textAssessmentEventRepository = textAssessmentEventRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
+        this.textSubmissionRepository = textSubmissionRepository;
     }
 
     /**
@@ -126,9 +128,19 @@ public class TextAssessmentEventResource {
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 return false;
             }
+            // Fetch the text submission by the received event submission id
+            Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(event.getSubmissionId());
+            log.debug("text submission {}", textSubmission.isPresent());
+            log.debug("text submission {}", textSubmissionRepository.findAll());
+            if (textSubmission.isEmpty()) {
+                return false;
+            }
+            Long fetchedParticipationId = textSubmission.get().getParticipation().getId();
+            Exercise fetchedExercise = textSubmission.get().getParticipation().getExercise();
+            Long fetchedExerciseId = fetchedExercise.getId();
+            Long fetchedCourseId = fetchedExercise.getCourseViaExerciseGroupOrCourseMember().getId();
             // check if the sent exercise id is valid
-            List<Long> listOfExerciseIdsInCourse = exerciseRepository.getExerciseIdsByCourseId(course.getId());
-            return listOfExerciseIdsInCourse.contains(event.getTextExerciseId());
+            return fetchedCourseId.equals(event.getCourseId()) && fetchedExerciseId.equals(event.getTextExerciseId()) && fetchedParticipationId.equals(event.getParticipationId());
         }
         catch (EntityNotFoundException exception) {
             // catch exception when event course id is malformed, or doesn't exist

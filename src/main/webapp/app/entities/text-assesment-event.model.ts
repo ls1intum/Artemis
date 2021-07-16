@@ -40,17 +40,11 @@ export class TextAssessmentEvent implements BaseEntity {
         return this;
     }
 
-    setFeedbackType(type: FeedbackType | undefined) {
-        if (type) {
-            this.feedbackType = type;
-        }
-        return this;
+    setFeedbackType(type?: FeedbackType) {
+        this.feedbackType = type;
     }
 
-    setSegmentType(type: TextBlockType | undefined) {
-        if (type) {
-            this.segmentType = type;
-        }
-        return this;
+    setSegmentType(type?: TextBlockType) {
+        this.segmentType = type;
     }
 }

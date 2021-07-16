@@ -502,7 +502,7 @@ public class ModelFactory {
     }
 
     public static TextAssessmentEvent generateTextAssessmentEvent(TextAssessmentEventType eventType, FeedbackType feedbackType, TextBlockType segmentType, Long courseId,
-            Long userId, Long exerciseId) {
+            Long userId, Long exerciseId, Long participationId, Long submissionId) {
         TextAssessmentEvent event = new TextAssessmentEvent();
         event.setId(null);
         event.setEventType(eventType);
@@ -510,27 +510,34 @@ public class ModelFactory {
         event.setSegmentType(segmentType);
         event.setCourseId(courseId);
         event.setTextExerciseId(exerciseId);
-        event.setParticipationId(1L);
-        event.setSubmissionId(1L);
+        event.setParticipationId(participationId);
+        event.setSubmissionId(submissionId);
         event.setUserId(userId);
         return event;
     }
 
-    public static List<TextAssessmentEvent> generateMultipleTextAssessmentEvents(Long courseId, Long userId, Long exerciseId) {
+    public static List<TextAssessmentEvent> generateMultipleTextAssessmentEvents(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
         List<TextAssessmentEvent> events = new ArrayList<>();
         events.add(generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
-                exerciseId));
-        events.add(generateTextAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId, exerciseId));
-        events.add(generateTextAssessmentEvent(TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING, FeedbackType.MANUAL, TextBlockType.AUTOMATIC, courseId, userId, exerciseId));
-        events.add(generateTextAssessmentEvent(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC, courseId, userId, exerciseId));
+                exerciseId, participationId, submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId, exerciseId,
+                participationId, submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING, FeedbackType.MANUAL, TextBlockType.AUTOMATIC, courseId, userId, exerciseId,
+                participationId, submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC, courseId, userId, exerciseId, participationId,
+                submissionId));
         events.add(generateTextAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC, courseId, userId,
-                exerciseId));
-        events.add(generateTextAssessmentEvent(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC, courseId, userId, exerciseId));
-        events.add(
-                generateTextAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId, userId, exerciseId));
-        events.add(generateTextAssessmentEvent(TextAssessmentEventType.SUBMIT_ASSESSMENT, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId, userId, exerciseId));
-        events.add(generateTextAssessmentEvent(TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId, userId, exerciseId));
-        events.add(generateTextAssessmentEvent(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId, userId, exerciseId));
+                exerciseId, participationId, submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC, courseId, userId, exerciseId, participationId,
+                submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId, userId,
+                exerciseId, participationId, submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.SUBMIT_ASSESSMENT, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId, userId, exerciseId, participationId,
+                submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId, userId, exerciseId,
+                participationId, submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId, userId, exerciseId,
+                participationId, submissionId));
         return events;
     }
 
@@ -767,6 +774,14 @@ public class ModelFactory {
         studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
         studentParticipation.setExercise(exercise);
         studentParticipation.setParticipant(user);
+        return studentParticipation;
+    }
+
+    public static StudentParticipation generateStudentParticipationWithoutUser(InitializationState initializationState, Exercise exercise) {
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setInitializationState(initializationState);
+        studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
+        studentParticipation.setExercise(exercise);
         return studentParticipation;
     }
 

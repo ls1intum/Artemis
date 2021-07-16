@@ -13,6 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.TextAssessmentEventResource;
@@ -23,6 +24,9 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
     private UserRepository userRepository;
 
     @Autowired
+    private TextSubmissionRepository textSubmissionRepository;
+
+    @Autowired
     private TextAssessmentEventResource textAssessmentEventResource;
 
     private Course course;
@@ -31,11 +35,17 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
 
     private Exercise exercise;
 
+    private TextSubmission textSubmission;
+
+    private StudentParticipation studentParticipation;
+
     @BeforeEach
     public void initTestCase() {
         course = database.createCourseWithTutor("tutor1");
         tutor = userRepository.getUserByLoginElseThrow("tutor1");
         exercise = course.getExercises().iterator().next();
+        studentParticipation = exercise.getStudentParticipations().iterator().next();
+        textSubmission = (TextSubmission) textSubmissionRepository.findAll().get(0);
     }
 
     @AfterEach
@@ -45,8 +55,9 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAddMultipleCompleteAssessmentEvents() throws Exception {
-        List<TextAssessmentEvent> events = ModelFactory.generateMultipleTextAssessmentEvents(course.getId(), tutor.getId(), exercise.getId());
+    public void testAddMultipleCompleteAssessmentEvents() {
+        List<TextAssessmentEvent> events = ModelFactory.generateMultipleTextAssessmentEvents(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
+                textSubmission.getId());
         for (TextAssessmentEvent event : events) {
             ResponseEntity<Void> responseEntity = textAssessmentEventResource.addAssessmentEvent(event);
             assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -55,19 +66,19 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAddSingleCompleteAssessmentEvent() throws Exception {
+    public void testAddSingleCompleteAssessmentEvent() {
         expectEventAddedWithResponse(HttpStatus.OK, tutor.getId());
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAddSingleCompleteAssessmentEvent_withTutorNotInCourse() throws Exception {
+    public void testAddSingleCompleteAssessmentEvent_withTutorNotInCourse() {
         // Tutor with tutor1 id incremented is not part of the course, therefore forbidden to access this resource
         expectEventAddedWithResponse(HttpStatus.BAD_REQUEST, tutor.getId() + 1);
     }
 
     private void expectEventAddedWithResponse(HttpStatus expected, Long userId) {
-        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), userId, exercise.getId());
+        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), userId, exercise.getId(), studentParticipation.getId(), textSubmission.getId());
         ResponseEntity<Void> responseEntity = textAssessmentEventResource.addAssessmentEvent(event);
         assertThat(responseEntity.getStatusCode()).isEqualTo(expected);
     }
@@ -75,7 +86,7 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testAddSingleCompleteAssessmentEvent_withNotNullEventId() {
-        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId());
+        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(), textSubmission.getId());
         event.setId(1L);
         ResponseEntity<Void> responseEntity = textAssessmentEventResource.addAssessmentEvent(event);
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -88,7 +99,7 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
         user.setLogin("admin");
         user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
         userRepository.save(user);
-        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), user.getId(), exercise.getId());
+        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), user.getId(), exercise.getId(), studentParticipation.getId(), textSubmission.getId());
         ResponseEntity<Void> responseAddEvent = textAssessmentEventResource.addAssessmentEvent(event);
         assertThat(responseAddEvent.getStatusCode()).isEqualTo(HttpStatus.OK);
 
