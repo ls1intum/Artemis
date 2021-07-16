@@ -14,8 +14,8 @@
             </h5>
         </div>
         <div class="card-body unit-card-body" [ngbCollapse]="isCollapsed">
-            <div class="embed-responsive embed-responsive-16by9">
-                <iframe id="videoFrame" class="embed-responsive-item rounded" [src]="videoUrl" allow="fullscreen"></iframe>
+            <div class="ratio ratio-16x9">
+                <iframe id="videoFrame" class="rounded" [src]="videoUrl" allow="fullscreen"></iframe>
             </div>
             {{ videoUnit?.description }}
         </div>

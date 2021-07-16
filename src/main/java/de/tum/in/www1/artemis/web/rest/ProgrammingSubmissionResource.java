@@ -18,6 +18,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -146,8 +148,16 @@ public class ProgrammingSubmissionResource {
         if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
             return notFound();
         }
-        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)
-                || (submissionType.equals(SubmissionType.INSTRUCTOR) && !authCheckService.isAtLeastInstructorForExercise(participation.getExercise()))) {
+
+        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
+            return forbidden();
+        }
+
+        // The editor is allowed to trigger an instructor build for template and solution participations,
+        // but not for student participations. The instructor however, might trigger student participations.
+        if (submissionType == SubmissionType.INSTRUCTOR && !authCheckService.isAtLeastInstructorForExercise(participation.getExercise())
+                && !(authCheckService.isAtLeastEditorForExercise(participation.getExercise())
+                        && (participation instanceof TemplateProgrammingExerciseParticipation || participation instanceof SolutionProgrammingExerciseParticipation))) {
             return forbidden();
         }
 
@@ -411,7 +421,7 @@ public class ProgrammingSubmissionResource {
      *
      * @param exerciseId the id of the exercise
      * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
-     * @param correctionRound the correctionround for which we want to find the submission
+     * @param correctionRound the correction round for which we want to find the submission
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/programming-submission-without-assessment")
