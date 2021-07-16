@@ -530,13 +530,12 @@ public class ModelFactory {
 
     /**
      * Generates a list of different combinations of assessment events based on the given parameters
-     * @param courseId the
      * @param courseId the course id of the event
      * @param userId the userid of the event
      * @param exerciseId the exercise id of the event
      * @param participationId the participation id of the event
      * @param submissionId the submission id of the event
-     * @return
+     * @return a list of TextAssessment events that are generated
      */
     public static List<TextAssessmentEvent> generateMultipleTextAssessmentEvents(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
         List<TextAssessmentEvent> events = new ArrayList<>();
