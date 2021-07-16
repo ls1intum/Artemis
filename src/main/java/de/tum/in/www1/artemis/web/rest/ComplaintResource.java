@@ -74,7 +74,7 @@ public class ComplaintResource {
     }
 
     /**
-     * POST /complaint: create a new complaint
+     * POST complaints: create a new complaint
      *
      * @param complaint the complaint to create
      * @param principal that wants to complain
@@ -112,7 +112,7 @@ public class ComplaintResource {
     }
 
     /**
-     * POST /complaints/exam/examId: create a new complaint for an exam exercise
+     * POST complaints/exam/examId: create a new complaint for an exam exercise
      *
      * @param complaint the complaint to create
      * @param principal that wants to complain
@@ -150,7 +150,7 @@ public class ComplaintResource {
     }
 
     /**
-     * Get /complaints/result/:resultId get a complaint associated with the result "id"
+     * Get complaints/result/{resultId} get a complaint associated with the result "id"
      *
      * @param resultId the id of the result for which we want to find a linked complaint
      * @return the ResponseEntity with status 200 (OK) and either with the complaint as body or an empty body, if no complaint was found for the result
@@ -190,7 +190,7 @@ public class ComplaintResource {
     }
 
     /**
-     * Get /:courseId/allowed-complaints get the number of complaints that a student or team is still allowed to submit in the given course.
+     * Get courses/{courseId}/allowed-complaints get the number of complaints that a student or team is still allowed to submit in the given course.
      * It is determined by the max. complaint limit and the current number of open or rejected complaints of the student or team in the course.
      * Students use their personal complaints for individual exercises and team complaints for team-based exercises, i.e. each student has
      * maxComplaints for personal complaints and additionally maxTeamComplaints for complaints by their team in the course.
@@ -218,7 +218,7 @@ public class ComplaintResource {
     }
 
     /**
-     * Get /exercises/:exerciseId/complaints-for-test-run-dashboard
+     * Get exercises/{exerciseId}/complaints-for-test-run-dashboard
      * <p>
      * Get all the complaints associated to a test run exercise, but filter out the ones that are not about the tutor who is doing the request, since this indicates test run exercises
      *

@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.persistence.EntityNotFoundException;
-
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +16,7 @@ import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Complaint entity.
@@ -28,7 +27,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     Optional<Complaint> findByResultId(Long resultId);
 
     default Complaint findByResultIdElseThrow(Long resultId) {
-        return findByResultId(resultId).orElseThrow(EntityNotFoundException::new);
+        return findById(resultId).orElseThrow(() -> new EntityNotFoundException("Complaint by ResultId", resultId));
     }
 
     @Query("SELECT c FROM Complaint c LEFT JOIN FETCH c.result r LEFT JOIN FETCH r.assessor WHERE c.id = :#{#complaintId}")
