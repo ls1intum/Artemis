@@ -38,20 +38,17 @@ public class TextAssessmentEventResource {
 
     private final CourseRepository courseRepository;
 
-    private final ExerciseRepository exerciseRepository;
-
     private final TextSubmissionRepository textSubmissionRepository;
 
     @Value("${info.text-assessment-analytics-enabled}")
     private Optional<Boolean> textAssessmentAnalyticsEnabled;
 
     public TextAssessmentEventResource(TextAssessmentEventRepository textAssessmentEventRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            CourseRepository courseRepository, ExerciseRepository exerciseRepository, TextSubmissionRepository textSubmissionRepository) {
+            CourseRepository courseRepository, TextSubmissionRepository textSubmissionRepository) {
         this.textAssessmentEventRepository = textAssessmentEventRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
-        this.exerciseRepository = exerciseRepository;
         this.textSubmissionRepository = textSubmissionRepository;
     }
 
@@ -130,8 +127,6 @@ public class TextAssessmentEventResource {
             }
             // Fetch the text submission by the received event submission id
             Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(event.getSubmissionId());
-            log.debug("text submission {}", textSubmission.isPresent());
-            log.debug("text submission {}", textSubmissionRepository.findAll());
             if (textSubmission.isEmpty()) {
                 return false;
             }

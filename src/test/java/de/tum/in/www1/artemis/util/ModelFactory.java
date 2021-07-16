@@ -501,6 +501,18 @@ public class ModelFactory {
         return course;
     }
 
+    /**
+     * Generates a TextAssessment event with the given parameters
+     * @param eventType the type of the event
+     * @param feedbackType the type of the feedback
+     * @param segmentType the segment type of the event
+     * @param courseId the course id of the event
+     * @param userId the userid of the event
+     * @param exerciseId the exercise id of the event
+     * @param participationId the participation id of the event
+     * @param submissionId the submission id of the event
+     * @return the TextAssessment event with all the properties applied
+     */
     public static TextAssessmentEvent generateTextAssessmentEvent(TextAssessmentEventType eventType, FeedbackType feedbackType, TextBlockType segmentType, Long courseId,
             Long userId, Long exerciseId, Long participationId, Long submissionId) {
         TextAssessmentEvent event = new TextAssessmentEvent();
@@ -516,6 +528,16 @@ public class ModelFactory {
         return event;
     }
 
+    /**
+     * Generates a list of different combinations of assessment events based on the given parameters
+     * @param courseId the
+     * @param courseId the course id of the event
+     * @param userId the userid of the event
+     * @param exerciseId the exercise id of the event
+     * @param participationId the participation id of the event
+     * @param submissionId the submission id of the event
+     * @return
+     */
     public static List<TextAssessmentEvent> generateMultipleTextAssessmentEvents(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
         List<TextAssessmentEvent> events = new ArrayList<>();
         events.add(generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
@@ -777,6 +799,12 @@ public class ModelFactory {
         return studentParticipation;
     }
 
+    /**
+     * Generates a minimal student participation without a specific user attached.
+     * @param initializationState the state of the participation
+     * @param exercise the referenced exercise of the participation
+     * @return the StudentParticipation created
+     */
     public static StudentParticipation generateStudentParticipationWithoutUser(InitializationState initializationState, Exercise exercise) {
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setInitializationState(initializationState);

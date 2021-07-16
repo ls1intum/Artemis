@@ -3617,13 +3617,11 @@ public class DatabaseUtilService {
     public Course createCourseWithTutor(String login) {
         Course course = this.createCourse();
         TextExercise textExercise = createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
-
         StudentParticipation participation = ModelFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
         studentParticipationRepo.save(participation);
-
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("some text", Language.ENGLISH, true);
         textSubmission.setParticipation(participation);
-        textSubmissionRepo.save(textSubmission);
+        textSubmissionRepo.saveAndFlush(textSubmission);
         course.addExercises(textExercise);
         User user = new User();
         user.setLogin(login);

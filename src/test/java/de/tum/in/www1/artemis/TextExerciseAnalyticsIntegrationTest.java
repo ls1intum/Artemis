@@ -27,6 +27,9 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
     private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
     private TextAssessmentEventResource textAssessmentEventResource;
 
     private Course course;
@@ -39,12 +42,15 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
 
     private StudentParticipation studentParticipation;
 
+    /**
+     * Initializes the database with a course that contains a tutor and a text submission
+     */
     @BeforeEach
     public void initTestCase() {
         course = database.createCourseWithTutor("tutor1");
         tutor = userRepository.getUserByLoginElseThrow("tutor1");
         exercise = course.getExercises().iterator().next();
-        studentParticipation = exercise.getStudentParticipations().iterator().next();
+        studentParticipation = studentParticipationRepository.findAll().get(0);
         textSubmission = (TextSubmission) textSubmissionRepository.findAll().get(0);
     }
 
@@ -53,6 +59,9 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
         database.resetDatabase();
     }
 
+    /**
+     * Tests adding multiple different combinations of events
+     */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testAddMultipleCompleteAssessmentEvents() {
@@ -64,12 +73,18 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
         }
     }
 
+    /**
+     * Tests addition of a single assessment event
+     */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testAddSingleCompleteAssessmentEvent() {
         expectEventAddedWithResponse(HttpStatus.OK, tutor.getId());
     }
 
+    /**
+     * Tests addition of a single event with a tutor that is not part of the course
+     */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testAddSingleCompleteAssessmentEvent_withTutorNotInCourse() {
@@ -77,12 +92,21 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
         expectEventAddedWithResponse(HttpStatus.BAD_REQUEST, tutor.getId() + 1);
     }
 
+    /**
+     * Local helper function that given a userId and an expected status, adds an event and checks if the result is as expected
+     * @param expected the status expected from the Http response
+     * @param userId the id of the user to be tested in the event
+     */
     private void expectEventAddedWithResponse(HttpStatus expected, Long userId) {
         TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), userId, exercise.getId(), studentParticipation.getId(), textSubmission.getId());
         ResponseEntity<Void> responseEntity = textAssessmentEventResource.addAssessmentEvent(event);
         assertThat(responseEntity.getStatusCode()).isEqualTo(expected);
     }
 
+    /**
+     * Tests addition of a single event with event id not null. The event is auto generated in the server side,
+     * that is why we treat incoming events with an already generated id as badly formed requests
+     */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testAddSingleCompleteAssessmentEvent_withNotNullEventId() {
@@ -92,6 +116,9 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * Tests the get events endpoint with admin role
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testGetAllEventsByCourseId() {
