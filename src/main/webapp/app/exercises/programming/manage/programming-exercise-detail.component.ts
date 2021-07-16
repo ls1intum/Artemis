@@ -291,7 +291,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     /**
      * Generates the link to any participation's submissions, used for the link to template and solution submissions
-     * @param id id of the participation
+     * @param id of the participation
      */
     getParticipationSubmissionLink(id: number) {
         const link = [this.baseResource, 'participations', id];
