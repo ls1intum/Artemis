@@ -22,6 +22,9 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import * as chai from 'chai';
 import { JhiAlertService } from 'ng-jhipster';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { BehaviorSubject } from 'rxjs';
+import { ExamExerciseUpdate, ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { Exercise } from 'app/entities/exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -32,6 +35,11 @@ describe('TextExamSubmissionComponent', () => {
 
     let textSubmission: TextSubmission;
     let exercise: TextExercise;
+
+    const examExerciseIdAndProblemStatementSourceMock = new BehaviorSubject<ExamExerciseUpdate>({ exerciseId: -1, problemStatement: 'initialProblemStatementValue' });
+    const mockExamExerciseUpdateService = {
+        currentExerciseIdAndProblemStatement: examExerciseIdAndProblemStatementSourceMock.asObservable(),
+    };
 
     beforeEach(() => {
         textSubmission = new TextSubmission();
@@ -47,7 +55,13 @@ describe('TextExamSubmissionComponent', () => {
                 MockModule(ArtemisSharedModule),
             ],
             declarations: [TextExamSubmissionComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe), MockComponent(IncludedInScoreBadgeComponent)],
-            providers: [MockProvider(TextEditorService), MockProvider(JhiAlertService), MockProvider(TranslateService), MockProvider(ArtemisMarkdownService)],
+            providers: [
+                MockProvider(TextEditorService),
+                MockProvider(JhiAlertService),
+                MockProvider(TranslateService),
+                MockProvider(ArtemisMarkdownService),
+                { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -126,6 +140,42 @@ describe('TextExamSubmissionComponent', () => {
             fixture.detectChanges();
             expect(textarea.value).to.equal('Test\t');
             expect(component.studentSubmission.isSynced).to.be.false;
+        });
+    });
+
+    describe('TextExamSubmissionComponent', () => {
+        const oldProblemStatement = 'problem statement with errors';
+        const updatedProblemStatement = 'new updated ProblemStatement';
+        const exerciseDummy = { id: 42, problemStatement: oldProblemStatement } as Exercise;
+
+        beforeEach(() => {
+            component.exercise = exerciseDummy;
+            component.studentSubmission = textSubmission;
+            const exerciseId = component.getExercise().id!;
+            const update = { exerciseId, problemStatement: updatedProblemStatement };
+
+            fixture.detectChanges();
+            examExerciseIdAndProblemStatementSourceMock.next(update);
+        });
+
+        it('should update problem statement', () => {
+            //not component.getExercise().problemStatement, due to inserted HTML via Diff-Highlighting
+            const result = component.updatedProblemStatement;
+            expect(result).to.equal(updatedProblemStatement);
+            expect(result).not.to.equal(oldProblemStatement);
+        });
+
+        it('should highlight differences', () => {
+            const result = component.getExercise().problemStatement;
+            expect(result).to.equal(component.updatedProblemStatementWithHighlightedDifferences);
+        });
+
+        it('should display different problem statement after button was clicked', () => {
+            const button = fixture.debugElement.nativeElement.querySelector('#highlightDiffButton');
+            button.click();
+            const result = component.getExercise().problemStatement;
+            expect(result).to.equal(updatedProblemStatement);
+            expect(result).not.to.equal(component.updatedProblemStatementWithHighlightedDifferences);
         });
     });
 });

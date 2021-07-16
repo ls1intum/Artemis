@@ -218,13 +218,10 @@ describe('Exam Navigation Bar Component', () => {
         expect(result).toEqual('notSubmitted');
     });
 
-    describe('Exam Exercise Update', () => {
+    it('should navigate to other Exercise', () => {
         const updatedExerciseId = 2;
-
-        it('should navigate to other Exercise', () => {
-            spyOn(comp, 'changeExerciseById');
-            examExerciseIdForNavigationSourceMock.next(updatedExerciseId);
-            expect(comp.changeExerciseById).toHaveBeenCalled();
-        });
+        spyOn(comp, 'changeExerciseById');
+        examExerciseIdForNavigationSourceMock.next(updatedExerciseId);
+        expect(comp.changeExerciseById).toHaveBeenCalled();
     });
 });
