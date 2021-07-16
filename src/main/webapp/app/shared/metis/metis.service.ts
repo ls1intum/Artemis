@@ -1,8 +1,8 @@
 import { CourseWideContext, Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post/post.service';
-import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 interface PostFilter {
     exercise?: Exercise;
@@ -12,11 +12,11 @@ interface PostFilter {
 
 export class MetisService {
     private posts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([]);
-    private filteredPosts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>();
+    private filteredPosts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([]);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
 
     get filteredPosts(): Observable<Post[]> {
-        return this.filteredPosts$;
+        return this.filteredPosts$.asObservable();
     }
 
     get tags(): Observable<string[]> {
@@ -33,10 +33,10 @@ export class MetisService {
 
     filterPosts(postFilter: PostFilter): void {
         const filteredPosts = this.posts$.getValue().filter((post) => {
-            if (postFilter.lecture?.id && postFilter.lecture.id !== post.lecture.id) {
+            if (postFilter.lecture?.id && postFilter.lecture.id !== post.lecture!.id) {
                 return false;
             }
-            if (postFilter.exercise?.id && postFilter.exercise.id !== post.exercise.id) {
+            if (postFilter.exercise?.id && postFilter.exercise.id !== post.exercise!.id) {
                 return false;
             }
             if (postFilter.courseWideContext && postFilter.courseWideContext !== post.courseWideContext) {
@@ -48,10 +48,4 @@ export class MetisService {
     }
 
     constructor(private postService: PostService) {}
-
-    getPostsByCourse(course: Course) {
-        this.postService.getAllPostsForCourse(course).subscribe((posts) => {
-            this.posts$.next(posts);
-        });
-    }
 }

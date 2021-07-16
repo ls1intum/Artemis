@@ -254,8 +254,9 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        Course course = preCheckUserAndCourse(user, courseId);
-        return postRepository.findPostTagsForCourse(courseId);
+        preCheckUserAndCourse(user, courseId);
+        List<String> tags = postRepository.findPostTagsForCourse(courseId);
+        return tags;
     }
 
     /**
