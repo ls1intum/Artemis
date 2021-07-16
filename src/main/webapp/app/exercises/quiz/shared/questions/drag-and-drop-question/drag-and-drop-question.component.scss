@@ -8,7 +8,6 @@
     padding: 20px;
     position: relative;
     width: 100%;
-    overflow: auto;
 
     .dnd-instructions {
         display: flex;
@@ -133,10 +132,9 @@
 
                             span {
                                 border: none;
-                                padding: 0;
                                 vertical-align: middle;
                                 display: inline-block;
-                                white-space: nowrap;
+                                font-size: 1rem;
                             }
                         }
                     }

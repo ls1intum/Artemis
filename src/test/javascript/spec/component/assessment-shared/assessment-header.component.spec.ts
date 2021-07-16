@@ -10,12 +10,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { MockComponent } from 'ng-mocks';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
-import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -30,9 +25,6 @@ describe('AssessmentHeaderComponent', () => {
                     provide: JhiAlertService,
                     useClass: JhiAlertService, // use the real one
                 },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -246,45 +238,5 @@ describe('AssessmentHeaderComponent', () => {
 
         expect(component.highlightDifferencesChange.emit).toHaveBeenCalled();
         expect(component.highlightDifferences).toEqual(false);
-    });
-
-    it('should send assessment event on assess next button click when exercise set to Text', () => {
-        component.exercise = {
-            type: ExerciseType.TEXT,
-        } as Exercise;
-        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
-        component.sendAssessNextEventToAnalytics();
-        fixture.detectChanges();
-        expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION);
-    });
-
-    it('should not send assessment event on assess next button click when exercise is not Text', () => {
-        component.exercise = {
-            type: ExerciseType.FILE_UPLOAD,
-        } as Exercise;
-        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
-        component.sendAssessNextEventToAnalytics();
-        fixture.detectChanges();
-        expect(sendAssessmentEvent).toHaveBeenCalledTimes(0);
-    });
-
-    it('should send assessment event on submit button click when exercise set to Text', () => {
-        component.exercise = {
-            type: ExerciseType.TEXT,
-        } as Exercise;
-        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
-        component.sendSubmitAssessmentEventToAnalytics();
-        fixture.detectChanges();
-        expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.SUBMIT_ASSESSMENT);
-    });
-
-    it('should not send assessment event on submit button click when exercise is not Text', () => {
-        component.exercise = {
-            type: ExerciseType.FILE_UPLOAD,
-        } as Exercise;
-        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
-        component.sendSubmitAssessmentEventToAnalytics();
-        fixture.detectChanges();
-        expect(sendAssessmentEvent).toHaveBeenCalledTimes(0);
     });
 });

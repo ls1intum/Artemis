@@ -11,11 +11,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
 import { SelectionRectangle, TextSelectEvent } from 'app/exercises/text/shared/text-select.directive';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
-import { FeedbackType } from 'app/entities/feedback.model';
-import { TextBlockType } from 'app/entities/text-block.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -28,11 +23,7 @@ describe('ManualTextSelectionComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisConfirmIconModule],
             declarations: [ManualTextSelectionComponent],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {
@@ -78,13 +69,5 @@ describe('ManualTextSelectionComponent', () => {
         expect(spy).to.have.been.calledOnce;
         expect(component.selectedText).to.be.undefined;
         expect(component.hostRectangle).to.be.undefined;
-    });
-
-    it('should send assessment event when selecting text block manually', () => {
-        component.selectedText = 'sample text';
-        const sendAssessmentEvent = sinon.spy(component.textAssessmentAnalytics, 'sendAssessmentEvent');
-        component.assessAction();
-        fixture.detectChanges();
-        expect(sendAssessmentEvent).to.have.been.calledWith(TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.MANUAL);
     });
 });

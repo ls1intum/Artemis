@@ -39,4 +39,27 @@ export class ExampleSubmissionsComponent implements OnInit {
             },
         );
     }
+
+    /**
+     * Navigates to the detail view of the example submission
+     * @param id id of the submission or new for a new submission
+     */
+    getLinkToExampleSubmission(id: number | 'new') {
+        if (!this.exercise.exerciseGroup) {
+            return ['/course-management', this.exercise.course!.id, this.exercise.type + '-exercises', this.exercise.id, 'example-submissions', id];
+        } else {
+            return [
+                '/course-management',
+                this.exercise.course!.id,
+                'exams',
+                this.exercise.exerciseGroup!.exam!.id,
+                'exercise-groups',
+                this.exercise.exerciseGroup!.id,
+                this.exercise.type + '-exercises',
+                this.exercise.id,
+                'example-submissions',
+                id,
+            ];
+        }
+    }
 }
