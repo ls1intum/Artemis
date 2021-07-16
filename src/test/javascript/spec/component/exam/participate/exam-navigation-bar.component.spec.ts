@@ -10,7 +10,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BehaviorSubject } from 'rxjs';
-import { ExamExerciseUpdate, ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
@@ -19,9 +19,9 @@ describe('Exam Navigation Bar Component', () => {
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
     let comp: ExamNavigationBarComponent;
 
-    const examExerciseIdAndProblemStatementSubjectMock = new BehaviorSubject<ExamExerciseUpdate>({ exerciseId: -1, problemStatement: '' });
+    const examExerciseIdForNavigationSourceMock = new BehaviorSubject<number>(-1);
     const mockExamExerciseUpdateService = {
-        currentExerciseIdAndProblemStatement: examExerciseIdAndProblemStatementSubjectMock.asObservable(),
+        currentExerciseIdForNavigation: examExerciseIdForNavigationSourceMock.asObservable(),
     };
 
     beforeEach(() => {
@@ -220,20 +220,10 @@ describe('Exam Navigation Bar Component', () => {
 
     describe('Exam Exercise Update', () => {
         const updatedExerciseId = 2;
-        const updatedProblemStatement = 'Updated Problem Statement';
-        const update = { exerciseId: updatedExerciseId, problemStatement: updatedProblemStatement };
-        const navigation = { exerciseId: updatedExerciseId, problemStatement: '' };
-
-        it('should update Exercise Problem Statement', () => {
-            examExerciseIdAndProblemStatementSubjectMock.next(update);
-            const foundIndex = comp.exercises.findIndex((ex) => ex.id === updatedExerciseId);
-            const result = comp.exercises[foundIndex].problemStatement;
-            expect(result).toEqual(updatedProblemStatement);
-        });
 
         it('should navigate to other Exercise', () => {
             spyOn(comp, 'changeExerciseById');
-            examExerciseIdAndProblemStatementSubjectMock.next(navigation);
+            examExerciseIdForNavigationSourceMock.next(updatedExerciseId);
             expect(comp.changeExerciseById).toHaveBeenCalled();
         });
     });
