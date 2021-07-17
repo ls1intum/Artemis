@@ -13,7 +13,7 @@ const adminPassword = Cypress.env('adminPassword');
 // Requests
 let artemisRequests: ArtemisRequests;
 
-// PagegObjects
+// PageObjects
 let courseManagementPage: CourseManagementPage;
 let navigationBar: NavigationBar;
 
@@ -34,17 +34,12 @@ const datepickerButtons = '.owl-dt-container-control-button';
 describe('Programming Exercise Management', () => {
     let course: any;
 
-    beforeEach(() => {
-        courseManagementPage = new CourseManagementPage();
-        navigationBar = new NavigationBar();
-        registerQueries();
+    before(() => {
         uid = generateUUID();
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
-        programmingExerciseName = 'Cypress programming exercise ' + uid;
-        programmingExerciseShortName = courseShortName;
+        cy.login(adminUsername, adminPassword);
         artemisRequests = new ArtemisRequests();
-        cy.login(adminUsername, adminPassword, '/');
         artemisRequests.courseManagement
             .createCourse(courseName, courseShortName)
             .its('body')
@@ -56,8 +51,20 @@ describe('Programming Exercise Management', () => {
             });
     });
 
+    beforeEach(() => {
+        courseManagementPage = new CourseManagementPage();
+        navigationBar = new NavigationBar();
+        registerQueries();
+        uid = generateUUID();
+        programmingExerciseName = 'Cypress programming exercise ' + uid;
+        programmingExerciseShortName = 'cypress' + uid;
+    });
+
     describe('Programming exercise creation', () => {
+        let programmingExerciseId: number;
+
         it('Creates a new programming exercise', function () {
+            cy.login(adminUsername, adminPassword, '/');
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(courseName, courseShortName);
             cy.get('#jh-create-entity').click();
@@ -75,9 +82,20 @@ describe('Programming Exercise Management', () => {
             cy.get('#field_points').type('100');
             cy.get('#field_allowOnlineEditor').check();
             cy.get(saveEntity).click();
-            cy.wait('@createProgrammingExerciseQuery');
+            cy.wait('@createProgrammingExerciseQuery')
+                .its('response.body')
+                .then((body) => {
+                    expect(body).property('id').to.be.a('number');
+                    programmingExerciseId = body.id;
+                });
             cy.url().should('include', '/exercises');
             cy.contains(programmingExerciseName).should(beVisible);
+        });
+
+        afterEach(() => {
+            if (programmingExerciseId) {
+                artemisRequests.courseManagement.deleteProgrammingExercise(programmingExerciseId);
+            }
         });
     });
 
@@ -87,6 +105,7 @@ describe('Programming Exercise Management', () => {
         });
 
         it('Deletes an existing programming exercise', function () {
+            cy.login(adminUsername, adminPassword, '/');
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(courseName, courseShortName);
             cy.get('[deletequestion="artemisApp.programmingExercise.delete.question"]').click();
@@ -102,7 +121,7 @@ describe('Programming Exercise Management', () => {
         });
     });
 
-    afterEach(() => {
+    after(() => {
         if (!!course) {
             artemisRequests.courseManagement.deleteCourse(course.id).its('status').should('eq', 200);
         }
