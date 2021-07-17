@@ -51,24 +51,6 @@ export class ModelingAssessmentService {
         return this.http.get<Result>(url).pipe(map((res) => this.convertResult(res)));
     }
 
-    /**
-     * TODO delete
-     * @deprecated do not use any more, instead use modeling-submission-service.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(...)
-     * @param exerciseId the modeling exercise id
-     */
-    getOptimalSubmissions(exerciseId: number): Observable<number[]> {
-        return this.http.get<number[]>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`);
-    }
-
-    /**
-     * TODO delete
-     * @deprecated do not use any more
-     * @param exerciseId the modeling exercise id
-     */
-    resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`, { observe: 'response' });
-    }
-
     cancelAssessment(submissionId: number): Observable<void> {
         return this.http.put<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/cancel-assessment`, null);
     }
