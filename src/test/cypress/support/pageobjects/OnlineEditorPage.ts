@@ -1,4 +1,3 @@
-import { delay } from 'rxjs/operators';
 import { beVisible, GET } from '../constants';
 
 const buildingAndTesting = 'Building and testing...';

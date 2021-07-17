@@ -5,7 +5,7 @@ import { OnlineEditorPage, ProgrammingExerciseSubmission } from '../support/page
 import allSuccessful from '../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import partiallySuccessful from '../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import { beVisible } from '../support/constants';
-import { ArtemisRequests } from './../support/requests/ArtemisRequests';
+import { ArtemisRequests } from '../support/requests/ArtemisRequests';
 
 // Environmental variables
 const adminUsername = Cypress.env('adminUsername');

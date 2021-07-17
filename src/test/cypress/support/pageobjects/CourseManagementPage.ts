@@ -18,7 +18,7 @@ export class CourseManagementPage {
      * Opens the exercises (of the first found course).
      */
     openExercisesOfCourse(courseName: string, courseShortName: string) {
-        this.getCourseCard(courseName, courseShortName).find('.card-footer').eq(0).children().eq(0).click();
+        this.getCourseCard(courseName, courseShortName).find('.card-footer').children().eq(0).click();
         cy.url().should('include', '/exercises');
     }
 
@@ -42,8 +42,10 @@ export class CourseManagementPage {
     }
 
     /**
-     * @param courseShortName
-     * @returns the title element of the course card.
+     * Retrieves the course selector. This is returns the element, which is used to identify a course card. It does not return the root of the course card!
+     * @param courseName the title of the course
+     * @param courseShortName the short name of the course
+     * @returns the title element (not the root element!) of the course card.
      */
     courseSelector(courseName: string, courseShortName: string) {
         return `${courseName} (${courseShortName})`;

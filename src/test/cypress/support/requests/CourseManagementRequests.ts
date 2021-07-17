@@ -47,8 +47,12 @@ export class CourseManagementRequests {
 
     /**
      * Creates a course with the specified title and short name.
-     * @param courseName the title of the course
-     * @param courseShortName the short name
+     * @param course the response object from a previous call to createCourse
+     * @param title the title of the programming exercise
+     * @param programmingShortName the short name of the programming exercise
+     * @param packageName the package name of the programming exercise
+     * @param releaseDate when the programming exercise should be available (default is now)
+     * @param dueDate when the programming exercise should be due (default is now + 1 day)
      * @returns the cypress chainable from the request
      */
     createProgrammingExercise(course: any, title: string, programmingShortName: string, packageName: string, releaseDate = new Date(), dueDate = new Date(Date.now() + oneDay)) {
