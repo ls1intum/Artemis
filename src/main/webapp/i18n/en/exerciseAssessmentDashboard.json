@@ -18,9 +18,9 @@
                     "COMPLETED": "Completed assessing students submissions"
                 },
                 "description": {
-                    "NOT_PARTICIPATED": "Please read the assessment instructions carefully and confirm that you have understood them",
-                    "REVIEWED_INSTRUCTIONS": "Please open Example Submissions and start training",
-                    "TRAINED": "Now you can start assessing students submissions",
+                    "NOT_PARTICIPATED": "Please read the assessment instructions carefully and confirm that you have understood them.",
+                    "REVIEWED_INSTRUCTIONS": "Please open Example Submissions and start training.",
+                    "TRAINED": "Now you can start assessing students' submissions.",
                     "COMPLETED": ""
                 }
             },
@@ -31,6 +31,7 @@
             "readGradingInstructions": "Read assessment instructions",
             "startYourParticipation": "Start participating in the exercise",
             "gradingInstructions": "Assessment instructions",
+            "structuredGradingInstructions": "Structured assessment instructions",
             "problemStatement": "Problem statement",
             "exampleSolution": "Example solution",
             "exampleSolutionExplanation": "Example solution explanation",

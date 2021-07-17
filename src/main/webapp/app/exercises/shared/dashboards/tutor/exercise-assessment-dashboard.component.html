@@ -171,7 +171,7 @@
         </jhi-info-panel>
 
         <div *ngIf="exercise.gradingCriteria && exercise.gradingCriteria.length > 0" class="col-12 mt-4">
-            <h4>Structured {{ 'artemisApp.exerciseAssessmentDashboard.gradingInstructions' | artemisTranslate }}</h4>
+            <h4>{{ 'artemisApp.exerciseAssessmentDashboard.structuredGradingInstructions' | artemisTranslate }}</h4>
             <jhi-structured-grading-instructions-assessment-layout
                 [readonly]="true"
                 [criteria]="exercise.gradingCriteria || []"
@@ -238,7 +238,7 @@
                             >
                                 {{ 'artemisApp.exerciseAssessmentDashboard.reviewExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                             </button>
-                            <fa-icon class="text-success" [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id!)"></fa-icon>
+                            <fa-icon class="text-secondary" [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id!)"></fa-icon>
                         </li>
                     </ul>
                 </div>
@@ -476,7 +476,7 @@
                 <h4 class="d-inline-block">
                     {{ 'artemisApp.exerciseAssessmentDashboard.complaints' | artemisTranslate }}
                 </h4>
-                <fa-icon class="text-primary" [icon]="'question-circle'" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate"></fa-icon>
+                <fa-icon class="text-secondary" [icon]="'question-circle'" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate"></fa-icon>
                 <div class="table-responsive">
                     <table class="table table-striped exercise-table" *ngIf="submissionsWithComplaints && submissionsWithComplaints!.length > 0; else noComplaints">
                         <thead>
@@ -539,7 +539,7 @@
                     {{ 'artemisApp.exerciseAssessmentDashboard.moreFeedback' | artemisTranslate }}
                 </h4>
                 <fa-icon
-                    class="text-primary"
+                    class="text-secondary"
                     [icon]="'question-circle'"
                     [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestHint' | artemisTranslate"
                 ></fa-icon>
