@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participant;
@@ -100,6 +101,7 @@ public class ComplaintService {
         }
 
         originalResult.setHasComplaint(true);
+        originalResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
         complaint.setSubmittedTime(ZonedDateTime.now());
         complaint.setParticipant(participant);
