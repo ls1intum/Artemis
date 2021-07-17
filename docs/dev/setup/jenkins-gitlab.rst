@@ -397,6 +397,8 @@ starting a new container with the old volumes:
 See https://hub.docker.com/r/gitlab/gitlab-ce/ for the latest version.
 You can also specify an earlier one.
 
+Note that **upgrading to a major version** may require following an upgrade path. You can view supported paths `here <https://docs.gitlab.com/ee/update/#upgrade-paths>`__.
+
 Start a GitLab container just as described in `Start-Gitlab <#start-gitlab>`__ and wait for a couple of minutes. GitLab
 should configure itself automatically. If there are no issues, you can
 delete the old container using ``docker rm gitlab_old`` and the olf
@@ -922,6 +924,62 @@ the following steps:
        jenkins:
            use-crumb: false
 
+Upgrading Jenkins
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In order to upgrade Jenkins to a newer version, you need to rebuild the Docker image targeting the new version.
+The stable LTS versions can be viewed through the `changelog <https://www.jenkins.io/changelog-stable/>`__. and the corresponding
+Docker image can be found on `dockerhub <https://hub.docker.com/r/jenkins/jenkins/tags?page=1&ordering=last_updated>`__.
+
+1. Open the Jenkins Dockerfile and replace the value of ``FROM`` with ``jenkins/jenkins:lts``. After running the command ``docker pull jenkins/jenkins:lts``, this will use the latest LTS version in the following steps.
+   You can also use a specific LTS version.
+   For example, if you want to upgrade Jenkins to version ``2.289.2``, you will need to use the ``jenkins/jenkins:2.289.2-lts`` image.
+
+2. If you're using docker-compose, you can simply use the following command and skip the next steps.
+
+   ::
+
+        docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build -d
+
+3. Build the new Docker image:
+
+   ::
+
+        docker build --no-cache -t jenkins-artemis .
+
+   The name of the image is called ``jenkins-artemis``.
+
+4. Stop the current Jenkins container (change jenkins to the name of your container):
+
+   ::
+
+        docker stop jenkins
+
+5. Rename the container to ``jenkins_old`` so that it can be used as a backup:
+
+   ::
+
+        docker rename jenkins jenkins_old
+
+6. Run the new Jenkins instance:
+
+   ::
+
+        docker run -itd --name jenkins --restart always \
+         -v jenkins_data:/var/jenkins_home \
+         -v /var/run/docker.sock:/var/run/docker.sock \
+         -p 9080:8080 jenkins-artemis \
+
+7. You can remove the backup container if it's no longer needed:
+
+   ::
+
+        docker rm jenkins_old
+
+
+You should also update the Jenkins plugins regularly due to security
+reasons. You can update them directly in the Web User Interface in the
+Plugin Manager.
+
 Build agents
 ^^^^^^^^^^^^
 
@@ -1140,36 +1198,11 @@ This section explains the changes required in Jenkins in order to set up build p
 
 
 Caching
--------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can configure caching for e.g. Maven repositories.
 See :doc:`programming-exercises` for more details.
 
-
-Upgrade Jenkins
-~~~~~~~~~~~~~~~
-
-Build the latest version of the ``jenkins-artemis`` Docker image, stop
-the running container and mount the Jenkins data volume to the new LTS
-container. Make sure to perform this command in the folder where the
-``Dockerfile`` was created (e.g. ``/opt/jenkins/``):
-
-    ::
-
-        docker stop jenkins
-        docker rename jenkins jenkins_old
-        docker build --no-cache -t jenkins-artemis .
-
-Now start a new Jenkins container just as described in `Start-Jenkins <#start-jenkins>`__.
-
-Jenkins should be up and running again. If there are no issues, you can
-delete the old container using ``docker rm jenkins_old`` and the old
-image (see ``docker images``) using ``docker rmi <old-image-id>``.
-You can also remove all old images using ``docker image prune -a``
-
-You should also update the Jenkins plugins regularly due to security
-reasons. You can update them directly in the Web User Interface in the
-Plugin Manager.
 
 Separate NGINX Configurations
 -----------------------------
