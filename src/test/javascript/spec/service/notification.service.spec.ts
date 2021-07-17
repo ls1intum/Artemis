@@ -13,6 +13,7 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { MockRouter } from '../helpers/mocks/mock-router';
+import { RouterTestingModule } from '@angular/router/testing';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -20,9 +21,7 @@ const expect = chai.expect;
 describe('Logs Service', () => {
     let notificationService: NotificationService;
     let httpMock: HttpTestingController;
-
-    const router = new MockRouter();
-    const navigateSpy = sinon.spy(router, 'navigate');
+    let router: Router;
 
     const generateQuizNotification = (id: number) => {
         const generatedNotification = { id, title: 'Quiz started', text: 'Quiz "Proxy pattern" just started.' } as Notification;
@@ -40,7 +39,7 @@ describe('Logs Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, TranslateTestingModule],
+            imports: [HttpClientTestingModule, TranslateTestingModule, RouterTestingModule.withRoutes([])],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -51,6 +50,7 @@ describe('Logs Service', () => {
             .then(() => {
                 notificationService = TestBed.inject(NotificationService);
                 httpMock = TestBed.inject(HttpTestingController);
+                router = TestBed.get(Router);
             });
     });
 
@@ -68,9 +68,12 @@ describe('Logs Service', () => {
         });
 
         it('should navigate to notification target', () => {
+            sinon.spy(router, 'navigate');
+            sinon.replace(router, 'navigate', sinon.fake());
+
             notificationService.interpretNotification(quizNotification);
-            //expect(navigateSpy).to.have.been.called;
-            expect(navigateSpy).to.have.been.calledOnce;
+
+            expect(router.navigate).to.have.been.calledOnce;
         });
     });
 });
