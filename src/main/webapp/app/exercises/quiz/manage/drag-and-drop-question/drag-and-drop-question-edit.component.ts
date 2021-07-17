@@ -74,7 +74,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     dragItemPicture?: string;
     backgroundFile?: Blob | File;
     backgroundFileName: string;
-    backgroundFilePath = '';
+    backgroundFilePath: string;
     dragItemFile?: Blob | File;
     dragItemFileName: string;
 
@@ -130,6 +130,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.showPreview = false;
         this.isUploadingBackgroundFile = false;
         this.backgroundFileName = '';
+        this.backgroundFilePath = '';
         this.isUploadingDragItemFile = false;
         this.dragItemFileName = '';
         this.isQuestionCollapsed = false;
@@ -156,10 +157,18 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     ngAfterViewInit(): void {
+        if (this.question.backgroundFilePath) {
+            this.backgroundFilePath = this.question.backgroundFilePath;
+            // Trigger image render with the question background file path in order to adjust the click layer.
+            setTimeout(() => {
+                this.changeDetector.detectChanges();
+            }, 0);
+        }
+
         this.backgroundImage.endLoadingProcess
             .pipe(
                 filter((x) => x === ImageLoadingStatus.SUCCESS),
-                // Some time between image load and render.
+                // Some time until image render. Need to wait until image width is computed.
                 debounceTime(300),
             )
             .subscribe(() => {
@@ -220,6 +229,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                 this.backgroundFile = undefined;
                 this.backgroundFileName = '';
                 this.backgroundFilePath = result.path!;
+
+                // Trigger image reload.
+                this.changeDetector.detectChanges();
             },
             (error) => {
                 console.error('Error during file upload in uploadBackground()', error.message);
