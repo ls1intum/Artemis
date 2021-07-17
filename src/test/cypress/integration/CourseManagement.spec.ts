@@ -101,7 +101,6 @@ describe('Course management', () => {
         });
 
         it('Adds a student manually to the course', function () {
-            cy.login(adminUsername, adminPassword);
             navigationBar.openCourseManagement();
             courseManagementPage.openStudentOverviewOfCourse(courseName, courseShortName);
             cy.get('#typeahead-basic').type(username);
