@@ -38,6 +38,7 @@
             "date": "Datum",
             "time": "Zeit",
             "durationWithFormat": "Dauer (mm:ss)",
+            "resultInformation": "Dein Ergebnis wird nach Abschluss der Korrektur an dieser Stelle für dich veröffentlicht. Du kommst zu dieser Seite, indem du in der Klausuren Übersicht des Kurses auf diese Klausur klickst.",
             "course": "Kurs",
             "exercises": "Aufgaben",
             "points": "Punkte",
