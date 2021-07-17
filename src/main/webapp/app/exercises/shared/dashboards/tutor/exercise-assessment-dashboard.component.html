@@ -600,7 +600,12 @@
                 </div>
             </ng-container>
         </div>
-        <jhi-collapsable-assessment-instructions [readOnly]="true" [exercise]="exercise" [collapsed]="true"></jhi-collapsable-assessment-instructions>
+        <jhi-collapsable-assessment-instructions
+            class="collapsable-instructions"
+            [readOnly]="true"
+            [exercise]="exercise"
+            [collapsed]="true"
+        ></jhi-collapsable-assessment-instructions>
     </div>
 
     <div *ngIf="this.tutorParticipation.status! === TRAINED || isAtLeastInstructor">
