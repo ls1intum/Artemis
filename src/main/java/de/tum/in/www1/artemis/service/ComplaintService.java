@@ -102,6 +102,7 @@ public class ComplaintService {
 
         originalResult.setHasComplaint(true);
         originalResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        originalResult.setAssessor(userRepository.getUserWithGroupsAndAuthorities("artemis_test_user_5"));
 
         complaint.setSubmittedTime(ZonedDateTime.now());
         complaint.setParticipant(participant);
