@@ -3471,6 +3471,28 @@ public class DatabaseUtilService {
         return Set.of(gradeStep1, gradeStep2, gradeStep3);
     }
 
+    public GradingScale generateGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex) {
+        if (gradeStepCount < 1 || gradeStepCount != intervals.length - 1 || firstPassingIndex >= gradeStepCount || firstPassingIndex < 0) {
+            fail("Invalud grading scale parameters");
+        }
+        GradingScale gradingScale = new GradingScale();
+        Set<GradeStep> gradeSteps = new HashSet<>();
+        for (int i = 0; i < gradeStepCount; i++) {
+            GradeStep gradeStep = new GradeStep();
+            gradeStep.setLowerBoundPercentage(intervals[i]);
+            gradeStep.setUpperBoundPercentage(intervals[i + 1]);
+            gradeStep.setLowerBoundInclusive(i == 0 || lowerBoundInclusivity);
+            gradeStep.setUpperBoundInclusive(i + 1 == gradeStepCount || !lowerBoundInclusivity);
+            gradeStep.setIsPassingGrade(i >= firstPassingIndex);
+            gradeStep.setGradeName("Step" + i);
+            gradeStep.setGradingScale(gradingScale);
+            gradeSteps.add(gradeStep);
+        }
+        gradingScale.setGradeSteps(gradeSteps);
+        gradingScale.setGradeType(GradeType.GRADE);
+        return gradingScale;
+    }
+
     public Course createCourseWithTestModelingAndFileUploadExercisesAndSubmissions() throws Exception {
         Course course = addCourseWithModelingAndTextAndFileUploadExercise();
         course.setEndDate(ZonedDateTime.now().minusMinutes(5));

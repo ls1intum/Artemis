@@ -52,8 +52,8 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         gradingScale = new GradingScale();
         gradingScale.setId(1L);
         gradeSteps = new HashSet<>();
-        course = new Course();
-        exam = new Exam();
+        course = database.addEmptyCourse();
+        exam = database.addExam(course);
     }
 
     @AfterEach
@@ -237,5 +237,126 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         gradingScaleRepository.save(gradingScale2);
 
         assertThat(gradingScaleRepository.findByExamIdOrElseThrow(exam.getId())).isEqualTo(gradingScale1);
+    }
+
+    /**
+     * Test grade step matching for rounding errors
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGradeStepMatchingForRoundingErrors1() {
+        GradingScale gradingScale = database.generateGradingScale(3, new double[] { 0, 40.005, 80, 100 }, true, 1);
+        gradingScaleRepository.save(gradingScale);
+        Long id = gradingScaleRepository.findAll().get(0).getId();
+
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(40, id);
+
+        assertThat(gradeStep.getGradeName()).isEqualTo("Step1");
+
+        gradeStep = gradingScaleRepository.matchPercentageToGradeStep(39.99, id);
+
+        assertThat(gradeStep.getGradeName()).isEqualTo("Step0");
+
+        gradeStep = gradingScaleRepository.matchPercentageToGradeStep(39.999, id);
+
+        assertThat(gradeStep.getGradeName()).isEqualTo("Step1");
+    }
+
+    /**
+     * Test grade step matching for rounding errors
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGradeStepMatchingForRoundingErrors2() {
+        GradingScale gradingScale = database.generateGradingScale(3, new double[] { 0, 40, 63.9901, 100 }, false, 1);
+        gradingScaleRepository.save(gradingScale);
+        Long id = gradingScaleRepository.findAll().get(0).getId();
+
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(64, id);
+
+        assertThat(gradeStep.getGradeName()).isEqualTo("Step1");
+
+        gradeStep = gradingScaleRepository.matchPercentageToGradeStep(64.005, id);
+
+        assertThat(gradeStep.getGradeName()).isEqualTo("Step2");
+    }
+
+    /**
+     * Test grade step matching for rounding errors
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGradeStepMatchingForRoundingErrors3() {
+        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, 50.010101, 100 }, true, 1);
+        gradingScaleRepository.save(gradingScale);
+        Long id = gradingScaleRepository.findAll().get(0).getId();
+
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(50, id);
+
+        assertThat(gradeStep.getGradeName()).isEqualTo("Step0");
+
+        gradeStep = gradingScaleRepository.matchPercentageToGradeStep(50.009, id);
+
+        assertThat(gradeStep.getGradeName()).isEqualTo("Step1");
+    }
+
+    /**
+     * Test grade step matching for rounding errors
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGradeStepMatchingForRoundingErrors4() {
+        double boundary = 60 + 1d / 7d;
+        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1);
+        gradingScaleRepository.save(gradingScale);
+        Long id = gradingScaleRepository.findAll().get(0).getId();
+
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(60.142857, id);
+
+        assertThat(gradeStep.getGradeName()).isEqualTo("Step1");
+
+        gradeStep = gradingScaleRepository.matchPercentageToGradeStep(60.1322, id);
+
+        assertThat(gradeStep.getGradeName()).isEqualTo("Step0");
+    }
+
+    /**
+     * Test grade step matching for rounding errors
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGradeStepMatchingForRoundingErrors5() {
+        double boundary = 55 + 2d / 3d;
+        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, boundary, 100 }, false, 1);
+        gradingScaleRepository.save(gradingScale);
+        Long id = gradingScaleRepository.findAll().get(0).getId();
+
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(55.67, id);
+
+        assertThat(gradeStep.getGradeName()).isEqualTo("Step0");
+
+        gradeStep = gradingScaleRepository.matchPercentageToGradeStep(55.679, id);
+
+        assertThat(gradeStep.getGradeName()).isEqualTo("Step1");
+    }
+
+    /**
+     * Test grade step matching for rounding errors
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGradeStepMatchingForRoundingErrors6() {
+        double boundary = 45 + 5d / 6d;
+        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1);
+        gradingScaleRepository.save(gradingScale);
+        Long id = gradingScaleRepository.findAll().get(0).getId();
+
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(45.83, id);
+
+        assertThat(gradeStep.getGradeName()).isEqualTo("Step1");
+
+        gradeStep = gradingScaleRepository.matchPercentageToGradeStep(45.825, id);
+
+        assertThat(gradeStep.getGradeName()).isEqualTo("Step1");
     }
 }
