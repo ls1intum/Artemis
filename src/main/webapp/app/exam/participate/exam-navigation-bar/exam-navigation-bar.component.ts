@@ -58,7 +58,7 @@ export class ExamNavigationBarComponent implements OnInit {
         this.exercises
             .filter((ex) => ex.type === ExerciseType.PROGRAMMING && ex.studentParticipations)
             .forEach((ex) => {
-                let domain: DomainChange = [DomainType.PARTICIPATION, ex.studentParticipations![0]];
+                const domain: DomainChange = [DomainType.PARTICIPATION, ex.studentParticipations![0]];
                 this.conflictService.setDomain(domain);
                 this.repositoryService.setDomain(domain);
                 this.repositoryService
