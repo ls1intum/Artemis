@@ -55,19 +55,28 @@ export class ExamNavigationBarComponent implements OnInit {
             }
         });
 
+        const timingEntries = window.performance.getEntriesByType('navigation') as [PerformanceNavigationTiming];
+        const isReload = timingEntries.some((entry) => entry.name === window.location.href && entry.type === 'reload');
+        if (!isReload) {
+            return;
+        }
+
+        // If exam is reloaded, update the isSynced variable for out of sync submissions.
         this.exercises
-            .filter((ex) => ex.type === ExerciseType.PROGRAMMING && ex.studentParticipations)
-            .forEach((ex) => {
-                const domain: DomainChange = [DomainType.PARTICIPATION, ex.studentParticipations![0]];
+            .filter((exercise) => exercise.type === ExerciseType.PROGRAMMING && exercise.studentParticipations)
+            .forEach((exercise) => {
+                const domain: DomainChange = [DomainType.PARTICIPATION, exercise.studentParticipations![0]];
                 this.conflictService.setDomain(domain);
                 this.repositoryService.setDomain(domain);
+
                 this.repositoryService
                     .getStatus()
-                    .pipe(map((commitState) => Object.values(CommitState).find((x) => x === commitState.repositoryStatus)))
+                    .pipe(map((response) => Object.values(CommitState).find((commitState) => commitState === response.repositoryStatus)))
                     .subscribe((commitState) => {
-                        if (commitState === CommitState.UNCOMMITTED_CHANGES) {
+                        let submission = ExamParticipationService.getSubmissionForExercise(exercise);
+                        if (commitState === CommitState.UNCOMMITTED_CHANGES && submission) {
                             // If there are uncommitted changes: set isSynced to false.
-                            ExamParticipationService.getSubmissionForExercise(ex)!.isSynced = false;
+                            submission.isSynced = false;
                         }
                     });
             });
