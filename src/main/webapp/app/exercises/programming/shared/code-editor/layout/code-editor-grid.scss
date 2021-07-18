@@ -173,10 +173,12 @@ Collapsable styling
         justify-content: space-between;
         flex-flow: column nowrap;
         cursor: pointer;
+
         .header {
             writing-mode: vertical-rl;
             margin-left: -3px;
         }
+
         fa-icon {
             display: flex;
             justify-content: center;
@@ -196,7 +198,7 @@ Collapsable styling
         grid-template-columns: minmax(max-content, 1fr) minmax(max-content, 2fr);
 
         > :not(:first-child) {
-            border-left: 3px solid ;
+            border-left: 3px solid;
             padding-left: 20px;
         }
 
