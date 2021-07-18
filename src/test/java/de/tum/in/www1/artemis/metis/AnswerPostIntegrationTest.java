@@ -146,7 +146,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateAnswerPostWithWrongCourseId() throws Exception {
+    public void testCreateAnswerPostWithWrongCourseId_badRequest() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
         Course dummyCourse = database.createCourse();
 
@@ -158,7 +158,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateExistingAnswerPost() throws Exception {
+    public void testCreateExistingAnswerPost_badRequest() throws Exception {
         AnswerPost existingAnswerPostToSave = existingAnswerPosts.get(0);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", existingAnswerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
@@ -189,7 +189,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testEditAnswerPost_asStudent2() throws Exception {
+    public void testEditAnswerPost_asStudent2_forbidden() throws Exception {
         // update post from another student (index 1)--> forbidden
         AnswerPost answerPostNotToUpdate = editExistingAnswerPost(existingAnswerPosts.get(1));
 
@@ -199,7 +199,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testEditAnswerPostWithIdIsNull() throws Exception {
+    public void testEditAnswerPostWithIdIsNull_badRequest() throws Exception {
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
         AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToUpdate, AnswerPost.class,
@@ -209,7 +209,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testEditAnswerPostWithWrongCourseId() throws Exception {
+    public void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
         Course dummyCourse = database.createCourse();
 
@@ -232,7 +232,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testDeleteAnswerPosts_asStudent2() throws Exception {
+    public void testDeleteAnswerPosts_asStudent2_forbidden() throws Exception {
         // delete post from another student (index 0) --> forbidden
         AnswerPost answerPostToNotDelete = existingAnswerPosts.get(0);
 
@@ -244,22 +244,22 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testDeleteAnswerPost_asTutor() throws Exception {
         // delete post from another student (index 0) --> ok
-        AnswerPost answerPostToNotDelete = existingAnswerPosts.get(0);
+        AnswerPost answerPostToDelete = existingAnswerPosts.get(0);
 
-        request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.OK);
-        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
-
-        // try to delete answerPost of non-existing post
-        Post post = answerPostToNotDelete.getPost();
-        post.setId(9999L);
-        answerPostToNotDelete.setPost(post);
-        request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.NOT_FOUND);
+        request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDelete.getId(), HttpStatus.OK);
         assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDeleteAnswerPost_asTutor_notFound() throws Exception {
+        request.delete("/api/courses/" + courseId + "/answer-posts/" + 9999L, HttpStatus.NOT_FOUND);
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteWithWrongCourseId() throws Exception {
+    public void testDeleteWithWrongCourseId_badRequest() throws Exception {
         AnswerPost answerPostToNotDelete = existingAnswerPosts.get(0);
         Course dummyCourse = database.createCourse();
 

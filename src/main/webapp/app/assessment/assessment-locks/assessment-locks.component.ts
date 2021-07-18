@@ -21,6 +21,8 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 export class AssessmentLocksComponent implements OnInit {
     PROGRAMMING_EXERCISE = ExerciseType.PROGRAMMING;
 
+    readonly ExerciseType = ExerciseType;
+
     course: Course;
     courseId: number;
     tutorId: number;

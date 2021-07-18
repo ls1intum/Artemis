@@ -1,7 +1,7 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
 
 .course-info-bar--participation {
-    $margin: calc(-1.25rem - 1px);
+    $margin: calc(-1rem - 1px);
     $background-color: saturate(lighten($artemis-dark, 10%), 15%);
     $top-border-radius: 3px;
 

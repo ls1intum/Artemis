@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseGroupVariantColumn } from 'app/entities/exercise-group-variant-column.model';
 
 @Component({
@@ -9,6 +10,8 @@ import { ExerciseGroupVariantColumn } from 'app/entities/exercise-group-variant-
 export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
     @Input() exerciseGroups: ExerciseGroup[];
     exerciseGroupVariantColumns: ExerciseGroupVariantColumn[] = [];
+    getIcon = getIcon;
+    getIconTooltip = getIconTooltip;
 
     ngOnChanges() {
         if (this.exerciseGroups) {
@@ -45,6 +48,7 @@ export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
                         }
                         // set properties
                         exerciseVariantColumn.exerciseTitle = exercise.title;
+                        exerciseVariantColumn.exerciseType = exercise.type;
                         exerciseVariantColumn.exerciseNumberOfParticipations = exercise.numberOfParticipations ? exercise.numberOfParticipations : 0;
                         exerciseVariantColumn.exerciseMaxPoints = exercise.maxPoints;
 

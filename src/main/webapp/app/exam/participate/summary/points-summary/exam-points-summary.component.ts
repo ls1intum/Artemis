@@ -35,7 +35,9 @@ export class ExamPointsSummaryComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.calculateExamGrade();
+        if (this.exam && this.exam.publishResultsDate && moment(this.exam.publishResultsDate).isBefore(this.serverDateService.now())) {
+            this.calculateExamGrade();
+        }
     }
 
     /**
