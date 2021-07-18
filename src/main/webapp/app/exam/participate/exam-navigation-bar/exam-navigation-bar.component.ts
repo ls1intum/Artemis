@@ -6,9 +6,10 @@ import * as moment from 'moment';
 import { Moment } from 'moment';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { CommitState, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { map } from 'rxjs/operators';
+import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -33,7 +34,12 @@ export class ExamNavigationBarComponent implements OnInit {
     icon: IconProp;
     getExerciseButtonTooltip = this.examParticipationService.getExerciseButtonTooltip;
 
-    constructor(private layoutService: LayoutService, private examParticipationService: ExamParticipationService, private repositoryService: CodeEditorRepositoryService) {}
+    constructor(
+        private layoutService: LayoutService,
+        private examParticipationService: ExamParticipationService,
+        private repositoryService: CodeEditorRepositoryService,
+        private conflictService: CodeEditorConflictStateService,
+    ) {}
 
     ngOnInit(): void {
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
@@ -52,9 +58,11 @@ export class ExamNavigationBarComponent implements OnInit {
         this.exercises
             .filter((ex) => ex.type === ExerciseType.PROGRAMMING && ex.studentParticipations)
             .forEach((ex) => {
-                this.repositoryService.setDomain([DomainType.PARTICIPATION, ex.studentParticipations![0]]);
+                let domain: DomainChange = [DomainType.PARTICIPATION, ex.studentParticipations![0]];
+                this.conflictService.setDomain(domain);
+                this.repositoryService.setDomain(domain);
                 this.repositoryService
-                    .getStatusWithoutConflictNotification()
+                    .getStatus()
                     .pipe(map((commitState) => Object.values(CommitState).find((x) => x === commitState.repositoryStatus)))
                     .subscribe((commitState) => {
                         if (commitState === CommitState.UNCOMMITTED_CHANGES) {

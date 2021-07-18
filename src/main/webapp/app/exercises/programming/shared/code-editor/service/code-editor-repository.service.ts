@@ -84,10 +84,6 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
         super(http, jhiWebsocketService, domainService);
     }
 
-    getStatusWithoutConflictNotification = () => {
-        return this.http.get<any>(this.restResourceUrl!);
-    };
-
     getStatus = () => {
         return this.http.get<any>(this.restResourceUrl!).pipe(
             handleErrorResponse<{ repositoryStatus: string }>(this.conflictService),
