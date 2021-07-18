@@ -54,7 +54,7 @@ export class ExamNavigationBarComponent implements OnInit {
             .forEach((ex) => {
                 this.repositoryService.setDomain([DomainType.PARTICIPATION, ex.studentParticipations![0]]);
                 this.repositoryService
-                    .getStatus()
+                    .getStatusWithoutConflictNotification()
                     .pipe(map((commitState) => Object.values(CommitState).find((x) => x === commitState.repositoryStatus)))
                     .subscribe((commitState) => {
                         if (commitState === CommitState.UNCOMMITTED_CHANGES) {
