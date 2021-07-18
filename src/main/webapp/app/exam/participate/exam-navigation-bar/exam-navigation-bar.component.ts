@@ -6,6 +6,9 @@ import * as moment from 'moment';
 import { Moment } from 'moment';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { CommitState, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -30,7 +33,7 @@ export class ExamNavigationBarComponent implements OnInit {
     icon: IconProp;
     getExerciseButtonTooltip = this.examParticipationService.getExerciseButtonTooltip;
 
-    constructor(private layoutService: LayoutService, private examParticipationService: ExamParticipationService) {}
+    constructor(private layoutService: LayoutService, private examParticipationService: ExamParticipationService, private repositoryService: CodeEditorRepositoryService) {}
 
     ngOnInit(): void {
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
@@ -45,6 +48,21 @@ export class ExamNavigationBarComponent implements OnInit {
                 this.itemsVisiblePerSide = 0;
             }
         });
+
+        this.exercises
+            .filter((ex) => ex.type === ExerciseType.PROGRAMMING && ex.studentParticipations)
+            .forEach((ex) => {
+                this.repositoryService.setDomain([DomainType.PARTICIPATION, ex.studentParticipations![0]]);
+                this.repositoryService
+                    .getStatus()
+                    .pipe(map((commitState) => Object.values(CommitState).find((x) => x === commitState.repositoryStatus)))
+                    .subscribe((commitState) => {
+                        if (commitState === CommitState.UNCOMMITTED_CHANGES) {
+                            // If there are uncommitted changes: set isSynced to false.
+                            ExamParticipationService.getSubmissionForExercise(ex)!.isSynced = false;
+                        }
+                    });
+            });
     }
 
     triggerExamAboutToEnd() {
