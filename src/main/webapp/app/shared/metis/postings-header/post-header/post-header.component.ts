@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsHeaderDirective } from 'app/shared/metis/postings-header/postings-header.directive';
-import { PostService } from 'app/shared/metis/post/post.service';
+import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
     selector: 'jhi-post-header',
@@ -9,11 +9,10 @@ import { PostService } from 'app/shared/metis/post/post.service';
     styleUrls: ['../../../../overview/discussion/discussion.scss'],
 })
 export class PostHeaderComponent extends PostingsHeaderDirective<Post> {
-    @Input() existingPostTags: string[];
-    @Output() toggledAnswersChange: EventEmitter<void> = new EventEmitter<void>();
+    @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
 
-    constructor(protected postService: PostService) {
-        super(postService);
+    constructor(protected metisService: MetisService) {
+        super(metisService);
     }
 
     getNumberOfAnswerPosts(): number {
@@ -21,6 +20,10 @@ export class PostHeaderComponent extends PostingsHeaderDirective<Post> {
     }
 
     toggleAnswers(): void {
-        this.toggledAnswersChange.emit();
+        this.toggleAnswersChange.emit();
+    }
+
+    deletePosting(): void {
+        this.metisService.deletePost(this.posting);
     }
 }

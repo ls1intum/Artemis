@@ -44,7 +44,7 @@ export class CoursePostsComponent implements OnInit {
      */
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.postService.findPostsForCourse(this.courseId).subscribe((res) => {
+        this.postService.getAllPostsByCourseId(this.courseId).subscribe((res) => {
             this.posts = res.body!.map((post: Post) => ({
                 id: post.id!,
                 content: post.content!,

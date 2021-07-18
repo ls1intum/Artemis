@@ -1,7 +1,5 @@
 <div class="row m-1 answer-post">
-    <jhi-answer-post-header [posting]="posting" [isAtLeastTutorInCourse]="isAtLeastTutorInCourse" [courseId]="courseId" [user]="user" (onDelete)="onDelete.emit($event)">
-    </jhi-answer-post-header>
+    <jhi-answer-post-header [posting]="posting"> </jhi-answer-post-header>
     <div class="col markdown-preview" [innerHTML]="posting.content ? (posting.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"></div>
-    <jhi-answer-post-footer [posting]="posting" [isAtLeastTutorInCourse]="isAtLeastTutorInCourse" [courseId]="courseId" (toggleApproveChange)="toggleApproveChange.emit($event)">
-    </jhi-answer-post-footer>
+    <jhi-answer-post-footer [posting]="posting"> </jhi-answer-post-footer>
 </div>

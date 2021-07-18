@@ -1,14 +1,9 @@
 import { Posting } from 'app/entities/metis/posting.model';
-import { Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { User } from 'app/core/user/user.model';
+import { Directive, Input, OnInit } from '@angular/core';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit {
     @Input() posting: T;
-    @Input() user: User;
-    @Input() isAtLeastTutorInCourse: boolean;
-    @Input() courseId: number;
-    @Output() onDelete: EventEmitter<T> = new EventEmitter<T>();
 
     content?: string;
     isEditMode: boolean;

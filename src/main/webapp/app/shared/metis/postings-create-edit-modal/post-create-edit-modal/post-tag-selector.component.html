@@ -1,19 +1,12 @@
 <tag-input
     name="tags"
-    [ngModel]="postTags"
-    (onAdd)="addTag($event)"
-    (onRemove)="removeTag($event)"
+    [ngModel]="tags"
+    (ngModelChange)="onPostTagsChange($event)"
     [maxItems]="3"
     [addOnBlur]="true"
     theme="bootstrap"
     [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"
     [secondaryPlaceholder]="'artemisApp.exercise.tagSecondaryPlaceholder' | artemisTranslate"
 >
-    <tag-input-dropdown
-        [focusFirstElement]="true"
-        [showDropdownIfEmpty]="true"
-        [minimumTextLength]="0"
-        [zIndex]="10000"
-        [autocompleteItems]="existingPostTags"
-    ></tag-input-dropdown>
+    <tag-input-dropdown [focusFirstElement]="true" [showDropdownIfEmpty]="true" [minimumTextLength]="0" [zIndex]="10000"></tag-input-dropdown>
 </tag-input>

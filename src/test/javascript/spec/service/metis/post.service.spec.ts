@@ -108,7 +108,7 @@ describe('Post Service', () => {
 
             const expected = [...posts];
             service
-                .findPostsForCourse(courseDefault.id!)
+                .getAllPostsByCourseId(courseDefault.id!)
                 .pipe(take(2))
                 .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'GET' });

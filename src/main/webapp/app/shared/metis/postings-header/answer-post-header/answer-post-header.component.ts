@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
-import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingsHeaderDirective } from 'app/shared/metis/postings-header/postings-header.directive';
+import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
     selector: 'jhi-answer-post-header',
@@ -9,7 +9,11 @@ import { PostingsHeaderDirective } from 'app/shared/metis/postings-header/postin
     styleUrls: ['../../../../overview/discussion/discussion.scss'],
 })
 export class AnswerPostHeaderComponent extends PostingsHeaderDirective<AnswerPost> {
-    constructor(protected answerPostService: AnswerPostService) {
-        super(answerPostService);
+    constructor(protected metisService: MetisService) {
+        super(metisService);
+    }
+
+    deletePosting(): void {
+        this.metisService.deleteAnswerPost(this.posting);
     }
 }

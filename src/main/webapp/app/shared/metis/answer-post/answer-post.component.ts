@@ -8,8 +8,6 @@ import { PostingDirective } from '../posting.directive';
     styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> {
-    @Output() toggleApproveChange: EventEmitter<AnswerPost> = new EventEmitter<AnswerPost>();
-
     constructor() {
         super();
     }

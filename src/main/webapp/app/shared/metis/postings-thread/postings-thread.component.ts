@@ -1,61 +1,37 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { User } from 'app/core/user/user.model';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { LocalStorageService } from 'ngx-webstorage';
-import { PostAction, PostActionName } from 'app/shared/metis/post/post.component';
 import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
 import { PostService } from 'app/shared/metis/post/post.service';
-
-export interface PostRowAction {
-    name: PostRowActionName;
-    post: Post;
-}
-
-export enum PostRowActionName {
-    VOTE_CHANGE,
-}
+import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
     selector: 'jhi-postings-thread',
     templateUrl: './postings-thread.component.html',
     styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
-export class PostingsThreadComponent implements OnInit {
+export class PostingsThreadComponent implements OnInit, OnChanges {
     @Input() post: Post;
-    @Input() user: User;
-    @Input() isAtLeastTutorInCourse: boolean;
     @Input() courseId: number;
-    @Input() existingPostTags: string[];
-    @Output() onDelete: EventEmitter<Post> = new EventEmitter<Post>();
-    @Output() interactPostRow: EventEmitter<PostRowAction> = new EventEmitter<PostRowAction>();
-    toggledAnswers: boolean;
+    showAnswers: boolean;
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
+    isAtLeastTutorInCourse: boolean;
 
-    constructor(private answerPostService: AnswerPostService, private postService: PostService, private localStorage: LocalStorageService) {}
+    constructor(private answerPostService: AnswerPostService, private postService: PostService, private metisService: MetisService, private localStorage: LocalStorageService) {}
 
     /**
      * sort answers when component is initialized
      */
     ngOnInit(): void {
+        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.sortAnswerPosts();
         this.createdAnswerPost = this.createEmptyAnswerPost();
     }
 
-    /**
-     * interact with post component
-     * @param {PostAction} action
-     */
-    interactPost(action: PostAction): void {
-        switch (action.name) {
-            case PostActionName.VOTE_CHANGE:
-                this.interactPostRow.emit({
-                    name: PostRowActionName.VOTE_CHANGE,
-                    post: action.post,
-                });
-                break;
-        }
+    ngOnChanges(): void {
+        this.sortAnswerPosts();
     }
 
     /**
@@ -72,25 +48,6 @@ export class PostingsThreadComponent implements OnInit {
         );
     }
 
-    deletePost(): void {
-        this.onDelete.emit(this.post);
-        this.localStorage.clear(`q${this.post.id}u${this.user.id}`);
-    }
-
-    onCreateAnswerPost(answerPost: AnswerPost): void {
-        if (!this.post.answers) {
-            this.post.answers = [];
-        }
-        this.post.answers.push(answerPost);
-        this.sortAnswerPosts();
-        this.createdAnswerPost = this.createEmptyAnswerPost();
-    }
-
-    deleteAnswerPost(answerPost: AnswerPost): void {
-        this.post.answers = this.post.answers?.filter((el: AnswerPost) => el.id !== answerPost.id);
-        this.sortAnswerPosts();
-    }
-
     createEmptyAnswerPost(): AnswerPost {
         const answerPost = new AnswerPost();
         answerPost.content = '';
@@ -100,12 +57,6 @@ export class PostingsThreadComponent implements OnInit {
     }
 
     toggleAnswers() {
-        this.toggledAnswers = !this.toggledAnswers;
-    }
-
-    toggleApprove(changedAnswerPost: AnswerPost): void {
-        const updatedAnswerPost = this.post.answers?.find((answerPost: AnswerPost) => answerPost.id === changedAnswerPost.id)!;
-        updatedAnswerPost.tutorApproved = changedAnswerPost.tutorApproved;
-        this.sortAnswerPosts();
+        this.showAnswers = !this.showAnswers;
     }
 }

@@ -53,12 +53,36 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * find all posts for id of course
+     * Get all posts for course by its id
      * @param {number} courseId
      * @return {Observable<EntityArrayResponseType>}
      */
-    findPostsForCourse(courseId: number): Observable<EntityArrayResponseType> {
+    getAllPostsByCourseId(courseId: number): Observable<EntityArrayResponseType> {
         return this.http.get<Post[]>(`api/courses/${courseId}/posts`, { observe: 'response' }).pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+    }
+
+    /**
+     * Get all posts for a lecture in a certain course by its id
+     * @param {number} courseId
+     * @param {number} lectureId
+     * @return {Observable<EntityArrayResponseType>}
+     */
+    getAllPostsByLectureId(courseId: number, lectureId: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Post[]>(`api/courses/${courseId}/lectures/${lectureId}/posts`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+    }
+
+    /**
+     * Get all posts for an exercise in a certain course by its id
+     * @param {number} courseId
+     * @param {number} exerciserId
+     * @return {Observable<EntityArrayResponseType>}
+     */
+    getAllPostsByExerciseId(courseId: number, exerciserId: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Post[]>(`api/courses/${courseId}/exercises/${exerciserId}/posts`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
     /**
@@ -76,11 +100,7 @@ export class PostService extends PostingsService<Post> {
      * @param {number} courseId
      * @return {Observable<string[]>}
      */
-    getAllPostTags(courseId: number): Observable<string[]> {
-        return this.http.get<string[]>(`api/courses/${courseId}/posts/tags`, { observe: 'response' }).pipe(
-            map((tagsResponse: HttpResponse<string[]>) => {
-                return tagsResponse.body!.filter((t) => !!t);
-            }),
-        );
+    getAllPostTagsByCourseId(courseId: number): Observable<HttpResponse<string[]>> {
+        return this.http.get<string[]>(`api/courses/${courseId}/posts/tags`, { observe: 'response' });
     }
 }

@@ -24,7 +24,7 @@ export class CourseLectureDetailsComponent implements OnInit {
     lecture?: Lecture;
     isDownloadingLink?: string;
     lectureUnits: LectureUnit[] = [];
-    postings?: DiscussionComponent;
+    discussionComponent?: DiscussionComponent;
     hasPdfLectureUnit: boolean;
 
     readonly LectureUnitType = LectureUnitType;
@@ -61,10 +61,9 @@ export class CourseLectureDetailsComponent implements OnInit {
                                 (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
                             ).length > 0;
                     }
-                    if (this.postings) {
+                    if (this.discussionComponent) {
                         // We need to manually update the lecture property of the student questions component
-                        this.postings.lecture = this.lecture;
-                        this.postings.loadPosts(); // reload the student questions
+                        this.discussionComponent.lecture = this.lecture;
                     }
                 },
                 (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -102,10 +101,9 @@ export class CourseLectureDetailsComponent implements OnInit {
      * @param instance The component instance
      */
     onChildActivate(instance: DiscussionComponent) {
-        this.postings = instance; // save the reference to the component instance
+        this.discussionComponent = instance; // save the reference to the component instance
         if (this.lecture) {
             instance.lecture = this.lecture;
-            instance.loadPosts(); // reload the student questions
         }
     }
 }

@@ -1,23 +1,12 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { User } from 'app/core/user/user.model';
-
-export interface PostVotesAction {
-    name: PostVotesActionName;
-    value: number;
-}
+import { MetisService } from 'app/shared/metis/metis.service';
+import { Post } from 'app/entities/metis/post.model';
 
 interface PostVote {
     isPositive: boolean;
-}
-
-/**
- * Names for interacting with parent component
- * @enum { number }
- */
-export enum PostVotesActionName {
-    VOTE_CHANGE,
 }
 
 @Component({
@@ -25,25 +14,29 @@ export enum PostVotesActionName {
     templateUrl: './post-votes.component.html',
     styleUrls: ['../../../../overview/discussion/discussion.scss'],
 })
-export class PostVotesComponent implements OnInit {
-    @Input() postId: number;
-    @Input() votes: number;
-    @Output() interactVotes = new EventEmitter<PostVotesAction>();
+export class PostVotesComponent implements OnInit, OnChanges {
+    @Input() post: Post;
 
     user: User;
     userVote: PostVote | null;
     voteValueChange = 0;
 
-    constructor(private localStorage: LocalStorageService, private accountService: AccountService) {}
+    constructor(private localStorage: LocalStorageService, private accountService: AccountService, private metisService: MetisService) {}
 
     /**
      * load user's vote
      */
     ngOnInit(): void {
-        this.accountService.identity().then((user: User) => {
-            this.user = user;
-            this.userVote = this.localStorage.retrieve(`q${this.postId}u${this.user.id}`);
-        });
+        this.updateVotes();
+    }
+
+    ngOnChanges(): void {
+        this.updateVotes();
+    }
+
+    private updateVotes() {
+        this.user = this.metisService.getUser();
+        this.userVote = this.localStorage.retrieve(`q${this.post.id}u${this.user.id}`);
     }
 
     /**
@@ -54,21 +47,18 @@ export class PostVotesComponent implements OnInit {
             if (this.userVote.isPositive) {
                 this.userVote = null;
                 this.voteValueChange = -1;
-                this.localStorage.clear(`q${this.postId}u${this.user.id}`);
+                this.localStorage.clear(`q${this.post.id}u${this.user.id}`);
             } else {
                 this.userVote.isPositive = true;
                 this.voteValueChange = 2;
-                this.localStorage.store(`q${this.postId}u${this.user.id}`, this.userVote);
+                this.localStorage.store(`q${this.post.id}u${this.user.id}`, this.userVote);
             }
         } else {
             this.userVote = { isPositive: true };
             this.voteValueChange = 1;
-            this.localStorage.store(`q${this.postId}u${this.user.id}`, this.userVote);
+            this.localStorage.store(`q${this.post.id}u${this.user.id}`, this.userVote);
         }
-        this.interactVotes.emit({
-            name: PostVotesActionName.VOTE_CHANGE,
-            value: this.voteValueChange,
-        });
+        this.metisService.updatePostVotes(this.post, this.voteValueChange);
     }
 
     /**
@@ -79,20 +69,17 @@ export class PostVotesComponent implements OnInit {
             if (this.userVote.isPositive) {
                 this.userVote.isPositive = false;
                 this.voteValueChange = -2;
-                this.localStorage.store(`q${this.postId}u${this.user.id}`, this.userVote);
+                this.localStorage.store(`q${this.post.id}u${this.user.id}`, this.userVote);
             } else {
                 this.userVote = null;
                 this.voteValueChange = 1;
-                this.localStorage.clear(`q${this.postId}u${this.user.id}`);
+                this.localStorage.clear(`q${this.post.id}u${this.user.id}`);
             }
         } else {
             this.userVote = { isPositive: false };
             this.voteValueChange = -1;
-            this.localStorage.store(`q${this.postId}u${this.user.id}`, this.userVote);
+            this.localStorage.store(`q${this.post.id}u${this.user.id}`, this.userVote);
         }
-        this.interactVotes.emit({
-            name: PostVotesActionName.VOTE_CHANGE,
-            value: this.voteValueChange,
-        });
+        this.metisService.updatePostVotes(this.post, this.voteValueChange);
     }
 }

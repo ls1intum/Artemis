@@ -1,61 +1,50 @@
-import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
-import { User } from 'app/core/user/user.model';
-import { PostRowAction, PostRowActionName } from 'app/shared/metis/postings-thread/postings-thread.component';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { Lecture } from 'app/entities/lecture.model';
-import { AccountService } from 'app/core/auth/account.service';
 import { Post } from 'app/entities/metis/post.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import interact from 'interactjs';
-import { ActivatedRoute } from '@angular/router';
-import { PostService } from 'app/shared/metis/post/post.service';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { Subscription } from 'rxjs';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-discussion',
     templateUrl: './discussion.component.html',
     styleUrls: ['./discussion.scss'],
+    providers: [MetisService],
 })
-export class DiscussionComponent implements OnInit, AfterViewInit {
+export class DiscussionComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
     @Input() exercise: Exercise;
     @Input() lecture: Lecture;
+    course: Course;
+    courseId: number;
     posts: Post[];
     collapsed = false;
-    user: User;
-    isAtLeastTutorInCourse: boolean;
-    courseId: number;
-    existingPostTags: string[];
     createdPost: Post;
 
-    constructor(private route: ActivatedRoute, private accountService: AccountService, private exerciseService: ExerciseService, private postService: PostService) {}
+    private postsSubscription: Subscription;
 
-    /**
-     * get the current user and check if he/she is at least a tutor for this course
-     */
+    constructor(private metisService: MetisService, private exerciseService: ExerciseService) {
+        this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
+            this.posts = posts;
+        });
+    }
+
     ngOnInit(): void {
-        this.accountService.identity().then((user: User) => {
-            this.user = user!;
-        });
-        this.loadPosts();
-        this.loadExistingPostTags();
+        this.resetCourseAndPosts();
+    }
+
+    ngOnChanges(): void {
+        this.resetCourseAndPosts();
+    }
+
+    private resetCourseAndPosts(): void {
+        this.course = this.exercise ? this.exercise.course! : this.lecture.course!;
+        this.courseId = this.course.id!;
+        this.metisService.setCourse(this.course);
+        this.metisService.getPostsForFilter({ exercise: this.exercise, lecture: this.lecture });
         this.createdPost = this.createEmptyPost();
-    }
-
-    loadPosts() {
-        if (this.exercise) {
-            this.posts = DiscussionComponent.sortPostsByVote(this.exercise.posts!);
-            this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
-            this.courseId = this.exercise.course!.id!;
-        } else if (this.lecture) {
-            this.posts = DiscussionComponent.sortPostsByVote(this.lecture.posts!);
-            this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.lecture.course!);
-            this.courseId = this.lecture.course!.id!;
-        }
-    }
-
-    loadExistingPostTags() {
-        this.postService.getAllPostTags(this.courseId).subscribe((tags: string[]) => {
-            this.existingPostTags = tags;
-        });
     }
 
     /**
@@ -86,41 +75,6 @@ export class DiscussionComponent implements OnInit, AfterViewInit {
             });
     }
 
-    /**
-     * interact with actions send from postRow
-     * @param {PostRowAction} action
-     */
-    interactPost(action: PostRowAction) {
-        switch (action.name) {
-            case PostRowActionName.VOTE_CHANGE:
-                this.updatePostAfterVoteChange(action.post);
-                break;
-        }
-    }
-
-    deletePost(post: Post): void {
-        this.posts = this.posts.filter((el) => el.id !== post.id);
-    }
-
-    private static sortPostsByVote(posts: Post[]): Post[] {
-        return posts.sort((a, b) => {
-            return b.votes! - a.votes!;
-        });
-    }
-
-    private updatePostAfterVoteChange(upvotedPost: Post): void {
-        const indexToUpdate = this.posts.findIndex((post) => {
-            return post.id === upvotedPost.id;
-        });
-        this.posts[indexToUpdate] = upvotedPost;
-        this.posts = DiscussionComponent.sortPostsByVote(this.posts);
-    }
-
-    onCreatePost(post: Post): void {
-        this.posts.push(post);
-        this.createdPost = this.createEmptyPost();
-    }
-
     createEmptyPost(): Post {
         const post = new Post();
         post.content = '';
@@ -135,5 +89,17 @@ export class DiscussionComponent implements OnInit, AfterViewInit {
             };
         }
         return post;
+    }
+
+    postsTrackByFn(index: number, post: Post): number {
+        return post.id!;
+    }
+
+    ngOnDestroy() {
+        this.postsSubscription.unsubscribe();
+    }
+
+    onCreatePost() {
+        this.createdPost = this.createEmptyPost();
     }
 }

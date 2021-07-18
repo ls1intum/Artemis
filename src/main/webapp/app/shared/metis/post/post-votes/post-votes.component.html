@@ -1,15 +1,15 @@
 <div class="d-flex flex-column">
     <div class="col-auto">
-        <fa-icon class="clickable fa-1x icon" [class.vote-active]="userVote && userVote.isPositive" [icon]="'angle-up'" (click)="toggleUpVote()"></fa-icon>
+        <fa-icon class="clickable fa-1x icon" [class.vote-active]="userVote && userVote.isPositive" [icon]="'angle-up'" (click)="toggleUpVote()"> </fa-icon>
     </div>
     <div class="col-auto text-center">
-        {{ votes > 0 ? votes : 0 }}
+        {{ post.votes! > 0 ? post.votes : 0 }}
     </div>
     <div class="col-auto">
         <fa-icon
             class="clickable fa-1x icon"
             [class.vote-active]="userVote && !userVote.isPositive"
-            [class.enabled]="votes <= 0 && !userVote"
+            [class.enabled]="post.votes! <= 0 && !userVote"
             [icon]="'angle-down'"
             (click)="toggleDownVote()"
         ></fa-icon>

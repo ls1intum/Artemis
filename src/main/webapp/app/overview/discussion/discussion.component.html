@@ -14,17 +14,8 @@
             </div>
         </div>
         <!-- body -->
-        <div class="card-body" *ngIf="user">
-            <jhi-postings-thread
-                *ngFor="let post of posts"
-                [post]="post"
-                [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
-                [user]="user"
-                [courseId]="courseId"
-                [existingPostTags]="existingPostTags"
-                (onDelete)="deletePost($event)"
-                (interactPostRow)="interactPost($event)"
-            ></jhi-postings-thread>
+        <div class="card-body">
+            <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post"></jhi-postings-thread>
             <!-- new post button -->
             <div class="row mt-3">
                 <div class="col-12">
@@ -32,7 +23,7 @@
                         <fa-icon [icon]="'plus'"></fa-icon>
                         <span class="d-none d-md-inline m-1">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
                     </button>
-                    <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" [courseId]="courseId" (onCreate)="onCreatePost($event)"></jhi-post-create-edit-modal>
+                    <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="onCreatePost()"></jhi-post-create-edit-modal>
                 </div>
             </div>
             <!-- no posts -->

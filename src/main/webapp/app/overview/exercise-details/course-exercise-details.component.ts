@@ -75,7 +75,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     isAfterAssessmentDueDate: boolean;
     public gradingCriteria: GradingCriterion[];
     showWelcomeAlert = false;
-    private postings?: DiscussionComponent;
+    private discussionComponent?: DiscussionComponent;
     baseResource: string;
     isExamExercise: boolean;
 
@@ -185,10 +185,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.subscribeForNewSubmissions();
         }
 
-        if (this.postings && this.exercise) {
+        if (this.discussionComponent && this.exercise) {
             // We need to manually update the exercise property of the posts component
-            this.postings.exercise = this.exercise;
-            this.postings.loadPosts(); // reload the posts
+            this.discussionComponent.exercise = this.exercise;
         }
         this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
     }
@@ -426,10 +425,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * @param instance The component instance
      */
     onChildActivate(instance: DiscussionComponent) {
-        this.postings = instance; // save the reference to the component instance
+        this.discussionComponent = instance; // save the reference to the component instance
         if (this.exercise) {
             instance.exercise = this.exercise;
-            instance.loadPosts(); // reload the posts
         }
     }
 

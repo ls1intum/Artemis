@@ -1,17 +1,8 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
-import { PostVotesAction, PostVotesActionName } from 'app/shared/metis/post/post-votes/post-votes.component';
 import { PostService } from 'app/shared/metis/post/post.service';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
-
-export interface PostAction {
-    name: PostActionName;
-    post: Post;
-}
-
-export enum PostActionName {
-    VOTE_CHANGE,
-}
+import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
     selector: 'jhi-post',
@@ -19,37 +10,9 @@ export enum PostActionName {
     styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit {
-    @Output() toggledAnswersChange: EventEmitter<void> = new EventEmitter<void>();
-    @Output() interactPost: EventEmitter<PostAction> = new EventEmitter<PostAction>();
-    @Input() existingPostTags: string[];
+    @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
 
-    constructor(protected postService: PostService) {
+    constructor(protected postService: PostService, protected metisService: MetisService) {
         super();
-    }
-
-    /**
-     * interact with actions sent from postVotes
-     * @param {PostVotesAction} action
-     */
-    interactVotes(action: PostVotesAction): void {
-        switch (action.name) {
-            case PostVotesActionName.VOTE_CHANGE:
-                this.updateVotes(action.value);
-                break;
-        }
-    }
-
-    /**
-     * update the number of votes for this post
-     * @param {number} voteChange
-     */
-    updateVotes(voteChange: number): void {
-        this.postService.updateVotes(this.courseId, this.posting.id!, voteChange).subscribe((res) => {
-            this.posting = res.body!;
-            this.interactPost.emit({
-                name: PostActionName.VOTE_CHANGE,
-                post: this.posting,
-            });
-        });
     }
 }
