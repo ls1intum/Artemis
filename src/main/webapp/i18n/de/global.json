@@ -326,6 +326,12 @@
     "completed": "abgeschlossen",
     "timeFormat": {
         "day": "Tag",
-        "days": "Tage"
+        "dayPlural": "Tage",
+        "hour": "Stunde",
+        "hourPlural": "Stunden",
+        "minute": "Minute",
+        "minutePlural": "Minuten",
+        "second": "Sekunde",
+        "secondPlural": "Sekunden"
     }
 }

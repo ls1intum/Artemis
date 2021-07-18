@@ -17,11 +17,13 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy 
     constructor(private translateService: TranslateService) {}
 
     /**
-     * Convert seconds to a human-readable duration format "d day(s) hh:mm:ss".
-     * The days and hours are left out if their value is zero
+     * Convert seconds to a human-readable duration format:
+     * If shortenAndRound is false: "d day(s) hh:mm:ss", where the days and hours are left out if their value is zero
+     * If shortenAndRound is true: "xx unit yy unit", where only the two highest units are shown. (If the time is between 10 minutes and one hour, only the minutes are shown)
+     * @param short? {boolean} allows the format to be shortened
      * @param seconds {number}
      */
-    transform(seconds: number): string {
+    transform(seconds: number, short?: boolean): string {
         this.seconds = seconds;
 
         const days = Math.floor(seconds / this.secondsInDay);
@@ -29,6 +31,30 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy 
         const minutes = Math.floor((seconds % this.secondsInHour) / this.secondsInMinute);
         seconds = seconds % this.secondsInMinute;
 
+        if (short === true) {
+            return this.handleShortFormat(days, hours, minutes, seconds);
+        } else {
+            return this.handleLongFormat(days, hours, minutes, seconds);
+        }
+    }
+
+    private handleShortFormat(days: number, hours: number, minutes: number, seconds: number): string {
+        if (!this.onLangChange) {
+            this.onLangChange = this.translateService.onLangChange.subscribe(() => this.transform(this.seconds));
+        }
+
+        if (days > 0) {
+            return days + this.getUnitString(days, 'timeFormat.day') + ' ' + hours + this.getUnitString(hours, 'timeFormat.hour');
+        } else if (hours > 0) {
+            return hours + this.getUnitString(hours, 'timeFormat.hour') + ' ' + minutes + this.getUnitString(minutes, 'timeFormat.minute');
+        } else if (minutes >= 10) {
+            return minutes + this.getUnitString(minutes, 'timeFormat.minute');
+        } else {
+            return minutes + this.getUnitString(minutes, 'timeFormat.minute') + ' ' + seconds + this.getUnitString(seconds, 'timeFormat.second');
+        }
+    }
+
+    private handleLongFormat(days: number, hours: number, minutes: number, seconds: number): string {
         let timeString = this.transformDays(days);
 
         if (days > 0 || hours > 0) {
@@ -58,12 +84,12 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy 
             this.onLangChange = this.translateService.onLangChange.subscribe(() => this.transform(this.seconds));
         }
 
-        return days + this.getDayString(days);
+        return days + this.getUnitString(days, 'timeFormat.day') + ' ';
     }
 
-    private getDayString(days: number): string {
-        const dayString = days > 1 ? this.translateService.instant('timeFormat.days') : this.translateService.instant('timeFormat.day');
-        return ' ' + dayString + ' ';
+    private getUnitString(amount: number, unit: string): string {
+        const unitString = amount === 1 ? this.translateService.instant(unit) : this.translateService.instant(unit + 'Plural');
+        return ' ' + unitString;
     }
 
     private cleanUpSubscription(): void {

@@ -74,12 +74,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
         if (timeDiff.asMilliseconds() < 0) {
             return '00:00';
         } else {
-            const secondsLeft = timeDiff.asSeconds();
-            if (timeDiff.asMinutes() > 10) {
-                return this.timePipe.transform(Math.round(secondsLeft / 60) * 60);
-            } else {
-                return this.timePipe.transform(Math.round(secondsLeft));
-            }
+            return this.timePipe.transform(Math.round(timeDiff.asSeconds()), true);
         }
     }
 
