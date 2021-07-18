@@ -45,20 +45,20 @@ describe('ExamTimerComponent', function () {
 
     it('should update display times', () => {
         let duration = moment.duration(15, 'minutes');
-        expect(component.updateDisplayTime(duration)).to.equal('15:00');
+        expect(component.updateDisplayTime(duration)).to.equal('15min');
         duration = moment.duration(-15, 'seconds');
-        expect(component.updateDisplayTime(duration)).to.equal('00:00');
+        expect(component.updateDisplayTime(duration)).to.equal('0min 0s');
         duration = moment.duration(8, 'minutes');
-        expect(component.updateDisplayTime(duration)).to.equal('08:00');
+        expect(component.updateDisplayTime(duration)).to.equal('8min 0s');
         duration = moment.duration(45, 'seconds');
-        expect(component.updateDisplayTime(duration)).to.equal('00:45');
+        expect(component.updateDisplayTime(duration)).to.equal('0min 45s');
     });
 
-    it('should round to next minute when over 10 minutes', () => {
+    it('should round down to next minute when over 10 minutes', () => {
         let duration = moment.duration(629, 'seconds');
-        expect(component.updateDisplayTime(duration)).to.equal('10:00');
+        expect(component.updateDisplayTime(duration)).to.equal('10min');
         duration = moment.duration(811, 'seconds');
-        expect(component.updateDisplayTime(duration)).to.equal('14:00');
+        expect(component.updateDisplayTime(duration)).to.equal('13min');
     });
 
     it('should update time in the template correctly', fakeAsync(() => {
@@ -70,11 +70,11 @@ describe('ExamTimerComponent', function () {
         let timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
         fixture.detectChanges();
         timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
-        expect(timeShownInTemplate).to.equal('30:00');
+        expect(timeShownInTemplate).to.equal('30min');
         tick(100);
         fixture.detectChanges();
         timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
-        expect(timeShownInTemplate).to.equal('25:00');
+        expect(timeShownInTemplate).to.equal('25min');
         discardPeriodicTasks();
     }));
 });

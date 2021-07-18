@@ -93,92 +93,29 @@ describe('ArtemisDurationFromSecondsPipe', () => {
     });
 
     describe('short format', () => {
-        describe('en locale', () => {
-            beforeEach(() => {
-                translateStub = sinon.stub(translateService, 'instant');
-                translateStub.withArgs('timeFormat.day').returns('day');
-                translateStub.withArgs('timeFormat.dayPlural').returns('days');
-                translateStub.withArgs('timeFormat.hour').returns('hour');
-                translateStub.withArgs('timeFormat.hourPlural').returns('hours');
-                translateStub.withArgs('timeFormat.minute').returns('minute');
-                translateStub.withArgs('timeFormat.minutePlural').returns('minutes');
-                translateStub.withArgs('timeFormat.second').returns('second');
-                translateStub.withArgs('timeFormat.secondPlural').returns('seconds');
-            });
-
-            it('Should return correct format for one day', () => {
-                const localizedDuration = pipe.transform(108322, true);
-                expect(localizedDuration).to.be.equal('1 day 6 hours');
-            });
-
-            it('Should return correct format for days', () => {
-                const localizedDuration = pipe.transform(1299751, true);
-                expect(localizedDuration).to.be.equal('15 days 1 hour');
-            });
-
-            it('Should return correct format for hour', () => {
-                const localizedDuration = pipe.transform(84427, true);
-                expect(localizedDuration).to.be.equal('23 hours 27 minutes');
-            });
-
-            it('Should return correct format for over 10 minutes', () => {
-                const localizedDuration = pipe.transform(2534, true);
-                expect(localizedDuration).to.be.equal('42 minutes');
-            });
-
-            it('Should return correct format for under 10 minutes', () => {
-                const localizedDuration = pipe.transform(421, true);
-                expect(localizedDuration).to.be.equal('7 minutes 1 second');
-            });
-
-            it('Should return correct format for under one minute', () => {
-                const localizedDuration = pipe.transform(21, true);
-                expect(localizedDuration).to.be.equal('0 minutes 21 seconds');
-            });
+        it('Should return correct format for day', () => {
+            const localizedDuration = pipe.transform(1299751, true);
+            expect(localizedDuration).to.be.equal('15d 1h');
         });
 
-        describe('de locale', () => {
-            beforeEach(() => {
-                translateStub = sinon.stub(translateService, 'instant');
-                translateStub.withArgs('timeFormat.day').returns('Tag');
-                translateStub.withArgs('timeFormat.dayPlural').returns('Tage');
-                translateStub.withArgs('timeFormat.hour').returns('Stunde');
-                translateStub.withArgs('timeFormat.hourPlural').returns('Stunden');
-                translateStub.withArgs('timeFormat.minute').returns('Minute');
-                translateStub.withArgs('timeFormat.minutePlural').returns('Minuten');
-                translateStub.withArgs('timeFormat.second').returns('Sekunde');
-                translateStub.withArgs('timeFormat.secondPlural').returns('Sekunden');
-            });
+        it('Should return correct format for hour', () => {
+            const localizedDuration = pipe.transform(84427, true);
+            expect(localizedDuration).to.be.equal('23h 27min');
+        });
 
-            it('Should return correct format for one day', () => {
-                const localizedDuration = pipe.transform(108322, true);
-                expect(localizedDuration).to.be.equal('1 Tag 6 Stunden');
-            });
+        it('Should return correct format for over 10 minutes', () => {
+            const localizedDuration = pipe.transform(2534, true);
+            expect(localizedDuration).to.be.equal('42min');
+        });
 
-            it('Should return correct format for days', () => {
-                const localizedDuration = pipe.transform(1299751, true);
-                expect(localizedDuration).to.be.equal('15 Tage 1 Stunde');
-            });
+        it('Should return correct format for under 10 minutes', () => {
+            const localizedDuration = pipe.transform(421, true);
+            expect(localizedDuration).to.be.equal('7min 1s');
+        });
 
-            it('Should return correct format for hour', () => {
-                const localizedDuration = pipe.transform(84427, true);
-                expect(localizedDuration).to.be.equal('23 Stunden 27 Minuten');
-            });
-
-            it('Should return correct format for over 10 minutes', () => {
-                const localizedDuration = pipe.transform(2534, true);
-                expect(localizedDuration).to.be.equal('42 Minuten');
-            });
-
-            it('Should return correct format for under 10 minutes', () => {
-                const localizedDuration = pipe.transform(421, true);
-                expect(localizedDuration).to.be.equal('7 Minuten 1 Sekunde');
-            });
-
-            it('Should return correct format for under one minute', () => {
-                const localizedDuration = pipe.transform(21, true);
-                expect(localizedDuration).to.be.equal('0 Minuten 21 Sekunden');
-            });
+        it('Should return correct format for under one minute', () => {
+            const localizedDuration = pipe.transform(21, true);
+            expect(localizedDuration).to.be.equal('0min 21s');
         });
     });
 });

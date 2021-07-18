@@ -326,12 +326,6 @@
     "completed": "Completed",
     "timeFormat": {
         "day": "day",
-        "dayPlural": "days",
-        "hour": "hour",
-        "hourPlural": "hours",
-        "minute": "minute",
-        "minutePlural": "minutes",
-        "second": "second",
-        "secondPlural": "seconds"
+        "dayPlural": "days"
     }
 }

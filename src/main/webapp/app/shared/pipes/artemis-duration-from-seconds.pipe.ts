@@ -39,18 +39,14 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy 
     }
 
     private handleShortFormat(days: number, hours: number, minutes: number, seconds: number): string {
-        if (!this.onLangChange) {
-            this.onLangChange = this.translateService.onLangChange.subscribe(() => this.transform(this.seconds));
-        }
-
         if (days > 0) {
-            return days + this.getUnitString(days, 'timeFormat.day') + ' ' + hours + this.getUnitString(hours, 'timeFormat.hour');
+            return days + 'd ' + hours + 'h';
         } else if (hours > 0) {
-            return hours + this.getUnitString(hours, 'timeFormat.hour') + ' ' + minutes + this.getUnitString(minutes, 'timeFormat.minute');
+            return hours + 'h ' + minutes + 'min';
         } else if (minutes >= 10) {
-            return minutes + this.getUnitString(minutes, 'timeFormat.minute');
+            return minutes + 'min';
         } else {
-            return minutes + this.getUnitString(minutes, 'timeFormat.minute') + ' ' + seconds + this.getUnitString(seconds, 'timeFormat.second');
+            return minutes + 'min ' + seconds + 's';
         }
     }
 
@@ -84,12 +80,12 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy 
             this.onLangChange = this.translateService.onLangChange.subscribe(() => this.transform(this.seconds));
         }
 
-        return days + this.getUnitString(days, 'timeFormat.day') + ' ';
+        return days + this.getDayString(days);
     }
 
-    private getUnitString(amount: number, unit: string): string {
-        const unitString = amount === 1 ? this.translateService.instant(unit) : this.translateService.instant(unit + 'Plural');
-        return ' ' + unitString;
+    private getDayString(days: number): string {
+        const dayString = days === 1 ? this.translateService.instant('timeFormat.day') : this.translateService.instant('timeFormat.dayPlural');
+        return ' ' + dayString + ' ';
     }
 
     private cleanUpSubscription(): void {
