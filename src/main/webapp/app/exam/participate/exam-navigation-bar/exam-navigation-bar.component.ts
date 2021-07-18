@@ -73,7 +73,7 @@ export class ExamNavigationBarComponent implements OnInit {
                     .getStatus()
                     .pipe(map((response) => Object.values(CommitState).find((commitState) => commitState === response.repositoryStatus)))
                     .subscribe((commitState) => {
-                        let submission = ExamParticipationService.getSubmissionForExercise(exercise);
+                        const submission = ExamParticipationService.getSubmissionForExercise(exercise);
                         if (commitState === CommitState.UNCOMMITTED_CHANGES && submission) {
                             // If there are uncommitted changes: set isSynced to false.
                             submission.isSynced = false;
