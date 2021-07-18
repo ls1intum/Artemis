@@ -181,7 +181,7 @@
             "generateMissingStudentExams": "Generate missing individual exams",
             "startExercises": "Prepare exercise start",
             "evaluateQuizExercises": "Evaluate quizzes",
-            "assessUnsubmittedStudentExams": "Assess unsubmitted student exams",
+            "assessUnsubmittedStudentExams": "Assess unsubmitted exams",
             "unlockAllRepositories": "Unlock all repositories",
             "lockAllRepositories": "Lock all repositories",
             "unlockAllRepositoriesModalText": "All repositories will be immediately unlocked! Students will be able to clone & push even if the exam is not started yet!\n\nThis operation is automatically performed once the exam is set to visible, therefore this operation should only be used manually if the automatic unlock failed!",

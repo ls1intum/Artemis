@@ -81,6 +81,11 @@ public class XmlFileUtils {
     public static DocumentBuilderFactory getDocumentBuilderFactory() throws ParserConfigurationException {
         final var domFactory = DocumentBuilderFactory.newInstance();
         domFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        domFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        domFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        domFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        domFactory.setXIncludeAware(false);
+        domFactory.setExpandEntityReferences(false);
         return domFactory;
     }
 

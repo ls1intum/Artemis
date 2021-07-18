@@ -21,8 +21,8 @@ module.exports = merge(commonConfig({ env: '"production"' }), {
     },
     output: {
         path: root('build/resources/main/static/'),
-        filename: 'app/[name].[hash].bundle.js',
-        chunkFilename: 'app/[id].[hash].chunk.js'
+        filename: 'app/[name].[fullhash].bundle.js',
+        chunkFilename: 'app/[id].[fullhash].chunk.js'
     },
     module: {
         rules: [

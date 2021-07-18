@@ -140,7 +140,7 @@ export class StudentExamsComponent implements OnInit {
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
-                onError(this.jhiAlertService, err);
+                this.handleError('artemisApp.studentExams.studentExamGenerationError', err);
                 this.isLoading = false;
             },
         );
@@ -166,7 +166,7 @@ export class StudentExamsComponent implements OnInit {
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
-                onError(this.jhiAlertService, err);
+                this.handleError('artemisApp.studentExams.missingStudentExamGenerationError', err);
                 this.isLoading = false;
             },
         );
@@ -191,7 +191,7 @@ export class StudentExamsComponent implements OnInit {
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
-                onError(this.jhiAlertService, err);
+                this.handleError('artemisApp.studentExams.startExerciseFailure', err);
                 this.isLoading = false;
             },
         );
@@ -216,8 +216,8 @@ export class StudentExamsComponent implements OnInit {
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
+                this.handleError('artemisApp.studentExams.evaluateQuizExerciseFailure', err);
                 this.isLoading = false;
-                onError(this.jhiAlertService, err);
             },
         );
     }
@@ -237,9 +237,9 @@ export class StudentExamsComponent implements OnInit {
                 );
                 this.isLoading = false;
             },
-            () => {
+            (err: HttpErrorResponse) => {
+                this.handleError('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure', err);
                 this.isLoading = false;
-                this.jhiAlertService.error('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure');
             },
         );
     }
@@ -275,7 +275,7 @@ export class StudentExamsComponent implements OnInit {
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
-                onError(this.jhiAlertService, err);
+                this.handleError('artemisApp.studentExams.unlockAllRepositoriesFailure', err);
                 this.isLoading = false;
             },
         );
@@ -312,7 +312,7 @@ export class StudentExamsComponent implements OnInit {
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
-                onError(this.jhiAlertService, err);
+                this.handleError('artemisApp.studentExams.lockAllRepositoriesFailure', err);
                 this.isLoading = false;
             },
         );
@@ -359,5 +359,25 @@ export class StudentExamsComponent implements OnInit {
     formatDate(date: Moment | Date | undefined) {
         // TODO: we should try to use the artemis date pipe here
         return date ? moment(date).format(defaultLongDateTimeFormat) : '';
+    }
+
+    /**
+     * Shows the translated error message if an error key is available in the error response. Otherwise it defaults to the generic alert.
+     * @param translationString the string identifier in the translation service for the text. This is ignored if the response does not contain an error message or error key.
+     * @param err the error response
+     */
+    private handleError(translationString: string, err: HttpErrorResponse) {
+        let errorDetail;
+        if (err?.error && err.error.errorKey) {
+            errorDetail = this.translateService.instant(err.error.errorKey);
+        } else {
+            errorDetail = err?.error?.message;
+        }
+        if (errorDetail) {
+            this.jhiAlertService.error(translationString, { message: errorDetail });
+        } else {
+            // Sometimes the response does not have an error field, so we default to generic error handling
+            onError(this.jhiAlertService, err);
+        }
     }
 }
