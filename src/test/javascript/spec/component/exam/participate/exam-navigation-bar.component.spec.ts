@@ -28,6 +28,13 @@ describe('Exam Navigation Bar Component', () => {
         comp = fixture.componentInstance;
         TestBed.inject(ExamParticipationService);
 
+        Object.defineProperty(window, 'performance', {
+            value: {
+                getEntriesByType: jest.fn().mockReturnValue([{ type: 'navigate' }]),
+                measure: jest.fn(),
+            },
+        });
+
         comp.endDate = moment();
         comp.exercises = [
             {
