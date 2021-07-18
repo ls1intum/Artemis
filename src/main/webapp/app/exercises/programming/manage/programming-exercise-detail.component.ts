@@ -288,4 +288,17 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
     }
+
+    /**
+     * Generates the link to any participation's submissions, used for the link to template and solution submissions
+     * @param id of the participation
+     */
+    getParticipationSubmissionLink(id: number) {
+        const link = [this.baseResource, 'participations', id];
+        // For unknown reason normal exercises append /submissions to the submission view whereas exam exercises do not
+        if (!this.isExamExercise) {
+            link.push('submissions');
+        }
+        return link;
+    }
 }

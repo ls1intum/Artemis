@@ -123,8 +123,8 @@ export class ListOfComplaintsComponent implements OnInit {
             exercise.id!,
             studentParticipation.id,
             submissionId,
-            this.examId ? this.examId : 0,
-            exercise.exerciseGroup?.id!,
+            0, // even if the list of complaints are part of an exam, the assessment of non-exam exercises gets executed
+            0,
             complaint.result.id,
         );
         this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
