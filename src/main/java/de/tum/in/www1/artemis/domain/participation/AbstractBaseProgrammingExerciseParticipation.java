@@ -62,6 +62,6 @@ public abstract class AbstractBaseProgrammingExerciseParticipation extends Parti
 
     @Override
     public String toString() {
-        return "Participation{" + "id=" + getId() + ", repositoryUrl='" + getRepositoryUrl() + "'" + ", buildPlanId='" + getBuildPlanId() + "}";
+        return getClass().getSimpleName() + "{" + "id=" + getId() + ", repositoryUrl='" + getRepositoryUrl() + "'" + ", buildPlanId='" + getBuildPlanId() + "}";
     }
 }

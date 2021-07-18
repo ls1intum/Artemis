@@ -7,9 +7,9 @@
             <jhi-alert-error></jhi-alert-error>
             <div class="text-start">
                 <jhi-non-programming-exercise-detail-common-actions
-                    *ngIf="fileUploadExercise.course"
+                    *ngIf="course"
                     [isExamExercise]="isExamExercise"
-                    [courseId]="fileUploadExercise.course.id!"
+                    [course]="course"
                     [exercise]="fileUploadExercise"
                 ></jhi-non-programming-exercise-detail-common-actions>
             </div>
