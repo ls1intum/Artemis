@@ -96,7 +96,8 @@ public class VideoUnitResource {
         // Validate the URL
         try {
             new URL(videoUnit.getSource());
-        } catch(MalformedURLException exception) {
+        }
+        catch(MalformedURLException exception) {
             badRequest();
         }
 
@@ -131,7 +132,8 @@ public class VideoUnitResource {
         // Validate the URL
         try {
             new URL(videoUnit.getSource());
-        } catch(MalformedURLException exception) {
+        }
+        catch(MalformedURLException exception) {
             badRequest();
         }
 
