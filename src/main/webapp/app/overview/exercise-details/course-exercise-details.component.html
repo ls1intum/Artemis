@@ -210,7 +210,9 @@
                     exercise.type === PROGRAMMING &&
                     studentParticipation &&
                     latestRatedResult &&
-                    (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
+                    (latestRatedResult.assessmentType === AssessmentType.MANUAL ||
+                        latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
+                        exercise.assessmentType === AssessmentType.COMPLAINT_BASED)
                 "
                 class="mb-2 mt-2 ms-3"
                 [exercise]="exercise"
@@ -224,7 +226,9 @@
                     exercise?.type === PROGRAMMING &&
                     studentParticipation &&
                     latestRatedResult &&
-                    (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
+                    (latestRatedResult.assessmentType === AssessmentType.MANUAL ||
+                        latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
+                        exercise.assessmentType === AssessmentType.COMPLAINT_BASED)
                 "
             >
                 <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult"></jhi-rating>

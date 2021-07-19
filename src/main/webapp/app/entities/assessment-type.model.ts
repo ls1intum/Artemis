@@ -2,4 +2,5 @@ export enum AssessmentType {
     AUTOMATIC = 'AUTOMATIC',
     SEMI_AUTOMATIC = 'SEMI_AUTOMATIC',
     MANUAL = 'MANUAL',
+    COMPLAINT_BASED = 'COMPLAINT_BASED',
 }
