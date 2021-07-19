@@ -16,7 +16,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     minInstructionsWidth: number;
     interactResizable: Interactable;
 
-    collapsed: boolean;
+    collapsed = false;
 
     constructor() {}
 
@@ -26,7 +26,6 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
      * The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
-        this.collapsed = false;
         this.initialInstructionsWidth = window.screen.width - 300 / 2;
         this.minInstructionsWidth = window.screen.width / 4 - 50;
         this.interactResizable = interact('.resizable-instructions');
