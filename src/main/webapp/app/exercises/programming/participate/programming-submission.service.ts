@@ -410,7 +410,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 .subscribe();
         } else {
             // only process, but do not try to fetchPending the latest one, e.g. because it was already downloaded shortly before (example: exam start)
-            this.processPendingSubmission(undefined, participationId, exerciseId, personal);
+            this.processPendingSubmission(undefined, participationId, exerciseId, personal).subscribe();
         }
         // We just remove the initial undefined from the pipe as it is only used to make the setup process easier.
         return this.submissionSubjects[participationId].asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
