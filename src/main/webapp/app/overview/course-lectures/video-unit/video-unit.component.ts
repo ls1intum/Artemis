@@ -22,7 +22,7 @@ export class VideoUnitComponent implements OnInit {
     ngOnInit() {
         if (this.videoUnit?.source) {
             // Validate the URL before displaying it
-            if (urlParser.parse(this.videoUnit.source)) {
+            if (!urlParser || urlParser.parse(this.videoUnit.source)) {
                 this.videoUrl = this.safeResourceUrlPipe.transform(this.videoUnit.source);
             }
         }
