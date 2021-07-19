@@ -485,7 +485,7 @@ public class ExamService {
             numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId()));
 
             log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
-            if (!(exercise instanceof QuizExercise || exercise.getAssessmentType() == AssessmentType.AUTOMATIC || exercise.getAssessmentType() == AssessmentType.COMPLAINT_BASED)) {
+            if (!(exercise instanceof QuizExercise || AssessmentType.hasNoManualFeedback(exercise.getAssessmentType()))) {
                 numberOfParticipationsForAssessmentGeneratedByExercise.add(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exercise.getId()));
             }
         }));

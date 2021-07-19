@@ -140,7 +140,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             return true;
         }
         // Manual assessed programming exercises as well
-        if (exercise.getAssessmentType() != AssessmentType.AUTOMATIC && exercise.getAssessmentType() != AssessmentType.COMPLAINT_BASED) {
+        if (!AssessmentType.hasNoManualFeedback(exercise.getAssessmentType())) {
             return true;
         }
         ZonedDateTime now = ZonedDateTime.now();

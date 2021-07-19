@@ -493,7 +493,7 @@ public class Result extends DomainObject {
      */
     @JsonIgnore
     public boolean isManual() {
-        return AssessmentType.MANUAL == assessmentType || AssessmentType.SEMI_AUTOMATIC == assessmentType;
+        return !AssessmentType.hasNoManualFeedback(assessmentType);
     }
 
     /**
@@ -503,7 +503,7 @@ public class Result extends DomainObject {
      */
     @JsonIgnore
     public boolean isAutomatic() {
-        return AssessmentType.AUTOMATIC == assessmentType || AssessmentType.COMPLAINT_BASED == assessmentType;
+        return AssessmentType.hasNoManualFeedback(assessmentType);
     }
 
     @Override

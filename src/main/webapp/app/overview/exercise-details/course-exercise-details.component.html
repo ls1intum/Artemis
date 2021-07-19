@@ -212,7 +212,7 @@
                     latestRatedResult &&
                     (latestRatedResult.assessmentType === AssessmentType.MANUAL ||
                         latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
-                        exercise.assessmentType === AssessmentType.COMPLAINT_BASED)
+                        (exercise.assessmentType === AssessmentType.COMPLAINT_BASED && isAfterDateForComplaint))
                 "
                 class="mb-2 mt-2 ms-3"
                 [exercise]="exercise"

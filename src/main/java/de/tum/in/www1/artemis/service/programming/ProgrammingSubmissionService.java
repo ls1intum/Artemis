@@ -723,8 +723,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     // TODO: why do we override this method and why do we not try to reuse the method in the super class?
     protected Result lockSubmission(Submission submission, int correctionRound) {
         Optional<Result> optionalExistingResult;
-        AssessmentType assessmentType = submission.getLatestResult().getAssessmentType();
-        if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC == assessmentType || AssessmentType.COMPLAINT_BASED == assessmentType) {
+        if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.hasNoManualFeedback(submission.getLatestResult().getAssessmentType())) {
             optionalExistingResult = Optional.of(submission.getLatestResult());
         }
         else if (correctionRound == 0 && submission.getLatestResult() == null) {

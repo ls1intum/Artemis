@@ -73,6 +73,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private submissionSubscription: Subscription;
     studentParticipation?: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
+    isAfterDateForComplaint: boolean;
     public gradingCriteria: GradingCriterion[];
     showWelcomeAlert = false;
     private postings?: PostingsComponent;
@@ -169,8 +170,17 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exercise.studentParticipations = this.filterParticipations(newExercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.exercise.participationStatus = participationStatus(this.exercise);
-        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
+        const now = moment();
+        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || now.isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exercise.categories || [];
+        this.isAfterDateForComplaint = !this.exercise.dueDate || now.isAfter(this.exercise.dueDate);
+
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            const programmingExercise = this.exercise as ProgrammingExercise;
+            this.isAfterDateForComplaint =
+                this.isAfterDateForComplaint &&
+                (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
+        }
 
         // This is only needed in the local environment
         if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && (<ProgrammingExercise>this.exercise).isLocalSimulation) {
