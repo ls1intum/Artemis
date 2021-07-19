@@ -37,37 +37,53 @@
             <div class="form-group">
                 <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate"></jhi-date-time-picker>
             </div>
-            <div class="d-flex">
-                <div class="form-group col-4">
-                    <label class="required" for="source">{{ 'artemisApp.videoUnit.createVideoUnit.source' | artemisTranslate }}*</label>
-                    <input
-                        type="text"
-                        class="form-control"
-                        id="source"
-                        formControlName="source"
-                        [placeholder]="'artemisApp.videoUnit.createVideoUnit.sourcePlaceHolder' | artemisTranslate"
-                    />
-                    <div *ngIf="sourceControl?.invalid && (sourceControl?.dirty || sourceControl?.touched)" class="alert alert-danger">
-                        <div *ngIf="sourceControl?.errors?.required">
-                            {{ 'artemisApp.videoUnit.createVideoUnit.sourceRequiredValidationError' | artemisTranslate }}
-                        </div>
-                        <div *ngIf="sourceControl?.errors?.invalidUrl">
-                            {{ 'artemisApp.videoUnit.createVideoUnit.sourceURLValidationError' | artemisTranslate }}
-                        </div>
+            <div class="container" style="padding: 0">
+                <div class="row">
+                    <div class="col-4">
+                        <label class="required" for="source">{{ 'artemisApp.videoUnit.createVideoUnit.source' | artemisTranslate }}*</label>
+                    </div>
+                    <div class="col-1"></div>
+                    <div class="col-7">
+                        <label for="urlHelper">{{ 'artemisApp.videoUnit.createVideoUnit.urlVideoHelper' | artemisTranslate }}</label>
                     </div>
                 </div>
-                <div class="col-1 mx-auto mb-3 text-center align-self-center">
-                    <button id="transformButton" type="button" class="btn btn-sm btn-primary" [disabled]="!isTransformable" (click)="setEmbeddedVideoUrl($event)">
-                        <fa-icon [icon]="'arrow-left'"></fa-icon>
-                    </button>
+                <div class="row">
+                    <div class="col-4">
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="source"
+                            formControlName="source"
+                            [placeholder]="'artemisApp.videoUnit.createVideoUnit.sourcePlaceHolder' | artemisTranslate"
+                        />
+                    </div>
+                    <div class="col-1 mx-auto text-center align-self-center">
+                        <button id="transformButton" type="button" class="btn btn-sm btn-primary" [disabled]="!isTransformable" (click)="setEmbeddedVideoUrl($event)">
+                            <fa-icon [icon]="'arrow-left'"></fa-icon>
+                        </button>
+                    </div>
+                    <div class="col-7">
+                        <input type="text" class="form-control" id="urlHelper" formControlName="urlHelper" aria-describedby="urlHelperExplanation" />
+                    </div>
                 </div>
-                <div class="form-group col-7">
-                    <label for="urlHelper">{{ 'artemisApp.videoUnit.createVideoUnit.urlVideoHelper' | artemisTranslate }}</label>
-                    <input type="text" class="form-control" id="urlHelper" formControlName="urlHelper" aria-describedby="urlHelperExplanation" />
-                    <small id="urlHelperExplanation" class="form-text text-muted">{{ 'artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder' | artemisTranslate }}</small>
-                    <div *ngIf="urlHelperControl?.invalid && (urlHelperControl?.dirty || urlHelperControl?.touched)" class="alert alert-danger">
-                        <div *ngIf="urlHelperControl?.errors?.invalidVideoUrl">
-                            {{ 'artemisApp.videoUnit.createVideoUnit.urlHelperValidationError' | artemisTranslate }}
+                <div class="row">
+                    <div class="col-4">
+                        <div *ngIf="sourceControl?.invalid && (sourceControl?.dirty || sourceControl?.touched)" class="alert alert-danger">
+                            <div *ngIf="sourceControl?.errors?.required">
+                                {{ 'artemisApp.videoUnit.createVideoUnit.sourceRequiredValidationError' | artemisTranslate }}
+                            </div>
+                            <div *ngIf="sourceControl?.errors?.invalidUrl">
+                                {{ 'artemisApp.videoUnit.createVideoUnit.sourceURLValidationError' | artemisTranslate }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-1"></div>
+                    <div class="col-7">
+                        <small id="urlHelperExplanation" class="form-text text-muted">{{ 'artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder' | artemisTranslate }}</small>
+                        <div *ngIf="urlHelperControl?.invalid && (urlHelperControl?.dirty || urlHelperControl?.touched)" class="alert alert-danger">
+                            <div *ngIf="urlHelperControl?.errors?.invalidVideoUrl">
+                                {{ 'artemisApp.videoUnit.createVideoUnit.urlHelperValidationError' | artemisTranslate }}
+                            </div>
                         </div>
                     </div>
                 </div>
