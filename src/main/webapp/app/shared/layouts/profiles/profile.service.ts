@@ -64,7 +64,7 @@ export class ProfileService {
                         profileInfo.accountName = data.accountName;
                         profileInfo.versionControlUrl = data.versionControlUrl;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
-
+                        profileInfo.textAssessmentAnalyticsEnabled = data['text-assessment-analytics-enabled'];
                         return profileInfo;
                     }),
                 )
