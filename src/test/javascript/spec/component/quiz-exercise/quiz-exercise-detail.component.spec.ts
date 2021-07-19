@@ -759,7 +759,7 @@ describe('QuizExercise Management Detail Component', () => {
             });
         });
 
-        describe('import questions', async () => {
+        describe('import questions', () => {
             const importQuestionAndExpectOneMoreQuestionInQuestions = async (question: QuizQuestion) => {
                 const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
                 await comp.verifyAndImportQuestions([question]);
