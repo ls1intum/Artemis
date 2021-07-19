@@ -97,7 +97,7 @@ public class VideoUnitResource {
         try {
             new URL(videoUnit.getSource());
         }
-        catch(MalformedURLException exception) {
+        catch (MalformedURLException exception) {
             badRequest();
         }
 
@@ -133,7 +133,7 @@ public class VideoUnitResource {
         try {
             new URL(videoUnit.getSource());
         }
-        catch(MalformedURLException exception) {
+        catch (MalformedURLException exception) {
             badRequest();
         }
 
