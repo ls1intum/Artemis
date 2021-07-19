@@ -226,9 +226,7 @@
                     exercise?.type === PROGRAMMING &&
                     studentParticipation &&
                     latestRatedResult &&
-                    (latestRatedResult.assessmentType === AssessmentType.MANUAL ||
-                        latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
-                        exercise.assessmentType === AssessmentType.COMPLAINT_BASED)
+                    (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
                 "
             >
                 <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult"></jhi-rating>
