@@ -17,16 +17,16 @@
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
         </a>
 
-        <!--Submissions -->
-        <a *ngIf="exercise.isAtLeastInstructor && course" [routerLink]="baseResource + 'submissions'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
-        </a>
-
         <!-- Scores -->
         <a *ngIf="course" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
             <fa-icon [icon]="'table'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+        </a>
+
+        <!--Submissions -->
+        <a *ngIf="exercise.isAtLeastInstructor && course" [routerLink]="baseResource + 'submissions'" class="btn btn-success btn-sm me-1" style="margin-bottom: 10px">
+            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
         </a>
 
         <!-- Example Submission -->
