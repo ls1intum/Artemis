@@ -14,7 +14,7 @@ import { lastValueFrom } from 'rxjs';
 import { round } from 'app/shared/util/utils';
 
 // Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
-const MAX_SIZE_UNIT = 200;
+export const MAX_SIZE_UNIT = 200;
 
 /**
  * Generates a new Drag and Drop Quiz Exercise based on a UML model.
