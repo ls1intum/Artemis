@@ -93,7 +93,7 @@ export class ExamParticipationService {
         const url = this.getResourceURL(courseId, examId) + '/start';
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {
-                const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
+                const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
                 this.adjustRepositoryUrlsForProgrammingExercises(convertedStudentExam);
                 this.currentlyLoadedStudentExam.next(convertedStudentExam);
                 return convertedStudentExam;
@@ -105,7 +105,7 @@ export class ExamParticipationService {
         const url = this.getResourceURL(courseId, examId) + '/test-run/' + testRunId + '/conduction';
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {
-                const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
+                const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
                 this.adjustRepositoryUrlsForProgrammingExercises(convertedStudentExam);
                 this.currentlyLoadedStudentExam.next(convertedStudentExam);
                 return convertedStudentExam;
@@ -210,12 +210,12 @@ export class ExamParticipationService {
 
     private convertStudentExamFromServer(studentExam: StudentExam): StudentExam {
         studentExam.exercises = this.exerciseService.convertExercisesDateFromServer(studentExam.exercises);
-        studentExam.exam = this.convertExamDateFromServer(studentExam.exam);
+        studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
         this.adjustRepositoryUrlsForProgrammingExercises(studentExam);
         return studentExam;
     }
 
-    private convertExamDateFromServer(exam?: Exam) {
+    private static convertExamDateFromServer(exam?: Exam) {
         if (exam) {
             exam.visibleDate = exam.visibleDate ? moment(exam.visibleDate) : undefined;
             exam.startDate = exam.startDate ? moment(exam.startDate) : undefined;
@@ -227,19 +227,19 @@ export class ExamParticipationService {
         return exam;
     }
 
-    private convertStudentExamDateFromServer(studentExam: StudentExam): StudentExam {
-        studentExam.exam = this.convertExamDateFromServer(studentExam.exam);
+    private static convertStudentExamDateFromServer(studentExam: StudentExam): StudentExam {
+        studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
         return studentExam;
     }
 
     private adjustRepositoryUrlsForProgrammingExercises(studentExam: StudentExam) {
-        // add user indepentend repositoryUrl to all student participations
+        // add user independent repositoryUrl to all student participations
         if (studentExam.exercises) {
-            studentExam.exercises!.forEach((ex) => {
-                if (ex.type === ExerciseType.PROGRAMMING && ex.studentParticipations) {
-                    ex.studentParticipations!.forEach((sp) => {
-                        if (sp.type === ParticipationType.PROGRAMMING) {
-                            addUserIndependentRepositoryUrl(sp);
+            studentExam.exercises!.forEach((exercise) => {
+                if (exercise.type === ExerciseType.PROGRAMMING && exercise.studentParticipations) {
+                    exercise.studentParticipations!.forEach((studentParticipation) => {
+                        if (studentParticipation.type === ParticipationType.PROGRAMMING) {
+                            addUserIndependentRepositoryUrl(studentParticipation);
                         }
                     });
                 }
@@ -248,24 +248,15 @@ export class ExamParticipationService {
     }
 
     public static getSubmissionForExercise(exercise: Exercise) {
-        if (
-            exercise &&
-            exercise.studentParticipations &&
-            exercise.studentParticipations.length > 0 &&
-            exercise.studentParticipations[0].submissions &&
-            exercise.studentParticipations[0].submissions.length > 0
-        ) {
-            return exercise.studentParticipations[0].submissions[0];
-        } else {
-            return undefined;
+        if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].submissions) {
+            // NOTE: using "submissions[0]" might not work for programming exercises with multiple submissions, it is better to always take the last submission
+            return exercise.studentParticipations[0].submissions.last();
         }
     }
 
-    getExerciseButtonTooltip(
-        exercise: Exercise,
-        submission = ExamParticipationService.getSubmissionForExercise(exercise),
-    ): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' {
-        // submission does not yet exist for this exercise.
+    getExerciseButtonTooltip(exercise: Exercise): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' {
+        const submission = ExamParticipationService.getSubmissionForExercise(exercise);
+        // The submission might not yet exist for this exercise.
         // When the participant navigates to the exercise the submissions are created.
         // Until then show, that the exercise is synced
         if (!submission) {
@@ -274,6 +265,7 @@ export class ExamParticipationService {
         if (exercise.type !== ExerciseType.PROGRAMMING) {
             return submission.isSynced ? 'synced' : 'notSynced';
         }
+        // programming exercise
         if (submission.submitted && submission.isSynced) {
             return 'submitted'; // You have submitted an exercise. You can submit again
         } else if (!submission.submitted && submission.isSynced) {

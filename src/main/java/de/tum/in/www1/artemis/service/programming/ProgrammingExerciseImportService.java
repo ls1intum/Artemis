@@ -103,7 +103,7 @@ public class ProgrammingExerciseImportService {
         setupExerciseForImport(newExercise);
 
         programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise);
-        programmingExerciseParticipationService.setupInitalTemplateParticipation(newExercise);
+        programmingExerciseParticipationService.setupInitialTemplateParticipation(newExercise);
         setupTestRepository(newExercise);
         programmingExerciseService.initParticipations(newExercise);
 

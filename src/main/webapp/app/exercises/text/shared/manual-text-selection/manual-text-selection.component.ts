@@ -1,6 +1,11 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { SelectionRectangle, TextSelectEvent } from 'app/exercises/text/shared/text-select.directive';
 import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
+import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { FeedbackType } from 'app/entities/feedback.model';
+import { TextBlockType } from 'app/entities/text-block.model';
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-manual-text-selection',
@@ -14,6 +19,10 @@ export class ManualTextSelectionComponent {
 
     public hostRectangle: SelectionRectangle | undefined;
     public selectedText: string | undefined;
+
+    constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
+        textAssessmentAnalytics.setComponentRoute(route);
+    }
 
     /**
      * Handle user's selection of solution text.
@@ -48,6 +57,7 @@ export class ManualTextSelectionComponent {
         if (this.selectedText) {
             this.assess.emit(this.selectedText);
             this.deselectText();
+            this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.MANUAL);
         }
     }
 }

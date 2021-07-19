@@ -30,15 +30,12 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     TRAINED = TutorParticipationStatus.TRAINED;
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
-    percentageInTimeAssessmentProgress = 0;
-    percentageLateAssessmentProgress = 0;
     percentageComplaintsProgress = 0;
 
     percentageInTimeAssessmentProgressOfCorrectionRound: number[] = [];
     percentageLateAssessmentProgressOfCorrectionRound: number[] = [];
 
     routerLink: string;
-
     constructor(private router: Router) {}
 
     /**
