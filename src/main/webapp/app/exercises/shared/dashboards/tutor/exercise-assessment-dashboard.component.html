@@ -249,13 +249,7 @@
             </div>
             <div *ngFor="let roundState of numberOfAssessmentsOfCorrectionRounds; let correctionRound = index">
                 <ng-container *ngIf="numberOfCorrectionRoundsEnabled > correctionRound">
-                    <ng-container
-                        *ngIf="
-                            (tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) &&
-                            !isTestRun &&
-                            exercise.assessmentType !== assessmentType.COMPLAINT_BASED
-                        "
-                    >
+                    <ng-container *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isTestRun">
                         <h4 *ngIf="!isExamMode">
                             {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | artemisTranslate }}
                         </h4>
