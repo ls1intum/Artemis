@@ -12,6 +12,8 @@ import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { GradeType } from 'app/entities/grading-scale.model';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -33,6 +35,11 @@ export class StudentExamDetailComponent implements OnInit {
 
     examId: number;
 
+    gradingScaleExists = false;
+    grade?: string;
+    isBonus = false;
+    passed = false;
+
     constructor(
         private route: ActivatedRoute,
         private studentExamService: StudentExamService,
@@ -40,6 +47,7 @@ export class StudentExamDetailComponent implements OnInit {
         private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
         private alertService: JhiAlertService,
         private modalService: NgbModal,
+        private gradingSystemService: GradingSystemService,
     ) {}
 
     /**
@@ -62,6 +70,23 @@ export class StudentExamDetailComponent implements OnInit {
             this.course = courseResponse.body!;
         });
         this.student = this.studentExam.user!;
+        this.calculateGrade();
+    }
+
+    /**
+     * Sets grade related information if a grading scale exists for the exam
+     */
+    calculateGrade() {
+        const achievedPercentageScore = (this.achievedTotalPoints / this.maxTotalPoints) * 100;
+        this.gradingSystemService.matchPercentageToGradeStepForExam(this.courseId, this.examId, achievedPercentageScore).subscribe((gradeObservable) => {
+            if (gradeObservable && gradeObservable!.body) {
+                const gradeDTO = gradeObservable!.body;
+                this.gradingScaleExists = true;
+                this.grade = gradeDTO.gradeName;
+                this.passed = gradeDTO.isPassingGrade;
+                this.isBonus = gradeDTO.gradeType === GradeType.BONUS;
+            }
+        });
     }
 
     /**

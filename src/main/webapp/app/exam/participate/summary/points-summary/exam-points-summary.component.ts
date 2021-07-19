@@ -55,26 +55,16 @@ export class ExamPointsSummaryComponent implements OnInit {
      */
     calculateExamGrade() {
         const achievedPointsRelative = (this.calculatePointsSum() / this.calculateMaxPointsSum()) * 100;
-        this.gradingSystemService
-            .matchPercentageToGradeStepForExam(this.courseId, this.exam!.id!, achievedPointsRelative)
-            .pipe(
-                catchError((error: HttpErrorResponse) => {
-                    if (error.status === 404) {
-                        return of(undefined);
-                    }
-                    return throwError(error);
-                }),
-            )
-            .subscribe((gradeObservable) => {
-                if (gradeObservable && gradeObservable!.body) {
-                    const gradeDTO = gradeObservable!.body;
-                    this.gradingScaleExists = true;
-                    this.grade = gradeDTO.gradeName;
-                    this.hasPassed = gradeDTO.isPassingGrade;
-                    this.isBonus = gradeDTO.gradeType === GradeType.BONUS;
-                    this.changeDetector.detectChanges();
-                }
-            });
+        this.gradingSystemService.matchPercentageToGradeStepForExam(this.courseId, this.exam!.id!, achievedPointsRelative).subscribe((gradeObservable) => {
+            if (gradeObservable && gradeObservable!.body) {
+                const gradeDTO = gradeObservable!.body;
+                this.gradingScaleExists = true;
+                this.grade = gradeDTO.gradeName;
+                this.hasPassed = gradeDTO.isPassingGrade;
+                this.isBonus = gradeDTO.gradeType === GradeType.BONUS;
+                this.changeDetector.detectChanges();
+            }
+        });
     }
 
     /**
