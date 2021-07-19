@@ -101,7 +101,7 @@ public class ExerciseResource {
         if (exercise.isExamExercise()) {
             Exam exam = exercise.getExerciseGroup().getExam();
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
-            // instructors editors and admins should always be able to see exam exercises
+            // instructors, editors and admins should always be able to see exam exercises
             if (!authCheckService.isAtLeastEditorForExercise(exercise, user)) {
                 // tutors should only be able to see exam exercises when the exercise has finished
                 ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
