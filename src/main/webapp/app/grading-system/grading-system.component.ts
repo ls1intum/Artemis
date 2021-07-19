@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { EntityResponseType, GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Observable, of, Subject } from 'rxjs';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { catchError, finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
@@ -30,7 +30,6 @@ export class GradingSystemComponent implements OnInit {
     isExam = false;
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    notFound = false;
     isLoading = false;
     invalidGradeStepsMessage?: string;
 
@@ -56,18 +55,8 @@ export class GradingSystemComponent implements OnInit {
             }
             if (this.isExam) {
                 this.handleFindObservable(this.gradingSystemService.findGradingScaleForExam(this.courseId!, this.examId!));
-                this.examService.find(this.courseId!, this.examId!).subscribe((examResponse) => {
-                    this.exam = examResponse.body!;
-                    this.maxPoints = this.exam?.maxPoints;
-                    this.onChangeMaxPoints(this.exam?.maxPoints);
-                });
             } else {
                 this.handleFindObservable(this.gradingSystemService.findGradingScaleForCourse(this.courseId!));
-                this.courseService.find(this.courseId!).subscribe((courseResponse) => {
-                    this.course = courseResponse.body!;
-                    this.maxPoints = this.course?.maxPoints;
-                    this.onChangeMaxPoints(this.course?.maxPoints);
-                });
             }
         });
     }
@@ -83,20 +72,20 @@ export class GradingSystemComponent implements OnInit {
                 if (gradingSystemResponse.body) {
                     this.handleFindResponse(gradingSystemResponse.body);
                 }
-            }, this.handleErrorResponse());
-    }
-
-    /**
-     * Handles 404 Not Found response in case not grading scale exists
-     *
-     * @private
-     */
-    private handleErrorResponse() {
-        return (err: HttpErrorResponse) => {
-            if (err.status === 404) {
-                this.notFound = true;
-            }
-        };
+                if (this.isExam) {
+                    this.examService.find(this.courseId!, this.examId!).subscribe((examResponse) => {
+                        this.exam = examResponse.body!;
+                        this.maxPoints = this.exam?.maxPoints;
+                        this.onChangeMaxPoints(this.exam?.maxPoints);
+                    });
+                } else {
+                    this.courseService.find(this.courseId!).subscribe((courseResponse) => {
+                        this.course = courseResponse.body!;
+                        this.maxPoints = this.course?.maxPoints;
+                        this.onChangeMaxPoints(this.course?.maxPoints);
+                    });
+                }
+            });
     }
 
     /**
@@ -122,7 +111,6 @@ export class GradingSystemComponent implements OnInit {
      */
     save(): void {
         this.isLoading = true;
-        this.notFound = false;
         this.gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale.gradeSteps);
         this.gradingScale.gradeSteps = this.setInclusivity(this.gradingScale.gradeSteps);
         this.gradingScale.gradeSteps = this.setPassingGrades(this.gradingScale.gradeSteps);

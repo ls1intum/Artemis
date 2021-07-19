@@ -1,6 +1,6 @@
 <div>
     <jhi-alert></jhi-alert>
-    <jhi-alert-error *ngIf="!notFound"></jhi-alert-error>
+    <jhi-alert-error></jhi-alert-error>
     <h2 style="margin-bottom: 0.5em">
         {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
         {{ isExam ? examId : courseId }}
@@ -14,7 +14,9 @@
         </div>
         <div class="dropdown-container">
             <div class="form-group">
-                <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.examManagement.maxPoints.title">Maximum number of points for exam</span>
+                <span class="colon-suffix no-flex-shrink">
+                    {{ isExam ? ('artemisApp.examManagement.maxPoints.title' | artemisTranslate) : ('artemisApp.course.maxPoints.title' | artemisTranslate) }}
+                </span>
                 <input type="number" class="form-control" [(ngModel)]="maxPoints" min="1" (change)="onChangeMaxPoints(maxPoints)" />
             </div>
             <div class="form-group">
