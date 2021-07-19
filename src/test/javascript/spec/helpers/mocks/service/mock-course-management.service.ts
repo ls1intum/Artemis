@@ -24,7 +24,7 @@ export class MockCourseManagementService {
     };
 
     coursesForNotificationsMock: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
-    //this method is used in notification.service.spec
+    // this method is used in notification.service.spec
     getCoursesForNotifications = () => {
         return this.coursesForNotificationsMock.asObservable();
     };

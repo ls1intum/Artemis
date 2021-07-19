@@ -159,7 +159,7 @@ describe('TextExamSubmissionComponent', () => {
         });
 
         it('should update problem statement', () => {
-            //not component.getExercise().problemStatement, due to inserted HTML via Diff-Highlighting
+            // not component.getExercise().problemStatement, due to inserted HTML via Diff-Highlighting
             const result = component.updatedProblemStatement;
             expect(result).to.equal(updatedProblemStatement);
             expect(result).not.to.equal(oldProblemStatement);

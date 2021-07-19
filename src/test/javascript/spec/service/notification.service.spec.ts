@@ -102,7 +102,6 @@ describe('Logs Service', () => {
                 wsReceiveNotificationStub = stub(websocketService, 'receive').returns(wsNotificationSubject);
 
                 wsQuizExerciseSubject = new Subject<QuizExercise | undefined>();
-                //wsReceiveQuizExerciseStub = stub(websocketService, 'receive').returns(wsQuizExerciseSubject);
 
                 courseManagementService = TestBed.inject(CourseManagementService);
                 cmCoursesSubject = new Subject<[Course] | undefined>();
@@ -133,7 +132,7 @@ describe('Logs Service', () => {
         });
 
         it('should convert date array from server', fakeAsync(() => {
-            //strange method, because notificationDate can only be of type Moment, I can not simulate an input with string for date
+            // strange method, because notificationDate can only be of type Moment, I can not simulate an input with string for date
             const notificationArray = [singleUserNotification, quizNotification];
             let serverResponse = notificationArray;
             const expectedResult = notificationArray.sort();
@@ -157,14 +156,14 @@ describe('Logs Service', () => {
             const userId = 99; //based on MockAccountService
             const notificationTopic = `/topic/user/${userId}/notifications`;
             expect(wsSubscribeStub).to.have.been.calledOnceWithExactly(notificationTopic);
-            //websocket correctly subscribed to the topic
+            // websocket correctly subscribed to the topic
 
             expect(wsReceiveNotificationStub).to.have.been.calledOnce;
-            //websocket "receive" called
+            // websocket "receive" called
 
-            //add new single user notification
+            // add new single user notification
             wsNotificationSubject.next(singleUserNotification);
-            //calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
+            // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
         }));
 
         it('should subscribe to group notification updates and receive new group notification', fakeAsync(() => {
@@ -175,21 +174,21 @@ describe('Logs Service', () => {
             tick(); // position of tick is very important here !
 
             expect(cmGetCoursesForNotificationsStub).to.have.been.calledOnce;
-            //courseManagementService.getCoursesForNotifications had been successfully subscribed to
+            // courseManagementService.getCoursesForNotifications had been successfully subscribed to
 
-            //push new courses
+            // push new courses
             cmCoursesSubject.next([course]);
 
             const notificationTopic = `/topic/course/${course.id}/TA`;
             expect(wsSubscribeStub).to.have.been.calledWith(notificationTopic);
-            //websocket correctly subscribed to the topic
+            // websocket correctly subscribed to the topic
 
             expect(wsReceiveNotificationStub).to.have.been.called;
-            //websocket "receive" called
+            // websocket "receive" called
 
-            //add new single user notification
+            // add new single user notification
             wsNotificationSubject.next(groupNotification);
-            //calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
+            // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
         }));
 
         it('should subscribe to quiz notification updates and receive a new quiz exercise and create a new quiz notification from it', fakeAsync(() => {
@@ -197,7 +196,7 @@ describe('Logs Service', () => {
             wsReceiveQuizExerciseStub = stub(websocketService, 'receive').returns(wsQuizExerciseSubject);
 
             notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
-                //the quiz notification is created after a new quiz exercise has been detected, therefore the time will always be different
+                // the quiz notification is created after a new quiz exercise has been detected, therefore the time will always be different
                 notification.notificationDate = undefined;
                 quizNotification.notificationDate = undefined;
 
@@ -207,21 +206,21 @@ describe('Logs Service', () => {
             tick(); // position of tick is very important here !
 
             expect(cmGetCoursesForNotificationsStub).to.have.been.calledOnce;
-            //courseManagementService.getCoursesForNotifications had been successfully subscribed to
+            // courseManagementService.getCoursesForNotifications had been successfully subscribed to
 
-            //push new courses
+            // push new courses
             cmCoursesSubject.next([course]);
 
             const notificationTopic = `/topic/course/${course.id}/TA`;
             expect(wsSubscribeStub).to.have.been.calledWith(notificationTopic);
-            //websocket correctly subscribed to the topic
+            // websocket correctly subscribed to the topic
 
             expect(wsReceiveQuizExerciseStub).to.have.been.called;
-            //websocket "receive" called
+            // websocket "receive" called
 
-            //pushes new quizExercise
+            // pushes new quizExercise
             wsQuizExerciseSubject.next(quizExercise);
-            //calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
+            // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
             tick();
         }));
     });
