@@ -607,7 +607,8 @@ public class ProgrammingExercise extends Exercise {
     public boolean areManualResultsAllowed() {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
         final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
-        return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
+        return (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAssessmentType() == AssessmentType.COMPLAINT_BASED)
+                && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
     }
 
     /**

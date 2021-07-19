@@ -13,7 +13,7 @@
             <fa-icon [icon]="'chalkboard-teacher'"></fa-icon>
         </li>
         <li *ngFor="let stat of numberOfAssessmentsOfCorrectionRounds; let i = index" class="progress-bar-li stacked-li" [ngClass]="calculateClassProgressBar()">
-            <div class="stacked-item">
+            <div *ngIg="exercise.assessmentType !== assessmentType.COMPLAINT_BASED" class="stacked-item">
                 <jhi-progress-bar
                     [tooltip]="'artemisApp.assessmentDashboard.assessStudentsSubmissions' | artemisTranslate"
                     [percentage]="percentageInTimeAssessmentProgressOfCorrectionRound[i]"

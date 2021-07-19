@@ -4,6 +4,7 @@ import { get } from 'lodash';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-tutor-participation-graph',
@@ -21,6 +22,8 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public numberOfOpenMoreFeedbackRequests: number;
     @Input() exercise: Exercise;
     @Input() public numberOfAssessmentsOfCorrectionRounds: DueDateStat[];
+
+    readonly assessmentType = AssessmentType;
 
     tutorParticipationStatus: TutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;
 
