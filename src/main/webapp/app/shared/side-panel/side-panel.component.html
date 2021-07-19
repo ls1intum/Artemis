@@ -1,7 +1,20 @@
 <div class="guided-tour panel-wrapper">
-    <div class="panel-header">
-        {{ panelHeader }}
+    <div *ngIf="panelDescriptionHeader !== undefined; else elseBlock" class="row panel-header">
+        <div class="col-7">
+            {{ panelHeader }}
+        </div>
+        <div class="col-5" style="margin-left: -3px">
+            {{ panelDescriptionHeader! }}
+        </div>
     </div>
+
+    <ng-template #elseBlock>
+        <div class="panel-header">
+            {{ panelHeader }}
+        </div>
+    </ng-template>
+
+    <div class="vertLine"></div>
     <div class="panel-body">
         <ng-content></ng-content>
     </div>
