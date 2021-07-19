@@ -1,14 +1,13 @@
-/// <reference types="cypress" />
-
 import { beVisible } from '../support/constants';
 import { CourseManagementPage } from '../support/pageobjects/CourseManagementPage';
 import { NavigationBar } from '../support/pageobjects/NavigationBar';
 import { ArtemisRequests } from '../support/requests/ArtemisRequests';
+import { CypressUserManagement } from '../support/users';
 import { generateUUID } from '../support/utils';
 
-// Environmental variables
-const adminUsername = Cypress.env('adminUsername');
-const adminPassword = Cypress.env('adminPassword');
+// The user management object
+const users = new CypressUserManagement();
+const admin = users.getAdmin();
 
 // Requests
 let artemisRequests: ArtemisRequests;
@@ -38,7 +37,7 @@ describe('Programming Exercise Management', () => {
         uid = generateUUID();
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
-        cy.login(adminUsername, adminPassword);
+        cy.login(admin);
         artemisRequests = new ArtemisRequests();
         artemisRequests.courseManagement
             .createCourse(courseName, courseShortName)
@@ -64,7 +63,7 @@ describe('Programming Exercise Management', () => {
         let programmingExerciseId: number;
 
         it('Creates a new programming exercise', function () {
-            cy.login(adminUsername, adminPassword, '/');
+            cy.login(admin, '/');
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(courseName, courseShortName);
             cy.get('#jh-create-entity').click();
@@ -105,7 +104,7 @@ describe('Programming Exercise Management', () => {
         });
 
         it('Deletes an existing programming exercise', function () {
-            cy.login(adminUsername, adminPassword, '/');
+            cy.login(admin, '/');
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(courseName, courseShortName);
             cy.get('[deletequestion="artemisApp.programmingExercise.delete.question"]').click();

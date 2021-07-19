@@ -1,17 +1,14 @@
-/// <reference types="cypress" />
-
 import { authTokenKey } from '../support/constants';
+import { CypressUserManagement } from '../support/users';
 
-let username = Cypress.env('username');
-let password = Cypress.env('password');
-if (Cypress.env('isCi')) {
-    username = username.replace('USERID', '5');
-    password = password.replace('USERID', '5');
-}
+// The user management object
+const users = new CypressUserManagement();
+const user = users.getStudentOne();
+
 describe('Authentication tests', () => {
     beforeEach(() => {
-        expect(username, 'username was set').to.be.a('string').and.not.be.empty;
-        expect(password, 'password was set').to.be.a('string').and.not.be.empty;
+        expect(user.username, 'username was set').to.be.a('string').and.not.be.empty;
+        expect(user.password, 'password was set').to.be.a('string').and.not.be.empty;
         cy.logout();
     });
 
@@ -21,7 +18,7 @@ describe('Authentication tests', () => {
     });
 
     it('logs in via the ui', function () {
-        cy.loginWithGUI(username, password);
+        cy.loginWithGUI(user);
         cy.url()
             .should('include', '/courses')
             .then(() => {
@@ -30,14 +27,14 @@ describe('Authentication tests', () => {
     });
 
     it('logs in programmatically and logs out via the ui', function () {
-        cy.login(username, password, '/courses');
+        cy.login(user, '/courses');
         cy.url().should('include', '/courses');
         cy.get('#account-menu').click().get('#logout').click();
         cy.url().should('equal', Cypress.config().baseUrl + '/');
     });
 
     it('displays error messages on wrong password', () => {
-        cy.loginWithGUI('artemis_admin', 'lorem-ipsum');
+        cy.loginWithGUI({ username: 'artemis_admin', password: 'lorem-ipsum' });
         cy.location('pathname').should('eq', '/');
         cy.get('.alert').should('exist').and('have.text', 'Failed to sign in! Please check your username and password and try again.');
         cy.get('.btn').click();

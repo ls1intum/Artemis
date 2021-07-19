@@ -1,18 +1,13 @@
-/// <reference types="cypress" />
-
 import { beVisible } from '../support/constants';
 import { CourseManagementPage } from '../support/pageobjects/CourseManagementPage';
 import { NavigationBar } from '../support/pageobjects/NavigationBar';
 import { ArtemisRequests } from '../support/requests/ArtemisRequests';
+import { CypressUserManagement } from '../support/users';
 import { generateUUID } from '../support/utils';
 
-// Environmental variables
-const adminUsername = Cypress.env('adminUsername');
-const adminPassword = Cypress.env('adminPassword');
-let username = Cypress.env('username');
-if (Cypress.env('isCi')) {
-    username = username.replace('USERID', '5');
-}
+// The user management object
+const users = new CypressUserManagement();
+const username = users.getStudentOne().username;
 
 // Requests
 let artemisRequests: ArtemisRequests;
@@ -41,7 +36,7 @@ describe('Course management', () => {
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
         artemisRequests = new ArtemisRequests();
-        cy.login(adminUsername, adminPassword, '/');
+        cy.login(users.getAdmin(), '/');
     });
 
     describe('Course creation', () => {

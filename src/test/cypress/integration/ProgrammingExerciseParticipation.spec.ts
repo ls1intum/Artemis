@@ -1,5 +1,4 @@
-/// <reference types="cypress" />
-
+import { CypressUserManagement, CypressCredentials } from './../support/users';
 import { generateUUID } from '../support/utils';
 import { OnlineEditorPage, ProgrammingExerciseSubmission } from '../support/pageobjects/OnlineEditorPage';
 import allSuccessful from '../fixtures/programming_exercise_submissions/all_successful/submission.json';
@@ -7,17 +6,8 @@ import partiallySuccessful from '../fixtures/programming_exercise_submissions/pa
 import { beVisible } from '../support/constants';
 import { ArtemisRequests } from '../support/requests/ArtemisRequests';
 
-// Environmental variables
-const adminUsername = Cypress.env('adminUsername');
-const adminPassword = Cypress.env('adminPassword');
-const usernameTemplate = Cypress.env('username');
-const passwordTemplate = Cypress.env('password');
-const student1 = usernameTemplate.replace('USERID', '3');
-const passwordStudent1 = passwordTemplate.replace('USERID', '3');
-const student2 = usernameTemplate.replace('USERID', '4');
-const passwordStudent2 = passwordTemplate.replace('USERID', '4');
-const student3 = usernameTemplate.replace('USERID', '5');
-const passwordStudent3 = passwordTemplate.replace('USERID', '5');
+// The user management object
+const users = new CypressUserManagement();
 
 // Requests
 let artemisRequests: ArtemisRequests;
@@ -52,23 +42,23 @@ describe('Programming exercise participations', () => {
     });
 
     it('Makes a partially successful submission', function () {
-        startParticipationInProgrammingExercise(student2, passwordStudent2);
+        startParticipationInProgrammingExercise(users.getStudentOne());
         makePartiallySuccessfulSubmission();
     });
 
     it('Makes a successful submission', function () {
-        startParticipationInProgrammingExercise(student3, passwordStudent3);
+        startParticipationInProgrammingExercise(users.getStudentTwo());
         makeSuccessfulSubmission();
     });
 
     it('Makes a failing submission', function () {
-        startParticipationInProgrammingExercise(student1, passwordStudent1);
+        startParticipationInProgrammingExercise(users.getStudentThree());
         makeFailingSubmission();
     });
 
     after(() => {
         if (!!course) {
-            cy.login(adminUsername, adminPassword);
+            cy.login(users.getAdmin());
             artemisRequests.courseManagement.deleteCourse(course.id);
         }
     });
@@ -85,12 +75,12 @@ function registerQueries() {
  * Creates a course and a programming exercise inside that course.
  */
 function setupCourseAndProgrammingExercise() {
-    cy.login(adminUsername, adminPassword, '/');
+    cy.login(users.getAdmin(), '/');
     artemisRequests.courseManagement.createCourse(courseName, courseShortName).then((response) => {
         course = response.body;
-        artemisRequests.courseManagement.addStudentToCourse(course.id, student1);
-        artemisRequests.courseManagement.addStudentToCourse(course.id, student2);
-        artemisRequests.courseManagement.addStudentToCourse(course.id, student3);
+        artemisRequests.courseManagement.addStudentToCourse(course.id, users.getStudentOne().username);
+        artemisRequests.courseManagement.addStudentToCourse(course.id, users.getStudentTwo().username);
+        artemisRequests.courseManagement.addStudentToCourse(course.id, users.getStudentThree().username);
         //  We sleep to allow bamboo/bitbucket to synchronize the group rights, because the programming exercise creation fails otherwise
         cy.log('Created course. Sleeping before adding a programming exercise...');
         cy.wait(65000);
@@ -161,8 +151,8 @@ function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmissio
 /**
  * Starts the participation in the test programming exercise.
  */
-function startParticipationInProgrammingExercise(username: string, password: string) {
-    cy.login(username, password, '/');
+function startParticipationInProgrammingExercise(credentials: CypressCredentials) {
+    cy.login(credentials, '/');
     cy.url().should('include', '/courses');
     cy.log('Participating in the programming exercise as a student...');
     cy.contains(courseName).parents('.card-header').click();

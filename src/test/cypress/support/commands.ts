@@ -1,3 +1,4 @@
+import { CypressCredentials } from './users';
 // ***********************************************
 // This example commands.js shows you how to
 // create various custom commands and overwrite
@@ -31,9 +32,9 @@ export {};
 declare global {
     namespace Cypress {
         interface Chainable {
-            login(username: String, password: String, url?: String): any;
+            login(credentials: CypressCredentials, url?: String): any;
             logout(): any;
-            loginWithGUI(username: String, password: String): any;
+            loginWithGUI(credentials: CypressCredentials): any;
             createCourse(course: String): Chainable<Cypress.Response>;
             deleteCourse(courseID: number): Chainable<Cypress.Response>;
         }
@@ -62,7 +63,9 @@ Cypress.Commands.overwrite('request', (originalFn, options) => {
 /**
  * Logs in using API and sets authToken in Cypress.env
  * */
-Cypress.Commands.add('login', (username, password, url) => {
+Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
+    const username = credentials.username;
+    const password = credentials.password;
     cy.request({
         url: '/api/authenticate',
         method: 'POST',
@@ -99,10 +102,10 @@ Cypress.Commands.add('logout', () => {
 /**
  * Logs in using GUI and sets authToken in Cypress.env
  * */
-Cypress.Commands.add('loginWithGUI', (username, password) => {
+Cypress.Commands.add('loginWithGUI', (credentials) => {
     cy.visit('/');
-    cy.get('#username').type(username);
-    cy.get('#password').type(password).type('{enter}');
+    cy.get('#username').type(credentials.username);
+    cy.get('#password').type(credentials.password).type('{enter}');
     Cypress.env(authTokenKey, localStorage.getItem(authTokenKey));
 });
 
