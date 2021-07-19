@@ -19,7 +19,7 @@
             "model": "Modell",
             "explanationText": "Erklärung",
             "modelingEditor": "Modellierungseditor",
-            "problemStatement": "<strong>Problemstellung:</strong>",
+            "problemStatement": "Problemstellung",
             "maxScore": "<strong>Max. Punktzahl: {{maxScore}}</strong>",
             "assessment": {
                 "title": "Bewertung",
