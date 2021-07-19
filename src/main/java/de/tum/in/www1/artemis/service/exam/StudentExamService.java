@@ -28,7 +28,9 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -70,11 +72,13 @@ public class StudentExamService {
 
     private final ExamRepository examRepository;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, InstanceMessageSendService instanceMessageSendService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -89,6 +93,7 @@ public class StudentExamService {
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examRepository = examRepository;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -236,25 +241,23 @@ public class StudentExamService {
     }
 
     /**
-     * Assess the modeling-, text and file upload exercises of student exams of an exam which are not submitted with 0 points.
+     * Assess all exercises, except quiz exercises, of student exams of an exam which are not submitted with 0 points.
      *
      * @param exam the exam
      * @param assessor the assessor should be the instructor making the call.
      * @return returns the set of unsubmitted StudentExams, the participations of which were assessed
      */
     public Set<StudentExam> assessUnsubmittedStudentExams(final Exam exam, final User assessor) {
-        // TODO Simon Entholzer: we should also do this for programming exercises with manual assessment
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam.getId());
-        Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream()
-                .collect(Collectors.toMap(StudentExam::getUser,
-                        studentExam -> studentExam.getExercises().stream()
-                                .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise)
-                                .collect(Collectors.toList())));
+        Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMap(unsubmittedStudentExams);
         for (final var user : exercisesOfUser.keySet()) {
+            // fetch all studentParticipations of a user, with sumbissions and results eagerly loaded
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
+
             for (final var studentParticipation : studentParticipations) {
-                final var latestSubmission = studentParticipation.findLatestSubmission();
+                var latestSubmission = studentParticipation.findLatestSubmission();
+                latestSubmission = prepareProgrammingSubmission(latestSubmission, studentParticipation);
                 if (latestSubmission.isPresent()) {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
                         // required so that the submission is counted in the assessment dashboard
@@ -269,6 +272,7 @@ public class StudentExamService {
 
     /**
      * Assess the modeling-, file upload and text submissions of an exam which are empty.
+     * Also create automatic submissions and assessments for programming exercises without submissions.
      * Also sets the state of all participations for all student exams which were submitted to FINISHED
      *
      * @param exam the exam
@@ -277,15 +281,10 @@ public class StudentExamService {
      * @return returns the set of StudentExams of which the empty submissions were assessed
      */
     public Set<StudentExam> assessEmptySubmissionsOfStudentExams(final Exam exam, final User assessor, final Set<StudentExam> excludeStudentExams) {
-        // TODO Simon Entholzer: we should also do this for programming exercises with manual assessment: when the participation does not have any submissions
         Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(exam.getId());
         // remove student exams which should be excluded
         studentExams = studentExams.stream().filter(studentExam -> !excludeStudentExams.contains(studentExam)).collect(Collectors.toSet());
-        Map<User, List<Exercise>> exercisesOfUser = studentExams.stream()
-                .collect(Collectors.toMap(StudentExam::getUser,
-                        studentExam -> studentExam.getExercises().stream()
-                                .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise)
-                                .collect(Collectors.toList())));
+        Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMap(studentExams);
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
@@ -296,8 +295,13 @@ public class StudentExamService {
                     studentParticipation.setInitializationState(InitializationState.FINISHED);
                     studentParticipationRepository.save(studentParticipation);
                 }
-                final var latestSubmission = studentParticipation.findLatestSubmission();
-                if (latestSubmission.isPresent() && latestSubmission.get().isEmpty()) {
+                var latestSubmission = studentParticipation.findLatestSubmission();
+                boolean wasEmptyProgrammingParticipation = false;
+                if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise) {
+                    wasEmptyProgrammingParticipation = true;
+                    latestSubmission = prepareProgrammingSubmission(latestSubmission, studentParticipation);
+                }
+                if ((latestSubmission.isPresent() && latestSubmission.get().isEmpty()) || wasEmptyProgrammingParticipation) {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
                         // required so that the submission is counted in the assessment dashboard
                         latestSubmission.get().submitted(true);
@@ -307,6 +311,40 @@ public class StudentExamService {
             }
         }
         return studentExams;
+    }
+
+    /**
+     * Helper method to return a map for each user to their exercises. Filters out quiz exercises as they are assessed differently.
+     *
+     * @param studentExams the student exams of the users containing the exercises
+     * @return a map of the User as key, and a list of the users exercises as value
+     */
+    public Map<User, List<Exercise>> getExercisesOfUserMap(Set<StudentExam> studentExams) {
+        return studentExams.stream()
+                .collect(
+                        Collectors
+                                .toMap(StudentExam::getUser,
+                                        studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
+                                                || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
+                                                .collect(Collectors.toList())));
+    }
+
+    /**
+     * Prepares the submission for programming participations.
+     * When it is the participation of a programming exercise and the manual assessment is enabled, but there is no submission,
+     * a new submission for the programming participation needs to be created.
+     *
+     * @param latestSubmission the optional latest submission of the participation
+     * @param studentParticipation the provided ProgrammingStudentParticipation
+     * @return the latestSubmission
+     */
+    public Optional<Submission> prepareProgrammingSubmission(Optional<Submission> latestSubmission, StudentParticipation studentParticipation) {
+        if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise
+                && ((ProgrammingExercise) studentParticipation.getExercise()).areManualResultsAllowed()) {
+            submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);
+            return studentParticipation.findLatestSubmission();
+        }
+        return latestSubmission;
     }
 
     private void lockStudentRepositories(User currentUser, StudentExam existingStudentExam) {
@@ -427,14 +465,19 @@ public class StudentExamService {
             if (studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
                     && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                 try {
-                    if (exercise instanceof ProgrammingExercise && !Hibernate.isInitialized(((ProgrammingExercise) exercise).getTemplateParticipation())) {
-                        // Load lazy property
-                        final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                        ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
+                    // Load lazy property
+                    if (exercise instanceof ProgrammingExercise programmingExercise && !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
+                        final var programmingExerciseReloaded = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                        programmingExercise.setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
                     }
                     // this will also create initial (empty) submissions for quiz, text, modeling and file upload
                     var participation = participationService.startExercise(exercise, student, true);
                     generatedParticipations.add(participation);
+                    // Unlock Repositories if the exam starts within 5 minutes
+                    if (exercise instanceof ProgrammingExercise programmingExercise
+                            && ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
+                        instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
+                    }
                 }
                 catch (Exception ex) {
                     log.warn("Start exercise for student exam {} and exercise {} and student {} failed with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),

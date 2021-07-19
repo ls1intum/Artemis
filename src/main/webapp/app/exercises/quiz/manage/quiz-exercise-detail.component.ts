@@ -46,6 +46,7 @@ import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/m
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 
 export interface Reason {
@@ -81,7 +82,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     @ViewChildren('editShortAnswer')
     editShortAnswerQuestionComponents: QueryList<ShortAnswerQuestionEditComponent>;
 
-    course: Course;
+    course?: Course;
     quizExercise: QuizExercise;
     exerciseGroup?: ExerciseGroup;
     courseRepository: CourseManagementService;
@@ -1276,7 +1277,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.cacheValidation();
         } else if (this.quizExercise.releaseDate && this.quizExercise.dueDate) {
             const duration = moment(this.quizExercise.dueDate).diff(this.quizExercise.releaseDate, 's');
-            this.quizExercise.duration = Math.round(duration);
+            this.quizExercise.duration = round(duration);
             this.updateDuration();
             this.cacheValidation();
         }

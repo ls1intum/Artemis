@@ -63,9 +63,9 @@
             "semester": "Semester",
             "maxPoints": {
                 "title": "Maximum number of points for course",
-                "warning": "Updating this field will update the grading scale for the course if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
+                "warning": "Updating this field will update the grading key for the course if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
             },
-            "gradingSystem": "Grade Key",
+            "gradingSystem": "Grading Key",
             "testCourse": {
                 "title": "Test Course",
                 "description": "Activate this checkbox for courses used for testing.",

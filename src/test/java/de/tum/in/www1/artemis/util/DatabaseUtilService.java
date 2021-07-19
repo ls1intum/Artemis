@@ -35,6 +35,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -380,6 +381,12 @@ public class DatabaseUtilService {
 
     public Course createCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        return courseRepo.save(course);
+    }
+
+    public Course createCourseWithPostsDisabled() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course.setPostsEnabled(false);
         return courseRepo.save(course);
     }
 
@@ -981,6 +988,28 @@ public class DatabaseUtilService {
             studentParticipationRepo.save(studentParticipation);
         }
         return testRun;
+    }
+
+    public Exam setupSimpleExamWithExerciseGroupExercise(Course course) {
+        var exam = ModelFactory.generateExam(course);
+        exam.setNumberOfExercisesInExam(1);
+        exam.setRandomizeExerciseOrder(true);
+        exam.setStartDate(ZonedDateTime.now().plusHours(2));
+        exam.setEndDate(ZonedDateTime.now().plusHours(4));
+        exam.setMaxPoints(20);
+        exam = examRepository.save(exam);
+
+        // add exercise group: 1 mandatory
+        ModelFactory.generateExerciseGroup(true, exam);
+        exam = examRepository.save(exam);
+
+        // add exercises
+        var exercise1a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        var exercise1b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        var exercise1c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        exerciseRepo.saveAll(List.of(exercise1a, exercise1b, exercise1c));
+
+        return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
     }
 
     public Exam setupExamWithExerciseGroupsExercisesRegisteredStudents(Course course) {
@@ -3583,5 +3612,27 @@ public class DatabaseUtilService {
 
     public Course saveCourse(Course course) {
         return courseRepo.save(course);
+    }
+
+    public Course createCourseWithTutor(String login) {
+        Course course = this.createCourse();
+        TextExercise textExercise = createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        StudentParticipation participation = ModelFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
+        studentParticipationRepo.save(participation);
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("some text", Language.ENGLISH, true);
+        textSubmission.setParticipation(participation);
+        textSubmissionRepo.saveAndFlush(textSubmission);
+        course.addExercises(textExercise);
+        User user = new User();
+        user.setLogin(login);
+        user.setId(1L);
+        user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
+        userRepo.save(user);
+        return course;
+    }
+
+    public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
+        return ModelFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
+                exerciseId, participationId, submissionId);
     }
 }

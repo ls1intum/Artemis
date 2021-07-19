@@ -29,7 +29,8 @@
                 "bonus": "Bonus points for the final exam",
                 "interval": "Interval (%)",
                 "intervalPoints": "Interval (Points)",
-                "gradeKeyButton": "View Grade Key"
+                "gradeKeyButton": "View Grading Key",
+                "gradeKeyButtonBonus": "View Bonus Rules"
             },
             "title": "Exam",
             "startExam": "Start",
@@ -37,6 +38,7 @@
             "date": "Date",
             "time": "Time",
             "durationWithFormat": "Duration (mm:ss)",
+            "resultInformation": "Your result will be published here as soon as the correction is finished. You can get to this page by clicking on this exam in the exam overview of this course.",
             "course": "Course",
             "exercises": "Exercises",
             "points": "Points",
@@ -179,7 +181,7 @@
             "generateMissingStudentExams": "Generate missing individual exams",
             "startExercises": "Prepare exercise start",
             "evaluateQuizExercises": "Evaluate quizzes",
-            "assessUnsubmittedStudentExams": "Assess unsubmitted student exams",
+            "assessUnsubmittedStudentExams": "Assess unsubmitted exams",
             "unlockAllRepositories": "Unlock all repositories",
             "lockAllRepositories": "Lock all repositories",
             "unlockAllRepositoriesModalText": "All repositories will be immediately unlocked! Students will be able to clone & push even if the exam is not started yet!\n\nThis operation is automatically performed once the exam is set to visible, therefore this operation should only be used manually if the automatic unlock failed!",
@@ -264,7 +266,7 @@
             "examChecklist": "Exam Checklist",
             "studentExams": "Student Exams",
             "students": "Students",
-            "gradingSystem": "Grade Key",
+            "gradingSystem": "Grading Key",
             "testRun": {
                 "testRun": "Test Run",
                 "title": "Test Run Management: ",
@@ -384,7 +386,8 @@
                 },
                 "textitems": {
                     "leastoneexercisegroup": "At least one exercise group",
-                    "numberofexercisegroupsequal": "Number of exercise groups equals number of exercises in exam",
+                    "numberofexercisegroupsequal": "Number of exercises in the exam equals the number of exercise groups",
+                    "numberofexercisegroupsinbetween": "Number of exercises in the exam is between the number of mandatory exercise groups and the total number of exercise groups",
                     "eachexercisegroup": "Each exercise group contains at least one exercise",
                     "pointsexercisegroupequal": "Points in exercises of each exercise group are identical",
                     "totalpointspossible": "Maximum number of points in exam can be attained with the current exercise group configuration",
@@ -441,6 +444,7 @@
         }
     },
     "studentExam": {
+        "submitSuccessful": "Your exam was submitted successfully. Artemis does not require further action, the window can be closed. Be sure to follow your instructor's exam protocol.",
         "alreadySubmitted": "You have already submitted.",
         "submissionNotInTime": "You have not submitted your exam on time. It will not be graded!",
         "handInFailed": "Submission of your exam failed. Please try again!"

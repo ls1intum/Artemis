@@ -1,14 +1,7 @@
 <div class="course-exercise-row row align-items-center mb-2 mt-2" (click)="showDetails($event)" [class.guided-tour]="hasGuidedTour">
     <div class="col-auto d-none d-sm-block">
         <div class="exercise-row-icon">
-            <fa-icon
-                *ngIf="exercise.type"
-                [icon]="getIcon(exercise.type)"
-                size="2x"
-                placement="right"
-                [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate"
-                container="body"
-            ></fa-icon>
+            <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" size="2x" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
         </div>
     </div>
     <div class="col">
@@ -44,7 +37,7 @@
             ></jhi-exercise-details-student-actions>
             <div class="exercise-tags col-auto col-sm d-flex justify-content-center mt-2">
                 <h4>
-                    <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
+                    <jhi-not-released-tag class="me-1" [exercise]="exercise"></jhi-not-released-tag>
                 </h4>
                 <h4 *ngIf="!isPresentationMode">
                     <span class="badge bg-success me-1" [hidden]="!asQuizExercise(exercise).isActiveQuiz">{{

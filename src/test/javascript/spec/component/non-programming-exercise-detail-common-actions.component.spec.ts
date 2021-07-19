@@ -35,6 +35,8 @@ describe('Exercise detail common actions Component', () => {
     let comp: NonProgrammingExerciseDetailCommonActionsComponent;
     let fixture: ComponentFixture<NonProgrammingExerciseDetailCommonActionsComponent>;
 
+    const course: Course = { id: 123 };
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule, TranslateModule.forRoot()],
@@ -54,17 +56,17 @@ describe('Exercise detail common actions Component', () => {
 
     it('Should be ok', () => {
         comp.exercise = { type: ExerciseType.TEXT, id: 1 } as TextExercise;
+        comp.course = course;
         fixture.detectChanges();
         expect(comp).to.be.ok;
     });
 
     it('should get the correct edit routes for non exam exercise', () => {
-        const course: Course = { id: 123 };
         const textExercise: TextExercise = new TextExercise(course, undefined);
         textExercise.id = 123;
 
         comp.exercise = textExercise;
-        comp.courseId = course.id!;
+        comp.course = course;
         comp.ngOnInit();
         expect(comp.baseResource).to.equal('/course-management/123/text-exercises/123/');
 
@@ -84,7 +86,6 @@ describe('Exercise detail common actions Component', () => {
     });
 
     it('should get the correct edit routes for exam exercise', () => {
-        const course: Course = { id: 1 };
         const exam: Exam = { id: 2, course };
         const exerciseGroup: ExerciseGroup = { id: 3, exam };
         const textExercise: TextExercise = new TextExercise(course, exerciseGroup);
@@ -92,23 +93,23 @@ describe('Exercise detail common actions Component', () => {
 
         comp.isExamExercise = true;
         comp.exercise = textExercise;
-        comp.courseId = course.id!;
+        comp.course = course;
         comp.ngOnInit();
-        expect(comp.baseResource).to.equal('/course-management/1/exams/2/exercise-groups/3/text-exercises/4/');
+        expect(comp.baseResource).to.equal('/course-management/123/exams/2/exercise-groups/3/text-exercises/4/');
 
         const fileUploadExercise: FileUploadExercise = new FileUploadExercise(course, exerciseGroup);
         fileUploadExercise.id = 5;
 
         comp.exercise = fileUploadExercise;
         comp.ngOnInit();
-        expect(comp.baseResource).to.equal('/course-management/1/exams/2/exercise-groups/3/file-upload-exercises/5/');
+        expect(comp.baseResource).to.equal('/course-management/123/exams/2/exercise-groups/3/file-upload-exercises/5/');
 
         const modelingExercise: ModelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, exerciseGroup);
         modelingExercise.id = 6;
 
         comp.exercise = modelingExercise;
         comp.ngOnInit();
-        expect(comp.baseResource).to.equal('/course-management/1/exams/2/exercise-groups/3/modeling-exercises/6/');
+        expect(comp.baseResource).to.equal('/course-management/123/exams/2/exercise-groups/3/modeling-exercises/6/');
     });
 
     it('should call event manager on delete exercises', function () {
@@ -120,7 +121,7 @@ describe('Exercise detail common actions Component', () => {
         const deleteFileUploadExerciseStub = sinon.stub(fileUploadExerciseService, 'delete').returns(of({} as HttpResponse<{}>));
         const deleteModelingExerciseService = sinon.stub(modelingExerciseService, 'delete').returns(of({} as HttpResponse<{}>));
 
-        comp.courseId = 123;
+        comp.course = course;
 
         comp.exercise = new TextExercise({ id: 123 }, undefined);
         comp.deleteExercise();

@@ -381,7 +381,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
         const ratedResults = this.studentParticipation?.results?.filter((result: Result) => result.rated).sort(this.resultSortFunction);
         if (ratedResults) {
-            const latestResult = ratedResults.length ? ratedResults[ratedResults.length - 1] : undefined;
+            const latestResult = ratedResults.last();
             if (latestResult) {
                 latestResult.participation = this.studentParticipation;
             }

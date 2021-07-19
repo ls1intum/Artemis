@@ -432,7 +432,7 @@ export class CourseManagementService {
         // here is only made if there was no similar request made before.
         setTimeout(() => {
             // Retrieve courses if no courses were fetched before and are not queried at the moment.
-            if (!this.fetchingCoursesForNotifications && !this.coursesForNotifications) {
+            if (!this.fetchingCoursesForNotifications && !this.coursesForNotifications.getValue()) {
                 this.findAllForNotifications().subscribe(
                     (res: HttpResponse<Course[]>) => {
                         this.coursesForNotifications.next(res.body || undefined);

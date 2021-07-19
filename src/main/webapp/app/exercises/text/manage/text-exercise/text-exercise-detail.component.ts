@@ -12,6 +12,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
@@ -23,6 +24,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     readonly moment = moment;
 
     textExercise: TextExercise;
+    course: Course | undefined;
     isExamExercise: boolean;
     formattedProblemStatement: SafeHtml | null;
     formattedSampleSolution: SafeHtml | null;
@@ -61,6 +63,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         this.textExerciseService.find(id).subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
             this.textExercise = textExerciseResponse.body!;
             this.isExamExercise = !!this.textExercise.exerciseGroup;
+            this.course = this.isExamExercise ? this.textExercise.exerciseGroup?.exam?.course : this.textExercise.course;
 
             this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.gradingInstructions);
             this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.problemStatement);

@@ -6,6 +6,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
@@ -17,7 +18,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     exercise: Exercise;
 
     @Input()
-    courseId: number;
+    course: Course;
 
     @Input()
     isExamExercise = false;
@@ -36,13 +37,13 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
 
     ngOnInit(): void {
         if (!this.isExamExercise) {
-            this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
-            this.shortBaseResource = `/course-management/${this.courseId}/`;
+            this.baseResource = `/course-management/${this.course.id!}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+            this.shortBaseResource = `/course-management/${this.course.id!}/`;
         } else {
             this.baseResource =
-                `/course-management/${this.courseId}/exams/${this.exercise.exerciseGroup?.exam?.id}` +
+                `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}` +
                 `/exercise-groups/${this.exercise.exerciseGroup?.id}/${this.exercise.type}-exercises/${this.exercise.id}/`;
-            this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.exercise.exerciseGroup?.exam?.id}/`;
+            this.shortBaseResource = `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}/`;
         }
     }
 

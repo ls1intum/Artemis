@@ -11,13 +11,13 @@
     <div class="col">
         <div class="d-flex justify-content-center">
             <!-- exam overview item -->
-            <div class="navigation-item">
-                <button class="btn w-100 synced overview" [ngClass]="getOverviewStatus()" [ngbTooltip]="'Exam Exercise Overview'" (click)="changePage(true)">
+            <div class="navigation-item overview">
+                <button class="btn w-100 synced" [ngClass]="getOverviewStatus()" [ngbTooltip]="'Exam Exercise Overview'" (click)="changePage(true, -1)">
                     <fa-icon [icon]="'bars'"></fa-icon>
                 </button>
             </div>
             <div class="navigation-item">
-                <button *ngIf="!overviewPageOpen && exerciseIndex !== 0" class="btn btn-secondary w-100" (click)="changePage(false, exerciseIndex - 1, false)">
+                <button class="btn btn-secondary w-100" (click)="changePage(false, exerciseIndex - 1, false)" [disabled]="exerciseIndex <= 0">
                     <span aria-hidden="true">&laquo;</span>
                     <span class="sr-only">Previous</span>
                 </button>
@@ -45,7 +45,11 @@
                 </div>
             </ng-container>
             <div class="navigation-item">
-                <button class="btn btn-secondary w-100" (click)="changePage(false, overviewPageOpen ? 0 : exerciseIndex + 1, false)">
+                <button
+                    class="btn btn-secondary w-100"
+                    (click)="changePage(false, overviewPageOpen ? 0 : exerciseIndex + 1, false)"
+                    [disabled]="exerciseIndex >= exercises.length - 1 || exerciseIndex < 0"
+                >
                     <span aria-hidden="true">&raquo;</span>
                     <span class="sr-only">Next</span>
                 </button>
@@ -54,8 +58,8 @@
     </div>
     <div class="col">
         <div class="row justify-content-end align-items-start pe-2">
-            <div *ngIf="!overviewPageOpen" class="d-flex mb-2 justify-content-end">
-                <button [class.invisible]="isProgrammingExercise() || isFileUploadExercise()" class="btn btn-primary" (click)="saveExercise()">
+            <div class="d-flex mb-2 justify-content-end">
+                <button *ngIf="!overviewPageOpen" [class.invisible]="isProgrammingExercise() || isFileUploadExercise()" class="btn btn-primary" (click)="saveExercise()">
                     {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | artemisTranslate }}
                 </button>
                 <button class="btn btn-danger ms-2" (click)="handInEarly()">
