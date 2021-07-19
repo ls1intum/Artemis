@@ -1,4 +1,4 @@
-import { beVisible, GET } from '../constants';
+import { beVisible } from '../constants';
 
 const buildingAndTesting = 'Building and testing...';
 
