@@ -447,7 +447,8 @@ public class SubmissionService {
      */
     public Result prepareTestRunSubmissionForAssessment(Submission submission) {
         Optional<Result> existingAutomaticResult = Optional.empty();
-        if (submission.getLatestResult() != null && AssessmentType.AUTOMATIC.equals(submission.getLatestResult().getAssessmentType())) {
+        if (submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()
+                || AssessmentType.COMPLAINT_BASED == submission.getLatestResult().getAssessmentType()) {
             existingAutomaticResult = resultRepository.findByIdWithEagerFeedbacks(submission.getLatestResult().getId());
         }
 

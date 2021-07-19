@@ -2512,7 +2512,7 @@ public class DatabaseUtilService {
         result.setSubmission(submission);
         submission.addResult(result);
         // Manual results are always rated and have a resultString which is defined in the client
-        if (assessmentType.equals(AssessmentType.SEMI_AUTOMATIC)) {
+        if (assessmentType == AssessmentType.SEMI_AUTOMATIC) {
             result.rated(true);
             result.resultString("1 of 13 passed, 1 issue, 5 of 10 points");
         }

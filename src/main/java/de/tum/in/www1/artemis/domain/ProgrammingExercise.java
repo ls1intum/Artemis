@@ -565,7 +565,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean needsLockOperation() {
-        return isExamExercise() || !AssessmentType.AUTOMATIC.equals(getAssessmentType()) || getBuildAndTestStudentSubmissionsAfterDueDate() != null;
+        return isExamExercise() || AssessmentType.AUTOMATIC != getAssessmentType() || getBuildAndTestStudentSubmissionsAfterDueDate() != null;
     }
 
     @Nullable
@@ -628,7 +628,7 @@ public class ProgrammingExercise extends Exercise {
      */
     private boolean checkForAssessedResult(Result result) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-        return result.getCompletionDate() != null && ((result.isManual() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC));
+        return result.getCompletionDate() != null && ((result.isManual() && isAssessmentOver) || result.isAutomatic());
     }
 
     @Override

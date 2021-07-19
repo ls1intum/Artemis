@@ -611,7 +611,8 @@ public abstract class Exercise extends DomainObject {
             // Check that submission was submitted in time (rated). For non programming exercises we check if the assessment due date has passed (if set)
             if (Boolean.TRUE.equals(result.isRated()) && (!isProgrammingExercise && isAssessmentOver
                     // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
-                    || isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)))) {
+                    || isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.getAssessmentType() == AssessmentType.AUTOMATIC
+                            || result.getAssessmentType() == AssessmentType.COMPLAINT_BASED))) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;
