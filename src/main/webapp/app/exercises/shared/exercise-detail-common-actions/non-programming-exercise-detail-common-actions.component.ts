@@ -98,7 +98,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
      */
     private navigateToOverview() {
         if (!this.isExamExercise) {
-            this.router.navigateByUrl(`/course-management/${this.course.id}/exercises/`);
+            this.router.navigateByUrl(`/course-management/${this.course.id}/exercises`);
         } else {
             this.router.navigateByUrl(`/course-management/${this.course.id}/exams/${this.exercise.exerciseGroup?.exam?.id}/exercise-groups`);
         }
