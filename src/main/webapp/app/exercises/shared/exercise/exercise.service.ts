@@ -119,7 +119,7 @@ export class ExerciseService {
      * @param { number } exerciseId - Id of exercise that should be resetted
      */
     reset(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/participations`, { observe: 'response' });
+        return this.http.post<void>(`${this.resourceUrl}/${exerciseId}/reset`, undefined, { observe: 'response' });
     }
 
     /**

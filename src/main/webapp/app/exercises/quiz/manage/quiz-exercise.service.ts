@@ -162,7 +162,7 @@ export class QuizExerciseService {
      * @param quizExerciseId the id of the quiz exercise that should be reset
      */
     reset(quizExerciseId: number): Observable<HttpResponse<{}>> {
-        return this.http.delete(`${SERVER_API_URL + 'api/exercises'}/${quizExerciseId}/participations`, { observe: 'response' });
+        return this.http.post(`${SERVER_API_URL + 'api/exercises'}/${quizExerciseId}/reset`, undefined, { observe: 'response' });
     }
 
     /**

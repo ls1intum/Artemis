@@ -550,7 +550,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
-                request.delete("/api/exercises/" + exercise.getId() + "/participations", HttpStatus.OK);
+                request.postWithoutResponseBody("/api/exercises/" + exercise.getId() + "/delete", HttpStatus.OK, null);
                 assertThat(exercise.getStudentParticipations().size()).as("Student participations have been deleted").isZero();
                 assertThat(exercise.getTutorParticipations().size()).as("Tutor participations have been deleted").isZero();
             }
@@ -562,7 +562,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
     public void testResetExercise_forbidden() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
-        request.delete("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/participations", HttpStatus.FORBIDDEN);
+        request.postWithoutResponseBody("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/reset", HttpStatus.FORBIDDEN, null);
     }
 
     @Test
