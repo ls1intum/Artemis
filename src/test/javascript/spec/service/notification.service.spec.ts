@@ -134,7 +134,7 @@ describe('Logs Service', () => {
         it('should convert date array from server', fakeAsync(() => {
             // strange method, because notificationDate can only be of type Moment, I can not simulate an input with string for date
             const notificationArray = [singleUserNotification, quizNotification];
-            let serverResponse = notificationArray;
+            const serverResponse = notificationArray;
             const expectedResult = notificationArray.sort();
 
             notificationService.query().subscribe((resp) => {
@@ -153,7 +153,7 @@ describe('Logs Service', () => {
 
             tick(); // position of tick is very important here !
 
-            const userId = 99; //based on MockAccountService
+            const userId = 99; // based on MockAccountService
             const notificationTopic = `/topic/user/${userId}/notifications`;
             expect(wsSubscribeStub).to.have.been.calledOnceWithExactly(notificationTopic);
             // websocket correctly subscribed to the topic
