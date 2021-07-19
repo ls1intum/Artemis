@@ -13,6 +13,9 @@
         [participantScoresAverage]="participantScoresAverage"
         [avgScore]="avgScore"
         [avgRatedScore]="avgRatedScore"
+        [avgGrade]="avgGrade"
+        [avgRatedGrade]="avgRatedGrade"
+        [isBonus]="gradingScale?.gradeType == GradeType.BONUS"
         (reload)="loadData()"
     ></jhi-participant-scores-tables-container>
 </div>

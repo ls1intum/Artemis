@@ -63,13 +63,14 @@ describe('DragAndDropQuestionEditComponent', () => {
         modalService = TestBed.inject(NgbModal);
     });
 
-    beforeEach(() => {
+    beforeEach(fakeAsync(() => {
         component.question = question1;
         component.questionIndex = 1;
         component.reEvaluationInProgress = false;
 
-        fixture.detectChanges();
-    });
+        fixture.detectChanges(false);
+        tick();
+    }));
 
     afterEach(function () {
         sinon.restore();
