@@ -1,4 +1,17 @@
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnInit,
+    Output,
+    SimpleChanges,
+    ViewChild,
+    ViewEncapsulation,
+} from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
@@ -17,6 +30,9 @@ import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainC
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
 import { cloneDeep } from 'lodash';
 import { round } from 'app/shared/util/utils';
+import { MAX_SIZE_UNIT } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
+import { filter, debounceTime } from 'rxjs/operators';
+import { SecuredImageComponent, ImageLoadingStatus } from 'app/shared/image/secured-image.component';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -25,9 +41,11 @@ import { round } from 'app/shared/util/utils';
     styleUrls: ['./drag-and-drop-question-edit.component.scss', '../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, QuizQuestionEdit {
+export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
     @ViewChild('clickLayer', { static: false })
     private clickLayer: ElementRef;
+    @ViewChild('backgroundImage', { static: false })
+    private backgroundImage: SecuredImageComponent;
     @ViewChild('markdownEditor', { static: false })
     private markdownEditor: MarkdownEditorComponent;
 
@@ -56,6 +74,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     dragItemPicture?: string;
     backgroundFile?: Blob | File;
     backgroundFileName: string;
+    backgroundFilePath: string;
     dragItemFile?: Blob | File;
     dragItemFileName: string;
 
@@ -111,6 +130,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
         this.showPreview = false;
         this.isUploadingBackgroundFile = false;
         this.backgroundFileName = '';
+        this.backgroundFilePath = '';
         this.isUploadingDragItemFile = false;
         this.dragItemFileName = '';
         this.isQuestionCollapsed = false;
@@ -134,6 +154,33 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
         if (changes.question && changes.question.currentValue) {
             this.backupQuestion = cloneDeep(this.question);
         }
+    }
+
+    ngAfterViewInit(): void {
+        if (this.question.backgroundFilePath) {
+            this.backgroundFilePath = this.question.backgroundFilePath;
+            // Trigger image render with the question background file path in order to adjust the click layer.
+            setTimeout(() => {
+                this.changeDetector.detectChanges();
+            }, 0);
+        }
+
+        this.backgroundImage.endLoadingProcess
+            .pipe(
+                filter((x) => x === ImageLoadingStatus.SUCCESS),
+                // Some time until image render. Need to wait until image width is computed.
+                debounceTime(300),
+            )
+            .subscribe(() => {
+                // Make the background image visible upon successful image load. Initially it is set to hidden and not
+                // conditionally loaded via '*ngIf' because otherwise the reference would be undefined and hence we
+                // wouldn't be able to subscribe to the loading process updates.
+                this.backgroundImage.element.nativeElement.style.visibility = 'visible';
+
+                // Adjust the click layer to correspond to the area of the background image.
+                this.clickLayer.nativeElement.style.width = `${this.backgroundImage.element.nativeElement.offsetWidth}px`;
+                this.clickLayer.nativeElement.style.left = `${this.backgroundImage.element.nativeElement.offsetLeft}px`;
+            });
     }
 
     /**
@@ -181,6 +228,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
                 this.isUploadingBackgroundFile = false;
                 this.backgroundFile = undefined;
                 this.backgroundFileName = '';
+                this.backgroundFilePath = result.path!;
+
+                // Trigger image reload.
+                this.changeDetector.detectChanges();
             },
             (error) => {
                 console.error('Error during file upload in uploadBackground()', error.message);
@@ -221,29 +272,29 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
                 case DragState.CREATE:
                 case DragState.RESIZE_BOTH:
                     // Update current drop location's position and size
-                    this.currentDropLocation!.posX = round((200 * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
-                    this.currentDropLocation!.posY = round((200 * Math.min(this.mouse.y, this.mouse.startY)) / backgroundHeight);
-                    this.currentDropLocation!.width = round((200 * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
-                    this.currentDropLocation!.height = round((200 * Math.abs(this.mouse.y - this.mouse.startY)) / backgroundHeight);
+                    this.currentDropLocation!.posX = round((MAX_SIZE_UNIT * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
+                    this.currentDropLocation!.posY = round((MAX_SIZE_UNIT * Math.min(this.mouse.y, this.mouse.startY)) / backgroundHeight);
+                    this.currentDropLocation!.width = round((MAX_SIZE_UNIT * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
+                    this.currentDropLocation!.height = round((MAX_SIZE_UNIT * Math.abs(this.mouse.y - this.mouse.startY)) / backgroundHeight);
                     break;
                 case DragState.MOVE:
                     // update current drop location's position
                     this.currentDropLocation!.posX = round(
-                        Math.min(Math.max(0, (200 * (this.mouse.x + this.mouse.offsetX)) / backgroundWidth), 200 - this.currentDropLocation!.width!),
+                        Math.min(Math.max(0, (MAX_SIZE_UNIT * (this.mouse.x + this.mouse.offsetX)) / backgroundWidth), MAX_SIZE_UNIT - this.currentDropLocation!.width!),
                     );
                     this.currentDropLocation!.posY = round(
-                        Math.min(Math.max(0, (200 * (this.mouse.y + this.mouse.offsetY)) / backgroundHeight), 200 - this.currentDropLocation!.height!),
+                        Math.min(Math.max(0, (MAX_SIZE_UNIT * (this.mouse.y + this.mouse.offsetY)) / backgroundHeight), MAX_SIZE_UNIT - this.currentDropLocation!.height!),
                     );
                     break;
                 case DragState.RESIZE_X:
                     // Update current drop location's position and size (only x-axis)
-                    this.currentDropLocation!.posX = round((200 * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
-                    this.currentDropLocation!.width = round((200 * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
+                    this.currentDropLocation!.posX = round((MAX_SIZE_UNIT * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
+                    this.currentDropLocation!.width = round((MAX_SIZE_UNIT * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
                     break;
                 case DragState.RESIZE_Y:
                     // update current drop location's position and size (only y-axis)
-                    this.currentDropLocation!.posY = round((200 * Math.min(this.mouse.y, this.mouse.startY)) / backgroundHeight);
-                    this.currentDropLocation!.height = round((200 * Math.abs(this.mouse.y - this.mouse.startY)) / backgroundHeight);
+                    this.currentDropLocation!.posY = round((MAX_SIZE_UNIT * Math.min(this.mouse.y, this.mouse.startY)) / backgroundHeight);
+                    this.currentDropLocation!.height = round((MAX_SIZE_UNIT * Math.abs(this.mouse.y - this.mouse.startY)) / backgroundHeight);
                     break;
             }
         }
@@ -259,7 +310,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
                     const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
                     const backgroundWidth = jQueryBackgroundElement.width()!;
                     const backgroundHeight = jQueryBackgroundElement.height()!;
-                    if ((this.currentDropLocation!.width! / 200) * backgroundWidth < 14 && (this.currentDropLocation!.height! / 200) * backgroundHeight < 14) {
+                    if ((this.currentDropLocation!.width! / MAX_SIZE_UNIT) * backgroundWidth < 14 && (this.currentDropLocation!.height! / MAX_SIZE_UNIT) * backgroundHeight < 14) {
                         // Remove drop Location if too small (assume it was an accidental click/drag),
                         this.deleteDropLocation(this.currentDropLocation!);
                     } else {
@@ -318,8 +369,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
             const backgroundWidth = jQueryBackgroundElement.width()!;
             const backgroundHeight = jQueryBackgroundElement.height()!;
 
-            const dropLocationX = (dropLocation.posX! / 200) * backgroundWidth;
-            const dropLocationY = (dropLocation.posY! / 200) * backgroundHeight;
+            const dropLocationX = (dropLocation.posX! / MAX_SIZE_UNIT) * backgroundWidth;
+            const dropLocationY = (dropLocation.posY! / MAX_SIZE_UNIT) * backgroundHeight;
 
             // Save offset of mouse in drop location
             this.mouse.offsetX = dropLocationX - this.mouse.x;
@@ -371,7 +422,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
             switch (resizeLocationY) {
                 case 'top':
                     // Use opposite end as startY
-                    this.mouse.startY = ((dropLocation.posY! + dropLocation.height!) / 200) * backgroundHeight;
+                    this.mouse.startY = ((dropLocation.posY! + dropLocation.height!) / MAX_SIZE_UNIT) * backgroundHeight;
                     break;
                 case 'middle':
                     // Limit to x-axis, startY will not be used
@@ -379,14 +430,14 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
                     break;
                 case 'bottom':
                     // Use opposite end as startY
-                    this.mouse.startY = (dropLocation.posY! / 200) * backgroundHeight;
+                    this.mouse.startY = (dropLocation.posY! / MAX_SIZE_UNIT) * backgroundHeight;
                     break;
             }
 
             switch (resizeLocationX) {
                 case 'left':
                     // Use opposite end as startX
-                    this.mouse.startX = ((dropLocation.posX! + dropLocation.width!) / 200) * backgroundWidth;
+                    this.mouse.startX = ((dropLocation.posX! + dropLocation.width!) / MAX_SIZE_UNIT) * backgroundWidth;
                     break;
                 case 'center':
                     // Limit to y-axis, startX will not be used
@@ -394,7 +445,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
                     break;
                 case 'right':
                     // Use opposite end as startX
-                    this.mouse.startX = (dropLocation.posX! / 200) * backgroundWidth;
+                    this.mouse.startX = (dropLocation.posX! / MAX_SIZE_UNIT) * backgroundWidth;
                     break;
             }
         }
