@@ -9,7 +9,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
@@ -320,10 +320,15 @@ describe('StudentExamsComponent', () => {
         expect(studentExamsComponent.studentExams.length).to.equal(2);
     });
 
-    it('should correctly catch HTTPError when generating student exams', () => {
+    it('should correctly catch HTTPError and get additional error when generating student exams', () => {
         examManagementService = TestBed.inject(ExamManagementService);
         const alertService = TestBed.inject(JhiAlertService);
-        const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
+        const translationService = TestBed.inject(TranslateService);
+        const errorDetailString = 'artemisApp.exam.validation.tooFewExerciseGroups';
+        const httpError = new HttpErrorResponse({
+            error: { errorKey: errorDetailString },
+            status: 400,
+        });
         course.isAtLeastInstructor = true;
         exam.startDate = moment().add(120, 'seconds');
 
@@ -334,11 +339,13 @@ describe('StudentExamsComponent', () => {
 
         expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).to.equal(false);
         const alertServiceSpy = sinon.spy(alertService, 'error');
+        const translationServiceSpy = sinon.spy(translationService, 'instant');
         const generateStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateStudentExamsButton'));
         expect(generateStudentExamsButton).to.exist;
         expect(generateStudentExamsButton.nativeElement.disabled).to.equal(false);
         generateStudentExamsButton.nativeElement.click();
         expect(alertServiceSpy).to.have.been.calledOnce;
+        expect(translationServiceSpy).to.have.been.calledOnceWithExactly(errorDetailString);
 
         generateStudentExamsStub.restore();
     });
@@ -350,7 +357,10 @@ describe('StudentExamsComponent', () => {
         studentExamsComponentFixture.detectChanges();
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
+            componentInstance,
+            result,
+        });
 
         expect(studentExamsComponent.isLoading).to.equal(false);
         expect(studentExamsComponent.isExamStarted).to.equal(false);
@@ -455,7 +465,10 @@ describe('StudentExamsComponent', () => {
     it('should unlock all repositories of the students', () => {
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
+            componentInstance,
+            result,
+        });
 
         course.isAtLeastInstructor = true;
 
@@ -477,7 +490,10 @@ describe('StudentExamsComponent', () => {
     it('should correctly catch HTTPError when unlocking all repositories', () => {
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
+            componentInstance,
+            result,
+        });
 
         const alertService = TestBed.inject(JhiAlertService);
         course.isAtLeastInstructor = true;
@@ -503,7 +519,10 @@ describe('StudentExamsComponent', () => {
     it('should lock all repositories of the students', () => {
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
+            componentInstance,
+            result,
+        });
 
         course.isAtLeastInstructor = true;
 
@@ -525,7 +544,10 @@ describe('StudentExamsComponent', () => {
     it('should correctly catch HTTPError when locking all repositories', () => {
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
+            componentInstance,
+            result,
+        });
 
         const alertService = TestBed.inject(JhiAlertService);
         course.isAtLeastInstructor = true;
