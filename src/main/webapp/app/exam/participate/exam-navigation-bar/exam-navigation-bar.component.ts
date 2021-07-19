@@ -62,18 +62,18 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     /**
-        @param exerciseIndex: exercise to switch to
-        @param overviewPage: user wants to switch to the overview page
-        @param forceSave: true if forceSave shall be used.
+     * @param overviewPage: user wants to switch to the overview page
+     * @param exerciseIndex: index of the exercise to switch to, if it should not be used, you can pass -1
+     * @param forceSave: true if forceSave shall be used.
      */
-    changePage(overviewPage: boolean, exerciseIndex?: number, forceSave?: boolean) {
+    changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean): void {
         if (!overviewPage) {
             // out of index -> do nothing
-            if (exerciseIndex! > this.exercises.length - 1 || exerciseIndex! < 0) {
+            if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
                 return;
             }
             // set index and emit event
-            this.exerciseIndex = exerciseIndex!;
+            this.exerciseIndex = exerciseIndex;
             this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave });
         } else if (overviewPage) {
             // set index and emit event
@@ -126,29 +126,40 @@ export class ExamNavigationBarComponent implements OnInit {
         return this.overviewPageOpen ? 'active' : '';
     }
 
+    /**
+     * calculate the exercise status (also see exam-exercise-overview-page.component.ts --> make sure the logic is consistent)
+     * also determines the used icon and its color
+     * TODO: we should try to extract a method for the common logic which avoids side effects (i.e. changing this.icon)
+     *  this method could e.g. return the sync status and the icon
+     *
+     * @param exerciseIndex index of the exercise
+     * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
+     */
     setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
+        // start with a yellow status (edit icon)
+        // TODO: it's a bit weired, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
+        //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
         this.icon = 'edit';
         const exercise = this.exercises[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
-        if (submission) {
-            if (submission.submitted) {
-                this.icon = 'check';
-            }
-            if (submission.isSynced) {
-                // make button blue
-                if (exerciseIndex === this.exerciseIndex && !this.overviewPageOpen) {
-                    return 'synced active';
-                } else {
-                    return 'synced';
-                }
+        if (!submission) {
+            // in case no participation/submission yet exists -> display synced
+            return 'synced';
+        }
+        if (submission.submitted) {
+            this.icon = 'check';
+        }
+        if (submission.isSynced) {
+            // make button blue (except for the current page)
+            if (exerciseIndex === this.exerciseIndex && !this.overviewPageOpen) {
+                return 'synced active';
             } else {
-                // make button yellow
-                this.icon = 'edit';
-                return 'notSynced';
+                return 'synced';
             }
         } else {
-            // in case no participation yet exists -> display synced
-            return 'synced';
+            // make button yellow
+            this.icon = 'edit';
+            return 'notSynced';
         }
     }
 

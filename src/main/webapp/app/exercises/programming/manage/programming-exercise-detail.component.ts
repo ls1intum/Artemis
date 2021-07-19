@@ -1,10 +1,8 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, of, Subject } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { Result } from 'app/entities/result.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -23,6 +21,8 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import * as moment from 'moment';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { SortService } from 'app/shared/service/sort.service';
+import { Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -64,6 +64,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private translateService: TranslateService,
         private profileService: ProfileService,
         private statisticsService: StatisticsService,
+        private sortService: SortService,
     ) {}
 
     ngOnInit() {
@@ -75,22 +76,28 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.programmingExercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.programmingExercise);
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
 
-            if (this.programmingExercise.templateParticipation) {
-                this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
-                this.loadLatestResultWithFeedbackAndSubmission(this.programmingExercise.templateParticipation.id!).subscribe((results) => {
-                    this.programmingExercise.templateParticipation!.results = results;
-                    this.loadingTemplateParticipationResults = false;
-                });
-            }
+            this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
+                this.programmingExercise = updatedProgrammingExercise.body!;
+                this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorForExercise(this.programmingExercise);
+                this.programmingExercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.programmingExercise);
+                this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
+                // get the latest results for further processing
+                if (this.programmingExercise.templateParticipation) {
+                    const latestTemplateResult = this.getLatestResult(this.programmingExercise.templateParticipation.submissions);
+                    if (latestTemplateResult) {
+                        this.programmingExercise.templateParticipation.results = [latestTemplateResult];
+                    }
+                }
+                if (this.programmingExercise.solutionParticipation) {
+                    const latestSolutionResult = this.getLatestResult(this.programmingExercise.solutionParticipation.submissions);
+                    if (latestSolutionResult) {
+                        this.programmingExercise.solutionParticipation.results = [latestSolutionResult];
+                    }
+                }
+                this.loadingTemplateParticipationResults = false;
+                this.loadingSolutionParticipationResults = false;
+            });
 
-            if (this.programmingExercise.solutionParticipation) {
-                this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
-
-                this.loadLatestResultWithFeedbackAndSubmission(this.programmingExercise.solutionParticipation.id!).subscribe((results) => {
-                    this.programmingExercise.solutionParticipation!.results = results;
-                    this.loadingSolutionParticipationResults = false;
-                });
-            }
             this.statisticsService.getExerciseStatistics(programmingExercise.id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
                 this.doughnutStats = statistics;
             });
@@ -117,17 +124,19 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Load the latest result for the given participation. Will return [result] if there is a result, [] if not.
-     * @param participationId of the given participation.
-     * @return an empty array if there is no result or an array with the single latest result.
+     * returns the latest result within the submissions array or undefined, sorting is based on the submission date and the result order retrieved from the server
+     *
+     * @param submissions
      */
-    private loadLatestResultWithFeedbackAndSubmission(participationId: number): Observable<Result[]> {
-        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(participationId, true).pipe(
-            catchError(() => of(null)),
-            map((result: Result | null) => {
-                return result ? [result] : [];
-            }),
-        );
+    getLatestResult(submissions?: Submission[]) {
+        if (submissions && submissions.length > 0) {
+            // important: sort to get the latest submission (the order of the server can be random)
+            this.sortService.sortByProperty(submissions, 'submissionDate', true);
+            const results = submissions.sort().last()?.results;
+            if (results && results.length > 0) {
+                return results.last();
+            }
+        }
     }
 
     combineTemplateCommits() {
@@ -278,5 +287,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
+    }
+
+    /**
+     * Generates the link to any participation's submissions, used for the link to template and solution submissions
+     * @param id of the participation
+     */
+    getParticipationSubmissionLink(id: number) {
+        const link = [this.baseResource, 'participations', id];
+        // For unknown reason normal exercises append /submissions to the submission view whereas exam exercises do not
+        if (!this.isExamExercise) {
+            link.push('submissions');
+        }
+        return link;
     }
 }

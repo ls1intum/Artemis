@@ -1,4 +1,8 @@
-<strong *ngIf="allowDrop" jhiTranslate="artemisApp.exercise.DragDropInstruction"> Drag & Drop instruction to feedback element</strong> <br /><br />
+<div *ngIf="allowDrop" jhiTranslate="artemisApp.exercise.DragDropInstruction">
+    <strong> Drag & Drop instruction to feedback element</strong>
+    <br />
+    <br />
+</div>
 <div *ngFor="let criterion of criteria; let criterionIndex = index">
     <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title">
         <div

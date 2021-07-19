@@ -42,6 +42,24 @@
                     <td>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR', 'ROLE_TA']">
                             <a
+                                *ngIf="submission.participation!.exercise!.type === ExerciseType.TEXT"
+                                [routerLink]="[
+                                    '/course-management',
+                                    courseId,
+                                    'text-exercises',
+                                    submission.participation!.exercise!.id!,
+                                    'participations',
+                                    submission.participation!.id!,
+                                    'submissions',
+                                    submission.id!,
+                                    'assessment'
+                                ]"
+                                class="btn btn-outline-secondary btn-sm mb-1"
+                            >
+                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
+                            </a>
+                            <a
+                                *ngIf="submission.participation!.exercise!.type !== ExerciseType.TEXT"
                                 [routerLink]="[
                                     '/course-management',
                                     courseId,
