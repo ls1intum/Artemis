@@ -89,7 +89,7 @@ export class ExamNavigationBarComponent implements OnInit {
      * @param exerciseId the unique identifier of an exercise that stays the same regardless of student exam ordering
      */
     changeExerciseById(exerciseId: number) {
-        const foundIndex = this.exercises.findIndex((ex) => ex.id === exerciseId);
+        const foundIndex = this.exercises.findIndex((exercise) => exercise.id === exerciseId);
         this.changePage(false, foundIndex, true);
     }
 
