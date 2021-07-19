@@ -490,8 +490,8 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGradeMappingWithRealExamResults() throws Exception {
-        double[] gradeBoundaries = new double[] { 0, 28.3, 34.2, 40, 45.8, 51.7, 57.5, 63.3, 69.2, 75, 80.8, 86.7, 92.5, 100 };
-        String[] gradeNames = new String[] { "5.0", "4.7", "4.3", "4.0", "3.7", "3.3", "3.0", "2.7", "2.3", "2.0", "1.7", "1.3", "1.0" };
+        double[] gradeBoundaries = { 0, 28.3, 34.2, 40, 45.8, 51.7, 57.5, 63.3, 69.2, 75, 80.8, 86.7, 92.5, 100 };
+        String[] gradeNames = { "5.0", "4.7", "4.3", "4.0", "3.7", "3.3", "3.0", "2.7", "2.3", "2.0", "1.7", "1.3", "1.0" };
         GradingScale gradingScale = database.generateGradingScale(13, gradeBoundaries, true, 3, Optional.of(gradeNames));
         gradingScaleRepository.save(gradingScale);
         Long id = gradingScaleRepository.findAll().get(0).getId();
@@ -500,7 +500,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
         assertThat(results).isNotEmpty();
         for (String[] result : results) {
-            if (result[1].equals("yes")) {
+            if ("yes".equals(result[1])) {
                 double percentage = Double.parseDouble(result[0].substring(0, result[0].length() - 1));
                 GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(percentage, id);
                 assertThat(gradeStep.getGradeName()).isEqualTo(result[2]);
