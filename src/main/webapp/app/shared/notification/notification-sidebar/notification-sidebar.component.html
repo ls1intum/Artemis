@@ -9,9 +9,14 @@
 
 <div class="notification-overlay" (click)="toggleSidebar()" [ngClass]="showSidebar ? 'show' : 'hide'"></div>
 
+<jhi-notification-settings *ngIf="showSettings" (onClose)="settingsClosed($event)"></jhi-notification-settings>
+
 <div class="notification-sidebar" [ngClass]="showSidebar ? 'show' : 'hide'">
     <div class="d-flex flex-column">
         <div class="header pt-4 px-3">
+            <button class="settings-button position-absolute border-0 bg-transparent" (click)="openSettings()">
+                <fa-icon id="settings-icon" [icon]="'cog'"></fa-icon>
+            </button>
             <button class="close position-absolute border-0 bg-transparent" (click)="toggleSidebar()">
                 <fa-icon [icon]="'times'"></fa-icon>
             </button>

@@ -1,0 +1,30 @@
+.notification-settings-window {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+
+    z-index: 1000;
+
+    overflow: auto;
+
+    padding: 20px;
+    background: white;
+    margin: 125px;
+
+    transition: 0.3s;
+    background-color: #ffffff;
+    box-shadow: 0 0 4px 0 rgba(136, 136, 136, 1);
+    &.show {
+        bottom: 0; /* right: 0; */
+        transition: 0.3s;
+    }
+
+    .header {
+        height: 85px;
+        .close {
+            right: 16px;
+        }
+    }
+}

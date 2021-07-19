@@ -16,6 +16,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 })
 export class NotificationSidebarComponent implements OnInit {
     showSidebar = false;
+    showSettings = false;
     loading = false;
     notifications: Notification[] = [];
     sortedNotifications: Notification[] = [];
@@ -48,6 +49,14 @@ export class NotificationSidebarComponent implements OnInit {
      */
     toggleSidebar(): void {
         this.showSidebar = !this.showSidebar;
+    }
+
+    openSettings(): void {
+        this.showSettings = true;
+    }
+
+    settingsClosed(isClosed: boolean): void {
+        this.showSettings = false;
     }
 
     /**

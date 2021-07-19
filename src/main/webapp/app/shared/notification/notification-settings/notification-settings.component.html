@@ -1,0 +1,20 @@
+<!--<div class="notification-overlay" (click)="toggleSettings()" [ngClass]="showSettings ? 'show' : 'hide'"></div>-->
+
+<div class="notification-settings-window">
+    <div class="d-flex flex-column">
+        <div class="header">
+            <button class="close border-0 bg-transparent" (click)="closeSettings()">
+                <fa-icon [icon]="'times'"></fa-icon>
+            </button>
+            <h5 class="mb-3 text-center">
+                <!--  {{ 'artemisApp.notification.notifications' | artemisTranslate }} -->
+                Notification Settings
+            </h5>
+            <h6 class="mb-3 text-center">Quiz Notifications :</h6>
+            <div class="mb-3 text-center">
+                <label for="quiz-notification-started"> Quiz Notification Started</label>
+                <input type="checkbox" id="quiz-notification-started" name="quizNotificationStated" />
+            </div>
+        </div>
+    </div>
+</div>
