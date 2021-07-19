@@ -37,6 +37,8 @@ import { JhiAlertService } from 'ng-jhipster';
 import { RouterTestingModule } from '@angular/router/testing';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -139,7 +141,11 @@ describe('TextSubmissionAssessmentComponent', () => {
                 TextblockFeedbackEditorComponent,
                 ManualTextblockSelectionComponent,
             ],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+            ],
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {
