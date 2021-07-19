@@ -255,8 +255,7 @@ public class PostService extends PostingService {
 
         // checks
         preCheckUserAndCourse(user, courseId);
-        List<String> tags = postRepository.findPostTagsForCourse(courseId);
-        return tags;
+        return postRepository.findPostTagsForCourse(courseId);
     }
 
     /**

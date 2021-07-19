@@ -1,7 +1,6 @@
-import { Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Directive, Input, OnInit } from '@angular/core';
 import { Posting } from 'app/entities/metis/posting.model';
 import { PostingsService } from 'app/shared/metis/postings.service';
-import { Reaction } from 'app/entities/metis/reaction.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 
 @Directive()

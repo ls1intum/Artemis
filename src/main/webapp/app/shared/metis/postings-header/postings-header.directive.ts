@@ -1,5 +1,5 @@
 import { Posting } from 'app/entities/metis/posting.model';
-import { Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Directive, Input, OnInit } from '@angular/core';
 import moment from 'moment';
 import { MetisService } from 'app/shared/metis/metis.service';
 
