@@ -126,7 +126,7 @@
                 </ng-container>
                 <jhi-complaint-interactions
                     *ngIf="
-                        (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.assessmentType === AssessmentType.COMPLAINT_BASED) &&
+                        (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || asProgrammingExercise(exercise).allowComplaintsForAutomaticAssessments) &&
                         getSubmissionForExercise(exercise) &&
                         isAfterStudentReviewStart()
                     "

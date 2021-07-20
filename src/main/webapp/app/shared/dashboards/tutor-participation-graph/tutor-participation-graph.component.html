@@ -12,7 +12,7 @@
         >
             <fa-icon [icon]="'chalkboard-teacher'"></fa-icon>
         </li>
-        <ng-container *ngIf="exercise.assessmentType !== assessmentType.COMPLAINT_BASED">
+        <ng-container *ngIf="shouldShowManualAssessments">
             <li *ngFor="let stat of numberOfAssessmentsOfCorrectionRounds; let i = index" class="progress-bar-li stacked-li" [ngClass]="calculateClassProgressBar()">
                 <div class="stacked-item">
                     <jhi-progress-bar

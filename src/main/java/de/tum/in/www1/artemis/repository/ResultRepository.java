@@ -399,13 +399,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     }
 
     /**
-     * Calculate the number of assessments which are either AUTOMATIC, SEMI_AUTOMATIC or COMPLAINT_BASED for a given exercise
+     * Calculate the number of assessments which are either AUTOMATIC, SEMI_AUTOMATIC for a given exercise
      *
      * @param exerciseId the exercise we are interested in
      * @return number of assessments for the exercise
      */
     default DueDateStat countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
-        List<AssessmentType> automaticAssessmentTypes = asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC, AssessmentType.COMPLAINT_BASED);
+        List<AssessmentType> automaticAssessmentTypes = asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC);
         return new DueDateStat(countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(exerciseId, automaticAssessmentTypes),
                 countNumberOfAssessmentsByTypeForExerciseAfterDueDate(exerciseId, automaticAssessmentTypes));
     }

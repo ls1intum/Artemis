@@ -102,7 +102,7 @@ public class ComplaintService {
 
         originalResult.setHasComplaint(true);
         // When a student complains, a tutor has to manually correct the submission, so it is no longer automatic
-        if (originalResult.getAssessmentType() == AssessmentType.AUTOMATIC || originalResult.getAssessmentType() == AssessmentType.COMPLAINT_BASED) {
+        if (originalResult.getAssessmentType() == AssessmentType.AUTOMATIC) {
             originalResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         }
 

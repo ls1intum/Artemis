@@ -142,9 +142,10 @@ public class ParticipationResource {
         if (exercise instanceof ProgrammingExercise) {
             // fetch additional objects needed for the startExercise method below
             var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-            if (!featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES) || (programmingExercise.getDueDate() != null
-                    && now().isAfter(programmingExercise.getDueDate())
-                    && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC))) {
+            if (!featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)
+                    || (programmingExercise.getDueDate() != null && now().isAfter(programmingExercise.getDueDate())
+                            && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC)
+                            || programmingExercise.getAllowComplaintsForAutomaticAssessments())) {
                 return forbidden();
             }
             exercise = programmingExercise;
@@ -184,7 +185,8 @@ public class ParticipationResource {
         checkAccessPermissionOwner(participation, user);
         // users cannot resume the programming exercises if test run after due date or semi automatic grading is active and the due date has passed
         if ((programmingExercise.getDueDate() != null && ZonedDateTime.now().isAfter(programmingExercise.getDueDate())
-                && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC))) {
+                && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC
+                        || programmingExercise.getAllowComplaintsForAutomaticAssessments()))) {
             return forbidden();
         }
 

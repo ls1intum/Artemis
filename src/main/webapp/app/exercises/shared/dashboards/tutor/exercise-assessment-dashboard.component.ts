@@ -59,7 +59,6 @@ export interface ExampleSubmissionQueryParams {
 export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly round = round;
     readonly ExerciseView = ExerciseView;
-    readonly assessmentType = AssessmentType;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     programmingExercise: ProgrammingExercise;

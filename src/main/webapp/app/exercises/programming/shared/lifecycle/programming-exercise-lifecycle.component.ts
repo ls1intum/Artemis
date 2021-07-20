@@ -35,15 +35,17 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
      */
     toggleAssessmentType() {
         if (this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
-            if (this.isExamMode || this.exercise.course?.complaintsEnabled) {
-                this.exercise.assessmentType = AssessmentType.COMPLAINT_BASED;
-            } else {
-                this.exercise.assessmentType = AssessmentType.AUTOMATIC;
-            }
-        } else if (this.exercise.assessmentType === AssessmentType.COMPLAINT_BASED) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
+            if (this.isExamMode || this.exercise.course?.complaintsEnabled) {
+                this.exercise.allowComplaintsForAutomaticAssessments = true;
+            } else {
+                this.exercise.allowComplaintsForAutomaticAssessments = false;
+            }
+        } else if (this.exercise.allowComplaintsForAutomaticAssessments) {
+            this.exercise.allowComplaintsForAutomaticAssessments = false;
         } else {
             this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            this.exercise.allowComplaintsForAutomaticAssessments = false;
         }
 
         // when the new value is AssessmentType.AUTOMATIC, we need to reset assessment due date

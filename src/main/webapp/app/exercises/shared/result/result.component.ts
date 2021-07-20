@@ -257,7 +257,7 @@ export class ResultComponent implements OnInit, OnChanges {
     buildResultTooltip() {
         const programmingExercise = getExercise(this.participation) as ProgrammingExercise;
         if (this.participation && isProgrammingExerciseStudentParticipation(this.participation) && isResultPreliminary(this.result!, programmingExercise)) {
-            if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC && programmingExercise?.assessmentType !== AssessmentType.COMPLAINT_BASED) {
+            if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {
                 return this.translate.instant('artemisApp.result.preliminaryTooltipSemiAutomatic');
             }
             return this.translate.instant('artemisApp.result.preliminaryTooltip');
@@ -437,6 +437,6 @@ export class ResultComponent implements OnInit, OnChanges {
      * @param result the result.
      */
     isManualResult(result: Result | undefined) {
-        return result?.assessmentType !== AssessmentType.AUTOMATIC && result?.assessmentType !== AssessmentType.COMPLAINT_BASED;
+        return result?.assessmentType !== AssessmentType.AUTOMATIC;
     }
 }

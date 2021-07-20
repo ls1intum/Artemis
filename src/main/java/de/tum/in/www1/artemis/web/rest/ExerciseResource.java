@@ -147,7 +147,8 @@ public class ExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
         // Programming exercises with only automatic assessment should *NOT* be available on the assessment dashboard!
-        if (exercise instanceof ProgrammingExercise && exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
+        if (exercise instanceof ProgrammingExercise programmingExercise && exercise.getAssessmentType() == AssessmentType.AUTOMATIC
+                && !programmingExercise.getAllowComplaintsForAutomaticAssessments()) {
             return badRequest();
         }
 

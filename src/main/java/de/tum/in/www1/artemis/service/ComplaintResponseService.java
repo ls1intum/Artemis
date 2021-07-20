@@ -259,8 +259,6 @@ public class ComplaintResponseService {
         }
         // for teams: the tutor who is responsible for team, should evaluate the complaint
         if (participation.getParticipant() instanceof Team team) {
-            log.error("TeamOwner:" + team.getOwner());
-            log.error("User:" + user.getLogin());
             return user.getLogin().equals(team.getOwner().getLogin());
         }
         // for complaints, a different tutor should review the complaint
