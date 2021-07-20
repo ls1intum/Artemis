@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREF
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.mockito.ArgumentMatchers;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -25,6 +26,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -1324,6 +1326,59 @@ public class CourseTestService {
 
         return Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).filter(path -> !path.toString().endsWith(".zip"))
                 .collect(Collectors.toList());
+    }
+
+    public void testExportCourse_cannotCreateTmpDir() throws Exception {
+        Course course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
+        List<String> exportErrors = new ArrayList<>();
+
+        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+        mockedFiles.when(() -> Files.createDirectories(argThat(path -> path.toString().contains("exports")))).thenThrow(IOException.class);
+        Optional<Path> exportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+        mockedFiles.close();
+
+        assertThat(exportedCourse).isEmpty();
+    }
+
+    public void testExportCourse_cannotCreateCourseExercisesDir() throws Exception {
+        Course course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
+        List<String> exportErrors = new ArrayList<>();
+
+        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+        mockedFiles.when(() -> Files.createDirectory(argThat(path -> path.toString().contains("course-exercises")))).thenThrow(IOException.class);
+        Optional<Path> exportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+        mockedFiles.close();
+
+        assertThat(exportedCourse).isEmpty();
+    }
+
+    public void testExportCourseExam_cannotCreateTmpDir() throws Exception {
+        Course course = database.createCourseWithExamAndExercises();
+        List<String> exportErrors = new ArrayList<>();
+
+        Optional<Exam> exam = examRepo.findByCourseId(course.getId()).stream().findFirst();
+        assertThat(exam).isPresent();
+
+        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+        mockedFiles.when(() -> Files.createDirectories(argThat(path -> path.toString().contains("exports")))).thenThrow(IOException.class);
+        Optional<Path> exportedCourse = courseExamExportService.exportExam(exam.get(), courseArchivesDirPath, exportErrors);
+        mockedFiles.close();
+
+        assertThat(exportedCourse).isEmpty();
+    }
+
+    public void testExportCourseExam_cannotCreateExamsDir() throws Exception {
+        Course course = database.createCourseWithExamAndExercises();
+        List<String> exportErrors = new ArrayList<>();
+
+        course = courseRepo.findWithEagerExercisesById(course.getId());
+
+        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+        mockedFiles.when(() -> Files.createDirectory(argThat(path -> path.toString().contains("exams")))).thenThrow(IOException.class);
+        Optional<Path> exportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+        mockedFiles.close();
+
+        assertThat(exportedCourse).isEmpty();
     }
 
     // Test
