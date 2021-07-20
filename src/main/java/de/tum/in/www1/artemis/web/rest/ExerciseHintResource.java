@@ -150,7 +150,7 @@ public class ExerciseHintResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, programmingExercise, null);
         Set<ExerciseHint> exerciseHints = exerciseHintRepository.findByExerciseId(exerciseId);
         return ResponseEntity.ok(exerciseHints);
