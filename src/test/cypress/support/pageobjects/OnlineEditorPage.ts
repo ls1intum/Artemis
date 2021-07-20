@@ -42,10 +42,10 @@ export class OnlineEditorPage {
         for (const newFile of submission.files) {
             cy.log(`Entering content for file ${newFile.name}`);
             this.openFileWithName(newFile.name);
-            this.focusCodeEditor().type('{selectall}{backspace}', { delay: 100 });
+            this.focusCodeEditor().type('{selectall}{backspace}', { delay: 300 });
             cy.fixture(newFile.path).then(($fileContent) => {
-                this.focusCodeEditor().type(this.sanitizeInput($fileContent, packageName), { delay: 2 });
-                cy.focused().type('{shift}{pagedown}{del}', { delay: 100 });
+                this.focusCodeEditor().type(this.sanitizeInput($fileContent, packageName), { delay: 3 });
+                cy.focused().type('{shift}{pagedown}{del}', { delay: 300 });
             });
         }
     }
