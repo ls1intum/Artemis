@@ -70,11 +70,6 @@ public class ExamSessionService {
      */
     public boolean checkExamSessionIsInitial(Long studentExamId) {
         long examSessionCount = examSessionRepository.findExamSessionCountByStudentExamId(studentExamId);
-        if (examSessionCount > 1) {
-            return false;
-        }
-        else {
-            return true;
-        }
+        return (examSessionCount == 1);
     }
 }
