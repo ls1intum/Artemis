@@ -461,11 +461,11 @@ HTTP. We need to extend the configuration in the file
 
 .. _Athene: https://github.com/ls1intum/Athene
 
-Athene Service
+Apollon Service
 --------------
 
-The semi-automatic text assessment relies on the Athene_ service.
-To enable automatic text assessments, special configuration is required:
+The `Apollon Converter`_ is needed to convert models from their JSON representaiton to PDF.
+Special configuration is required:
 
 Enable the ``apollon`` Spring profile:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
