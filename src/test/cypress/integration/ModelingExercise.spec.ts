@@ -188,10 +188,11 @@ describe('Modeling Exercise Spec', () => {
         it('Tutor can assess the submission', () => {
             cy.login(tutorUsername, tutorPassword, '/course-management');
             cy.get(`[href="/course-management/${testCourse.id}/assessment-dashboard"]`).click();
+            cy.url().should('contain', `/course-management/${testCourse.id}/assessment-dashboard`);
             cy.get('#field_showFinishedExercise').click();
             cy.get('tbody > tr > :nth-child(6) >').click();
             cy.get('.btn').click();
-            cy.wait(10000);
+            cy.wait(5000);
             cy.get('.btn').click();
             cy.get('#assessmentLockedCurrentUser').should('contain.text', 'You have the lock for this assessment');
             cy.get('jhi-unreferenced-feedback > .btn').click();
