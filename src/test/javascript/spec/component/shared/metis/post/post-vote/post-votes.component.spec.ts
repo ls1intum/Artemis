@@ -1,14 +1,16 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ActivatedRoute } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { User } from 'app/core/user/user.model';
-import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../../../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { PostVotesComponent } from 'app/shared/metis/post/post-votes/post-votes.component';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { PostService } from 'app/shared/metis/post/post.service';
+import { MockPostService } from '../../../../../helpers/mocks/service/mock-post.service';
+import { Post } from 'app/entities/metis/post.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -21,12 +23,23 @@ describe('PostVotesComponent', () => {
         id: 1,
     } as User;
 
+    const user2 = {
+        id: 2,
+    } as User;
+
+    const post = {
+        id: 1,
+        author: user2,
+        votes: 0,
+    } as Post;
+
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
+                { provide: MetisService, useClass: MetisService },
+                { provide: PostService, useClass: MockPostService },
             ],
             declarations: [PostVotesComponent],
         })
@@ -40,7 +53,7 @@ describe('PostVotesComponent', () => {
 
     it('should toggle upvote', () => {
         component.user = user1;
-        component.votes = 42;
+        component.post = post;
         component.userVote = null;
         // if not yet voted
         component.toggleUpVote();
@@ -59,7 +72,7 @@ describe('PostVotesComponent', () => {
 
     it('should toggle downvote', () => {
         component.user = user1;
-        component.votes = 42;
+        component.post = post;
         component.userVote = null;
         // if not yet voted
         component.toggleDownVote();
