@@ -73,7 +73,7 @@ public class TextBlock implements Serializable {
     private TextSubmission submission;
 
     @ManyToOne
-    @JsonIgnoreProperties("textBlocks")
+    @JsonIgnore
     private TextAssessmentKnowledge knowledge;
 
     @ManyToOne
