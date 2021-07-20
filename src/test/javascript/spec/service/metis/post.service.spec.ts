@@ -33,11 +33,15 @@ describe('Post Service', () => {
         elemDefault.id = 0;
         elemDefault.creationDate = undefined;
         elemDefault.content = 'This is a test post';
+        elemDefault.title = 'title';
+        elemDefault.tags = ['tag1', 'tag2'];
 
         elem2 = new Post();
         elem2.id = 1;
         elem2.creationDate = undefined;
         elem2.content = 'This is a test post';
+        elem2.title = 'title';
+        elem2.tags = ['tag3', 'tag4'];
 
         courseDefault = new Course();
         courseDefault.id = 1;
@@ -109,6 +113,45 @@ describe('Post Service', () => {
             const expected = [...posts];
             service
                 .getAllPostsByCourseId(courseDefault.id!)
+                .pipe(take(2))
+                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(returnedFromService);
+            tick();
+        }));
+
+        it('should return all student posts for a lecture', fakeAsync(() => {
+            const returnedFromService = [elem2];
+
+            const expected = [elem2];
+            service
+                .getAllPostsByLectureId(courseDefault.id!, lectureDefault.id!)
+                .pipe(take(2))
+                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(returnedFromService);
+            tick();
+        }));
+
+        it('should return all student posts for an exercise', fakeAsync(() => {
+            const returnedFromService = [elemDefault];
+
+            const expected = [elemDefault];
+            service
+                .getAllPostsByExerciseId(courseDefault.id!, exerciseDefault.id!)
+                .pipe(take(2))
+                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(returnedFromService);
+            tick();
+        }));
+
+        it('should return all post tags for a course', fakeAsync(() => {
+            const returnedFromService = ['tag1', 'tag2', 'tag3', 'tag4'];
+
+            const expected = ['tag1', 'tag2', 'tag3', 'tag4'];
+            service
+                .getAllPostTagsByCourseId(courseDefault.id!)
                 .pipe(take(2))
                 .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'GET' });

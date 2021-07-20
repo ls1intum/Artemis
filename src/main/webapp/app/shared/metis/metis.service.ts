@@ -83,12 +83,6 @@ export class MetisService {
         }
     }
 
-    private sortPostsByVote(posts: Post[]): Post[] {
-        return posts.sort((a, b) => {
-            return b.votes! - a.votes!;
-        });
-    }
-
     deletePost(post: Post): void {
         this.postService.delete(this.courseId, post).subscribe(() => {
             this.getPostsForFilter(this.currentPostFilter);
@@ -157,5 +151,11 @@ export class MetisService {
 
     metisUserIsAuthorOfPosting(posting: Posting): boolean {
         return this.user ? posting?.author!.id === this.user.id : false;
+    }
+
+    private sortPostsByVote(posts: Post[]): Post[] {
+        return posts.sort((a, b) => {
+            return b.votes! - a.votes!;
+        });
     }
 }
