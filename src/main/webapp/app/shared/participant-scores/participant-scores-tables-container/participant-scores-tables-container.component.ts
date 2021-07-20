@@ -19,6 +19,12 @@ export class ParticipantScoresTablesContainerComponent {
     avgScore = 0;
     @Input()
     avgRatedScore = 0;
+    @Input()
+    avgGrade?: String;
+    @Input()
+    avgRatedGrade?: String;
+    @Input()
+    isBonus = false;
     @Output()
     reload = new EventEmitter<void>();
 
