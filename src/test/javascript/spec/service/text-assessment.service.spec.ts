@@ -8,6 +8,7 @@ import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { TextAssessmentEvent } from 'app/entities/text-assesment-event.model';
 
 describe('TextAssessment Service', () => {
     let injector: TestBed;
@@ -80,6 +81,16 @@ describe('TextAssessment Service', () => {
         service.trackAssessment(textSubmission);
         httpMock.expectOne({ url: `${SERVER_API_URL}/athene-tracking/text-exercise-assessment`, method: 'POST' });
     });
+
+    it('should send assessment event to analytics', fakeAsync(() => {
+        const assessmentEvent: TextAssessmentEvent = new TextAssessmentEvent();
+        service.addTextAssessmentEvent(assessmentEvent).subscribe((response) => {
+            expect(response.status).toBe(200);
+        });
+        const mockRequest = httpMock.expectOne({ url: `${SERVER_API_URL}/analytics/text-assessment/events`, method: 'POST' });
+        mockRequest.flush(mockResponse);
+        tick();
+    }));
 
     it('should not parse jwt from header', fakeAsync(() => {
         service.getFeedbackDataForExerciseSubmission(1, 1).subscribe((studentParticipation) => {

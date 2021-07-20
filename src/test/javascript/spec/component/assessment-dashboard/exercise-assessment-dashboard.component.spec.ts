@@ -61,6 +61,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
 import { SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
+import { InfoPanelComponent } from 'app/shared/info-panel/info-panel.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -202,6 +203,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockComponent(HeaderParticipationPageComponent),
                 MockComponent(SidePanelComponent),
+                MockComponent(InfoPanelComponent),
                 MockComponent(ModelingEditorComponent),
                 MockComponent(SecondCorrectionEnableButtonComponent),
                 MockComponent(CollapsableAssessmentInstructionsComponent),

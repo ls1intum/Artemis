@@ -387,8 +387,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param exerciseId id of ProgrammingExercise
      * @param personal whether the current user is a participant in the participation.
      * @param forceCacheOverride whether the cache should definitely be overridden, default is false
+     * @param fetchPending whether the latest pending submission should be fetched from the server
      */
-    public getLatestPendingSubmissionByParticipationId = (participationId: number, exerciseId: number, personal: boolean, forceCacheOverride = false) => {
+    public getLatestPendingSubmissionByParticipationId = (participationId: number, exerciseId: number, personal: boolean, forceCacheOverride = false, fetchPending = true) => {
         const subject = this.submissionSubjects[participationId];
         if (!forceCacheOverride && subject) {
             return subject.asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
@@ -396,9 +397,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         // The setup process is difficult, because it should not happen that multiple subscribers trigger the setup process at the same time.
         // There the subject is returned before the REST call is made, but will emit its result as soon as it returns.
         this.submissionSubjects[participationId] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
-        this.fetchLatestPendingSubmissionByParticipationId(participationId)
-            .pipe(switchMap((submission) => this.processPendingSubmission(submission, participationId, exerciseId, personal)))
-            .subscribe();
+        if (fetchPending) {
+            this.fetchLatestPendingSubmissionByParticipationId(participationId)
+                .pipe(switchMap((submission) => this.processPendingSubmission(submission, participationId, exerciseId, personal)))
+                .subscribe();
+        } else {
+            // only process, but do not try to fetchPending the latest one, e.g. because it was already downloaded shortly before (example: exam start)
+            this.processPendingSubmission(undefined, participationId, exerciseId, personal).subscribe();
+        }
         // We just remove the initial undefined from the pipe as it is only used to make the setup process easier.
         return this.submissionSubjects[participationId].asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
     };
