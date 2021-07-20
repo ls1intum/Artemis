@@ -10,11 +10,11 @@ const users = new CypressUserManagement();
 const username = users.getStudentOne().username;
 
 // Requests
-let artemisRequests: ArtemisRequests;
+const artemisRequests: ArtemisRequests = new ArtemisRequests();
 
 // PagegObjects
-let courseManagementPage: CourseManagementPage;
-let navigationBar: NavigationBar;
+const courseManagementPage: CourseManagementPage = new CourseManagementPage();
+const navigationBar: NavigationBar = new NavigationBar();
 
 // Common primitives
 let uid: string;
@@ -29,14 +29,45 @@ const modalDeleteButton = '.modal-footer > .btn-danger';
 
 describe('Course management', () => {
     beforeEach(() => {
-        courseManagementPage = new CourseManagementPage();
-        navigationBar = new NavigationBar();
-        registerQueries();
         uid = generateUUID();
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
-        artemisRequests = new ArtemisRequests();
         cy.login(users.getAdmin(), '/');
+    });
+
+    describe('Manual student selection', () => {
+        let courseId: number;
+
+        beforeEach(() => {
+            artemisRequests.courseManagement
+                .createCourse(courseName, courseShortName)
+                .its('body')
+                .then((body) => {
+                    expect(body).property('id').to.be.a('number');
+                    courseId = body.id;
+                });
+        });
+
+        it('Adds a student manually to the course', function () {
+            navigationBar.openCourseManagement();
+            courseManagementPage.openStudentOverviewOfCourse(courseName, courseShortName);
+            cy.intercept('GET', '/api/users/search*').as('getStudentQuery');
+            cy.intercept('POST', '/api/courses/*/students/' + username).as('addStudentQuery');
+            cy.get('#typeahead-basic').type(username);
+            cy.wait('@getStudentQuery');
+            cy.get('#ngb-typeahead-0')
+                .contains(new RegExp('\\(' + username + '\\)'))
+                .should(beVisible)
+                .click();
+            cy.wait('@addStudentQuery');
+            cy.get('[deletequestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"]').should(beVisible);
+        });
+
+        after(() => {
+            if (!!courseId) {
+                artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
+            }
+        });
     });
 
     describe('Course creation', () => {
@@ -49,6 +80,7 @@ describe('Course management', () => {
             cy.get(shortName).type(courseShortName);
             cy.get('#field_testCourse').check();
             cy.get('#field_customizeGroupNamesEnabled').uncheck();
+            cy.intercept('POST', '/api/courses').as('createCourseQuery');
             cy.get(saveEntity).click();
             cy.wait('@createCourseQuery')
                 .its('response.body')
@@ -81,46 +113,4 @@ describe('Course management', () => {
             cy.contains(courseManagementPage.courseSelector(courseName, courseShortName)).should('not.exist');
         });
     });
-
-    describe('Manual student selection', () => {
-        let courseId: number;
-
-        beforeEach(() => {
-            artemisRequests.courseManagement
-                .createCourse(courseName, courseShortName)
-                .its('body')
-                .then((body) => {
-                    expect(body).property('id').to.be.a('number');
-                    courseId = body.id;
-                });
-        });
-
-        it('Adds a student manually to the course', function () {
-            navigationBar.openCourseManagement();
-            courseManagementPage.openStudentOverviewOfCourse(courseName, courseShortName);
-            cy.get('#typeahead-basic').type(username);
-            cy.wait('@getStudentQuery');
-            cy.get('#ngb-typeahead-0')
-                .contains(new RegExp('\\(' + username + '\\)'))
-                .should(beVisible)
-                .click();
-            cy.wait('@addStudentQuery');
-            cy.get('[deletequestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"]').should(beVisible);
-        });
-
-        after(() => {
-            if (!!courseId) {
-                artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
-            }
-        });
-    });
 });
-
-/**
- * Sets all the necessary cypress request hooks.
- */
-function registerQueries() {
-    cy.intercept('GET', '/api/users/search*').as('getStudentQuery');
-    cy.intercept('POST', '/api/courses/*/students/' + username).as('addStudentQuery');
-    cy.intercept('POST', '/api/courses').as('createCourseQuery');
-}
