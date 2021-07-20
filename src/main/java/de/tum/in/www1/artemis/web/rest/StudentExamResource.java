@@ -502,6 +502,7 @@ public class StudentExamResource {
         final String instanceId = request.getHeader("X-Artemis-Client-Instance-ID");
         ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId, ipAddress);
         examSession.hideDetails();
+        examSession.setInitialSession(this.examSessionService.checkExamSessionIsInitial(studentExam.getId()));
         studentExam.setExamSessions(Set.of(examSession));
 
         // not needed

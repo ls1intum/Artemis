@@ -10,6 +10,7 @@ import { CommitState, DomainChange, DomainType } from 'app/exercises/programming
 import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { map } from 'rxjs/operators';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { ExamSession } from 'app/entities/exam-session.model';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -21,7 +22,7 @@ export class ExamNavigationBarComponent implements OnInit {
     @Input() exerciseIndex = 0;
     @Input() endDate: Moment;
     @Input() overviewPageOpen: boolean;
-
+    @Input() examSessions?: ExamSession[] = [];
     @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise?: Exercise; forceSave: boolean }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
     @Output() onExamHandInEarly = new EventEmitter<void>();
@@ -55,31 +56,27 @@ export class ExamNavigationBarComponent implements OnInit {
             }
         });
 
-        const timingEntries = window.performance.getEntriesByType('navigation') as [PerformanceNavigationTiming];
-        const isReload = timingEntries.some((entry) => entry.name === window.location.href && entry.type === 'reload');
-        if (!isReload) {
-            return;
+        // If exam is not loaded for the first time, update the isSynced variable for out of sync submissions.
+        if (this.examSessions && !this.examSessions[0].initialSession) {
+            this.exercises
+                .filter((exercise) => exercise.type === ExerciseType.PROGRAMMING && exercise.studentParticipations)
+                .forEach((exercise) => {
+                    const domain: DomainChange = [DomainType.PARTICIPATION, exercise.studentParticipations![0]];
+                    this.conflictService.setDomain(domain);
+                    this.repositoryService.setDomain(domain);
+
+                    this.repositoryService
+                        .getStatus()
+                        .pipe(map((response) => Object.values(CommitState).find((commitState) => commitState === response.repositoryStatus)))
+                        .subscribe((commitState) => {
+                            const submission = ExamParticipationService.getSubmissionForExercise(exercise);
+                            if (commitState === CommitState.UNCOMMITTED_CHANGES && submission) {
+                                // If there are uncommitted changes: set isSynced to false.
+                                submission.isSynced = false;
+                            }
+                        });
+                });
         }
-
-        // If exam is reloaded, update the isSynced variable for out of sync submissions.
-        this.exercises
-            .filter((exercise) => exercise.type === ExerciseType.PROGRAMMING && exercise.studentParticipations)
-            .forEach((exercise) => {
-                const domain: DomainChange = [DomainType.PARTICIPATION, exercise.studentParticipations![0]];
-                this.conflictService.setDomain(domain);
-                this.repositoryService.setDomain(domain);
-
-                this.repositoryService
-                    .getStatus()
-                    .pipe(map((response) => Object.values(CommitState).find((commitState) => commitState === response.repositoryStatus)))
-                    .subscribe((commitState) => {
-                        const submission = ExamParticipationService.getSubmissionForExercise(exercise);
-                        if (commitState === CommitState.UNCOMMITTED_CHANGES && submission) {
-                            // If there are uncommitted changes: set isSynced to false.
-                            submission.isSynced = false;
-                        }
-                    });
-            });
     }
 
     triggerExamAboutToEnd() {

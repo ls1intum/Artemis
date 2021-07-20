@@ -61,4 +61,20 @@ public class ExamSessionService {
         String token = encoder.encodeToString(bytes);
         return token.substring(0, 16);
     }
+
+    /**
+     * Checks the number of exam sessions for student exam and decides if the current session is initial or not
+     *
+     * @param studentExamId student exam id which is associated with exam session
+     * @return true if there is only one exam session for this student exam in the database, otherwise returns false
+     */
+    public boolean checkExamSessionIsInitial(Long studentExamId) {
+        long examSessionCount = examSessionRepository.findExamSessionCountByStudentExamId(studentExamId);
+        if (examSessionCount > 1) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
 }
