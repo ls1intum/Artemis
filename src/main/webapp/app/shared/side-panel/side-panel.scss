@@ -3,12 +3,18 @@
 .panel-wrapper {
     border: 1px solid $primary;
     border-radius: 3px;
+
+    .panel-header {
+        padding: 10px 10px 10px 15px;
+        font-size: 16px;
+    }
+
     .panel-body {
         padding: 8px 15px;
     }
-    .panel-header {
-        padding: 15px;
+
+    .vertLine {
+        height: 1px;
         background-color: $primary;
-        color: #ffffff;
     }
 }

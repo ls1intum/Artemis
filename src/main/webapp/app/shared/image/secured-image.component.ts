@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { BehaviorSubject, isObservable, Observable, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -70,7 +70,7 @@ export class SecuredImageComponent implements OnChanges, OnInit {
     }
 
     // we need HttpClient to load the image and DomSanitizer to trust the url
-    constructor(private domSanitizer: DomSanitizer, private cacheableImageService: CacheableImageService) {}
+    constructor(private domSanitizer: DomSanitizer, private cacheableImageService: CacheableImageService, public element: ElementRef) {}
 
     // triggers the reload of the picture when the user clicks on a button
     retryLoadImage() {

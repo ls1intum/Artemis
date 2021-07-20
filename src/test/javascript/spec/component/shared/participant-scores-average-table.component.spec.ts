@@ -59,6 +59,8 @@ describe('ParticipantScoresAverageTable', () => {
         participantScoreAverageDTO.averageScore = 5;
         participantScoreAverageDTO.averagePoints = 8;
         participantScoreAverageDTO.averageRatedPoints = 12;
+        participantScoreAverageDTO.averageGrade = '2.7';
+        participantScoreAverageDTO.averageRatedGrade = '2.0';
 
         component.isLoading = false;
         component.participantAverageScores = [participantScoreAverageDTO];
@@ -66,13 +68,15 @@ describe('ParticipantScoresAverageTable', () => {
         fixture.detectChanges();
 
         const cellElements = fixture.debugElement.queryAll(By.css('.datatable-body-cell-label > span'));
-        expect(cellElements.length).to.equal(6);
+        expect(cellElements.length).to.equal(8);
         expect(cellElements[0].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.userName);
         expect(cellElements[1].nativeElement.innerHTML).to.contain('');
         expect(cellElements[2].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.averageScore);
         expect(cellElements[3].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.averagePoints);
         expect(cellElements[4].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.averageRatedScore);
         expect(cellElements[5].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.averageRatedPoints);
+        expect(cellElements[6].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.averageGrade);
+        expect(cellElements[7].nativeElement.innerHTML).to.contain(participantScoreAverageDTO.averageRatedGrade);
     });
 
     it('should extract participant name correctly', () => {
