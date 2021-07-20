@@ -167,7 +167,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
         this.backgroundImage.endLoadingProcess
             .pipe(
-                filter((x) => x === ImageLoadingStatus.SUCCESS),
+                filter((loadingStatus) => loadingStatus === ImageLoadingStatus.SUCCESS),
                 // Some time until image render. Need to wait until image width is computed.
                 debounceTime(300),
             )
