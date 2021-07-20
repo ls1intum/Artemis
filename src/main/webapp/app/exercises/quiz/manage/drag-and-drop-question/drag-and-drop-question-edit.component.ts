@@ -167,20 +167,28 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
         this.backgroundImage.endLoadingProcess
             .pipe(
-                filter((x) => x === ImageLoadingStatus.SUCCESS),
+                filter((loadingStatus) => loadingStatus === ImageLoadingStatus.SUCCESS),
                 // Some time until image render. Need to wait until image width is computed.
                 debounceTime(300),
             )
-            .subscribe(() => {
-                // Make the background image visible upon successful image load. Initially it is set to hidden and not
-                // conditionally loaded via '*ngIf' because otherwise the reference would be undefined and hence we
-                // wouldn't be able to subscribe to the loading process updates.
-                this.backgroundImage.element.nativeElement.style.visibility = 'visible';
+            .subscribe(() => this.adjustClickLayerWidth());
 
-                // Adjust the click layer to correspond to the area of the background image.
-                this.clickLayer.nativeElement.style.width = `${this.backgroundImage.element.nativeElement.offsetWidth}px`;
-                this.clickLayer.nativeElement.style.left = `${this.backgroundImage.element.nativeElement.offsetLeft}px`;
-            });
+        // Trigger click layer width adjustment upon window resize.
+        window.onresize = () => this.adjustClickLayerWidth();
+    }
+
+    /**
+     * Adjusts the click-layer width to equal the background image width.
+     */
+    adjustClickLayerWidth() {
+        // Make the background image visible upon successful image load. Initially it is set to hidden and not
+        // conditionally loaded via '*ngIf' because otherwise the reference would be undefined and hence we
+        // wouldn't be able to subscribe to the loading process updates.
+        this.backgroundImage.element.nativeElement.style.visibility = 'visible';
+
+        // Adjust the click layer to correspond to the area of the background image.
+        this.clickLayer.nativeElement.style.width = `${this.backgroundImage.element.nativeElement.offsetWidth}px`;
+        this.clickLayer.nativeElement.style.left = `${this.backgroundImage.element.nativeElement.offsetLeft}px`;
     }
 
     /**
