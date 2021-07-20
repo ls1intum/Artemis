@@ -7,12 +7,8 @@ import { Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateTestingModule } from '../helpers/mocks/service/mock-translate.service';
 import { Notification } from 'app/entities/notification.model';
-import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
-import * as chai from 'chai';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { RouterTestingModule } from '@angular/router/testing';
-import * as moment from 'moment';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../helpers/mocks/service/mock-course-management.service';
 import { BehaviorSubject, Subject } from 'rxjs';
@@ -23,6 +19,10 @@ import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.se
 import { SinonStub, stub } from 'sinon';
 import { Course } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
+import * as chai from 'chai';
+import * as moment from 'moment';
 
 chai.use(sinonChai);
 const expect = chai.expect;
