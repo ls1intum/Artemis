@@ -7,6 +7,5 @@
     "supportFile": "src/test/cypress/support/index.ts",
     "baseUrl": "http://localhost:8080",
     "video": false,
-    "screenshotOnRunFailure": false,
-    "chromeWebSecurity": false
+    "screenshotOnRunFailure": false
 }

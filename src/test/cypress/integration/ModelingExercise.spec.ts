@@ -4,27 +4,17 @@ import { generateUUID } from '../support/utils';
 // https://day.js.org/docs is a tool for date/time
 import * as dayjs from 'dayjs';
 
-// environmental variables
-let studentUsername = Cypress.env('username');
-let studentPassword = Cypress.env('password');
-let tutorUsername = Cypress.env('taUsername');
-let tutorPassword = Cypress.env('taPassword');
-let instructorUsername = Cypress.env('instructorUsername');
-let instructorPassword = Cypress.env('instructorPassword');
+// We need to get our usernames/passwords like this
 const adminUsername = Cypress.env('adminUsername');
 const adminPassword = Cypress.env('adminPassword');
-
-// in case we are running the tests in a CI plan we need to get our usernames/passwords like this
-if (Cypress.env('isCi')) {
-    const baseUsername = Cypress.env('username');
-    const basePassword = Cypress.env('password');
-    studentUsername = baseUsername.replace('USERID', '105');
-    studentPassword = basePassword.replace('USERID', '105');
-    tutorUsername = baseUsername.replace('USERID', '101');
-    tutorPassword = basePassword.replace('USERID', '101');
-    instructorUsername = baseUsername.replace('USERID', '103');
-    instructorPassword = basePassword.replace('USERID', '103');
-}
+const baseUsername = Cypress.env('username');
+const basePassword = Cypress.env('password');
+const studentUsername = baseUsername.replace('USERID', '105');
+const studentPassword = basePassword.replace('USERID', '105');
+const tutorUsername = baseUsername.replace('USERID', '101');
+const tutorPassword = basePassword.replace('USERID', '101');
+const instructorUsername = baseUsername.replace('USERID', '103');
+const instructorPassword = basePassword.replace('USERID', '103');
 
 let testCourse: any;
 let modelingExercise: any;

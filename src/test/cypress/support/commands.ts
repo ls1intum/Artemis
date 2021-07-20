@@ -34,10 +34,10 @@ declare global {
             login(username: String, password: String, url?: String): any;
             logout(): any;
             loginWithGUI(username: String, password: String): any;
-            createCourse(course: String): Chainable<Cypress.Response>;
-            deleteCourse(courseID: number): Chainable<Cypress.Response>;
-            deleteModelingExercise(courseID: number): Chainable<Cypress.Response>;
-            createModelingExercise(modelingExercise: String): Chainable<Cypress.Response>;
+            createCourse(course: String): Chainable<Cypress.Response<JSON>>;
+            deleteCourse(courseID: number): Chainable<Cypress.Response<JSON>>;
+            deleteModelingExercise(courseID: number): Chainable<Cypress.Response<JSON>>;
+            createModelingExercise(modelingExercise: String): Chainable<Cypress.Response<JSON>>;
             getSettled(selector: String, options?: {}): Chainable<Cypress>;
         }
     }
