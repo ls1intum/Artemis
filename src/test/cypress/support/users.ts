@@ -31,7 +31,21 @@ export class CypressUserManagement {
      * @returns the third testing account with student rights.
      */
     public getStudentThree(): CypressCredentials {
+        return this.getUserWithId('104');
+    }
+
+    /**
+     * @returns an instructor account.
+     */
+    public getInstructor(): CypressCredentials {
         return this.getUserWithId('103');
+    }
+
+    /**
+     * @returns a tutor account.
+     */
+    public getTutor(): CypressCredentials {
+        return this.getUserWithId('101');
     }
 
     private getUserWithId(id: string): CypressCredentials {

@@ -35,8 +35,11 @@ declare global {
             login(credentials: CypressCredentials, url?: String): any;
             logout(): any;
             loginWithGUI(credentials: CypressCredentials): any;
-            createCourse(course: String): Chainable<Cypress.Response>;
-            deleteCourse(courseID: number): Chainable<Cypress.Response>;
+            createCourse(course: String): Chainable<Cypress.Response<JSON>>;
+            deleteCourse(courseID: number): Chainable<Cypress.Response<JSON>>;
+            deleteModelingExercise(courseID: number): Chainable<Cypress.Response<JSON>>;
+            createModelingExercise(modelingExercise: String): Chainable<Cypress.Response<JSON>>;
+            getSettled(selector: String, options?: {}): Chainable<Cypress>;
         }
     }
 }
@@ -139,5 +142,70 @@ Cypress.Commands.add('deleteCourse', (courseID: number) => {
         headers: { Authorization: `Bearer ${Cypress.env(authTokenKey)}` },
     }).then((response) => {
         return response;
+    });
+});
+
+/**
+ * Creates a modelingExercise with API request
+ * @param modelingExercise is a modeling exercise object in json format
+ * @return Chainable<Cypress.Response> the http response of the POST request
+ * */
+Cypress.Commands.add('createModelingExercise', (modelingExercise: string) => {
+    cy.request({
+        url: '/api/modeling-exercises',
+        method: 'POST',
+        body: modelingExercise,
+        headers: {
+            Authorization: 'Bearer ' + Cypress.env(authTokenKey),
+        },
+    }).then((response) => {
+        return response;
+    });
+});
+
+/**
+ * Deletes modeling exercise with exerciseID
+ * @param exerciseID id of the exercise that is to be deleted
+ * @return Chainable<Cypress.Response> the http response of the DELETE request
+ * */
+Cypress.Commands.add('deleteModelingExercise', (exerciseID: number) => {
+    cy.request({
+        url: `/api/modeling-exercises/${exerciseID}`,
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${Cypress.env(authTokenKey)}` },
+    }).then((response) => {
+        return response;
+    });
+});
+
+/** recursively gets an element, returning only after it's determined to be attached to the DOM for good
+ *  this prevents the "Element is detached from DOM" issue in some cases
+ */
+Cypress.Commands.add('getSettled', (selector, opts = {}) => {
+    const retries = opts.retries || 3;
+    const delay = opts.delay || 100;
+
+    const isAttached = (resolve: any, count = 0) => {
+        const el = Cypress.$(selector);
+
+        // is element attached to the DOM?
+        count = Cypress.dom.isAttached(el) ? count + 1 : 0;
+
+        // hit our base case, return the element
+        if (count >= retries) {
+            return resolve(el);
+        }
+
+        // retry after a bit of a delay
+        setTimeout(() => isAttached(resolve, count), delay);
+    };
+
+    // wrap, so we can chain cypress commands off the result
+    return cy.wrap(null).then(() => {
+        return new Cypress.Promise((resolve) => {
+            return isAttached(resolve, 0);
+        }).then((el) => {
+            return cy.wrap(el);
+        });
     });
 });
