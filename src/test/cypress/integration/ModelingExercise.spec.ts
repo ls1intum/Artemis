@@ -212,7 +212,7 @@ describe('Modeling Exercise Spec', () => {
             cy.contains('Save').click();
         });
 
-        it('Student can view the assessment and complain', () => {
+        it.skip('Student can view the assessment and complain', () => {
             cy.intercept('POST', '/api/complaints').as('complaintCreated');
             cy.login(student, `/courses/${testCourse.id}/exercises/${modelingExercise.id}`);
             cy.get('jhi-submission-result-status > .col-auto').should('contain.text', 'Score').and('contain.text', '1 of 100 points');
@@ -225,7 +225,7 @@ describe('Modeling Exercise Spec', () => {
             cy.wait('@complaintCreated');
         });
 
-        it('Instructor can see complaint and reject it', () => {
+        it.skip('Instructor can see complaint and reject it', () => {
             cy.login(instructor, `/course-management/${testCourse.id}/assessment-dashboard`);
             cy.get('.col-md-4 > .card > .card-body').contains('Total complaints: 1').click();
             cy.get('tr > .text-center >').click();
