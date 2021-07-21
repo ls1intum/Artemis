@@ -26,11 +26,13 @@ export class OnlineEditorPage {
      */
     typeSubmission(submission: ProgrammingExerciseSubmission, packageName: string) {
         for (const newFile of submission.files) {
+            this.createFileInRootPackage(newFile.name);
             cy.log(`Entering content for file ${newFile.name}`);
-            this.openFileWithName(newFile.name);
-            this.focusCodeEditor().type('{selectall}{backspace}', { delay: 300 });
             cy.fixture(newFile.path).then(($fileContent) => {
                 this.focusCodeEditor().type(this.sanitizeInput($fileContent, packageName), { delay: 3 });
+                // Create some padding if the following deletion accidentally also removes a character in front of the focus
+                cy.focused().type('{enter}{enter}');
+                // Delete the remaining content which has been automatically added by the code editor
                 cy.focused().type('{shift}{pagedown}{del}', { delay: 300 });
             });
         }
@@ -46,10 +48,30 @@ export class OnlineEditorPage {
     }
 
     /**
+     * Deletes a file in the filebrowser.
+     * @param name the file name
+     */
+    deleteFile(name: string) {
+        cy.intercept('DELETE', '/api/repository/*/**').as('deleteFile');
+        this.findFile(name).find('[data-icon="trash"]').click();
+        cy.get('[jhitranslate="artemisApp.editor.fileBrowser.delete"]').click();
+        cy.wait('@deleteFile');
+        this.findFileBrowser().contains(name).should('not.exist');
+    }
+
+    /**
+     * @param name the file name
+     * @returns the root element of a file in the filebrowser
+     */
+    private findFile(name: string) {
+        return this.findFileBrowser().contains(name).parent();
+    }
+
+    /**
      * Opens a file in the file browser by clicking on it.
      */
     openFileWithName(name: string) {
-        this.findFileBrowser().contains(name).click().wait(2000);
+        this.findFile(name).click().wait(2000);
     }
 
     /**

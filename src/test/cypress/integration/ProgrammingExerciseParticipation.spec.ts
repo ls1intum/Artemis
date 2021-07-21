@@ -93,7 +93,6 @@ function makeFailingSubmission() {
  * Makes a submission, which passes and fails some tests, and asserts the outcome in the UI.
  */
 function makePartiallySuccessfulSubmission() {
-    editorPage.createFileInRootPackage('SortStrategy.java');
     makeSubmissionAndVerifyResults(partiallySuccessful, () => {
         editorPage.getResultPanel().contains('46%').should('be.visible');
         editorPage.getResultPanel().contains('6 of 13 passed').should('be.visible');
@@ -112,9 +111,6 @@ function makePartiallySuccessfulSubmission() {
  * Makes a submission, which passes all tests, and asserts the outcome in the UI.
  */
 function makeSuccessfulSubmission() {
-    editorPage.createFileInRootPackage('SortStrategy.java');
-    editorPage.createFileInRootPackage('Context.java');
-    editorPage.createFileInRootPackage('Policy.java');
     makeSubmissionAndVerifyResults(allSuccessful, () => {
         editorPage.getResultPanel().contains('100%').should('be.visible');
         editorPage.getResultPanel().contains('13 of 13 passed').should('be.visible');
@@ -129,6 +125,12 @@ function makeSuccessfulSubmission() {
  * General method for entering, submitting and verifying something in the online editor.
  */
 function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
+    // We create an empty file so that the file browser does not create an extra subfolder when all files are deleted
+    editorPage.createFileInRootPackage('placeholderFile');
+    // We delete all existing files, so we can create new files and don't have to delete their already existing content
+    editorPage.deleteFile('Client.java');
+    editorPage.deleteFile('BubbleSort.java');
+    editorPage.deleteFile('MergeSort.java');
     editorPage.typeSubmission(submission, packageName);
     editorPage.submit();
     verifyOutput();
