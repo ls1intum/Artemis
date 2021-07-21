@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 
+import java.util.Objects;
+
 /**
  * A ProgrammingExerciseTestCase.
  */
@@ -177,5 +179,18 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     public String toString() {
         return "ProgrammingExerciseTestCase{" + "id=" + getId() + ", testName='" + testName + '\'' + ", weight=" + weight + ", active=" + active + ", visibility=" + visibility
                 + ", bonusMultiplier=" + bonusMultiplier + ", bonusPoints=" + bonusPoints + '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        ProgrammingExerciseTestCase that = (ProgrammingExerciseTestCase) o;
+        return isSameTestCase(that);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getTestName(), getExercise().getId());
     }
 }
