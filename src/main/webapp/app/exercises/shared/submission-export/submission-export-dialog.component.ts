@@ -47,7 +47,7 @@ export class SubmissionExportDialogComponent implements OnInit {
                 tap(({ body: exercise }) => {
                     this.exercise = exercise!;
                     // TODO workaround since find does not support exam exercise permissions properly
-                    if(this.exercise.exerciseGroup?.exam?.course) {
+                    if (this.exercise.exerciseGroup?.exam?.course) {
                         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup?.exam?.course!);
                     }
                 }),
