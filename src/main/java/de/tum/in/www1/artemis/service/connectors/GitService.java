@@ -441,7 +441,7 @@ public class GitService {
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
-                Git git = Git.cloneRepository().setTransportConfigCallback(sshCallback).setURI(gitUriAsString).setDirectory(localPath.toFile()).call();
+                Git git = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).call();
                 git.close();
             }
             catch (IOException | URISyntaxException | GitAPIException | InvalidPathException e) {
@@ -462,7 +462,7 @@ public class GitService {
      * Checks whether the repository is cached.
      * This method does only support repositories that use the repoClonePath which is set in the application-artemis.yml file!
      *
-     * @param repositoryUrl
+     * @param repositoryUrl the url of the repository
      * @return returns true if the repository is already cached
      */
     public boolean isRepositoryCached(VcsRepositoryUrl repositoryUrl) {
@@ -596,7 +596,7 @@ public class GitService {
         git.commit().setMessage(message).setAllowEmpty(true).setCommitter(name, email).call();
         log.debug("commitAndPush -> Push {}", repo.getLocalPath());
         setRemoteUrl(repo);
-        git.push().setTransportConfigCallback(sshCallback).call();
+        pushCommand(git).call();
         git.close();
     }
 
@@ -621,7 +621,7 @@ public class GitService {
             }
 
             // push the source content to the new remote
-            git.push().setTransportConfigCallback(sshCallback).call();
+            pushCommand(git).call();
         }
         catch (URISyntaxException | IOException e) {
             log.error("Error while pushing to remote target: ", e);
@@ -650,7 +650,7 @@ public class GitService {
             }
 
             // push the source content to the new remote
-            git.push().setTransportConfigCallback(sshCallback).call();
+            pushCommand(git).call();
         }
         catch (URISyntaxException e) {
             log.error("Error while pushing to remote target: ", e);
@@ -696,7 +696,7 @@ public class GitService {
         try (Git git = new Git(repo)) {
             log.debug("Fetch {}", repo.getLocalPath());
             setRemoteUrl(repo);
-            git.fetch().setForceUpdate(true).setRemoveDeletedRefs(true).setTransportConfigCallback(sshCallback).call();
+            fetchCommand(git).setForceUpdate(true).setRemoveDeletedRefs(true).call();
         }
     }
 
@@ -737,7 +737,7 @@ public class GitService {
             repo.setContent(null);
             log.debug("Pull ignore conflicts {}", repo.getLocalPath());
             setRemoteUrl(repo);
-            git.pull().setTransportConfigCallback(sshCallback).call();
+            pullCommand(git).call();
         }
         catch (GitAPIException ex) {
             log.error("Cannot pull the repo " + repo.getLocalPath(), ex);
@@ -758,7 +758,7 @@ public class GitService {
         repo.setContent(null);
         log.debug("Pull {}", repo.getLocalPath());
         setRemoteUrl(repo);
-        return git.pull().setTransportConfigCallback(sshCallback).call();
+        return pullCommand(git).call();
     }
 
     /**
@@ -769,7 +769,7 @@ public class GitService {
      */
     public String getOriginHead(Repository repo) throws GitAPIException {
         Git git = new Git(repo);
-        var originHeadRef = git.lsRemote().callAsMap().get(Constants.HEAD);
+        var originHeadRef = lsRemoteCommand(git).callAsMap().get(Constants.HEAD);
         git.close();
 
         // Empty Git repos don't have HEAD
@@ -817,7 +817,7 @@ public class GitService {
         // Get HEAD ref of repo without cloning it locally
         try {
             log.debug("getLastCommitHash {}", repoUrl);
-            var headRef = Git.lsRemoteRepository().setRemote(getGitUriAsString(repoUrl)).setTransportConfigCallback(sshCallback).callAsMap().get(Constants.HEAD);
+            var headRef = lsRemoteCommand().setRemote(getGitUriAsString(repoUrl)).callAsMap().get(Constants.HEAD);
 
             if (headRef == null) {
                 return null;
@@ -1118,7 +1118,7 @@ public class GitService {
                 git.add().addFilepattern(".").call();
                 git.commit().setAmend(true).setMessage(firstCommit.getFullMessage()).call();
                 log.debug("combineAllCommitsIntoInitialCommit -> Push {}", repo.getLocalPath());
-                git.push().setForce(true).setTransportConfigCallback(sshCallback).call();
+                pushCommand(git).setForce(true).call();
                 git.close();
             }
             else {
@@ -1273,5 +1273,33 @@ public class GitService {
         Git git = new Git(repo);
         git.stashCreate().call();
         git.close();
+    }
+
+    private PullCommand pullCommand(Git git) {
+        return authenticate(git.pull());
+    }
+
+    private PushCommand pushCommand(Git git) {
+        return authenticate(git.push());
+    }
+
+    private CloneCommand cloneCommand() {
+        return authenticate(Git.cloneRepository());
+    }
+
+    private FetchCommand fetchCommand(Git git) {
+        return authenticate(git.fetch());
+    }
+
+    private LsRemoteCommand lsRemoteCommand(Git git) {
+        return authenticate(git.lsRemote());
+    }
+
+    private LsRemoteCommand lsRemoteCommand() {
+        return authenticate(Git.lsRemoteRepository());
+    }
+
+    public <C extends GitCommand<?>> C authenticate(TransportCommand<C, ?> command) {
+        return command.setTransportConfigCallback(sshCallback);
     }
 }
