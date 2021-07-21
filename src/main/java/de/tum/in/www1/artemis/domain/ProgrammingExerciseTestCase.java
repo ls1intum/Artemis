@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.util.Objects;
+
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 
@@ -11,8 +13,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
-
-import java.util.Objects;
 
 /**
  * A ProgrammingExerciseTestCase.
