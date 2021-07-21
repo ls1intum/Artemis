@@ -424,7 +424,7 @@ public class CourseService {
         dto.setNumberOfEditorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getEditorGroupName())));
         dto.setNumberOfInstructorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getInstructorGroupName())));
 
-        dto.setActiveStudents(getActiveStudents(exerciseIds, 0, 8));
+        dto.setActiveStudents(getActiveStudents(exerciseIds, 0, 16));
         return dto;
     }
 

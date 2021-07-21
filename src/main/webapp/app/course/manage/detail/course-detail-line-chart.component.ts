@@ -97,12 +97,12 @@ export class CourseDetailLineChartComponent implements OnChanges {
 
     private createLabels() {
         const prefix = this.translateService.instant('calendar_week');
-        const startDate = moment().subtract(7 + 8 * -this.currentPeriod, 'weeks');
-        const endDate = this.currentPeriod !== 0 ? moment().subtract(8 * -this.currentPeriod, 'weeks') : moment();
+        const startDate = moment().subtract(15 + 16 * -this.currentPeriod, 'weeks');
+        const endDate = this.currentPeriod !== 0 ? moment().subtract(16 * -this.currentPeriod, 'weeks') : moment();
         let currentWeek;
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 16; i++) {
             currentWeek = moment()
-                .subtract(7 + 8 * -this.currentPeriod - i, 'weeks')
+                .subtract(15 + 16 * -this.currentPeriod - i, 'weeks')
                 .isoWeekday(1)
                 .isoWeek();
             this.lineChartLabels[i] = prefix + ' ' + currentWeek;

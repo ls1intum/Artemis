@@ -1511,6 +1511,6 @@ public class CourseResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Integer[]> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Integer periodIndex) {
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 8));
+        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 16));
     }
 }
