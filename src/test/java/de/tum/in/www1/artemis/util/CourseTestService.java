@@ -1768,7 +1768,7 @@ public class CourseTestService {
         // Check results
         assertThat(courseDTO).isNotNull();
 
-        assertThat(courseDTO.getActiveStudents().length).isEqualTo(8);
+        assertThat(courseDTO.getActiveStudents().length).isEqualTo(16);
 
         // number of users in course
         assertThat(courseDTO.getNumberOfStudentsInCourse()).isEqualTo(8);
@@ -1804,7 +1804,7 @@ public class CourseTestService {
         var activeStudents = request.get("/api/courses/" + course.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
 
         assertThat(activeStudents).isNotNull();
-        assertThat(activeStudents.length).isEqualTo(4);
+        assertThat(activeStudents.length).isEqualTo(16);
 
     }
 }
