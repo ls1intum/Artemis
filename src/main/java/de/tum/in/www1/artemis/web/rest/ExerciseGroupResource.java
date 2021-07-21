@@ -42,8 +42,6 @@ public class ExerciseGroupResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     private final ExerciseGroupRepository exerciseGroupRepository;
 
     private final ExamRepository examRepository;
@@ -56,10 +54,8 @@ public class ExerciseGroupResource {
 
     private final AuditEventRepository auditEventRepository;
 
-    public ExerciseGroupResource(StudentParticipationRepository studentParticipationRepository, ExerciseGroupRepository exerciseGroupRepository,
-            ExamAccessService examAccessService, UserRepository userRepository, ExerciseService exerciseService, AuditEventRepository auditEventRepository,
-            ExamRepository examRepository) {
-        this.studentParticipationRepository = studentParticipationRepository;
+    public ExerciseGroupResource(ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, UserRepository userRepository,
+            ExerciseService exerciseService, AuditEventRepository auditEventRepository, ExamRepository examRepository) {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.examRepository = examRepository;
         this.examAccessService = examAccessService;

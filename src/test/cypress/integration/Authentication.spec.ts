@@ -10,8 +10,6 @@ if (Cypress.env('isCi')) {
 }
 describe('Authentication tests', () => {
     beforeEach(() => {
-        expect(username, 'username was set').to.be.a('string').and.not.be.empty;
-        expect(password, 'password was set').to.be.a('string').and.not.be.empty;
         cy.logout();
     });
 

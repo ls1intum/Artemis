@@ -23,7 +23,7 @@
         "textUnit": {
             "created": "New text unit created",
             "updated": "Text unit updated",
-            "tooltip": "This is a text unit.",
+            "tooltip": "This is a text unit",
             "isolated": "View Isolated",
             "notReleasedTooltip": "Text only visible to teaching assistants and instructors. Release date:",
             "markdownHelp": "You can enter Markdown here. More information: ",
@@ -48,7 +48,7 @@
         "videoUnit": {
             "created": "A new video unit created",
             "updated": "Video unit updated",
-            "tooltip": "This is a video unit.",
+            "tooltip": "This is a video unit",
             "description": "Description",
             "notReleasedTooltip": "Video only visible to teaching assistants and instructors. Release date:",
             "createVideoUnit": {
@@ -102,7 +102,7 @@
             "editAttachmentUnit": {
                 "title": "Edit Attachment Unit"
             },
-            "tooltip": "This is an Attachment.",
+            "tooltip": "This is a lecture attachment",
             "uploadDate": "Upload Date",
             "version": "Version",
             "FileName": "Filename",
