@@ -181,12 +181,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 (!this.exercise.dueDate || now.isAfter(this.exercise.dueDate)) &&
                 (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
 
-            this.isAllowedToComplain =
-                !!this.studentParticipation &&
-                !!this.latestRatedResult &&
-                (this.latestRatedResult.assessmentType === AssessmentType.MANUAL ||
-                    this.latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
-                    (!!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint));
+            this.isAllowedToComplain = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
         }
 
         // This is only needed in the local environment

@@ -144,8 +144,8 @@ public class ParticipationResource {
             var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
             if (!featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)
                     || (programmingExercise.getDueDate() != null && now().isAfter(programmingExercise.getDueDate())
-                            && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC)
-                            || programmingExercise.getAllowComplaintsForAutomaticAssessments())) {
+                            && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC
+                            || programmingExercise.getAllowComplaintsForAutomaticAssessments()))) {
                 return forbidden();
             }
             exercise = programmingExercise;
