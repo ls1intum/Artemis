@@ -10,8 +10,5 @@ export const BASE_API = 'api/';
 // Authentication
 export const authTokenKey = 'jhi-authenticationtoken';
 
-// Assertions
-export const beVisible = 'be.visible';
-
 // Constants
 export const USER_ID_SELECTOR = 'USERID';

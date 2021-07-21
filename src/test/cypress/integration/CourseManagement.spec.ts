@@ -1,5 +1,4 @@
 import { artemis } from '../support/ArtemisTesting';
-import { beVisible } from '../support/constants';
 import { CourseManagementPage } from '../support/pageobjects/CourseManagementPage';
 import { NavigationBar } from '../support/pageobjects/NavigationBar';
 import { ArtemisRequests } from '../support/requests/ArtemisRequests';
@@ -54,10 +53,10 @@ describe('Course management', () => {
             cy.wait('@getStudentQuery');
             cy.get('#ngb-typeahead-0')
                 .contains(new RegExp('\\(' + username + '\\)'))
-                .should(beVisible)
+                .should('be.visible')
                 .click();
             cy.wait('@addStudentQuery');
-            cy.get('[deletequestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"]').should(beVisible);
+            cy.get('[deletequestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"]').should('be.visible');
         });
 
         after(() => {

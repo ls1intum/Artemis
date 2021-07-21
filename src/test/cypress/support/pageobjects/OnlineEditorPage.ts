@@ -1,5 +1,3 @@
-import { beVisible } from '../constants';
-
 const buildingAndTesting = 'Building and testing...';
 
 /**
@@ -59,9 +57,9 @@ export class OnlineEditorPage {
      */
     submit() {
         cy.get('#submit_button').click();
-        this.getResultPanel().contains(buildingAndTesting, { timeout: 15000 }).should(beVisible);
-        this.getBuildOutput().contains(buildingAndTesting).should(beVisible);
-        this.getResultPanel().contains('GRADED', { timeout: 80000 }).should(beVisible);
+        this.getResultPanel().contains(buildingAndTesting, { timeout: 15000 }).should('be.visible');
+        this.getBuildOutput().contains(buildingAndTesting).should('be.visible');
+        this.getResultPanel().contains('GRADED', { timeout: 80000 }).should('be.visible');
     }
 
     /**

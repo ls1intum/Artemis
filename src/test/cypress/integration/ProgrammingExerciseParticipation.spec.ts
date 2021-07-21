@@ -2,7 +2,6 @@ import { CypressCredentials } from './../support/users';
 import { generateUUID } from '../support/utils';
 import allSuccessful from '../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import partiallySuccessful from '../fixtures/programming_exercise_submissions/partially_successful/submission.json';
-import { beVisible } from '../support/constants';
 import { artemis } from '../support/ArtemisTesting';
 import { ProgrammingExerciseSubmission } from '../support/pageobjects/OnlineEditorPage';
 
@@ -81,11 +80,11 @@ function setupCourseAndProgrammingExercise() {
 function makeFailingSubmission() {
     const submission = { files: [{ name: 'BubbleSort.java', path: 'programming_exercise_submissions/build_error/BubbleSort.txt' }] };
     makeSubmissionAndVerifyResults(submission, () => {
-        editorPage.getResultPanel().contains('Build Failed').should(beVisible);
-        editorPage.getResultPanel().contains('0%').should(beVisible);
-        editorPage.getBuildOutput().contains('[ERROR] COMPILATION ERROR').should(beVisible);
+        editorPage.getResultPanel().contains('Build Failed').should('be.visible');
+        editorPage.getResultPanel().contains('0%').should('be.visible');
+        editorPage.getBuildOutput().contains('[ERROR] COMPILATION ERROR').should('be.visible');
         editorPage.getInstructionSymbols().each(($el) => {
-            cy.wrap($el).find('[data-icon="question"]').should(beVisible);
+            cy.wrap($el).find('[data-icon="question"]').should('be.visible');
         });
     });
 }
@@ -96,14 +95,14 @@ function makeFailingSubmission() {
 function makePartiallySuccessfulSubmission() {
     editorPage.createFileInRootPackage('SortStrategy.java');
     makeSubmissionAndVerifyResults(partiallySuccessful, () => {
-        editorPage.getResultPanel().contains('46%').should(beVisible);
-        editorPage.getResultPanel().contains('6 of 13 passed').should(beVisible);
-        editorPage.getBuildOutput().contains('No build results available').should(beVisible);
+        editorPage.getResultPanel().contains('46%').should('be.visible');
+        editorPage.getResultPanel().contains('6 of 13 passed').should('be.visible');
+        editorPage.getBuildOutput().contains('No build results available').should('be.visible');
         editorPage.getInstructionSymbols().each(($el, $index) => {
             if ($index < 3) {
-                cy.wrap($el).find('[data-icon="check"]').should(beVisible);
+                cy.wrap($el).find('[data-icon="check"]').should('be.visible');
             } else {
-                cy.wrap($el).find('[data-icon="times"]').should(beVisible);
+                cy.wrap($el).find('[data-icon="times"]').should('be.visible');
             }
         });
     });
@@ -117,11 +116,11 @@ function makeSuccessfulSubmission() {
     editorPage.createFileInRootPackage('Context.java');
     editorPage.createFileInRootPackage('Policy.java');
     makeSubmissionAndVerifyResults(allSuccessful, () => {
-        editorPage.getResultPanel().contains('100%').should(beVisible);
-        editorPage.getResultPanel().contains('13 of 13 passed').should(beVisible);
-        editorPage.getBuildOutput().contains('No build results available').should(beVisible);
+        editorPage.getResultPanel().contains('100%').should('be.visible');
+        editorPage.getResultPanel().contains('13 of 13 passed').should('be.visible');
+        editorPage.getBuildOutput().contains('No build results available').should('be.visible');
         editorPage.getInstructionSymbols().each(($el) => {
-            cy.wrap($el).find('[data-icon="check"]').should(beVisible);
+            cy.wrap($el).find('[data-icon="check"]').should('be.visible');
         });
     });
 }
@@ -145,7 +144,7 @@ function startParticipationInProgrammingExercise(credentials: CypressCredentials
     cy.contains(courseName).parents('.card-header').click();
     cy.url().should('include', exercisePath);
     cy.intercept('POST', '/api/courses/*/exercises/*/participations').as('participateInExerciseQuery');
-    cy.get(exerciseRow).contains(programmingExerciseName).should(beVisible);
+    cy.get(exerciseRow).contains(programmingExerciseName).should('be.visible');
     cy.get(exerciseRow).find('.start-exercise').click();
     cy.wait('@participateInExerciseQuery');
     cy.intercept('GET', '/api/programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');

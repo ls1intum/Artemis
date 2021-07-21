@@ -1,5 +1,4 @@
 import { artemis } from '../support/ArtemisTesting';
-import { beVisible } from '../support/constants';
 import { CourseManagementPage } from '../support/pageobjects/CourseManagementPage';
 import { NavigationBar } from '../support/pageobjects/NavigationBar';
 import { generateUUID } from '../support/utils';
@@ -71,12 +70,12 @@ describe('Programming Exercise Management', () => {
             cy.get(fieldTitle).type(programmingExerciseName);
             cy.get(shortName).type(programmingExerciseShortName);
             cy.get('#field_packageName').type(packageName);
-            cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').should(beVisible).click();
-            cy.get(datepickerButtons).wait(500).eq(1).should(beVisible).click();
+            cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').should('be.visible').click();
+            cy.get(datepickerButtons).wait(500).eq(1).should('be.visible').click();
             cy.get('.test-schedule-date.ng-pristine > :nth-child(1) > .btn').click();
             cy.get('.owl-dt-control-arrow-button').eq(1).click();
             cy.get('.owl-dt-day-3').eq(2).click();
-            cy.get(datepickerButtons).eq(1).should(beVisible).click();
+            cy.get(datepickerButtons).eq(1).should('be.visible').click();
             cy.get('#field_points').type('100');
             cy.get('#field_allowOnlineEditor').check();
             cy.get(saveEntity).click();
@@ -87,7 +86,7 @@ describe('Programming Exercise Management', () => {
                     programmingExerciseId = body.id;
                 });
             cy.url().should('include', '/exercises');
-            cy.contains(programmingExerciseName).should(beVisible);
+            cy.contains(programmingExerciseName).should('be.visible');
         });
 
         afterEach(() => {
@@ -115,7 +114,7 @@ describe('Programming Exercise Management', () => {
                 });
             cy.get('[type="text"], [name="confirmExerciseName"]').type(programmingExerciseName).type('{enter}');
             cy.wait('@deleteProgrammingExerciseQuery');
-            cy.contains('No Programming Exercises').should(beVisible);
+            cy.contains('No Programming Exercises').should('be.visible');
         });
     });
 

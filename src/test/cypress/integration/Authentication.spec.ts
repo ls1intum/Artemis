@@ -5,8 +5,6 @@ describe('Authentication tests', () => {
     const user = artemis.users.getStudentOne();
 
     beforeEach(() => {
-        expect(user.username, 'username was set').to.be.a('string').and.not.be.empty;
-        expect(user.password, 'password was set').to.be.a('string').and.not.be.empty;
         cy.logout();
     });
 
