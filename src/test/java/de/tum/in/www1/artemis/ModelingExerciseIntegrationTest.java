@@ -217,12 +217,11 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateModelingExercise_updatingCourseId_conflict() throws Exception {
         // Create a modeling exercise.
-        Long oldCourseId = 1L;
-        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(oldCourseId);
-        ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        ModelingExercise createdModelingExercise = classExercise;
+        Long oldCourseId = createdModelingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
         // Create a new course with different id.
-        Long newCourseId = 2L;
+        Long newCourseId = oldCourseId + 1;
         Course newCourse = databaseUtilService.createCourse(newCourseId);
 
         // Assing new course to the modeling exercise.

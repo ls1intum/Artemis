@@ -386,7 +386,6 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
 
-        textExercise.setCourse(null);
         textExercise.setExerciseGroup(exerciseGroup);
 
         request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
@@ -395,13 +394,11 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void updateTextExercise_convertFromExamToCourseExercise_badRequest() throws Exception {
-        Course course = database.addEmptyCourse();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
         textExerciseRepository.save(textExercise);
 
         textExercise.setExerciseGroup(null);
-        textExercise.setCourse(course);
 
         request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }

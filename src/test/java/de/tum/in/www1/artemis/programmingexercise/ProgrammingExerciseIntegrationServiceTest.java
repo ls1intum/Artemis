@@ -646,7 +646,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
     public void updateProgrammingExercise_updatingCourseId_conflict() throws Exception {
         // Create a programming exercise.
-        testRecreateBuildPlansExerciseSuccess();
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
 
         // Create a new course with different id.
         Long oldCourseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
