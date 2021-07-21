@@ -85,6 +85,14 @@
             width: 150px;
             height: 150px;
         }
+
+        .no-statistics {
+            display: flex;
+            height: 175px;
+            justify-content: center;
+            flex-direction: column;
+            margin-bottom: 0;
+        }
     }
 
     .card-footer {
