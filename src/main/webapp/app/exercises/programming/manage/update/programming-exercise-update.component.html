@@ -386,6 +386,7 @@
                         [domainCommands]="domainCommandsGradingInstructions"
                         [(markdown)]="programmingExercise.gradingInstructions"
                         [editorMode]="EditorMode.LATEX"
+                        [enableResize]="true"
                     ></jhi-markdown-editor>
                     <jhi-grading-instructions-details *ngIf="this.checkedFlagForStructuredGradingInstructions" [exercise]="programmingExercise"></jhi-grading-instructions-details>
                 </div>

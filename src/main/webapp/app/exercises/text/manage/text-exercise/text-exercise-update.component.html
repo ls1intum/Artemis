@@ -132,6 +132,7 @@
                 [(markdown)]="textExercise.problemStatement"
                 [editorMode]="EditorMode.LATEX"
                 [shouldDisplayAlert]="false"
+                [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
         <div class="form-group" id="field_sampleSolution">
@@ -142,6 +143,7 @@
                 [(markdown)]="textExercise.sampleSolution"
                 [editorMode]="EditorMode.LATEX"
                 [shouldDisplayAlert]="false"
+                [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
         <div class="form-group" name="gradingInstructions" id="field_gradingInstructions">
@@ -153,6 +155,7 @@
                 [(markdown)]="textExercise.gradingInstructions"
                 [editorMode]="EditorMode.LATEX"
                 [shouldDisplayAlert]="false"
+                [enableResize]="true"
             ></jhi-markdown-editor>
             <jhi-grading-instructions-details *ngIf="this.checkedFlag" [exercise]="textExercise"></jhi-grading-instructions-details>
         </div>

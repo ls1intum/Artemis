@@ -8,6 +8,7 @@
         [domainCommands]="domainCommands"
         (markdownChange)="prepareForSave()"
         (textWithDomainCommandsFound)="domainCommandsFound($event)"
+        [enableResize]="true"
     >
         <!-- Preview -->
         <ng-container #preview>
@@ -87,6 +88,7 @@
                                 [domainCommands]="domainCommandsGradingInstructions"
                                 (markdownChange)="prepareForSave()"
                                 (textWithDomainCommandsFound)="onInstructionChange($event, instruction)"
+                                [enableResize]="true"
                                 class="editor"
                                 style="width: 65%"
                             ></jhi-markdown-editor>
