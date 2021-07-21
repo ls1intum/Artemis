@@ -180,7 +180,7 @@ describe('Modeling Exercise Spec', () => {
             cy.contains('Save').click();
         });
 
-        it('Tutor can assess the submission', () => {
+        it.skip('Tutor can assess the submission', () => {
             cy.login(tutor, '/course-management');
             cy.get(`[href="/course-management/${testCourse.id}/assessment-dashboard"]`).click();
             cy.url().should('contain', `/course-management/${testCourse.id}/assessment-dashboard`);
@@ -206,7 +206,7 @@ describe('Modeling Exercise Spec', () => {
             cy.get('.alerts').should('contain.text', 'Your assessment was submitted successfully!');
         });
 
-        it('Close assessment period', () => {
+        it.skip('Close assessment period', () => {
             cy.login(instructor, `/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
             cy.get(':nth-child(9) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(dayjs().toString(), { force: true });
             cy.contains('Save').click();
