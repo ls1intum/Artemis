@@ -124,9 +124,10 @@
             </div>
         </div>
         <jhi-presentation-score-checkbox [exercise]="textExercise"></jhi-presentation-score-checkbox>
-        <div class="form-group" id="field_problemStatement">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
+        <div class="form-group">
+            <label jhiTranslate="artemisApp.exercise.problemStatement" for="problemStatement">Problem Statement</label>
             <jhi-markdown-editor
+                id="problemStatement"
                 class="markdown-editor"
                 [domainCommands]="domainCommandsProblemStatement"
                 [(markdown)]="textExercise.problemStatement"
@@ -135,14 +136,12 @@
                 [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
-        <div class="form-group" id="field_sampleSolution">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.sampleSolution" for="field_sampleSolution">Sample Solution</label>
+        <div class="form-group">
+            <label jhiTranslate="artemisApp.exercise.sampleSolution" for="sampleSolution">Sample Solution</label>
             <jhi-markdown-editor
+                id="sampleSolution"
                 class="markdown-editor"
-                [domainCommands]="domainCommandsSampleSolution"
                 [(markdown)]="textExercise.sampleSolution"
-                [editorMode]="EditorMode.LATEX"
-                [shouldDisplayAlert]="false"
                 [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
@@ -153,7 +152,6 @@
                 class="markdown-editor background-editor-color"
                 [domainCommands]="domainCommandsGradingInstructions"
                 [(markdown)]="textExercise.gradingInstructions"
-                [editorMode]="EditorMode.LATEX"
                 [shouldDisplayAlert]="false"
                 [enableResize]="true"
             ></jhi-markdown-editor>
