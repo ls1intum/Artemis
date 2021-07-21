@@ -31,11 +31,9 @@ describe('Logs Service', () => {
     let notificationService: NotificationService;
     let httpMock: HttpTestingController;
     let router: Router;
-    let accountService: AccountService;
 
     let websocketService: JhiWebsocketService;
     let wsSubscribeStub: SinonStub;
-    let wsUnsubscribeStub: SinonStub;
     let wsReceiveNotificationStub: SinonStub;
     let wsNotificationSubject: Subject<Notification | undefined>;
 
@@ -93,11 +91,8 @@ describe('Logs Service', () => {
                 httpMock = TestBed.inject(HttpTestingController);
                 router = TestBed.get(Router);
 
-                accountService = TestBed.inject(AccountService);
-
                 websocketService = TestBed.inject(JhiWebsocketService);
                 wsSubscribeStub = stub(websocketService, 'subscribe');
-                wsUnsubscribeStub = stub(websocketService, 'unsubscribe');
                 wsNotificationSubject = new Subject<Notification | undefined>();
                 wsReceiveNotificationStub = stub(websocketService, 'receive').returns(wsNotificationSubject);
 
