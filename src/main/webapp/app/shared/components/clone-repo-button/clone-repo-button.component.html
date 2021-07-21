@@ -2,7 +2,7 @@
     <button
         jhi-exercise-action-button
         buttonIcon="download"
-        class="clone-repository"
+        class="ms-2 clone-repository"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [buttonLabel]="'artemisApp.exerciseActions.cloneRepository' | artemisTranslate"
         [buttonLoading]="loading"
@@ -10,7 +10,7 @@
         [hideLabelMobile]="false"
         [ngbPopover]="popContent"
         [autoClose]="'outside'"
-        placement="right"
+        placement="end"
         container="body"
     ></button>
     <ng-template #popContent style="max-width: 660px">
