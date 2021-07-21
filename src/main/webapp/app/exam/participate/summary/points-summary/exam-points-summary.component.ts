@@ -60,8 +60,8 @@ export class ExamPointsSummaryComponent implements OnInit {
                 const gradeDTO = gradeObservable!.body;
                 this.gradingScaleExists = true;
                 this.grade = gradeDTO.gradeName;
-                this.hasPassed = gradeDTO.isPassingGrade;
                 this.isBonus = gradeDTO.gradeType === GradeType.BONUS;
+                this.hasPassed = gradeDTO.isPassingGrade;
                 this.changeDetector.detectChanges();
             }
         });
