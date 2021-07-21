@@ -4,6 +4,7 @@ import allSuccessful from '../fixtures/programming_exercise_submissions/all_succ
 import partiallySuccessful from '../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import { beVisible } from '../support/constants';
 import { artemis } from '../support/ArtemisTesting';
+import { ProgrammingExerciseSubmission } from '../support/pageobjects/OnlineEditorPage';
 
 // The user management object
 const users = artemis.users;
