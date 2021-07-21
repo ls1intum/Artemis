@@ -49,7 +49,7 @@ export class AnswerPostService extends PostingsService<AnswerPost> {
      * @param {AnswerPost} answerPost
      * @return {Observable<HttpResponse<any>>}
      */
-    delete(courseId: number, answerPost: AnswerPost): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}${courseId}/answer-posts/${answerPost.id}`, { observe: 'response' });
+    delete(courseId: number, answerPost: AnswerPost): Observable<EntityResponseType> {
+        return this.http.delete<AnswerPost>(`${this.resourceUrl}${courseId}/answer-posts/${answerPost.id}`, { observe: 'response' });
     }
 }

@@ -14,9 +14,8 @@
             "createModalTitlePost": "Create post",
             "createModalTitleAnswer": "Create reply",
             "editPosting": "Edit content",
-            "approvedLabel": "Approved by a tutor",
-            "approveAnswer": "Approve reply",
-            "unapproveAnswer": "Remove approval",
+            "approveAnswer": "Approve",
+            "approvedAnswer": "Approved",
             "discussion": {
                 "header": "Discussion",
                 "show": "Show discussion",

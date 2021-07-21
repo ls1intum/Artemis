@@ -1,12 +1,9 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PostService } from 'app/shared/metis/post/post.service';
-import { MockPostService } from '../../../../../helpers/mocks/service/mock-post.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { PostFooterComponent } from 'app/shared/metis/postings-footer/post-footer/post-footer.component';
 import { By } from '@angular/platform-browser';
 import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';

@@ -1,9 +1,6 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { LocalStorageService } from 'ngx-webstorage';
-import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
-import { PostService } from 'app/shared/metis/post/post.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
@@ -13,13 +10,12 @@ import { MetisService } from 'app/shared/metis/metis.service';
 })
 export class PostingsThreadComponent implements OnInit, OnChanges {
     @Input() post: Post;
-    @Input() courseId: number;
     showAnswers: boolean;
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
 
-    constructor(private answerPostService: AnswerPostService, private postService: PostService, private metisService: MetisService, private localStorage: LocalStorageService) {}
+    constructor(private metisService: MetisService) {}
 
     /**
      * sort answers when component is initialized
@@ -35,7 +31,9 @@ export class PostingsThreadComponent implements OnInit, OnChanges {
     }
 
     /**
-     * sorts the answer posts of a post into approved and not approved and then by date
+     * Sorts answerPosts by two criteria
+     * 1. Criterion: tutorApproved -> true comes first
+     * 2. Criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      */
     sortAnswerPosts(): void {
         if (!this.post.answers) {

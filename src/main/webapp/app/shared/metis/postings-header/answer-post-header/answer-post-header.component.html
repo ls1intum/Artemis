@@ -1,9 +1,11 @@
 <div class="row justify-content-between my-1">
     <div class="col-auto pe-0">
-        <span class="posting-header" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
+        <span class="posting-header">
             {{ posting.author!.name }}
             {{ postingIsOfToday ? ' • Today ' : ' • ' }}
-            {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
+            <span [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
+                {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
+            </span>
         </span>
         <fa-icon
             *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"

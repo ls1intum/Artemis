@@ -52,10 +52,10 @@ export class MetisService {
     setCourse(course: Course) {
         this.course = course;
         this.courseId = course.id!;
-        this.updatePostTags();
+        this.updateCoursePostTags();
     }
 
-    updatePostTags() {
+    updateCoursePostTags() {
         this.postService.getAllPostTagsByCourseId(this.courseId).subscribe((res: HttpResponse<string[]>) => {
             this.tags$.next(res.body!.filter((t) => !!t));
         });

@@ -1,8 +1,6 @@
 import { Component, OnChanges, OnInit } from '@angular/core';
 import { PostingsFooterDirective } from 'app/shared/metis/postings-footer/postings-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
-import { PostService } from 'app/shared/metis/post/post.service';
-import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
     selector: 'jhi-post-footer',
@@ -12,8 +10,8 @@ import { MetisService } from 'app/shared/metis/metis.service';
 export class PostFooterComponent extends PostingsFooterDirective<Post> implements OnInit, OnChanges {
     tags: string[];
 
-    constructor(protected postService: PostService, protected metisService: MetisService) {
-        super(postService, metisService);
+    constructor() {
+        super();
     }
 
     ngOnInit(): void {

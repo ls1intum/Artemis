@@ -14,9 +14,8 @@
             "createModalTitlePost": "Beitrag erstellen",
             "createModalTitleAnswer": "Antwort erstellen",
             "editPosting": "Inhalt bearbeiten",
-            "approvedLabel": "Von Tutor:in bestätigt",
-            "approveAnswer": "Antwort bestätigen",
-            "unapproveAnswer": "Bestätigung aufheben",
+            "approveAnswer": "Bestätigen",
+            "approvedAnswer": "Bestätigt",
             "discussion": {
                 "header": "Diskussion",
                 "show": "Diskussion anzeigen",

@@ -2,8 +2,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { PostHeaderComponent } from 'app/shared/metis/postings-header/post-header/post-header.component';
+import { MockPipe } from 'ng-mocks';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -13,7 +12,7 @@ const expect = chai.expect;
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
-    let componentFixture: ComponentFixture<AnswerPostComponent>;
+    let fixture: ComponentFixture<AnswerPostComponent>;
 
     const answerPost = {
         id: 2,
@@ -25,29 +24,29 @@ describe('AnswerPostComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [],
-            declarations: [AnswerPostComponent, MockComponent(PostHeaderComponent), MockPipe(HtmlForMarkdownPipe)],
+            declarations: [AnswerPostComponent, MockPipe(HtmlForMarkdownPipe)],
             schemas: [NO_ERRORS_SCHEMA],
             providers: [],
         })
             .compileComponents()
             .then(() => {
-                componentFixture = TestBed.createComponent(AnswerPostComponent);
-                component = componentFixture.componentInstance;
+                fixture = TestBed.createComponent(AnswerPostComponent);
+                component = fixture.componentInstance;
             });
     });
 
     it('should contain a header', () => {
-        const header = componentFixture.debugElement.nativeElement.querySelector('jhi-answer-post-header');
+        const header = fixture.debugElement.nativeElement.querySelector('jhi-answer-post-header');
         expect(header).to.exist;
     });
 
     it('should contain a div with markdown content', () => {
-        const header = componentFixture.debugElement.nativeElement.querySelector('div.markdown-preview');
+        const header = fixture.debugElement.nativeElement.querySelector('div.markdown-preview');
         expect(header).to.exist;
     });
 
     it('should contain a footer', () => {
-        const footer = componentFixture.debugElement.nativeElement.querySelector('jhi-answer-post-footer');
+        const footer = fixture.debugElement.nativeElement.querySelector('jhi-answer-post-footer');
         expect(footer).to.exist;
     });
 

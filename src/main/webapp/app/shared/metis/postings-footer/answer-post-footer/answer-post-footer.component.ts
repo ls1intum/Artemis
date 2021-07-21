@@ -1,7 +1,6 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { PostingsFooterDirective } from 'app/shared/metis/postings-footer/postings-footer.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
@@ -9,11 +8,16 @@ import { MetisService } from 'app/shared/metis/metis.service';
     templateUrl: './answer-post-footer.component.html',
     styleUrls: ['../../../../overview/discussion/discussion.scss'],
 })
-export class AnswerPostFooterComponent extends PostingsFooterDirective<AnswerPost> {
+export class AnswerPostFooterComponent extends PostingsFooterDirective<AnswerPost> implements OnInit {
     @Output() toggleApproveChange: EventEmitter<AnswerPost> = new EventEmitter<AnswerPost>();
+    isAtLeastTutorInCourse: boolean;
 
-    constructor(protected answerPostService: AnswerPostService, protected metisService: MetisService) {
-        super(answerPostService, metisService);
+    constructor(protected metisService: MetisService) {
+        super();
+    }
+
+    ngOnInit(): void {
+        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
     }
 
     toggleApprove(): void {

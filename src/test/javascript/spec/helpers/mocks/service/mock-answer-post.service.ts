@@ -1,8 +1,12 @@
 import { Observable, of } from 'rxjs';
-import { Post } from 'app/entities/metis/post.model';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { HttpResponse } from '@angular/common/http';
 
-export class MockPostService {
-    create = (courseId: number, post: Post): Observable<Post> => of(post);
-    update = (courseId: number, post: Post): Observable<Post> => of(post);
-    updateVotes = (courseId: number, post: Post, voteChange: number): Observable<Post> => of(post);
+export class MockAnswerPostService {
+    create = (courseId: number, answerPost: AnswerPost): Observable<AnswerPost> => of(answerPost);
+    update = (courseId: number, answerPost: AnswerPost): Observable<AnswerPost> => of(answerPost);
+
+    delete(answerPost: AnswerPost): Observable<HttpResponse<any>> {
+        return of();
+    }
 }
