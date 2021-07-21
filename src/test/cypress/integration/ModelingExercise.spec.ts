@@ -1,11 +1,11 @@
-import { CypressUserManagement } from './../support/users';
 import { generateUUID } from '../support/utils';
+import { artemis } from '../support/ArtemisTesting';
 
 // https://day.js.org/docs is a tool for date/time
 import dayjs from 'dayjs';
 
 // Users
-const userManagement = new CypressUserManagement();
+const userManagement = artemis.users;
 const admin = userManagement.getAdmin();
 const student = userManagement.getStudentOne();
 const tutor = userManagement.getTutor();
@@ -13,7 +13,7 @@ const instructor = userManagement.getInstructor();
 
 let testCourse: any;
 let modelingExercise: any;
-//
+
 const uid = generateUUID();
 const courseName = 'Cypress course' + uid;
 const courseShortName = 'cy' + uid;

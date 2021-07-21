@@ -1,16 +1,16 @@
+import { artemis } from '../support/ArtemisTesting';
 import { beVisible } from '../support/constants';
 import { CourseManagementPage } from '../support/pageobjects/CourseManagementPage';
 import { NavigationBar } from '../support/pageobjects/NavigationBar';
-import { ArtemisRequests } from '../support/requests/ArtemisRequests';
-import { CypressUserManagement } from '../support/users';
 import { generateUUID } from '../support/utils';
 
-// The user management object
-const users = new CypressUserManagement();
-const admin = users.getAdmin();
+/**
+ * Admin account.
+ */
+const admin = artemis.users.getAdmin();
 
 // Requests
-let artemisRequests: ArtemisRequests;
+const artemisRequests = artemis.requests;
 
 // PageObjects
 let courseManagementPage: CourseManagementPage;
@@ -38,7 +38,6 @@ describe('Programming Exercise Management', () => {
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
         cy.login(admin);
-        artemisRequests = new ArtemisRequests();
         artemisRequests.courseManagement
             .createCourse(courseName, courseShortName)
             .its('body')

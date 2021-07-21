@@ -1,13 +1,9 @@
+import { artemis } from '../support/ArtemisTesting';
 import { beVisible } from '../support/constants';
 import { CourseManagementPage } from '../support/pageobjects/CourseManagementPage';
 import { NavigationBar } from '../support/pageobjects/NavigationBar';
 import { ArtemisRequests } from '../support/requests/ArtemisRequests';
-import { CypressUserManagement } from '../support/users';
 import { generateUUID } from '../support/utils';
-
-// The user management object
-const users = new CypressUserManagement();
-const username = users.getStudentOne().username;
 
 // Requests
 const artemisRequests: ArtemisRequests = new ArtemisRequests();
@@ -32,7 +28,7 @@ describe('Course management', () => {
         uid = generateUUID();
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
-        cy.login(users.getAdmin(), '/');
+        cy.login(artemis.users.getAdmin(), '/');
     });
 
     describe('Manual student selection', () => {
@@ -49,6 +45,7 @@ describe('Course management', () => {
         });
 
         it('Adds a student manually to the course', function () {
+            const username = artemis.users.getStudentOne().username;
             navigationBar.openCourseManagement();
             courseManagementPage.openStudentOverviewOfCourse(courseName, courseShortName);
             cy.intercept('GET', '/api/users/search*').as('getStudentQuery');

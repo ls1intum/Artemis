@@ -1,19 +1,18 @@
-import { CypressUserManagement, CypressCredentials } from './../support/users';
+import { CypressCredentials } from './../support/users';
 import { generateUUID } from '../support/utils';
-import { OnlineEditorPage, ProgrammingExerciseSubmission } from '../support/pageobjects/OnlineEditorPage';
 import allSuccessful from '../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import partiallySuccessful from '../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import { beVisible } from '../support/constants';
-import { ArtemisRequests } from '../support/requests/ArtemisRequests';
+import { artemis } from '../support/ArtemisTesting';
 
 // The user management object
-const users = new CypressUserManagement();
+const users = artemis.users;
 
 // Requests
-let artemisRequests: ArtemisRequests;
+const artemisRequests = artemis.requests;
 
 // PageObjects
-let editorPage: OnlineEditorPage;
+const editorPage = artemis.pageobjects.onlineEditor;
 
 // Container for a course dto
 let course: any;
@@ -32,13 +31,7 @@ const exerciseRow = '.course-exercise-row';
 
 describe('Programming exercise participations', () => {
     before(() => {
-        artemisRequests = new ArtemisRequests();
         setupCourseAndProgrammingExercise();
-    });
-
-    beforeEach(() => {
-        editorPage = new OnlineEditorPage();
-        registerQueries();
     });
 
     it('Makes a partially successful submission', function () {
@@ -63,13 +56,6 @@ describe('Programming exercise participations', () => {
         }
     });
 });
-
-/**
- * Sets all the necessary cypress request hooks up.
- */
-function registerQueries() {
-    cy.intercept('POST', '/api/courses/*/exercises/*/participations').as('participateInExerciseQuery');
-}
 
 /**
  * Creates a course and a programming exercise inside that course.
@@ -157,9 +143,11 @@ function startParticipationInProgrammingExercise(credentials: CypressCredentials
     cy.log('Participating in the programming exercise as a student...');
     cy.contains(courseName).parents('.card-header').click();
     cy.url().should('include', exercisePath);
+    cy.intercept('POST', '/api/courses/*/exercises/*/participations').as('participateInExerciseQuery');
     cy.get(exerciseRow).contains(programmingExerciseName).should(beVisible);
     cy.get(exerciseRow).find('.start-exercise').click();
     cy.wait('@participateInExerciseQuery');
+    cy.intercept('GET', '/api/programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
     cy.get(exerciseRow).find('[buttonicon="folder-open"]').click();
-    editorPage.waitForPageLoad();
+    cy.wait('@initialQuery').wait(2000);
 }

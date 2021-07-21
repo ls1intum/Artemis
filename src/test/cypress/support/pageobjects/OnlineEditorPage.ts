@@ -6,18 +6,6 @@ const buildingAndTesting = 'Building and testing...';
  * A class which encapsulates UI selectors and actions for the Online Editor Page.
  */
 export class OnlineEditorPage {
-    constructor() {
-        cy.intercept('POST', '/api/repository/*/**').as('createFile');
-        cy.intercept('GET', '/api/programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
-    }
-
-    /**
-     * Waits for the first query (student participation) on the online editor page to improve test stability.
-     */
-    waitForPageLoad() {
-        return cy.wait('@initialQuery').wait(2000);
-    }
-
     /**
      * @returns the root element of the file browser. Useful for further querying.
      */
@@ -81,6 +69,7 @@ export class OnlineEditorPage {
      * @param fileName the name of the new file
      */
     createFileInRootPackage(fileName: string) {
+        cy.intercept('POST', '/api/repository/*/**').as('createFile');
         cy.get('.file-icons').children('button').first().click();
         cy.get('jhi-code-editor-file-browser-create-node').type(fileName).type('{enter}');
         cy.wait('@createFile');

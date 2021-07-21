@@ -1,11 +1,9 @@
+import { artemis } from '../support/ArtemisTesting';
 import { authTokenKey } from '../support/constants';
-import { CypressUserManagement } from '../support/users';
-
-// The user management object
-const users = new CypressUserManagement();
-const user = users.getStudentOne();
 
 describe('Authentication tests', () => {
+    const user = artemis.users.getStudentOne();
+
     beforeEach(() => {
         expect(user.username, 'username was set').to.be.a('string').and.not.be.empty;
         expect(user.password, 'password was set').to.be.a('string').and.not.be.empty;
