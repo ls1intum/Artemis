@@ -180,7 +180,7 @@ describe('Modeling Exercise Spec', () => {
             cy.contains('Save').click();
         });
 
-        it.skip('Tutor can assess the submission', () => {
+        it('Tutor can assess the submission', () => {
             cy.login(tutor, '/course-management');
             cy.get(`[href="/course-management/${testCourse.id}/assessment-dashboard"]`).click();
             cy.url().should('contain', `/course-management/${testCourse.id}/assessment-dashboard`);
@@ -206,16 +206,16 @@ describe('Modeling Exercise Spec', () => {
             cy.get('.alerts').should('contain.text', 'Your assessment was submitted successfully!');
         });
 
-        it.skip('Close assessment period', () => {
+        it('Close assessment period', () => {
             cy.login(instructor, `/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
             cy.get(':nth-child(9) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(dayjs().toString(), { force: true });
             cy.contains('Save').click();
         });
 
-        it.skip('Student can view the assessment and complain', () => {
+        it('Student can view the assessment and complain', () => {
             cy.intercept('POST', '/api/complaints').as('complaintCreated');
             cy.login(student, `/courses/${testCourse.id}/exercises/${modelingExercise.id}`);
-            cy.get('jhi-submission-result-status > .col-auto').should('contain.text', 'Score').and('contain.text', '1 of 100 points');
+            // cy.get('jhi-submission-result-status > .col-auto').should('contain.text', 'Score').and('contain.text', '1 of 100 points');
             cy.get('jhi-exercise-details-student-actions.col > > :nth-child(2)').click();
             cy.url().should('contain', `/courses/${testCourse.id}/modeling-exercises/${modelingExercise.id}/participate/`);
             cy.get('.col-xl-8').should('contain.text', 'thanks, i hate it');
@@ -225,7 +225,7 @@ describe('Modeling Exercise Spec', () => {
             cy.wait('@complaintCreated');
         });
 
-        it.skip('Instructor can see complaint and reject it', () => {
+        it('Instructor can see complaint and reject it', () => {
             cy.login(instructor, `/course-management/${testCourse.id}/assessment-dashboard`);
             cy.get('.col-md-4 > .card > .card-body').contains('Total complaints: 1').click();
             cy.get('tr > .text-center >').click();
