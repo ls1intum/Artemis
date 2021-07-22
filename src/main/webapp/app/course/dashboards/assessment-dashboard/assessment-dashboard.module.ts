@@ -11,12 +11,14 @@ import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tuto
 import { ArtemisExerciseAssessmentDashboardModule } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.module';
 import { AssessmentDashboardInformationComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 
 const ENTITY_STATES = [...assessmentDashboardRoute];
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
+        ArtemisSidePanelModule,
         ArtemisResultModule,
         MomentModule,
         ClipboardModule,

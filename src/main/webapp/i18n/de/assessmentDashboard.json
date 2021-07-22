@@ -6,23 +6,16 @@
             },
             "title": "Bewertungsübersicht",
             "noSubmissionFound": "Keine Abgaben gefunden",
-            "informationAboutCourse": "Kursinformationen",
-            "informationAboutExam": "Klausurinformationen",
+            "assessmentInformation": "Bewertungsinformationen",
             "submissions": "Einreichugen",
             "pageHeader": "Bewertungs-Dashboard für den Kurs",
             "pageHeaderExam": "Klausur-Dashboard für Tutor:innen von",
             "pageHeaderExamTestRun": "Testlauf Bewertungs-Dashboard",
-            "yourAssessments": "Deine Bewertungen",
-            "totalAssessments": "Gesamtzahl der Bewertungen",
+            "assessments": "Assessments",
+            "assessmentLocks": "Assessment Locks",
             "totalAssessmentsForCorrectionrounds": "Bewertungen der Korrekturrunden",
-            "complaintsAboutYourAssessments": "Beschwerden über deine Bewertungen",
             "complaints": "Beschwerden",
-            "totalComplaints": "Gesamtzahl der Beschwerden",
-            "totalLocks": "Gesamtzahl gesperrter Bewertungen",
-            "moreFeedbackRequestsForYourAssessments": "Feedbackanfragen über deine Bewertungen",
-            "yourAssessmentLocks": "Von dir gesperrte Bewertungen",
             "moreFeedbackRequests": "Feedbackanfragen",
-            "totalMoreFeedbackRequests": "Gesamtzahl der weiteren Feedbackanfragen",
             "showFinishedExercises": "Beendete Übungen anzeigen",
             "exercise": "Übungen",
             "exerciseType": "Aufgabentyp",
@@ -37,7 +30,12 @@
             "assessStudentsLateSubmissions": "Bewerte die verspäteten Einreichungen der Studierenden",
             "evaluateStudentsComplaints": "Evaluiere die Beschwerden und Feedback Anfragen der Studierenden",
             "numberOfOpenComplaints": "Anzahl an offenen Beschwerden",
-            "exerciseTeams": "Teams der Übung"
+            "exerciseTeams": "Teams der Übung",
+            "exerciseTable": {
+                "title": "Tabelle aller Übungen",
+                "courseInformation": "Übung Tabelle listet alle Übungen des aktuellen Kurses auf. Um alle Übungen, einschließlich der beendeten, anzuzeigen, musst du in das folgende Checkbox. Du kannst klicken <strong>Aufgaben-Dashboard</strong>, um die Aufgabendetails und Abgaben der Studierenden anschauen.",
+                "examInformation": "Übung Tabelle listet alle Übungen des aktuellen Kurses auf. Um alle Übungen, einschließlich der beendeten, anzuzeigen, musst du in das folgende Checkbox. Du kannst klicken <strong>Aufgaben-Dashboard</strong>, um die Aufgabendetails und Abgaben der Studierenden anschauen."
+            }
         }
     }
 }
