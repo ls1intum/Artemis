@@ -1,15 +1,13 @@
 <div>
-    <div class="row">
+    <div class="row" *ngIf="exercise && exercise.id && exercise.course && exercise.course.id">
         <div class="col-12 col-sm">
             <h4>
-                <span *ngIf="exercise && exercise.course"
-                    >{{ exercise.course.title }} - {{ exercise.title }} - {{ 'artemisApp.exampleSubmission.exampleSubmissions' | artemisTranslate }}
-                </span>
+                <span> {{ exercise.course.title }} - {{ exercise.title }} - {{ 'artemisApp.exampleSubmission.exampleSubmissions' | artemisTranslate }} </span>
             </h4>
         </div>
         <div class="col-12 col-sm-auto d-flex">
             <a
-                *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
+                *ngIf="exercise.course.isAtLeastEditor"
                 class="btn btn-primary"
                 [routerLink]="getLinkToExampleSubmission('new')"
                 jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"
@@ -20,7 +18,7 @@
     <jhi-alert-error></jhi-alert-error>
     <br />
     <div class="table-responsive">
-        <table class="table table-striped">
+        <table class="table table-striped" *ngIf="exercise && exercise.id && exercise.course && exercise.course.id">
             <thead>
                 <tr>
                     <th><span jhiTranslate="global.field.id"></span></th>
@@ -32,26 +30,18 @@
             <tbody class="markdown-preview">
                 <tr *ngFor="let exampleSubmission of exercise.exampleSubmissions; let i = index">
                     <td>
-                        <a
-                            *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
-                            [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)"
-                            class="btn-link"
-                        >
+                        <a [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)" class="btn-link">
                             {{ exampleSubmission.id }}
                         </a>
                     </td>
                     <td>
-                        <a
-                            *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
-                            [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)"
-                            class="btn-link"
-                        >
+                        <a [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)" class="btn-link">
                             {{ 'artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate }} {{ i + 1 }}
                         </a>
                     </td>
-                    <td>{{ exampleSubmission.usedForTutorial ? 'Yes' : 'No' }}</td>
+                    <td>{{ 'global.generic.' + (exampleSubmission.usedForTutorial ? 'yes' : 'no') | artemisTranslate }}</td>
                     <td>
-                        <button (click)="deleteExampleSubmission(i)" class="btn btn-danger col-auto">
+                        <button *ngIf="exercise.course.isAtLeastEditor" (click)="deleteExampleSubmission(i)" class="btn btn-danger col-auto">
                             <fa-icon [icon]="'times'"></fa-icon>
                             {{ 'entity.action.delete' | artemisTranslate }}
                         </button>
