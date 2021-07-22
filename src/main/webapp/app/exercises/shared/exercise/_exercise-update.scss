@@ -1,10 +1,6 @@
-@mixin form-element-font-style() {
+.form-element {
     font-size: 17px;
     font-weight: bolder;
-}
-
-.form-element {
-    @include form-element-font-style();
 }
 
 .form-group {

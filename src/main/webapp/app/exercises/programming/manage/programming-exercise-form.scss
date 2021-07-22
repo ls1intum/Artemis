@@ -1,7 +1,8 @@
 @import '../../shared/exercise/_exercise-update.scss';
 
 label {
-    @include form-element-font-style();
+    font-size: 17px;
+    font-weight: bolder;
 }
 
 .form__editable-instructions ::ng-deep .editable-instruction-container__editor {
