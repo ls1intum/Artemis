@@ -37,8 +37,8 @@
             },
             "clusters": "Cluster",
             "checkClusters": {
-                "text": "Anzahl der Cluster:",
-                "error": "Laden der Anzahl der Cluster fehlgeschlagen."
+                "text": "Clusteranzahl:",
+                "error": "Laden der Clusteranzahl fehlgeschlagen."
             },
             "buildClusters": {
                 "action": "Cluster erstellen",
