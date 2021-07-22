@@ -56,7 +56,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         this.calculatePercentageAssessmentProgress();
         this.calculatePercentageComplaintsProgress();
 
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+        if (this.exercise && this.exercise.type === ExerciseType.PROGRAMMING) {
             this.shouldShowManualAssessments = !(this.exercise as ProgrammingExercise).allowComplaintsForAutomaticAssessments;
         }
     }
