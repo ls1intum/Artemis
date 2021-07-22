@@ -1,14 +1,16 @@
 <div class="row justify-content-between my-1 me-0">
     <div class="col-auto pe-0">
-        <span class="posting-header" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
+        <span class="posting-header header-author-date">
             {{ posting.author!.name }}
             {{ postingIsOfToday ? ' • Today ' : ' • ' }}
-            {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
+            <span [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
+                {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
+            </span>
         </span>
         <fa-icon
             *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
             size="xs"
-            class="me-0.5 clickable icon"
+            class="me-0.5 editIcon clickable icon"
             [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
             container="body"
             [icon]="'pencil-alt'"
@@ -19,20 +21,22 @@
             *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
             iconSize="xs"
             (confirmEvent)="deletePosting()"
-            [ngClass]="'me-1 clickable icon'"
+            [ngClass]="'me-1 deleteIcon clickable icon'"
             [initialTooltip]="'artemisApp.metis.deletePost' | artemisTranslate"
             [confirmTooltip]="'artemisApp.metis.confirmDeletePost' | artemisTranslate"
         >
         </jhi-confirm-icon>
     </div>
     <div
-        class="col-auto ps-0 pe-1"
+        class="col-auto ps-0 pe-1 toggleAnswerElement"
         (click)="toggleAnswers()"
-        [ngClass]="getNumberOfAnswerPosts() > 0 ? 'clickable' : ''"
+        [ngClass]="numberOfAnswerPosts > 0 ? 'clickable' : ''"
         [ngbTooltip]="'artemisApp.metis.toggleThread' | artemisTranslate"
-        [disableTooltip]="getNumberOfAnswerPosts() === 0"
+        [disableTooltip]="numberOfAnswerPosts === 0"
     >
-        <span class="posting-header">{{ getNumberOfAnswerPosts() }}</span>
-        <fa-icon [icon]="'comments'" class="icon"></fa-icon>
+        <span class="posting-header answer-count"
+            >{{ numberOfAnswerPosts }}
+            <fa-icon [icon]="'comments'" class="icon"></fa-icon>
+        </span>
     </div>
 </div>

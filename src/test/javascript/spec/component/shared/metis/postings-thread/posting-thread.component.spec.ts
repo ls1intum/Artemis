@@ -10,9 +10,9 @@ import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.serv
 import { MockAnswerPostService } from '../../../../helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import * as moment from 'moment';
+import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
-import { By } from '@angular/platform-browser';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -77,6 +77,9 @@ describe('PostingThreadComponent', () => {
             });
     });
 
+    afterEach(function () {
+        sinon.restore();
+    });
     it('should initialized correctly for users that are at least tutors in course', () => {
         component.post = post;
         component.post.answers = unsortedAnswerArray;
@@ -129,7 +132,7 @@ describe('PostingThreadComponent', () => {
         component.post = post;
         component.post.answers = unsortedAnswerArray;
         fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.query(By.css('button'));
+        const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
         expect(answerNowButton).to.not.exist;
     });
 
@@ -137,7 +140,7 @@ describe('PostingThreadComponent', () => {
         component.post = post;
         component.post.answers = [];
         fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.query(By.css('button'));
+        const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
         expect(answerNowButton).to.exist;
     });
 
@@ -145,7 +148,7 @@ describe('PostingThreadComponent', () => {
         component.post = post;
         component.post.answers = unsortedAnswerArray;
         component.ngOnInit();
-        const postComponent = fixture.debugElement.query(By.css('jhi-post'));
+        const postComponent = fixture.debugElement.nativeElement.querySelector('jhi-post');
         expect(postComponent).to.exist;
     });
 
@@ -154,7 +157,7 @@ describe('PostingThreadComponent', () => {
         component.post.answers = unsortedAnswerArray;
         component.showAnswers = true;
         fixture.detectChanges();
-        const answerPostComponent = fixture.debugElement.query(By.css('jhi-answer-post'));
+        const answerPostComponent = fixture.debugElement.nativeElement.querySelector('jhi-answer-post');
         expect(answerPostComponent).to.exist;
     });
 
@@ -163,7 +166,7 @@ describe('PostingThreadComponent', () => {
         component.post.answers = unsortedAnswerArray;
         component.showAnswers = false;
         fixture.detectChanges();
-        const answerPostComponent = fixture.debugElement.query(By.css('jhi-answer-post'));
+        const answerPostComponent = fixture.debugElement.nativeElement.querySelector('jhi-answer-post');
         expect(answerPostComponent).to.not.exist;
     });
 });

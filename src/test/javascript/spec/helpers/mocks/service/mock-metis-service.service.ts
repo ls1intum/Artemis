@@ -21,4 +21,8 @@ export class MockMetisService {
     metisUserIsAtLeastTutorInCourse(): Observable<HttpResponse<any>> {
         return of();
     }
+
+    metisUserIsAuthorOfPosting(): Observable<HttpResponse<any>> {
+        return of();
+    }
 }

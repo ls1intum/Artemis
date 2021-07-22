@@ -4,10 +4,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { By } from '@angular/platform-browser';
 import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import * as moment from 'moment';
+import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
@@ -45,26 +45,42 @@ describe('AnswerPostFooterComponent', () => {
             });
     });
 
-    it('should initialize unapproved answer post footer correctly', () => {
-        metisServiceUserAuthorityStub.returns(false);
-        component.ngOnInit();
-        expect(component.isAtLeastTutorInCourse).to.deep.equal(false);
+    afterEach(function () {
+        sinon.restore();
     });
 
-    it('should initialize approved answer post footer correctly', () => {
-        metisServiceUserAuthorityStub.returns(true);
-        component.ngOnInit();
-        expect(component.isAtLeastTutorInCourse).to.deep.equal(true);
-    });
-
-    it('should toggle answer post from approved to unapproved', () => {
+    it('should initialize user authority and answer post footer correctly', () => {
         component.posting = unApprovedAnswerPost;
         metisServiceUserAuthorityStub.returns(false);
         component.ngOnInit();
         expect(component.isAtLeastTutorInCourse).to.deep.equal(false);
         fixture.detectChanges();
-        const notApprovedBadge = fixture.debugElement.query(By.css('.not-approved-badge'));
-        const approveBadge = fixture.debugElement.query(By.css('.approved-badge'));
-        // Todo: finish test
+        const approvedBadge = fixture.debugElement.nativeElement.querySelector('.approved-badge');
+        expect(approvedBadge).to.not.exist;
+    });
+
+    it('should initialize user authority and answer post footer correctly', () => {
+        component.posting = unApprovedAnswerPost;
+        metisServiceUserAuthorityStub.returns(true);
+        component.ngOnInit();
+        expect(component.isAtLeastTutorInCourse).to.deep.equal(true);
+        fixture.detectChanges();
+        const approvedBadge = fixture.debugElement.nativeElement.querySelector('.approved-badge');
+        expect(approvedBadge).to.not.exist;
+    });
+
+    it('should toggle answer post from unapproved to approved on click', () => {
+        const toggleApproveSpy = sinon.spy(component, 'toggleApprove');
+        component.posting = unApprovedAnswerPost;
+        metisServiceUserAuthorityStub.returns(true);
+        component.ngOnInit();
+        fixture.detectChanges();
+        const toggleElement = fixture.debugElement.nativeElement.querySelector('#toggleElement');
+        toggleElement.click();
+        fixture.detectChanges();
+        expect(toggleApproveSpy).to.have.been.called;
+        expect(component.posting.tutorApproved).to.be.equal(true);
+        const approvedBadge = fixture.debugElement.nativeElement.querySelector('.approved-badge');
+        expect(approvedBadge).to.exist;
     });
 });
