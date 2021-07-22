@@ -1,14 +1,9 @@
-/// <reference types="cypress" />
-
+import { artemis } from '../support/ArtemisTesting';
 import { authTokenKey } from '../support/constants';
 
-let username = Cypress.env('username');
-let password = Cypress.env('password');
-if (Cypress.env('isCi')) {
-    username = username.replace('USERID', '1');
-    password = password.replace('USERID', '1');
-}
 describe('Authentication tests', () => {
+    const user = artemis.users.getStudentOne();
+
     beforeEach(() => {
         cy.logout();
     });
@@ -19,7 +14,7 @@ describe('Authentication tests', () => {
     });
 
     it('logs in via the ui', function () {
-        cy.loginWithGUI(username, password);
+        cy.loginWithGUI(user);
         cy.url()
             .should('include', '/courses')
             .then(() => {
@@ -28,14 +23,14 @@ describe('Authentication tests', () => {
     });
 
     it('logs in programmatically and logs out via the ui', function () {
-        cy.login(username, password, '/courses');
+        cy.login(user, '/courses');
         cy.url().should('include', '/courses');
         cy.get('#account-menu').click().get('#logout').click();
         cy.url().should('equal', Cypress.config().baseUrl + '/');
     });
 
     it('displays error messages on wrong password', () => {
-        cy.loginWithGUI('artemis_admin', 'lorem-ipsum');
+        cy.loginWithGUI({ username: 'artemis_admin', password: 'lorem-ipsum' });
         cy.location('pathname').should('eq', '/');
         cy.get('.alert').should('exist').and('have.text', 'Failed to sign in! Please check your username and password and try again.');
         cy.get('.btn').click();
