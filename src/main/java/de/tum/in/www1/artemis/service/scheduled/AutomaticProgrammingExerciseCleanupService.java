@@ -135,7 +135,9 @@ public class AutomaticProgrammingExerciseCleanupService {
 
         Set<ProgrammingExerciseStudentParticipation> participationsWithBuildPlanToDelete = new HashSet<>();
 
-        programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults().forEach(participation -> {
+        var participationsWithBuildPlans = programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults();
+        log.info("Found {} potential build plans to delete", participationsWithBuildPlans.size());
+        participationsWithBuildPlans.forEach(participation -> {
 
             if (participation.getBuildPlanId() == null || participation.getParticipant() == null) {
                 // NOTE: based on the query above, this code is not reachable. We check it anyway to be 100% sure such participations won't be processed
@@ -172,6 +174,7 @@ public class AutomaticProgrammingExerciseCleanupService {
         deleteBuildPlans(participationsWithBuildPlanToDelete);
     }
 
+    // returns false if the participation should be cleaned after the criteria checked in this method
     private boolean checkBuildAndTestExercises(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation,
             Set<ProgrammingExerciseStudentParticipation> participationsWithBuildPlanToDelete, AtomicLong countAfterBuildAndTestDate) {
         if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
@@ -219,6 +222,7 @@ public class AutomaticProgrammingExerciseCleanupService {
         }
     }
 
+    // returns false if the participation should be cleaned after the criteria checked in this method
     private boolean checkFutureExamExercises(ProgrammingExercise programmingExercise) {
         if (programmingExercise.isExamExercise() && programmingExercise.getExerciseGroup().getExam() != null) {
             var exam = programmingExercise.getExerciseGroup().getExam();

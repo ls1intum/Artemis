@@ -27,6 +27,8 @@ export class ParticipantScoreAverageDTO {
     public averageRatedScore?: number;
     public averagePoints?: number;
     public averageRatedPoints?: number;
+    public averageGrade?: string;
+    public averageRatedGrade?: string;
 }
 
 export class ScoresDTO {

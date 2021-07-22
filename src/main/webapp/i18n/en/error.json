@@ -34,6 +34,7 @@
         "feedbackCreditsNull": "Error! If feedback is present, all elements must contain points.",
         "invalidGradeStepFormat": "One or more grade steps are not following the correct format. Click on the \"?\" for more information.",
         "invalidGradeStepAdjacency": "The grade steps don't map to a valid grading key. Click on the \"?\" for more information.",
-        "emptyGradeSteps": "Grade steps can't be empty. Click on the \"?\" for more information."
+        "emptyGradeSteps": "Grade steps can't be empty. Click on the \"?\" for more information.",
+        "textSubmissionTooLong": "Text submissions can not be longer than 30,000 characters."
     }
 }

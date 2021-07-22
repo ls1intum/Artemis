@@ -432,6 +432,12 @@ public class CourseExamExportService {
      */
     private Optional<Path> createCourseZipFile(Path outputZipFile, List<Path> filesToZip, Path relativeZipPath, List<String> exportErrors) {
         try {
+            // Create the parent directories if they don't exist otherwise the zip file cannot be created.
+            Path parentDir = outputZipFile.getParent();
+            if (!Files.exists(parentDir)) {
+                Files.createDirectories(parentDir);
+            }
+
             zipFileService.createZipFile(outputZipFile, filesToZip, relativeZipPath);
             log.info("Successfully created zip file: {}", outputZipFile);
             return Optional.of(outputZipFile);

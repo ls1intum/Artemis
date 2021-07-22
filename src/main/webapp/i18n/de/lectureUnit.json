@@ -22,7 +22,7 @@
         "textUnit": {
             "created": "Eine neue Texteinheit erstellt",
             "updated": "Texteinheit aktualisiert",
-            "tooltip": "Das ist eine Texteinheit.",
+            "tooltip": "Das ist eine Texteinheit",
             "isolated": "Isoliert öffnen",
             "notReleasedTooltip": "Text nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "markdownHelp": "Hier kann Markdown eingegeben werden. Mehr Informationen:",
@@ -47,7 +47,7 @@
         "videoUnit": {
             "created": "Eine neue Videoeinheit wurde erstellt",
             "updated": "Videoeinheit aktualisiert",
-            "tooltip": "Das ist eine Videoeinheit.",
+            "tooltip": "Das ist eine Videoeinheit",
             "description": "Beschreibung",
             "notReleasedTooltip": "Video nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "createVideoUnit": {
@@ -101,7 +101,7 @@
             "editAttachmentUnit": {
                 "title": "Bearbeite Dateieinheit"
             },
-            "tooltip": "Das ist eine Datei.",
+            "tooltip": "Das ist eine Datei",
             "uploadDate": "Upload Datum",
             "version": "Version",
             "FileName": "Dateiname",

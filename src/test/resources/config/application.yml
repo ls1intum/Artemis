@@ -153,6 +153,9 @@ info:
             -   tutor_assessment_tour: 'Patterns in Software Engineering'
     # Allowed Orion version range. Should only be changed on major version releases
     allowed-minimum-orion-version: 1.0.0
+    # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
+    # default value set to true for tests
+    text-assessment-analytics-enabled: true
 
 jhipster:
     clientApp:

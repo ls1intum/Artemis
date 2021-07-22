@@ -241,7 +241,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // TODO: move to exam-participation.service after studentExam was retrieved
             // initialize all submissions as synced
             this.studentExam.exercises!.forEach((exercise) => {
-                // We do not support hints at the moment. Setting an empty array here disables the hint requests
+                // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
                 exercise.exerciseHints = [];
                 if (exercise.studentParticipations) {
                     exercise.studentParticipations!.forEach((participation) => {
@@ -266,7 +266,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                         // setup subscription for programming exercises
                         if (exercise.type === ExerciseType.PROGRAMMING) {
-                            const programmingSubmissionSubscription = this.createProgrammingExerciseSubmission(exercise.id!, participation.id!);
+                            const programmingSubmissionSubscription = this.createProgrammingExerciseSubmission(exercise.id!, participation.id!, false);
                             this.programmingSubmissionSubscriptions.push(programmingSubmissionSubscription);
                         }
                     });
@@ -325,6 +325,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             .subscribe(
                 (studentExam: StudentExam) => {
                     this.studentExam = studentExam;
+                    this.studentExam.exercises!.forEach((exercise) => {
+                        // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
+                        exercise.exerciseHints = [];
+                    });
                     this.alertService.addAlert({ type: 'success', msg: 'studentExam.submitSuccessful', timeout: 20000 }, []);
                 },
                 (error: Error) => {
@@ -511,7 +515,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 if (participation) {
                     // for programming exercises -> wait for latest submission before showing exercise
                     if (exercise.type === ExerciseType.PROGRAMMING) {
-                        const subscription = this.createProgrammingExerciseSubmission(exercise.id!, participation.id!);
+                        const subscription = this.createProgrammingExerciseSubmission(exercise.id!, participation.id!, true);
                         // we have to create a fake submission here, otherwise the navigation bar status will not work and the save mechanism might have problems
                         participation.submissions = [ProgrammingSubmission.createInitialCleanSubmissionForExam()];
                         this.programmingSubmissionSubscriptions.push(subscription);
@@ -675,10 +679,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * (e.g. programming-exam-submission exists only while the exam is not over)
      * @param exerciseId id of the exercise we want to subscribe to
      * @param participationId id of the participation we want to subscribe to
+     * @param fetchPending whether the latest pending submission should be fetched (true) or _only_ the websocket subscription is created (false)
      */
-    private createProgrammingExerciseSubmission(exerciseId: number, participationId: number): Subscription {
+    private createProgrammingExerciseSubmission(exerciseId: number, participationId: number, fetchPending: boolean): Subscription {
         return this.programmingSubmissionService
-            .getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true)
+            .getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true, false, fetchPending)
             .pipe(
                 filter((submissionStateObj) => submissionStateObj != undefined),
                 distinctUntilChanged(),
