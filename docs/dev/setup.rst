@@ -295,6 +295,34 @@ internal user management in Artemis, then you would use the profiles:
 
    dev,jenkins,gitlab,artemis,scheduling
 
+Configure Text Assessment Analytics Service:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Text Assessment Analytics is an internal analytics service used to gather data regarding the features of the text assessment process. Certain assessment events are tracked:
+
+1. Adding new feedback on a manually selected block
+2. Adding new feedback on an automatically selected block
+3. Deleting a feedback
+4. Clicking to resolve feedback conflicts
+5. Clicking to view origin submission of automatically generated feedback
+6. Hovering over the text assessment feedback impact warning
+7. Editing/Discarding an automatically generated feedback
+8. Clicking the Submit button when assessing a text submission
+9. Clicking the Assess Next button when assessing a text submission
+
+These events are tracked by attaching a POST call to the respective DOM elements on the client side.
+The POST call accesses the **TextAssessmentEventResource** which then adds the events in its respective table.
+This feature is disabled by default. We can enable it by modifying the configuration in the file:
+``src/main/resources/config/application-artemis.yml`` like so:
+
+.. code:: yaml
+
+   info:
+      text-assessment-analytics-enabled: true
+
+
+..
+
 Client Setup
 ------------
 
@@ -433,11 +461,11 @@ HTTP. We need to extend the configuration in the file
 
 .. _Athene: https://github.com/ls1intum/Athene
 
-Athene Service
+Apollon Service
 --------------
 
-The semi-automatic text assessment relies on the Athene_ service.
-To enable automatic text assessments, special configuration is required:
+The `Apollon Converter`_ is needed to convert models from their JSON representaiton to PDF.
+Special configuration is required:
 
 Enable the ``apollon`` Spring profile:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -460,4 +488,3 @@ HTTP. We need to extend the configuration in the file
 
 
 .. _Apollon Converter: https://github.com/ls1intum/Apollon_converter
-

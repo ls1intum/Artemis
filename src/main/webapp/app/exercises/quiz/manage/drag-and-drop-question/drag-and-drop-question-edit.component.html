@@ -163,9 +163,10 @@
         <div class="row">
             <div class="background-area">
                 <jhi-secured-image
-                    *ngIf="question.backgroundFilePath"
-                    [src]="question.backgroundFilePath"
+                    #backgroundImage
+                    [src]="backgroundFilePath"
                     [alt]="'artemisApp.dragAndDropQuestion.noBackgroundPicture' | artemisTranslate"
+                    style="visibility: hidden"
                 >
                 </jhi-secured-image>
                 <div
