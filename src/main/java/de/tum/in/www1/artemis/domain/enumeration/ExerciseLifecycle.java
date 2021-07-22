@@ -33,7 +33,7 @@ public enum ExerciseLifecycle implements IExerciseLifecycle {
         @Override
         public ZonedDateTime getDateFromExercise(Exercise exercise) {
             if (!(exercise instanceof ProgrammingExercise)) {
-                throw new IllegalStateException("Unexpected Exercise Lifecycle State " + this.toString() + "for exercise: " + exercise);
+                throw new IllegalStateException("Unexpected Exercise Lifecycle State " + this.toString() + " for exercise: " + exercise);
             }
             return ((ProgrammingExercise) exercise).getBuildAndTestStudentSubmissionsAfterDueDate();
         }

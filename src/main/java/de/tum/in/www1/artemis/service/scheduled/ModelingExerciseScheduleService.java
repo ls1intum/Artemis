@@ -74,7 +74,7 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
             modelingExercisesWithExam.forEach(this::scheduleExamExercise);
 
             log.info("Scheduled {} modeling exercises.", exercisesToBeScheduled.size());
-            log.info("Scheduled {} exam programming exercises.", modelingExercisesWithExam.size());
+            log.info("Scheduled {} exam modeling exercises.", modelingExercisesWithExam.size());
         }
         catch (Exception e) {
             log.error("Failed to start ModelingExerciseScheduleService", e);
@@ -92,7 +92,6 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
     }
 
     private static boolean needsToBeScheduled(ModelingExercise exercise) {
-
         if (exercise.getAssessmentType() != AssessmentType.SEMI_AUTOMATIC) {
             return false;
         }
