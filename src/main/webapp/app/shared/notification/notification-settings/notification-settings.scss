@@ -4,27 +4,31 @@
     right: 0;
     bottom: 0;
     left: 0;
-
     z-index: 1000;
-
     overflow: auto;
-
     padding: 20px;
     background: white;
     margin: 125px;
-
-    transition: 0.3s;
-    background-color: #ffffff;
     box-shadow: 0 0 4px 0 rgba(136, 136, 136, 1);
-    &.show {
-        bottom: 0; /* right: 0; */
-        transition: 0.3s;
-    }
 
     .header {
         height: 85px;
+
         .close {
+            position: absolute;
             right: 16px;
         }
+    }
+
+    #apply-changes-button {
+        position: absolute;
+        right: 125px;
+        //width: 175px;
+        width: 250px;
+        height: 50px;
+        font-size: 20px;
+        border: 0;
+        color: white;
+        background: #2f6fb2; /* TUM blue */
     }
 }

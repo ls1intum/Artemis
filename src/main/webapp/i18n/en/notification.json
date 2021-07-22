@@ -10,6 +10,10 @@
             "loadedNotificationCount": "{{loaded}} of {{total}} notifications loaded",
             "by": "by",
             "allLoaded": "No further notifications available.",
+            "settings": {
+                "header": "Notification Settings",
+                "saveChanges": "Save Changes"
+            },
             "target": {
                 "newAnswer": "View reply",
                 "newQuestion": "View post",

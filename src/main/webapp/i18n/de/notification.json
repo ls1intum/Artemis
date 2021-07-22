@@ -10,6 +10,10 @@
             "loadedNotificationCount": "{{loaded}} von {{total}} Mitteilungen geladen",
             "by": "von",
             "allLoaded": "Keine weiteren Mitteilungen vorhanden.",
+            "settings": {
+                "header": "Benachrichtigungseinstellungen",
+                "saveChanges": "Änderungen speichern"
+            },
             "target": {
                 "newAnswerPost": "Antwort ansehen",
                 "newPost": "Beitrag ansehen",

@@ -1,5 +1,3 @@
-<!--<div class="notification-overlay" (click)="toggleSettings()" [ngClass]="showSettings ? 'show' : 'hide'"></div>-->
-
 <div class="notification-settings-window">
     <div class="d-flex flex-column">
         <div class="header">
@@ -7,14 +5,23 @@
                 <fa-icon [icon]="'times'"></fa-icon>
             </button>
             <h5 class="mb-3 text-center">
-                <!--  {{ 'artemisApp.notification.notifications' | artemisTranslate }} -->
-                Notification Settings
+                {{ 'artemisApp.notification.settings.header' | artemisTranslate }}
             </h5>
             <h6 class="mb-3 text-center">Quiz Notifications :</h6>
-            <div class="mb-3 text-center">
-                <label for="quiz-notification-started"> Quiz Notification Started</label>
-                <input type="checkbox" id="quiz-notification-started" name="quizNotificationStated" />
+            <div class="mb-3 text-center" *ngFor="let notificationOption of notificationOptions">
+                <label for="{{ notificationOption.type }}"> {{ notificationOption.type }} </label>
+                <input
+                    type="checkbox"
+                    [checked]="notificationOption.status"
+                    id="{{ notificationOption.type }}"
+                    value="{{ notificationOption.type }}"
+                    (click)="toggleOption($event)"
+                />
             </div>
         </div>
+        <button *ngIf="optionsChanged" id="apply-changes-button" (click)="saveSettings()">
+            <fa-icon [icon]="'save'"></fa-icon>
+            {{ 'artemisApp.notification.settings.saveChanges' | artemisTranslate }}
+        </button>
     </div>
 </div>

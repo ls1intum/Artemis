@@ -7,7 +7,7 @@
     </button>
 </li>
 
-<div class="notification-overlay" (click)="toggleSidebar()" [ngClass]="showSidebar ? 'show' : 'hide'"></div>
+<div class="notification-overlay" (click)="closeOverlay()" [ngClass]="showSidebar || showSettings ? 'show' : 'hide'"></div>
 
 <jhi-notification-settings *ngIf="showSettings" (onClose)="settingsClosed($event)"></jhi-notification-settings>
 

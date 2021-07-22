@@ -52,11 +52,20 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     openSettings(): void {
+        this.toggleSidebar();
         this.showSettings = true;
     }
-
     settingsClosed(isClosed: boolean): void {
+        //TODO isClosed inputparamenter vll entfernen
         this.showSettings = false;
+    }
+
+    closeOverlay(): void {
+        if (this.showSettings) {
+            this.settingsClosed(true);
+        } else if (this.showSidebar) {
+            this.toggleSidebar();
+        }
     }
 
     /**
