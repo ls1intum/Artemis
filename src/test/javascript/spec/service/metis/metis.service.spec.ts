@@ -1,0 +1,217 @@
+import { getTestBed, TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { spy, stub } from 'sinon';
+import * as chai from 'chai';
+import * as sinonChai from 'sinon-chai';
+import * as moment from 'moment';
+import { CourseWideContext, Post } from 'app/entities/metis/post.model';
+import { Course } from 'app/entities/course.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { MockPostService } from '../../helpers/mocks/service/mock-post.service';
+import { MockAnswerPostService } from '../../helpers/mocks/service/mock-answer-post.service';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { ArtemisTestModule } from '../../test.module';
+import { PostService } from 'app/shared/metis/post/post.service';
+import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { User } from 'app/core/user/user.model';
+
+chai.use(sinonChai);
+const expect = chai.expect;
+
+describe('Metis Service', () => {
+    let injector: TestBed;
+    let metisService: MetisService;
+    let postService: MockPostService;
+    let answerPostService: MockAnswerPostService;
+    let accountService: MockAccountService;
+    let post1: Post;
+    let post2: Post;
+    let post3: Post;
+    let user1: User;
+    let user2: User;
+    let answerPost: AnswerPost;
+    let courseDefault: Course;
+    let exerciseDefault: TextExercise;
+    let lectureDefault: Lecture;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [HttpClientTestingModule, ArtemisTestModule],
+            providers: [
+                { provide: MetisService, useClass: MetisService },
+                { provide: PostService, useClass: MockPostService },
+                { provide: AnswerPostService, useClass: MockAnswerPostService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
+        });
+        injector = getTestBed();
+        metisService = injector.get(MetisService);
+        postService = injector.get(PostService);
+        answerPostService = injector.get(AnswerPostService);
+        accountService = injector.get(AccountService);
+
+        const today = moment();
+        const yesterday = moment().subtract(1, 'day');
+        user1 = { id: 1, name: 'usersame1', login: 'login1' } as User;
+        user2 = { id: 2, name: 'usersame2', login: 'login2' } as User;
+
+        post1 = new Post();
+        post1.id = 1;
+        post1.creationDate = today;
+        post1.content = 'This is a test post';
+        post1.title = 'title';
+        post1.tags = ['tag1', 'tag2'];
+        post1.votes = 5;
+        post1.author = user1;
+
+        post2 = new Post();
+        post2.id = 2;
+        post2.creationDate = yesterday;
+        post2.content = 'This is a test post';
+        post2.title = 'title';
+        post2.tags = ['tag1', 'tag2'];
+        post2.votes = 2;
+        post2.author = user2;
+
+        post3 = new Post();
+        post3.id = 3;
+        post3.creationDate = yesterday;
+        post3.content = 'This is a test post';
+        post3.title = 'title';
+        post3.tags = ['tag1', 'tag2'];
+        post3.votes = 1;
+        post3.author = user2;
+        post3.courseWideContext = CourseWideContext.RANDOM;
+
+        const posts: Post[] = [post1, post2, post3];
+
+        answerPost = new AnswerPost();
+        answerPost.id = 1;
+        answerPost.creationDate = undefined;
+        answerPost.content = 'This is a test answer post';
+
+        courseDefault = new Course();
+        courseDefault.id = 1;
+
+        exerciseDefault = new TextExercise(courseDefault, undefined);
+        exerciseDefault.id = 1;
+        exerciseDefault.posts = [post1];
+
+        lectureDefault = new Lecture();
+        lectureDefault.id = 1;
+        lectureDefault.posts = [post2];
+
+        courseDefault.exercises = [exerciseDefault];
+        courseDefault.lectures = [lectureDefault];
+        courseDefault.posts = posts;
+    });
+
+    describe('Invoke post service methods', () => {
+        it('should create a post', () => {
+            const postServiceSpy = spy(postService, 'create');
+            metisService.createPost(post1);
+            expect(postServiceSpy).to.have.been.called;
+        });
+        it('should delete a post', () => {
+            const postServiceSpy = spy(postService, 'delete');
+            metisService.deletePost(post1);
+            expect(postServiceSpy).to.have.been.called;
+        });
+        it('should update a post', () => {
+            const postServiceSpy = spy(postService, 'update');
+            metisService.updatePost(post1);
+            expect(postServiceSpy).to.have.been.called;
+        });
+
+        it('should get all a post tags', () => {
+            const postServiceSpy = spy(postService, 'getAllPostTagsByCourseId');
+            metisService.updateCoursePostTags();
+            expect(postServiceSpy).to.have.been.called;
+        });
+        it('should get posts for lecture filter', () => {
+            const postServiceSpy = spy(postService, 'getAllPostsByLectureId');
+            metisService.getPostsForFilter({ lecture: lectureDefault });
+            expect(postServiceSpy).to.have.been.called;
+        });
+        it('should get posts for exercise filter', () => {
+            const postServiceSpy = spy(postService, 'getAllPostsByExerciseId');
+            metisService.getPostsForFilter({ exercise: exerciseDefault });
+            expect(postServiceSpy).to.have.been.called;
+        });
+        it('should get posts for course-context filter', () => {
+            const postServiceSpy = spy(postService, 'getAllPostsByCourseId');
+            metisService.getPostsForFilter({ courseWideContext: CourseWideContext.RANDOM });
+            expect(postServiceSpy).to.have.been.called;
+        });
+        it('should get posts for course', () => {
+            const postServiceSpy = spy(postService, 'getAllPostsByCourseId');
+            metisService.getPostsForFilter({});
+            expect(postServiceSpy).to.have.been.called;
+        });
+        it('should update votes for a post', () => {
+            const postServiceSpy = spy(postService, 'updateVotes');
+            metisService.updatePostVotes(post1, 6);
+            expect(postServiceSpy).to.have.been.called;
+        });
+    });
+
+    describe('Invoke answer post service methods', () => {
+        it('should create an answer post', () => {
+            const answerPostServiceSpy = spy(answerPostService, 'create');
+            metisService.createAnswerPost(answerPost);
+            expect(answerPostServiceSpy).to.have.been.called;
+        });
+        it('should delete an answer post', () => {
+            const answerPostServiceSpy = spy(answerPostService, 'delete');
+            metisService.deleteAnswerPost(answerPost);
+            expect(answerPostServiceSpy).to.have.been.called;
+        });
+        it('should update an answer post', () => {
+            const answerPostServiceSpy = spy(answerPostService, 'update');
+            metisService.updateAnswerPost(answerPost);
+            expect(answerPostServiceSpy).to.have.been.called;
+        });
+    });
+
+    it('should determine that metis user is at least tutor in course', () => {
+        const accountServiceStub = stub(accountService, 'isAtLeastTutorInCourse').returns(true);
+        const metisUserIsAtLeastTutorInCourseReturn = metisService.metisUserIsAtLeastTutorInCourse();
+        expect(metisUserIsAtLeastTutorInCourseReturn).to.be.true;
+    });
+
+    it('should determine that metis user is not at least tutor in course', () => {
+        const accountServiceStub = stub(accountService, 'isAtLeastTutorInCourse').returns(false);
+        const metisUserIsAtLeastTutorInCourseReturn = metisService.metisUserIsAtLeastTutorInCourse();
+        expect(metisUserIsAtLeastTutorInCourseReturn).to.be.false;
+    });
+
+    it('should determine that metis user is at least tutor in course', () => {
+        const accountServiceStub = stub(accountService, 'isAtLeastTutorInCourse').returns(true);
+        const metisUserIsAtLeastTutorInCourseReturn = metisService.metisUserIsAtLeastTutorInCourse();
+        expect(metisUserIsAtLeastTutorInCourseReturn).to.be.true;
+    });
+
+    it('should determine that metis user is author of post', () => {
+        const metisServiceGetUserStub = stub(metisService, 'getUser').returns(user1);
+        const metisUserIsAuthorOfPostingReturn = metisService.metisUserIsAuthorOfPosting(post1);
+        expect(metisUserIsAuthorOfPostingReturn).to.be.true;
+    });
+
+    it('should determine that metis user is not author of post', () => {
+        const metisServiceGetUserStub = stub(metisService, 'getUser').returns(user2);
+        const metisUserIsAuthorOfPostingReturn = metisService.metisUserIsAuthorOfPosting(post1);
+        expect(metisUserIsAuthorOfPostingReturn).to.be.false;
+    });
+
+    it('should set course information correctly and invoke an update of the post tags in this course', () => {
+        const updateCoursePostTagsSpy = spy(metisService, 'updateCoursePostTags');
+        metisService.setCourse(courseDefault);
+        const getCourseReturn = metisService.getCourse();
+        expect(getCourseReturn).to.be.equal(courseDefault);
+        expect(updateCoursePostTagsSpy).to.have.been.called;
+    });
+});

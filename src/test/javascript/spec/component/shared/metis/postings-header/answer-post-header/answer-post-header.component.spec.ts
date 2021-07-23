@@ -5,16 +5,16 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import * as moment from 'moment';
+import { Moment } from 'moment';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { Post } from 'app/entities/metis/post.model';
 import { User } from 'app/core/user/user.model';
-import { PostHeaderComponent } from 'app/shared/metis/postings-header/post-header/post-header.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { getElement } from '../../../../../helpers/utils/general.utils';
+import { AnswerPostHeaderComponent } from 'app/shared/metis/postings-header/answer-post-header/answer-post-header.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -24,53 +24,40 @@ let metisServiceUserIsAtLeastTutorStub: SinonStub;
 let metisServiceUserPostAuthorStub: SinonStub;
 let metisServiceDeletePostStub: SinonStub;
 
-describe('PostHeaderComponent', () => {
-    let component: PostHeaderComponent;
-    let fixture: ComponentFixture<PostHeaderComponent>;
+describe('AnswerPostHeaderComponent', () => {
+    let component: AnswerPostHeaderComponent;
+    let fixture: ComponentFixture<AnswerPostHeaderComponent>;
     let debugElement: DebugElement;
 
     const user = { id: 1, name: 'usersame', login: 'login' } as User;
 
-    const today = moment();
-    const yesterday = moment().subtract(1, 'day');
+    const today: Moment = moment();
+    const yesterday: Moment = moment().subtract(1, 'day');
 
-    const post = {
+    const answerPost = {
         id: 1,
         author: user,
         creationDate: yesterday,
-        answers: [],
-        content: 'Post Content',
-    } as Post;
-
-    const answerPost1 = {
-        id: 1,
-        content: 'Some answer',
+        content: 'Answer Post Content',
     } as AnswerPost;
-
-    const answerPost2 = {
-        id: 2,
-        content: 'Some answer',
-    } as AnswerPost;
-
-    const answerPosts: AnswerPost[] = [answerPost1, answerPost2];
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [],
             providers: [{ provide: MetisService, useClass: MockMetisService }],
-            declarations: [PostHeaderComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
+            declarations: [AnswerPostHeaderComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             schemas: [NO_ERRORS_SCHEMA],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(PostHeaderComponent);
+                fixture = TestBed.createComponent(AnswerPostHeaderComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
                 metisServiceUserIsAtLeastTutorStub = stub(metisService, 'metisUserIsAtLeastTutorInCourse');
                 metisServiceUserPostAuthorStub = stub(metisService, 'metisUserIsAuthorOfPosting');
-                metisServiceDeletePostStub = stub(metisService, 'deletePost');
+                metisServiceDeletePostStub = stub(metisService, 'deleteAnswerPost');
                 debugElement = fixture.debugElement;
-                component.posting = post;
+                component.posting = answerPost;
                 component.ngOnInit();
             });
     });
@@ -86,7 +73,7 @@ describe('PostHeaderComponent', () => {
         expect(headerAuthorAndDate.innerHTML).to.contain(user.name);
     });
 
-    it('should set date information correctly for post of today', () => {
+    it('should set date information correctly for answer post of today', () => {
         component.posting.creationDate = today;
         component.ngOnInit();
         fixture.detectChanges();
@@ -131,35 +118,5 @@ describe('PostHeaderComponent', () => {
         expect(getElement(debugElement, '.deleteIcon')).to.exist;
         component.deletePosting();
         expect(metisServiceDeletePostStub).to.have.been.called;
-    });
-
-    it('should only display non clickable icon for post without answers', () => {
-        component.ngOnChanges();
-        fixture.detectChanges();
-        expect(component.numberOfAnswerPosts).to.be.equal(0);
-        expect(getElement(debugElement, '.posting-header.answer-count').innerHTML).contains(0);
-        expect(getElement(debugElement, '.answer-count .icon')).to.exist;
-        expect(getElement(debugElement, '.toggleAnswerElement.clickable')).to.not.exist;
-    });
-
-    it('should only display non clickable icon for post with answers', () => {
-        component.posting.answers = answerPosts;
-        component.ngOnChanges();
-        fixture.detectChanges();
-        expect(component.numberOfAnswerPosts).to.be.equal(answerPosts.length);
-        expect(getElement(debugElement, '.posting-header.answer-count').innerHTML).contains(answerPosts.length);
-        expect(getElement(debugElement, '.answer-count .icon')).to.exist;
-        expect(getElement(debugElement, '.toggleAnswerElement.clickable')).to.exist;
-    });
-
-    it('should call toggleAnswers method and emit event when answer count icon is clicked', () => {
-        const toggleAnswersSpy = sinon.spy(component, 'toggleAnswers');
-        const toggleAnswersChangeSpy = sinon.spy(component.toggleAnswersChange, 'emit');
-        component.posting.answers = answerPosts;
-        component.ngOnChanges();
-        fixture.detectChanges();
-        getElement(debugElement, '.toggleAnswerElement.clickable').click();
-        expect(toggleAnswersSpy).to.have.been.called;
-        expect(toggleAnswersChangeSpy).to.have.been.called;
     });
 });
