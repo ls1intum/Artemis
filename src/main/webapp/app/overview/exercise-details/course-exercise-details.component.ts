@@ -73,7 +73,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private submissionSubscription: Subscription;
     studentParticipation?: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
-    isAllowedToComplain: boolean;
+    allowComplaintsForAutomaticAssessments: boolean;
     public gradingCriteria: GradingCriterion[];
     showWelcomeAlert = false;
     private postings?: PostingsComponent;
@@ -173,7 +173,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const now = moment();
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || now.isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exercise.categories || [];
-        this.isAllowedToComplain = false;
+        this.allowComplaintsForAutomaticAssessments = false;
 
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = this.exercise as ProgrammingExercise;
@@ -181,7 +181,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 (!this.exercise.dueDate || now.isAfter(this.exercise.dueDate)) &&
                 (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
 
-            this.isAllowedToComplain = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
+            this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
         }
 
         // This is only needed in the local environment

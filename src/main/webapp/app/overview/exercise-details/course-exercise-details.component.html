@@ -208,10 +208,11 @@
                 *ngIf="
                     exercise &&
                     exercise.type === PROGRAMMING &&
-                    isAllowedToComplain &&
                     !!studentParticipation &&
                     !!latestRatedResult &&
-                    (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC || isAllowedToComplain)
+                    (latestRatedResult.assessmentType === AssessmentType.MANUAL ||
+                        latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
+                        allowComplaintsForAutomaticAssessments)
                 "
                 class="mb-2 mt-2 ms-3"
                 [exercise]="exercise"
