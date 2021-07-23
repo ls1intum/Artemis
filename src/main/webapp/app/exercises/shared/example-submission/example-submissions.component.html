@@ -24,7 +24,7 @@
                     <th><span jhiTranslate="global.field.id"></span></th>
                     <th><span jhiTranslate="artemisApp.exercise.title"></span></th>
                     <th><span jhiTranslate="artemisApp.exampleSubmission.usedForTutorial"></span></th>
-                    <th></th>
+                    <th *ngIf="exercise.course.isAtLeastEditor"></th>
                 </tr>
             </thead>
             <tbody class="markdown-preview">
@@ -40,8 +40,8 @@
                         </a>
                     </td>
                     <td>{{ 'global.generic.' + (exampleSubmission.usedForTutorial ? 'yes' : 'no') | artemisTranslate }}</td>
-                    <td>
-                        <button *ngIf="exercise.course.isAtLeastEditor" (click)="deleteExampleSubmission(i)" class="btn btn-danger col-auto">
+                    <td *ngIf="exercise.course.isAtLeastEditor">
+                        <button (click)="deleteExampleSubmission(i)" class="btn btn-danger col-auto">
                             <fa-icon [icon]="'times'"></fa-icon>
                             {{ 'entity.action.delete' | artemisTranslate }}
                         </button>
