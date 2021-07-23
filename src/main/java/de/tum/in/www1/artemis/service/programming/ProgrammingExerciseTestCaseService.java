@@ -155,6 +155,9 @@ public class ProgrammingExerciseTestCaseService {
         testCasesToSave.addAll(newTestCases);
         testCasesToSave.addAll(testCasesWithUpdatedActivation);
 
+        // Ensure no duplicate TestCase is present
+        testCasesToSave.removeIf(testCase -> testCasesToSave.stream().filter(t -> t.getTestName().equals(testCase.getTestName())).count() > 1);
+
         if (testCasesToSave.size() > 0) {
             testCaseRepository.saveAll(testCasesToSave);
             return true;
