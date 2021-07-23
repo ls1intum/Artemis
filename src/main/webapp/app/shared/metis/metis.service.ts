@@ -65,11 +65,11 @@ export class MetisService {
         this.currentPostFilter = postFilter;
         if (postFilter?.lecture) {
             this.postService.getAllPostsByLectureId(this.courseId, postFilter.lecture.id!).subscribe((res: HttpResponse<Post[]>) => {
-                this.posts$.next(this.sortPosts(res.body!));
+                this.posts$.next(MetisService.sortPosts(res.body!));
             });
         } else if (postFilter?.exercise) {
             this.postService.getAllPostsByExerciseId(this.courseId, postFilter.exercise.id!).subscribe((res: HttpResponse<Post[]>) => {
-                this.posts$.next(this.sortPosts(res.body!));
+                this.posts$.next(MetisService.sortPosts(res.body!));
             });
         } else if (postFilter?.courseWideContext) {
             this.postService.getAllPostsByCourseId(this.courseId).subscribe((res: HttpResponse<Post[]>) => {
@@ -78,7 +78,7 @@ export class MetisService {
             });
         } else {
             this.postService.getAllPostsByCourseId(this.courseId).subscribe((res: HttpResponse<Post[]>) => {
-                this.posts$.next(this.sortPosts(res.body!));
+                this.posts$.next(MetisService.sortPosts(res.body!));
             });
         }
     }
@@ -158,7 +158,7 @@ export class MetisService {
      * 1. Criterion: votes -> highest number comes first
      * 2. Criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      */
-    private sortPosts(posts: Post[]): Post[] {
+    private static sortPosts(posts: Post[]): Post[] {
         return posts.sort((postA, postB) => postB.votes! - postA.votes! || postA.creationDate!.valueOf() - postB.creationDate!.valueOf());
     }
 }

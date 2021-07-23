@@ -1,4 +1,4 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { spy, stub } from 'sinon';
 import * as chai from 'chai';
@@ -111,23 +111,39 @@ describe('Metis Service', () => {
     });
 
     describe('Invoke post service methods', () => {
-        it('should create a post', () => {
+        it('should create a post', fakeAsync(() => {
             const postServiceSpy = spy(postService, 'create');
-            metisService.createPost(post1);
+            const createdPostSub = metisService.createPost(post1).subscribe((createdPost) => {
+                expect(createdPost).to.be.deep.equal(post1);
+            });
             expect(postServiceSpy).to.have.been.called;
-        });
+            tick();
+            createdPostSub.unsubscribe();
+        }));
         it('should delete a post', () => {
             const postServiceSpy = spy(postService, 'delete');
             metisService.deletePost(post1);
             expect(postServiceSpy).to.have.been.called;
         });
-        it('should update a post', () => {
+        it('should update a post', fakeAsync(() => {
             const postServiceSpy = spy(postService, 'update');
-            metisService.updatePost(post1);
+            const updatedPostSub = metisService.updatePost(post1).subscribe((updatedPost) => {
+                expect(updatedPost).to.be.deep.equal(post1);
+            });
             expect(postServiceSpy).to.have.been.called;
-        });
-
-        it('should get all a post tags', () => {
+            tick();
+            updatedPostSub.unsubscribe();
+        }));
+        it('should get correct list of posts when set', fakeAsync(() => {
+            metisService.setPosts([post1]);
+            tick();
+            const postsSub = metisService.posts.subscribe((posts) => {
+                expect(posts).to.be.deep.equal([post1]);
+            });
+            tick();
+            postsSub.unsubscribe();
+        }));
+        it('should update post tags', () => {
             const postServiceSpy = spy(postService, 'getAllPostTagsByCourseId');
             metisService.updateCoursePostTags();
             expect(postServiceSpy).to.have.been.called;
@@ -160,21 +176,29 @@ describe('Metis Service', () => {
     });
 
     describe('Invoke answer post service methods', () => {
-        it('should create an answer post', () => {
+        it('should create an answer post', fakeAsync(() => {
             const answerPostServiceSpy = spy(answerPostService, 'create');
-            metisService.createAnswerPost(answerPost);
+            const createdAnswerPostSub = metisService.createAnswerPost(answerPost).subscribe((createdAnswerPost) => {
+                expect(createdAnswerPost).to.be.deep.equal(answerPost);
+            });
             expect(answerPostServiceSpy).to.have.been.called;
-        });
+            tick();
+            createdAnswerPostSub.unsubscribe();
+        }));
         it('should delete an answer post', () => {
             const answerPostServiceSpy = spy(answerPostService, 'delete');
             metisService.deleteAnswerPost(answerPost);
             expect(answerPostServiceSpy).to.have.been.called;
         });
-        it('should update an answer post', () => {
+        it('should create a post', fakeAsync(() => {
             const answerPostServiceSpy = spy(answerPostService, 'update');
-            metisService.updateAnswerPost(answerPost);
+            const updatedAnswerPostSub = metisService.updateAnswerPost(answerPost).subscribe((updatedAnswerPost) => {
+                expect(updatedAnswerPost).to.be.deep.equal(answerPost);
+            });
             expect(answerPostServiceSpy).to.have.been.called;
-        });
+            tick();
+            updatedAnswerPostSub.unsubscribe();
+        }));
     });
 
     it('should determine that metis user is at least tutor in course', () => {

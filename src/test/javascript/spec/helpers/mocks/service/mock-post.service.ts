@@ -24,14 +24,14 @@ export class MockPostService {
     }
 
     getAllPostsByCourseId(courseId: number): Observable<HttpResponse<Post[]>> {
-        return of({ body: {} }) as Observable<HttpResponse<Post[]>>;
+        return of({ body: [{ id: 1, course: { id: courseId } }] }) as Observable<HttpResponse<Post[]>>;
     }
 
     getAllPostsByLectureId(courseId: number, lectureId: number): Observable<HttpResponse<Post[]>> {
-        return of({ body: {} }) as Observable<HttpResponse<Post[]>>;
+        return of({ body: [{ id: 1, course: { id: courseId }, lecture: { id: lectureId } }] }) as Observable<HttpResponse<Post[]>>;
     }
 
     getAllPostsByExerciseId(courseId: number, exerciserId: number): Observable<HttpResponse<Post[]>> {
-        return of({ body: {} }) as Observable<HttpResponse<Post[]>>;
+        return of({ body: [{ id: 1, course: { id: courseId }, exercise: { id: exerciserId } }] }) as Observable<HttpResponse<Post[]>>;
     }
 }
