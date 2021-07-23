@@ -142,10 +142,9 @@ public class ParticipationResource {
         if (exercise instanceof ProgrammingExercise) {
             // fetch additional objects needed for the startExercise method below
             var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-            if (!featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)
-                    || (programmingExercise.getDueDate() != null && now().isAfter(programmingExercise.getDueDate())
-                            && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC
-                            || programmingExercise.getAllowComplaintsForAutomaticAssessments()))) {
+            if (!featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES) || (programmingExercise.getDueDate() != null
+                    && now().isAfter(programmingExercise.getDueDate()) && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                            || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC || programmingExercise.getAllowComplaintsForAutomaticAssessments()))) {
                 return forbidden();
             }
             exercise = programmingExercise;
