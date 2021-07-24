@@ -226,7 +226,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_updatingCourseId_conflict() throws Exception {
-        programmingExerciseIntegrationServiceTest.updateProgrammingExercise_updatingCourseId_conflict();
+        programmingExerciseIntegrationServiceTest.updateProgrammingExerciseShouldFailWithConflictWhenUpdatingCourseId();
     }
 
     @Test

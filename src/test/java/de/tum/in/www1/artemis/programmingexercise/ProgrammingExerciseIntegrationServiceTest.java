@@ -644,7 +644,11 @@ public class ProgrammingExerciseIntegrationServiceTest {
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
     }
 
-    public void updateProgrammingExercise_updatingCourseId_conflict() throws Exception {
+    /**
+     * This test checks that it is not allowed to change the courseId of an exercise
+     * in an update request. The request should fail with 'HttpStatus.CONFLICT'.
+     */
+    public void updateProgrammingExerciseShouldFailWithConflictWhenUpdatingCourseId() throws Exception {
         // Create a programming exercise.
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
