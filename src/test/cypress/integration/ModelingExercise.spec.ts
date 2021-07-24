@@ -3,10 +3,10 @@ import { artemis } from '../support/ArtemisTesting';
 
 // https://day.js.org/docs is a tool for date/time
 import dayjs from 'dayjs';
-import { NavigationBar } from '../support/pageobjects/NavigationBar';
+import { CourseManagementPage } from '../support/pageobjects/CourseManagementPage';
 
 // pageobjects
-const navigationBar: NavigationBar = artemis.pageobjects.navigationBar;
+const courseManagement: CourseManagementPage = artemis.pageobjects.courseManagement;
 
 // Users
 const userManagement = artemis.users;
@@ -32,21 +32,12 @@ describe('Modeling Exercise Spec', () => {
             cy.createCourse(course).then((courseResp) => {
                 testCourse = courseResp.body;
                 cy.visit(`/course-management/${testCourse.id}`).get('.row-md > :nth-child(2)').should('contain.text', testCourse.title);
-                // set instructor group
-                cy.get('.row-md > :nth-child(5) > :nth-child(8) >').click();
-                cy.get('#typeahead-basic ').type(instructor.username).type('{enter}');
-                cy.get('#ngb-typeahead-0-0 >').contains(instructor.username).click();
-                cy.get('.breadcrumb > :nth-child(2)').click();
                 // set tutor group
-                cy.get('.row-md > :nth-child(5) > :nth-child(6) >').click();
-                cy.get('#typeahead-basic ').type(tutor.username).type('{enter}');
-                cy.get('#ngb-typeahead-1-0 >').contains(tutor.username).click();
-                cy.get('.breadcrumb > :nth-child(2)').click();
+                courseManagement.addTutorToCourse(tutor);
                 // set student group
-                cy.get('.row-md > :nth-child(5) > :nth-child(2) >').click();
-                cy.get('#typeahead-basic ').type(student.username).type('{enter}');
-                cy.get('#ngb-typeahead-2-0 >').contains(student.username).click();
-                cy.get('.breadcrumb > :nth-child(2)').click();
+                courseManagement.addStudentToCourse(student);
+                // set instructor group
+                courseManagement.addInstructorToCourse(instructor);
             });
         });
     });
