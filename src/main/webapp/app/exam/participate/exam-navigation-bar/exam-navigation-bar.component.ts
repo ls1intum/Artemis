@@ -56,27 +56,30 @@ export class ExamNavigationBarComponent implements OnInit {
             }
         });
 
-        // If exam is not loaded for the first time, update the isSynced variable for out of sync submissions.
-        if (this.examSessions && !this.examSessions[0].initialSession) {
-            this.exercises
-                .filter((exercise) => exercise.type === ExerciseType.PROGRAMMING && exercise.studentParticipations)
-                .forEach((exercise) => {
-                    const domain: DomainChange = [DomainType.PARTICIPATION, exercise.studentParticipations![0]];
-                    this.conflictService.setDomain(domain);
-                    this.repositoryService.setDomain(domain);
-
-                    this.repositoryService
-                        .getStatus()
-                        .pipe(map((response) => Object.values(CommitState).find((commitState) => commitState === response.repositoryStatus)))
-                        .subscribe((commitState) => {
-                            const submission = ExamParticipationService.getSubmissionForExercise(exercise);
-                            if (commitState === CommitState.UNCOMMITTED_CHANGES && submission) {
-                                // If there are uncommitted changes: set isSynced to false.
-                                submission.isSynced = false;
-                            }
-                        });
-                });
+        const isInitialSession = this.examSessions && this.examSessions.length > 0 && this.examSessions[0].initialSession;
+        if (isInitialSession || isInitialSession == undefined) {
+            return;
         }
+
+        // If it is not an initial session, update the isSynced variable for out of sync submissions.
+        this.exercises
+            .filter((exercise) => exercise.type === ExerciseType.PROGRAMMING && exercise.studentParticipations)
+            .forEach((exercise) => {
+                const domain: DomainChange = [DomainType.PARTICIPATION, exercise.studentParticipations![0]];
+                this.conflictService.setDomain(domain);
+                this.repositoryService.setDomain(domain);
+
+                this.repositoryService
+                    .getStatus()
+                    .pipe(map((response) => Object.values(CommitState).find((commitState) => commitState === response.repositoryStatus)))
+                    .subscribe((commitState) => {
+                        const submission = ExamParticipationService.getSubmissionForExercise(exercise);
+                        if (commitState === CommitState.UNCOMMITTED_CHANGES && submission) {
+                            // If there are uncommitted changes: set isSynced to false.
+                            submission.isSynced = false;
+                        }
+                    });
+            });
     }
 
     triggerExamAboutToEnd() {
