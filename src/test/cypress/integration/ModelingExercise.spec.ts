@@ -4,9 +4,13 @@ import { artemis } from '../support/ArtemisTesting';
 // https://day.js.org/docs is a tool for date/time
 import dayjs from 'dayjs';
 import { CourseManagementPage } from '../support/pageobjects/CourseManagementPage';
+import { CreateModelingExercisePage } from '../support/pageobjects/CreateModelingExercisePage';
+import { ModelingExerciseExampleSubmissionPage } from '../support/pageobjects/ModelingExerciseExampleSubmissionPage';
 
 // pageobjects
 const courseManagement: CourseManagementPage = artemis.pageobjects.courseManagement;
+const createModelingExercise: CreateModelingExercisePage = artemis.pageobjects.createModelingExercise;
+const modelingExerciseExampleSubission: ModelingExerciseExampleSubmissionPage = artemis.pageobjects.modelingExerciseExampleSubmission;
 
 // Users
 const userManagement = artemis.users;
@@ -58,12 +62,13 @@ describe('Modeling Exercise Spec', () => {
         });
 
         it('Create a new modeling exercise', () => {
+            cy.intercept('POST', '/api/modeling-exercises').as('createModelingExercise');
             cy.visit(`/course-management/${testCourse.id}/exercises`);
             cy.get('#modeling-exercise-create-button').click();
-            cy.get('#field_title').type('Cypress Modeling Exercise');
-            cy.get('#field_categories').type('e2e-testing');
-            cy.get('#field_points').type('10');
-            cy.contains('Save').click();
+            createModelingExercise.setTitle('Cypress Modeling Exercise');
+            createModelingExercise.setCategories(['e2e-testing', 'test2']);
+            createModelingExercise.setPoints(10);
+            createModelingExercise.save();
             cy.wait('@createModelingExercise').then((interception) => {
                 modelingExercise = interception?.response?.body;
             });
@@ -74,23 +79,21 @@ describe('Modeling Exercise Spec', () => {
             cy.visit(`/course-management/${testCourse.id}/exercises`);
             cy.contains('Cypress Modeling Exercise').click();
             cy.get('.card-body').contains('Edit').click();
-            cy.get('.sc-ksdxAp > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-furvIG', { position: 'bottomLeft', force: true });
-            cy.contains('Save').click();
+            createModelingExercise.addComponentToExampleSolution(1);
+            createModelingExercise.save();
             cy.get('.row-md > :nth-child(4)').should('contain.text', 'Export');
             cy.get('.sc-furvIG > :nth-child(1)').should('exist');
         });
 
         it('Creates Example Submission', () => {
             cy.visit(`/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
-            cy.contains('Create Example Submission').click();
-            cy.get('.sc-ksdxAp > :nth-child(2) > :nth-child(1) > :nth-child(1)').drag('.sc-furvIG', { position: 'bottomLeft', force: true });
-            cy.get('.sc-ksdxAp > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-furvIG', { position: 'bottomLeft', force: true });
-            cy.get('.sc-ksdxAp > :nth-child(3) > :nth-child(1) > :nth-child(1)').drag('.sc-furvIG', { position: 'bottomLeft', force: true });
-            cy.contains('Create new Example Submission').click();
+            modelingExerciseExampleSubission.createExampleSubmission();
+            modelingExerciseExampleSubission.addComponentToExampleSubmission(1);
+            modelingExerciseExampleSubission.addComponentToExampleSubmission(2);
+            modelingExerciseExampleSubission.addComponentToExampleSubmission(3);
+            modelingExerciseExampleSubission.createNewExampleSubmission();
             cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
-            cy.contains('Show Assessment').click();
-            // cy.get('.sc-furvIG >> :nth-child(1)').should('contain.text', 'Class');
-            // cy.get('.sc-furvIG').contains('Class').dblclick('top');
+            modelingExerciseExampleSubission.switchToAssessmentView();
             cy.getSettled(`.sc-furvIG >> :nth-child(1)`).dblclick('top');
             cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('-1');
             cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(3) ').type('Wrong');
@@ -111,7 +114,6 @@ describe('Modeling Exercise Spec', () => {
             cy.get('#field_title')
                 .clear()
                 .type('Cypress EDITED ME' + uid);
-            cy.get('#field_categories >>>>>>>:nth-child(2)>').click();
             cy.get('jhi-difficulty-picker > :nth-child(1) > :nth-child(4)').click({ force: true });
             cy.get(':nth-child(1) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').type('01.01.2030', { force: true });
             cy.get('.ms-3 > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').type('02.01.2030', { force: true });

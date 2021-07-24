@@ -89,6 +89,9 @@ export class CourseManagementPage {
         this.confirmUserIntoGroup(credentials);
     }
 
+    /**
+     * helper method to avoid code duplication
+     * */
     private confirmUserIntoGroup(credentials: CypressCredentials) {
         cy.get('#typeahead-basic ').type(credentials.username).type('{enter}');
         cy.get('ngb-highlight').contains(credentials.username).click();
