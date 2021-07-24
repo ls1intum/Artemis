@@ -60,9 +60,9 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     toggleHighlightedProblemStatement(): void {
         if (this.showHighlightedDifferences) {
-            this.getExercise().problemStatement = this.updatedProblemStatement;
+            this.exercise.problemStatement = this.updatedProblemStatement;
         } else {
-            this.getExercise().problemStatement = this.updatedProblemStatementWithHighlightedDifferences;
+            this.exercise.problemStatement = this.updatedProblemStatementWithHighlightedDifferences;
         }
         this.showHighlightedDifferences = !this.showHighlightedDifferences;
     }
@@ -72,9 +72,9 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     updateExerciseProblemStatementById(exerciseId: number, updatedProblemStatement: string) {
-        if (updatedProblemStatement != undefined && exerciseId === this.getExercise().id) {
+        if (updatedProblemStatement != undefined && exerciseId === this.exercise.id) {
             this.updatedProblemStatement = updatedProblemStatement;
-            this.getExercise().problemStatement = this.highlightProblemStatementDifferences();
+            this.exercise.problemStatement = this.highlightProblemStatementDifferences();
         }
     }
 
@@ -89,7 +89,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
         // checks if first update i.e. no highlight
         if (!this.previousProblemStatementUpdate) {
-            outdatedProblemStatement = this.getExercise().problemStatement!;
+            outdatedProblemStatement = this.exercise.problemStatement!;
             this.previousProblemStatementUpdate = this.updatedProblemStatement;
             // else use previousProblemStatementUpdate as new outdatedProblemStatement to avoid inserted HTML elements
         } else {

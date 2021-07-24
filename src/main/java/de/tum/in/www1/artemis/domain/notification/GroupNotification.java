@@ -113,7 +113,7 @@ public class GroupNotification extends Notification {
     }
 
     /**
-     * Create JSON representation for a GroupNotification for an Exercise in an Exam including the updated Problem Statement or if duplicated test cases were detected.
+     * Create JSON representation for a GroupNotification for an Exercise in an Exam including the updated Problem Statement.
      *
      * @param exercise for which to create the notification.
      * @return the stringified JSON of the target with the updated problem statement of exercise.
