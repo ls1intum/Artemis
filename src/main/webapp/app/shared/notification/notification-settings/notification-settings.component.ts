@@ -1,8 +1,8 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 
-interface NotificationOption {
+export interface NotificationOption {
     type: string;
-    status: boolean;
+    status: boolean; //TODO change to String or smth else to make it extendable for emails, etc
 }
 
 @Component({
@@ -21,7 +21,7 @@ export class NotificationSettingsComponent implements OnInit {
     notificationOptions: Array<NotificationOption>;
 
     ngOnInit(): void {
-        this.notificationOptions = new Array<NotificationOption>();
+        this.notificationOptions = new Array<NotificationOption>(); //TODO look into Map again, maybe I did smth wrong in html
         //TODO this.notificationTypeMap = loadSettingsFromServer();
 
         //TODO remove TESTING
@@ -37,6 +37,7 @@ export class NotificationSettingsComponent implements OnInit {
 
     saveSettings() {
         //TODO Server REST-POST call
+        //TODO refresh notifications in notification-sidebar (else outdated, ngOnitnit only called once, i.e. only calls loadnotifications once)
     }
 
     toggleOption(event: any) {

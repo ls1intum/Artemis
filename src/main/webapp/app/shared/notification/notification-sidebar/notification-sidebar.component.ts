@@ -8,6 +8,7 @@ import { GroupNotification } from 'app/entities/group-notification.model';
 import { Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
+import { NotificationOption } from '../notification-settings/notification-settings.component';
 
 @Component({
     selector: 'jhi-notification-sidebar',
@@ -33,11 +34,13 @@ export class NotificationSidebarComponent implements OnInit {
      * Load notifications when user is authenticated on component initialization.
      */
     ngOnInit(): void {
+        debugger;
         this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
                 if (user.lastNotificationRead) {
                     this.lastNotificationRead = user.lastNotificationRead;
                 }
+                //this.loadNotificationSettings(); TODO only explicitly call in notification-settings component if it is open, the server has to filter the notifications already on its own
                 this.loadNotifications();
                 this.subscribeToNotificationUpdates();
             }
@@ -55,6 +58,7 @@ export class NotificationSidebarComponent implements OnInit {
         this.toggleSidebar();
         this.showSettings = true;
     }
+
     settingsClosed(isClosed: boolean): void {
         //TODO isClosed inputparamenter vll entfernen
         this.showSettings = false;
@@ -107,7 +111,22 @@ export class NotificationSidebarComponent implements OnInit {
         }
     }
 
+    private loadNotificationSettings(): void {
+        //TODO create and add new loadingSettings variable and rename loading to loadingNotifications
+        this.notificationService
+            .queryNotificationSettings({
+                page: this.page, //kp ob nötig
+            })
+            .subscribe(
+                (res: HttpResponse<NotificationOption[]>) => this.loadNotificationSettingsSuccess(res.body!, res.headers),
+                (res: HttpErrorResponse) => (this.error = res.message),
+            );
+    }
+
+    private loadNotificationSettingsSuccess(notificationOptions: NotificationOption[], headers: HttpHeaders): void {}
+
     private loadNotifications(): void {
+        debugger;
         if (!this.loading && (this.totalNotifications === 0 || this.notifications.length < this.totalNotifications)) {
             this.loading = true;
             this.notificationService
@@ -124,6 +143,7 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     private loadNotificationsSuccess(notifications: Notification[], headers: HttpHeaders): void {
+        debugger;
         this.totalNotifications = Number(headers.get('X-Total-Count')!);
         this.addNotifications(notifications);
         this.page += 1;

@@ -91,6 +91,15 @@ public class NotificationResource {
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
+    @GetMapping("/notifications/settings")
+    // @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<NotificationOption>> getNotificationSettingsForCurrentUser(@ApiParam Pageable pageable) {
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        final Page<Notification> page = notificationRepository.findNotificationSettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
     /**
      * PUT /notifications : Updates an existing notification.
      *
