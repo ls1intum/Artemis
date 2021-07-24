@@ -3,6 +3,10 @@ import { artemis } from '../support/ArtemisTesting';
 
 // https://day.js.org/docs is a tool for date/time
 import dayjs from 'dayjs';
+import { NavigationBar } from '../support/pageobjects/NavigationBar';
+
+// pageobjects
+const navigationBar: NavigationBar = artemis.pageobjects.navigationBar;
 
 // Users
 const userManagement = artemis.users;
@@ -22,7 +26,7 @@ describe('Modeling Exercise Spec', () => {
     before('Log in as admin and create a course', () => {
         cy.intercept('POST', '/api/modeling-exercises').as('createModelingExercise');
         cy.login(admin);
-        cy.fixture('course.json').then((course) => {
+        cy.fixture('requests/course.json').then((course) => {
             course.title = courseName;
             course.shortName = courseShortName;
             cy.createCourse(course).then((courseResp) => {
@@ -134,7 +138,7 @@ describe('Modeling Exercise Spec', () => {
 
     describe('Modeling Exercise Flow', () => {
         before('create Modeling Exercise with future release date', () => {
-            cy.fixture('modeling-exercise.json').then((exercise) => {
+            cy.fixture('requests/modeling-exercise.json').then((exercise) => {
                 exercise.title = 'Cypress Modeling Exercise ' + uid;
                 exercise.course = testCourse;
                 exercise.releaseDate = dayjs().add(1, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
