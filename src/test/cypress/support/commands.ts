@@ -112,7 +112,7 @@ Cypress.Commands.add('loginWithGUI', (credentials) => {
     Cypress.env(authTokenKey, localStorage.getItem(authTokenKey));
 });
 
-/**
+/** @deprecated -> USE COURSEMANAGEMENTREQUESTS
  * Creates a course with API request
  * @param course is a course object in json format
  * @return Chainable<Cypress.Response> the http response of the POST request
@@ -130,7 +130,7 @@ Cypress.Commands.add('createCourse', (course: string) => {
     });
 });
 
-/**
+/** @deprecated -> USE COURSEMANAGEMENTREQUESTS
  * Deletes course with courseID
  * @param courseID id of the course that is to be deleted
  * @return Chainable<Cypress.Response> the http response of the DELETE request
@@ -145,7 +145,7 @@ Cypress.Commands.add('deleteCourse', (courseID: number) => {
     });
 });
 
-/**
+/** @deprecated -> USE COURSEMANAGEMENTREQUESTS
  * Creates a modelingExercise with API request
  * @param modelingExercise is a modeling exercise object in json format
  * @return Chainable<Cypress.Response> the http response of the POST request
@@ -163,7 +163,7 @@ Cypress.Commands.add('createModelingExercise', (modelingExercise: string) => {
     });
 });
 
-/**
+/** @deprecated -> USE COURSEMANAGEMENTREQUESTS
  * Deletes modeling exercise with exerciseID
  * @param exerciseID id of the exercise that is to be deleted
  * @return Chainable<Cypress.Response> the http response of the DELETE request
