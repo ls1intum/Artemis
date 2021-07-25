@@ -23,20 +23,18 @@ import { FormBuilder } from '@angular/forms';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-let metisService: MetisService;
-let metisServiceUserIsAtLeastTutorStub: SinonStub;
-let metisServiceUserPostAuthorStub: SinonStub;
-let metisServiceDeletePostStub: SinonStub;
-let modal: MockNgbModalService;
-
 describe('AnswerPostHeaderComponent', () => {
     let component: AnswerPostHeaderComponent;
     let fixture: ComponentFixture<AnswerPostHeaderComponent>;
     let debugElement: DebugElement;
+    let metisService: MetisService;
+    let metisServiceUserIsAtLeastTutorStub: SinonStub;
+    let metisServiceUserPostAuthorStub: SinonStub;
+    let metisServiceDeletePostStub: SinonStub;
+    let modal: MockNgbModalService;
 
     const user = { id: 1, name: 'usersame', login: 'login' } as User;
 
-    const today: Moment = moment();
     const yesterday: Moment = moment().subtract(1, 'day');
 
     const answerPost = {
@@ -49,7 +47,14 @@ describe('AnswerPostHeaderComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: NgbModal, useClass: MockNgbModalService }],
+            providers: [
+                FormBuilder,
+                { provide: MetisService, useClass: MockMetisService },
+                {
+                    provide: NgbModal,
+                    useClass: MockNgbModalService,
+                },
+            ],
             declarations: [AnswerPostHeaderComponent, AnswerPostCreateEditModalComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             schemas: [NO_ERRORS_SCHEMA],
         })
@@ -74,16 +79,9 @@ describe('AnswerPostHeaderComponent', () => {
 
     it('should set author information correctly', () => {
         fixture.detectChanges();
-        const headerAuthorAndDate = fixture.debugElement.nativeElement.querySelector('.posting-header.header-author-date');
+        const headerAuthorAndDate = getElement(debugElement, '.posting-header.header-author-date');
         expect(headerAuthorAndDate).to.exist;
         expect(headerAuthorAndDate.innerHTML).to.contain(user.name);
-    });
-
-    it('should set date information correctly for answer post of today', () => {
-        component.posting.creationDate = today;
-        component.ngOnInit();
-        fixture.detectChanges();
-        expect(getElement(debugElement, '.today-flag')).to.exist;
     });
 
     it('should set date information correctly for post of yesterday', () => {
@@ -93,17 +91,8 @@ describe('AnswerPostHeaderComponent', () => {
         expect(getElement(debugElement, '.today-flag')).to.not.exist;
     });
 
-    it('should display edit and delete options to tutor', () => {
-        metisServiceUserIsAtLeastTutorStub.returns(true);
-        component.ngOnInit();
-        fixture.detectChanges();
-        expect(getElement(debugElement, '.editIcon')).to.exist;
-        expect(getElement(debugElement, '.deleteIcon')).to.exist;
-    });
-
     it('should display edit and delete options to post author', () => {
         metisServiceUserPostAuthorStub.returns(true);
-        component.ngOnInit();
         fixture.detectChanges();
         expect(getElement(debugElement, '.editIcon')).to.exist;
         expect(getElement(debugElement, '.deleteIcon')).to.exist;
@@ -112,7 +101,6 @@ describe('AnswerPostHeaderComponent', () => {
     it('should not display edit and delete options to users that are neither author or tutor', () => {
         metisServiceUserIsAtLeastTutorStub.returns(false);
         metisServiceUserPostAuthorStub.returns(false);
-        component.ngOnInit();
         fixture.detectChanges();
         expect(getElement(debugElement, '.editIcon')).to.not.exist;
         expect(getElement(debugElement, '.deleteIcon')).to.not.exist;
@@ -123,7 +111,6 @@ describe('AnswerPostHeaderComponent', () => {
         const modalSpy = spy(modal, 'open');
         fixture.detectChanges();
         getElement(debugElement, '.editIcon').click();
-        fixture.detectChanges();
         expect(modalSpy).to.have.been.called;
     });
 

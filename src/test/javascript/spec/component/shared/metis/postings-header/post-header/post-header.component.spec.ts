@@ -6,7 +6,7 @@ import { MockMetisService } from '../../../../../helpers/mocks/service/mock-meti
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import * as moment from 'moment';
 import * as sinon from 'sinon';
-import { SinonStub, spy, stub } from 'sinon';
+import { SinonStub, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { Post } from 'app/entities/metis/post.model';
@@ -15,34 +15,26 @@ import { PostHeaderComponent } from 'app/shared/metis/postings-header/post-heade
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { getElement } from '../../../../../helpers/utils/general.utils';
-import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { FormBuilder } from '@angular/forms';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-let metisService: MetisService;
-let metisServiceUserIsAtLeastTutorStub: SinonStub;
-let metisServiceUserPostAuthorStub: SinonStub;
-let metisServiceDeletePostStub: SinonStub;
-let modal: MockNgbModalService;
-
 describe('PostHeaderComponent', () => {
     let component: PostHeaderComponent;
     let fixture: ComponentFixture<PostHeaderComponent>;
     let debugElement: DebugElement;
+    let metisService: MetisService;
+    let metisServiceUserIsAtLeastTutorStub: SinonStub;
+    let metisServiceDeletePostStub: SinonStub;
 
     const user = { id: 1, name: 'usersame', login: 'login' } as User;
-
-    const today = moment();
-    const yesterday = moment().subtract(1, 'day');
 
     const post = {
         id: 1,
         author: user,
-        creationDate: yesterday,
+        creationDate: moment(),
         answers: [],
         content: 'Post Content',
     } as Post;
@@ -62,7 +54,7 @@ describe('PostHeaderComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: NgbModal, useClass: MockNgbModalService }],
+            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
             declarations: [PostHeaderComponent, PostCreateEditModalComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             schemas: [NO_ERRORS_SCHEMA],
         })
@@ -71,9 +63,7 @@ describe('PostHeaderComponent', () => {
                 fixture = TestBed.createComponent(PostHeaderComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
-                modal = TestBed.inject(NgbModal);
                 metisServiceUserIsAtLeastTutorStub = stub(metisService, 'metisUserIsAtLeastTutorInCourse');
-                metisServiceUserPostAuthorStub = stub(metisService, 'metisUserIsAuthorOfPosting');
                 metisServiceDeletePostStub = stub(metisService, 'deletePost');
                 debugElement = fixture.debugElement;
                 component.posting = post;
@@ -85,25 +75,9 @@ describe('PostHeaderComponent', () => {
         sinon.restore();
     });
 
-    it('should set author information correctly', () => {
-        fixture.detectChanges();
-        const headerAuthorAndDate = fixture.debugElement.nativeElement.querySelector('.posting-header.header-author-date');
-        expect(headerAuthorAndDate).to.exist;
-        expect(headerAuthorAndDate.innerHTML).to.contain(user.name);
-    });
-
     it('should set date information correctly for post of today', () => {
-        component.posting.creationDate = today;
-        component.ngOnInit();
         fixture.detectChanges();
         expect(getElement(debugElement, '.today-flag')).to.exist;
-    });
-
-    it('should set date information correctly for post of yesterday', () => {
-        component.posting.creationDate = yesterday;
-        component.ngOnInit();
-        fixture.detectChanges();
-        expect(getElement(debugElement, '.today-flag')).to.not.exist;
     });
 
     it('should display edit and delete options to tutor', () => {
@@ -114,23 +88,6 @@ describe('PostHeaderComponent', () => {
         expect(getElement(debugElement, '.deleteIcon')).to.exist;
     });
 
-    it('should display edit and delete options to post author', () => {
-        metisServiceUserPostAuthorStub.returns(true);
-        component.ngOnInit();
-        fixture.detectChanges();
-        expect(getElement(debugElement, '.editIcon')).to.exist;
-        expect(getElement(debugElement, '.deleteIcon')).to.exist;
-    });
-
-    it('should not display edit and delete options to users that are neither author or tutor', () => {
-        metisServiceUserIsAtLeastTutorStub.returns(false);
-        metisServiceUserPostAuthorStub.returns(false);
-        component.ngOnInit();
-        fixture.detectChanges();
-        expect(getElement(debugElement, '.editIcon')).to.not.exist;
-        expect(getElement(debugElement, '.deleteIcon')).to.not.exist;
-    });
-
     it('should invoke metis service when delete icon is clicked', () => {
         metisServiceUserIsAtLeastTutorStub.returns(true);
         fixture.detectChanges();
@@ -139,16 +96,7 @@ describe('PostHeaderComponent', () => {
         expect(metisServiceDeletePostStub).to.have.been.called;
     });
 
-    it('should open modal when edit icon is clicked', () => {
-        metisServiceUserPostAuthorStub.returns(true);
-        const modalSpy = spy(modal, 'open');
-        fixture.detectChanges();
-        getElement(debugElement, '.editIcon').click();
-        fixture.detectChanges();
-        expect(modalSpy).to.have.been.called;
-    });
-
-    it('should only display non clickable icon for post without answers', () => {
+    it('should only display non clickable answer-count icon for post without answers', () => {
         component.ngOnChanges();
         fixture.detectChanges();
         expect(component.numberOfAnswerPosts).to.be.equal(0);

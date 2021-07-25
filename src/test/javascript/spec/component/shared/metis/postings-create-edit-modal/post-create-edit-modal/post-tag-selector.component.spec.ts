@@ -9,6 +9,7 @@ import { spy } from 'sinon';
 import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-tag-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
+import { By } from '@angular/platform-browser';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -34,6 +35,7 @@ describe('PostTagSelectorComponent', () => {
                 metisService = TestBed.inject(MetisService);
                 metisServiceSpy = spy(metisService, 'tags', ['get']);
                 component.postTags = [];
+                component.ngOnInit();
             });
     });
 
@@ -41,15 +43,23 @@ describe('PostTagSelectorComponent', () => {
         sinon.restore();
     });
 
-    it('should init with empty list of tags', () => {
-        component.ngOnInit();
+    it('should be initialized with empty list of tags', () => {
         expect(component.tags).to.be.deep.equal([]);
     });
 
-    it('should init with existing list of tags', fakeAsync(() => {
-        component.ngOnInit();
+    it('should be initialized with existing list of tags', fakeAsync(() => {
         tick();
         expect(metisServiceSpy.get).to.have.been.called;
         expect(component.existingPostTags).to.be.deep.equal(existingTags);
+    }));
+
+    it('should update tags', fakeAsync(() => {
+        fixture.detectChanges();
+        const onPostTagsChangeSpy = spy(component, 'onPostTagsChange');
+        const tagInput = fixture.debugElement.query(By.css('tag-input')).nativeElement;
+        tagInput.value = 'new tag';
+        tagInput.dispatchEvent(new Event('ngModelChange'));
+        fixture.detectChanges();
+        expect(onPostTagsChangeSpy).to.have.been.called;
     }));
 });

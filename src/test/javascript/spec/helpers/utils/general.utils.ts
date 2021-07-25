@@ -14,11 +14,6 @@ export const getElement = (debugElement: DebugElement, identifier: string) => {
     return element ? element.nativeElement : null;
 };
 
-export const getElementBySelector = (debugElement: DebugElement, identifier: string) => {
-    const element = debugElement.nativeElement.querySelector(identifier);
-    return element ? element.nativeElement : null;
-};
-
 export const expectElementToBeEnabled = (element: null | any) => {
     expect(element).to.exist;
     expect(element.disabled).to.be.false;
