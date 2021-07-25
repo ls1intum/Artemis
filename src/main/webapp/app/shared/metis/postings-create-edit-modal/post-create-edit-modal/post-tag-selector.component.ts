@@ -16,13 +16,12 @@ export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy {
 
     private tagsSubscription: Subscription;
 
-    constructor(private metisService: MetisService) {
+    constructor(private metisService: MetisService) {}
+
+    ngOnInit(): void {
         this.tagsSubscription = this.metisService.tags.subscribe((tags: string[]) => {
             this.existingPostTags = tags;
         });
-    }
-
-    ngOnInit(): void {
         this.mapTagsToTagModel();
     }
 
