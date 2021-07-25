@@ -267,7 +267,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         // Create the eclipse .project file which will be modified.
         Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
         File projectFile = new File(projectFilePath.toString());
-        String projectFileContents = de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources("test-data/repository-export/.project");
+        String projectFileContents = de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources("test-data/repository-export/sample.project");
         FileUtils.writeStringToFile(projectFile, projectFileContents, StandardCharsets.UTF_8);
 
         // Create the maven .pom file
