@@ -6,9 +6,6 @@ import { Exam } from 'app/entities/exam.model';
 import { round } from 'app/shared/util/utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { catchError } from 'rxjs/operators';
-import { HttpErrorResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
 import { GradeType } from 'app/entities/grading-scale.model';
 
 @Component({

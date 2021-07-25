@@ -80,8 +80,8 @@ export class StudentExamDetailComponent implements OnInit {
         const achievedPercentageScore = (this.achievedTotalPoints / this.maxTotalPoints) * 100;
         this.gradingSystemService.matchPercentageToGradeStepForExam(this.courseId, this.examId, achievedPercentageScore).subscribe((gradeObservable) => {
             if (gradeObservable && gradeObservable!.body) {
-                const gradeDTO = gradeObservable!.body;
                 this.gradingScaleExists = true;
+                const gradeDTO = gradeObservable!.body;
                 this.grade = gradeDTO.gradeName;
                 this.passed = gradeDTO.isPassingGrade;
                 this.isBonus = gradeDTO.gradeType === GradeType.BONUS;
