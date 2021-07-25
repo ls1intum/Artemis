@@ -3,8 +3,6 @@
  * Path: /course-management/${courseID}/modeling-exercises/${exerciseID}/example-submissions
  */
 export class ModelingExerciseExampleSubmissionPage {
-    MODELING_SPACE = '.sc-furvIG';
-    COMPONENT_CONTAINER = '.sc-ksdxAp';
 
     /**
      * Locates and clicks the Create Example Submission Button
@@ -18,14 +16,6 @@ export class ModelingExerciseExampleSubmissionPage {
      * */
     createNewExampleSubmission() {
         cy.contains('Create new Example Submission').click();
-    }
-
-    /**
-     * Adds a Modeling Component to the Model
-     * */
-    addComponentToExampleSubmission(componentNumber: number) {
-        cy.get(`${this.COMPONENT_CONTAINER} > :nth-child(${componentNumber}) > :nth-child(1) > :nth-child(1)`)
-            .drag(`${this.MODELING_SPACE}`, { position: 'bottomLeft', force: true });
     }
 
     switchToAssessmentView() {

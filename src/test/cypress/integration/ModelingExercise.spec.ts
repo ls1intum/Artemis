@@ -11,6 +11,7 @@ import { ModelingExerciseExampleSubmissionPage } from '../support/pageobjects/Mo
 const courseManagement: CourseManagementPage = artemis.pageobjects.courseManagement;
 const createModelingExercise: CreateModelingExercisePage = artemis.pageobjects.createModelingExercise;
 const modelingExerciseExampleSubission: ModelingExerciseExampleSubmissionPage = artemis.pageobjects.modelingExerciseExampleSubmission;
+const modelingEditor = artemis.pageobjects.modelingEditor;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 // Users
@@ -45,7 +46,7 @@ describe('Modeling Exercise Spec', () => {
 
     after('Delete the test course', () => {
         cy.login(admin);
-        cy.deleteCourse(testCourse.id);
+        courseManagementRequests.deleteCourse(testCourse.id);
     });
 
     describe('Create/Edit Modeling Exercise', () => {
@@ -55,7 +56,7 @@ describe('Modeling Exercise Spec', () => {
 
         after('delete Modeling Exercise', () => {
             cy.login(admin);
-            cy.deleteModelingExercise(modelingExercise.id);
+            courseManagementRequests.deleteModelingExercise(modelingExercise.id);
         });
 
         it('Create a new modeling exercise', () => {
@@ -63,7 +64,7 @@ describe('Modeling Exercise Spec', () => {
             cy.visit(`/course-management/${testCourse.id}/exercises`);
             cy.get('#modeling-exercise-create-button').click();
             createModelingExercise.setTitle('Cypress Modeling Exercise');
-            createModelingExercise.setCategories(['e2e-testing', 'test2']);
+            createModelingExercise.addCategories(['e2e-testing', 'test2']);
             createModelingExercise.setPoints(10);
             createModelingExercise.save();
             cy.wait('@createModelingExercise').then((interception) => {
@@ -76,7 +77,7 @@ describe('Modeling Exercise Spec', () => {
             cy.visit(`/course-management/${testCourse.id}/exercises`);
             cy.contains('Cypress Modeling Exercise').click();
             cy.get('.card-body').contains('Edit').click();
-            createModelingExercise.addComponentToExampleSolution(1);
+            modelingEditor.addComponentToModel(1);
             createModelingExercise.save();
             cy.get('.row-md > :nth-child(4)').should('contain.text', 'Export');
             cy.get('.sc-furvIG > :nth-child(1)').should('exist');
@@ -85,9 +86,9 @@ describe('Modeling Exercise Spec', () => {
         it('Creates Example Submission', () => {
             cy.visit(`/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
             modelingExerciseExampleSubission.createExampleSubmission();
-            modelingExerciseExampleSubission.addComponentToExampleSubmission(1);
-            modelingExerciseExampleSubission.addComponentToExampleSubmission(2);
-            modelingExerciseExampleSubission.addComponentToExampleSubmission(3);
+            modelingEditor.addComponentToModel(1);
+            modelingEditor.addComponentToModel(2);
+            modelingEditor.addComponentToModel(3);
             modelingExerciseExampleSubission.createNewExampleSubmission();
             cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
             modelingExerciseExampleSubission.switchToAssessmentView();
@@ -104,20 +105,17 @@ describe('Modeling Exercise Spec', () => {
         it('Edit Existing Modeling Exercise', () => {
             cy.intercept('PUT', '/api/modeling-exercises').as('editModelingExercise');
             cy.visit(`/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
-            cy.get('#field_title')
-                .clear()
-                .type('Cypress EDITED ME' + uid);
-            cy.get('jhi-difficulty-picker > :nth-child(1) > :nth-child(4)').click({ force: true });
-            cy.get(':nth-child(1) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').type('01.01.2030', { force: true });
-            cy.get('.ms-3 > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').type('02.01.2030', { force: true });
-            cy.get(':nth-child(9) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').type('03.01.2030', { force: true });
-            cy.get('jhi-included-in-overall-score-picker > .btn-group > :nth-child(3)').click({ force: true });
-            cy.get('#field_points').clear().type('100');
-            cy.contains('Save').click();
+            createModelingExercise.setTitle('Cypress EDITED ME');
+            createModelingExercise.pickDifficulty({hard: true});
+            createModelingExercise.setReleaseDate(dayjs().add(1, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS'));
+            createModelingExercise.setDueDate(dayjs().add(2, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS'));
+            createModelingExercise.setAssessmentDueDate(dayjs().add(3, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS'));
+            createModelingExercise.includeInOverallScore();
+            createModelingExercise.setPoints(100);
+            createModelingExercise.save();
             cy.wait('@editModelingExercise');
             cy.visit(`/course-management/${testCourse.id}/exercises`);
             cy.get('tbody > tr > :nth-child(2)').should('contain.text', 'Cypress EDITED ME');
-            cy.get('tbody > tr > :nth-child(3)').should('contain.text', 'Jan 1, 2030');
             cy.get('tbody > tr > :nth-child(6)').should('contain.text', '100');
         });
     });
@@ -144,8 +142,8 @@ describe('Modeling Exercise Spec', () => {
 
         it('Release a Modeling Exercise', () => {
             cy.login(instructor, `/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
-            cy.get(':nth-child(1) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(dayjs().subtract(1, 'hour').toString(), { force: true });
-            cy.contains('Save').click();
+            createModelingExercise.setReleaseDate(dayjs().subtract(1, 'hour').toString());
+            createModelingExercise.save();
         });
 
         it('Student can start and submit their model', () => {
@@ -170,7 +168,7 @@ describe('Modeling Exercise Spec', () => {
             cy.contains('Save').click();
         });
 
-        it.skip('Tutor can assess the submission', () => {
+        it('Tutor can assess the submission', () => {
             cy.login(tutor, '/course-management');
             cy.get(`[href="/course-management/${testCourse.id}/assessment-dashboard"]`).click();
             cy.url().should('contain', `/course-management/${testCourse.id}/assessment-dashboard`);
@@ -196,13 +194,13 @@ describe('Modeling Exercise Spec', () => {
             cy.get('.alerts').should('contain.text', 'Your assessment was submitted successfully!');
         });
 
-        it.skip('Close assessment period', () => {
+        it('Close assessment period', () => {
             cy.login(instructor, `/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
             cy.get(':nth-child(9) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(dayjs().toString(), { force: true });
             cy.contains('Save').click();
         });
 
-        it.skip('Student can view the assessment and complain', () => {
+        it('Student can view the assessment and complain', () => {
             cy.intercept('POST', '/api/complaints').as('complaintCreated');
             cy.login(student, `/courses/${testCourse.id}/exercises/${modelingExercise.id}`);
             cy.get('jhi-submission-result-status > .col-auto').should('contain.text', 'Score').and('contain.text', '1 of 100 points');
@@ -215,7 +213,7 @@ describe('Modeling Exercise Spec', () => {
             cy.wait('@complaintCreated');
         });
 
-        it.skip('Instructor can see complaint and reject it', () => {
+        it('Instructor can see complaint and reject it', () => {
             cy.login(instructor, `/course-management/${testCourse.id}/assessment-dashboard`);
             cy.get('.col-md-4 > .card > .card-body').contains('Total complaints: 1').click();
             cy.get('tr > .text-center >').click();

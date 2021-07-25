@@ -3,6 +3,7 @@ import { NavigationBar } from './NavigationBar';
 import { OnlineEditorPage } from './OnlineEditorPage';
 import { CreateModelingExercisePage } from './CreateModelingExercisePage';
 import { ModelingExerciseExampleSubmissionPage } from './ModelingExerciseExampleSubmissionPage';
+import { ModelingEditor } from './ModelingEditor';
 
 /**
  * A class which encapsulates all pageobjects, which can be used to automate the Artemis UI.
@@ -13,4 +14,5 @@ export class ArtemisPageobjects {
     onlineEditor = new OnlineEditorPage();
     createModelingExercise = new CreateModelingExercisePage();
     modelingExerciseExampleSubmission = new ModelingExerciseExampleSubmissionPage();
+    modelingEditor = new ModelingEditor();
 }
