@@ -1,4 +1,5 @@
 import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -15,12 +16,14 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
     isLoading = false;
     maxContentLength = MAX_CONTENT_LENGTH;
     content: string;
+    formGroup: FormGroup;
 
-    protected constructor(protected metisService: MetisService, protected modalService: NgbModal) {}
+    protected constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {}
 
     ngOnInit() {
         this.content = this.posting.content ?? '';
         this.updateModalTitle();
+        this.resetFormGroup();
     }
 
     ngOnChanges() {
@@ -29,6 +32,8 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
     }
 
     abstract updateModalTitle(): void;
+
+    abstract resetFormGroup(): void;
 
     confirm() {
         this.isLoading = true;

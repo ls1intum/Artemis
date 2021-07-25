@@ -18,6 +18,7 @@ import { AnswerPostHeaderComponent } from 'app/shared/metis/postings-header/answ
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { FormBuilder } from '@angular/forms';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,10 +49,7 @@ describe('AnswerPostHeaderComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [],
-            providers: [
-                { provide: MetisService, useClass: MockMetisService },
-                { provide: NgbModal, useClass: MockNgbModalService },
-            ],
+            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: NgbModal, useClass: MockNgbModalService }],
             declarations: [AnswerPostHeaderComponent, AnswerPostCreateEditModalComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             schemas: [NO_ERRORS_SCHEMA],
         })
@@ -85,14 +83,14 @@ describe('AnswerPostHeaderComponent', () => {
         component.posting.creationDate = today;
         component.ngOnInit();
         fixture.detectChanges();
-        expect(getElement(debugElement, '.posting-header.header-author-date').innerHTML).to.contain('Today');
+        expect(getElement(debugElement, '.today-flag')).to.exist;
     });
 
     it('should set date information correctly for post of yesterday', () => {
         component.posting.creationDate = yesterday;
         component.ngOnInit();
         fixture.detectChanges();
-        expect(getElement(debugElement, '.posting-header.header-author-date').innerHTML).to.not.contain('Today');
+        expect(getElement(debugElement, '.today-flag')).to.not.exist;
     });
 
     it('should display edit and delete options to tutor', () => {

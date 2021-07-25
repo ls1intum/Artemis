@@ -2,7 +2,8 @@
     <div class="col-auto pe-0">
         <span class="posting-header header-author-date">
             {{ posting.author!.name }}
-            {{ postingIsOfToday ? ' • Today ' : ' • ' }}
+            •
+            <span class="today-flag" *ngIf="postingIsOfToday">{{ optionalTodayFlag | artemisTranslate }}</span>
             <span [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
                 {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
             </span>

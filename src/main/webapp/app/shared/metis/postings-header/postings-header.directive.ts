@@ -9,6 +9,7 @@ export abstract class PostingsHeaderDirective<T extends Posting> implements OnIn
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
     postingIsOfToday: boolean;
+    optionalTodayFlag: string | undefined;
 
     protected constructor(protected metisService: MetisService) {}
 
@@ -16,6 +17,15 @@ export abstract class PostingsHeaderDirective<T extends Posting> implements OnIn
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(this.posting);
         this.postingIsOfToday = moment().isSame(this.posting.creationDate, 'day');
+        this.optionalTodayFlag = this.getOptionalTodayFlag();
+    }
+
+    getOptionalTodayFlag(): string | undefined {
+        if (this.postingIsOfToday) {
+            return 'artemisApp.metis.today';
+        } else {
+            return undefined;
+        }
     }
 
     abstract deletePosting(): void;

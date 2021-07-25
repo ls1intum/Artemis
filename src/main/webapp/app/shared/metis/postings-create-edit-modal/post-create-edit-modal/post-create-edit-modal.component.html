@@ -1,50 +1,49 @@
 <ng-template #postingEditor let-c="close">
-    <div class="modal-header">
-        <h4 class="modal-title">{{ modalTitle | artemisTranslate }}</h4>
-    </div>
-    <div class="modal-body">
-        <div class="position-relative mb-3">
-            <div>
-                <label class="mb-1" jhiTranslate="artemisApp.metis.post.title">Title</label>
-                <jhi-help-icon placement="top auto" text="artemisApp.metis.post.titleTooltip"></jhi-help-icon>
+    <form [formGroup]="formGroup" (ngSubmit)="confirm()">
+        <div class="modal-header">
+            <h4 class="modal-title">{{ modalTitle | artemisTranslate }}</h4>
+        </div>
+        <div class="modal-body">
+            <div class="position-relative mb-3">
+                <div>
+                    <label class="mb-1" jhiTranslate="artemisApp.metis.post.title">Title</label>
+                    <jhi-help-icon placement="top auto" text="artemisApp.metis.post.titleTooltip"></jhi-help-icon>
+                </div>
+                <div>
+                    <input formControlName="title" type="text" class="form-control" name="title" />
+                </div>
             </div>
-            <div>
-                <input [(ngModel)]="posting.title" maxlength="200" type="text" class="form-control" id="title" name="title" />
+            <div class="position-relative mb-3">
+                <div>
+                    <label class="mb-1" jhiTranslate="artemisApp.metis.post.tags">Tags</label>
+                    <jhi-help-icon placement="top auto" text="artemisApp.metis.post.tagsTooltip"></jhi-help-icon>
+                </div>
+                <div>
+                    <jhi-post-tag-selector [(postTags)]="posting.tags"></jhi-post-tag-selector>
+                </div>
+            </div>
+            <div class="position-relative mb-1">
+                <div>
+                    <label class="mb-1" jhiTranslate="artemisApp.metis.post.content">Content</label>
+                    <jhi-help-icon placement="top auto" text="artemisApp.metis.post.contentTooltip"></jhi-help-icon>
+                </div>
+                <div class="row mb-2">
+                    <jhi-postings-markdown-editor formControlName="content" [maxContentLength]="maxContentLength"></jhi-postings-markdown-editor>
+                </div>
             </div>
         </div>
-        <div class="position-relative mb-3">
-            <div>
-                <label class="mb-1" jhiTranslate="artemisApp.metis.post.tags">Tags</label>
-                <jhi-help-icon placement="top auto" text="artemisApp.metis.post.tagsTooltip"></jhi-help-icon>
-            </div>
-            <div>
-                <jhi-post-tag-selector [(postTags)]="posting.tags"></jhi-post-tag-selector>
-            </div>
+        <div class="modal-footer">
+            <button
+                jhi-postings-button
+                [buttonLoading]="isLoading"
+                [disabled]="!formGroup.valid"
+                [buttonLabel]="'artemisApp.metis.savePosting' | artemisTranslate"
+                class="btn btn-sm btn-outline-secondary"
+                type="submit"
+            ></button>
+            <button class="btn btn-sm me-1 btn-outline-secondary" (click)="c()">
+                {{ 'artemisApp.metis.cancel' | artemisTranslate }}
+            </button>
         </div>
-        <div class="position-relative mb-1">
-            <div>
-                <label class="mb-1" jhiTranslate="artemisApp.metis.post.content">Content</label>
-                <jhi-help-icon placement="top auto" text="artemisApp.metis.post.contentTooltip"></jhi-help-icon>
-            </div>
-            <div>
-                <jhi-postings-markdown-editor [(content)]="content"></jhi-postings-markdown-editor>
-            </div>
-        </div>
-        <div class="col text-end">
-            <p class="small my-0 ms-2">{{ content.length }} / {{ maxContentLength }}</p>
-        </div>
-    </div>
-    <div class="modal-footer">
-        <button
-            jhi-postings-button
-            [buttonLoading]="isLoading"
-            [disabled]="content.length === 0 || content.length > maxContentLength"
-            [buttonLabel]="'artemisApp.metis.savePosting' | artemisTranslate"
-            class="btn btn-sm btn-outline-secondary"
-            (click)="confirm()"
-        ></button>
-        <button class="btn btn-sm me-1 btn-outline-secondary" (click)="c()">
-            {{ 'artemisApp.metis.cancel' | artemisTranslate }}
-        </button>
-    </div>
+    </form>
 </ng-template>

@@ -2,7 +2,7 @@
     <jhi-markdown-editor
         class="markdown-editor background-editor-color w-100"
         [markdown]="content"
-        (markdownChange)="markdownChange($event)"
+        (markdownChange)="writeValue($event)"
         [enableResize]="true"
         [metaCommands]="[]"
         [headerCommands]="[]"
@@ -10,4 +10,7 @@
         [enableFileUpload]="false"
         [colorCommands]="[]"
     ></jhi-markdown-editor>
+</div>
+<div class="col text-end">
+    <p class="small my-0 ms-2">{{ content?.length }} / {{ maxContentLength }}</p>
 </div>
