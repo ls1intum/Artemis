@@ -1,7 +1,8 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 
 @Component({
     selector: 'jhi-postings-thread',
@@ -14,6 +15,7 @@ export class PostingsThreadComponent implements OnInit, OnChanges {
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
+    @ViewChild('createAnswerPostModal') createAnswerPostModal: TemplateRef<AnswerPostCreateEditModalComponent>;
 
     constructor(private metisService: MetisService) {}
 

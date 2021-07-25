@@ -37,7 +37,7 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
 
     confirm() {
         this.isLoading = true;
-        this.posting.content = this.content;
+        this.posting.content = this.formGroup.get('content')?.value;
         if (this.posting!.id) {
             this.updatePosting();
         } else {

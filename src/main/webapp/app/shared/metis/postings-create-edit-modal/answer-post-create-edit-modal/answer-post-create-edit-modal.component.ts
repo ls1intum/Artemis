@@ -22,7 +22,6 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
     }
 
     createPosting(): void {
-        this.posting.content = this.formGroup.get('content')?.value;
         this.posting.creationDate = moment();
         this.metisService.createAnswerPost(this.posting).subscribe({
             next: (answerPost: AnswerPost) => {
@@ -37,7 +36,6 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
     }
 
     updatePosting(): void {
-        this.posting.content = this.formGroup.get('content')?.value;
         this.metisService.updateAnswerPost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
