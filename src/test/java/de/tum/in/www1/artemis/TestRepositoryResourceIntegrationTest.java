@@ -11,10 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.ListBranchCommand;
@@ -478,7 +475,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void testIsClean() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         doReturn(true).when(gitService).isRepositoryCached(any());
-        var status = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, LinkedHashMap.class);
+        Map status = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, LinkedHashMap.class);
         assertThat(status.size()).isGreaterThan(0);
     }
 

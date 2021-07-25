@@ -1379,6 +1379,7 @@ public class CourseTestService {
         mockedFiles.close();
 
         assertThat(exportedCourse).isEmpty();
+        assertThat(exportErrors.size()).isGreaterThan(0);
     }
 
     // Test
