@@ -154,9 +154,9 @@ describe('Modeling Exercise Spec', () => {
             cy.wait('@createModelingParticipation');
             cy.get('.btn').should('contain.text', 'Open modelling editor');
             cy.get('.btn').click();
-            cy.get('.sc-ksdxAp > :nth-child(2) > :nth-child(1) > :nth-child(1)').drag('.sc-furvIG', { position: 'bottomLeft', force: true });
-            cy.get('.sc-ksdxAp > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-furvIG', { position: 'bottomLeft', force: true });
-            cy.get('.sc-ksdxAp > :nth-child(3) > :nth-child(1) > :nth-child(1)').drag('.sc-furvIG', { position: 'bottomLeft', force: true });
+            modelingEditor.addComponentToModel(1);
+            modelingEditor.addComponentToModel(2);
+            modelingEditor.addComponentToModel(3);
             cy.get('.jhi-btn').click();
             cy.get('.alerts').should('contain.text', 'Your submission was successful! You can change your submission or wait for your feedback.');
             cy.get('.col-auto').should('contain.text', 'No graded result');
@@ -164,8 +164,10 @@ describe('Modeling Exercise Spec', () => {
 
         it('Close exercise for submissions', () => {
             cy.login(instructor, `/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
-            cy.get(':nth-child(2) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(dayjs().toString(), { force: true });
-            cy.contains('Save').click();
+            createModelingExercise.setDueDate(dayjs().add(1, 'second').toString());
+            // so the submission is not considered 'late'
+            cy.wait(1000);
+            createModelingExercise.save();
         });
 
         it('Tutor can assess the submission', () => {
@@ -181,29 +183,26 @@ describe('Modeling Exercise Spec', () => {
             cy.get('jhi-unreferenced-feedback > .btn').click();
             cy.get('jhi-assessment-detail > .card > .card-body > :nth-child(1) > :nth-child(2)').clear().type('1');
             cy.get('jhi-assessment-detail > .card > .card-body > :nth-child(2) > :nth-child(2)').clear().type('thanks, i hate it');
-            cy.get('.sc-furvIG >> :nth-child(1)').dblclick('top');
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('-1');
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(3) > ').type('Wrong', { force: true });
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(13) >').click('right', { force: true });
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('1');
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(3) >').type('Good', { force: true });
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(5)').click();
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('0');
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(3) >').type('Unnecessary', { force: true });
+            modelingExerciseExampleSubission.openAssessmentForComponent(1);
+            modelingExerciseExampleSubission.assessComponent(-1, 'False');
+            modelingExerciseExampleSubission.openAssessmentForComponent(2);
+            modelingExerciseExampleSubission.assessComponent(2, 'Good');
+            modelingExerciseExampleSubission.openAssessmentForComponent(3);
+            modelingExerciseExampleSubission.assessComponent(0, 'Unnecessary');
             cy.get('.top-container > :nth-child(3) > :nth-child(4)').click();
             cy.get('.alerts').should('contain.text', 'Your assessment was submitted successfully!');
         });
 
         it('Close assessment period', () => {
             cy.login(instructor, `/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
-            cy.get(':nth-child(9) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(dayjs().toString(), { force: true });
-            cy.contains('Save').click();
+            createModelingExercise.setAssessmentDueDate(dayjs().toString());
+            createModelingExercise.save();
         });
 
         it('Student can view the assessment and complain', () => {
             cy.intercept('POST', '/api/complaints').as('complaintCreated');
             cy.login(student, `/courses/${testCourse.id}/exercises/${modelingExercise.id}`);
-            cy.get('jhi-submission-result-status > .col-auto').should('contain.text', 'Score').and('contain.text', '1 of 100 points');
+            cy.get('jhi-submission-result-status > .col-auto').should('contain.text', 'Score').and('contain.text', '2 of 100 points');
             cy.get('jhi-exercise-details-student-actions.col > > :nth-child(2)').click();
             cy.url().should('contain', `/courses/${testCourse.id}/modeling-exercises/${modelingExercise.id}/participate/`);
             cy.get('.col-xl-8').should('contain.text', 'thanks, i hate it');
