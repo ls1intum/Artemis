@@ -306,7 +306,7 @@ public class CourseService {
      *
      * @param exerciseIds the ids to get the active students for
      * @param periodIndex the deviation from the current time
-     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 8 for the courde detail view
+     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 16 for the courde detail view
      * @return An Integer array containing active students for each index. An index corresponds to a week
      */
     public Integer[] getActiveStudents(Set<Long> exerciseIds, Integer periodIndex, int length) {
@@ -374,11 +374,11 @@ public class CourseService {
      * which map to the date and the amount of the findings. This Map-List is taken and converted into an Integer array,
      * containing the values for each point of the graph. In the course management overview, we want to display the last
      * 4 weeks, each week represented by one point in the graph. (Beginning with the current week.) In the course detail view,
-     * we display 8 weeks at once.
+     * we display 16 weeks at once.
      *
      * @param outcome A List<StatisticsEntry>, containing the content which should be refactored into an array
      * @param startDate the startDate
-     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 8 for the courde detail view
+     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 16 for the courde detail view
      * @return an array, containing the amount of active users. One entry corresponds to one week
      */
     private Integer[] sortUserIntoWeeks(List<StatisticsEntry> outcome, ZonedDateTime startDate, int length) {

@@ -24,6 +24,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
 
     LEFT = false;
     RIGHT = true;
+    displayedNumberOfWeeks = 16;
 
     // Chart
     chartTime: any;
@@ -97,12 +98,12 @@ export class CourseDetailLineChartComponent implements OnChanges {
 
     private createLabels() {
         const prefix = this.translateService.instant('calendar_week');
-        const startDate = moment().subtract(15 + 16 * -this.currentPeriod, 'weeks');
-        const endDate = this.currentPeriod !== 0 ? moment().subtract(16 * -this.currentPeriod, 'weeks') : moment();
+        const startDate = moment().subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks');
+        const endDate = this.currentPeriod !== 0 ? moment().subtract(this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks') : moment();
         let currentWeek;
-        for (let i = 0; i < 16; i++) {
+        for (let i = 0; i < this.displayedNumberOfWeeks; i++) {
             currentWeek = moment()
-                .subtract(15 + 16 * -this.currentPeriod - i, 'weeks')
+                .subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod - i, 'weeks')
                 .isoWeekday(1)
                 .isoWeek();
             this.lineChartLabels[i] = prefix + ' ' + currentWeek;
