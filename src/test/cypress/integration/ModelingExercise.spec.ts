@@ -11,7 +11,8 @@ import { ModelingExerciseExampleSubmissionPage } from '../support/pageobjects/Mo
 const courseManagement: CourseManagementPage = artemis.pageobjects.courseManagement;
 const createModelingExercise: CreateModelingExercisePage = artemis.pageobjects.createModelingExercise;
 const modelingExerciseExampleSubission: ModelingExerciseExampleSubmissionPage = artemis.pageobjects.modelingExerciseExampleSubmission;
-
+// requests
+const courseManagementRequests = artemis.requests.courseManagement;
 // Users
 const userManagement = artemis.users;
 const admin = userManagement.getAdmin();
@@ -30,19 +31,15 @@ describe('Modeling Exercise Spec', () => {
     before('Log in as admin and create a course', () => {
         cy.intercept('POST', '/api/modeling-exercises').as('createModelingExercise');
         cy.login(admin);
-        cy.fixture('requests/course.json').then((course) => {
-            course.title = courseName;
-            course.shortName = courseShortName;
-            cy.createCourse(course).then((courseResp) => {
-                testCourse = courseResp.body;
-                cy.visit(`/course-management/${testCourse.id}`).get('.row-md > :nth-child(2)').should('contain.text', testCourse.title);
-                // set tutor group
-                courseManagement.addTutorToCourse(tutor);
-                // set student group
-                courseManagement.addStudentToCourse(student);
-                // set instructor group
-                courseManagement.addInstructorToCourse(instructor);
-            });
+        courseManagementRequests.createCourse(courseName, courseShortName).then((courseResp) => {
+            testCourse = courseResp.body;
+            cy.visit(`/course-management/${testCourse.id}`).get('.row-md > :nth-child(2)').should('contain.text', testCourse.title);
+            // set tutor group
+            courseManagement.addTutorToCourse(tutor);
+            // set student group
+            courseManagement.addStudentToCourse(student);
+            // set instructor group
+            courseManagement.addInstructorToCourse(instructor);
         });
     });
 
@@ -94,18 +91,14 @@ describe('Modeling Exercise Spec', () => {
             modelingExerciseExampleSubission.createNewExampleSubmission();
             cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
             modelingExerciseExampleSubission.switchToAssessmentView();
-            cy.getSettled(`.sc-furvIG >> :nth-child(1)`).dblclick('top');
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('-1');
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(3) ').type('Wrong');
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(13)').click();
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('1');
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(3) ').type('Good');
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(5)').click();
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('0');
-            cy.get('.sc-nVjpj > :nth-child(1) > :nth-child(3)').type('Unnecessary');
-            cy.get('.card-body').click('top');
+            modelingExerciseExampleSubission.openAssessmentForComponent(1);
+            modelingExerciseExampleSubission.assessComponent(-1, 'False');
+            modelingExerciseExampleSubission.openAssessmentForComponent(2);
+            modelingExerciseExampleSubission.assessComponent(2, 'Good');
+            modelingExerciseExampleSubission.openAssessmentForComponent(3);
+            modelingExerciseExampleSubission.assessComponent(0, 'Unnecessary');
             cy.get('.sc-furvIG > :nth-child(1) > :nth-child(1) > :nth-child(2) > :nth-child(1)').should('exist');
-            cy.contains('Save Example Assessment').click();
+            modelingExerciseExampleSubission.saveExampleAssessment();
         });
 
         it('Edit Existing Modeling Exercise', () => {
@@ -137,7 +130,7 @@ describe('Modeling Exercise Spec', () => {
                 exercise.releaseDate = dayjs().add(1, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
                 exercise.dueDate = dayjs().add(2, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
                 exercise.assessmentDueDate = dayjs().add(3, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-                cy.createModelingExercise(exercise).then((resp) => {
+                courseManagementRequests.createModelingExercise(exercise).then((resp) => {
                     modelingExercise = resp.body;
                 });
             });

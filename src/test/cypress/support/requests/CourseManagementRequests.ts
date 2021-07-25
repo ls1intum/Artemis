@@ -1,4 +1,4 @@
-import { BASE_API, DELETE, POST } from '../constants';
+import { authTokenKey, BASE_API, DELETE, POST } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 
@@ -79,5 +79,26 @@ export class CourseManagementRequests {
      */
     addStudentToCourse(courseId: number, studentName: string) {
         return cy.request({ url: COURSE_BASE + courseId + '/students/' + studentName, method: POST });
+    }
+
+    createModelingExercise(modelingExercise: string) {
+        return cy.request({
+            url: '/api/modeling-exercises',
+            method: 'POST',
+            body: modelingExercise,
+            headers: {
+                Authorization: 'Bearer ' + Cypress.env(authTokenKey),
+            },
+        });
+    }
+
+    deleteModelingExercise(exerciseID: number) {
+        return cy.request({
+            url: `/api/modeling-exercises/${exerciseID}`,
+            method: 'DELETE',
+            headers: {
+                Authorization: `Bearer ${Cypress.env(authTokenKey)}`
+            },
+        });
     }
 }
