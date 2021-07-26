@@ -2,7 +2,6 @@
     "artemisApp": {
         "modelingEditor": {
             "title": "Modelling Editor",
-            "problemStatement": "Problem statement",
             "maxScore": "<strong>Max. Points: {{maxScore}}</strong>",
             "saveSuccessful": "Your diagram was saved successfully!",
             "submitSuccessful": "Your diagram was submitted successfully! You may submit again or wait for your feedback.",
