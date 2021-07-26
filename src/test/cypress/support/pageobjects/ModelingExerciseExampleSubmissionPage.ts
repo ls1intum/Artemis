@@ -3,7 +3,6 @@
  * Path: /course-management/${courseID}/modeling-exercises/${exerciseID}/example-submissions
  */
 export class ModelingExerciseExampleSubmissionPage {
-
     /**
      * Locates and clicks the Create Example Submission Button
      * */
@@ -23,7 +22,7 @@ export class ModelingExerciseExampleSubmissionPage {
     }
 
     openAssessmentForComponent(componentNumber: number) {
-        cy.getSettled(`.sc-furvIG >> :nth-child(${componentNumber})`).dblclick('top', {force: true});
+        cy.getSettled(`.sc-furvIG >> :nth-child(${componentNumber})`).dblclick('top', { force: true });
     }
 
     assessComponent(points: number, feedback: string) {

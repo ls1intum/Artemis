@@ -3,7 +3,6 @@
  * Path: /course-management/{courseID}/modeling-exercises/{exerciseID}
  */
 export class CreateModelingExercisePage {
-
     setTitle(title: string) {
         cy.get('#field_title').clear().type(title);
     }
@@ -12,7 +11,7 @@ export class CreateModelingExercisePage {
         categories.forEach((category) => {
             cy.get('#field_categories').type(category);
             // this line is a hack so the category ends
-            cy.get('#id').click({force: true});
+            cy.get('#id').click({ force: true });
         });
     }
 
@@ -52,7 +51,7 @@ export class CreateModelingExercisePage {
         cy.get('jhi-included-in-overall-score-picker > .btn-group > :nth-child(3)').click({ force: true });
     }
 
-    pickDifficulty(options: {hard?: boolean, medium?: boolean, easy?: boolean}) {
+    pickDifficulty(options: { hard?: boolean; medium?: boolean; easy?: boolean }) {
         if (options.hard) {
             cy.get('jhi-difficulty-picker > :nth-child(1) > :nth-child(4)').click({ force: true });
         }

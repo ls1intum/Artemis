@@ -97,7 +97,7 @@ export class CourseManagementRequests {
             url: `/api/modeling-exercises/${exerciseID}`,
             method: 'DELETE',
             headers: {
-                Authorization: `Bearer ${Cypress.env(authTokenKey)}`
+                Authorization: `Bearer ${Cypress.env(authTokenKey)}`,
             },
         });
     }

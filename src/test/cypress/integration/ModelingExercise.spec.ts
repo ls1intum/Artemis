@@ -106,7 +106,7 @@ describe('Modeling Exercise Spec', () => {
             cy.intercept('PUT', '/api/modeling-exercises').as('editModelingExercise');
             cy.visit(`/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
             createModelingExercise.setTitle('Cypress EDITED ME');
-            createModelingExercise.pickDifficulty({hard: true});
+            createModelingExercise.pickDifficulty({ hard: true });
             createModelingExercise.setReleaseDate(dayjs().add(1, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS'));
             createModelingExercise.setDueDate(dayjs().add(2, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS'));
             createModelingExercise.setAssessmentDueDate(dayjs().add(3, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS'));
