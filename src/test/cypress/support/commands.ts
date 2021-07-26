@@ -35,10 +35,6 @@ declare global {
             login(credentials: CypressCredentials, url?: String): any;
             logout(): any;
             loginWithGUI(credentials: CypressCredentials): any;
-            createCourse(course: String): Chainable<Cypress.Response<JSON>>;
-            deleteCourse(courseID: number): Chainable<Cypress.Response<JSON>>;
-            deleteModelingExercise(courseID: number): Chainable<Cypress.Response<JSON>>;
-            createModelingExercise(modelingExercise: String): Chainable<Cypress.Response<JSON>>;
             getSettled(selector: String, options?: {}): Chainable<Cypress>;
         }
     }
@@ -73,6 +69,7 @@ Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
         url: '/api/authenticate',
         method: 'POST',
         followRedirect: true,
+        retryOnStatusCodeFailure: true,
         body: {
             username,
             password,
@@ -110,72 +107,6 @@ Cypress.Commands.add('loginWithGUI', (credentials) => {
     cy.get('#username').type(credentials.username);
     cy.get('#password').type(credentials.password).type('{enter}');
     Cypress.env(authTokenKey, localStorage.getItem(authTokenKey));
-});
-
-/** @deprecated -> USE COURSEMANAGEMENTREQUESTS
- * Creates a course with API request
- * @param course is a course object in json format
- * @return Chainable<Cypress.Response> the http response of the POST request
- * */
-Cypress.Commands.add('createCourse', (course: string) => {
-    cy.request({
-        url: '/api/courses',
-        method: 'POST',
-        body: course,
-        headers: {
-            Authorization: 'Bearer ' + Cypress.env(authTokenKey),
-        },
-    }).then((response) => {
-        return response;
-    });
-});
-
-/** @deprecated -> USE COURSEMANAGEMENTREQUESTS
- * Deletes course with courseID
- * @param courseID id of the course that is to be deleted
- * @return Chainable<Cypress.Response> the http response of the DELETE request
- * */
-Cypress.Commands.add('deleteCourse', (courseID: number) => {
-    cy.request({
-        url: `/api/courses/${courseID}`,
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${Cypress.env(authTokenKey)}` },
-    }).then((response) => {
-        return response;
-    });
-});
-
-/** @deprecated -> USE COURSEMANAGEMENTREQUESTS
- * Creates a modelingExercise with API request
- * @param modelingExercise is a modeling exercise object in json format
- * @return Chainable<Cypress.Response> the http response of the POST request
- * */
-Cypress.Commands.add('createModelingExercise', (modelingExercise: string) => {
-    cy.request({
-        url: '/api/modeling-exercises',
-        method: 'POST',
-        body: modelingExercise,
-        headers: {
-            Authorization: 'Bearer ' + Cypress.env(authTokenKey),
-        },
-    }).then((response) => {
-        return response;
-    });
-});
-
-/** @deprecated -> USE COURSEMANAGEMENTREQUESTS
- * Deletes modeling exercise with exerciseID
- * @param exerciseID id of the exercise that is to be deleted
- * @return Chainable<Cypress.Response> the http response of the DELETE request
- * */
-Cypress.Commands.add('deleteModelingExercise', (exerciseID: number) => {
-    cy.request({
-        url: `/api/modeling-exercises/${exerciseID}`,
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${Cypress.env(authTokenKey)}` },
-    }).then((response) => {
-        return response;
-    });
 });
 
 /** recursively gets an element, returning only after it's determined to be attached to the DOM for good
