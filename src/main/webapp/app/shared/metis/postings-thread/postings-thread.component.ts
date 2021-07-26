@@ -21,7 +21,7 @@ export class PostingsThreadComponent implements OnInit, OnChanges {
 
     /**
      * on initialization: determines if user is at least tutor in course by invoking metis service, sorts the answer posts,
-     * and creates a default answer post that is used as input for modals
+     * and creates a default answer post
      */
     ngOnInit(): void {
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
@@ -53,8 +53,8 @@ export class PostingsThreadComponent implements OnInit, OnChanges {
     }
 
     /**
-     * creates an empty answer post for a single post (start of a thread), sets the tutorApproved flag accordingly
-     * @return AnswerPost created empty default post
+     * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set tutorApproved flag
+     * @return AnswerPost created empty default answer post
      */
     createEmptyAnswerPost(): AnswerPost {
         const answerPost = new AnswerPost();

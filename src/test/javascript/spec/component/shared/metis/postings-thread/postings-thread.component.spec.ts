@@ -20,7 +20,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('PostingThreadComponent', () => {
+describe('PostingsThreadComponent', () => {
     let component: PostingsThreadComponent;
     let fixture: ComponentFixture<PostingsThreadComponent>;
     let metisService: MetisService;
@@ -79,7 +79,7 @@ describe('PostingThreadComponent', () => {
     afterEach(function () {
         sinon.restore();
     });
-    it('should initialized correctly for users that are at least tutors in course', () => {
+    it('should be initialized correctly for users that are at least tutors in course', () => {
         component.post = post;
         component.post.answers = unsortedAnswerArray;
         metisServiceUserAuthorityStub.returns(true);
@@ -88,7 +88,7 @@ describe('PostingThreadComponent', () => {
         expect(component.createdAnswerPost.tutorApproved).to.be.equal(true);
     });
 
-    it('should initialized correctly for users that are not at least tutors in course', () => {
+    it('should be initialized correctly for users that are not at least tutors in course', () => {
         component.post = post;
         component.post.answers = unsortedAnswerArray;
         metisServiceUserAuthorityStub.returns(false);

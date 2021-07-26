@@ -4,9 +4,11 @@
     (ngModelChange)="onPostTagsChange($event)"
     [maxItems]="3"
     [addOnBlur]="true"
+    [modelAsStrings]="true"
     theme="bootstrap"
-    [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"
-    [secondaryPlaceholder]="'artemisApp.exercise.tagSecondaryPlaceholder' | artemisTranslate"
+    [placeholder]="'artemisApp.metis.post.tagPlaceholder' | artemisTranslate"
+    [secondaryPlaceholder]="'artemisApp.metis.post.tagSecondaryPlaceholder' | artemisTranslate"
 >
-    <tag-input-dropdown [focusFirstElement]="true" [showDropdownIfEmpty]="true" [minimumTextLength]="0" [zIndex]="10000"></tag-input-dropdown>
+    <tag-input-dropdown [focusFirstElement]="true" [showDropdownIfEmpty]="true" [minimumTextLength]="0" [zIndex]="10000" [autocompleteItems]="existingPostTags">
+    </tag-input-dropdown>
 </tag-input>

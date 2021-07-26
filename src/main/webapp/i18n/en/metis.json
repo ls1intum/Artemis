@@ -32,6 +32,8 @@
                 "title": "Title",
                 "titleTooltip": "Add a precise and summarizing title your post",
                 "tags": "Tags",
+                "tagPlaceholder": "+ Tag",
+                "tagSecondaryPlaceholder": "Add tag(s)",
                 "tagsTooltip": "Add up to three descriptive and reusable tags to your post",
                 "content": "Content",
                 "contentTooltip": "Describe your issue or request as precise as possible. Use markdown formatting where it improves readability.",

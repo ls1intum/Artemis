@@ -36,7 +36,6 @@ export class MetisService {
     get posts(): Observable<Post[]> {
         return this.posts$.asObservable();
     }
-
     get tags(): Observable<string[]> {
         return this.tags$;
     }

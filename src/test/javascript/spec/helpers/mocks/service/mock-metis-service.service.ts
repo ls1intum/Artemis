@@ -1,6 +1,7 @@
 import { Observable, of } from 'rxjs';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Post } from 'app/entities/metis/post.model';
+import { Posting } from 'app/entities/metis/posting.model';
 
 export class MockMetisService {
     get tags(): Observable<string[]> {
@@ -21,7 +22,7 @@ export class MockMetisService {
         return true;
     }
 
-    metisUserIsAuthorOfPosting(): boolean {
+    metisUserIsAuthorOfPosting(posting: Posting): boolean {
         return true;
     }
 }

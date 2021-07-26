@@ -1,9 +1,9 @@
 import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { spy, stub } from 'sinon';
+import { SinonStub, spy, stub } from 'sinon';
+import * as sinon from 'sinon';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import * as moment from 'moment';
 import { CourseWideContext, Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -25,9 +25,11 @@ const expect = chai.expect;
 describe('Metis Service', () => {
     let injector: TestBed;
     let metisService: MetisService;
+    let metisServiceUserStub: SinonStub;
     let postService: MockPostService;
     let answerPostService: MockAnswerPostService;
     let accountService: MockAccountService;
+    let accountServiceIsAtLeastTutorStub: SinonStub;
     let post1: Post;
     let post2: Post;
     let post3: Post;
@@ -54,14 +56,11 @@ describe('Metis Service', () => {
         answerPostService = injector.get(AnswerPostService);
         accountService = injector.get(AccountService);
 
-        const today = moment();
-        const yesterday = moment().subtract(1, 'day');
         user1 = { id: 1, name: 'usersame1', login: 'login1' } as User;
         user2 = { id: 2, name: 'usersame2', login: 'login2' } as User;
 
         post1 = new Post();
         post1.id = 1;
-        post1.creationDate = today;
         post1.content = 'This is a test post';
         post1.title = 'title';
         post1.tags = ['tag1', 'tag2'];
@@ -70,7 +69,6 @@ describe('Metis Service', () => {
 
         post2 = new Post();
         post2.id = 2;
-        post2.creationDate = yesterday;
         post2.content = 'This is a test post';
         post2.title = 'title';
         post2.tags = ['tag1', 'tag2'];
@@ -79,7 +77,6 @@ describe('Metis Service', () => {
 
         post3 = new Post();
         post3.id = 3;
-        post3.creationDate = yesterday;
         post3.content = 'This is a test post';
         post3.title = 'title';
         post3.tags = ['tag1', 'tag2'];
@@ -108,6 +105,13 @@ describe('Metis Service', () => {
         courseDefault.exercises = [exerciseDefault];
         courseDefault.lectures = [lectureDefault];
         courseDefault.posts = posts;
+
+        metisServiceUserStub = stub(metisService, 'getUser');
+        accountServiceIsAtLeastTutorStub = stub(accountService, 'isAtLeastTutorInCourse');
+
+        afterEach(() => {
+            sinon.restore();
+        });
     });
 
     describe('Invoke post service methods', () => {
@@ -202,31 +206,31 @@ describe('Metis Service', () => {
     });
 
     it('should determine that metis user is at least tutor in course', () => {
-        const accountServiceStub = stub(accountService, 'isAtLeastTutorInCourse').returns(true);
+        accountServiceIsAtLeastTutorStub.returns(true);
         const metisUserIsAtLeastTutorInCourseReturn = metisService.metisUserIsAtLeastTutorInCourse();
         expect(metisUserIsAtLeastTutorInCourseReturn).to.be.true;
     });
 
     it('should determine that metis user is not at least tutor in course', () => {
-        const accountServiceStub = stub(accountService, 'isAtLeastTutorInCourse').returns(false);
+        accountServiceIsAtLeastTutorStub.returns(false);
         const metisUserIsAtLeastTutorInCourseReturn = metisService.metisUserIsAtLeastTutorInCourse();
         expect(metisUserIsAtLeastTutorInCourseReturn).to.be.false;
     });
 
     it('should determine that metis user is at least tutor in course', () => {
-        const accountServiceStub = stub(accountService, 'isAtLeastTutorInCourse').returns(true);
+        accountServiceIsAtLeastTutorStub.returns(true);
         const metisUserIsAtLeastTutorInCourseReturn = metisService.metisUserIsAtLeastTutorInCourse();
         expect(metisUserIsAtLeastTutorInCourseReturn).to.be.true;
     });
 
     it('should determine that metis user is author of post', () => {
-        const metisServiceGetUserStub = stub(metisService, 'getUser').returns(user1);
+        metisServiceUserStub.returns(user1);
         const metisUserIsAuthorOfPostingReturn = metisService.metisUserIsAuthorOfPosting(post1);
         expect(metisUserIsAuthorOfPostingReturn).to.be.true;
     });
 
     it('should determine that metis user is not author of post', () => {
-        const metisServiceGetUserStub = stub(metisService, 'getUser').returns(user2);
+        metisServiceUserStub.returns(user2);
         const metisUserIsAuthorOfPostingReturn = metisService.metisUserIsAuthorOfPosting(post1);
         expect(metisUserIsAuthorOfPostingReturn).to.be.false;
     });
