@@ -19,8 +19,10 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.notification.NotificationSettings;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
+import de.tum.in.www1.artemis.repository.NotificationSettingsRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -48,11 +50,15 @@ public class NotificationResource {
 
     private final UserRepository userRepository;
 
+    private final NotificationSettingsRepository notificationSettingsRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
-    public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
+    public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, NotificationSettingsRepository notificationSettingsRepository,
+            AuthorizationCheckService authorizationCheckService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
+        this.notificationSettingsRepository = notificationSettingsRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
 
@@ -93,9 +99,9 @@ public class NotificationResource {
 
     @GetMapping("/notifications/settings")
     // @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<NotificationOption>> getNotificationSettingsForCurrentUser(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<NotificationSettings>> getNotificationSettingsForCurrentUser(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        final Page<Notification> page = notificationRepository.findNotificationSettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), pageable);
+        final Page<NotificationSettings> page = notificationSettingsRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId(), pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
