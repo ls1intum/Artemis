@@ -205,7 +205,7 @@ public class TextExerciseResource {
         }
         TextExercise textExerciseBeforeUpdate = textExerciseRepository.findByIdElseThrow(textExercise.getId());
 
-        // Forbid changes of course exercise belongs to.
+        // Forbid changing the course the exercise belongs to.
         if (textExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId().longValue() != textExercise.getCourseViaExerciseGroupOrCourseMember().getId().longValue()) {
             return conflict("The text exercise course cannot be changed", ENTITY_NAME, "cannotChangeCourseId");
         }
