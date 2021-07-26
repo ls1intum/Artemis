@@ -26,7 +26,7 @@ import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
-import { NotificationSettingsComponent } from 'app/shared/notification/notification-settings/notification-settings.component';
+import { NotificationOptionsComponent } from 'app/shared/notification/notification-options/notification-options.component';
 
 // NOTE: this module should only include the most important modules for normal users, all course management, admin and account functionality should be lazy loaded if possible
 @NgModule({
@@ -56,7 +56,7 @@ import { NotificationSettingsComponent } from 'app/shared/notification/notificat
         FooterComponent,
         NotificationPopupComponent,
         NotificationSidebarComponent,
-        NotificationSettingsComponent,
+        NotificationOptionsComponent,
         SystemNotificationComponent,
         LoadingNotificationComponent,
     ],

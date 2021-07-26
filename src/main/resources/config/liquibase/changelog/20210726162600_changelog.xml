@@ -1,0 +1,27 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.8.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="alexander.malyuk" id="20210726162600-1">
+
+        <!-- Introduction of notification options -->
+        <createTable tableName="notification_options">
+            <column name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="notification_settingsPK"/>
+            </column>
+            <column name="type" type="VARCHAR(255)"/>
+            <column name="app" type="BIT(1)"/>
+            <column name="email" type="BIT(1)"/>
+            <column name="user_id" type="BIGINT"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="user_id" baseColumnNames="notification_options"
+                                 constraintName="fk_notification_options_user_id" deferrable="false"
+                                 referencedColumnNames="id" referencedTableName="jhi_user"/>
+        <addUniqueConstraint tableName="notification" columnNames="id, type, user_id"/>
+    </changeSet>
+    <changeSet author="alexander.malyuk" id="20210726162600-2">
+        <sqlFile
+            encoding="UTF-8"
+            relativeToChangelogFile="true"
+            path="../migrationSQL/fillNotificationOptions.sql"
+        />
+    </changeSet>
+</databaseChangeLog>

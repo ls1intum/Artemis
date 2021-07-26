@@ -15,7 +15,7 @@ import { Notification } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { NotificationOption } from 'app/shared/notification/notification-settings/notification-settings.component';
+import { NotificationOption } from 'app/shared/notification/notification-options/notification-options.component';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -46,9 +46,9 @@ export class NotificationService {
             .pipe(map((res: HttpResponse<Notification[]>) => this.convertDateArrayFromServer(res)));
     }
 
-    queryNotificationSettings(req?: any): Observable<HttpResponse<NotificationOption[]>> {
+    queryNotificationOptions(req?: any): Observable<HttpResponse<NotificationOption[]>> {
         const options = createRequestOption(req);
-        return this.http.get<NotificationOption[]>(this.resourceUrl + '/settings', { params: options, observe: 'response' });
+        return this.http.get<NotificationOption[]>(this.resourceUrl + '/options', { params: options, observe: 'response' });
         //.pipe(map((res: HttpResponse<NotificationOption[]>) => this.convertDateArrayFromServer(res)));
     }
 

@@ -8,16 +8,17 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 
 /**
- * Individual user's Notification Settings about one notifiction type
+ * Individual user's Notification Options about one notification type
  */
 @Entity
-@Table(name = "notification_settings")
+@Table(name = "notification_option")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class NotificationSettings extends DomainObject {
+public class NotificationOption extends DomainObject {
 
     @Id
     @Column(name = "id")
@@ -33,8 +34,9 @@ public class NotificationSettings extends DomainObject {
     @Column(name = "email", columnDefinition = "boolean default false")
     private boolean email = false;
 
-    @Column(name = "user_id")
-    private long user_id;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     // getter & setter
 
@@ -71,19 +73,18 @@ public class NotificationSettings extends DomainObject {
         this.email = email;
     }
 
-    public long getUser_id() {
-        return user_id;
+    public User getUser_id() {
+        return user;
     }
 
-    public void setUser_id(long user_id) {
-        this.user_id = user_id;
+    public void setUser_id(User user) {
+        this.user = user;
     }
 
     @Override
     public String toString() {
-        return "NotificationSettings{" + "id=" + id + ", type='" + type + '\'' + ", app=" + app + ", email=" + email + ", user_id=" + user_id + '}';
+        return "NotificationOption{" + "id=" + id + ", type='" + type + '\'' + ", app=" + app + ", email=" + email + ", user_id=" + user + '}';
     }
-
 }
 
 /*

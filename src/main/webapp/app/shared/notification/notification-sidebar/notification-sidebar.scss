@@ -62,7 +62,7 @@
         padding: 20px 16px;
     }
 
-    .settings-button {
+    .option-button {
         margin-left: 15px;
 
         fa-icon {
@@ -73,7 +73,7 @@
 
 /* TEST: TODO if everything worked out this should be in separate component/html/css files */
 
-.notification-settings-window {
+.notification-options-window {
     position: fixed;
     top: 0;
     right: 0;

@@ -10,7 +10,7 @@
             "loadedNotificationCount": "{{loaded}} of {{total}} notifications loaded",
             "by": "by",
             "allLoaded": "No further notifications available.",
-            "settings": {
+            "options": {
                 "header": "Notification Settings",
                 "saveChanges": "Save Changes"
             },

@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.notification.NotificationOption;
 
 /**
  * Spring Data repository for the Notification entity.
@@ -27,4 +28,10 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                     OR type(notification) = SingleUserNotification and notification.recipient.login = :#{#login}
             """)
     Page<Notification> findAllNotificationsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login, Pageable pageable);
+
+    @Query("""
+            SELECT notificationOption FROM NotificationOption notificationOption
+            WHERE notificationOption.user.id = :#{#userId}
+            """)
+    Page<NotificationOption> findAllNotificationOptionsForRecipientWithId(@Param("userId") long userId, Pageable pageable);
 }
