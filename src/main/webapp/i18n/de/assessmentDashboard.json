@@ -11,8 +11,8 @@
             "pageHeader": "Bewertungs-Dashboard für den Kurs",
             "pageHeaderExam": "Klausur-Dashboard für Tutor:innen von",
             "pageHeaderExamTestRun": "Testlauf Bewertungs-Dashboard",
-            "assessments": "Assessments",
-            "assessmentLocks": "Assessment Locks",
+            "assessments": "Bewertungen",
+            "assessmentLocks": "Gesperrte Bewertungen",
             "totalAssessmentsForCorrectionrounds": "Bewertungen der Korrekturrunden",
             "complaints": "Beschwerden",
             "moreFeedbackRequests": "Feedbackanfragen",
@@ -34,7 +34,7 @@
             "exerciseTable": {
                 "title": "Tabelle aller Übungen",
                 "courseInformation": "Übung Tabelle listet alle Übungen des aktuellen Kurses auf. Um alle Übungen, einschließlich der beendeten, anzuzeigen, musst du in das folgende Checkbox. Du kannst klicken <strong>Aufgaben-Dashboard</strong>, um die Aufgabendetails und Abgaben der Studierenden anschauen.",
-                "examInformation": "Übung Tabelle listet alle Übungen des aktuellen Kurses auf. Um alle Übungen, einschließlich der beendeten, anzuzeigen, musst du in das folgende Checkbox. Du kannst klicken <strong>Aufgaben-Dashboard</strong>, um die Aufgabendetails und Abgaben der Studierenden anschauen."
+                "examInformation": "Übung Tabelle listet alle Übungen des aktuellen Klausur auf. Um alle Übungen, einschließlich der beendeten, anzuzeigen, musst du in das folgende Checkbox. Du kannst klicken <strong>Aufgaben-Dashboard</strong>, um die Aufgabendetails und Abgaben der Studierenden anschauen."
             }
         }
     }
