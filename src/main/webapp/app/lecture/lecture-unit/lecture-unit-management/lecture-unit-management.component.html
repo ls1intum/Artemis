@@ -36,7 +36,7 @@
             <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit"></jhi-video-unit>
             <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit"></jhi-text-unit>
         </div>
-        <div class="col-1 my-auto">
+        <div class="col-1 my-auto" style="min-width: 100px">
             <div class="container">
                 <div class="row mx-auto mb-1">
                     <button id="{{ 'up-' + i }}" type="button" class="btn btn-primary btn-circle" (click)="moveUp(i)" [disabled]="i === 0">
