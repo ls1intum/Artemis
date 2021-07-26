@@ -14,15 +14,24 @@ export class PostFooterComponent extends PostingsFooterDirective<Post> implement
         super();
     }
 
+    /**
+     * on initialization: updates the post tags
+     */
     ngOnInit(): void {
         this.updateTags();
     }
 
+    /**
+     * on changes: updates the post tags
+     */
     ngOnChanges(): void {
         this.updateTags();
     }
 
-    private updateTags() {
+    /**
+     * sets the current post tags, empty error if none exit
+     */
+    private updateTags(): void {
         if (this.posting.tags) {
             this.tags = this.posting.tags;
         } else {

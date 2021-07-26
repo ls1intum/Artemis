@@ -15,12 +15,19 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
         super(metisService, modalService, formBuilder);
     }
 
+    /**
+     * resets the answer post content
+     */
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength)]],
         });
     }
 
+    /**
+     * invokes the metis service after setting current date as creation date of the new answer post,
+     * ends the process successfully by closing the modal and stopping the button's loading animation
+     */
     createPosting(): void {
         this.posting.creationDate = moment();
         this.metisService.createAnswerPost(this.posting).subscribe({
@@ -35,6 +42,10 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
         });
     }
 
+    /**
+     * invokes the metis service with the updated answer post
+     * ends the process successfully by closing the modal and stopping the button's loading animation
+     */
     updatePosting(): void {
         this.metisService.updateAnswerPost(this.posting).subscribe({
             next: () => {
@@ -47,7 +58,10 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
         });
     }
 
-    updateModalTitle() {
+    /**
+     * updates the title in accordance with the current use case (edit or create)
+     */
+    updateModalTitle(): void {
         if (this.posting.id) {
             this.modalTitle = 'artemisApp.metis.editPosting';
         } else {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, forwardRef } from '@angular/core';
+import { Component, Input, OnInit, forwardRef } from '@angular/core';
 import { Command } from 'app/shared/markdown-editor/commands/command';
 import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
 import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
@@ -12,7 +12,6 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 @Component({
     selector: 'jhi-postings-markdown-editor',
     templateUrl: './postings-markdown-editor.component.html',
-    styleUrls: ['../../../overview/discussion/discussion.scss'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,
@@ -29,6 +28,9 @@ export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAcce
 
     constructor() {}
 
+    /**
+     * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
+     */
     ngOnInit(): void {
         this.defaultCommands = [
             new BoldCommand(),
@@ -41,6 +43,10 @@ export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAcce
         ];
     }
 
+    /**
+     * writes the current value of a form group and propagates the change
+     * @param value
+     */
     writeValue(value: string): void {
         if (value !== undefined) {
             this.content = value;
@@ -48,9 +54,16 @@ export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAcce
         }
     }
 
+    /**
+     * registers a callback function used when form group input changes (required)
+     * @param fn
+     */
     registerOnChange(fn: any): void {
         this.propagateChange = fn;
     }
 
+    /**
+     * defines a behavior when from group input is touched (required)
+     */
     registerOnTouched(): void {}
 }

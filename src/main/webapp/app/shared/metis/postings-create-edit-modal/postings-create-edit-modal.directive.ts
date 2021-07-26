@@ -20,36 +20,48 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
 
     protected constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {}
 
-    ngOnInit() {
+    /**
+     * on initialization: sets the content, and the modal title (edit or create) and reset the form group
+     */
+    ngOnInit(): void {
         this.content = this.posting.content ?? '';
         this.updateModalTitle();
         this.resetFormGroup();
     }
 
-    ngOnChanges() {
+    /**
+     * on changes: sets the content, and the modal title (edit or create)
+     */
+    ngOnChanges(): void {
         this.content = this.posting.content ?? '';
         this.updateModalTitle();
+    }
+
+    /**
+     * checks if the form group is valid, changes the clicked button to indicate a loading process,
+     * set the input content (updated or new; of post and answer post) delegates to the corresponding method
+     */
+    confirm(): void {
+        if (this.formGroup.valid) {
+            this.isLoading = true;
+            this.posting.content = this.formGroup.get('content')?.value;
+            if (this.posting!.id) {
+                this.updatePosting();
+            } else {
+                this.createPosting();
+            }
+        }
+    }
+
+    open(): void {
+        this.modalRef = this.modalService.open(this.postingEditor, { size: 'lg' });
     }
 
     abstract updateModalTitle(): void;
 
     abstract resetFormGroup(): void;
 
-    confirm() {
-        this.isLoading = true;
-        this.posting.content = this.formGroup.get('content')?.value;
-        if (this.posting!.id) {
-            this.updatePosting();
-        } else {
-            this.createPosting();
-        }
-    }
-
     abstract createPosting(): void;
 
     abstract updatePosting(): void;
-
-    public open() {
-        this.modalRef = this.modalService.open(this.postingEditor, { size: 'lg' });
-    }
 }

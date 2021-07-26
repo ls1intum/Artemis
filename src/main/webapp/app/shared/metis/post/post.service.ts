@@ -18,7 +18,7 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * create a post
+     * creates a post
      * @param {number} courseId
      * @param {Post} post
      * @return {Observable<EntityResponseType>}
@@ -29,7 +29,7 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * update the post
+     * updates a post
      * @param {number} courseId
      * @param {Post} post
      * @return {Observable<EntityResponseType>}
@@ -40,7 +40,7 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * update the votes of a post
+     * updates the votes of a post
      * @param {number} courseId
      * @param {number} postId
      * @param {number} voteChange
@@ -53,7 +53,7 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * Get all posts for course by its id
+     * gets all posts for course by its id
      * @param {number} courseId
      * @return {Observable<EntityArrayResponseType>}
      */
@@ -62,7 +62,7 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * Get all posts for a lecture in a certain course by its id
+     * gets all posts for a lecture in a certain course by its id
      * @param {number} courseId
      * @param {number} lectureId
      * @return {Observable<EntityArrayResponseType>}
@@ -74,7 +74,7 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * Get all posts for an exercise in a certain course by its id
+     * gets all posts for an exercise in a certain course by its id
      * @param {number} courseId
      * @param {number} exerciserId
      * @return {Observable<EntityArrayResponseType>}
@@ -86,7 +86,7 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * delete post
+     * deletes a post
      * @param {number} courseId
      * @param {Post} post
      * @return {Observable<HttpResponse<any>>}
@@ -96,7 +96,7 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * get all tags for course
+     * gets all tags for course
      * @param {number} courseId
      * @return {Observable<string[]>}
      */

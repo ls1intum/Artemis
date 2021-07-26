@@ -17,6 +17,9 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         super(metisService, modalService, formBuilder);
     }
 
+    /**
+     * resets the post title and post content
+     */
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
             title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH)]],
@@ -24,6 +27,10 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         });
     }
 
+    /**
+     * invokes the metis service after setting the title and current date as creation date of the new answer post,
+     * ends the process successfully by closing the modal and stopping the button's loading animation
+     */
     createPosting(): void {
         this.posting.title = this.formGroup.get('title')?.value;
         this.posting.creationDate = moment();
@@ -39,6 +46,10 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         });
     }
 
+    /**
+     * invokes the metis service after setting the title of the updated post
+     * ends the process successfully by closing the modal and stopping the button's loading animation
+     */
     updatePosting(): void {
         this.posting.title = this.formGroup.get('title')?.value;
         this.metisService.updatePost(this.posting).subscribe({
@@ -52,7 +63,10 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         });
     }
 
-    updateModalTitle() {
+    /**
+     * updates the title in accordance with the current use case (edit or create)
+     */
+    updateModalTitle(): void {
         if (this.posting.id) {
             this.modalTitle = 'artemisApp.metis.editPosting';
         } else {

@@ -16,18 +16,31 @@ export class PostHeaderComponent extends PostingsHeaderDirective<Post> implement
         super(metisService);
     }
 
-    ngOnChanges() {
+    /**
+     * on changes: updates the number of answer posts
+     */
+    ngOnChanges(): void {
         this.numberOfAnswerPosts = this.getNumberOfAnswerPosts();
     }
 
+    /**
+     * counts the answer posts of a post, 0 if none exist
+     * @return number number of answer posts
+     */
     getNumberOfAnswerPosts(): number {
         return <number>this.posting.answers?.length! ? this.posting.answers?.length! : 0;
     }
 
+    /**
+     * emits an event of toggling (show, do not show) the answer posts for a post
+     */
     toggleAnswers(): void {
         this.toggleAnswersChange.emit();
     }
 
+    /**
+     * invokes the metis service to delete a post
+     */
     deletePosting(): void {
         this.metisService.deletePost(this.posting);
     }

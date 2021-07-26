@@ -12,7 +12,7 @@ export abstract class PostingsService<T extends Posting> {
     abstract update(courseId: number, posting: T): Observable<HttpResponse<T>>;
 
     /**
-     * Takes a posting and converts the date from the client
+     * takes a posting and converts the date from the client
      * @param   {T} posting
      * @return  {T}
      */
@@ -24,7 +24,7 @@ export abstract class PostingsService<T extends Posting> {
     }
 
     /**
-     * Takes a posting and converts the date from the server
+     * takes a posting and converts the date from the server
      * @param   {HttpResponse<T>} res
      * @return  {HttpResponse<T>}
      */
@@ -36,7 +36,7 @@ export abstract class PostingsService<T extends Posting> {
     }
 
     /**
-     * Takes an array of posts and converts the date from the server
+     * takes an array of posts and converts the date from the server
      * @param   {HttpResponse<T[]>} res
      * @return  {HttpResponse<T[]>}
      */

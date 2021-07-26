@@ -20,7 +20,8 @@ export class PostingsThreadComponent implements OnInit, OnChanges {
     constructor(private metisService: MetisService) {}
 
     /**
-     * sort answers when component is initialized
+     * on initialization: determines if user is at least tutor in course by invoking metis service, sorts the answer posts,
+     * and creates a default answer post that is used as input for modals
      */
     ngOnInit(): void {
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
@@ -28,14 +29,17 @@ export class PostingsThreadComponent implements OnInit, OnChanges {
         this.createdAnswerPost = this.createEmptyAnswerPost();
     }
 
+    /**
+     * on changes: sorts the answer posts
+     */
     ngOnChanges(): void {
         this.sortAnswerPosts();
     }
 
     /**
-     * Sorts answerPosts by two criteria
-     * 1. Criterion: tutorApproved -> true comes first
-     * 2. Criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
+     * sorts answerPosts by two criteria
+     * 1. criterion: tutorApproved -> true comes first
+     * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      */
     sortAnswerPosts(): void {
         if (!this.post.answers) {
@@ -48,6 +52,10 @@ export class PostingsThreadComponent implements OnInit, OnChanges {
         );
     }
 
+    /**
+     * creates an empty answer post for a single post (start of a thread), sets the tutorApproved flag accordingly
+     * @return AnswerPost created empty default post
+     */
     createEmptyAnswerPost(): AnswerPost {
         const answerPost = new AnswerPost();
         answerPost.content = '';
@@ -56,7 +64,10 @@ export class PostingsThreadComponent implements OnInit, OnChanges {
         return answerPost;
     }
 
-    toggleAnswers() {
+    /**
+     * toggles the answers of a post (show/do not show)
+     */
+    toggleAnswers(): void {
         this.showAnswers = !this.showAnswers;
     }
 }

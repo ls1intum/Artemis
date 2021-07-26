@@ -16,10 +16,17 @@ export class AnswerPostFooterComponent extends PostingsFooterDirective<AnswerPos
         super();
     }
 
+    /**
+     * on initialization: invoke the metis service to determine if current user is at least tutor in course
+     */
     ngOnInit(): void {
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
     }
 
+    /**
+     * toggles the tutorApproved property of an answer post if the user is at least tutor in a course,
+     * delegates the update to the metis service
+     */
     toggleApprove(): void {
         if (this.isAtLeastTutorInCourse) {
             this.posting.tutorApproved = !this.posting.tutorApproved;

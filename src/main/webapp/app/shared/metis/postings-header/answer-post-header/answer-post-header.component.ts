@@ -13,6 +13,9 @@ export class AnswerPostHeaderComponent extends PostingsHeaderDirective<AnswerPos
         super(metisService);
     }
 
+    /**
+     * invokes the metis service to delete an answer post
+     */
     deletePosting(): void {
         this.metisService.deleteAnswerPost(this.posting);
     }

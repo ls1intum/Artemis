@@ -9,6 +9,9 @@ interface PostVote {
     isPositive: boolean;
 }
 
+/**
+ * @deprecated This components will soon be removed
+ */
 @Component({
     selector: 'jhi-post-votes',
     templateUrl: './post-votes.component.html',

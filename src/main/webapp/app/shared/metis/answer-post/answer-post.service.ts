@@ -18,7 +18,7 @@ export class AnswerPostService extends PostingsService<AnswerPost> {
     }
 
     /**
-     * create answerPost
+     * creates an answerPost
      * @param {number} courseId
      * @param {AnswerPost} answerPost
      * @return {Observable<EntityResponseType>}
@@ -31,7 +31,7 @@ export class AnswerPostService extends PostingsService<AnswerPost> {
     }
 
     /**
-     * update answerPost
+     * updates an answerPost
      * @param {number} courseId
      * @param {AnswerPost} answerPost
      * @return {Observable<EntityResponseType>}
@@ -44,7 +44,7 @@ export class AnswerPostService extends PostingsService<AnswerPost> {
     }
 
     /**
-     * delete answerPost
+     * deletes an answerPost
      * @param {number} courseId
      * @param {AnswerPost} answerPost
      * @return {Observable<HttpResponse<any>>}

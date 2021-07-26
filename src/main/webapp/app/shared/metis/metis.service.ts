@@ -55,12 +55,20 @@ export class MetisService {
         this.updateCoursePostTags();
     }
 
-    updateCoursePostTags() {
+    /**
+     * fetches all post tags used in the current course, informs all subscribing components
+     */
+    updateCoursePostTags(): void {
         this.postService.getAllPostTagsByCourseId(this.courseId).subscribe((res: HttpResponse<string[]>) => {
             this.tags$.next(res.body!.filter((t) => !!t));
         });
     }
 
+    /**
+     * fetches all posts for a course, optionally fetching posts only for a certain context, i.e. a lecture, exercise or specified course-wide-context,
+     * informs all components that subscribed on posts by sending out the sorted, newly fetched posts
+     * @param postFilter criteria to filter course posts with (lecture, exercise, course-wide context)
+     */
     getPostsForFilter(postFilter?: PostFilter): void {
         this.currentPostFilter = postFilter;
         if (postFilter?.lecture) {
@@ -83,18 +91,33 @@ export class MetisService {
         }
     }
 
+    /**
+     * deletes a post by invoking the post service
+     * fetches the post for the currently set filter on response
+     * @param post post to delete
+     */
     deletePost(post: Post): void {
         this.postService.delete(this.courseId, post).subscribe(() => {
             this.getPostsForFilter(this.currentPostFilter);
         });
     }
 
+    /**
+     * deletes an answer post by invoking the post service
+     * fetches the post for the currently set filter on response
+     * @param answerPost answer post to delete
+     */
     deleteAnswerPost(answerPost: AnswerPost): void {
         this.answerPostService.delete(this.courseId, answerPost).subscribe(() => {
             this.getPostsForFilter(this.currentPostFilter);
         });
     }
 
+    /**
+     * creates a new post by invoking the post service
+     * fetches the post for the currently set filter on response
+     * @param post newly created post
+     */
     createPost(post: Post): Observable<Post> {
         return this.postService.create(this.courseId, post).pipe(
             map((res) => {
@@ -104,6 +127,11 @@ export class MetisService {
         );
     }
 
+    /**
+     * creates a new answer post by invoking the answer post service
+     * fetches the post for the currently set filter on response
+     * @param answerPost newly created answer post
+     */
     createAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
         return this.answerPostService.create(this.courseId, answerPost).pipe(
             map((res) => {
@@ -113,6 +141,11 @@ export class MetisService {
         );
     }
 
+    /**
+     * updates a given answer posts by invoking the answer post service,
+     * fetches the post for the currently set filter on response
+     * @param post post to update
+     */
     updatePost(post: Post): Observable<Post> {
         return this.postService.update(this.courseId, post).pipe(
             map((res) => {
@@ -122,6 +155,11 @@ export class MetisService {
         );
     }
 
+    /**
+     * updates a given answer posts by invoking the answer post service,
+     * fetches the post for the currently set filter on response
+     * @param answerPost answer post to update
+     */
     updateAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
         return this.answerPostService.update(this.courseId, answerPost).pipe(
             map((res) => {
@@ -131,6 +169,11 @@ export class MetisService {
         );
     }
 
+    /**
+     * updates post votes by invoking the post service
+     * @param post that is voted on
+     * @param voteChange vote change
+     */
     updatePostVotes(post: Post, voteChange: number): void {
         this.postService.updateVotes(this.courseId, post.id!, voteChange).subscribe(() => {
             this.getPostsForFilter(this.currentPostFilter);
@@ -138,25 +181,35 @@ export class MetisService {
     }
 
     /**
-     * Use this to set posts from outside.
+     * to be used to set posts from outside
      * @param posts
      */
     setPosts(posts: Post[]): void {
         this.posts$.next(posts);
     }
 
+    /**
+     * determines if the current user is at least tutor in the current course
+     * @return boolean tutor flag
+     */
     metisUserIsAtLeastTutorInCourse(): boolean {
         return this.accountService.isAtLeastTutorInCourse(this.course);
     }
 
+    /**
+     * determines if the current user is the author of a given posting
+     * @param posting posting to be checked against
+     * @return boolean author flag
+     */
     metisUserIsAuthorOfPosting(posting: Posting): boolean {
         return this.user ? posting?.author!.id === this.getUser().id : false;
     }
 
     /**
-     * Sorts posts by two criteria
-     * 1. Criterion: votes -> highest number comes first
-     * 2. Criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
+     * sorts posts by two criteria
+     * 1. criterion: votes -> highest number comes first
+     * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
+     * @return Post[] sorted array of posts
      */
     private static sortPosts(posts: Post[]): Post[] {
         return posts.sort((postA, postB) => postB.votes! - postA.votes! || postA.creationDate!.valueOf() - postB.creationDate!.valueOf());

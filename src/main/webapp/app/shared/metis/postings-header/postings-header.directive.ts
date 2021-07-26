@@ -9,18 +9,25 @@ export abstract class PostingsHeaderDirective<T extends Posting> implements OnIn
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
     postingIsOfToday: boolean;
-    optionalTodayFlag: string | undefined;
+    todayFlag: string | undefined;
 
     protected constructor(protected metisService: MetisService) {}
 
+    /**
+     * on initialization: determines if user is at least tutor in the course and if user is author of posting by invoking the metis service,
+     * determines if posting is of today and sets the today flag to be shown in the header of the posting
+     */
     ngOnInit(): void {
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(this.posting);
         this.postingIsOfToday = moment().isSame(this.posting.creationDate, 'day');
-        this.optionalTodayFlag = this.getOptionalTodayFlag();
+        this.todayFlag = this.getTodayFlag();
     }
 
-    getOptionalTodayFlag(): string | undefined {
+    /**
+     * sets a flag that replaces the date by "Today" in the posting's header if applicable
+     */
+    getTodayFlag(): string | undefined {
         if (this.postingIsOfToday) {
             return 'artemisApp.metis.today';
         } else {
