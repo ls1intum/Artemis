@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { ConsistencyCheckError } from 'app/entities/consistency-check-result.model';
-import { Exercise, getCourseId } from 'app/entities/exercise.model';
+import { getCourseId } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-consistency-check',

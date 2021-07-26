@@ -139,7 +139,8 @@ public class GitLabService extends AbstractVersionControlService {
     public List<Member> getAllMembersOfRepository(VcsRepositoryUrl repositoryUrl) {
         try {
             return gitlab.getProjectApi().getAllMembers(urlService.getPathFromRepositoryUrl(repositoryUrl));
-        } catch (GitLabApiException e) {
+        }
+        catch (GitLabApiException e) {
             throw new GitLabException("Error while retrieving all members of  repository: From repo " + repositoryUrl, e);
         }
     }

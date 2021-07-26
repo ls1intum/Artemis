@@ -1,5 +1,16 @@
 package de.tum.in.www1.artemis;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.Iterator;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -8,16 +19,6 @@ import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
-
-import java.util.Iterator;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConsistencyCheckBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -117,7 +118,6 @@ public class ConsistencyCheckBitbucketBambooIntegrationTest extends AbstractSpri
         var exercise = (ProgrammingExercise) course.getExercises().iterator().next();
         exercise.setTestRepositoryUrl("artemislocalhost/to/set/localSimulation/to/true");
         exercise = programmingExerciseRepository.save(exercise);
-
 
         var consistencyErrors = request.getList("/api/consistency-check/exercise/" + exercise.getId(), HttpStatus.OK, ConsistencyErrorDTO.class);
         assertThat(consistencyErrors.size()).isEqualTo(1);

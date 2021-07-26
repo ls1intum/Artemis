@@ -132,14 +132,17 @@ public class BitbucketService extends AbstractVersionControlService {
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users";
         ResponseEntity<BitbucketSearchDTO<BitbucketUserDTO>> response;
         try {
-            response = restTemplate.exchange(baseUrl, HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
+            response = restTemplate.exchange(baseUrl, HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+            });
 
             if (response.getStatusCode().equals(HttpStatus.OK) && response.getBody() != null) {
                 return response.getBody().getSearchResults();
-            } else {
+            }
+            else {
                 throw new BitbucketException("Error while retrieving users from repository '" + repositorySlug + "'");
             }
-        } catch (BitbucketException e) {
+        }
+        catch (BitbucketException e) {
             log.error("An error occurred while retrieving users from repository: {}", e.getMessage());
         }
         return null;

@@ -13,7 +13,6 @@ import java.util.*;
 
 import javax.annotation.Nullable;
 
-import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -33,6 +32,7 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.*;
+import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -954,14 +954,13 @@ public class ProgrammingExerciseService {
      * @param programmingExercise to check
      * @return List containing the resulting errors, if any.
      */
-    private List<ConsistencyErrorDTO> checkVCSConsistency(ProgrammingExercise programmingExercise,
-                                                          List<User> allTeachingUsersInCourse,
-                                                          List<User> allStudentsInCourse) {
+    private List<ConsistencyErrorDTO> checkVCSConsistency(ProgrammingExercise programmingExercise, List<User> allTeachingUsersInCourse, List<User> allStudentsInCourse) {
         List<ConsistencyErrorDTO> result = new ArrayList<>();
 
         if (!versionControlService.get().checkIfProjectExists(programmingExercise.getProjectKey(), programmingExercise.getProjectName())) {
             result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING));
-        } else {
+        }
+        else {
             if (!versionControlService.get().repositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl())) {
                 result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.TEMPLATE_REPO_MISSING));
             }

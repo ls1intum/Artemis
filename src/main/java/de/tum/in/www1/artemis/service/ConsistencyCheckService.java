@@ -1,21 +1,17 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.Course;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Service Implementation for consistency checks
@@ -33,7 +29,7 @@ public class ConsistencyCheckService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public ConsistencyCheckService(ProgrammingExerciseService programmingExerciseService, CourseRepository courseRepository,
-                                   ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.programmingExerciseService = programmingExerciseService;
         this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;

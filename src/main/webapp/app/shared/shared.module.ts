@@ -96,7 +96,7 @@ import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consiste
         ExerciseStatisticsComponent,
         DoughnutChartComponent,
         ExerciseDetailStatisticsComponent,
-        ConsistencyCheckComponent
+        ConsistencyCheckComponent,
     ],
     providers: [ArtemisDatePipe, TranslatePipe],
 })

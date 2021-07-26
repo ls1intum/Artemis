@@ -15,7 +15,6 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { CheckType, ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 
