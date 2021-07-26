@@ -475,7 +475,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void testIsClean() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         doReturn(true).when(gitService).isRepositoryCached(any());
-        Map status = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, LinkedHashMap.class);
+        var status = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, HashMap.class);
         assertThat(status.size()).isGreaterThan(0);
     }
 
