@@ -174,7 +174,7 @@ describe('Modeling Exercise Spec', () => {
             cy.login(tutor, '/course-management');
             cy.get(`[href="/course-management/${testCourse.id}/assessment-dashboard"]`).click();
             cy.url().should('contain', `/course-management/${testCourse.id}/assessment-dashboard`);
-            cy.get('#field_showFinishedExercise').click();
+            cy.get('#field_showFinishedExercise').should('be.visible').click();
             cy.get('tbody > tr > :nth-child(6) >').click();
             cy.get('.btn').click();
             cy.wait(5000);
