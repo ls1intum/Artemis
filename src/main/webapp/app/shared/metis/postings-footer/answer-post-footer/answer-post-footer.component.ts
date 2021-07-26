@@ -30,7 +30,7 @@ export class AnswerPostFooterComponent extends PostingsFooterDirective<AnswerPos
     toggleApprove(): void {
         if (this.isAtLeastTutorInCourse) {
             this.posting.tutorApproved = !this.posting.tutorApproved;
-            this.metisService.updateAnswerPost(this.posting);
+            this.metisService.updateAnswerPost(this.posting).subscribe(() => {});
         }
     }
 }
