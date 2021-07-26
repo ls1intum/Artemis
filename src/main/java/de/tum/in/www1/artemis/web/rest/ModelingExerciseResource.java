@@ -172,7 +172,7 @@ public class ModelingExerciseResource {
 
         ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
 
-        // Forbid changes of course exercise belongs to.
+        // Forbid changing the course the exercise belongs to.
         if (modelingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId().longValue() != modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId()
                 .longValue()) {
             return conflict("The modeling exercise course cannot be changed", ENTITY_NAME, "cannotChangeCourseId");
