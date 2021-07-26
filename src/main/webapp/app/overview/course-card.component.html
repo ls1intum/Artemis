@@ -6,7 +6,7 @@
                 <div class="col-2 header-col image-col">
                     <jhi-secured-image *ngIf="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
                 </div>
-                <div class="col-8 header-col title-col">
+                <div class="col-7 header-col title-col px-3">
                     <h5 class="card-title text-center">
                         {{ course.title }}
                     </h5>
@@ -49,7 +49,7 @@
             ></canvas>
         </div>
         <ng-template #noStatistic>
-            <h6 jhiTranslate="artemisApp.studentDashboard.noStatistics">No statistics available</h6>
+            <h6 class="no-statistics" jhiTranslate="artemisApp.studentDashboard.noStatistics">No statistics available</h6>
         </ng-template>
     </div>
 

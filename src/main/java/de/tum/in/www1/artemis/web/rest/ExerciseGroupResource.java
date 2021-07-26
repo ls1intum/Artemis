@@ -42,8 +42,6 @@ public class ExerciseGroupResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     private final ExerciseGroupRepository exerciseGroupRepository;
 
     private final ExamRepository examRepository;
@@ -56,10 +54,8 @@ public class ExerciseGroupResource {
 
     private final AuditEventRepository auditEventRepository;
 
-    public ExerciseGroupResource(StudentParticipationRepository studentParticipationRepository, ExerciseGroupRepository exerciseGroupRepository,
-            ExamAccessService examAccessService, UserRepository userRepository, ExerciseService exerciseService, AuditEventRepository auditEventRepository,
-            ExamRepository examRepository) {
-        this.studentParticipationRepository = studentParticipationRepository;
+    public ExerciseGroupResource(ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, UserRepository userRepository,
+            ExerciseService exerciseService, AuditEventRepository auditEventRepository, ExamRepository examRepository) {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.examRepository = examRepository;
         this.examAccessService = examAccessService;
@@ -132,8 +128,7 @@ public class ExerciseGroupResource {
             return conflict();
         }
 
-        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, courseId, examId,
-                updatedExerciseGroup.getId());
+        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, courseId, examId, updatedExerciseGroup);
         if (accessFailure.isPresent()) {
             return accessFailure.get();
         }
@@ -154,8 +149,9 @@ public class ExerciseGroupResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseGroup> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
-        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, courseId, examId, exerciseGroupId);
-        return accessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupRepository.findByIdElseThrow(exerciseGroupId)));
+        ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdElseThrow(exerciseGroupId);
+        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, courseId, examId, exerciseGroup);
+        return accessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroup));
     }
 
     /**
@@ -190,12 +186,11 @@ public class ExerciseGroupResource {
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId,
             @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans, @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete exercise group : {}", exerciseGroupId);
-        Optional<ResponseEntity<Void>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
+        ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdWithExercisesElseThrow(exerciseGroupId);
+        Optional<ResponseEntity<Void>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.INSTRUCTOR, courseId, examId, exerciseGroup);
         if (accessFailure.isPresent()) {
             return accessFailure.get();
         }
-
-        ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdWithExercisesElseThrow(exerciseGroupId);
 
         User user = userRepository.getUser();
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE_GROUP, "exerciseGroup=" + exerciseGroup.getTitle());

@@ -25,6 +25,7 @@
 
         .course-info-col {
             justify-content: flex-end;
+            padding-right: 0;
 
             .course-info-amounts {
                 display: flex;
@@ -83,6 +84,14 @@
             z-index: 1;
             width: 150px;
             height: 150px;
+        }
+
+        .no-statistics {
+            display: flex;
+            height: 175px;
+            justify-content: center;
+            flex-direction: column;
+            margin-bottom: 0;
         }
     }
 

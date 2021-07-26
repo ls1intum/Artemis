@@ -21,6 +21,8 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import * as moment from 'moment';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { SortService } from 'app/shared/service/sort.service';
+import { Submission } from 'app/entities/submission.model';
 import { CheckType, ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 
 @Component({
@@ -64,6 +66,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private translateService: TranslateService,
         private profileService: ProfileService,
         private statisticsService: StatisticsService,
+        private sortService: SortService,
     ) {}
 
     ngOnInit() {
@@ -76,19 +79,21 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
 
             this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
-                // TODO: the feedback would be missing here, is that a problem?
                 this.programmingExercise = updatedProgrammingExercise.body!;
+                this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorForExercise(this.programmingExercise);
+                this.programmingExercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.programmingExercise);
+                this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
                 // get the latest results for further processing
                 if (this.programmingExercise.templateParticipation) {
-                    const templateSubmissions = this.programmingExercise.templateParticipation.submissions;
-                    if (templateSubmissions && templateSubmissions.length > 0) {
-                        this.programmingExercise.templateParticipation.results = templateSubmissions.last()?.results;
+                    const latestTemplateResult = this.getLatestResult(this.programmingExercise.templateParticipation.submissions);
+                    if (latestTemplateResult) {
+                        this.programmingExercise.templateParticipation.results = [latestTemplateResult];
                     }
                 }
                 if (this.programmingExercise.solutionParticipation) {
-                    const solutionSubmissions = this.programmingExercise.solutionParticipation.submissions;
-                    if (solutionSubmissions && solutionSubmissions.length > 0) {
-                        this.programmingExercise.solutionParticipation.results = solutionSubmissions.last()?.results;
+                    const latestSolutionResult = this.getLatestResult(this.programmingExercise.solutionParticipation.submissions);
+                    if (latestSolutionResult) {
+                        this.programmingExercise.solutionParticipation.results = [latestSolutionResult];
                     }
                 }
                 this.loadingTemplateParticipationResults = false;
@@ -119,6 +124,22 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
+    }
+
+    /**
+     * returns the latest result within the submissions array or undefined, sorting is based on the submission date and the result order retrieved from the server
+     *
+     * @param submissions
+     */
+    getLatestResult(submissions?: Submission[]) {
+        if (submissions && submissions.length > 0) {
+            // important: sort to get the latest submission (the order of the server can be random)
+            this.sortService.sortByProperty(submissions, 'submissionDate', true);
+            const results = submissions.sort().last()?.results;
+            if (results && results.length > 0) {
+                return results.last();
+            }
+        }
     }
 
     combineTemplateCommits() {
@@ -279,5 +300,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
+    }
+
+    /**
+     * Generates the link to any participation's submissions, used for the link to template and solution submissions
+     * @param id of the participation
+     */
+    getParticipationSubmissionLink(id: number) {
+        const link = [this.baseResource, 'participations', id];
+        // For unknown reason normal exercises append /submissions to the submission view whereas exam exercises do not
+        if (!this.isExamExercise) {
+            link.push('submissions');
+        }
+        return link;
     }
 }
