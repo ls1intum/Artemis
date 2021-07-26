@@ -5,6 +5,7 @@ $label-color: #6a737d;
 
 .icon {
     color: $label-color;
+
     &.vote-active {
         color: $background-color;
     }
