@@ -14,7 +14,9 @@
                         {{ 'artemisApp.assessmentDashboard.assessments' | artemisTranslate }}
                     </div>
                     <div class="col-5">
-                        ({{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total * numberOfCorrectionRounds }}) / {{ numberOfTutorAssessments }} ({{ totalAssessmentPercentage }}%)
+                        ({{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total * numberOfCorrectionRounds }}) / {{ numberOfTutorAssessments }} ({{
+                            totalAssessmentPercentage
+                        }}%)
                     </div>
                 </div>
                 <div class="row mb-1" *ngIf="complaintsEnabled">
@@ -22,8 +24,7 @@
                         {{ 'artemisApp.assessmentDashboard.complaints' | artemisTranslate }}
                     </div>
                     <div class="col-5">
-                        <a [routerLink]="['/course-management', courseId, 'complaints']"> {{ numberOfComplaints }}
-                        </a> /
+                        <a [routerLink]="['/course-management', courseId, 'complaints']"> {{ numberOfComplaints }} </a> /
                         <a [routerLink]="['/course-management', courseId, 'complaints']" [queryParams]="{ tutorId: tutorId }">
                             {{ numberOfTutorComplaints }}
                         </a>
@@ -58,7 +59,9 @@
                         {{ 'artemisApp.assessmentDashboard.assessments' | artemisTranslate }}
                     </div>
                     <div class="col-5">
-                        ({{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total * numberOfCorrectionRounds }}) / {{ numberOfTutorAssessments }} ({{ totalAssessmentPercentage }}%)
+                        ({{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total * numberOfCorrectionRounds }}) / {{ numberOfTutorAssessments }} ({{
+                            totalAssessmentPercentage
+                        }}%)
                     </div>
                 </div>
                 <div class="row mb-1">
@@ -70,12 +73,13 @@
                             [routerLink]="['/course-management', courseId, 'exams', examId, 'complaints']"
                             [queryParams]="{ correctionRound: numberOfCorrectionRounds - 1 }"
                             [class.disabled]="!isAtLeastInstructor"
-                        >   {{ numberOfComplaints }}
-                        </a> / -
+                        >
+                            {{ numberOfComplaints }}
+                        </a>
+                        / -
                         <!-- TODO: make those links work (REST calls to fetch for individual students do not exist yet) -->
                         <!-- this value is not yet available for exam mode. As soon as the leaderboards exist add it again. {{ numberOfTutorComplaints }} -->
-                        <a [routerLink]="['/course-management', courseId, 'exams', examId, 'complaints']" [queryParams]="{ tutorId: tutorId }" [class.disabled]="true">
-                        </a>
+                        <a [routerLink]="['/course-management', courseId, 'exams', examId, 'complaints']" [queryParams]="{ tutorId: tutorId }" [class.disabled]="true"> </a>
                     </div>
                 </div>
                 <div class="row mb-1">
@@ -85,7 +89,8 @@
                     <div class="col-5">
                         <a [routerLink]="['/course-management', courseId, 'exams', examId, 'assessment-locks']">
                             {{ totalNumberOfAssessmentLocks }}
-                        </a> /
+                        </a>
+                        /
                         <a [routerLink]="['/course-management', courseId, 'exams', examId, 'assessment-locks']" [queryParams]="{ tutorId: tutorId }" [class.disabled]="true">
                             {{ numberOfAssessmentLocks }}
                         </a>
@@ -96,7 +101,8 @@
                         {{ 'artemisApp.assessmentDashboard.totalAssessmentsForCorrectionrounds' | artemisTranslate }}
                     </div>
                     <div class="col-5">
-                        {{ numberOfAssessmentsOfCorrectionRounds[0].inTime }} <span *ngIf="numberOfAssessmentsOfCorrectionRounds[1]"> - {{ numberOfAssessmentsOfCorrectionRounds[1].inTime }}</span>
+                        {{ numberOfAssessmentsOfCorrectionRounds[0].inTime }}
+                        <span *ngIf="numberOfAssessmentsOfCorrectionRounds[1]"> - {{ numberOfAssessmentsOfCorrectionRounds[1].inTime }}</span>
                     </div>
                 </div>
             </div>

@@ -49,22 +49,22 @@ describe('Grading Instructions Management Component', () => {
             // THEN
             expect(component.backupExercise.id).to.equal(component.exercise.id);
             expect(component.questionEditorText).to.equal(
-                '[gradingInstruction]\n' +
+                '[instruction]\n' +
                     '\t[credits] 0\n' +
                     '\t[gradingScale] Add instruction grading scale here (only visible for tutors)\n' +
                     '\t[description] Add grading instruction here (only visible for tutors)\n' +
                     '\t[feedback] Add feedback for students here (visible for students)\n' +
                     '\t[maxCountInScore] 0\n' +
                     '\n' +
-                    '[gradingCriterion]This is an example criterion\n' +
-                    '\t[gradingInstruction]\n' +
+                    '[criterion]This is an example criterion\n' +
+                    '\t[instruction]\n' +
                     '\t[credits] 0\n' +
                     '\t[gradingScale] Add instruction grading scale here (only visible for tutors)\n' +
                     '\t[description] Add grading instruction here (only visible for tutors)\n' +
                     '\t[feedback] Add feedback for students here (visible for students)\n' +
                     '\t[maxCountInScore] 0\n' +
                     '\n' +
-                    '[gradingInstruction]\n' +
+                    '[instruction]\n' +
                     '\t[credits] 0\n' +
                     '\t[gradingScale] Add instruction grading scale here (only visible for tutors)\n' +
                     '\t[description] Add grading instruction here (only visible for tutors)\n' +
@@ -80,11 +80,11 @@ describe('Grading Instructions Management Component', () => {
             tick(); // simulate async
             // THEN
             expect(component.questionEditorText).to.equal(
-                '[gradingCriterion]' +
+                '[criterion]' +
                     'testCriteria' +
                     '\n' +
                     '\t' +
-                    '[gradingInstruction]\n' +
+                    '[instruction]\n' +
                     '\t' +
                     '[credits]' +
                     ' 1\n' +

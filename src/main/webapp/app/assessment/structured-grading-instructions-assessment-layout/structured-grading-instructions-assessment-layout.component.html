@@ -1,10 +1,9 @@
-<div *ngIf="allowDrop" jhiTranslate="artemisApp.exercise.DragDropInstruction">
-    <strong> Drag & Drop instruction to feedback element</strong>
-    <br />
-    <br />
+<div *ngIf="allowDrop" class="alert alert-info">
+    <fa-icon [icon]="'info-circle'"></fa-icon>
+    <span>{{ 'artemisApp.exercise.dragDropInstruction' | artemisTranslate }}</span>
 </div>
 <div *ngFor="let criterion of criteria; let criterionIndex = index">
-    <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title">
+    <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title" [isSubHeader]="true">
         <div
             class="rounded"
             *ngFor="let instruction of criterion!.structuredGradingInstructions; let instructionIndex = index"

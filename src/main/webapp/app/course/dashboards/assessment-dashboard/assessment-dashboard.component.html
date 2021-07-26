@@ -75,7 +75,7 @@
 
     <div class="container-fluid table-responsive">
         <h4 jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></h4>
-        <div *ngIf="!isTestRun" class="guided-tour-form-check form-check col-6 align-baseline">
+        <div *ngIf="!isTestRun" class="guided-tour-form-check col-6 align-baseline">
             <input type="checkbox" name="showFinishedExercise" id="field_showFinishedExercise" [ngModel]="showFinishedExercises" (ngModelChange)="triggerFinishedExercises()" />
             <label class="form-check-label" for="field_showFinishedExercise">
                 {{ 'artemisApp.assessmentDashboard.showFinishedExercises' | artemisTranslate }}
@@ -186,7 +186,7 @@
         </table>
     </div>
 
-    <div class="container-fluid" style="padding-top: 25px;">
+    <div class="container-fluid" style="padding-top: 25px">
         <h4 *ngIf="!isExamMode">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | artemisTranslate }}</h4>
         <h4 *ngIf="isExamMode">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.examTitle' | artemisTranslate }}</h4>
 
