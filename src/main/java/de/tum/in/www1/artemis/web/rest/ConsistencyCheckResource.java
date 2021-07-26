@@ -30,6 +30,11 @@ public class ConsistencyCheckResource {
         this.consistencyCheckService = consistencyCheckService;
     }
 
+    /**
+     * GET /consistency-check/exercise/{programmingExerciseId} : request consistency check of a programming exercise
+     * @param programmingExerciseId id of the exercise to check
+     * @return List containing the resulting errors, if any.
+     */
     @GetMapping("/consistency-check/exercise/{programmingExerciseId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ConsistencyErrorDTO>> checkConsistencyOfProgrammingExercise(@PathVariable long programmingExerciseId) {
@@ -38,6 +43,11 @@ public class ConsistencyCheckResource {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * GET /consistency-check/course/{courseId} : request consistency check of all programming exercises of a given course
+     * @param courseId id of the course to check
+     * @return List containing the resulting errors, if any.
+     */
     @GetMapping("/consistency-check/course/{courseId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ConsistencyErrorDTO>> checkConsistencyOfCourse(@PathVariable long courseId) {
