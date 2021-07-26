@@ -110,7 +110,6 @@ public class PostResource {
         return new ResponseEntity<>(lecturePosts, null, HttpStatus.OK);
     }
 
-    // TODO: add test and comply with other endpoints
     /**
      * GET /courses/{courseId}/posts/tags : Get all tags for posts in a certain course
      *
