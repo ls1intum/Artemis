@@ -642,7 +642,7 @@ public class AuthorizationCheckService {
      * @param resultId Id of the result he wants to assess
      * @return true if caller is allowed to assess submissions
      */
-    public boolean isAllowedToAssesExercise(Exercise exercise, User user, Long resultId) {
+    public boolean isAllowedToAssessExercise(Exercise exercise, User user, Long resultId) {
         return this.isAtLeastTeachingAssistantForExercise(exercise, user) && (resultId == null || isAtLeastInstructorForExercise(exercise, user));
     }
 
@@ -651,4 +651,11 @@ public class AuthorizationCheckService {
             throw new ResponseStatusException(HttpStatus.CONFLICT);
         }
     }
+
+    public void isAllowedToAssessExerciseElseThrow(Exercise exercise, User user, Long resultId) {
+        if (!isAllowedToAssessExercise(exercise, user, resultId)) {
+            throw new AccessForbiddenException("You are not allowed to assess this exercise!");
+        }
+    }
+
 }

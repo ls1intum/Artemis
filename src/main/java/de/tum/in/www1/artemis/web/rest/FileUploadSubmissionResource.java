@@ -23,10 +23,12 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.EmptyFileException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileUploadSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -85,14 +87,10 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         final var exercise = fileUploadExerciseRepository.findOneByIdElseThrow(exerciseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastStudentForExercise(exercise, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        // Make sure that the exercise exists
-        if (exercise == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
+        if (fileUploadSubmission.getParticipation().getExercise().getId().equals(exerciseId)) {
+            return badRequest("exerciseId", "400", "ExerciseId in Body doesnt match ExerciseId in path!");
         }
 
         // Apply further checks if it is an exam submission
@@ -147,7 +145,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * GET /file-upload-submissions/:id : get the fileUploadSubmissions by it's id. Is used by tutor when assessing submissions.
+     * GET /file-upload-submissions/:submissionId : get the fileUploadSubmissions by it's id. Is used by tutor when assessing submissions.
      * In case an instructors calls, the resultId is used first. If the resultId is not set, the correctionRound is used.
      * If neither resultId nor correctionRound is set, the first correctionRound is used.
      *
@@ -166,9 +164,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAllowedToAssesExercise(fileUploadExercise, user, resultId)) {
-            return forbidden();
-        }
+        authCheckService.isAllowedToAssessExerciseElseThrow(fileUploadExercise, user, resultId);
 
         // load submission with results either by resultId or by correctionRound
         if (resultId != null) {
@@ -233,15 +229,14 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a file upload submission without assessment");
         final Exercise fileUploadExercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        fileUploadExercise.setGradingCriteria(gradingCriteria);
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
-            return forbidden();
-        }
         if (!(fileUploadExercise instanceof FileUploadExercise)) {
             return badRequest();
         }
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        fileUploadExercise.setGradingCriteria(gradingCriteria);
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, fileUploadExercise, user);
 
         // Check if tutors can start assessing the students submission
         this.fileUploadSubmissionService.checkIfExerciseDueDateIsReached(fileUploadExercise);
@@ -257,11 +252,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         else {
             Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService
                     .getRandomFileUploadSubmissionEligibleForNewAssessment((FileUploadExercise) fileUploadExercise, fileUploadExercise.isExamExercise(), correctionRound);
-
-            if (optionalFileUploadSubmission.isEmpty()) {
-                return notFound();
-            }
-            fileUploadSubmission = optionalFileUploadSubmission.get();
+            fileUploadSubmission = optionalFileUploadSubmission.orElseThrow(() -> new EntityNotFoundException("fileUploadSubmission without Assessment"));
         }
 
         // Make sure the exercise is connected to the participation in the json response
@@ -311,16 +302,11 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         }
 
         Optional<Submission> optionalSubmission = participation.findLatestSubmission();
-        FileUploadSubmission fileUploadSubmission;
-        if (optionalSubmission.isEmpty()) {
-            // this should never happen as the submission is initialized along with the participation when the exercise is started
-            fileUploadSubmission = new FileUploadSubmission();
-            fileUploadSubmission.setParticipation(participation);
-        }
-        else {
-            // only try to get and set the file upload if the fileUploadSubmission existed before
-            fileUploadSubmission = (FileUploadSubmission) optionalSubmission.get();
-        }
+        FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) optionalSubmission.orElseGet(() -> {
+            FileUploadSubmission temp = new FileUploadSubmission();
+            temp.setParticipation(participation);
+            return temp;
+        });
 
         // make sure only the latest submission and latest result is sent to the client
         participation.setSubmissions(null);

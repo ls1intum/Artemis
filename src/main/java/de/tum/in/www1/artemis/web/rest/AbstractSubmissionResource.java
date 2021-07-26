@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
-
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -10,10 +8,10 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
  * Abstract class that allows reuse
@@ -60,13 +58,9 @@ public abstract class AbstractSubmissionResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (assessedByTutor) {
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                throw new AccessForbiddenException(NOT_ALLOWED);
-            }
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
         }
-        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
 
         final boolean examMode = exercise.isExamExercise();
         List<Submission> submissions;
