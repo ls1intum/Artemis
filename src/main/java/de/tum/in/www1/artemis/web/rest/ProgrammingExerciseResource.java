@@ -596,7 +596,7 @@ public class ProgrammingExerciseResource {
                     "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
         }
 
-        // Forbid changes of course exercise belongs to.
+        // Forbid changing the course the exercise belongs to.
         if (programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId().longValue() != updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember()
                 .getId().longValue()) {
             return conflict("The programming exercise course cannot be changed", ENTITY_NAME, "cannotChangeCourseId");
