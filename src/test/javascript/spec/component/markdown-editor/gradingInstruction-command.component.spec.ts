@@ -40,7 +40,7 @@ describe('GradingInstructionCommand', () => {
 
         gradingInstructionCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).to.equal(
-            '[gradingInstruction]' +
+            '[instruction]' +
                 '\n' +
                 '\t' +
                 ('[credits]' +
@@ -73,7 +73,7 @@ describe('GradingInstructionCommand', () => {
 
         criterionCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).to.equal(
-            '\n' + '[gradingCriterion]' + GradingCriterionCommand.text + '\n' + gradingInstructionCommand.instructionText(),
+            '\n' + '[criterion]' + GradingCriterionCommand.text + '\n' + gradingInstructionCommand.instructionText(),
         );
     });
 });
