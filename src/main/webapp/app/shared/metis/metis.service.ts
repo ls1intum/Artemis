@@ -36,6 +36,7 @@ export class MetisService {
     get posts(): Observable<Post[]> {
         return this.posts$.asObservable();
     }
+
     get tags(): Observable<string[]> {
         return this.tags$;
     }
@@ -52,6 +53,14 @@ export class MetisService {
         this.course = course;
         this.courseId = course.id!;
         this.updateCoursePostTags();
+    }
+
+    /**
+     * to be used to set posts from outside
+     * @param posts
+     */
+    setPosts(posts: Post[]): void {
+        this.posts$.next(posts);
     }
 
     /**
@@ -91,36 +100,15 @@ export class MetisService {
     }
 
     /**
-     * deletes a post by invoking the post service
-     * fetches the post for the currently set filter on response
-     * @param post post to delete
-     */
-    deletePost(post: Post): void {
-        this.postService.delete(this.courseId, post).subscribe(() => {
-            this.getPostsForFilter(this.currentPostFilter);
-        });
-    }
-
-    /**
-     * deletes an answer post by invoking the post service
-     * fetches the post for the currently set filter on response
-     * @param answerPost answer post to delete
-     */
-    deleteAnswerPost(answerPost: AnswerPost): void {
-        this.answerPostService.delete(this.courseId, answerPost).subscribe(() => {
-            this.getPostsForFilter(this.currentPostFilter);
-        });
-    }
-
-    /**
      * creates a new post by invoking the post service
-     * fetches the post for the currently set filter on response
+     * fetches the post for the currently set filter on response  and updates course tags
      * @param post newly created post
      */
     createPost(post: Post): Observable<Post> {
         return this.postService.create(this.courseId, post).pipe(
             map((res) => {
                 this.getPostsForFilter(this.currentPostFilter);
+                this.updateCoursePostTags();
                 return res.body!;
             }),
         );
@@ -149,6 +137,7 @@ export class MetisService {
         return this.postService.update(this.courseId, post).pipe(
             map((res) => {
                 this.getPostsForFilter(this.currentPostFilter);
+                this.updateCoursePostTags();
                 return res.body!;
             }),
         );
@@ -180,11 +169,26 @@ export class MetisService {
     }
 
     /**
-     * to be used to set posts from outside
-     * @param posts
+     * deletes a post by invoking the post service
+     * fetches the post for the currently set filter on response and updates course tags
+     * @param post post to delete
      */
-    setPosts(posts: Post[]): void {
-        this.posts$.next(posts);
+    deletePost(post: Post): void {
+        this.postService.delete(this.courseId, post).subscribe(() => {
+            this.getPostsForFilter(this.currentPostFilter);
+            this.updateCoursePostTags();
+        });
+    }
+
+    /**
+     * deletes an answer post by invoking the post service
+     * fetches the post for the currently set filter on response
+     * @param answerPost answer post to delete
+     */
+    deleteAnswerPost(answerPost: AnswerPost): void {
+        this.answerPostService.delete(this.courseId, answerPost).subscribe(() => {
+            this.getPostsForFilter(this.currentPostFilter);
+        });
     }
 
     /**
