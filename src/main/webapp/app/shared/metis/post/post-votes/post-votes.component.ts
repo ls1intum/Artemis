@@ -12,7 +12,7 @@ interface PostVote {
 @Component({
     selector: 'jhi-post-votes',
     templateUrl: './post-votes.component.html',
-    styleUrls: ['../../../../overview/discussion/discussion.scss'],
+    styleUrls: ['./post-votes.scss'],
 })
 export class PostVotesComponent implements OnInit, OnChanges {
     @Input() post: Post;

@@ -51,7 +51,7 @@ export class DiscussionComponent implements OnInit, AfterViewInit, OnChanges, On
      * Configures interact to make discussion expandable
      */
     ngAfterViewInit(): void {
-        interact('.expanded-posts')
+        interact('.expanded-discussion')
             .resizable({
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },
                 modifiers: [

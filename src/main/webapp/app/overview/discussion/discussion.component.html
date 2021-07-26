@@ -1,6 +1,8 @@
 <!-- uncollapsed posts -->
-<div *ngIf="!collapsed; else collapsedPosts" class="postings-container expanded-posts">
-    <div class="draggable-left"><fa-icon [icon]="'grip-lines-vertical'"></fa-icon></div>
+<div *ngIf="!collapsed; else collapsedPosts" class="postings-container expanded-discussion">
+    <div class="draggable-left">
+        <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
+    </div>
     <div class="card">
         <!-- header -->
         <div class="card-header text-white" [ngbTooltip]="'artemisApp.metis.discussion.hide' | artemisTranslate" (click)="collapsed = true">
@@ -35,7 +37,7 @@
 </div>
 <!-- collapsed posts -->
 <ng-template #collapsedPosts>
-    <div class="postings-container collapsed-postings text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.discussion.show' | artemisTranslate">
+    <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.discussion.show' | artemisTranslate">
         <fa-icon [icon]="'chevron-left'"></fa-icon>
         <span class="h5" jhiTranslate="artemisApp.metis.discussion.header"></span>
         <fa-icon [icon]="'chevron-left'"></fa-icon>

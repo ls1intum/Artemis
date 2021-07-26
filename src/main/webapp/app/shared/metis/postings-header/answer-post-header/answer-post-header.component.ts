@@ -6,7 +6,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 @Component({
     selector: 'jhi-answer-post-header',
     templateUrl: './answer-post-header.component.html',
-    styleUrls: ['../../../../overview/discussion/discussion.scss'],
+    styleUrls: ['../posting-header.scss'],
 })
 export class AnswerPostHeaderComponent extends PostingsHeaderDirective<AnswerPost> {
     constructor(protected metisService: MetisService) {

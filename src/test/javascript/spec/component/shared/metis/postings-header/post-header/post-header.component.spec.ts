@@ -102,7 +102,7 @@ describe('PostHeaderComponent', () => {
         expect(component.numberOfAnswerPosts).to.be.equal(0);
         expect(getElement(debugElement, '.posting-header.answer-count').innerHTML).contains(0);
         expect(getElement(debugElement, '.answer-count .icon')).to.exist;
-        expect(getElement(debugElement, '.toggleAnswerElement.clickable')).to.not.exist;
+        expect(getElement(debugElement, '.toggle-answer-element.clickable')).to.not.exist;
     });
 
     it('should only display non clickable icon for post with answers', () => {
@@ -112,7 +112,7 @@ describe('PostHeaderComponent', () => {
         expect(component.numberOfAnswerPosts).to.be.equal(answerPosts.length);
         expect(getElement(debugElement, '.posting-header.answer-count').innerHTML).contains(answerPosts.length);
         expect(getElement(debugElement, '.answer-count .icon')).to.exist;
-        expect(getElement(debugElement, '.toggleAnswerElement.clickable')).to.exist;
+        expect(getElement(debugElement, '.toggle-answer-element.clickable')).to.exist;
     });
 
     it('should call toggleAnswers method and emit event when answer count icon is clicked', () => {
@@ -121,7 +121,7 @@ describe('PostHeaderComponent', () => {
         component.posting.answers = answerPosts;
         component.ngOnChanges();
         fixture.detectChanges();
-        getElement(debugElement, '.toggleAnswerElement.clickable').click();
+        getElement(debugElement, '.toggle-answer-element.clickable').click();
         expect(toggleAnswersSpy).to.have.been.called;
         expect(toggleAnswersChangeSpy).to.have.been.called;
     });

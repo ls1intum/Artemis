@@ -9,14 +9,7 @@ $label-color: #6a737d;
     margin-left: auto;
 }
 
-.icon {
-    color: $label-color;
-    &.vote-active {
-        color: $background-color;
-    }
-}
-
-.expanded-posts {
+.expanded-discussion {
     width: 30vw;
 
     .draggable-left {
@@ -51,44 +44,7 @@ $label-color: #6a737d;
     }
 }
 
-.reaction {
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-
-    .plus {
-        font-size: 0.5em;
-    }
-}
-
-.post-tag {
-    max-width: 130px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    background-color: darkblue;
-}
-
-.line {
-    width: auto;
-    height: 1px;
-    background: rgba(0, 0, 0, 0.1);
-    content: ' ';
-}
-
-.approved-badge {
-    max-width: 130px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    background-color: green;
-}
-
-.not-approved-badge {
-    max-width: 130px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    background-color: lightgray;
-}
-
-.collapsed-postings {
+.collapsed-discussion {
     width: 50px;
     justify-content: space-between;
     flex-flow: column nowrap;
@@ -108,17 +64,8 @@ $label-color: #6a737d;
     }
 }
 
-.posting-header {
-    font-size: 12px;
-}
-
-.answer-post {
-    background-color: rgba(0, 0, 0, 0.03);
-    border-radius: 4px;
-}
-
 @media screen and (max-width: 992px) {
-    .expanded-posts {
+    .expanded-discussion {
         width: 94vw;
 
         .draggable-left {
