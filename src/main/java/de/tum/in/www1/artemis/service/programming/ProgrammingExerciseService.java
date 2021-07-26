@@ -920,9 +920,9 @@ public class ProgrammingExerciseService {
      * Make sure to load Template and Solution participations along with the programming exercise.
      *
      * Checks:
-     * - Validity of VCS repositories and project
+     * - Existence of VCS repositories and project
      * - Existence of CI build plans
-     * -
+     *
      * @param programmingExercise of the programming exercise to check
      * @return List containing the resulting errors, if any.
      */
@@ -936,13 +936,8 @@ public class ProgrammingExerciseService {
         }
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        List<User> allStudentsInCourse = userRepository.getStudents(course);
-        List<User> allTeachingUsersInCourse = new ArrayList<>();    // TODO check if needed
-        allTeachingUsersInCourse.addAll(userRepository.getTutors(course));
-        allTeachingUsersInCourse.addAll(userRepository.getEditors(course));
-        allTeachingUsersInCourse.addAll(userRepository.getInstructors(course));
 
-        result.addAll(checkVCSConsistency(programmingExercise, allTeachingUsersInCourse, allStudentsInCourse));
+        result.addAll(checkVCSConsistency(programmingExercise));
         result.addAll(checkCIConsistency(programmingExercise));
 
         return result;
@@ -954,7 +949,7 @@ public class ProgrammingExerciseService {
      * @param programmingExercise to check
      * @return List containing the resulting errors, if any.
      */
-    private List<ConsistencyErrorDTO> checkVCSConsistency(ProgrammingExercise programmingExercise, List<User> allTeachingUsersInCourse, List<User> allStudentsInCourse) {
+    private List<ConsistencyErrorDTO> checkVCSConsistency(ProgrammingExercise programmingExercise) {
         List<ConsistencyErrorDTO> result = new ArrayList<>();
 
         if (!versionControlService.get().checkIfProjectExists(programmingExercise.getProjectKey(), programmingExercise.getProjectName())) {

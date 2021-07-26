@@ -125,29 +125,6 @@ public class BitbucketService extends AbstractVersionControlService {
         removeStudentRepositoryAccess(repositoryUrl, urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), user.getLogin());
     }
 
-    @Override
-    public List<BitbucketUserDTO> getAllMembersOfRepository(VcsRepositoryUrl repositoryUrl) {
-        String repositorySlug = getRepositoryName(repositoryUrl);
-        String projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users";
-        ResponseEntity<BitbucketSearchDTO<BitbucketUserDTO>> response;
-        try {
-            response = restTemplate.exchange(baseUrl, HttpMethod.GET, null, new ParameterizedTypeReference<>() {
-            });
-
-            if (response.getStatusCode().equals(HttpStatus.OK) && response.getBody() != null) {
-                return response.getBody().getSearchResults();
-            }
-            else {
-                throw new BitbucketException("Error while retrieving users from repository '" + repositorySlug + "'");
-            }
-        }
-        catch (BitbucketException e) {
-            log.error("An error occurred while retrieving users from repository: {}", e.getMessage());
-        }
-        return null;
-    }
-
     /**
      * This methods protects the repository on the Bitbucket server by using a REST-call to setup branch protection.
      * The branch protection is applied to all branches and prevents rewriting the history (force-pushes) and deletion of branches.
