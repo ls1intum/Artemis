@@ -5,7 +5,10 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 
 /**
  * Individual user's Notification Settings about one notifiction type
@@ -13,16 +16,15 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @Entity
 @Table(name = "notification_settings")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-// @Inheritance(strategy = InheritanceType.SINGLE_TABLE) I do not know why I should use Inheritance, inherit from what?
-
-public abstract class NotificationSettings extends DomainObject {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class NotificationSettings extends DomainObject {
 
     @Column(name = "id")
     private long id;
 
-    // @Enumerated(EnumType.STRING) maybe use NotificationType Enums
+    @Enumerated(EnumType.STRING)
     @Column(name = "type")
-    private String type;
+    private NotificationType type;
 
     @Column(name = "app", columnDefinition = "boolean default true")
     private boolean app = true;
@@ -44,11 +46,11 @@ public abstract class NotificationSettings extends DomainObject {
         this.id = id;
     }
 
-    public String getType() {
+    public NotificationType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(NotificationType type) {
         this.type = type;
     }
 

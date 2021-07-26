@@ -16,7 +16,7 @@ public interface NotificationSettingsRepository {
 
     @Query("""
             SELECT notificationSettings FROM NotificationSettings notificationSettings
-            WHERE notificationSettings.user_id = :#{#id}
+            WHERE notificationSettings.user_id = :#{#userId}
             """)
-    Page<NotificationSettings> findAllNotificationSettingsForRecipientWithId(@Param("id") long id, Pageable pageable);
+    Page<NotificationSettings> findAllNotificationSettingsForRecipientWithId(@Param("userId") long userId, Pageable pageable);
 }
