@@ -296,7 +296,7 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * PUT /file-upload-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing fileUploadExercise.
+     * POST /file-upload-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing fileUploadExercise.
      *
      * @param exerciseId                                   of the exercise
      * @param fileUploadExercise                           the fileUploadExercise to re-evaluate and update
@@ -307,7 +307,7 @@ public class FileUploadExerciseResource {
      * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
      * Server Error) if the fileUploadExercise couldn't be updated
      */
-    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
+    @PostMapping(Endpoints.REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable long exerciseId, @RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {

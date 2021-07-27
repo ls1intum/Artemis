@@ -446,7 +446,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         gradingCriteria.remove(1);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
-        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody(
+        FileUploadExercise updatedFileUploadExercise = request.postWithResponseBody(
                 "/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedFileUploadExercise);
         assertThat(updatedFileUploadExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
@@ -469,7 +469,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         gradingCriteria.remove(0);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
-        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody(
+        FileUploadExercise updatedFileUploadExercise = request.postWithResponseBody(
                 "/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate" + "?deleteFeedback=true", fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedFileUploadExercise);
         assertThat(updatedFileUploadExercise.getGradingCriteria().size()).isEqualTo(1);
@@ -486,7 +486,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         course.setInstructorGroupName("test");
         courseRepo.save(course);
 
-        request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExercise, FileUploadExercise.class,
+        request.postWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExercise, FileUploadExercise.class,
                 HttpStatus.FORBIDDEN);
     }
 
@@ -499,7 +499,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         fileUploadExerciseToBeConflicted.setId(123456789L);
         fileUploadExerciseRepository.save(fileUploadExerciseToBeConflicted);
 
-        request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExerciseToBeConflicted, FileUploadExercise.class,
+        request.postWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExerciseToBeConflicted, FileUploadExercise.class,
                 HttpStatus.CONFLICT);
     }
 
@@ -509,7 +509,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
 
-        request.putWithResponseBody("/api/file-upload-exercises/" + 123456789 + "/re-evaluate", fileUploadExercise, FileUploadExercise.class, HttpStatus.NOT_FOUND);
+        request.postWithResponseBody("/api/file-upload-exercises/" + 123456789 + "/re-evaluate", fileUploadExercise, FileUploadExercise.class, HttpStatus.NOT_FOUND);
     }
 
 }
