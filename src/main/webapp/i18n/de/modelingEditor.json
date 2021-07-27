@@ -2,7 +2,6 @@
     "artemisApp": {
         "modelingEditor": {
             "title": "Modellierungseditor",
-            "problemStatement": "<strong>Problemstellung:</strong>",
             "maxScore": "<strong>Max. Punktzahl: {{maxScore}}</strong>",
             "saveSuccessful": "Dein Diagramm wurde erfolgreich gespeichert!",
             "submitSuccessful": "Dein Diagramm wurde erfolgreich abgesendet! Du kannst es ändern oder auf dein Feedback warten.",
