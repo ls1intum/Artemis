@@ -11,7 +11,7 @@
             [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             (clickHandler)="importIntoIDE()"
             [buttonLabel]="'artemisApp.exerciseActions.importIntoIntelliJ' | artemisTranslate"
-            [buttonLoading]="!!this.exercise.loading || orionState.cloning"
+            [buttonLoading]="this.exercise.loading || orionState.cloning"
             [smallButton]="smallButtons"
             *ngIf="isOfflineIdeAllowed && (orionState.view !== ExerciseView.STUDENT || orionState.opened !== this.exercise.id)"
         ></jhi-ide-button>
