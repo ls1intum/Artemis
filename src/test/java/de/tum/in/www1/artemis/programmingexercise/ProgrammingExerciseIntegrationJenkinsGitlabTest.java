@@ -94,7 +94,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void textExportSubmissionsByStudentLogins() throws Exception {
-        programmingExerciseIntegrationServiceTest.textExportSubmissionsByStudentLogins();
+        programmingExerciseIntegrationServiceTest.testExportSubmissionsByStudentLogins();
     }
 
     @Test

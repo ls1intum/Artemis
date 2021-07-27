@@ -6,8 +6,8 @@
 <jhi-alert></jhi-alert>
 
 <div *ngIf="exercise">
-    <div class="row my-3 d-flex justify-content-between">
-        <div class="col-sm-8" *ngIf="!isTestRun">
+    <div *ngIf="!isTestRun" class="row my-3 d-flex justify-content-between">
+        <div class="col-sm-8">
             <div>
                 <p class="h3" style="text-align: left">
                     {{ 'artemisApp.exerciseAssessmentDashboard.yourStatus' | artemisTranslate }}:
@@ -49,7 +49,6 @@
 
         <div class="col-sm-4" style="min-width: 400px">
             <jhi-side-panel
-                *ngIf="!isExamMode"
                 [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exerciseInformation' | artemisTranslate"
                 [panelDescriptionHeader]="'artemisApp.exerciseAssessmentDashboard.totalYours' | artemisTranslate"
             >

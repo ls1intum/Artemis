@@ -306,22 +306,23 @@ public class CourseService {
      *
      * @param exerciseIds the ids to get the active students for
      * @param periodIndex the deviation from the current time
+     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 16 for the courde detail view
      * @return An Integer array containing active students for each index. An index corresponds to a week
      */
-    public Integer[] getActiveStudents(Set<Long> exerciseIds, Integer periodIndex) {
+    public Integer[] getActiveStudents(Set<Long> exerciseIds, Integer periodIndex, int length) {
         ZonedDateTime now = ZonedDateTime.now();
         LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
         LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
         ZoneId zone = now.getZone();
         // startDate is the starting point of the data collection which is the Monday 3 weeks ago +/- the deviation from the current timeframe
-        ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks(3 + (4 * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks((length - 1) + (length * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
         // the endDate depends on whether the current week is shown. If it is, the endDate is the Sunday of the current week at 23:59.
         // If the timeframe was adapted (periodIndex != 0), the endDate needs to be adapted according to the deviation
-        ZonedDateTime endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(4 * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
+        ZonedDateTime endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(length * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
                 : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
         List<StatisticsEntry> outcome = courseRepository.getActiveStudents(exerciseIds, startDate, endDate);
         List<StatisticsEntry> distinctOutcome = removeDuplicateActiveUserRows(outcome, startDate);
-        return sortUserIntoWeeks(distinctOutcome, startDate);
+        return sortUserIntoWeeks(distinctOutcome, startDate, length);
     }
 
     /**
@@ -372,14 +373,16 @@ public class CourseService {
      * Gets a list of maps as parameter, each map describing an entry in the database. The map has the two keys "day" and "amount",
      * which map to the date and the amount of the findings. This Map-List is taken and converted into an Integer array,
      * containing the values for each point of the graph. In the course management overview, we want to display the last
-     * 4 weeks, each week represented by one point in the graph. (Beginning with the current week.)
+     * 4 weeks, each week represented by one point in the graph. (Beginning with the current week.) In the course detail view,
+     * we display 16 weeks at once.
      *
      * @param outcome A List<StatisticsEntry>, containing the content which should be refactored into an array
      * @param startDate the startDate
+     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 16 for the courde detail view
      * @return an array, containing the amount of active users. One entry corresponds to one week
      */
-    private Integer[] sortUserIntoWeeks(List<StatisticsEntry> outcome, ZonedDateTime startDate) {
-        Integer[] result = new Integer[4];
+    private Integer[] sortUserIntoWeeks(List<StatisticsEntry> outcome, ZonedDateTime startDate, int length) {
+        Integer[] result = new Integer[length];
         Arrays.fill(result, 0);
         for (StatisticsEntry map : outcome) {
             ZonedDateTime date = (ZonedDateTime) map.getDay();
@@ -421,7 +424,7 @@ public class CourseService {
         dto.setNumberOfEditorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getEditorGroupName())));
         dto.setNumberOfInstructorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getInstructorGroupName())));
 
-        dto.setActiveStudents(getActiveStudents(exerciseIds, 0));
+        dto.setActiveStudents(getActiveStudents(exerciseIds, 0, 16));
         return dto;
     }
 
