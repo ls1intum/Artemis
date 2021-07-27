@@ -8,7 +8,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseDetailBarChartComponent } from 'app/course/manage/detail/course-detail-bar-chart.component';
+import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -17,9 +17,9 @@ import { ArtemisTestModule } from '../../../test.module';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('CourseDetailBarChartComponent', () => {
-    let fixture: ComponentFixture<CourseDetailBarChartComponent>;
-    let component: CourseDetailBarChartComponent;
+describe('CourseDetailLineChartComponent', () => {
+    let fixture: ComponentFixture<CourseDetailLineChartComponent>;
+    let component: CourseDetailLineChartComponent;
     let service: CourseManagementService;
 
     const initialStats = [26, 46, 34, 12];
@@ -27,7 +27,7 @@ describe('CourseDetailBarChartComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), ChartsModule],
-            declarations: [CourseDetailBarChartComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [CourseDetailLineChartComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -36,7 +36,7 @@ describe('CourseDetailBarChartComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(CourseDetailBarChartComponent);
+                fixture = TestBed.createComponent(CourseDetailLineChartComponent);
                 component = fixture.componentInstance;
                 service = TestBed.inject(CourseManagementService);
             });
