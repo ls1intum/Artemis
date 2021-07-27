@@ -13,7 +13,6 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { getCourseId } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
@@ -138,11 +137,13 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      * If the current page shows the first quiz question statistic then it will navigate to the quiz statistic
      */
     previousStatistic() {
+        const baseUrl = this.quizStatisticUtil.getBaseUrlForQuizExercise(this.quizExercise);
+
         if (this.isQuizStatistic) {
-            this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-point-statistic`);
+            this.router.navigateByUrl(baseUrl + `/quiz-point-statistic`);
         } else if (this.isQuizPointStatistic) {
             if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
-                this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-statistic`);
+                this.router.navigateByUrl(baseUrl + `/quiz-statistic`);
             } else {
                 // go to previous question-statistic
                 this.quizStatisticUtil.navigateToStatisticOf(this.quizExercise, this.quizExercise.quizQuestions.last()!);
@@ -157,12 +158,14 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      * If the current page shows the last quiz question statistic then it will navigate to the quiz point statistic
      */
     nextStatistic() {
+        const baseUrl = this.quizStatisticUtil.getBaseUrlForQuizExercise(this.quizExercise);
+
         if (this.isQuizPointStatistic) {
-            this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-statistic`);
+            this.router.navigateByUrl(baseUrl + `/quiz-statistic`);
         } else if (this.isQuizStatistic) {
             // go to quiz-statistic if the position = last position
             if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
-                this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-point-statistic`);
+                this.router.navigateByUrl(baseUrl + `/quiz-point-statistic`);
             } else {
                 // go to next question-statistic
                 this.quizStatisticUtil.navigateToStatisticOf(this.quizExercise, this.quizExercise.quizQuestions[0]);
