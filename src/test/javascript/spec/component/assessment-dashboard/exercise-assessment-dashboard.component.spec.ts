@@ -358,7 +358,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     it('should calculateStatus DRAFT', () => {
         expect(modelingSubmission.latestResult).to.be.undefined;
-        expect(comp.calculateSubmissionStatus(modelingSubmission)).to.be.equal('DRAFT');
+        expect(comp.calculateSubmissionStatusIsDraft(modelingSubmission)).to.be.equal(true);
     });
 
     it('should call hasBeenCompletedByTutor', () => {
