@@ -275,20 +275,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<FileUploadSubmission> getDataForFileUpload(@PathVariable Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
-        if (participation == null) {
-            return ResponseEntity.notFound()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).build();
-        }
         FileUploadExercise fileUploadExercise;
         if (participation.getExercise() instanceof FileUploadExercise) {
             fileUploadExercise = (FileUploadExercise) participation.getExercise();
-            if (fileUploadExercise == null) {
-                return ResponseEntity.badRequest()
-                        .headers(
-                                HeaderUtil.createFailureAlert(applicationName, true, "fileUploadExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
-                        .body(null);
-            }
-
             // make sure sensitive information are not sent to the client
             fileUploadExercise.filterSensitiveInformation();
         }

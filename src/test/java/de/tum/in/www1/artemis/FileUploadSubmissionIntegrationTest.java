@@ -429,19 +429,6 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(value = "student1")
-    public void getDataForFileUpload_wrongExerciseOfParticipationNull() throws Exception {
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        List<Feedback> feedbacks = ModelFactory.generateFeedback();
-        fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessorFeedback(releasedFileUploadExercise, fileUploadSubmission, "student2", "tutor1", feedbacks);
-        database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
-        Participation participation = fileUploadSubmission.getParticipation();
-        participation.setExercise(null);
-        FileUploadSubmission submission = request.get("/api/participations/" + participation.getId() + "/file-upload-editor", HttpStatus.NOT_FOUND, FileUploadSubmission.class);
-        assertThat(submission).isNull();
-    }
-
-    @Test
-    @WithMockUser(value = "student1")
     public void getDataForFileUpload_afterAssessmentDueDate_showsFeedback() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
