@@ -89,7 +89,8 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        if (fileUploadSubmission.getParticipation().getExercise().getId().equals(exerciseId)) {
+        if (fileUploadSubmission.getParticipation() != null && fileUploadSubmission.getParticipation().getExercise() != null
+                && !fileUploadSubmission.getParticipation().getExercise().getId().equals(exerciseId)) {
             return badRequest("exerciseId", "400", "ExerciseId in Body doesnt match ExerciseId in path!");
         }
 

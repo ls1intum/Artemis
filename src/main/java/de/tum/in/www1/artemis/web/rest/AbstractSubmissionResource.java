@@ -60,7 +60,9 @@ public abstract class AbstractSubmissionResource {
         if (assessedByTutor) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
         }
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
+        else {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
+        }
 
         final boolean examMode = exercise.isExamExercise();
         List<Submission> submissions;

@@ -7,7 +7,10 @@ import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
@@ -421,7 +424,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(value = "student3", roles = "USER")
-    public void submitExerciseWithSubmissionID() throws Exception {
+    public void submitExerciseWithSubmissionId() throws Exception {
         FileUploadSubmission submission = performInitialSubmission(releasedFileUploadExercise.getId(), submittedFileUploadSubmission, validFile.getOriginalFilename());
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", validFile,
                 FileUploadSubmission.class, HttpStatus.OK);
@@ -439,7 +442,6 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     public void submitExercise_afterDueDate() throws Exception {
         StudentParticipation studentParticipation = database.createAndSaveParticipationForExerciseInTheFuture(releasedFileUploadExercise, "student3");
         submittedFileUploadSubmission.setParticipation(studentParticipation);
-
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
                 FileUploadSubmission.class, HttpStatus.OK);
     }
@@ -449,7 +451,6 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     public void submitExercise_withoutDueDate() throws Exception {
         StudentParticipation studentParticipation = database.createAndSaveParticipationForExerciseInTheFuture(noDueDateFileUploadExercise, "student3");
         submittedFileUploadSubmission.setParticipation(studentParticipation);
-
         request.postWithMultipartFile("/api/exercises/" + noDueDateFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
                 FileUploadSubmission.class, HttpStatus.OK);
     }
@@ -505,7 +506,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getSubmissionByID_asTA() throws Exception {
+    public void getSubmissionById_asTA() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, "student1");
 
