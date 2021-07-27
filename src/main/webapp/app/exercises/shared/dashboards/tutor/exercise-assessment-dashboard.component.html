@@ -319,7 +319,7 @@
                                         ></jhi-result>
                                     </td>
                                     <td>
-                                        {{ calculateSubmissionStatus(submission, correctionRound) }}
+                                        {{ calculateSubmissionStatusIsDraft(submission, correctionRound) ? 'DRAFT' : 'DONE' }}
                                     </td>
                                     <td>
                                         <span
@@ -336,7 +336,7 @@
                                         <ng-container *ngIf="(isTestRun && complaints.length === 0) || !isTestRun">
                                             <ng-container *jhiExtensionPoint="overrideOpenButton; context: { submission: submission, correctionRound: correctionRound }">
                                                 <button
-                                                    *ngIf="submission && calculateSubmissionStatus(submission, correctionRound) === 'DRAFT'; else continueButton"
+                                                    *ngIf="submission && calculateSubmissionStatusIsDraft(submission, correctionRound); else continueButton"
                                                     (click)="openAssessmentEditor(submission, correctionRound)"
                                                     class="btn btn-warning btn-sm"
                                                 >

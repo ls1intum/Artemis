@@ -22,7 +22,7 @@
                     class="btn btn-sm"
                     [buttonLoading]="orionState.cloning"
                     buttonLabel="{{
-                        (submission && calculateSubmissionStatus(submission, correctionRound) === 'DRAFT'
+                        (submission && calculateSubmissionStatusIsDraft(submission, correctionRound)
                             ? 'artemisApp.orionExerciseAssessmentDashboard.continueAssessment'
                             : 'artemisApp.orionExerciseAssessmentDashboard.openAssessment'
                         ) | artemisTranslate

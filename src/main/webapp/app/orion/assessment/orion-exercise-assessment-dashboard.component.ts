@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { Submission } from 'app/entities/submission.model';
+import { calculateSubmissionStatusIsDraft, Submission } from 'app/entities/submission.model';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
@@ -19,6 +19,7 @@ import { onError } from 'app/shared/util/global.utils';
 export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     readonly ExerciseView = ExerciseView;
     readonly ExerciseType = ExerciseType;
+    calculateSubmissionStatusIsDraft = calculateSubmissionStatusIsDraft;
     orionState: OrionState;
 
     exerciseId: number;
@@ -43,10 +44,6 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
         this.orionConnectorService.state().subscribe((state) => {
             this.orionState = state;
         });
-    }
-
-    calculateSubmissionStatus(submission: Submission, correctionRound?: number): 'DONE' | 'DRAFT' {
-        return this.programmingSubmissionService.calculateSubmissionStatus(submission, correctionRound);
     }
 
     /**

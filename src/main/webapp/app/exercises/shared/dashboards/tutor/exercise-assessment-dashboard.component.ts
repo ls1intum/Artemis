@@ -14,7 +14,14 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import {
+    calculateSubmissionStatusIsDraft,
+    getLatestSubmissionResult,
+    getSubmissionResultByCorrectionRound,
+    setLatestSubmissionResult,
+    Submission,
+    SubmissionExerciseType,
+} from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -55,6 +62,7 @@ export interface ExampleSubmissionQueryParams {
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly round = round;
+    calculateSubmissionStatusIsDraft = calculateSubmissionStatusIsDraft;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     programmingExercise: ProgrammingExercise;
@@ -533,15 +541,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     private onError(error: string) {
         this.jhiAlertService.error(error);
-    }
-
-    /**
-     * Calculates the status of a submission by inspecting the result
-     * @param submission Submission which to check
-     * @param correctionRound for which to get status
-     */
-    calculateSubmissionStatus(submission: Submission, correctionRound = 0) {
-        return this.programmingSubmissionService.calculateSubmissionStatus(submission, correctionRound);
     }
 
     calculateComplaintStatus(complaint: Complaint) {
