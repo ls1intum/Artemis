@@ -10,6 +10,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-exercise-scores-repo-export-dialog',
@@ -38,6 +39,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         private repoExportService: ProgrammingAssessmentRepoExportService,
         public activeModal: NgbActiveModal,
         private jhiAlertService: JhiAlertService,
+        private accountService: AccountService,
     ) {}
 
     ngOnInit() {
@@ -59,6 +61,10 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                 .pipe(
                     tap(({ body: exercise }) => {
                         this.exercise = exercise!;
+                        // TODO workaround since find does not support exam exercise permissions properly
+                        if (this.exercise.exerciseGroup?.exam?.course) {
+                            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup?.exam?.course!);
+                        }
                         this.isAtLeastInstructor = this.exercise.isAtLeastInstructor;
                     }),
                     catchError((err) => {
