@@ -43,6 +43,14 @@ export class NotificationOptionsComponent implements OnInit {
     saveOptions() {
         //TODO Server REST-POST call
         //TODO refresh notifications in notification-sidebar (else outdated, ngOnitnit only called once, i.e. only calls loadnotifications once)
+        this.notificationService
+            .saveNotificationOptions({
+                page: this.page, //kp ob nötig
+            })
+            .subscribe(
+                (res: HttpResponse<NotificationOption[]>) => this.loadNotificationOptionsSuccess(res.body!, res.headers),
+                (res: HttpErrorResponse) => (this.error = res.message),
+            );
     }
 
     toggleOption(event: any) {

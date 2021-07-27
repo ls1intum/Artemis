@@ -48,8 +48,11 @@ export class NotificationService {
 
     queryNotificationOptions(req?: any): Observable<HttpResponse<NotificationOption[]>> {
         const options = createRequestOption(req);
-        return this.http.get<NotificationOption[]>(this.resourceUrl + '/options', { params: options, observe: 'response' });
-        //.pipe(map((res: HttpResponse<NotificationOption[]>) => this.convertDateArrayFromServer(res)));
+        return this.http.get<NotificationOption[]>(this.resourceUrl + '/fetch-options', { params: options, observe: 'response' });
+    }
+
+    saveNotificationOptions(options: NotificationOption[]): Observable<HttpResponse<NotificationOption[]>> {
+        return this.http.post<NotificationOption[]>(this.resourceUrl + '/save-options', options, { observe: 'response' });
     }
 
     /**

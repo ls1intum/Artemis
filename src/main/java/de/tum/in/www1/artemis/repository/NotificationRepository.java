@@ -34,4 +34,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             WHERE notificationOption.user.id = :#{#userId}
             """)
     Page<NotificationOption> findAllNotificationOptionsForRecipientWithId(@Param("userId") long userId, Pageable pageable);
+
+    @Query("""
+
+            """)
+    void saveAllNotificationOptionsForRecipientWithId(@Param("userId") long userId, @Param("options") NotificationOption[] options);
 }
