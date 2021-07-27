@@ -1,4 +1,5 @@
 import * as chai from 'chai';
+import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { CodeEditorInstructorAndEditorOrionContainerComponent } from 'app/orion/management/code-editor-instructor-and-editor-orion-container.component';
 import { ArtemisTestModule } from '../../test.module';
@@ -54,6 +55,9 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
                 comp = TestBed.createComponent(CodeEditorInstructorAndEditorOrionContainerComponent).componentInstance;
                 orionConnectorService = TestBed.inject(OrionConnectorService);
             });
+    });
+    afterEach(() => {
+        sinon.restore();
     });
 
     it('applyDomainChange should inform connector', () => {

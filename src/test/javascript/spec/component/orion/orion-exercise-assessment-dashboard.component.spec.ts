@@ -1,5 +1,6 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import * as chai from 'chai';
+import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
 import { SinonStub, spy, stub } from 'sinon';
@@ -65,9 +66,8 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
                 comp.exercise = programmingExercise;
             });
     });
-
     afterEach(() => {
-        readerStub.restore();
+        sinon.restore();
     });
 
     it('openAssessmentInOrion should call connector', () => {
@@ -94,13 +94,6 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         comp.downloadSubmissionInOrion(programmingSubmission, 0);
 
         expect(sendSubmissionToOrion).to.have.been.calledOnceWithExactly(programmingExercise.id, programmingSubmission.id, 0);
-    });
-    it('calculateSubmissionStatus should delegate', () => {
-        const calculateSubmissionStatusStub = stub(TestBed.inject(ProgrammingSubmissionService), 'calculateSubmissionStatus');
-        calculateSubmissionStatusStub.returns('DONE');
-
-        expect(comp.calculateSubmissionStatus(programmingSubmission, 0)).to.be.equal('DONE');
-        expect(calculateSubmissionStatusStub).to.have.been.calledOnceWithExactly(programmingSubmission, 0);
     });
     it('sendSubmissionToOrion should convert and call connector', () => {
         const downloadSubmissionSpy = spy(orionConnectorService, 'downloadSubmission');

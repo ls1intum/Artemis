@@ -1,4 +1,5 @@
 import * as chai from 'chai';
+import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
@@ -58,12 +59,8 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
                 ideStateStub = stub(orionConnector, 'state');
             });
     });
-
     afterEach(() => {
-        forwardBuildSpy.restore();
-        cloneSpy.restore();
-        submitSpy.restore();
-        ideStateStub.restore();
+        sinon.restore();
     });
 
     it('should not reflect that the represented exercise is opened if another exercise has been opened', fakeAsync(() => {
