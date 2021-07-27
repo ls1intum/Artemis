@@ -49,7 +49,13 @@
         (onFileLoad)="fileLoad($event)"
     >
     </jhi-code-editor-ace>
-    <jhi-code-editor-instructions *ngIf="showEditorInstructions" editorSidebarRight (onToggleCollapse)="onToggleCollapse($event)" (onError)="onError($event)" [isAssessmentMode]="isTutorAssessment">
+    <jhi-code-editor-instructions
+        *ngIf="showEditorInstructions"
+        editorSidebarRight
+        (onToggleCollapse)="onToggleCollapse($event)"
+        (onError)="onError($event)"
+        [isAssessmentMode]="isTutorAssessment"
+    >
         <ng-content select="[editorSidebar]"></ng-content>
     </jhi-code-editor-instructions>
     <jhi-code-editor-build-output
