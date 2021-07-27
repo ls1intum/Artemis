@@ -304,9 +304,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         Optional<Submission> optionalSubmission = participation.findLatestSubmission();
         FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) optionalSubmission.orElseGet(() -> {
-            FileUploadSubmission temp = new FileUploadSubmission();
-            temp.setParticipation(participation);
-            return temp;
+            FileUploadSubmission tempParticipation = new FileUploadSubmission();
+            tempParticipation.setParticipation(participation);
+            return tempParticipation;
         });
 
         // make sure only the latest submission and latest result is sent to the client
