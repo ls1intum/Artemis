@@ -167,6 +167,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
         const target = event.event?.toElement || event.relatedTarget || event.target;
         target.blur();
         const card = $(target).closest('.collapsable');
+        console.log(card);
         const collapsed = `collapsed--${horizontal ? 'horizontal' : 'vertical'}`;
 
         if (card.hasClass(collapsed)) {

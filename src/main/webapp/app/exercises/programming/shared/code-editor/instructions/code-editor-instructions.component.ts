@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 
@@ -10,6 +10,9 @@ import interact from 'interactjs';
 export class CodeEditorInstructionsComponent implements AfterViewInit {
     @Output()
     onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight?: number }>();
+
+    @Input()
+    isAssessmentMode = true;
 
     /** Resizable constants **/
     initialInstructionsWidth: number;
