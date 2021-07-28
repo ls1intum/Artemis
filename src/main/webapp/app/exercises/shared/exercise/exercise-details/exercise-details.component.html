@@ -107,12 +107,12 @@
     </dd>
 </ng-container>
 <ng-container *ngIf="exercise.gradingInstructions">
-    <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
+    <dt><span jhiTranslate="artemisApp.exercise.assessmentInstructions">Assessment Instructions</span></dt>
     <dd class="editor-outline-background"><span [innerHTML]="formattedGradingInstructions"></span></dd>
 </ng-container>
 <ng-container *ngIf="exercise.gradingCriteria">
-    <dt><span jhiTranslate="artemisApp.exercise.structuredGradingInstructions">Structured Grading Instructions</span></dt>
-    <dd>
+    <dt><span jhiTranslate="artemisApp.exercise.structuredAssessmentInstructions">Structured Assessment Instructions</span></dt>
+    <dd class="col-md-6 mt-4">
         <jhi-structured-grading-instructions-assessment-layout
             [readonly]="true"
             [criteria]="exercise.gradingCriteria || []"
