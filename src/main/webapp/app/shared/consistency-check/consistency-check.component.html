@@ -16,28 +16,32 @@
             <div class="table-responsive p-1 my-5" *ngIf="!isLoadingResults()">
                 <table class="table table-striped">
                     <thead>
-                    <tr>
-                        <th><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span></th>
-                        <th><span jhiTranslate="artemisApp.consistencyCheck.error.type">Error type</span></th>
-                    </tr>
+                        <tr>
+                            <th><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span></th>
+                            <th><span jhiTranslate="artemisApp.consistencyCheck.error.type">Error type</span></th>
+                        </tr>
                     </thead>
                     <tbody>
-                    <tr *ngFor="let error of errors">
-                        <td>
-                            <a *ngIf="courseId != undefined" (click)="closeModal()" [routerLink]="['/course-management', courseId, 'programming-exercises', error.programmingExercise!.id]">
-                                <ngb-highlight [result]="error.programmingExercise!.title!"></ngb-highlight>
-                            </a>
-                            <ngb-highlight *ngIf="courseId == undefined" [result]="error.programmingExercise!.title!"></ngb-highlight>
-                        </td>
-                        <td>
-                            <ngb-highlight [result]="error.type"></ngb-highlight>
-                        </td>
-                    </tr>
+                        <tr *ngFor="let error of errors">
+                            <td>
+                                <a
+                                    *ngIf="courseId != undefined"
+                                    (click)="closeModal()"
+                                    [routerLink]="['/course-management', courseId, 'programming-exercises', error.programmingExercise!.id]"
+                                >
+                                    <ngb-highlight [result]="error.programmingExercise!.title!"></ngb-highlight>
+                                </a>
+                                <ngb-highlight *ngIf="courseId == undefined" [result]="error.programmingExercise!.title!"></ngb-highlight>
+                            </td>
+                            <td>
+                                <ngb-highlight [result]="error.type"></ngb-highlight>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
                 <div *ngIf="errors !== undefined && errors.length < 1" class="text-center">
                     <span class="h1 text-success"><fa-icon [icon]="'check'"></fa-icon></span>
-                    <br>
+                    <br />
                     <span jhiTranslate="artemisApp.consistencyCheck.noErrors">No errors found</span>
                 </div>
             </div>
