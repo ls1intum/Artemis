@@ -47,7 +47,7 @@ export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAcce
      * writes the current value of a form group and propagates the change
      * @param value
      */
-    writeValue(value: string): void {
+    writeValue(value: any): void {
         if (value !== undefined) {
             this.content = value;
             this.propagateChange(this.content);
