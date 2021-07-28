@@ -10,8 +10,6 @@ export abstract class PostingDirective<T extends Posting> implements OnInit {
     allowedHtmlTags: string[] = ['a', 'b', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'li', 'mark', 'ol', 'p', 'pre', 'small', 'span', 'strong', 'sub', 'sup', 'ul'];
     allowedHtmlAttributes: string[] = ['href'];
 
-    protected constructor() {}
-
     ngOnInit(): void {
         this.content = this.posting.content;
     }

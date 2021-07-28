@@ -9,8 +9,4 @@ import { PostingDirective } from 'app/shared/metis/posting.directive';
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit {
     @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
-
-    constructor() {
-        super();
-    }
 }

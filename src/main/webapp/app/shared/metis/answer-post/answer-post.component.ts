@@ -7,8 +7,4 @@ import { PostingDirective } from '../posting.directive';
     templateUrl: './answer-post.component.html',
     styleUrls: ['./answer-post.scss'],
 })
-export class AnswerPostComponent extends PostingDirective<AnswerPost> {
-    constructor() {
-        super();
-    }
-}
+export class AnswerPostComponent extends PostingDirective<AnswerPost> {}

@@ -12,7 +12,7 @@ export class AnswerPostFooterComponent extends PostingsFooterDirective<AnswerPos
     @Output() toggleApproveChange: EventEmitter<AnswerPost> = new EventEmitter<AnswerPost>();
     isAtLeastTutorInCourse: boolean;
 
-    constructor(protected metisService: MetisService) {
+    constructor(private metisService: MetisService) {
         super();
     }
 

@@ -10,10 +10,6 @@ import { Post } from 'app/entities/metis/post.model';
 export class PostFooterComponent extends PostingsFooterDirective<Post> implements OnInit, OnChanges {
     tags: string[];
 
-    constructor() {
-        super();
-    }
-
     /**
      * on initialization: updates the post tags
      */
