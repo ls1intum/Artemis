@@ -280,6 +280,45 @@
                         }}
                     </td>
                 </tr>
+                <tr *ngIf="gradingScaleExists">
+                    <th scope="row">{{ 'artemisApp.examScores.standardGradeDeviationColumn' | artemisTranslate }}</th>
+                    <td *ngIf="!isBonus">
+                        {{
+                            aggregatedExamResults.standardGradeDeviationPassed !== null
+                                ? roundAndPerformLocalConversion(aggregatedExamResults.standardGradeDeviationPassed, 2, 2)
+                                : '-'
+                        }}
+                    </td>
+                    <td>{{ aggregatedExamResults.standardGradeDeviation !== null ? roundAndPerformLocalConversion(aggregatedExamResults.standardGradeDeviation, 2, 2) : '-' }}</td>
+                    <td>
+                        {{
+                            aggregatedExamResults.standardGradeDeviationTotal !== null
+                                ? roundAndPerformLocalConversion(aggregatedExamResults.standardGradeDeviationTotal, 2, 2)
+                                : '-'
+                        }}
+                    </td>
+                    <td *ngIf="hasSecondCorrectionAndStarted && !isBonus" style="border-left: 3px solid lightgrey">
+                        {{
+                            aggregatedExamResults.standardGradeDeviationPassedInFirstCorrection !== null
+                                ? roundAndPerformLocalConversion(aggregatedExamResults.standardGradeDeviationPassedInFirstCorrection, 2, 2)
+                                : '-'
+                        }}
+                    </td>
+                    <td *ngIf="hasSecondCorrectionAndStarted" [ngStyle]="isBonus ? { 'border-left': '3px solid lightgrey' } : {}">
+                        {{
+                            aggregatedExamResults.standardGradeDeviationInFirstCorrection !== null
+                                ? roundAndPerformLocalConversion(aggregatedExamResults.standardGradeDeviationInFirstCorrection, 2, 2)
+                                : '-'
+                        }}
+                    </td>
+                    <td *ngIf="hasSecondCorrectionAndStarted">
+                        {{
+                            aggregatedExamResults.standardGradeDeviationTotalInFirstCorrection !== null
+                                ? roundAndPerformLocalConversion(aggregatedExamResults.standardGradeDeviationTotalInFirstCorrection, 2, 2)
+                                : '-'
+                        }}
+                    </td>
+                </tr>
             </tbody>
         </table>
 
