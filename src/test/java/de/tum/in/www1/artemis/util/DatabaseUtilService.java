@@ -230,6 +230,9 @@ public class DatabaseUtilService {
     private OrganizationRepository organizationRepository;
 
     @Autowired
+    private ModelingExerciseRepository modelingExerciseRepository;
+
+    @Autowired
     private DatabaseCleanupService databaseCleanupService;
 
     @Autowired
@@ -1603,6 +1606,17 @@ public class DatabaseUtilService {
 
         addTestCasesToProgrammingExercise(programmingExercise);
         return programmingExercise;
+    }
+
+    public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise() {
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
+                exerciseGroup.getExam().getCourse());
+        classExercise.setTitle("ClassDiagram");
+        classExercise.setExerciseGroup(exerciseGroup);
+
+        classExercise = modelingExerciseRepository.save(classExercise);
+        return classExercise;
     }
 
     public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed, String commitHash) {
