@@ -32,7 +32,7 @@ export class PostService extends PostingsService<Post> {
         if (post.exercise && post.exercise.course === undefined) {
             post.exercise.course = { id: courseId };
         }
-        return this.http.post<Post>(`${this.resourceUrl}${courseId}/posts`, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.post<Post>(`${this.resourceUrl}${courseId}/posts`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
     }
 
     /**
@@ -43,7 +43,7 @@ export class PostService extends PostingsService<Post> {
      */
     update(courseId: number, post: Post): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(post);
-        return this.http.put<Post>(`${this.resourceUrl}${courseId}/posts`, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.put<Post>(`${this.resourceUrl}${courseId}/posts`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
     }
 
     /**
@@ -54,9 +54,7 @@ export class PostService extends PostingsService<Post> {
      * @return {Observable<EntityResponseType>}
      */
     updateVotes(courseId: number, postId: number, voteChange: number): Observable<EntityResponseType> {
-        return this.http
-            .put(`${this.resourceUrl}${courseId}/posts/${postId}/votes`, voteChange, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.put(`${this.resourceUrl}${courseId}/posts/${postId}/votes`, voteChange, { observe: 'response' }).pipe(map(this.convertDateFromServer));
     }
 
     /**
@@ -65,7 +63,7 @@ export class PostService extends PostingsService<Post> {
      * @return {Observable<EntityArrayResponseType>}
      */
     getAllPostsByCourseId(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<Post[]>(`api/courses/${courseId}/posts`, { observe: 'response' }).pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+        return this.http.get<Post[]>(`api/courses/${courseId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
     }
 
     /**
@@ -75,9 +73,7 @@ export class PostService extends PostingsService<Post> {
      * @return {Observable<EntityArrayResponseType>}
      */
     getAllPostsByLectureId(courseId: number, lectureId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Post[]>(`api/courses/${courseId}/lectures/${lectureId}/posts`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+        return this.http.get<Post[]>(`api/courses/${courseId}/lectures/${lectureId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
     }
 
     /**
@@ -87,9 +83,7 @@ export class PostService extends PostingsService<Post> {
      * @return {Observable<EntityArrayResponseType>}
      */
     getAllPostsByExerciseId(courseId: number, exerciserId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Post[]>(`api/courses/${courseId}/exercises/${exerciserId}/posts`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+        return this.http.get<Post[]>(`api/courses/${courseId}/exercises/${exerciserId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
     }
 
     /**
