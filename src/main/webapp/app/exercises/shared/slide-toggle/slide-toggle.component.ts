@@ -6,10 +6,18 @@ import { Component, Output, EventEmitter } from '@angular/core';
         <!-- Default switch -->
         <div class="form-check form-switch">
             <input type="checkbox" class="form-check-input" id="flexSwitchCheckDefault" [(ngModel)]="checked" (change)="getCheckedFlag()" />
-            <label class="form-check-label" for="flexSwitchCheckDefault"></label>
+            <label
+                *ngIf="checked === false || checked === undefined"
+                class="form-check-label"
+                for="flexSwitchCheckDefault"
+                jhiTranslate="artemisApp.exercise.assessmentInstructions"
+            >
+                Assessment Instructions</label
+            >
+            <label *ngIf="checked === true" class="form-check-label" for="flexSwitchCheckDefault" jhiTranslate="artemisApp.exercise.structuredAssessmentInstructions">
+                Structured Assessment Instructions</label
+            >
         </div>
-        <label *ngIf="checked === false || checked === undefined" jhiTranslate="artemisApp.exercise.gradingInstructions"> Grading Instructions</label>
-        <label *ngIf="checked === true" jhiTranslate="artemisApp.exercise.structuredGradingInstructions"> Structured Grading Instructions</label>
     `,
 })
 export class SlideToggleComponent {
