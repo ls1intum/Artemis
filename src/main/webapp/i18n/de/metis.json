@@ -32,7 +32,7 @@
                 "title": "Titel",
                 "titleTooltip": "Gib deinem Beitrag einen prägnanten und zusammenfassenden Titel",
                 "tags": "Tags",
-                "tagsTooltip": "Gib deinem Beitrag bis zu drei beschreibende und wiederverwendbare Tags",
+                "tagsTooltip": "Gib deinem Beitrag bis zu drei aussagekräftige und wiederverwendbare Tags",
                 "tagPlaceholder": "+ Tag",
                 "tagSecondaryPlaceholder": "Tag(s) hinzufügen",
                 "content": "Inhalt",

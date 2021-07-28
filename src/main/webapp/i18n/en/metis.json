@@ -30,7 +30,7 @@
             },
             "post": {
                 "title": "Title",
-                "titleTooltip": "Add a precise and summarizing title your post",
+                "titleTooltip": "Add a precise and summarizing title to your post",
                 "tags": "Tags",
                 "tagPlaceholder": "+ Tag",
                 "tagSecondaryPlaceholder": "Add tag(s)",
