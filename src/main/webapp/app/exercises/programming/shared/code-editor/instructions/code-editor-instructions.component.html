@@ -1,12 +1,19 @@
-<div id="cardInstructions" class="instructions-wrapper card border border-lightgrey">
-    <div class="card-header d-flex justify-content-center text-white bg-primary" (click)="toggleEditorCollapse($event)">
+<div id="cardInstructions" class="instructions-wrapper card collapsable-card" [ngStyle]="collapsed ? { height: '250px' } : { height: '100%' }">
+    <div class="card-header d-flex justify-content-left text-white bg-primary" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title">
-            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
-            <span class="ms-2" jhiTranslate="artemisApp.editor.instructions">Instructions</span>
+            <span *ngIf="!collapsed">
+                <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                <span class="ms-2" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
+            </span>
+            <span class="collapsed-instructions-card" *ngIf="collapsed">
+                <fa-icon [icon]="'chevron-left'"></fa-icon>
+                <span class="header" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
+                <fa-icon [icon]="'chevron-left'"></fa-icon>
+            </span>
         </h3>
-        <fa-icon class="ms-auto" [icon]="'chevron-right'"></fa-icon>
+        <fa-icon *ngIf="!collapsed" class="ms-auto" [icon]="'chevron-right'"></fa-icon>
     </div>
-    <ng-content></ng-content>
+    <ng-content *ngIf="!collapsed"></ng-content>
     <!-- Required for resizing; don't remove empty span -->
     <div class="rg-left"><span></span></div>
 </div>

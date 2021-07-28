@@ -453,6 +453,30 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportCourse_cannotCreateTmpDir() throws Exception {
+        courseTestService.testExportCourse_cannotCreateTmpDir();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportCourse_cannotCreateCourseExercisesDir() throws Exception {
+        courseTestService.testExportCourse_cannotCreateCourseExercisesDir();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportCourseExam_cannotCreateTmpDir() throws Exception {
+        courseTestService.testExportCourseExam_cannotCreateTmpDir();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportCourseExam_cannotCreateExamExercisesDir() throws Exception {
+        courseTestService.testExportCourseExam_cannotCreateExamsDir();
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testDownloadCourseArchiveAsStudent_forbidden() throws Exception {
         courseTestService.testDownloadCourseArchiveAsStudent_forbidden();

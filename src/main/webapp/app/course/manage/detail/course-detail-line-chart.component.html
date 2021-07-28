@@ -4,15 +4,15 @@
         <fa-icon [icon]="'arrow-left'" size="2x" class="col-md-1 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
         <div class="col-md-9">
             <canvas
-                class="course-detail-bar-chart"
+                class="course-detail-line-chart"
                 baseChart
                 height="750"
                 width="1500"
                 [datasets]="chartData"
-                [labels]="barChartLabels"
-                [options]="barChartOptions"
-                [legend]="barChartLegend"
-                [chartType]="barChartType"
+                [labels]="lineChartLabels"
+                [options]="lineChartOptions"
+                [legend]="lineChartLegend"
+                [chartType]="lineChartType"
             ></canvas>
         </div>
         <h1 *ngIf="loading" style="z-index: 1; display: flex; justify-content: center; align-items: center; position: absolute">

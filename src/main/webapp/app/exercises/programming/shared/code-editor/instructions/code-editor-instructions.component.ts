@@ -16,6 +16,8 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     minInstructionsWidth: number;
     interactResizable: Interactable;
 
+    collapsed = false;
+
     constructor() {}
 
     /**
@@ -34,6 +36,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
      * @param event - any event
      */
     toggleEditorCollapse(event: any) {
+        this.collapsed = !this.collapsed;
         this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.minInstructionsWidth });
     }
 }
