@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 
@@ -7,6 +7,6 @@ import { PostingDirective } from 'app/shared/metis/posting.directive';
     templateUrl: './post.component.html',
     styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
-export class PostComponent extends PostingDirective<Post> implements OnInit {
+export class PostComponent extends PostingDirective<Post> {
     @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
 }
