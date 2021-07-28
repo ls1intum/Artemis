@@ -38,7 +38,7 @@ public class ConsistencyErrorDTO {
         SOLUTION_REPO_MISSING("SOLUTION_REPO_MISSING"), TEST_REPO_MISSING("TEST_REPO_MISSING"), TEMPLATE_BUILD_PLAN_MISSING("TEMPLATE_BUILD_PLAN_MISSING"),
         SOLUTION_BUILD_PLAN_MISSING("SOLUTION_BUILD_PLAN_MISSING");
 
-        ErrorType(final String s) {
+        ErrorType(final String value) {
         }
 
         @Override

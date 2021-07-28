@@ -24,14 +24,11 @@ public class ConsistencyCheckService {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final CourseRepository courseRepository;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public ConsistencyCheckService(ProgrammingExerciseService programmingExerciseService, CourseRepository courseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository) {
         this.programmingExerciseService = programmingExerciseService;
-        this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
@@ -42,6 +39,7 @@ public class ConsistencyCheckService {
      * @return List containing the resulting errors, if any.
      */
     public List<ConsistencyErrorDTO> checkConsistencyOfProgrammingExercise(long exerciseId) {
+        log.debug("Checking consistency for programming exercise [{}]", exerciseId);
         return programmingExerciseService.checkConsistencyOfProgrammingExercise(exerciseId);
     }
 
@@ -52,6 +50,7 @@ public class ConsistencyCheckService {
      * @return List containing the resulting errors, if any.
      */
     public List<ConsistencyErrorDTO> checkConsistencyOfCourse(long courseId) {
+        log.debug("Checking consistency for course [{}]", courseId);
         List<ConsistencyErrorDTO> result = new ArrayList<>();
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findAllByCourseWithTemplateAndSolutionParticipation(courseId);
 

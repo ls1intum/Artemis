@@ -38,6 +38,7 @@ public class ConsistencyCheckResource {
     @GetMapping("/consistency-check/exercise/{programmingExerciseId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ConsistencyErrorDTO>> checkConsistencyOfProgrammingExercise(@PathVariable long programmingExerciseId) {
+        log.debug("REST request to check consistencies of programming exercise [{}]", programmingExerciseId);
         List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfProgrammingExercise(programmingExerciseId);
 
         return ResponseEntity.ok(result);
@@ -51,6 +52,7 @@ public class ConsistencyCheckResource {
     @GetMapping("/consistency-check/course/{courseId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ConsistencyErrorDTO>> checkConsistencyOfCourse(@PathVariable long courseId) {
+        log.debug("REST request to check consistencies of course [{}]", courseId);
         List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfCourse(courseId);
 
         return ResponseEntity.ok(result);

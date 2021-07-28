@@ -935,8 +935,6 @@ public class ProgrammingExerciseService {
             return result;
         }
 
-        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-
         result.addAll(checkVCSConsistency(programmingExercise));
         result.addAll(checkCIConsistency(programmingExercise));
 
