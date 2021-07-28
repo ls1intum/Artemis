@@ -3,6 +3,7 @@ resources:
   - artemis-k8s/artemis-configmap.yml
   - artemis-k8s/artemis-deployment.yml
   - artemis-k8s/artemis-service.yml
+  - artemis-k8s/artemis-ingress.yml
   - artemis-k8s/artemis-mysql.yml
   - gateway-k8s/gateway-deployment.yml
   - gateway-k8s/gateway-service.yml

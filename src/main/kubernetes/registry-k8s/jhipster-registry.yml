@@ -28,8 +28,8 @@ metadata:
   namespace: default
   labels:
     app: jhipster-registry
-  annotations:
-    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+  # annotations:
+  #   service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
 spec:
   ports:
     - port: 8761

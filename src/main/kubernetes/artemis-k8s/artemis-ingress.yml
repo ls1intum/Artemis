@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: artemis-app
+  namespace: default
+spec:
+  rules:
+  - host: artemis-app.default.rancher.localhost
+    http:
+      paths:
+      - backend:
+          service:
+            name: artemis
+            port: 
+              number: 8080
+        pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - artemis-app.default.rancher.localhost
