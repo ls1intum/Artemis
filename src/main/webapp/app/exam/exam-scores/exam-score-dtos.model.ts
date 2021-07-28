@@ -42,6 +42,7 @@ export class StudentResult {
     public overallScoreAchieved?: number;
     public overallPointsAchievedInFirstCorrection?: number;
     public overallGrade?: string;
+    public overallGradeInFirstCorrection?: string;
     public hasPassed?: boolean;
     public submitted: boolean;
     public exerciseGroupIdToExerciseResult: { [key: number]: ExerciseResult };

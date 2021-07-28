@@ -102,6 +102,8 @@ public class ExamScoresDTO {
 
         public String overallGrade = null;
 
+        public String overallGradeInFirstCorrection = null;
+
         public Boolean hasPassed = null;
 
         public Double overallPointsAchievedInFirstCorrection = null;

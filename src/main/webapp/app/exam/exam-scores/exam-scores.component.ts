@@ -395,14 +395,15 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
             if (this.gradingScaleExists) {
                 const grade = Number(studentResult.overallGrade);
+                const gradeInFirstCorrection = Number(studentResult.overallGradeInFirstCorrection);
                 studentGradesTotal.push(grade);
-                studentGradesTotalInFirstCorrectionRound.push(grade);
+                studentGradesTotalInFirstCorrectionRound.push(gradeInFirstCorrection);
                 if (studentResult.submitted) {
                     studentGradesSubmitted.push(grade);
-                    studentGradesSubmittedInFirstCorrectionRound.push(grade);
+                    studentGradesSubmittedInFirstCorrectionRound.push(gradeInFirstCorrection);
                     if (studentResult.hasPassed) {
                         studentGradesPassed.push(grade);
-                        studentGradesPassedInFirstCorrectionRound.push(grade);
+                        studentGradesPassedInFirstCorrectionRound.push(gradeInFirstCorrection);
                     }
                 }
             }
