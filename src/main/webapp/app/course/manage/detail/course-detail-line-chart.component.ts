@@ -8,11 +8,11 @@ import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/qui
 import { round } from 'app/shared/util/utils';
 
 @Component({
-    selector: 'jhi-course-detail-bar-chart',
-    templateUrl: './course-detail-bar-chart.component.html',
-    styleUrls: ['./course-detail-bar-chart.component.scss'],
+    selector: 'jhi-course-detail-line-chart',
+    templateUrl: './course-detail-line-chart.component.html',
+    styleUrls: ['./course-detail-line-chart.component.scss'],
 })
-export class CourseDetailBarChartComponent implements OnChanges {
+export class CourseDetailLineChartComponent implements OnChanges {
     @Input()
     courseId: number;
     @Input()
@@ -24,16 +24,17 @@ export class CourseDetailBarChartComponent implements OnChanges {
 
     LEFT = false;
     RIGHT = true;
+    displayedNumberOfWeeks = 16;
 
     // Chart
     chartTime: any;
     // Histogram related properties
-    barChartOptions: any = {};
-    barChartType: ChartType = 'line';
+    lineChartOptions: any = {};
+    lineChartType: ChartType = 'line';
     amountOfStudents: string;
-    barChartLegend = false;
+    lineChartLegend = false;
     // Data
-    barChartLabels: Label[] = [];
+    lineChartLabels: Label[] = [];
     chartData: ChartDataSets[] = [];
     data: number[] = [];
     absoluteData: number[] = [];
@@ -97,15 +98,15 @@ export class CourseDetailBarChartComponent implements OnChanges {
 
     private createLabels() {
         const prefix = this.translateService.instant('calendar_week');
-        const startDate = moment().subtract(3 + 4 * -this.currentPeriod, 'weeks');
-        const endDate = this.currentPeriod !== 0 ? moment().subtract(4 * -this.currentPeriod, 'weeks') : moment();
+        const startDate = moment().subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks');
+        const endDate = this.currentPeriod !== 0 ? moment().subtract(this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks') : moment();
         let currentWeek;
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < this.displayedNumberOfWeeks; i++) {
             currentWeek = moment()
-                .subtract(3 + 4 * -this.currentPeriod - i, 'weeks')
+                .subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod - i, 'weeks')
                 .isoWeekday(1)
                 .isoWeek();
-            this.barChartLabels[i] = prefix + ' ' + currentWeek;
+            this.lineChartLabels[i] = prefix + ' ' + currentWeek;
         }
         this.chartTime = startDate.isoWeekday(1).format('DD.MM.YYYY') + ' - ' + endDate.isoWeekday(7).format('DD.MM.YYYY');
     }
@@ -118,7 +119,7 @@ export class CourseDetailBarChartComponent implements OnChanges {
 
     private defineChartOptions() {
         const self = this;
-        this.barChartOptions = {
+        this.lineChartOptions = {
             layout: {
                 padding: {
                     top: 20,

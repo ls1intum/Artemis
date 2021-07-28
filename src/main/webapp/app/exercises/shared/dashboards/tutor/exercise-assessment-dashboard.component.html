@@ -6,8 +6,8 @@
 <jhi-alert></jhi-alert>
 
 <div *ngIf="exercise">
-    <div class="row my-3 d-flex justify-content-between">
-        <div class="col-sm-8" *ngIf="!isTestRun">
+    <div *ngIf="!isTestRun" class="row my-3 d-flex justify-content-between">
+        <div class="col-sm-8">
             <div>
                 <p class="h3" style="text-align: left">
                     {{ 'artemisApp.exerciseAssessmentDashboard.yourStatus' | artemisTranslate }}:
@@ -47,9 +47,8 @@
             </div>
         </div>
 
-        <div class="col-sm-4" style="min-width: 400px">
+        <div *ngIf="!isExamMode" class="col-sm-4" style="min-width: 400px">
             <jhi-side-panel
-                *ngIf="!isExamMode"
                 [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exerciseInformation' | artemisTranslate"
                 [panelDescriptionHeader]="'artemisApp.exerciseAssessmentDashboard.totalYours' | artemisTranslate"
             >
@@ -170,7 +169,7 @@
             <div [innerHTML]="formattedGradingInstructions" style="margin-bottom: -15px"></div>
         </jhi-info-panel>
 
-        <div *ngIf="exercise.gradingCriteria && exercise.gradingCriteria.length > 0" class="col-12 mt-4">
+        <div *ngIf="exercise.gradingCriteria && exercise.gradingCriteria.length > 0" class="col-md-6 mt-4">
             <h4>{{ 'artemisApp.exerciseAssessmentDashboard.structuredGradingInstructions' | artemisTranslate }}</h4>
             <jhi-structured-grading-instructions-assessment-layout
                 [readonly]="true"

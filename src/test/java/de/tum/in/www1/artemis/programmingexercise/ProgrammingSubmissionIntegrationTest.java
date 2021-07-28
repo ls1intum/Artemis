@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_SUBMISSION_TOPIC;
+import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -30,15 +32,24 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TestConstants;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Value("${artemis.git.name}")
+    private String artemisGitName;
+
+    @Value("${artemis.git.email}")
+    private String artemisGitEmail;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -48,6 +59,9 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
 
     private ProgrammingExercise exercise;
 
@@ -144,6 +158,19 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         var updatedSubmissions = submissionRepository.findAll();
         assertThat(updatedSubmissions).hasSize(1);
         assertThat(updatedSubmissions.get(0).getId()).isEqualTo(submission.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void triggerBuildInstructor_cannotGetLastCommitHash() throws Exception {
+        bambooRequestMockProvider.enableMockingOfRequests();
+        doThrow(EntityNotFoundException.class).when(gitService).getLastCommitHash(any());
+        String login = "student1";
+        StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
+        bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
+        bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
+        request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.NOT_FOUND,
+                new HttpHeaders());
     }
 
     @Test
@@ -360,6 +387,23 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void triggerFailedBuildSubmissionNotLatestButLastGradedNotFound() throws Exception {
+        var participation = createExerciseWithSubmissionAndParticipation();
+
+        String url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build?lastGraded=true";
+        request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, null);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void triggerFailedBuild_CIException() throws Exception {
+        var participation = createExerciseWithSubmissionAndParticipation();
+
+        doThrow(ContinuousIntegrationException.class).when(continuousIntegrationService).triggerBuild(participation);
+        String url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build";
+        request.postWithoutLocation(url, null, HttpStatus.OK, null);
+    }
+
+    private ProgrammingExerciseStudentParticipation createExerciseWithSubmissionAndParticipation() {
         var user = database.getUserByLogin("student1");
         exercise.setDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.save(exercise);
@@ -373,8 +417,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         programmingExerciseStudentParticipationRepository.save(participation);
         doReturn(Optional.of(submission)).when(programmingSubmissionService).getLatestPendingSubmission(anyLong(), anyBoolean());
 
-        String url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build?lastGraded=true";
-        request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, null);
+        return participation;
     }
 
     @Test
@@ -420,6 +463,58 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @WithMockUser(username = "student1", roles = "USER")
     public void getAllProgrammingSubmissionsAsUserForbidden() throws Exception {
         request.get("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testNotifyPush_invalidParticipation() throws Exception {
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation = studentParticipationRepository.save(studentParticipation);
+
+        String url = "/api/programming-submissions/" + studentParticipation.getId();
+        request.post(url, "test", HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testNotifyPush_cannotGetLastCommitDetails() throws Exception {
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        doThrow(ContinuousIntegrationException.class).when(versionControlService).getLastCommitDetails(any());
+        String url = "/api/programming-submissions/" + participation.getId();
+        request.post(url, "test", HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testNotifyPush_commitIsDifferentBranch() throws Exception {
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+
+        Commit mockCommit = mock(Commit.class);
+        doReturn(mockCommit).when(versionControlService).getLastCommitDetails(any());
+        doReturn("branch").when(versionControlService).getDefaultBranchOfRepository(any());
+        doReturn("another-branch").when(mockCommit).getBranch();
+
+        String url = "/api/programming-submissions/" + participation.getId();
+        request.postWithoutLocation(url, "test", HttpStatus.OK, new HttpHeaders());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testNotifyPush_isSetupCommit() throws Exception {
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+
+        Commit mockCommit = mock(Commit.class);
+        doReturn(mockCommit).when(versionControlService).getLastCommitDetails(any());
+        doReturn("default-branch").when(versionControlService).getDefaultBranchOfRepository(any());
+
+        doReturn("default-branch").when(mockCommit).getBranch();
+        doReturn(artemisGitName).when(mockCommit).getAuthorName();
+        doReturn(artemisGitEmail).when(mockCommit).getAuthorEmail();
+        doReturn(SETUP_COMMIT_MESSAGE).when(mockCommit).getMessage();
+
+        String url = "/api/programming-submissions/" + participation.getId();
+        request.postWithoutLocation(url, "test", HttpStatus.OK, new HttpHeaders());
+
     }
 
     @Test

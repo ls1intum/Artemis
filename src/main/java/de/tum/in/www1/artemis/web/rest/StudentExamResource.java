@@ -66,10 +66,12 @@ public class StudentExamResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final ExamService examService;
+
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService,
             ExamSessionService examSessionService, StudentParticipationRepository studentParticipationRepository, QuizExerciseRepository quizExerciseRepository,
-            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService) {
+            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -82,6 +84,7 @@ public class StudentExamResource {
         this.quizExerciseRepository = quizExerciseRepository;
         this.examRepository = examRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.examService = examService;
     }
 
     /**
@@ -158,11 +161,16 @@ public class StudentExamResource {
         }
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         if (!studentExam.isTestRun()) {
-            Exam exam = examRepository.findById(examId).get();
+            Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
             // when the exam is already visible, the working time cannot be changed, due to permission issues with unlock and lock operations for programming exercises
             if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
                 return badRequest();
             }
+            if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDate(exam)) && exam.getStartDate() != null
+                    && ZonedDateTime.now().isBefore(exam.getStartDate().plusSeconds(workingTime))) {
+                examService.scheduleModelingExercises(exam);
+            }
+
         }
 
         studentExam.setWorkingTime(workingTime);
