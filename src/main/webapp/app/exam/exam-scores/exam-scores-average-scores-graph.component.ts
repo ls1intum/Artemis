@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
@@ -7,19 +7,28 @@ import { GraphColors } from 'app/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { round } from 'app/shared/util/utils';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ExerciseType } from 'app/entities/exercise.model';
 
-const BAR_HEIGHT = 25;
+const BAR_HEIGHT = 15;
 
 @Component({
     selector: 'jhi-exam-scores-average-scores-graph',
     templateUrl: './exam-scores-average-scores-graph.component.html',
 })
-export class ExamScoresAverageScoresGraphComponent implements OnInit {
+export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewInit {
     @Input() averageScores: AggregatedExerciseGroupResult;
 
     height = BAR_HEIGHT;
+    courseId: number;
+    examId: number;
+    exerciseIds: number[] = [];
+    exerciseTypes: ExerciseType[] = [];
 
     // Histogram related properties
+    @ViewChild(BaseChartDirective)
+    chartDirective: BaseChartDirective;
+    chartInstance: Chart;
     barChartOptions: ChartOptions = {};
     barChartType: ChartType = 'horizontalBar';
     averagePointsTooltip: string;
@@ -32,12 +41,26 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
-    constructor(private service: StatisticsService, private translateService: TranslateService, private localeConversionService: LocaleConversionService) {}
+    constructor(
+        private router: Router,
+        private activatedRoute: ActivatedRoute,
+        private service: StatisticsService,
+        private translateService: TranslateService,
+        private localeConversionService: LocaleConversionService,
+    ) {}
 
     ngOnInit(): void {
         this.averagePointsTooltip = this.translateService.instant('artemisApp.examScores.averagePointsTooltip');
+        this.activatedRoute.params.subscribe((params) => {
+            this.courseId = +params['courseId'];
+            this.examId = +params['examId'];
+        });
         this.initializeChart();
         this.createCharts();
+    }
+
+    ngAfterViewInit() {
+        this.chartInstance = this.chartDirective.chart;
     }
 
     private initializeChart(): void {
@@ -46,11 +69,14 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         const absoluteData = [this.averageScores.averagePoints!];
         const relativeData: number[] = [this.averageScores.averagePercentage!];
         this.averageScores.exerciseResults.forEach((exercise) => {
-            labels.push(exercise.title);
+            labels.push(exercise.exerciseId + ' ' + exercise.title);
             colors.push(GraphColors.DARK_BLUE);
             absoluteData.push(exercise.averagePoints!);
             relativeData.push(exercise.averagePercentage!);
+
             this.height += BAR_HEIGHT;
+            this.exerciseIds.push(exercise.exerciseId);
+            this.exerciseTypes.push(exercise.exerciseType);
         });
         this.barChartLabels = labels;
         this.absolutePoints = absoluteData;
@@ -61,7 +87,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                 backgroundColor: colors,
                 borderColor: colors,
                 hoverBackgroundColor: colors,
-                barPercentage: 0.75,
+                barPercentage: 0.9,
             },
         ];
     }
@@ -137,6 +163,42 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                     },
                 },
             },
+            // we show the a pointer to indicate to the user that a data point is clickable (navigation to exercise)
+            onHover: (event: any, chartElement) => {
+                const element = chartElement[0];
+                if (element) {
+                    event.target.style.cursor = element['_index'] !== 0 ? 'pointer' : 'default';
+                }
+            },
+            // when the user clicks on a data point, we navigate to the scores page of the corresponding exercise
+            onClick: (evt) => {
+                const point: any = this.chartInstance.getElementAtEvent(evt)[0];
+
+                if (point) {
+                    const exerciseId = this.exerciseIds[point._index - 1];
+                    const exerciseType = this.exerciseTypes[point._index - 1];
+                    if (exerciseId && exerciseType) {
+                        this.navigateToExercise(exerciseId, exerciseType);
+                    }
+                }
+            },
         };
+    }
+
+    /**
+     * We navigate to the exercise scores page when the user clicks on a data point
+     */
+    navigateToExercise(exerciseId: number, exerciseType: ExerciseType) {
+        this.router.navigate([
+            'course-management',
+            this.courseId,
+            'exams',
+            this.examId,
+            'exercise-groups',
+            this.averageScores.exerciseGroupId,
+            `${exerciseType}-exercises`,
+            exerciseId,
+            'scores',
+        ]);
     }
 }

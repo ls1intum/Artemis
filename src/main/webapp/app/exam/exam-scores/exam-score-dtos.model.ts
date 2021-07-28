@@ -1,3 +1,5 @@
+import { ExerciseType } from 'app/entities/exercise.model';
+
 export class ExamScoreDTO {
     public examId: number;
     public title: string;
@@ -25,6 +27,7 @@ export class ExerciseInfo {
     public title: string;
     public maxPoints: number;
     public numberOfParticipants: number;
+    public exerciseType: string;
 
     constructor() {}
 }
@@ -133,16 +136,18 @@ export class AggregatedExerciseResult {
     public exerciseId: number;
     public title: string;
     public maxPoints: number;
+    public exerciseType: ExerciseType;
     public totalParticipants: number;
     public noOfParticipantsWithFilter = 0;
     public totalPoints = 0;
     public averagePoints?: number;
     public averagePercentage?: number;
 
-    constructor(exerciseId: number, title: string, maxPoints: number, totalParticipants: number) {
+    constructor(exerciseId: number, title: string, maxPoints: number, totalParticipants: number, exerciseType: ExerciseType) {
         this.exerciseId = exerciseId;
         this.title = title;
         this.maxPoints = maxPoints;
         this.totalParticipants = totalParticipants;
+        this.exerciseType = exerciseType;
     }
 }

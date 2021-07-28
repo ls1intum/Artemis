@@ -11,6 +11,7 @@ import {
     AggregatedExerciseResult,
     ExamScoreDTO,
     ExerciseGroup,
+    ExerciseInfo,
     StudentResult,
 } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
@@ -29,6 +30,7 @@ import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scor
 import * as Sentry from '@sentry/browser';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -291,7 +293,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             const groupResult = new AggregatedExerciseGroupResult(exerciseGroup.id, exerciseGroup.title, exerciseGroup.maxPoints, exerciseGroup.numberOfParticipants);
             // We initialize the data structure for exercises here as it can happen that no student was assigned to an exercise
             exerciseGroup.containedExercises.forEach((exerciseInfo) => {
-                const exResult = new AggregatedExerciseResult(exerciseInfo.exerciseId, exerciseInfo.title, exerciseInfo.maxPoints, exerciseInfo.numberOfParticipants);
+                const type = ExamScoresComponent.declareExerciseType(exerciseInfo);
+                const exResult = new AggregatedExerciseResult(exerciseInfo.exerciseId, exerciseInfo.title, exerciseInfo.maxPoints, exerciseInfo.numberOfParticipants, type!);
                 groupResult.exerciseResults.push(exResult);
             });
             groupIdToGroupResults.set(exerciseGroup.id, groupResult);
@@ -712,5 +715,20 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     logErrorOnSentry(errorMessage: string) {
         console.log(errorMessage);
         Sentry.captureException(new Error(errorMessage));
+    }
+
+    private static declareExerciseType(exerciseInfo: ExerciseInfo) {
+        switch (exerciseInfo.exerciseType) {
+            case 'TextExercise':
+                return ExerciseType.TEXT;
+            case 'ModelingExercise':
+                return ExerciseType.MODELING;
+            case 'ProgrammingExercise':
+                return ExerciseType.PROGRAMMING;
+            case 'FileUploadExercise':
+                return ExerciseType.FILE_UPLOAD;
+            case 'QuizExercise':
+                return ExerciseType.QUIZ;
+        }
     }
 }
