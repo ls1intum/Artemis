@@ -6,7 +6,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 @Component({
     selector: 'jhi-answer-post-footer',
     templateUrl: './answer-post-footer.component.html',
-    styleUrls: ['./answer-post-footer.scss'],
+    styleUrls: ['./answer-post-footer.component.scss'],
 })
 export class AnswerPostFooterComponent extends PostingsFooterDirective<AnswerPost> implements OnInit {
     @Output() toggleApproveChange: EventEmitter<AnswerPost> = new EventEmitter<AnswerPost>();

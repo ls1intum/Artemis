@@ -5,7 +5,7 @@ import { Post } from 'app/entities/metis/post.model';
 @Component({
     selector: 'jhi-post-footer',
     templateUrl: './post-footer.component.html',
-    styleUrls: ['./post-footer.scss'],
+    styleUrls: ['./post-footer.component.scss'],
 })
 export class PostFooterComponent extends PostingsFooterDirective<Post> implements OnInit, OnChanges {
     tags: string[];

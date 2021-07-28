@@ -5,6 +5,6 @@ import { PostingDirective } from '../posting.directive';
 @Component({
     selector: 'jhi-answer-post',
     templateUrl: './answer-post.component.html',
-    styleUrls: ['./answer-post.scss'],
+    styleUrls: ['./answer-post.component.scss'],
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> {}

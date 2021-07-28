@@ -6,7 +6,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 @Component({
     selector: 'jhi-post-header',
     templateUrl: './post-header.component.html',
-    styleUrls: ['../posting-header.scss'],
+    styleUrls: ['../posting-header.component.scss'],
 })
 export class PostHeaderComponent extends PostingsHeaderDirective<Post> implements OnChanges {
     @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
