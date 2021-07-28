@@ -7,14 +7,10 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
 # Add a jhipster user to run our application so that it doesn't need to run as root
 RUN adduser -D -s /bin/sh jhipster
 WORKDIR /home/jhipster
-
-ADD entrypoint.sh entrypoint.sh
-RUN chmod 755 entrypoint.sh && chown jhipster:jhipster entrypoint.sh
 USER jhipster
 
-ENTRYPOINT ["./entrypoint.sh"]
+COPY build/libs/*.jar app.jar
+
+ENTRYPOINT ["java","-jar","app.jar"]
 
 EXPOSE 8080
-
-ADD *.war app.war
-

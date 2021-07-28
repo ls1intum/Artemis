@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: artemis-mysql
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: artemis-mysql
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+#      annotations:
+#        cattle.io/timestamp: "2021-07-27T10:42:50Z"
+#        field.cattle.io/ports: '[[{"containerPort":3306,"dnsName":"artemis-mysql","kind":"ClusterIP","name":"mysql-prot","protocol":"TCP"}]]'
+      labels:
+        app: artemis-mysql
+    spec:
+      containers:
+      - args:
+        - --lower_case_table_names=1
+        - --skip-ssl
+        - --character_set_server=utf8mb4
+        - --explicit_defaults_for_timestamp
+        env:
+          - name: MYSQL_ALLOW_EMPTY_PASSWORD
+            value: "yes"
+          - name: MYSQL_DATABASE
+            value: Artemis
+          - name: MYSQL_ROOT_PASSWORD
+        image: mysql:8.0.25
+        imagePullPolicy: Always
+        name: artemis-mysql
+        ports:
+          - containerPort: 3306
+            protocol: TCP
+        resources: 
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+        securityContext:
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: false
+        stdin: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        tty: true
+        volumeMounts:
+          - mountPath: /var/lib/mysql/
+            name: data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: data
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: artemis-mysql
+    namespace: default
+spec:
+    selector:
+        app: artemis-mysql
+    ports:
+        - port: 3306

@@ -1,0 +1,15 @@
+resources:
+  # Individual apps
+  - artemis-k8s/artemis-configmap.yml
+  - artemis-k8s/artemis-deployment.yml
+  - artemis-k8s/artemis-service.yml
+  - artemis-k8s/artemis-mysql.yml
+  - gateway-k8s/gateway-deployment.yml
+  - gateway-k8s/gateway-service.yml
+  # messagebroker
+  - messagebroker-k8s/kafka.yml
+  # service discovery eureka/consul
+  - registry-k8s/jhipster-registry.yml
+  - registry-k8s/application-configmap.yml
+
+patchesJson6902:
