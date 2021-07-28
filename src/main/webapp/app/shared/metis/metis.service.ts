@@ -2,7 +2,7 @@ import { CourseWideContext, Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post/post.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { BehaviorSubject, map, Observable } from 'rxjs';
+import { BehaviorSubject, map, Observable, tap } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -83,22 +83,34 @@ export class MetisService {
     getPostsForFilter(postFilter?: PostFilter): void {
         this.currentPostFilter = postFilter;
         if (postFilter?.lecture) {
-            this.postService.getAllPostsByLectureId(this.courseId, postFilter.lecture.id!).subscribe((res: HttpResponse<Post[]>) => {
-                this.posts$.next(MetisService.sortPosts(res.body!));
-            });
+            this.postService
+                .getAllPostsByLectureId(this.courseId, postFilter.lecture.id!)
+                .pipe(map((res: HttpResponse<Post[]>) => MetisService.sortPosts(res.body!)))
+                .subscribe((posts: Post[]) => {
+                    this.posts$.next(posts);
+                });
         } else if (postFilter?.exercise) {
-            this.postService.getAllPostsByExerciseId(this.courseId, postFilter.exercise.id!).subscribe((res: HttpResponse<Post[]>) => {
-                this.posts$.next(MetisService.sortPosts(res.body!));
-            });
-        } else if (postFilter?.courseWideContext) {
-            this.postService.getAllPostsByCourseId(this.courseId).subscribe((res: HttpResponse<Post[]>) => {
-                const posts = res.body!.filter((post) => post.courseWideContext === postFilter.courseWideContext);
-                this.posts$.next(posts);
-            });
+            this.postService
+                .getAllPostsByExerciseId(this.courseId, postFilter.exercise.id!)
+                .pipe(map((res: HttpResponse<Post[]>) => MetisService.sortPosts(res.body!)))
+                .subscribe((posts: Post[]) => {
+                    this.posts$.next(posts);
+                });
         } else {
-            this.postService.getAllPostsByCourseId(this.courseId).subscribe((res: HttpResponse<Post[]>) => {
-                this.posts$.next(MetisService.sortPosts(res.body!));
-            });
+            this.postService
+                .getAllPostsByCourseId(this.courseId)
+                .pipe(
+                    map((res: HttpResponse<Post[]>) => {
+                        let posts: Post[] = res.body!;
+                        if (postFilter?.courseWideContext) {
+                            posts = posts.filter((post) => post.courseWideContext === postFilter.courseWideContext);
+                        }
+                        return MetisService.sortPosts(posts);
+                    }),
+                )
+                .subscribe((posts: Post[]) => {
+                    this.posts$.next(posts);
+                });
         }
     }
 
@@ -109,11 +121,11 @@ export class MetisService {
      */
     createPost(post: Post): Observable<Post> {
         return this.postService.create(this.courseId, post).pipe(
-            map((res) => {
+            tap(() => {
                 this.getPostsForFilter(this.currentPostFilter);
                 this.updateCoursePostTags();
-                return res.body!;
             }),
+            map((res: HttpResponse<Post>) => res.body!),
         );
     }
 
@@ -124,10 +136,10 @@ export class MetisService {
      */
     createAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
         return this.answerPostService.create(this.courseId, answerPost).pipe(
-            map((res) => {
+            tap(() => {
                 this.getPostsForFilter(this.currentPostFilter);
-                return res.body!;
             }),
+            map((res: HttpResponse<Post>) => res.body!),
         );
     }
 
@@ -138,11 +150,11 @@ export class MetisService {
      */
     updatePost(post: Post): Observable<Post> {
         return this.postService.update(this.courseId, post).pipe(
-            map((res) => {
+            tap(() => {
                 this.getPostsForFilter(this.currentPostFilter);
                 this.updateCoursePostTags();
-                return res.body!;
             }),
+            map((res: HttpResponse<Post>) => res.body!),
         );
     }
 
@@ -153,10 +165,10 @@ export class MetisService {
      */
     updateAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
         return this.answerPostService.update(this.courseId, answerPost).pipe(
-            map((res) => {
+            tap(() => {
                 this.getPostsForFilter(this.currentPostFilter);
-                return res.body!;
             }),
+            map((res: HttpResponse<Post>) => res.body!),
         );
     }
 
