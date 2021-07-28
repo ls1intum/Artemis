@@ -6,8 +6,15 @@ import { MetisService } from 'app/shared/metis/metis.service';
 
 const MAX_CONTENT_LENGTH = 1000;
 
+enum EditType {
+    CREATE,
+    UPDATE,
+}
+
 @Directive()
 export abstract class PostingsCreateEditModalDirective<T extends Posting> implements OnInit, OnChanges {
+    readonly EditType = EditType;
+
     @Input() posting: T;
     @ViewChild('postingEditor') postingEditor: TemplateRef<any>;
     @Output() onCreate: EventEmitter<T> = new EventEmitter<T>();
@@ -19,6 +26,10 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
     formGroup: FormGroup;
 
     protected constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {}
+
+    get editType(): EditType {
+        return this.posting.id ? EditType.UPDATE : EditType.CREATE;
+    }
 
     /**
      * on initialization: sets the content, and the modal title (edit or create) and reset the form group
@@ -46,9 +57,9 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
         if (this.formGroup.valid) {
             this.isLoading = true;
             this.posting.content = this.formGroup.get('content')?.value;
-            if (this.posting!.id) {
+            if (this.editType === EditType.UPDATE) {
                 this.updatePosting();
-            } else {
+            } else if (this.editType === EditType.CREATE) {
                 this.createPosting();
             }
         }

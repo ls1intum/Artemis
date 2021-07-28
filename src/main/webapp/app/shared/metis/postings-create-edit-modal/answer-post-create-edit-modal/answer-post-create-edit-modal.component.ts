@@ -62,9 +62,9 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
      * updates the title in accordance with the current use case (edit or create)
      */
     updateModalTitle(): void {
-        if (this.posting.id) {
+        if (this.editType === this.EditType.UPDATE) {
             this.modalTitle = 'artemisApp.metis.editPosting';
-        } else {
+        } else if (this.editType === this.EditType.CREATE) {
             this.modalTitle = 'artemisApp.metis.createModalTitleAnswer';
         }
     }
