@@ -205,7 +205,7 @@ public class PostService extends PostingService {
      * retrieves all posts for a course by its id
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId  id of the course the post belongs to
+     * @param courseId id of the course the post belongs to
      * @return list of posts that belong to the course
      */
     public List<Post> getAllCoursePosts(Long courseId) {

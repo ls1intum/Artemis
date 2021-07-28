@@ -38,7 +38,7 @@ public class AnswerPostService extends PostingService {
     private final SingleUserNotificationService singleUserNotificationService;
 
     protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            AnswerPostRepository answerPostRepository, PostRepository postRepository, LectureRepository lectureRepository, ExerciseRepository exerciseRepository,
+            AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService) {
         super(courseRepository, exerciseRepository, postRepository, authorizationCheckService);
         this.userRepository = userRepository;
