@@ -55,12 +55,14 @@
                     ></jhi-modeling-editor>
                 </dd>
 
-                <dt>
-                    {{ 'artemisApp.modelingExercise.exampleSolutionExplanation' | artemisTranslate }}
-                </dt>
-                <dd class="editor-outline-background">
-                    <span [innerHTML]="sampleSolution"></span>
-                </dd>
+                <div *ngIf="modelingExercise.sampleSolutionExplanation">
+                    <dt>
+                        {{ 'artemisApp.modelingExercise.exampleSolutionExplanation' | artemisTranslate }}
+                    </dt>
+                    <dd class="editor-outline-background">
+                        <span [innerHTML]="sampleSolution"></span>
+                    </dd>
+                </div>
             </dl>
             <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN']">
                 <dl class="row-md">
