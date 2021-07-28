@@ -4,6 +4,7 @@ import static com.google.gson.JsonParser.parseString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -28,6 +29,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.ResourceUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -35,6 +37,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -57,6 +60,7 @@ import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import liquibase.util.csv.CSVReader;
 
 /**
  * Service responsible for initializing the database with specific testdata for a testscenario
@@ -224,6 +228,9 @@ public class DatabaseUtilService {
 
     @Autowired
     private OrganizationRepository organizationRepository;
+
+    @Autowired
+    private ModelingExerciseRepository modelingExerciseRepository;
 
     @Autowired
     private DatabaseCleanupService databaseCleanupService;
@@ -1599,6 +1606,17 @@ public class DatabaseUtilService {
 
         addTestCasesToProgrammingExercise(programmingExercise);
         return programmingExercise;
+    }
+
+    public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise() {
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
+                exerciseGroup.getExam().getCourse());
+        classExercise.setTitle("ClassDiagram");
+        classExercise.setExerciseGroup(exerciseGroup);
+
+        classExercise = modelingExerciseRepository.save(classExercise);
+        return classExercise;
     }
 
     public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed, String commitHash) {
@@ -3471,6 +3489,39 @@ public class DatabaseUtilService {
         return Set.of(gradeStep1, gradeStep2, gradeStep3);
     }
 
+    public GradingScale generateGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex, Optional<String[]> gradeNames) {
+        if (gradeStepCount != intervals.length - 1 || firstPassingIndex >= gradeStepCount || firstPassingIndex < 0) {
+            fail("Invalid grading scale parameters");
+        }
+        GradingScale gradingScale = new GradingScale();
+        Set<GradeStep> gradeSteps = new HashSet<>();
+        for (int i = 0; i < gradeStepCount; i++) {
+            GradeStep gradeStep = new GradeStep();
+            gradeStep.setLowerBoundPercentage(intervals[i]);
+            gradeStep.setUpperBoundPercentage(intervals[i + 1]);
+            gradeStep.setLowerBoundInclusive(i == 0 || lowerBoundInclusivity);
+            gradeStep.setUpperBoundInclusive(i + 1 == gradeStepCount || !lowerBoundInclusivity);
+            gradeStep.setIsPassingGrade(i >= firstPassingIndex);
+            gradeStep.setGradeName(gradeNames.isPresent() ? gradeNames.get()[i] : "Step" + i);
+            gradeStep.setGradingScale(gradingScale);
+            gradeSteps.add(gradeStep);
+        }
+        gradingScale.setGradeSteps(gradeSteps);
+        gradingScale.setGradeType(GradeType.GRADE);
+        return gradingScale;
+    }
+
+    public List<String[]> loadPercentagesAndGrades(String path) throws Exception {
+        CSVReader reader = new CSVReader(new FileReader(ResourceUtils.getFile("classpath:" + path)));
+        List<String[]> rows = reader.readAll();
+        // delete first row with column headers
+        rows.remove(0);
+        List<String[]> percentagesAndGrades = new ArrayList<>();
+        // copy only percentages, whether the student has submitted, and their grade
+        rows.forEach(row -> percentagesAndGrades.add(new String[] { row[2], row[3], row[4] }));
+        return percentagesAndGrades;
+    }
+
     public Course createCourseWithTestModelingAndFileUploadExercisesAndSubmissions() throws Exception {
         Course course = addCourseWithModelingAndTextAndFileUploadExercise();
         course.setEndDate(ZonedDateTime.now().minusMinutes(5));
@@ -3611,5 +3662,27 @@ public class DatabaseUtilService {
 
     public Course saveCourse(Course course) {
         return courseRepo.save(course);
+    }
+
+    public Course createCourseWithTutor(String login) {
+        Course course = this.createCourse();
+        TextExercise textExercise = createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        StudentParticipation participation = ModelFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
+        studentParticipationRepo.save(participation);
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("some text", Language.ENGLISH, true);
+        textSubmission.setParticipation(participation);
+        textSubmissionRepo.saveAndFlush(textSubmission);
+        course.addExercises(textExercise);
+        User user = new User();
+        user.setLogin(login);
+        user.setId(1L);
+        user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
+        userRepo.save(user);
+        return course;
+    }
+
+    public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
+        return ModelFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
+                exerciseId, participationId, submissionId);
     }
 }

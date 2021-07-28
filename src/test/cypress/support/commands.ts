@@ -1,3 +1,4 @@
+import { CypressCredentials } from './users';
 // ***********************************************
 // This example commands.js shows you how to
 // create various custom commands and overwrite
@@ -31,19 +32,43 @@ export {};
 declare global {
     namespace Cypress {
         interface Chainable {
-            login(username: String, password: String, url?: String): any;
+            login(credentials: CypressCredentials, url?: String): any;
             logout(): any;
-            loginWithGUI(username: String, password: String): any;
-            createCourse(course: String): Chainable<Cypress.Response>;
-            deleteCourse(courseID: number): Chainable<Cypress.Response>;
+            loginWithGUI(credentials: CypressCredentials): any;
+            createCourse(course: String): Chainable<Cypress.Response<JSON>>;
+            deleteCourse(courseID: number): Chainable<Cypress.Response<JSON>>;
+            deleteModelingExercise(courseID: number): Chainable<Cypress.Response<JSON>>;
+            createModelingExercise(modelingExercise: String): Chainable<Cypress.Response<JSON>>;
+            getSettled(selector: String, options?: {}): Chainable<Cypress>;
         }
     }
 }
 
 /**
+ * Overwrite the normal cypress request to always add the authorization token.
+ */
+Cypress.Commands.overwrite('request', (originalFn, options) => {
+    const token = Cypress.env(authTokenKey);
+
+    if (!!token) {
+        const authHeader = 'Bearer ' + token;
+        if (!!options.headers) {
+            options.headers.Authorization = authHeader;
+        } else {
+            options.headers = { Authorization: authHeader };
+        }
+        return originalFn(options);
+    }
+
+    return originalFn(options);
+});
+
+/**
  * Logs in using API and sets authToken in Cypress.env
  * */
-Cypress.Commands.add('login', (username, password, url) => {
+Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
+    const username = credentials.username;
+    const password = credentials.password;
     cy.request({
         url: '/api/authenticate',
         method: 'POST',
@@ -80,10 +105,10 @@ Cypress.Commands.add('logout', () => {
 /**
  * Logs in using GUI and sets authToken in Cypress.env
  * */
-Cypress.Commands.add('loginWithGUI', (username, password) => {
+Cypress.Commands.add('loginWithGUI', (credentials) => {
     cy.visit('/');
-    cy.get('#username').type(username);
-    cy.get('#password').type(password).type('{enter}');
+    cy.get('#username').type(credentials.username);
+    cy.get('#password').type(credentials.password).type('{enter}');
     Cypress.env(authTokenKey, localStorage.getItem(authTokenKey));
 });
 
@@ -117,5 +142,70 @@ Cypress.Commands.add('deleteCourse', (courseID: number) => {
         headers: { Authorization: `Bearer ${Cypress.env(authTokenKey)}` },
     }).then((response) => {
         return response;
+    });
+});
+
+/**
+ * Creates a modelingExercise with API request
+ * @param modelingExercise is a modeling exercise object in json format
+ * @return Chainable<Cypress.Response> the http response of the POST request
+ * */
+Cypress.Commands.add('createModelingExercise', (modelingExercise: string) => {
+    cy.request({
+        url: '/api/modeling-exercises',
+        method: 'POST',
+        body: modelingExercise,
+        headers: {
+            Authorization: 'Bearer ' + Cypress.env(authTokenKey),
+        },
+    }).then((response) => {
+        return response;
+    });
+});
+
+/**
+ * Deletes modeling exercise with exerciseID
+ * @param exerciseID id of the exercise that is to be deleted
+ * @return Chainable<Cypress.Response> the http response of the DELETE request
+ * */
+Cypress.Commands.add('deleteModelingExercise', (exerciseID: number) => {
+    cy.request({
+        url: `/api/modeling-exercises/${exerciseID}`,
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${Cypress.env(authTokenKey)}` },
+    }).then((response) => {
+        return response;
+    });
+});
+
+/** recursively gets an element, returning only after it's determined to be attached to the DOM for good
+ *  this prevents the "Element is detached from DOM" issue in some cases
+ */
+Cypress.Commands.add('getSettled', (selector, opts = {}) => {
+    const retries = opts.retries || 3;
+    const delay = opts.delay || 100;
+
+    const isAttached = (resolve: any, count = 0) => {
+        const el = Cypress.$(selector);
+
+        // is element attached to the DOM?
+        count = Cypress.dom.isAttached(el) ? count + 1 : 0;
+
+        // hit our base case, return the element
+        if (count >= retries) {
+            return resolve(el);
+        }
+
+        // retry after a bit of a delay
+        setTimeout(() => isAttached(resolve, count), delay);
+    };
+
+    // wrap, so we can chain cypress commands off the result
+    return cy.wrap(null).then(() => {
+        return new Cypress.Promise((resolve) => {
+            return isAttached(resolve, 0);
+        }).then((el) => {
+            return cy.wrap(el);
+        });
     });
 });

@@ -39,6 +39,9 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
+    private ParticipationRepository participationRepository;
+
+    @Autowired
     private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     @Autowired
@@ -262,6 +265,14 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
         request.get(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetLatestPendingSubmission_notProgrammingParticipation() throws Exception {
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation = participationRepository.save(studentParticipation);
+        request.get(participationsBaseUrl + studentParticipation.getId() + "/latest-pending-submission", HttpStatus.NOT_FOUND, ProgrammingSubmission.class);
     }
 
     @Test

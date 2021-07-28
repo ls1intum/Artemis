@@ -275,12 +275,30 @@ public class ProgrammingPlagiarismDetectionService {
         repositories.parallelStream().forEach(repository -> {
             var localPath = repository.getLocalPath();
             try {
-                programmingExerciseExportService.deleteTempLocalRepository(repository);
+                deleteTempLocalRepository(repository);
             }
             catch (GitException ex) {
                 log.error("Delete repository {} did not work as expected: {}", localPath, ex.getMessage());
             }
         });
+    }
+
+    /**
+     * Deletes the locally checked out repository.
+     *
+     * @param repository The repository that should get deleted
+     */
+    public void deleteTempLocalRepository(Repository repository) {
+        // we do some cleanup here to prevent future errors with file handling
+        // We can always delete the repository as it won't be used by the student (separate path)
+        if (repository != null) {
+            try {
+                gitService.deleteLocalRepository(repository);
+            }
+            catch (IOException ex) {
+                log.warn("Could not delete temporary repository {}: {}", repository.getLocalPath().toString(), ex.getMessage());
+            }
+        }
     }
 
     private LanguageOption getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
