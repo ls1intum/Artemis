@@ -67,9 +67,12 @@ export class MetisService {
      * fetches all post tags used in the current course, informs all subscribing components
      */
     updateCoursePostTags(): void {
-        this.postService.getAllPostTagsByCourseId(this.courseId).subscribe((res: HttpResponse<string[]>) => {
-            this.tags$.next(res.body!.filter((t) => !!t));
-        });
+        this.postService
+            .getAllPostTagsByCourseId(this.courseId)
+            .pipe(map((res: HttpResponse<string[]>) => res.body!.filter((tag) => !!tag)))
+            .subscribe((tags: string[]) => {
+                this.tags$.next(tags);
+            });
     }
 
     /**
