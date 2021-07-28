@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "5.0.9",
+    "version": "5.1.0",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -119,7 +119,7 @@
         "copy-webpack-plugin": "9.0.1",
         "cross-env": "7.0.3",
         "css-loader": "6.0.0",
-        "cypress": "7.7.0",
+        "cypress": "8.0.0",
         "eslint": "7.30.0",
         "eslint-config-prettier": "8.3.0",
         "eslint-plugin-chai-friendly": "0.7.1",
@@ -210,7 +210,7 @@
         "webpack:prod:main": "yarn run webpack-ts --config webpack/webpack.prod.ts --progress",
         "webpack:prod": "yarn run cleanup && yarn run webpack:prod:main && yarn run clean-www",
         "cypress:open": "yarn run cypress open ",
-        "cypress:run": "yarn run cypress run --headless --browser chrome",
+        "cypress:run": "yarn run cypress run --browser=chrome",
         "webpack-dev-server": "node node_modules/webpack-dev-server/bin/webpack-dev-server.js",
         "webpack": "node --report-on-fatalerror node_modules/webpack/bin/webpack.js",
         "webpack-ts": "cross-env NODE_OPTIONS=--max_old_space_size=4096 TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack"

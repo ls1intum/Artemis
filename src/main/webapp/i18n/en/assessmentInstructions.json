@@ -4,16 +4,16 @@
             "instructions": "Instructions",
             "editor": {
                 "addCredits": "[credits] Points",
-                "addInstruction": "[instruction] Grading Instructions",
+                "addInstruction": "[instruction] Assessment Instructions",
                 "addFeedback": "[feedback] Feedback",
                 "addGradingScale": "[gradingScale] Grading Scale",
                 "addCountUsage": "[count] Usage Number",
-                "addCriterion": "[criterion] Grading Criterion"
+                "addCriterion": "[criterion] Assessment Criterion"
             }
         },
         "problemStatement": "Problem Statement",
         "sampleSolution": "Example Solution",
-        "gradingCriteria": "Grading Criteria",
+        "assessmentInstructions": "Assessment Instructions",
         "usageCount": "Usage Count"
     }
 }

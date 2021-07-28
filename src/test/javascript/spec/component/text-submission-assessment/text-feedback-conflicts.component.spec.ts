@@ -35,6 +35,8 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 describe('TextFeedbackConflictsComponent', () => {
     let component: TextFeedbackConflictsComponent;
@@ -173,7 +175,11 @@ describe('TextFeedbackConflictsComponent', () => {
                 ManualTextblockSelectionComponent,
                 TextFeedbackConflictsHeaderComponent,
             ],
-            providers: [{ provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ feedbackId: 1 }) } } }],
+            providers: [
+                { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ feedbackId: 1 }) } } },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+            ],
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {

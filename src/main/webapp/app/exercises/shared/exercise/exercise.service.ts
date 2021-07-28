@@ -275,7 +275,7 @@ export class ExerciseService {
     }
 
     /**
-     * Look up permissions and add/replace isAtLeastInstuctor, isAtLeastEditor and isAtLeastTutor to http request containing a course
+     * Look up permissions and add/replace isAtLeastInstructor, isAtLeastEditor and isAtLeastTutor to http request containing a course
      * @param { ERT } res - Response from server including a course
      */
     checkPermission<ERT extends EntityResponseType>(res: ERT): ERT {
