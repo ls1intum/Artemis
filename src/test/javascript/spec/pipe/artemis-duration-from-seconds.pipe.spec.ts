@@ -1,94 +1,52 @@
-import { TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { SinonStub } from 'sinon';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('ArtemisDurationFromSecondsPipe', () => {
-    let pipe: ArtemisDurationFromSecondsPipe;
-    let translateService: TranslateService;
-    let translateStub: SinonStub;
+    const pipe: ArtemisDurationFromSecondsPipe = new ArtemisDurationFromSecondsPipe();
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [ArtemisDurationFromSecondsPipe],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        });
-        translateService = TestBed.inject(TranslateService);
-        pipe = new ArtemisDurationFromSecondsPipe(translateService);
+    it('Should return correct format for zero seconds', () => {
+        const localizedDuration = pipe.transform(0);
+        expect(localizedDuration).to.be.equal('0min 0s');
+    });
+
+    it('Should return correct format for negative seconds', () => {
+        const localizedDuration = pipe.transform(-42);
+        expect(localizedDuration).to.be.equal('0min 0s');
     });
 
     describe('long format', () => {
-        it('Should return correct format for only seconds with one digit', () => {
+        it('Should return correct format for only seconds', () => {
             const localizedDuration = pipe.transform(7);
-            expect(localizedDuration).to.be.equal('00:07');
+            expect(localizedDuration).to.be.equal('0min 7s');
         });
 
-        it('Should return correct format for only seconds with two digits', () => {
-            const localizedDuration = pipe.transform(42);
-            expect(localizedDuration).to.be.equal('00:42');
-        });
-
-        it('Should return correct format for minutes with one digit', () => {
-            const localizedDuration = pipe.transform(135);
-            expect(localizedDuration).to.be.equal('02:15');
-        });
-
-        it('Should return correct format for minutes with two digits', () => {
+        it('Should return correct format for minutes', () => {
             const localizedDuration = pipe.transform(1326);
-            expect(localizedDuration).to.be.equal('22:06');
+            expect(localizedDuration).to.be.equal('22min 6s');
         });
 
-        it('Should return correct format for hours with one digit', () => {
-            const localizedDuration = pipe.transform(40645);
-            expect(localizedDuration).to.be.equal('11:17:25');
-        });
-
-        it('Should return correct format for hours with two digits', () => {
+        it('Should return correct format for hours', () => {
             const localizedDuration = pipe.transform(21922);
-            expect(localizedDuration).to.be.equal('06:05:22');
+            expect(localizedDuration).to.be.equal('6h 5min 22s');
         });
 
-        describe('en locale', () => {
-            beforeEach(() => {
-                translateStub = sinon.stub(translateService, 'instant');
-                translateStub.withArgs('timeFormat.day').returns('day');
-                translateStub.withArgs('timeFormat.dayPlural').returns('days');
-            });
-
-            it('Should return correct format for one day', () => {
-                const localizedDuration = pipe.transform(108322);
-                expect(localizedDuration).to.be.equal('1 day 06:05:22');
-            });
-
-            it('Should return correct format for days', () => {
-                const localizedDuration = pipe.transform(1357800);
-                expect(localizedDuration).to.be.equal('15 days 17:10:00');
-            });
+        it('Should return correct format for days', () => {
+            const localizedDuration = pipe.transform(1357800);
+            expect(localizedDuration).to.be.equal('15d 17h 10min 0s');
         });
 
-        describe('de locale', () => {
-            beforeEach(() => {
-                translateStub = sinon.stub(translateService, 'instant');
-                translateStub.withArgs('timeFormat.day').returns('Tag');
-                translateStub.withArgs('timeFormat.dayPlural').returns('Tage');
-            });
+        it('Should be chosen when parameter is false', () => {
+            const localizedDuration = pipe.transform(1357800, false);
+            expect(localizedDuration).to.be.equal('15d 17h 10min 0s');
+        });
 
-            it('Should return correct format for one day', () => {
-                const localizedDuration = pipe.transform(108322);
-                expect(localizedDuration).to.be.equal('1 Tag 06:05:22');
-            });
-
-            it('Should return correct format for days', () => {
-                const localizedDuration = pipe.transform(1357800);
-                expect(localizedDuration).to.be.equal('15 Tage 17:10:00');
-            });
+        it('Should be chosen when parameter is undefined', () => {
+            const localizedDuration = pipe.transform(1357800, undefined);
+            expect(localizedDuration).to.be.equal('15d 17h 10min 0s');
         });
     });
 

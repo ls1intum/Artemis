@@ -323,9 +323,5 @@
         "disconnected": "Disconnected"
     },
     "loading": "Loading...",
-    "completed": "Completed",
-    "timeFormat": {
-        "day": "day",
-        "dayPlural": "days"
-    }
+    "completed": "Completed"
 }
