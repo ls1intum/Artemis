@@ -9,8 +9,8 @@ RUN adduser -D -s /bin/sh jhipster
 WORKDIR /home/jhipster
 USER jhipster
 
-COPY build/libs/*.jar app.jar
+COPY build/libs/*.war app.war
 
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["java","-jar","app.war"]
 
 EXPOSE 8080
