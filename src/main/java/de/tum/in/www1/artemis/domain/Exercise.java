@@ -574,8 +574,10 @@ public abstract class Exercise extends DomainObject {
                     // => if we can't find INITIALIZED, we return that one
                     relevantParticipation = participation;
                 }
+                // this case handles FINISHED participations which typically happen when manual results are involved
                 else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
-                        || participation.getExercise() instanceof FileUploadExercise) {
+                        || participation.getExercise() instanceof FileUploadExercise
+                        || (participation.getExercise() instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
                     return participation;
                 }
             }
