@@ -373,10 +373,6 @@ tasks.named("dependencyUpdates").configure {
     }
 }
 
-// Disbale build of Artemis-*-plain.jar
-jar {
-    enabled = false
-}
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar

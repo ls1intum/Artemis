@@ -93,7 +93,7 @@ Build the Artemis application for Docker using the following command:
 
 ::
 
-   ./gradlew -Pprod -Pwar bootWar
+   ./gradlew -Pprod -Pwar clean bootWar
 
 Run Docker build
 ----------------
