@@ -1,3 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: artemis-data
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+  storageClassName: local-path
+  volumeMode: Filesystem
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,9 +29,6 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-#      annotations:
-#        cattle.io/timestamp: "2021-07-27T10:42:50Z"
-#        field.cattle.io/ports: '[[{"containerPort":3306,"dnsName":"artemis-mysql","kind":"ClusterIP","name":"mysql-prot","protocol":"TCP"}]]'
       labels:
         app: artemis-mysql
     spec:
@@ -57,14 +68,16 @@ spec:
         tty: true
         volumeMounts:
           - mountPath: /var/lib/mysql/
-            name: data
+            name: artemis-data
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30
       volumes:
-        - name: data
+      - name: artemis-data
+        persistentVolumeClaim:
+          claimName: artemis-data
 ---
 apiVersion: v1
 kind: Service
