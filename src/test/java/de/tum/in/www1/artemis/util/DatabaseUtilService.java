@@ -735,6 +735,7 @@ public class DatabaseUtilService {
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setLecture(lectureContext);
+            postToAdd.setCourse(lectureContext.getCourse());
             postRepository.save(postToAdd);
             posts.add(postToAdd);
         }
@@ -746,6 +747,7 @@ public class DatabaseUtilService {
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setExercise(exerciseContext);
+            postToAdd.setCourse(exerciseContext.getCourseViaExerciseGroupOrCourseMember());
             postRepository.save(postToAdd);
             posts.add(postToAdd);
         }

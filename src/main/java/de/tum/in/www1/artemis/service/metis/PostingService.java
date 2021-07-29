@@ -7,6 +7,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Posting;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -18,14 +19,17 @@ public abstract class PostingService {
 
     final ExerciseRepository exerciseRepository;
 
+    final LectureRepository lectureRepository;
+
     final PostRepository postRepository;
 
     final AuthorizationCheckService authorizationCheckService;
 
-    protected PostingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, PostRepository postRepository,
+    protected PostingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, PostRepository postRepository,
             AuthorizationCheckService authorizationCheckService) {
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
+        this.lectureRepository = lectureRepository;
         this.postRepository = postRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
@@ -43,17 +47,11 @@ public abstract class PostingService {
     }
 
     /**
-     * Method to (i) compare id of the course belonging to the post with the path variable courseId,
-     * and (ii) if the possibly associated exercise is not an exam exercise
+     * Method to check if the possibly associated exercise is not an exam exercise
      *
      * @param post     post that is checked
-     * @param courseId id of the course that is used as path variable
      */
-    void preCheckPostValidity(Post post, Long courseId) {
-        if (!post.getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Post sent in body", getEntityName(), "idnull");
-        }
-
+    void preCheckPostValidity(Post post) {
         // do not allow postings for exam exercises
         if (post.getExercise() != null) {
             Long exerciseId = post.getExercise().getId();

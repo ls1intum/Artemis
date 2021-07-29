@@ -36,7 +36,7 @@ public class PostService extends PostingService {
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService) {
-        super(courseRepository, exerciseRepository, postRepository, authorizationCheckService);
+        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.lectureRepository = lectureRepository;
@@ -59,11 +59,14 @@ public class PostService extends PostingService {
         if (post.getId() != null) {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
-        preCheckUserAndCourse(user, courseId);
-        preCheckPostValidity(post, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
+        preCheckPostValidity(post);
 
         // set author to current user
         post.setAuthor(user);
+        // set course explicitly as it might not be set,
+        // if only an exercise or lecture is provided in post
+        post.setCourse(course);
         Post savedPost = postRepository.save(post);
 
         sendNotification(savedPost);
@@ -89,7 +92,7 @@ public class PostService extends PostingService {
         }
         preCheckUserAndCourse(user, courseId);
         Post existingPost = postRepository.findByIdElseThrow(post.getId());
-        preCheckPostValidity(existingPost, courseId);
+        preCheckPostValidity(existingPost);
         mayUpdateOrDeletePostingElseThrow(existingPost, user);
 
         // update: allow overwriting of values only for depicted fields
@@ -123,7 +126,7 @@ public class PostService extends PostingService {
         // checks
         preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(postId);
-        preCheckPostValidity(post, courseId);
+        preCheckPostValidity(post);
         if (voteChange < -2 || voteChange > 2) {
             throw new BadRequestAlertException("VoteChange can only be changed +1 or -1", METIS_POST_ENTITY_NAME, "400", true);
         }
@@ -236,7 +239,7 @@ public class PostService extends PostingService {
         // checks
         preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(postId);
-        preCheckPostValidity(post, courseId);
+        preCheckPostValidity(post);
         mayUpdateOrDeletePostingElseThrow(post, user);
 
         // delete

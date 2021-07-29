@@ -40,7 +40,7 @@ public class AnswerPostService extends PostingService {
     protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService) {
-        super(courseRepository, exerciseRepository, postRepository, authorizationCheckService);
+        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
@@ -68,7 +68,6 @@ public class AnswerPostService extends PostingService {
         }
         Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
-        preCheckPostValidity(answerPost.getPost(), courseId);
 
         // answer post is automatically approved if written by an instructor
         answerPost.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
@@ -101,7 +100,6 @@ public class AnswerPostService extends PostingService {
         }
         AnswerPost existingAnswerPost = answerPostRepository.findByIdElseThrow(answerPost.getId());
         Course course = preCheckUserAndCourse(user, courseId);
-        preCheckPostValidity(answerPost.getPost(), courseId);
         mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user);
 
         // update: allow overwriting of values only for depicted fields
@@ -144,7 +142,6 @@ public class AnswerPostService extends PostingService {
         // checks
         AnswerPost answerPost = answerPostRepository.findByIdElseThrow(answerPostId);
         preCheckUserAndCourse(user, courseId);
-        preCheckPostValidity(answerPost.getPost(), courseId);
         mayUpdateOrDeletePostingElseThrow(answerPost, user);
 
         // delete

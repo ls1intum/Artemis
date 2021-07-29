@@ -57,11 +57,11 @@ public class Post extends Posting {
     private Set<String> tags = new HashSet<>();
 
     @ManyToOne
-    @JsonIncludeProperties({ "id", "course" })
+    @JsonIncludeProperties({ "id" })
     private Exercise exercise;
 
     @ManyToOne
-    @JsonIncludeProperties({ "id", "course" })
+    @JsonIncludeProperties({ "id" })
     private Lecture lecture;
 
     @ManyToOne
@@ -151,23 +151,9 @@ public class Post extends Posting {
         this.lecture = lecture;
     }
 
-    /**
-     * Convenience method to retrieve the relevant Course, if necessary from linked Lecture or Exercise.
-     *
-     * @return related Course object
-     */
     @Override
     public Course getCourse() {
-        if (getLecture() != null) {
-            return getLecture().getCourse();
-        }
-        else if (getExercise() != null) {
-            return getExercise().getCourseViaExerciseGroupOrCourseMember();
-        }
-        else if (course != null) {
-            return course;
-        }
-        return null;
+        return course;
     }
 
     public void setCourse(Course course) {
