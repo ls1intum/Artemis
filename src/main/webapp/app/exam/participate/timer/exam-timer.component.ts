@@ -4,7 +4,6 @@ import { distinctUntilChanged, first, map, takeUntil } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { cloneDeep } from 'lodash';
-import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
@@ -38,9 +37,9 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$),
     );
 
-    timePipe: ArtemisDurationFromSecondsPipe;
+    timePipe: ArtemisDurationFromSecondsPipe = new ArtemisDurationFromSecondsPipe();
 
-    constructor(private serverDateService: ArtemisServerDateService, private translateService: TranslateService) {
+    constructor(private serverDateService: ArtemisServerDateService) {
         this.timer$
             .pipe(
                 map((timeLeft: moment.Duration) => timeLeft.asSeconds()),
@@ -54,8 +53,6 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
                 // -> display at least one display time, that's why we use setTimeout
                 setTimeout(() => this.destroy$.next(true));
             });
-
-        this.timePipe = new ArtemisDurationFromSecondsPipe(translateService);
     }
 
     ngOnInit(): void {

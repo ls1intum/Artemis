@@ -63,7 +63,7 @@ export const getAdditionalWorkingTime = (exam: Exam, studentExam: StudentExam): 
 };
 
 /**
- * Determins if the exam spans multiple days
+ * Determines if the exam spans multiple days
  *
  * @param exam
  * @param studentExam
@@ -74,6 +74,10 @@ export const examOverMultipleDays = (exam: Exam, studentExam: StudentExam): bool
         return false;
     }
     const endDate = endTime(exam, studentExam)!;
+
+    console.log(exam);
+    console.log(exam.startDate);
+    console.log(exam.startDate.dayOfYear());
 
     return endDate.dayOfYear() !== exam.startDate.dayOfYear();
 };
