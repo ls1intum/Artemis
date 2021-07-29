@@ -31,8 +31,6 @@ public class AnswerPostService extends PostingService {
 
     private final PostRepository postRepository;
 
-    private final LectureRepository lectureRepository;
-
     private final GroupNotificationService groupNotificationService;
 
     private final SingleUserNotificationService singleUserNotificationService;
@@ -44,7 +42,6 @@ public class AnswerPostService extends PostingService {
         this.userRepository = userRepository;
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
-        this.lectureRepository = lectureRepository;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
     }

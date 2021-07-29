@@ -30,8 +30,6 @@ public class PostService extends PostingService {
 
     private final PostRepository postRepository;
 
-    private final LectureRepository lectureRepository;
-
     private final GroupNotificationService groupNotificationService;
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
@@ -39,7 +37,6 @@ public class PostService extends PostingService {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
-        this.lectureRepository = lectureRepository;
         this.groupNotificationService = groupNotificationService;
     }
 
