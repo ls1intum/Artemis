@@ -7,11 +7,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { Course } from 'app/entities/course.model';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
     templateUrl: './non-programming-exercise-detail-common-actions.component.html',
-    styles: [],
 })
 export class NonProgrammingExerciseDetailCommonActionsComponent implements OnInit {
     @Input()
@@ -33,6 +33,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
         private fileUploadExerciseService: FileUploadExerciseService,
         private modelingExerciseService: ModelingExerciseService,
         private eventManager: JhiEventManager,
+        private router: Router,
     ) {}
 
     ngOnInit(): void {
@@ -57,6 +58,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                             content: 'Deleted a textExercise',
                         });
                         this.dialogErrorSource.next('');
+                        this.navigateToOverview();
                     },
                     (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
                 );
@@ -69,6 +71,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                             content: 'Deleted an fileUploadExercise',
                         });
                         this.dialogErrorSource.next('');
+                        this.navigateToOverview();
                     },
                     (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
                 );
@@ -81,11 +84,23 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                             content: 'Deleted an modelingExercise',
                         });
                         this.dialogErrorSource.next('');
+                        this.navigateToOverview();
                     },
                     (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
                 );
                 break;
             default:
+        }
+    }
+
+    /**
+     * Navigates back to the exercises list
+     */
+    private navigateToOverview() {
+        if (!this.isExamExercise) {
+            this.router.navigateByUrl(`/course-management/${this.course.id}/exercises`);
+        } else {
+            this.router.navigateByUrl(`/course-management/${this.course.id}/exams/${this.exercise.exerciseGroup?.exam?.id}/exercise-groups`);
         }
     }
 }

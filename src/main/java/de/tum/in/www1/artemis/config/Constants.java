@@ -147,6 +147,8 @@ public final class Constants {
     // same constant as in the client
     public static final int EXAM_START_WAIT_TIME_MINUTES = 5;
 
+    public static final int EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES = 1;
+
     public static final String TOGGLE_STUDENT_EXAM_SUBMITTED = "TOGGLE_STUDENT_EXAM_SUBMITTED";
 
     public static final String TOGGLE_STUDENT_EXAM_UNSUBMITTED = "TOGGLE_STUDENT_EXAM_UNSUBMITTED";
