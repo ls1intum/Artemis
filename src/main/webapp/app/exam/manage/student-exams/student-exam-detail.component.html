@@ -64,6 +64,14 @@
                     <strong>{{ 'artemisApp.studentExams.submissionDate' | artemisTranslate }}:</strong>
                     {{ studentExam.submissionDate | artemisDate: 'long':true }}
                 </li>
+                <li *ngIf="gradingScaleExists">
+                    <strong>{{ isBonus ? ('artemisApp.studentExams.bonus' | artemisTranslate) : ('artemisApp.studentExams.grade' | artemisTranslate) }}:</strong>
+                    {{ grade }}
+                </li>
+                <li *ngIf="gradingScaleExists && !isBonus">
+                    <strong>{{ 'artemisApp.studentExams.passed' | artemisTranslate }}:</strong>
+                    {{ (passed ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
+                </li>
             </ol>
         </div>
     </div>
