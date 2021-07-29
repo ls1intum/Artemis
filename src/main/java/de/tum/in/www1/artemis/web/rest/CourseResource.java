@@ -985,7 +985,7 @@ public class CourseResource {
             courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
 
             var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0));
+            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, 4));
             courseDTOs.add(courseDTO);
         }
 
@@ -1511,6 +1511,6 @@ public class CourseResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Integer[]> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Integer periodIndex) {
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex));
+        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 16));
     }
 }

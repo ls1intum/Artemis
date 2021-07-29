@@ -26,6 +26,7 @@
             "discussion": "Diskussion",
             "tutorLeaderboard": {
                 "courseTitle": "Tutor:innen-Bestenliste",
+                "examTitle": "Tutor:innen-Klausur Bestenliste",
                 "id": "ID",
                 "name": "Name",
                 "numberOfAssessments": "Assessments",

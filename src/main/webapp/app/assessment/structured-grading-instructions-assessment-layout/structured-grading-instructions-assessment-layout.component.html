@@ -1,10 +1,9 @@
-<div *ngIf="allowDrop" jhiTranslate="artemisApp.exercise.DragDropInstruction">
-    <strong> Drag & Drop instruction to feedback element</strong>
-    <br />
-    <br />
+<div *ngIf="allowDrop" class="alert alert-info">
+    <fa-icon [icon]="'info-circle'"></fa-icon>
+    <span>{{ 'artemisApp.exercise.dragDropInstruction' | artemisTranslate }}</span>
 </div>
 <div *ngFor="let criterion of criteria; let criterionIndex = index">
-    <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title">
+    <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title" [isSubHeader]="true">
         <div
             class="rounded"
             *ngFor="let instruction of criterion!.structuredGradingInstructions; let instructionIndex = index"
@@ -17,15 +16,15 @@
             <table class="table" style="margin: 1px">
                 <tbody>
                     <tr>
-                        <td width="5%" [innerHTML]="setScore(instruction.credits)"></td>
-                        <td width="10%" [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
-                        <td width="80%" [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown" [ngbTooltip]="setTooltip(instruction)"></td>
-                        <td width="5%" [innerHTML]="instruction.usageCount"></td>
-                        <td>
+                        <td width="4%" [innerHTML]="setScore(instruction.credits)"></td>
+                        <td [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
+                        <td [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown" [ngbTooltip]="setTooltip(instruction)"></td>
+                        <td width="4%" [innerHTML]="instruction.usageCount"></td>
+                        <td width="2%" style="text-align: end">
                             <fa-icon
                                 [icon]="'question-circle'"
                                 class="text-secondary"
-                                placement="top"
+                                placement="left"
                                 ngbTooltip="{{ 'artemisApp.exercise.usageCountHint' | artemisTranslate }}"
                             ></fa-icon>
                         </td>
