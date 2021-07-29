@@ -1,5 +1,5 @@
 import { CourseWideContext, Post } from 'app/entities/metis/post.model';
-import { PostService } from 'app/shared/metis/post/post.service';
+import { PostService } from 'app/shared/metis/post.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { BehaviorSubject, map, Observable, tap } from 'rxjs';
@@ -9,8 +9,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Injectable } from '@angular/core';
-import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
+import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Reaction } from 'app/entities/metis/reaction.model';
+import { ReactionService } from 'app/shared/metis/reaction.service';
 
 interface PostFilter {
     exercise?: Exercise;
@@ -27,7 +29,7 @@ export class MetisService {
     private user: User;
     private course: Course;
 
-    constructor(private postService: PostService, private answerPostService: AnswerPostService, private accountService: AccountService) {
+    constructor(private postService: PostService, private answerPostService: AnswerPostService, private reactionService: ReactionService, private accountService: AccountService) {
         this.accountService.identity().then((user: User) => {
             this.user = user!;
         });
@@ -185,7 +187,7 @@ export class MetisService {
 
     /**
      * deletes a post by invoking the post service
-     * fetches the post for the currently set filter on response and updates course tags
+     * fetches the posts for the currently set filter on response and updates course tags
      * @param post post to delete
      */
     deletePost(post: Post): void {
@@ -197,11 +199,33 @@ export class MetisService {
 
     /**
      * deletes an answer post by invoking the post service
-     * fetches the post for the currently set filter on response
+     * fetches the posts for the currently set filter on response
      * @param answerPost answer post to delete
      */
     deleteAnswerPost(answerPost: AnswerPost): void {
         this.answerPostService.delete(this.courseId, answerPost).subscribe(() => {
+            this.getPostsForFilter(this.currentPostFilter);
+        });
+    }
+
+    /**
+     * creates a new reaction
+     * fetches the posts for the currently set filter on response
+     * @param reaction reaction to create
+     */
+    createReaction(reaction: Reaction): void {
+        this.reactionService.create(this.courseId, reaction).subscribe(() => {
+            this.getPostsForFilter(this.currentPostFilter);
+        });
+    }
+
+    /**
+     * deletes an existing reaction
+     * fetches the posts for the currently set filter on response
+     * @param reaction reaction to create
+     */
+    deleteReaction(reaction: Reaction): void {
+        this.reactionService.delete(this.courseId, reaction).subscribe(() => {
             this.getPostsForFilter(this.currentPostFilter);
         });
     }

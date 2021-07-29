@@ -8,7 +8,7 @@ import { PostVotesComponent } from 'app/shared/metis/post/post-votes/post-votes.
 import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { PostService } from 'app/shared/metis/post/post.service';
+import { PostService } from 'app/shared/metis/post.service';
 import { MockPostService } from '../../../../../helpers/mocks/service/mock-post.service';
 import { Post } from 'app/entities/metis/post.model';
 

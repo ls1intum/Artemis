@@ -20,6 +20,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TagInputModule } from 'ngx-chips';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
+import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 
 @NgModule({
     imports: [
@@ -32,6 +33,7 @@ import { PickerModule } from '@ctrl/ngx-emoji-mart';
         TagInputModule,
         ArtemisSharedComponentModule,
         PickerModule,
+        EmojiModule,
     ],
     declarations: [
         PostingsThreadComponent,

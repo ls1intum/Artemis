@@ -6,7 +6,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { PostService } from 'app/shared/metis/post/post.service';
+import { PostService } from 'app/shared/metis/post.service';
 
 const expect = chai.expect;
 

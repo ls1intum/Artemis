@@ -13,8 +13,8 @@ import { MockAnswerPostService } from '../../helpers/mocks/service/mock-answer-p
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ArtemisTestModule } from '../../test.module';
-import { PostService } from 'app/shared/metis/post/post.service';
-import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
+import { PostService } from 'app/shared/metis/post.service';
+import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { User } from 'app/core/user/user.model';

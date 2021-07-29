@@ -63,7 +63,7 @@ export class PostService extends PostingsService<Post> {
      * @return {Observable<EntityArrayResponseType>}
      */
     getAllPostsByCourseId(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<Post[]>(`api/courses/${courseId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
+        return this.http.get<Post[]>(`${this.resourceUrl}${courseId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
     }
 
     /**
@@ -73,7 +73,7 @@ export class PostService extends PostingsService<Post> {
      * @return {Observable<EntityArrayResponseType>}
      */
     getAllPostsByLectureId(courseId: number, lectureId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<Post[]>(`api/courses/${courseId}/lectures/${lectureId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
+        return this.http.get<Post[]>(`${this.resourceUrl}${courseId}/lectures/${lectureId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
     }
 
     /**
@@ -83,7 +83,7 @@ export class PostService extends PostingsService<Post> {
      * @return {Observable<EntityArrayResponseType>}
      */
     getAllPostsByExerciseId(courseId: number, exerciserId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<Post[]>(`api/courses/${courseId}/exercises/${exerciserId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
+        return this.http.get<Post[]>(`${this.resourceUrl}${courseId}/exercises/${exerciserId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
     }
 
     /**
@@ -102,6 +102,6 @@ export class PostService extends PostingsService<Post> {
      * @return {Observable<string[]>}
      */
     getAllPostTagsByCourseId(courseId: number): Observable<HttpResponse<string[]>> {
-        return this.http.get<string[]>(`api/courses/${courseId}/posts/tags`, { observe: 'response' });
+        return this.http.get<string[]>(`${this.resourceUrl}${courseId}/posts/tags`, { observe: 'response' });
     }
 }

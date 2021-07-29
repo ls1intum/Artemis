@@ -2,6 +2,8 @@ import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { PostingsFooterDirective } from 'app/shared/metis/postings-footer/postings-footer.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { Reaction } from 'app/entities/metis/reaction.model';
+import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 
 @Component({
     selector: 'jhi-answer-post-footer',
@@ -12,8 +14,8 @@ export class AnswerPostFooterComponent extends PostingsFooterDirective<AnswerPos
     @Output() toggleApproveChange: EventEmitter<AnswerPost> = new EventEmitter<AnswerPost>();
     isAtLeastTutorInCourse: boolean;
 
-    constructor(private metisService: MetisService) {
-        super();
+    constructor(protected metisService: MetisService) {
+        super(metisService);
     }
 
     /**
@@ -21,6 +23,13 @@ export class AnswerPostFooterComponent extends PostingsFooterDirective<AnswerPos
      */
     ngOnInit(): void {
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+    }
+
+    buildReaction(emojiData: EmojiData): Reaction {
+        const reaction = new Reaction();
+        reaction.emojiId = emojiData.id;
+        reaction.answerPost = this.posting;
+        return reaction;
     }
 
     /**

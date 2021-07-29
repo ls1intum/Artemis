@@ -64,6 +64,7 @@ public class ReactionService {
             answerPostService.preCheckPostValidity((Post) posting, courseId);
             Post post = postService.findById(posting.getId());
             reaction.setPost(post);
+            reaction.setUser(user);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
             // save post
@@ -75,6 +76,7 @@ public class ReactionService {
             answerPostService.preCheckUserAndCourse(user, courseId);
             AnswerPost answerPost = answerPostService.findById(posting.getId());
             reaction.setAnswerPost(answerPost);
+            reaction.setUser(user);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
             // save answer post

@@ -36,8 +36,7 @@
                       "./src/main/webapp/manifest.webapp"
                   ],
                   "styles": [
-                      "src/main/webapp/content/scss/global.scss",
-                      "node_modules/@ctrl/ngx-emoji-mart/picker.css"
+                      "src/main/webapp/content/scss/global.scss"
                   ],
                   "scripts": [
                   ]
