@@ -1,5 +1,13 @@
-<div class="my-1 me-0 justify-content-between align-items-center">
-    <span *ngFor="let tag of tags" class="align-items-center post-tag col-auto text-white badge px-1 me-1">
-        {{ tag }}
-    </span>
+<div class="my-1 me-0 row justify-content-between align-items-center">
+    <div class="col-auto">
+        <span *ngFor="let tag of tags" class="align-items-center post-tag col-auto text-white badge px-1 me-1">
+            {{ tag }}
+        </span>
+    </div>
+    <div class="col-auto p-0">
+        <fa-icon [icon]="['far', 'smile']" class="text-secondary clickable" (click)="toggleReactionSelector()"></fa-icon>
+        <div *ngIf="showReactionSelector">
+            <emoji-mart></emoji-mart>
+        </div>
+    </div>
 </div>

@@ -17,6 +17,7 @@
         "@angular/platform-browser": "12.1.2",
         "@angular/platform-browser-dynamic": "12.1.2",
         "@angular/router": "12.1.2",
+        "@ctrl/ngx-emoji-mart": "^6.0.0",
         "@fingerprintjs/fingerprintjs": "3.2.0",
         "@fortawesome/angular-fontawesome": "0.9.0",
         "@fortawesome/fontawesome-svg-core": "1.2.35",

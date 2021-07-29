@@ -19,6 +19,7 @@ import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TagInputModule } from 'ngx-chips';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { PickerModule } from '@ctrl/ngx-emoji-mart';
 
 @NgModule({
     imports: [
@@ -30,6 +31,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         FormsModule,
         TagInputModule,
         ArtemisSharedComponentModule,
+        PickerModule,
     ],
     declarations: [
         PostingsThreadComponent,
