@@ -11,8 +11,8 @@ import { getCourseId } from 'app/entities/exercise.model';
     styles: [],
 })
 export class ConsistencyCheckComponent implements OnInit {
-    @Input() private id: number;
-    @Input() private checkType: CheckType;
+    @Input() id: number;
+    @Input() checkType: CheckType;
 
     errors: ConsistencyCheckError[];
     courseId: number | undefined;
