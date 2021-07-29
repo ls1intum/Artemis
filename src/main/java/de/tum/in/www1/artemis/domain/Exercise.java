@@ -562,7 +562,7 @@ public abstract class Exercise extends DomainObject {
     @Nullable
     public StudentParticipation findParticipation(List<StudentParticipation> participations) {
         for (StudentParticipation participation : participations) {
-            if (participation.getExercise() != null && participation.getExercise().equals(this)) {
+            if (this.equals(participation.getExercise())) {
                 return participation;
             }
         }
