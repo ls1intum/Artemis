@@ -75,9 +75,5 @@ export const examOverMultipleDays = (exam: Exam, studentExam: StudentExam): bool
     }
     const endDate = endTime(exam, studentExam)!;
 
-    console.log(exam);
-    console.log(exam.startDate);
-    console.log(exam.startDate.dayOfYear());
-
-    return endDate.dayOfYear() !== exam.startDate.dayOfYear();
+    return !endDate.isSame(exam.startDate, 'day');
 };
