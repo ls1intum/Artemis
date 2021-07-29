@@ -89,6 +89,8 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
+        // if there is a participation that has an exercise linked to it,
+        // the exercise needs to be the same as the one referenced in the path via exerciseId
         if (fileUploadSubmission.getParticipation() != null && fileUploadSubmission.getParticipation().getExercise() != null
                 && !fileUploadSubmission.getParticipation().getExercise().getId().equals(exerciseId)) {
             return badRequest("exerciseId", "400", "ExerciseId in Body doesnt match ExerciseId in path!");
@@ -146,8 +148,8 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * GET /file-upload-submissions/:submissionId : get the fileUploadSubmissions by it's id. Is used by tutor when assessing submissions.
-     * In case an instructors calls, the resultId is used first. If the resultId is not set, the correctionRound is used.
+     * GET /file-upload-submissions/:submissionId : get the fileUploadSubmissions by its id. Is used by tutor when assessing submissions.
+     * In case an instructor calls, the resultId is used first. If the resultId is not set, the correctionRound is used.
      * If neither resultId nor correctionRound is set, the first correctionRound is used.
      *
      * @param submissionId the id of the fileUploadSubmission to retrieve
@@ -291,11 +293,11 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             return forbidden();
         }
 
-        Optional<Submission> optionalSubmission = participation.findLatestSubmission();
-        FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) optionalSubmission.orElseGet(() -> {
-            FileUploadSubmission tempParticipation = new FileUploadSubmission();
-            tempParticipation.setParticipation(participation);
-            return tempParticipation;
+        Optional<FileUploadSubmission> optionalSubmission = participation.findLatestSubmission();
+        FileUploadSubmission fileUploadSubmission = optionalSubmission.orElseGet(() -> {
+            FileUploadSubmission tempSubmission = new FileUploadSubmission();
+            tempSubmission.setParticipation(participation);
+            return tempSubmission;
         });
 
         // make sure only the latest submission and latest result is sent to the client
