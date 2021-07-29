@@ -8,7 +8,7 @@ This page describes how to set up an environment deployed in Kubernetes.
 * `Docker <https://docs.docker.com/install>`__
 * `DockerHub Account <https://hub.docker.com/signup>`__
 * `k3d <https://k3d.io/>`__
-* `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl/>`
+* `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl/>`__
 * `helm <https://helm.sh/docs/intro/install/>`__
 
 
