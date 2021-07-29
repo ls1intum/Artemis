@@ -7,7 +7,9 @@
     </div>
     <div class="row card-footer">
         <div *ngIf="exam.startDate" class="col-12">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: exam.startDate | artemisDate } }}</div>
-        <div *ngIf="exam.startDate && exam.endDate" class="col-12">{{ 'artemisApp.exam.overview.duration' | artemisTranslate: { duration: examDuration } }}</div>
+        <div *ngIf="exam.startDate && exam.endDate" class="col-12">
+            {{ 'artemisApp.exam.overview.duration' | artemisTranslate }} {{ examDuration | artemisDurationFromSeconds }}
+        </div>
         <div *ngIf="exam.maxPoints" class="col-12">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate: { points: exam.maxPoints } }}</div>
     </div>
 </div>
