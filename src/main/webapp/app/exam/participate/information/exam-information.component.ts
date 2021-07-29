@@ -27,7 +27,7 @@ export class ExamInformationComponent {
         return examUtils.getAdditionalWorkingTime(this.exam, this.studentExam);
     }
 
-    examOverMultipleDays(): boolean {
-        return examUtils.examOverMultipleDays(this.exam, this.studentExam);
+    isExamOverMultipleDays(): boolean {
+        return examUtils.isExamOverMultipleDays(this.exam, this.studentExam);
     }
 }

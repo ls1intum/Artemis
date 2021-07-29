@@ -20,7 +20,7 @@ export const endTime = (exam: Exam, studentExam: StudentExam) => {
 };
 
 /**
- * Calculates the working time of the exam
+ * Calculates the working time of the exam in seconds
  *
  * @param exam
  * @return {number | undefined}
@@ -40,10 +40,7 @@ export const normalWorkingTime = (exam: Exam): number | undefined => {
  * @return {boolean | undefined}
  */
 export const hasAdditionalWorkingTime = (exam: Exam, studentExam: StudentExam): boolean | undefined => {
-    if (!exam || !exam.endDate || !exam.startDate) {
-        return undefined;
-    }
-    if (studentExam && studentExam.workingTime) {
+    if (exam && exam.endDate && exam.startDate && studentExam && studentExam.workingTime) {
         const personalEndDate = moment(exam.startDate).add(studentExam.workingTime, 'seconds');
         return personalEndDate.isAfter(exam.endDate);
     }
@@ -69,7 +66,7 @@ export const getAdditionalWorkingTime = (exam: Exam, studentExam: StudentExam): 
  * @param studentExam
  * @return {boolean}
  */
-export const examOverMultipleDays = (exam: Exam, studentExam: StudentExam): boolean => {
+export const isExamOverMultipleDays = (exam: Exam, studentExam: StudentExam): boolean => {
     if (!exam || !exam.startDate || !exam.endDate) {
         return false;
     }
