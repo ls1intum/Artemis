@@ -1,7 +1,7 @@
 <div class="mt-3 mb-4 text-center">
     <div class="mb-2" *ngIf="exam">
         <ng-container *ngIf="exam.startDate">
-            <div *ngIf="examOverMultipleDays(); else examSingleDay">
+            <div *ngIf="isExamOverMultipleDays(); else examSingleDay">
                 <span class="mx-2">
                     <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | artemisTranslate }}:</strong>
                     {{ exam.startDate | artemisDate: 'long-date' }} {{ exam.startDate | artemisDate: 'time' }}

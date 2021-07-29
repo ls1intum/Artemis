@@ -20,7 +20,7 @@ export const endTime = (exam: Exam, studentExam: StudentExam) => {
 };
 
 /**
- * Calculates the working time of the exam
+ * Calculates the working time of the exam in seconds
  *
  * @param exam
  * @return {number | undefined}
@@ -69,7 +69,7 @@ export const getAdditionalWorkingTime = (exam: Exam, studentExam: StudentExam): 
  * @param studentExam
  * @return {boolean}
  */
-export const examOverMultipleDays = (exam: Exam, studentExam: StudentExam): boolean => {
+export const isExamOverMultipleDays = (exam: Exam, studentExam: StudentExam): boolean => {
     if (!exam || !exam.startDate || !exam.endDate) {
         return false;
     }

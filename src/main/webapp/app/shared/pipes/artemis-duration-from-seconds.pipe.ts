@@ -8,12 +8,12 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
 
     /**
      * Convert seconds to a human-readable duration format:
-     * If short is false: "1d 11h 7min 6s", where the days and hours are left out if their value and all higher values are zero
      * If short is true: "xx unit yy unit", where only the two highest units are shown. If the time is between 10 minutes and one hour, only the minutes are shown
+     * Otherwise: "1d 11h 7min 6s", where the days and hours are left out if their value and all higher values are zero
      * @param short? {boolean} allows the format to be shortened
      * @param seconds {number}
      */
-    transform(seconds: number, short?: boolean): string {
+    transform(seconds: number, short = false): string {
         if (seconds === null || seconds <= 0) {
             return '0min 0s';
         }
