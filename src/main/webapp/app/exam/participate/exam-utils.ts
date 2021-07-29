@@ -29,7 +29,7 @@ export const normalWorkingTime = (exam: Exam): number | undefined => {
     if (!exam || !exam.endDate || !exam.startDate) {
         return undefined;
     }
-    return exam.endDate.diff(exam.startDate, 'seconds');
+    return moment(exam.endDate).diff(exam.startDate, 'seconds');
 };
 
 /**
