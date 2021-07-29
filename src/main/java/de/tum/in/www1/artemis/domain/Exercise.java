@@ -554,6 +554,22 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
+     * Find the participation for this exercise
+     *
+     * @param participations the list of available participations
+     * @return the found participation, or null, if none exist
+     */
+    @Nullable
+    public StudentParticipation findParticipation(List<StudentParticipation> participations) {
+        for (StudentParticipation participation : participations) {
+            if (participation.getExercise() != null && participation.getExercise().equals(this)) {
+                return participation;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Find a relevant participation for this exercise (relevancy depends on InitializationState)
      *
      * @param participations the list of available participations

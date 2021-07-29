@@ -559,7 +559,7 @@ public class StudentExamResource {
         }
 
         // get user's participation for the exercise
-        StudentParticipation participation = participations != null ? exercise.findRelevantParticipation(participations) : null;
+        StudentParticipation participation = participations != null ? exercise.findParticipation(participations) : null;
 
         // add relevant submission (relevancy depends on InitializationState) with its result to participation
         if (participation != null) {
