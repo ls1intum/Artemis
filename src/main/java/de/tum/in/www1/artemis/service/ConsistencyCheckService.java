@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
@@ -26,8 +25,7 @@ public class ConsistencyCheckService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public ConsistencyCheckService(ProgrammingExerciseService programmingExerciseService, CourseRepository courseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+    public ConsistencyCheckService(ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
