@@ -4,7 +4,7 @@ import { distinctUntilChanged, first, map, takeUntil } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { cloneDeep } from 'lodash';
-import { round } from 'app/shared/util/utils';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
     selector: 'jhi-exam-timer',
@@ -37,6 +37,8 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$),
     );
 
+    timePipe: ArtemisDurationFromSecondsPipe = new ArtemisDurationFromSecondsPipe();
+
     constructor(private serverDateService: ArtemisServerDateService) {
         this.timer$
             .pipe(
@@ -65,12 +67,11 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
     updateDisplayTime(timeDiff: moment.Duration) {
         // update isCriticalTime
         this.setIsCriticalTime(timeDiff);
+
         if (timeDiff.asMilliseconds() < 0) {
-            return '00 : 00';
+            return this.timePipe.transform(0, true);
         } else {
-            return timeDiff.asMinutes() > 10
-                ? round(timeDiff.asMinutes()) + ' min'
-                : timeDiff.minutes().toString().padStart(2, '0') + ' : ' + timeDiff.seconds().toString().padStart(2, '0') + ' min';
+            return this.timePipe.transform(Math.round(timeDiff.asSeconds()), true);
         }
     }
 

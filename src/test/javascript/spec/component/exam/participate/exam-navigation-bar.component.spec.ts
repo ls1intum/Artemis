@@ -12,6 +12,8 @@ import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-tran
 import { ArtemisTestModule } from '../../../test.module';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { BehaviorSubject } from 'rxjs';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
@@ -22,11 +24,21 @@ describe('Exam Navigation Bar Component', () => {
     let comp: ExamNavigationBarComponent;
     let repositoryService: CodeEditorRepositoryService;
 
+    const examExerciseIdForNavigationSourceMock = new BehaviorSubject<number>(-1);
+    const mockExamExerciseUpdateService = {
+        currentExerciseIdForNavigation: examExerciseIdForNavigationSourceMock.asObservable(),
+    };
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule],
             declarations: [ExamNavigationBarComponent, MockComponent(ExamTimerComponent), MockDirective(NgbTooltip)],
-            providers: [ExamParticipationService, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
+            providers: [
+                ExamParticipationService,
+                { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamNavigationBarComponent);
@@ -225,5 +237,12 @@ describe('Exam Navigation Bar Component', () => {
         const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
 
         expect(result).toEqual('notSubmitted');
+    });
+
+    it('should navigate to other Exercise', () => {
+        const updatedExerciseId = 2;
+        spyOn(comp, 'changeExerciseById');
+        examExerciseIdForNavigationSourceMock.next(updatedExerciseId);
+        expect(comp.changeExerciseById).toHaveBeenCalled();
     });
 });

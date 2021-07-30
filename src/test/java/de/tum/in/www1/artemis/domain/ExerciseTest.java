@@ -13,6 +13,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -23,6 +25,12 @@ public class ExerciseTest {
     private Exercise exercise;
 
     private List<StudentParticipation> studentParticipations;
+
+    @Mock
+    private ExerciseGroup exerciseGroup;
+
+    @Mock
+    private Exam exam;
 
     @Mock
     private StudentParticipation studentParticipationInitialized;
@@ -221,6 +229,26 @@ public class ExerciseTest {
 
         exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), "student", true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission1));
+    }
+
+    @Test
+    public void getExamViaExerciseGroupOrCourseMember_withExamExercise() {
+        Exercise examExercise = mock(Exercise.class, CALLS_REAL_METHODS);
+
+        when(examExercise.isExamExercise()).thenReturn(true);
+        when(examExercise.getExerciseGroup()).thenReturn(exerciseGroup);
+        when(exerciseGroup.getExam()).thenReturn(exam);
+
+        Exam result = examExercise.getExamViaExerciseGroupOrCourseMember();
+        assertThat(result).isEqualTo(exam);
+    }
+
+    @Test
+    public void getExamViaExerciseGroupOrCourseMember_withoutExamExercise() {
+        Exercise examExercise = mock(Exercise.class, CALLS_REAL_METHODS);
+        when(examExercise.isExamExercise()).thenReturn(false);
+        Exam result = examExercise.getExamViaExerciseGroupOrCourseMember();
+        assertThat(result).isEqualTo(null);
     }
 
     private List<StudentParticipation> filterForCourseDashboard_prepareParticipations() {

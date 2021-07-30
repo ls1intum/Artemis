@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -16,6 +16,10 @@ export class CourseManagementExercisesComponent implements OnInit {
     modelingExercisesCount = 0;
     fileUploadExercisesCount = 0;
 
+    // extension points, see shared/extension-point
+    @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;
+    @ContentChild('overrideNonProgrammingExerciseCard') overrideNonProgrammingExerciseCard: TemplateRef<any>;
+
     constructor(private courseService: CourseManagementService, private route: ActivatedRoute) {}
 
     /**
@@ -24,5 +28,14 @@ export class CourseManagementExercisesComponent implements OnInit {
     ngOnInit(): void {
         this.courseId = Number(this.route.parent!.snapshot.paramMap.get('courseId'));
         this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
+    }
+
+    /**
+     * Sets the programming exercise count. Required to pass a callback to the
+     * overrideProgrammingExerciseCard extension since extensions don't support @Output
+     * @param count to set the programmingExerciseCount to
+     */
+    setProgrammingExerciseCount(count: number) {
+        this.programmingExercisesCount = count;
     }
 }
