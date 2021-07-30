@@ -171,6 +171,7 @@ export class NotificationService {
     }
 
     private addNotificationToObserver(notification: Notification): void {
+        debugger;
         if (notification && notification.notificationDate) {
             notification.notificationDate = moment(notification.notificationDate);
             this.notificationObserver.next(notification);

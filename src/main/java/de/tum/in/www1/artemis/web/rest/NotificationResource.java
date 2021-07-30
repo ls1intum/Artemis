@@ -105,27 +105,13 @@ public class NotificationResource {
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
-
-    @PostMapping("/save-options")
-    public ResponseEntity<NotificationOption[]> saveNotificationOptionsForCurrentUser(@RequestBody NotificationOption[] options) {
-        // return badRequest();
-        if (options == null) {
-            return conflict();
-        }
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        Long currentUserId = currentUser.getId();
-        for (NotificationOption option : options) {
-            if (option.getUser_id().getId() != currentUserId) { // TODO try to rework User_id to actually be only the id
-                return conflict();
-            }
-        }
-        // TODO maybe more checks
-
-        // NotificationOption[] savedOptions = notificationRepository.saveAllNotificationOptionsForRecipientWithId(currentUserId, options);
-
-        notificationRepository.saveAllNotificationOptionsForRecipientWithId(currentUserId, options);
-        return ok();
-    }
+    /*
+     * @PostMapping("/save-options") public ResponseEntity<NotificationOption[]> saveNotificationOptionsForCurrentUser(@RequestBody NotificationOption[] options) { // return
+     * badRequest(); if (options == null) { return conflict(); } User currentUser = userRepository.getUserWithGroupsAndAuthorities(); Long currentUserId = currentUser.getId(); for
+     * (NotificationOption option : options) { if (option.getUser_id().getId() != currentUserId) { // TODO try to rework User_id to actually be only the id return conflict(); } }
+     * // TODO maybe more checks // NotificationOption[] savedOptions = notificationRepository.saveAllNotificationOptionsForRecipientWithId(currentUserId, options);
+     * notificationRepository.saveAllNotificationOptionsForRecipientWithId(currentUserId, options); return ok(); }
+     */
 
     /**
      * PUT /notifications : Updates an existing notification.

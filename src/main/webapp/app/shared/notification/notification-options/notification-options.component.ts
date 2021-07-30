@@ -7,7 +7,7 @@ export interface NotificationOption {
     type: string;
     app: boolean;
     email: boolean;
-    user_id: number;
+    user_id: number; // todo change to user type
 }
 
 @Component({
@@ -43,6 +43,7 @@ export class NotificationOptionsComponent implements OnInit {
     saveOptions() {
         //TODO Server REST-POST call
         //TODO refresh notifications in notification-sidebar (else outdated, ngOnitnit only called once, i.e. only calls loadnotifications once)
+        /*
         this.notificationService
             .saveNotificationOptions({
                 page: this.page, //kp ob nötig
@@ -51,6 +52,7 @@ export class NotificationOptionsComponent implements OnInit {
                 (res: HttpResponse<NotificationOption[]>) => this.loadNotificationOptionsSuccess(res.body!, res.headers),
                 (res: HttpErrorResponse) => (this.error = res.message),
             );
+            */
     }
 
     toggleOption(event: any) {

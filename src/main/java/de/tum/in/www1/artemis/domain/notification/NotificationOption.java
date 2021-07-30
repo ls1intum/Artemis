@@ -2,9 +2,6 @@ package de.tum.in.www1.artemis.domain.notification;
 
 import javax.persistence.*;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -16,7 +13,7 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
  */
 @Entity
 @Table(name = "notification_option")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+// @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class NotificationOption extends DomainObject {
 
