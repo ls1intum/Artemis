@@ -554,6 +554,22 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
+     * Find the participation for this exercise
+     *
+     * @param participations the list of available participations
+     * @return the found participation, or null, if none exist
+     */
+    @Nullable
+    public StudentParticipation findParticipation(List<StudentParticipation> participations) {
+        for (StudentParticipation participation : participations) {
+            if (this.equals(participation.getExercise())) {
+                return participation;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Find a relevant participation for this exercise (relevancy depends on InitializationState)
      *
      * @param participations the list of available participations
@@ -574,8 +590,10 @@ public abstract class Exercise extends DomainObject {
                     // => if we can't find INITIALIZED, we return that one
                     relevantParticipation = participation;
                 }
+                // this case handles FINISHED participations which typically happen when manual results are involved
                 else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
-                        || participation.getExercise() instanceof FileUploadExercise) {
+                        || participation.getExercise() instanceof FileUploadExercise
+                        || (participation.getExercise() instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
                     return participation;
                 }
             }
