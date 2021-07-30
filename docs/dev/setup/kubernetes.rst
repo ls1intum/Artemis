@@ -5,11 +5,11 @@ This page describes how to set up an environment deployed in Kubernetes.
 
 **Prerequisites:**
 
-* `Docker <https://docs.docker.com/install>`__ v20.10.7
-* `DockerHub Account <https://hub.docker.com/signup>`__
-* `k3d <https://k3d.io/>`__ v4.4.7
-* `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl/>`__ v1.21
-* `helm <https://helm.sh/docs/intro/install/>`__ v3.6.3
+* `Docker <https://docs.docker.com/install>`__ v20.10.7 - Docker will be used to build the Artemis image
+* `DockerHub Account <https://hub.docker.com/signup>`__ - DockerHub account is needed in order to push the Artemis image which will be used by Kubernetes
+* `k3d <https://k3d.io/#installation>`__ v4.4.7 - Lightweght Kubernetes distribution needed to crete a cluster
+* `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl/>`__ v1.21 - Kubernetes command-line tool, used for deployments
+* `helm <https://helm.sh/docs/intro/install/>`__ v3.6.3 - Package manager for Kubernetes
 
 
 .. contents:: Content of this document
@@ -22,16 +22,16 @@ Setup Kubernetes cluster
 
    ::
 
-      $CLUSTER_NAME="k3d-rancher"
-      $RANCHER_SERVER_HOSTNAME="rancher.localhost"
-      $KUBECONFIG_FILE="$CLUSTER_NAME.yaml"
+      export CLUSTER_NAME="k3d-rancher"
+      export RANCHER_SERVER_HOSTNAME="rancher.localhost"
+      export KUBECONFIG_FILE="$CLUSTER_NAME.yaml"
 
 2. Create the cluster
    
    ::
 
-      k3d cluster create $env:CLUSTER_NAME --api-port 6550 --servers 1 --agents 3 --port 443:443@loadbalancer --wait
-      k3d cluster list
+      k3d cluster create $CLUSTER_NAME --api-port 6550 --servers 1 --agents 3 --port 443:443@loadbalancer --wait
+      k3d cluster list 
       k3d kubeconfig get $CLUSTER_NAME > $KUBECONFIG_FILE
       $KUBECONFIG=($KUBECONFIG_FILE)
       kubectl get nodes
@@ -43,8 +43,7 @@ Setup Kubernetes cluster
       helm repo add jetstack https://charts.jetstack.io
       helm repo update
       kubectl create namespace cert-manager
-      helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.0.4 --set
-      installCRDs=true --wait
+      helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.0.4 --set installCRDs=true --wait
       kubectl -n cert-manager rollout status deploy/cert-manager
 
 4. Install Rancher
@@ -59,7 +58,8 @@ Setup Kubernetes cluster
 
 Create DockerHub repository
 ---------------------------
-Once you have logged in your DockerHub account you can create as many public repositories as you want.
+The Artemis image will be stored and managed in DockerHub. Kubernetes will take it from there and deploy it afterwards.
+After you log in to your `DockerHub <https://hub.docker.com/>`__ account you can create as many public repositories as you want.
 In order to create a repository you need to select the ``Create repository`` button.
 
 
@@ -73,9 +73,9 @@ Then fill in the repository name with ``artemis``. The use the ``Create`` button
 .. figure:: kubernetes/dockerhub_create_repository.png
    :align: center
 
-Configure DockerHub id
-----------------------
-
+Configure Docker ID (username)
+------------------------------
+The username in DockerHub is called Docker ID. You need to seet your Docker ID in the ``artemis-deployment.yml`` resource so that Kubernetes knows where to pull the image from.
 Open the ``src/main/kubernetes/artemis-k8s/artemis-deployment.yml`` file and edit
 
     ::
@@ -83,9 +83,9 @@ Open the ``src/main/kubernetes/artemis-k8s/artemis-deployment.yml`` file and edi
       template:
          spec:
          containers:
-            image: <DockerHubId>/artemis
+            image: <DockerId>/artemis
 
-and replace <DockerHubId> with your docker id in DockerHub
+and replace <DockerId> with your docker ID in DockerHub
 
 
 Configure Artemis resources
@@ -147,7 +147,7 @@ In the console you will see that the resources are created.
 
 Check the deployments in Rancher
 --------------------------------
-Open Rancher and navigate to your cluster.
+Open Rancher using `<https://rancher.localhost/>`__ and navigate to your cluster.
 It may take some time but at the end you should see that all the workloads have Active status. In case there is aa problem with some of the workloads you can check the logs to see what the issue is.
 
 .. figure:: kubernetes/rancher_workloads.png
