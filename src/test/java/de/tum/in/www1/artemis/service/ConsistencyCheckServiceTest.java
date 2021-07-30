@@ -13,7 +13,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -38,17 +37,18 @@ public class ConsistencyCheckServiceTest {
 
     public Course course;
 
-    private VersionControlService versionControlService;
-
     private MockDelegate mockDelegate;
 
-    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService) throws Exception {
+    public void setup(MockDelegate mockDelegate) throws Exception {
         this.mockDelegate = mockDelegate;
-        this.versionControlService = versionControlService;
         course = database.addCourseWithOneProgrammingExercise();
     }
 
-    // Test
+    /**
+     * Test consistencyCheck feature with programming exercise without
+     * inconsistencies
+     * @throws Exception if an error occurs
+     */
     public void checkConsistencyOfProgrammingExercise_noErrors() throws Exception {
         var exercise = (ProgrammingExercise) course.getExercises().iterator().next();
         exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
@@ -64,7 +64,11 @@ public class ConsistencyCheckServiceTest {
         assertThat(consistencyErrors.size()).isEqualTo(0);
     }
 
-    // Test
+    /**
+     * Test consistencyCheck feature with programming exercise
+     * with missing VCS project
+     * @throws Exception if an error occurs
+     */
     public void checkConsistencyOfProgrammingExercise_missingVCSProject() throws Exception {
         var exercise = (ProgrammingExercise) course.getExercises().iterator().next();
         exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
@@ -78,7 +82,11 @@ public class ConsistencyCheckServiceTest {
         assertThat(consistencyErrors.get(0).getType()).isEqualTo(ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING);
     }
 
-    // Test
+    /**
+     * Test consistencyCheck feature with programming exercise
+     * with missing VCS repositories
+     * @throws Exception if an error occurs
+     */
     public void checkConsistencyOfProgrammingExercise_missingVCSRepos() throws Exception {
         var exercise = (ProgrammingExercise) course.getExercises().iterator().next();
         exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
@@ -94,7 +102,11 @@ public class ConsistencyCheckServiceTest {
         assertThat(consistencyErrors.size()).isEqualTo(3);
     }
 
-    // Test
+    /**
+     * Test consistencyCheck feature with programming exercise
+     * with missing Build Plans
+     * @throws Exception if an error occurs
+     */
     public void checkConsistencyOfProgrammingExercise_buildPlansMissing() throws Exception {
         var exercise = (ProgrammingExercise) course.getExercises().iterator().next();
         exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
@@ -110,7 +122,11 @@ public class ConsistencyCheckServiceTest {
         assertThat(consistencyErrors.size()).isEqualTo(2);
     }
 
-    // Test
+    /**
+     * Test consistencyCheck feature with a local simulation
+     * of a programming exercise
+     * @throws Exception if an error occurs
+     */
     public void checkConsistencyOfProgrammingExercise_isLocalSimulation() throws Exception {
         var exercise = (ProgrammingExercise) course.getExercises().iterator().next();
         exercise.setTestRepositoryUrl("artemislocalhost/to/set/localSimulation/to/true");
@@ -121,7 +137,11 @@ public class ConsistencyCheckServiceTest {
         assertThat(consistencyErrors.get(0).getType()).isEqualTo(ConsistencyErrorDTO.ErrorType.IS_LOCAL_SIMULATION);
     }
 
-    // Test
+    /**
+     * Test consistencyCheck feature with a course
+     * containing errors
+     * @throws Exception if an error occurs
+     */
     public void checkConsistencyOfCourse() throws Exception {
         var newExercise = ModelFactory.generateProgrammingExercise(null, null, course);
         newExercise.setShortName("Test2");

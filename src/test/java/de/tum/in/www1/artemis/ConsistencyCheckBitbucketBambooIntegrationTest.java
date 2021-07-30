@@ -15,7 +15,7 @@ public class ConsistencyCheckBitbucketBambooIntegrationTest extends AbstractSpri
 
     @BeforeEach
     public void setup() throws Exception {
-        consistencyCheckServiceTest.setup(this, versionControlService);
+        consistencyCheckServiceTest.setup(this);
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
     }

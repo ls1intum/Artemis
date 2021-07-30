@@ -15,7 +15,7 @@ public class ConsistencyCheckGitlabJenkinsIntegrationTest extends AbstractSpring
 
     @BeforeEach
     public void setup() throws Exception {
-        consistencyCheckServiceTest.setup(this, versionControlService);
+        consistencyCheckServiceTest.setup(this);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
     }
