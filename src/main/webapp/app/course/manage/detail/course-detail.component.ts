@@ -6,7 +6,6 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course-management.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
-import { isOrion } from 'app/shared/orion/orion';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
 import { ButtonSize } from 'app/shared/components/button.component';
@@ -35,7 +34,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     ButtonSize = ButtonSize;
     ActionType = ActionType;
-    readonly isOrion = isOrion;
     CachingStrategy = CachingStrategy;
 
     courseDTO: CourseManagementDetailViewDto;

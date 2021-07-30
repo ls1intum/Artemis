@@ -14,6 +14,7 @@ import org.hibernate.annotations.DiscriminatorOptions;
 import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -447,6 +448,19 @@ public abstract class Exercise extends DomainObject {
         }
     }
 
+    /**
+     * Utility method to get the exam. Get the exam over the exerciseGroup, if one was set, otherwise return null.
+     *
+     * @return exam, to which the exercise belongs
+     */
+    @JsonIgnore
+    public Exam getExamViaExerciseGroupOrCourseMember() {
+        if (isExamExercise()) {
+            return this.getExerciseGroup().getExam();
+        }
+        return null;
+    }
+
     public Set<ExampleSubmission> getExampleSubmissions() {
         return exampleSubmissions;
     }
@@ -554,6 +568,22 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
+     * Find the participation for this exercise
+     *
+     * @param participations the list of available participations
+     * @return the found participation, or null, if none exist
+     */
+    @Nullable
+    public StudentParticipation findParticipation(List<StudentParticipation> participations) {
+        for (StudentParticipation participation : participations) {
+            if (this.equals(participation.getExercise())) {
+                return participation;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Find a relevant participation for this exercise (relevancy depends on InitializationState)
      *
      * @param participations the list of available participations
@@ -574,8 +604,10 @@ public abstract class Exercise extends DomainObject {
                     // => if we can't find INITIALIZED, we return that one
                     relevantParticipation = participation;
                 }
+                // this case handles FINISHED participations which typically happen when manual results are involved
                 else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
-                        || participation.getExercise() instanceof FileUploadExercise) {
+                        || participation.getExercise() instanceof FileUploadExercise
+                        || (participation.getExercise() instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
                     return participation;
                 }
             }

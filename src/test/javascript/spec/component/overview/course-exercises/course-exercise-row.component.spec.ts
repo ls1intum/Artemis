@@ -2,15 +2,12 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { SinonStub, stub } from 'sinon';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockOrionConnectorService } from '../../../helpers/mocks/service/mock-orion-connector.service';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
-
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { Result } from 'app/entities/result.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
@@ -49,7 +46,6 @@ describe('CourseExerciseRowComponent', () => {
                 { provide: CourseManagementService, useClass: MockCourseService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: OrionConnectorService, useClass: MockOrionConnectorService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],

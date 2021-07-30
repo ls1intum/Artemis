@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
-import * as moment from 'moment';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam.model';
+import * as examUtils from 'app/exam/participate/exam-utils';
 
 @Component({
     selector: 'jhi-exam-information',
@@ -11,30 +11,23 @@ export class ExamInformationComponent {
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
 
-    /**
-     * Calculates the end time depending on the individual working time.
-     */
     endTime() {
-        if (!this.exam || !this.exam.endDate) {
-            return undefined;
-        }
-        if (this.studentExam && this.studentExam.workingTime && this.exam.startDate) {
-            return moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
-        }
-        return this.exam.endDate;
+        return examUtils.endTime(this.exam, this.studentExam);
     }
 
-    examOverMultipleDays() {
-        if (!this.exam || !this.exam.startDate || !this.exam.endDate) {
-            return false;
-        }
-        let endDate;
-        if (this.studentExam && this.studentExam.workingTime && this.exam.startDate) {
-            endDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
-        } else {
-            endDate = this.exam.endDate;
-        }
+    normalWorkingTime(): number | undefined {
+        return examUtils.normalWorkingTime(this.exam);
+    }
 
-        return endDate.dayOfYear() !== this.exam.startDate.dayOfYear();
+    hasAdditionalWorkingTime(): boolean | undefined {
+        return examUtils.hasAdditionalWorkingTime(this.exam, this.studentExam);
+    }
+
+    getAdditionalWorkingTime(): number {
+        return examUtils.getAdditionalWorkingTime(this.exam, this.studentExam);
+    }
+
+    isExamOverMultipleDays(): boolean {
+        return examUtils.isExamOverMultipleDays(this.exam, this.studentExam);
     }
 }
