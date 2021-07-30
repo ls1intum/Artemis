@@ -5,11 +5,11 @@ This page describes how to set up an environment deployed in Kubernetes.
 
 **Prerequisites:**
 
-* `Docker <https://docs.docker.com/install>`__
+* `Docker <https://docs.docker.com/install>`__ v20.10.7
 * `DockerHub Account <https://hub.docker.com/signup>`__
-* `k3d <https://k3d.io/>`__
-* `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl/>`__
-* `helm <https://helm.sh/docs/intro/install/>`__
+* `k3d <https://k3d.io/>`__ v4.4.7
+* `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl/>`__ v1.21
+* `helm <https://helm.sh/docs/intro/install/>`__ v3.6.3
 
 
 .. contents:: Content of this document
@@ -73,9 +73,9 @@ Then fill in the repository name with ``artemis``. The use the ``Create`` button
 .. figure:: kubernetes/dockerhub_create_repository.png
    :align: center
 
-Configure Artemis resources
----------------------------
-Make sure you have configured the ``src/main/resources/config/application-prod.yml`` or ``src/main/resources/config/application-artemis.yml`` file with the proper configuration. localhost connections to Jira, Bamboo, Bitbucket or Gitlab, Jenkins will not work. For this reason you should set the connection to existing servers or to local Kubernetes deployments.
+Configure DockerHub id
+----------------------
+
 Open the ``src/main/kubernetes/artemis-k8s/artemis-deployment.yml`` file and edit
 
     ::
@@ -86,6 +86,17 @@ Open the ``src/main/kubernetes/artemis-k8s/artemis-deployment.yml`` file and edi
             image: <DockerHubId>/artemis
 
 and replace <DockerHubId> with your docker id in DockerHub
+
+
+Configure Artemis resources
+---------------------------
+Make sure you have configured the ``src/main/resources/config/application-prod.yml`` or ``src/main/resources/config/application-artemis.yml`` file with the proper configuration. localhost connections to Jira, Bamboo, Bitbucket or Gitlab, Jenkins will not work. For this reason you should set the connection to existing servers or to local Kubernetes deployments.
+
+For more information check out the following documentations: 
+`Bitbucket, Jira, Bamboo <https://docs.artemis.ase.in.tum.de/dev/setup/bamboo-bitbucket-jira/>`__ or
+`Gitlab, Jenkins <https://docs.artemis.ase.in.tum.de/dev/setup/jenkins-gitlab/>`__
+
+TO DO: Add documentation how to deploy Jira, Bamboo, Bitbucket, Jenkins, Gitlab on Kubernetes
 
 Build Artemis
 -------------
@@ -112,6 +123,13 @@ Push the image to DockerHub:
 ::
 
    docker push <DockerHubId>/artemis
+
+Configure Artemis profiles
+--------------------------
+You can configure the profiles for running Artemis in the ``src/main/kubernetes/artemis-k8s/artemis-configmap.yml`` file by changing ``SPRING_PROFILES_ACTIVE``.
+The current ones are set to use Bitbucket, Jira and Bamboo. If you want to use Jenkins and Gitlab you should replace ``bamboo,bitbucket,jira`` with ``jenkins,gitlab``.
+You can also change ``prod`` to ``dev`` if you want to run in development profile.
+
 
 Deploy Kubernetes Resources
 ---------------------------
