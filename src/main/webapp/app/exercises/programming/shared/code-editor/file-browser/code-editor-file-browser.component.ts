@@ -22,6 +22,7 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 import { supportedTextFileExtensions } from 'app/exercises/programming/shared/code-editor/file-browser/supported-file-extensions';
+import { CodeEditorCollapseService, CollapsableCodeEditorElement } from 'app/exercises/programming/shared/code-editor/code-editor-collapse.service';
 
 export type InteractableEvent = {
     // Click event object; contains target information
@@ -84,6 +85,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     filesTreeViewItem: TreeviewItem[];
     compressFolders = true;
 
+    collapsed = false;
+
     @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
     @ViewChild('creatingInput', { static: false }) creatingInput: ElementRef;
 
@@ -125,6 +128,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         private repositoryService: CodeEditorRepositoryService,
         private fileService: CodeEditorFileService,
         private conflictService: CodeEditorConflictStateService,
+        private codeEditorCollapseService: CodeEditorCollapseService,
     ) {}
 
     ngOnInit(): void {
@@ -375,6 +379,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @param event
      */
     toggleEditorCollapse(event: any) {
+        this.collapsed = !this.collapsed;
+        this.codeEditorCollapseService.sendToggleCollapseEvent(CollapsableCodeEditorElement.FILE_BROWSER);
         this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable });
     }
 

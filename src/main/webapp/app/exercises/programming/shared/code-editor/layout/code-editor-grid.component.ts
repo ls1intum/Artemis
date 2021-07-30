@@ -5,6 +5,8 @@ import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ResizeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
+import { CodeEditorCollapseService, CollapsableCodeEditorElement } from 'app/exercises/programming/shared/code-editor/code-editor-collapse.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-code-editor-grid',
@@ -20,6 +22,10 @@ export class CodeEditorGridComponent implements AfterViewInit {
     isTutorAssessment = false;
     @Output()
     onResize = new EventEmitter<ResizeType>();
+
+    fileBrowserIsCollapsed = false;
+    rightPanelIsCollapsed = false;
+    buildOutputIsCollapsed = false;
 
     interactResizableMain: Interactable;
     resizableMinHeightMain = 480;
@@ -37,7 +43,26 @@ export class CodeEditorGridComponent implements AfterViewInit {
     resizableMinHeightBottom = 300;
     resizableMaxHeightBottom = 600;
 
-    constructor() {}
+    collapseSubscription: Subscription;
+
+    constructor(private codeEditorCollapseService: CodeEditorCollapseService) {
+        this.collapseSubscription = this.codeEditorCollapseService.getToggleCollapseEvent().subscribe((collapseEvent) => {
+            switch (collapseEvent) {
+                case CollapsableCodeEditorElement.FILE_BROWSER: {
+                    this.fileBrowserIsCollapsed = !this.fileBrowserIsCollapsed;
+                    break;
+                }
+                case CollapsableCodeEditorElement.RIGHT_PANEL: {
+                    this.rightPanelIsCollapsed = !this.rightPanelIsCollapsed;
+                    break;
+                }
+                case CollapsableCodeEditorElement.BUILD_OUTPUT: {
+                    this.buildOutputIsCollapsed = !this.buildOutputIsCollapsed;
+                    break;
+                }
+            }
+        });
+    }
 
     /**
      * After the view was initialized, we create an interact.js resizable object,
