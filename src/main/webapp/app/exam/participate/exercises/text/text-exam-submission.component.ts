@@ -83,6 +83,8 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
             return;
         }
 
+        this.showHighlightedDifferences = true;
+
         // creates the diffMatchPatch library object to be able to modify strings
         const dmp = new DiffMatchPatch();
         let outdatedProblemStatement: string;
