@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, ContentChild, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -73,11 +73,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private submissionSubscription: Subscription;
     studentParticipation?: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
+    allowComplaintsForAutomaticAssessments: boolean;
     public gradingCriteria: GradingCriterion[];
     showWelcomeAlert = false;
     private postings?: PostingsComponent;
     baseResource: string;
     isExamExercise: boolean;
+
+    // extension points, see shared/extension-point
+    @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
 
     /**
      * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
@@ -169,8 +173,19 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exercise.studentParticipations = this.filterParticipations(newExercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.exercise.participationStatus = participationStatus(this.exercise);
-        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
+        const now = moment();
+        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || now.isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exercise.categories || [];
+        this.allowComplaintsForAutomaticAssessments = false;
+
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            const programmingExercise = this.exercise as ProgrammingExercise;
+            const isAfterDateForComplaint =
+                (!this.exercise.dueDate || now.isAfter(this.exercise.dueDate)) &&
+                (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
+
+            this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
+        }
 
         // This is only needed in the local environment
         if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && (<ProgrammingExercise>this.exercise).isLocalSimulation) {

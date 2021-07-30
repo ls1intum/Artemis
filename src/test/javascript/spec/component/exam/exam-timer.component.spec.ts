@@ -8,6 +8,8 @@ import * as moment from 'moment';
 import { MockPipe } from 'ng-mocks';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -24,7 +26,7 @@ describe('ExamTimerComponent', function () {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ExamTimerComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamTimerComponent);
@@ -43,11 +45,20 @@ describe('ExamTimerComponent', function () {
 
     it('should update display times', () => {
         let duration = moment.duration(15, 'minutes');
-        expect(component.updateDisplayTime(duration)).to.equal('15 min');
+        expect(component.updateDisplayTime(duration)).to.equal('15min');
         duration = moment.duration(-15, 'seconds');
-        expect(component.updateDisplayTime(duration)).to.equal('00 : 00');
+        expect(component.updateDisplayTime(duration)).to.equal('0min 0s');
         duration = moment.duration(8, 'minutes');
-        expect(component.updateDisplayTime(duration)).to.equal('08 : 00 min');
+        expect(component.updateDisplayTime(duration)).to.equal('8min 0s');
+        duration = moment.duration(45, 'seconds');
+        expect(component.updateDisplayTime(duration)).to.equal('0min 45s');
+    });
+
+    it('should round down to next minute when over 10 minutes', () => {
+        let duration = moment.duration(629, 'seconds');
+        expect(component.updateDisplayTime(duration)).to.equal('10min');
+        duration = moment.duration(811, 'seconds');
+        expect(component.updateDisplayTime(duration)).to.equal('13min');
     });
 
     it('should update time in the template correctly', fakeAsync(() => {
@@ -59,11 +70,11 @@ describe('ExamTimerComponent', function () {
         let timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
         fixture.detectChanges();
         timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
-        expect(timeShownInTemplate).to.equal('30 min');
+        expect(timeShownInTemplate).to.equal('30min');
         tick(100);
         fixture.detectChanges();
         timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
-        expect(timeShownInTemplate).to.equal('25 min');
+        expect(timeShownInTemplate).to.equal('25min');
         discardPeriodicTasks();
     }));
 });
