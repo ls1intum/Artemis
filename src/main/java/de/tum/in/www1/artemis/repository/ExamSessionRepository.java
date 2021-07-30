@@ -13,7 +13,11 @@ import de.tum.in.www1.artemis.domain.exam.ExamSession;
 @Repository
 public interface ExamSessionRepository extends JpaRepository<ExamSession, Long> {
 
-    @Query("select count(es.id) from ExamSession es where es.studentExam.id = :#{#studentExamId}")
+    @Query("""
+        SELECT count(es.id)
+        FROM ExamSession es
+        WHERE es.studentExam.id = :#{#studentExamId}
+    """)
     long findExamSessionCountByStudentExamId(@Param("studentExamId") Long studentExamId);
 
 }
