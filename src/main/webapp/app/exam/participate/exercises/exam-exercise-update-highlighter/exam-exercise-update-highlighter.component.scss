@@ -1,0 +1,17 @@
+#highlightDiffButton {
+    background-color: #fbc107;
+    border: none;
+    padding: 0 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 10px;
+    font-size: 16px;
+    color: #353d47;
+
+    :hover {
+        color: #fff;
+    }
+}

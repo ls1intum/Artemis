@@ -11,6 +11,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
 import { Submission } from 'app/entities/submission.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
+import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -18,7 +19,7 @@ import { DiffMatchPatch } from 'diff-match-patch-typescript';
     providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
     styleUrls: ['./text-exam-submission.component.scss'],
 })
-export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+export class TextExamSubmissionComponent extends ExamExerciseUpdateHighlighterComponent implements OnInit {
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
     studentSubmission: TextSubmission;
@@ -31,33 +32,37 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     answer: string;
     private textEditorInput = new Subject<string>();
 
+    /*
     subscriptionToLiveExamExerciseUpdates: Subscription;
     previousProblemStatementUpdate: string;
     updatedProblemStatementWithHighlightedDifferences: string;
     updatedProblemStatement: string;
     showHighlightedDifferences = true;
-
+ */
     constructor(
         private textService: TextEditorService,
         private jhiAlertService: JhiAlertService,
         private artemisMarkdown: ArtemisMarkdownService,
         private translateService: TranslateService,
         private stringCountService: StringCountService,
-        private examExerciseUpdateService: ExamExerciseUpdateService,
+        //      private examExerciseUpdateService: ExamExerciseUpdateService,
+        examExerciseUpdateService: ExamExerciseUpdateService,
         changeDetectorReference: ChangeDetectorRef,
     ) {
-        super(changeDetectorReference);
+        super(examExerciseUpdateService, changeDetectorReference);
     }
 
     ngOnInit(): void {
         // show submission answers in UI
         this.updateViewFromSubmission();
 
+        /*
         this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
             this.updateExerciseProblemStatementById(update.exerciseId, update.problemStatement);
         });
+ */
     }
-
+    /*
     toggleHighlightedProblemStatement(): void {
         if (this.showHighlightedDifferences) {
             this.exercise.problemStatement = this.updatedProblemStatement;
@@ -66,11 +71,13 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         }
         this.showHighlightedDifferences = !this.showHighlightedDifferences;
     }
+ */
 
     getExercise(): Exercise {
         return this.exercise;
     }
 
+    /*
     updateExerciseProblemStatementById(exerciseId: number, updatedProblemStatement: string) {
         if (updatedProblemStatement != undefined && exerciseId === this.exercise.id) {
             this.updatedProblemStatement = updatedProblemStatement;
@@ -105,6 +112,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.updatedProblemStatementWithHighlightedDifferences = dmp.diff_prettyHtml(diff).replace(/&para;/g, '');
         return this.updatedProblemStatementWithHighlightedDifferences;
     }
+     */
 
     getSubmission(): Submission {
         return this.studentSubmission;
