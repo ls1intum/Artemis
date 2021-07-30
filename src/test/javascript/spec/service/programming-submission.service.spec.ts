@@ -13,7 +13,6 @@ import {
     ProgrammingSubmissionStateObj,
 } from 'app/exercises/programming/participate/programming-submission.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { MockAlertService } from '../helpers/mocks/service/mock-alert.service';
 import { Result } from 'app/entities/result.model';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -22,13 +21,9 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock-participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { MockOrionConnectorService } from '../helpers/mocks/service/mock-orion-connector.service';
-import { ProgrammingAssessmentRepoExportService } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { JhiAlertService } from 'ng-jhipster';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -39,8 +34,6 @@ describe('ProgrammingSubmissionService', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let participationService: ProgrammingExerciseParticipationService;
     let submissionService: ProgrammingSubmissionService;
-    const orionConnectorService = new MockOrionConnectorService();
-    let repositoryExportService: ProgrammingAssessmentRepoExportService;
 
     let httpGetStub: SinonStub;
     let wsSubscribeStub: SinonStub;
@@ -73,10 +66,7 @@ describe('ProgrammingSubmissionService', () => {
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
                 { provide: HttpClient, useClass: MockHttpService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: JhiAlertService, useClass: MockAlertService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
-                { provide: OrionConnectorService, useValue: orionConnectorService },
-                { provide: ProgrammingAssessmentRepoExportService, useClass: ProgrammingAssessmentRepoExportService },
             ],
         })
             .compileComponents()
@@ -86,7 +76,6 @@ describe('ProgrammingSubmissionService', () => {
                 httpService = TestBed.inject(HttpClient);
                 participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
                 participationService = TestBed.inject(ProgrammingExerciseParticipationService);
-                repositoryExportService = TestBed.inject(ProgrammingAssessmentRepoExportService);
 
                 httpGetStub = stub(httpService, 'get');
                 wsSubscribeStub = stub(websocketService, 'subscribe');
@@ -364,41 +353,5 @@ describe('ProgrammingSubmissionService', () => {
         // Should now unsubscribe as last participation for topic was unsubscribed
         submissionService.unsubscribeForLatestSubmissionOfParticipation(2);
         expect(wsUnsubscribeStub).to.have.been.called;
-    });
-
-    describe('Orion functions', () => {
-        it('downloadSubmission should convert and call connector', () => {
-            const downloadSubmissionSpy = spy(orionConnectorService, 'downloadSubmission');
-            const isCloningSpy = spy(orionConnectorService, 'isCloning');
-            const exportSubmissionStub = stub(repositoryExportService, 'exportReposByParticipations');
-
-            // first it loads the submission
-            httpGetStub.returns(of(currentSubmission));
-            // then the exported file
-            const response = new HttpResponse({ body: new Blob(['Stuff', 'in blob']), status: 200 });
-            exportSubmissionStub.returns(of(response));
-
-            // mock FileReader
-            const mockReader = {
-                result: 'testBase64',
-                // required, used to instantly trigger the callback
-                // @ts-ignore
-                readAsDataURL() {
-                    this.onloadend();
-                },
-            };
-            const readerStub = stub(window, 'FileReader');
-            readerStub.returns(mockReader);
-
-            submissionService.downloadSubmissionInOrion(25, 11, 0);
-
-            expect(isCloningSpy).to.have.been.calledOnceWithExactly(true);
-            // ignore HttpParams
-            expect(httpGetStub).to.have.been.calledOnceWith('api/programming-submissions/11/lock');
-            // ignore RepositoryExportOptions
-            expect(exportSubmissionStub).to.have.been.calledOnceWith(25, [1]);
-            expect(readerStub).to.have.been.calledOnce;
-            expect(downloadSubmissionSpy).to.have.been.calledOnceWithExactly(11, 0, 'testBase64');
-        });
     });
 });
