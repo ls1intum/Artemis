@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -10,16 +8,10 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { MockOrionConnectorService } from '../../helpers/mocks/service/mock-orion-connector.service';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
-import { spy } from 'sinon';
-import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
-
-chai.use(sinonChai);
 
 describe('ProgrammingExercise Management Component', () => {
     const course = { id: 123 } as Course;
@@ -34,9 +26,6 @@ describe('ProgrammingExercise Management Component', () => {
     let fixture: ComponentFixture<ProgrammingExerciseComponent>;
     let service: CourseExerciseService;
 
-    const orionConnectorService = new MockOrionConnectorService();
-    const router = new MockRouter();
-
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
@@ -48,8 +37,6 @@ describe('ProgrammingExercise Management Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
-                { provide: OrionConnectorService, useValue: orionConnectorService },
-                { provide: Router, useValue: router },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
             ],
         })
@@ -61,10 +48,6 @@ describe('ProgrammingExercise Management Component', () => {
         service = fixture.debugElement.injector.get(CourseExerciseService);
 
         comp.programmingExercises = [programmingExercise, programmingExercise2, programmingExercise3];
-    });
-
-    afterEach(() => {
-        router.navigateSpy.restore();
     });
 
     it('Should call load all on init', () => {
@@ -131,28 +114,6 @@ describe('ProgrammingExercise Management Component', () => {
             // THEN
             expect(comp.isExerciseSelected(programmingExercise)).toBeTruthy();
             expect(comp.isExerciseSelected(programmingExercise2)).toBeFalsy();
-        });
-    });
-
-    describe('Orion functions', () => {
-        it('editInIde should call connector', () => {
-            const editExerciseSpy = spy(orionConnectorService, 'editExercise');
-
-            comp.editInIDE(programmingExercise);
-
-            chai.expect(editExerciseSpy).to.have.been.calledOnceWithExactly(programmingExercise);
-        });
-        it('openOrionEditor should navigate to orion editor', () => {
-            comp.openOrionEditor(programmingExercise);
-
-            chai.expect(router.navigateSpy).to.have.been.calledOnceWithExactly(['code-editor', 'ide', 456, 'admin', undefined]);
-        });
-        it('openOrionEditor with error', () => {
-            const error = 'test error';
-            router.navigateSpy.throws(error);
-            comp.openOrionEditor(programmingExercise);
-
-            chai.expect(router.navigateSpy).to.have.been.calledWithExactly(['code-editor', 'ide', 456, 'admin', undefined]);
         });
     });
 });

@@ -72,7 +72,7 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
     submit(): void {
         this.orionConnectorService.submit();
         if (this.selectedRepository !== REPOSITORY.TEST) {
-            this.orionState.building = true;
+            this.orionConnectorService.isBuilding(true);
             this.orionBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise, this.selectedParticipation);
         }
     }
@@ -81,7 +81,7 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
      * Tells Orion to build and test the selected repository locally instead of committing and pushing the code to the remote
      */
     buildLocally(): void {
+        this.orionConnectorService.isBuilding(true);
         this.orionConnectorService.buildAndTestLocally();
-        this.orionState.building = true;
     }
 }

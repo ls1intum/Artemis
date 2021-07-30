@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, ContentChild, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -79,6 +79,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private postings?: PostingsComponent;
     baseResource: string;
     isExamExercise: boolean;
+
+    // extension points, see shared/extension-point
+    @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
 
     /**
      * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
