@@ -36,7 +36,7 @@ export class ExamNavigationBarComponent implements OnInit {
 
     icon: IconProp;
     getExerciseButtonTooltip = this.examParticipationService.getExerciseButtonTooltip;
-  
+
     subscriptionToLiveExamExerciseUpdates: Subscription;
 
     constructor(
