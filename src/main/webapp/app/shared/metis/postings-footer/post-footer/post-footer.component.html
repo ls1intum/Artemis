@@ -4,11 +4,5 @@
             {{ tag }}
         </span>
     </div>
-    <div class="col-auto p-0">
-        <fa-icon [icon]="['far', 'smile']" class="text-secondary clickable" (click)="toggleReactionSelector()"></fa-icon>
-        <div *ngIf="showReactionSelector">
-            <emoji-mart (emojiSelect)="updateReaction($event)"></emoji-mart>
-        </div>
-        <ngx-emoji *ngFor="let reaction of posting.reactions" [emoji]="reaction.emojiId!"></ngx-emoji>
-    </div>
 </div>
+<jhi-postings-reactions-bar [posting]="posting" [postingType]="'post'"></jhi-postings-reactions-bar>

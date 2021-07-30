@@ -21,6 +21,9 @@ import { TagInputModule } from 'ngx-chips';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { OverlayModule } from '@angular/cdk/overlay';
+import { CommonModule } from '@angular/common';
+import { PostingsReactionsBarComponent } from 'app/shared/metis/postings-footer/postings-reactions-bar/postings-reactions-bar.component';
 
 @NgModule({
     imports: [
@@ -34,6 +37,8 @@ import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
         ArtemisSharedComponentModule,
         PickerModule,
         EmojiModule,
+        OverlayModule,
+        CommonModule,
     ],
     declarations: [
         PostingsThreadComponent,
@@ -49,6 +54,7 @@ import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
         PostComponent,
         PostVotesComponent,
         AnswerPostComponent,
+        PostingsReactionsBarComponent,
     ],
     exports: [
         PostingsThreadComponent,
@@ -64,6 +70,7 @@ import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
         PostComponent,
         PostVotesComponent,
         AnswerPostComponent,
+        PostingsReactionsBarComponent,
     ],
 })
 export class MetisModule {}

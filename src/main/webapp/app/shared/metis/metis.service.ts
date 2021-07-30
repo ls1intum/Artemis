@@ -213,10 +213,13 @@ export class MetisService {
      * fetches the posts for the currently set filter on response
      * @param reaction reaction to create
      */
-    createReaction(reaction: Reaction): void {
-        this.reactionService.create(this.courseId, reaction).subscribe(() => {
-            this.getPostsForFilter(this.currentPostFilter);
-        });
+    createReaction(reaction: Reaction): Observable<Reaction> {
+        return this.reactionService.create(this.courseId, reaction).pipe(
+            tap(() => {
+                this.getPostsForFilter(this.currentPostFilter);
+            }),
+            map((res: HttpResponse<Post>) => res.body!),
+        );
     }
 
     /**
@@ -224,10 +227,13 @@ export class MetisService {
      * fetches the posts for the currently set filter on response
      * @param reaction reaction to create
      */
-    deleteReaction(reaction: Reaction): void {
-        this.reactionService.delete(this.courseId, reaction).subscribe(() => {
-            this.getPostsForFilter(this.currentPostFilter);
-        });
+    deleteReaction(reaction: Reaction): Observable<void> {
+        return this.reactionService.delete(this.courseId, reaction).pipe(
+            tap(() => {
+                this.getPostsForFilter(this.currentPostFilter);
+            }),
+            map((res: HttpResponse<void>) => res.body!),
+        );
     }
 
     /**

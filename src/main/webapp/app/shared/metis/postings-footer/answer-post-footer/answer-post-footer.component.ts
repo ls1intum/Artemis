@@ -15,7 +15,7 @@ export class AnswerPostFooterComponent extends PostingsFooterDirective<AnswerPos
     isAtLeastTutorInCourse: boolean;
 
     constructor(protected metisService: MetisService) {
-        super(metisService);
+        super();
     }
 
     /**
@@ -23,13 +23,6 @@ export class AnswerPostFooterComponent extends PostingsFooterDirective<AnswerPos
      */
     ngOnInit(): void {
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-    }
-
-    buildReaction(emojiData: EmojiData): Reaction {
-        const reaction = new Reaction();
-        reaction.emojiId = emojiData.id;
-        reaction.answerPost = this.posting;
-        return reaction;
     }
 
     /**

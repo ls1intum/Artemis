@@ -1,0 +1,29 @@
+<div class="me-0 row">
+    <div class="col-auto pe-0">
+        <fa-icon
+            [icon]="['far', 'smile']"
+            class="reaction-button text-secondary clickable"
+            (click)="showReactionSelector = !showReactionSelector"
+            cdkOverlayOrigin
+            #trigger="cdkOverlayOrigin"
+            [ngbTooltip]="'artemisApp.metis.chooseReaction' | artemisTranslate"
+        >
+        </fa-icon>
+    </div>
+    <div class="col-auto p-0" *ngFor="let reactionCount of reactionCountMap | keyvalue">
+        <button class="reaction-button clickable" [class.reaction-button--reacted]="reactionCount.value.hasReacted" (click)="updateReaction(reactionCount.key)">
+            <ngx-emoji class="emoji" [emoji]="reactionCount.key" [size]="16"></ngx-emoji>
+            <span class="posting-footer">{{ reactionCount.value.count }}</span>
+        </button>
+    </div>
+    <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="trigger" [cdkConnectedOverlayOpen]="showReactionSelector">
+        <emoji-mart
+            (emojiSelect)="selectReaction($event)"
+            [emojiSize]="20"
+            [showSingleCategory]="true"
+            [showPreview]="false"
+            [recent]="selectedCourseEmojis"
+            [i18n]="{ search: 'artemisApp.metis.searchEmoji' | artemisTranslate, categories: { recent: 'artemisApp.metis.courseEmojiSelectionCategory' | artemisTranslate } }"
+        ></emoji-mart>
+    </ng-template>
+</div>

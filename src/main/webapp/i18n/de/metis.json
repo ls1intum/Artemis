@@ -17,6 +17,9 @@
             "approveAnswer": "Bestätigen",
             "approvedAnswer": "Bestätigt",
             "today": "Heute",
+            "chooseReaction": "Wähle eine Reaktion...",
+            "searchEmoji": "Emoji suchen",
+            "courseEmojiSelectionCategory": "Ausgewählte emojis für diesen Kurs",
             "discussion": {
                 "header": "Diskussion",
                 "show": "Diskussion anzeigen",
