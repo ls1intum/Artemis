@@ -14,6 +14,7 @@ import org.hibernate.annotations.DiscriminatorOptions;
 import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -445,6 +446,19 @@ public abstract class Exercise extends DomainObject {
         else {
             return this.getCourse();
         }
+    }
+
+    /**
+     * Utility method to get the exam. Get the exam over the exerciseGroup, if one was set, otherwise return null.
+     *
+     * @return exam, to which the exercise belongs
+     */
+    @JsonIgnore
+    public Exam getExamViaExerciseGroupOrCourseMember() {
+        if (isExamExercise()) {
+            return this.getExerciseGroup().getExam();
+        }
+        return null;
     }
 
     public Set<ExampleSubmission> getExampleSubmissions() {
