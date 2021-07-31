@@ -57,8 +57,7 @@ public class WebsocketMessagingService {
         if (participation instanceof StudentParticipation) {
             var exercise = participation.getExercise();
             // If the assessment due date is not over yet, do not send manual feedback to students!
-            if (AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) || exercise.getAssessmentDueDate() == null
-                    || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate())) {
+            if (AssessmentType.AUTOMATIC == result.getAssessmentType() || exercise.getAssessmentDueDate() == null || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate())) {
                 StudentParticipation studentParticipation = (StudentParticipation) participation;
 
                 result.filterSensitiveInformation();

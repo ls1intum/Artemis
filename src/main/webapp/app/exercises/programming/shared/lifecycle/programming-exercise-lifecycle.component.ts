@@ -1,9 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
 import * as moment from 'moment';
+import { Moment } from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -33,8 +33,21 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
      * SEMI_AUTOMATIC (After all automatic tests have been run, the tutors will have to make a final manual assessment)
      *
      */
-    toggleHasManualAssessment() {
-        this.exercise.assessmentType = this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ? AssessmentType.AUTOMATIC : AssessmentType.SEMI_AUTOMATIC;
+    toggleAssessmentType() {
+        if (this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
+            this.exercise.assessmentType = AssessmentType.AUTOMATIC;
+            if (this.isExamMode || this.exercise.course?.complaintsEnabled) {
+                this.exercise.allowComplaintsForAutomaticAssessments = true;
+            } else {
+                this.exercise.allowComplaintsForAutomaticAssessments = false;
+            }
+        } else if (this.exercise.allowComplaintsForAutomaticAssessments) {
+            this.exercise.allowComplaintsForAutomaticAssessments = false;
+        } else {
+            this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            this.exercise.allowComplaintsForAutomaticAssessments = false;
+        }
+
         // when the new value is AssessmentType.AUTOMATIC, we need to reset assessment due date
         if (this.exercise.assessmentType === AssessmentType.AUTOMATIC) {
             this.exercise.assessmentDueDate = undefined;
