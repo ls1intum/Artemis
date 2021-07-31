@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -21,5 +21,11 @@ export class MockCourseManagementService {
         const mockHttpResponse = new HttpResponse({ body: mockHttpBody });
 
         return of(mockHttpResponse);
+    };
+
+    coursesForNotificationsMock: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
+    // this method is used in notification.service.spec
+    getCoursesForNotifications = () => {
+        return this.coursesForNotificationsMock.asObservable();
     };
 }

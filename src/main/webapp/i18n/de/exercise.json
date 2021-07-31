@@ -43,6 +43,7 @@
             "actions": "Aktionen",
             "notStarted": "Du hast diese Aufgabe noch nicht gestartet.",
             "problemStatement": "Aufgabenstellung",
+            "instructions": "Anweisungen",
             "sampleSolution": "Beispiel Lösung",
             "assessmentInstructions": "Bewertungsanweisungen",
             "assessmentInstruction": "Bewertungsanweisung: ",

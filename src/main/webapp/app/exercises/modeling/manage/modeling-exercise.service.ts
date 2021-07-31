@@ -108,6 +108,17 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
     }
 
     /**
+     * Get the number of clusters for the exercise with the given ID.
+     *
+     * @param exerciseId
+     */
+    getNumberOfClusters(exerciseId: number): Observable<HttpResponse<number>> {
+        return this.http.get<number>(`${this.resourceUrl}/${exerciseId}/check-clusters`, {
+            observe: 'response',
+        });
+    }
+
+    /**
      * Build the clusters to use in Compass
      * @param modelingExerciseId id of the exercise to build the clusters for
      */

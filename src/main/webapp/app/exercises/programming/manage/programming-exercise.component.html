@@ -3,30 +3,28 @@
         <span *ngIf="course && !showHeading">{{ course.title }} - </span
         ><span *ngIf="programmingExercises && showHeading">{{ getAmountOfExercisesString(programmingExercises) }} </span>
         <span jhiTranslate="artemisApp.programmingExercise.home.title">Programming Exercises</span>
-        <button
-            jhiOrionFilter
-            [showInOrionWindow]="false"
-            *ngIf="course && course.isAtLeastEditor"
-            id="jh-import-entity"
-            class="btn btn-primary float-end jh-create-entity create-programming-exercise me-1"
-            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            (click)="openImportModal()"
-        >
-            <fa-icon [icon]="'plus'"></fa-icon>
-            <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.importLabel"> Import new programming exercise </span>
-        </button>
-        <a
-            jhiOrionFilter
-            [showInOrionWindow]="false"
-            *ngIf="course && course.isAtLeastEditor"
-            id="jh-create-entity"
-            class="btn btn-primary float-end jh-create-entity create-programming-exercise me-1"
-            [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [routerLink]="['/course-management', courseId, 'programming-exercises', 'new']"
-        >
-            <fa-icon [icon]="'plus'"></fa-icon>
-            <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">Generate new Programming Exercise</span>
-        </a>
+        <ng-container *jhiExtensionPoint="overrideGenerateAndImportButton">
+            <button
+                *ngIf="course && course.isAtLeastEditor"
+                id="jh-import-entity"
+                class="btn btn-primary float-end jh-create-entity create-programming-exercise me-1"
+                [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                (click)="openImportModal()"
+            >
+                <fa-icon [icon]="'plus'"></fa-icon>
+                <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.importLabel"> Import new programming exercise </span>
+            </button>
+            <a
+                *ngIf="course && course.isAtLeastEditor"
+                id="jh-create-entity"
+                class="btn btn-primary float-end jh-create-entity create-programming-exercise me-1"
+                [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
+                [routerLink]="['/course-management', courseId, 'programming-exercises', 'new']"
+            >
+                <fa-icon [icon]="'plus'"></fa-icon>
+                <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">Generate new Programming Exercise</span>
+            </a>
+        </ng-container>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row"></div>
@@ -52,8 +50,8 @@
                     <th jhiSortBy="includedInOverallScore">
                         <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiOrionFilter [showInOrionWindow]="false"><span jhiTranslate="artemisApp.programmingExercise.repositories">Repositories</span></th>
-                    <th jhiOrionFilter [showInOrionWindow]="false"><span jhiTranslate="artemisApp.programmingExercise.buildplans">Build Plans</span>&nbsp;</th>
+                    <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.repositories">Repositories</span></th>
+                    <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.buildplans">Build Plans</span>&nbsp;</th>
                     <th class="d-none d-md-table-cell" jhiSortBy="publishBuildPlanUrl">
                         <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -89,7 +87,7 @@
                     <td class="d-none d-md-table-cell">{{ programmingExercise.maxPoints }}</td>
                     <td>{{ programmingExercise.bonusPoints }}</td>
                     <td>{{ exerciseService.isIncludedInScore(programmingExercise) }}</td>
-                    <td *ngIf="!isOrion">
+                    <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">
                         <div class="d-flex justify-content-between">
                             <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
                                 <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
@@ -147,7 +145,7 @@
                             <ng-template #noVersionControlAndContinuousIntegrationAvailableTest>Test</ng-template>
                         </div>
                     </td>
-                    <td jhiOrionFilter [showInOrionWindow]="false">
+                    <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">
                         <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
                         <span *ngIf="programmingExercise.templateParticipation?.buildPlanId"
                             ><a
@@ -187,32 +185,7 @@
                         </div>
                     </td>
                     <td class="d-none d-md-table-cell" *ngIf="course.presentationScore !== 0">{{ programmingExercise.presentationScoreEnabled }}</td>
-                    <td jhiOrionFilter [showInOrionWindow]="true" class="align-middle">
-                        <jhi-ide-button
-                            *ngIf="
-                                orionState.view === ExerciseView.INSTRUCTOR &&
-                                    orionState.opened === programmingExercise.id &&
-                                    programmingExercise.isAtLeastEditor &&
-                                    programmingExercise.templateParticipation;
-                                else importAsInstructor
-                            "
-                            buttonLabel="{{ 'artemisApp.programmingExercise.intellij.openEditor' | artemisTranslate }}"
-                            [smallButton]="false"
-                            (clickHandler)="openOrionEditor(programmingExercise)"
-                        >
-                        </jhi-ide-button>
-                        <ng-template #importAsInstructor>
-                            <jhi-ide-button
-                                *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation"
-                                [buttonLabel]="'entity.action.editInIntelliJ' | artemisTranslate"
-                                [buttonLoading]="orionState.cloning"
-                                [smallButton]="false"
-                                (clickHandler)="editInIDE(programmingExercise)"
-                            >
-                            </jhi-ide-button>
-                        </ng-template>
-                    </td>
-                    <td jhiOrionFilter [showInOrionWindow]="false" class="text-end">
+                    <td *jhiExtensionPoint="overrideButtons; context: { exercise: programmingExercise }" class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a
@@ -273,8 +246,6 @@
                                     [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     [attr.disabled]="false"
                                     *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation"
-                                    jhiOrionFilter
-                                    [showInOrionWindow]="false"
                                     [routerLink]="[
                                         '/course-management',
                                         courseId,
