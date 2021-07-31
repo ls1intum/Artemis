@@ -108,19 +108,19 @@
                 <ng-container *ngTemplateOutlet="editorBottom"></ng-container>
             </div>
         </jhi-code-editor-container>
-        <ng-template #editorBottom>
-            <div class="row mt-3">
-                <div class="col-md-6">
-                    <jhi-unreferenced-feedback
-                        [(feedbacks)]="unreferencedFeedback"
-                        (feedbacksChange)="validateFeedback()"
-                        [readOnly]="readOnly()"
-                        [highlightDifferences]="highlightDifferences"
-                    ></jhi-unreferenced-feedback>
-                </div>
-            </div>
-        </ng-template>
     </ng-container>
+    <ng-template #editorBottom>
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <jhi-unreferenced-feedback
+                    [(feedbacks)]="unreferencedFeedback"
+                    (feedbacksChange)="validateFeedback()"
+                    [readOnly]="readOnly()"
+                    [highlightDifferences]="highlightDifferences"
+                ></jhi-unreferenced-feedback>
+            </div>
+        </div>
+    </ng-template>
 </ng-template>
 
 <ng-template #noSubmission>
