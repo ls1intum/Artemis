@@ -174,7 +174,7 @@ You can do it by executing the following command:
 
    kubectl apply -k src/main/kubernetes
 
-In the console you will see that the resources are created.
+In the console you will see that the resources are created. It will take a litte bit of time when you are doing this for the first time. Be patient!
 
 .. figure:: kubernetes/kubectl_kustomization.png
    :align: center
@@ -188,3 +188,11 @@ It may take some time but at the end you should see that all the workloads have 
    :align: center
 
 You can open the Artemis application using the link ``https://artemis-app.default.rancher.localhost/``
+In case that there is an error with the deployment you can check out the logs. 
+
+Check out the logs
+------------------
+Open the workload which logs you need to check. There is a list of pods. Open the menu for one of the pods and select ``View Logs``. A popup with the logs will be opened.
+
+.. figure:: kubernetes/rancher_logs.png
+   :align: center
