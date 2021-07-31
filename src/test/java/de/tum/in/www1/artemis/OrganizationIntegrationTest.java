@@ -224,7 +224,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
 
         Organization organization = database.createOrganization();
 
-        Organization updatedOrganization = request.postWithResponseBody("/api/organizations/add", organization, Organization.class, HttpStatus.OK);
+        Organization updatedOrganization = request.postWithResponseBody("/api/organizations", organization, Organization.class, HttpStatus.OK);
         Organization updatedOrganization2 = request.get("/api/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
         assertThat(updatedOrganization2).isNotNull();
         assertThat(updatedOrganization.getId()).isNotNull();

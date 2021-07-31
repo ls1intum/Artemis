@@ -51,14 +51,15 @@ public class OrganizationResource {
     }
 
     /**
-     * POST /organizations/course/:courseId/organization/:organizationId :
+     * POST organizations/course/:courseId/organization/:organizationId :
      * Add a course to an organization
      *
      * @param courseId the id of the course to add
      * @param organizationId the id of the organization where the course should be added
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
-    @PostMapping("/organizations/course/{courseId}/organization/{organizationId}")
+    @PostMapping("organizations/{organizationId}/courses/{courseId}/organization/") // TODO: this path doesn't make sense, should be organizations/{organizationId}/courses, the
+                                                                                    // courseId should be chosen by the server
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> addCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
         log.debug("REST request to add course to organization : {}", organizationId);
@@ -69,14 +70,14 @@ public class OrganizationResource {
     }
 
     /**
-     * DELETE /organizations/course/:courseId/organization/:organizationId :
+     * DELETE organizations/course/:courseId/organization/:organizationId :
      * Remove a course from an organization
      *
      * @param courseId the id of the course to remove
      * @param organizationId the id of the organization from with the course should be removed
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
-    @DeleteMapping("/organizations/course/{courseId}/organization/{organizationId}")
+    @DeleteMapping("organizations/course/{courseId}/organization/{organizationId}") // TODO: should be organizations/{organizationId}/courses/{courseId}
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> removeCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
         Organization organization = organizationRepository.findOneOrElseThrow(organizationId);
@@ -86,14 +87,14 @@ public class OrganizationResource {
     }
 
     /**
-     * POST /organizations/user/:userlogin/organization/:organizationId :
+     * POST organizations/user/:userlogin/organization/:organizationId :
      * Add a user to an organization
      *
      * @param userLogin the login of the user to add
      * @param organizationId the id of the organization where the user should be added
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
-    @PostMapping("/organizations/user/{userLogin}/organization/{organizationId}")
+    @PostMapping("organizations/user/{userLogin}/organization/{organizationId}") // TODO: should be organizations/{organizationId}/users/{userLogin}
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> addUserToOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
         User user = userRepository.getUserByLoginElseThrow(userLogin);
@@ -104,7 +105,7 @@ public class OrganizationResource {
     }
 
     /**
-     * DELETE /organizations/user/:userLogin/organization/:organizationId :
+     * DELETE organizations/{organizationId}/users/{userLogin} :
      * Remove a user from an organization
      *
      * Keep in mind that removing a user from an organization does not remove it
@@ -114,7 +115,7 @@ public class OrganizationResource {
      * @param organizationId the id of the organization from with the user should be removed
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
-    @DeleteMapping("/organizations/user/{userLogin}/organization/{organizationId}")
+    @DeleteMapping("organizations/{organizationId}/users/{userLogin}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> removeUserFromOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
         log.debug("REST request to remove course to organization : {}", organizationId);
@@ -126,12 +127,12 @@ public class OrganizationResource {
     }
 
     /**
-     * POST /organizations/add : Add a new organization
+     * POST /organizations : Add a new organization
      *
      * @param organization the organization entity to add
      * @return the ResponseEntity containing the added organization with status 200 (OK), or 404 (Not Found) otherwise
      */
-    @PostMapping("/organizations/add")
+    @PostMapping("/organizations")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Organization> addOrganization(@RequestBody Organization organization) {
         log.debug("REST request to add new organization : {}", organization);
@@ -146,7 +147,7 @@ public class OrganizationResource {
      * @param organization the updated organization entity
      * @return the ResponseEntity containing the updated organization with status 200 (OK), or 404 (Not Found) otherwise
      */
-    @PutMapping("/organizations/update")
+    @PutMapping("/organizations/{organizationId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Organization> updateOrganization(@RequestBody Organization organization) {
         log.debug("REST request to update organization : {}", organization);
@@ -160,12 +161,12 @@ public class OrganizationResource {
     }
 
     /**
-     * DELETE /organizations/delete/:organizationId : Delete an existing organization
+     * DELETE organizations/:organizationId : Delete an existing organization
      *
      * @param organizationId the id of the organization to remove
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
-    @DeleteMapping("/organizations/delete/{organizationId}")
+    @DeleteMapping("organizations/{organizationId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteOrganization(@PathVariable Long organizationId) {
         log.debug("REST request to delete organization : {}", organizationId);
@@ -175,11 +176,11 @@ public class OrganizationResource {
     }
 
     /**
-     * GET /organizations/all : Get all organizations
+     * GET organizations : Get all organizations
      *
      * @return ResponseEntity containing a list of all organizations with status 200 (OK)
      */
-    @GetMapping("/organizations/all")
+    @GetMapping("organizations")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Organization>> getAllOrganizations() {
         log.debug("REST request to get all organizations");
@@ -261,7 +262,7 @@ public class OrganizationResource {
      * @param courseId the id of the course that the organizations should contain
      * @return ResponseEntity containing a set of organizations containing the given course
      */
-    @GetMapping("/organizations/course/{courseId}")
+    @GetMapping("/organizations/courses/{courseId}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Set<Organization>> getAllOrganizationsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all organizations of course : {}", courseId);
@@ -275,7 +276,7 @@ public class OrganizationResource {
      * @param userId the id of the user that the organizations should contain
      * @return ResponseEntity containing a set of organizations containing the given user
      */
-    @GetMapping("/organizations/user/{userId}")
+    @GetMapping("/organizations/users/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Set<Organization>> getAllOrganizationsByUser(@PathVariable Long userId) {
         log.debug("REST request to get all organizations of user : {}", userId);
