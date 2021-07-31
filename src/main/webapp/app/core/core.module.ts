@@ -6,7 +6,6 @@ import { AuthInterceptor } from 'app/core/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
-import { JhiConfigService, JhiLanguageService, NgJhipsterModule } from 'ng-jhipster';
 import { NgbDateAdapter, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { NgxWebstorageModule } from 'ngx-webstorage';
@@ -49,7 +48,6 @@ import { missingTranslationHandler, translatePartialLoader } from './config/tran
             missingTranslationHandler: {
                 provide: MissingTranslationHandler,
                 useFactory: missingTranslationHandler,
-                deps: [JhiConfigService],
             },
         }),
     ],
