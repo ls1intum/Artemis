@@ -1,5 +1,5 @@
-import { TIME_FORMAT } from './../constants';
 import dayjs from 'dayjs';
+import { dayjsToString } from '../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam creation page.
@@ -100,6 +100,6 @@ export class ExamCreationPage {
     }
 
     private enterDate(selector: string, date: dayjs.Dayjs) {
-        cy.get(selector).find('input').clear().type(date.format(TIME_FORMAT), { force: true });
+        cy.get(selector).find('input').clear().type(dayjsToString(date), { force: true });
     }
 }

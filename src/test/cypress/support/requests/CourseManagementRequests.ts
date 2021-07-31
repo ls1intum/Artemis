@@ -1,6 +1,9 @@
 import { BASE_API, DELETE, POST } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
+import { dayjsToString, generateUUID } from '../utils';
+import examTemplate from '../../fixtures/requests/exam_template.json';
+import dayjs from 'dayjs';
 
 const COURSE_BASE = BASE_API + 'courses/';
 const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
@@ -79,5 +82,57 @@ export class CourseManagementRequests {
      */
     addStudentToCourse(courseId: number, studentName: string) {
         return cy.request({ url: COURSE_BASE + courseId + '/students/' + studentName, method: POST });
+    }
+
+    /**
+     * Creates an exam with the provided settings.
+     * @param course the course dto of a previous createCourse request
+     * @param title the exam title
+     * @param visibleDate the date when the exam should be visible
+     * @param startDate the date when the exam should start
+     * @param endDate the date when the exam should end
+     * @param randomizeOrder if the exercise order should be randomized
+     * @param correctionRounds how many correction rounds there are
+     * @param maxPoints the maximum amount of points achieved in the exam
+     * @param gracePeriod the grace period in seconds
+     * @param numberOfExercises the amount of exercises in the exam
+     * @param startText the start text
+     * @param endText the end text
+     * @param confirmationStartText the confirmation start text
+     * @param confirmationEndText the confirmation end text
+     * @returns the request response
+     */
+    createExam(
+        course: any,
+        title = 'exam' + generateUUID(),
+        visibleDate = dayjsToString(dayjs()),
+        startDate = dayjsToString(dayjs().add(1, 'day')),
+        endDate = dayjsToString(dayjs().add(2, 'day')),
+        randomizeOrder = false,
+        correctionRounds = 1,
+        maxPoints = 10,
+        gracePeriod = 30,
+        numberOfExercises = 1,
+        startText = 'Cypress exam start text',
+        endText = 'Cypress exam end text',
+        confirmationStartText = 'Cypress exam confirmation start text',
+        confirmationEndText = 'Cypress exam confirmation end text',
+    ) {
+        const template = examTemplate;
+        template.course = course;
+        template.title = title;
+        template.visibleDate = visibleDate;
+        template.startDate = startDate;
+        template.endDate = endDate;
+        template.randomizeExerciseOrder = randomizeOrder;
+        template.numberOfCorrectionRoundsInExam = correctionRounds;
+        template.maxPoints = maxPoints;
+        template.gracePeriod = gracePeriod;
+        template.numberOfExercisesInExam = numberOfExercises;
+        template.startText = startText;
+        template.endText = endText;
+        template.confirmationStartText = confirmationStartText;
+        template.confirmationEndText = confirmationEndText;
+        return cy.request({ url: COURSE_BASE + course.id + '/exams', method: POST, body: template });
     }
 }

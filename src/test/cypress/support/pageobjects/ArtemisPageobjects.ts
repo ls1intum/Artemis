@@ -1,3 +1,4 @@
+import { ExamManagementPage } from './ExamManagementPage';
 import { ExamCreationPage } from './ExamCreationPage';
 import { CourseManagementPage } from './CourseManagementPage';
 import { NavigationBar } from './NavigationBar';
@@ -11,4 +12,5 @@ export class ArtemisPageobjects {
     navigationBar = new NavigationBar();
     onlineEditor = new OnlineEditorPage();
     examCreation = new ExamCreationPage();
+    examManagement = new ExamManagementPage();
 }

@@ -1,0 +1,18 @@
+{
+    "randomizeExerciseOrder": false,
+    "numberOfCorrectionRoundsInExam": 1,
+    "maxPoints": 10,
+    "visible": false,
+    "started": false,
+    "gracePeriod": 180,
+    "course": "<Insert course object here>",
+    "title": "<Insert exam title here>",
+    "visibleDate": "<Insert visible date here>",
+    "startDate": "<Insert start date here>",
+    "endDate": "<Insert end date here>",
+    "numberOfExercisesInExam": 1,
+    "startText": "<Insert start text here>",
+    "endText": "<Insert end text here>",
+    "confirmationStartText": "<Insert confirmation start text here>",
+    "confirmationEndText": "<Insert confirmation end text here>"
+}
