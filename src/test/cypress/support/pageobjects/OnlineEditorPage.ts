@@ -4,15 +4,7 @@ const buildingAndTesting = 'Building and testing...';
  * A class which encapsulates UI selectors and actions for the Online Editor Page.
  */
 export class OnlineEditorPage {
-    deleteRemainingContent: string;
-
-    constructor() {
-        this.deleteRemainingContent = '';
-        for (let i = 0; i < 100; i++) {
-            this.deleteRemainingContent += '{del}';
-        }
-    }
-
+    readonly deleteRemainingContent = '{del}'.repeat(100);
     /**
      * @returns the root element of the file browser. Useful for further querying.
      */
