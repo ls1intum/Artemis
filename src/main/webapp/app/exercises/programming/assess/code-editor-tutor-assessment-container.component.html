@@ -43,7 +43,8 @@
     <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
 </jhi-assessment-layout>
 
-<ng-template #assessment>
+<ng-template #assessment *jhiExtensionPoint="overrideCodeEditor; context: { title: editorTitle, feedback: editorBottom }">
+    }
     <jhi-code-editor-container
         *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
         [editable]="false"
@@ -56,7 +57,7 @@
         (onUpdateFeedback)="onUpdateFeedback($event)"
         (onFileLoad)="onFileLoad($event)"
     >
-        <div editorTitle>
+        <div editorTitle #editorTitle>
             <span>{{ exercise?.title }}</span>
             <span
                 >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}
@@ -103,7 +104,7 @@
             [exercise]="exercise!"
             [programmingParticipation]="participation"
         ></jhi-assessment-instructions>
-        <div class="mt-3" editorBottom>
+        <div class="mt-3" editorBottom #editorBottom>
             <div class="row mt-3">
                 <div class="col-md-6">
                     <jhi-unreferenced-feedback

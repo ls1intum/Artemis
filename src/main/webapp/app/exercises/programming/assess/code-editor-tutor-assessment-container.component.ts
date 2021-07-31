@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ContentChild, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import * as moment from 'moment';
 import { now } from 'moment';
@@ -99,6 +99,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     templateParticipation: TemplateProgrammingExerciseParticipation;
     templateFileSession: { [fileName: string]: string } = {};
+
+    // extension points, see shared/extension-point
+    @ContentChild("overrideCodeEditor") overrideCodeEditor: TemplateRef<any>;
+    @ContentChild("editorBottom") editorBottom: TemplateRef<any>;
+    @ContentChild("editorTitle") editorTitle: TemplateRef<any>;
 
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
@@ -287,11 +292,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     save(): void {
         this.saveBusy = true;
-        this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, undefined).subscribe(
-            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
-            (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
-        );
+        this.handleSaveOrSubmit(undefined, 'artemisApp.textAssessment.saveSuccessful');
     }
 
     /**
@@ -299,9 +300,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     submit(): void {
         this.submitBusy = true;
+        this.handleSaveOrSubmit(true, 'artemisApp.textAssessment.submitSuccessful');
+    }
+
+    /**
+     * Shared functionality for save and submit
+     *
+     * @param submit true if it is a submit, undefined if save
+     * @param translationKey key for the alert to be shown on success
+     */
+    private handleSaveOrSubmit(submit: boolean | undefined, translationKey: string) {
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, true).subscribe(
-            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
+        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, submit).subscribe(
+            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, translationKey),
             (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );
     }
