@@ -20,7 +20,7 @@ describe('Exam management', () => {
     let examTitle: string;
 
     before(() => {
-        cy.login(artemis.users.getAdmin(), '/');
+        cy.login(artemis.users.getAdmin());
         courseManagementRequests.createCourse(courseName, courseShortName).then((response) => {
             course = response.body;
         });
