@@ -9,7 +9,9 @@
                 <!-- new answer -->
                 <button *ngIf="showAnswers || sortedAnswerPosts.length === 0" class="btn btn-sm btn-outline-secondary m-1" (click)="createAnswerPostModal.open()">
                     <fa-icon [icon]="'comments'"></fa-icon>
-                    <span class="d-none d-md-inline">{{ 'artemisApp.metis.answerNow' | artemisTranslate }}</span>
+                    <span class="d-none d-md-inline">{{
+                        (sortedAnswerPosts.length === 0 ? 'artemisApp.metis.startDiscussion' : 'artemisApp.metis.answerNow') | artemisTranslate
+                    }}</span>
                 </button>
                 <jhi-answer-post-create-edit-modal
                     #createAnswerPostModal

@@ -4,6 +4,7 @@
             "noPosts": "There are no posts yet.",
             "addNewPost": "New post",
             "answerNow": "Reply now",
+            "startDiscussion": "Diskussion beginnen",
             "cancel": "Cancel",
             "savePosting": "Save",
             "toggleThread": "Click to toggle the thread",
@@ -49,7 +50,6 @@
             },
             "answerPost": {
                 "created": "New reply successfully created",
-                "updated": "Reply successfully updated",
                 "deleted": "Reply successfully deleted"
             }
         }

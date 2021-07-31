@@ -4,6 +4,7 @@
             "noPosts": "Es gibt noch keine Beiträge.",
             "addNewPost": "Neuer Beitrag",
             "answerNow": "Jetzt beantworten",
+            "startDiscussion": "Diskussion beginnen",
             "cancel": "Abbrechen",
             "savePosting": "Speichern",
             "toggleThread": "Klicke, um den Thread ein-/auszuklappen",
@@ -49,7 +50,6 @@
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",
-                "updated": "Antwort erfolgreich aktualisiert",
                 "deleted": "Antwort erfolgreich gelöscht"
             }
         }

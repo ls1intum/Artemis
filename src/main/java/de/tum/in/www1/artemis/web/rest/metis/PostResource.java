@@ -60,8 +60,7 @@ public class PostResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @RequestBody Post post) {
         Post updatedPost = postService.updatePost(courseId, post);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, postService.getEntityName(), updatedPost.getId().toString()))
-                .body(updatedPost);
+        return new ResponseEntity<>(updatedPost, null, HttpStatus.OK);
     }
 
     /**

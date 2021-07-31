@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -57,8 +58,7 @@ public class AnswerPostResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<AnswerPost> updateAnswerPost(@PathVariable Long courseId, @RequestBody AnswerPost answerPost) {
         AnswerPost updatedAnswerPost = answerPostService.updateAnswerPost(courseId, answerPost);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, answerPostService.getEntityName(), updatedAnswerPost.getId().toString()))
-                .body(updatedAnswerPost);
+        return new ResponseEntity<>(updatedAnswerPost, null, HttpStatus.OK);
     }
 
     /**
