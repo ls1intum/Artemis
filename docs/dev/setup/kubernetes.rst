@@ -18,8 +18,10 @@ This page describes how to set up an environment deployed in Kubernetes.
 
 Setup Kubernetes cluster
 ------------------------
-1. Set environment variables
-
+1. Set the following environment variables.
+   
+   **IMPORTANT: Commands may differ for your OS, the examples are working for Linux machine.**
+   
    ::
 
       export CLUSTER_NAME="k3d-rancher"
@@ -30,31 +32,60 @@ Setup Kubernetes cluster
    
    ::
 
-      k3d cluster create $CLUSTER_NAME --api-port 6550 --servers 1 --agents 3 --port 443:443@loadbalancer --wait
-      k3d cluster list 
-      k3d kubeconfig get $CLUSTER_NAME > $KUBECONFIG_FILE
-      $KUBECONFIG=($KUBECONFIG_FILE)
-      kubectl get nodes
+      k3d cluster create $CLUSTER_NAME --api-port 6550 --servers 1 --agents 3 --port 443:443@loadbalancer --wait #Create a cluster with 1 server, 3 agents and a load balancer
+      k3d cluster list #Show the list of all clusters
+      k3d kubeconfig get $CLUSTER_NAME > $KUBECONFIG_FILE #Get the cluster config file and write it to the $KUBECONFIG_FILE
+      export KUBECONFIG=$KUBECONFIG_FILE #Set KUBECONFIG env variable which will be used to read the Kubernetes configuration from the future commands 
+      kubectl get nodes #Show the list of all nodes(should show k3d-k3d-rancher-server-0, k3d-k3d-rancher-agent-1, k3d-k3d-rancher-agent-2, k3d-k3d-rancher-agent-3 with status READY)
+
 
 3. Install cert-manager with helm
    
    ::
 
-      helm repo add jetstack https://charts.jetstack.io
-      helm repo update
-      kubectl create namespace cert-manager
-      helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.0.4 --set installCRDs=true --wait
-      kubectl -n cert-manager rollout status deploy/cert-manager
+      helm repo add jetstack https://charts.jetstack.io #Add jetstack
+      helm repo update #Update information of available charts locally from chart repositories
+      kubectl create namespace cert-manager #Create cert-manager namespace
+      helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.0.4 --set installCRDs=true --wait #Deploy cert-manager
+      kubectl -n cert-manager rollout status deploy/cert-manager #Rollout cert-manager deployment 
 
 4. Install Rancher
 
    ::
 
-      helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+      helm repo add rancher-latest https://releases.rancher.com/server-charts/latest #Add Rancher 
       helm repo update
-      kubectl create namespace cattle-system
-      helm install rancher rancher-latest/rancher --namespace cattle-system --set hostname=$RANCHER_SERVER_HOSTNAME --wait
-      kubectl -n cattle-system rollout status deploy/rancher
+      kubectl create namespace cattle-system #Create namespace called cattle-system 
+      helm install rancher rancher-latest/rancher --namespace cattle-system --set hostname=$RANCHER_SERVER_HOSTNAME --wait #Install and deploy Rancher on the given hostname
+      kubectl -n cattle-system rollout status deploy/rancher #Rollout Rancher deployment
+
+5. Open Rancher and update the password
+
+Open Rancher on `<https://rancher.localhost/>`__.
+You will be notified that the connection is not private. You can just proceed to the website.
+You will be prompted to set a password which later will be used to login to Rancher. The password will be used often, that's why you shouldn't forget it.
+
+.. figure:: kubernetes/rancher_password.png
+   :align: center
+
+Then you should save the Rancher Server URL, please use the predefined name.  
+
+.. figure:: kubernetes/rancher_url.png
+   :align: center
+
+After saving you be redirected to the main page of rancher, where you see your cluters. There will be one local cluster.
+
+.. figure:: kubernetes/rancher_cluster.png
+   :align: center
+
+You can open the workloads using the menu, there will be no workloads deployed at the moment.
+
+.. figure:: kubernetes/rancher_nav_workloads.png
+   :align: center
+
+
+.. figure:: kubernetes/rancher_empty_workloads.png
+   :align: center
 
 Create DockerHub repository
 ---------------------------
