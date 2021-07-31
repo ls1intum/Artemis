@@ -1,23 +1,21 @@
+import { TIME_FORMAT } from './../support/constants';
 import { artemis } from '../support/ArtemisTesting';
 import { generateUUID } from '../support/utils';
+import dayjs from 'dayjs';
 
 // Requests
-let artemisRequests = artemis.requests;
+const artemisRequests = artemis.requests;
 
 // Common primitives
-let uid: string;
-let courseName: string;
-let courseShortName: string;
+const uid = generateUUID();
+const courseName = 'Cypress course' + uid;
+const courseShortName = 'cypress' + uid;
 const examTitle = 'Cypress exam title';
 
 describe('Exam management', () => {
     let courseId: number;
 
     before(() => {
-        uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
-
         cy.login(artemis.users.getAdmin(), '/');
         artemisRequests.courseManagement.createCourse(courseName, courseShortName).then((response) => {
             courseId = response.body.id;
@@ -29,23 +27,9 @@ describe('Exam management', () => {
         artemis.pageobjects.courseManagement.openExamsOfCourse(courseName, courseShortName);
         cy.contains('Create new Exam').click();
         cy.get('#title').type(examTitle);
-        cy.get('#visibleDate').find('.btn').click().wait(500);
-        cy.get('owl-date-time-container').contains('Set').click();
-
-        cy.get('#startDate').find('.btn').click().wait(500);
-        // Open next month
-        cy.get('.owl-dt-control-arrow-button').eq(1).click();
-        // Select the 17th of the next month
-        cy.get('.owl-dt-calendar-body').contains('17').click();
-        cy.get('owl-date-time-container').contains('Set').click();
-
-        cy.get('#endDate').find('.btn').click().wait(500);
-        // Open next month
-        cy.get('.owl-dt-control-arrow-button').eq(1).click();
-        // Select the 18th of the next month
-        cy.get('.owl-dt-calendar-body').contains('18').click();
-        cy.get('owl-date-time-container').contains('Set').click();
-
+        cy.get('#visibleDate').find('input').clear().type(dayjs().format(TIME_FORMAT), { force: true });
+        cy.get('#startDate').find('input').clear().type(dayjs().add(1, 'day').format(TIME_FORMAT), { force: true });
+        cy.get('#endDate').find('input').clear().type(dayjs().add(2, 'day').format(TIME_FORMAT), { force: true });
         cy.get('#numberOfExercisesInExam').type('4');
         cy.get('#maxPoints').type('40');
 
