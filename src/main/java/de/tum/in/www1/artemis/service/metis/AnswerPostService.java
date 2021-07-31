@@ -97,7 +97,7 @@ public class AnswerPostService extends PostingService {
         }
         AnswerPost existingAnswerPost = answerPostRepository.findByIdElseThrow(answerPost.getId());
         Course course = preCheckUserAndCourse(user, courseId);
-        mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user);
+        mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user, course);
 
         // update: allow overwriting of values only for depicted fields
         existingAnswerPost.setContent(answerPost.getContent());
@@ -137,9 +137,9 @@ public class AnswerPostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
+        final Course course = preCheckUserAndCourse(user, courseId);
         AnswerPost answerPost = answerPostRepository.findByIdElseThrow(answerPostId);
-        preCheckUserAndCourse(user, courseId);
-        mayUpdateOrDeletePostingElseThrow(answerPost, user);
+        mayUpdateOrDeletePostingElseThrow(answerPost, user, course);
 
         // delete
         answerPostRepository.deleteById(answerPostId);

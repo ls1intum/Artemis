@@ -40,9 +40,9 @@ public abstract class PostingService {
      * @param posting posting that is requested
      * @param user    requesting user
      */
-    void mayUpdateOrDeletePostingElseThrow(Posting posting, User user) {
+    void mayUpdateOrDeletePostingElseThrow(Posting posting, User user, Course course) {
         if (!user.getId().equals(posting.getAuthor().getId())) {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, posting.getCourse(), user);
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         }
     }
 
@@ -64,6 +64,7 @@ public abstract class PostingService {
 
     Course preCheckUserAndCourse(User user, Long courseId) {
         final Course course = courseRepository.findByIdElseThrow(courseId);
+        // user has to be at least student in the course
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         // check if course has posts enabled

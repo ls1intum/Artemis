@@ -61,9 +61,6 @@ public class PostService extends PostingService {
 
         // set author to current user
         post.setAuthor(user);
-        // set course explicitly as it might not be set,
-        // if only an exercise or lecture is provided in post
-        post.setCourse(course);
         Post savedPost = postRepository.save(post);
 
         sendNotification(savedPost);
@@ -87,10 +84,10 @@ public class PostService extends PostingService {
         if (post.getId() == null) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
         }
-        preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
         Post existingPost = postRepository.findByIdElseThrow(post.getId());
         preCheckPostValidity(existingPost);
-        mayUpdateOrDeletePostingElseThrow(existingPost, user);
+        mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
 
         // update: allow overwriting of values only for depicted fields
         existingPost.setTitle(post.getTitle());
@@ -234,10 +231,10 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(postId);
         preCheckPostValidity(post);
-        mayUpdateOrDeletePostingElseThrow(post, user);
+        mayUpdateOrDeletePostingElseThrow(post, user, course);
 
         // delete
         postRepository.deleteById(postId);
