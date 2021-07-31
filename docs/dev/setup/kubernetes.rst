@@ -18,13 +18,16 @@ This page describes how to set up an environment deployed in Kubernetes.
 
 Setup Kubernetes cluster
 ------------------------
-1. Set the following environment variables.
-   
-   **IMPORTANT: Commands may differ for your OS, the examples are working for Linux machine.**
+In order to be able to deploy Artemis on Kubernetes, you need to setup a cluster.
+With the following commands you will setup one cluster with 3 agents as well as Rancher which is a platform for cluster management with easy to use user interface.
+
+**IMPORTANT: The following commands may differ for your OS, the examples are working for Linux machine.**
+
+1. Set environment variables
    
    ::
 
-      export CLUSTER_NAME="k3d-rancher"
+      export CLUSTER_NAME="k3d-rancher" 
       export RANCHER_SERVER_HOSTNAME="rancher.localhost"
       export KUBECONFIG_FILE="$CLUSTER_NAME.yaml"
 
@@ -89,7 +92,7 @@ You can open the workloads using the menu, there will be no workloads deployed a
 
 Create DockerHub repository
 ---------------------------
-The Artemis image will be stored and managed in DockerHub. Kubernetes will take it from there and deploy it afterwards.
+The Artemis image will be stored and managed in DockerHub. Kubernetes will pull it from there and deploy it afterwards.
 After you log in to your `DockerHub <https://hub.docker.com/>`__ account you can create as many public repositories as you want.
 In order to create a repository you need to select the ``Create repository`` button.
 
