@@ -366,13 +366,13 @@ This part of the documentation assumes you have a Kubernetes cluster running, as
 
 ::
 
-   docker build  -t <DockerHubId>/artemis-bamboo -f src/main/docker/bamboo/Dockerfile .
+   docker build  -t <DockerId>/artemis-bamboo -f src/main/docker/bamboo/Dockerfile .
 
 3. Push the image to DockerHub
    
 ::
 
-   docker push <DockerHubId>/artemis-bamboo
+   docker push <DockerId>/artemis-bamboo
 
 4. Add your DockerHub username in ``src/main/kubernetes/atlassian/bamboo.yml``
    Replace <DockerId> in:
@@ -403,6 +403,7 @@ This part of the documentation assumes you have a Kubernetes cluster running, as
    5. Open ``/src/main/docker/atlassian-setup-k8s.sh`` and add the URL values to the script
 
    ::
+
       jira_url=<jira_url>
       bamboo_url=<bamboo_url>
       bitbucket_url=<bitbucket_url>
