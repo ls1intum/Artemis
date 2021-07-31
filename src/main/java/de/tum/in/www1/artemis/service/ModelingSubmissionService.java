@@ -185,7 +185,7 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     private ModelingSubmission assignResultWithFeedbackSuggestionsToSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
         var existingResult = modelingSubmission.getLatestResult();
-        if (existingResult != null && existingResult.getAssessmentType() != null && existingResult.getAssessmentType().equals(AssessmentType.MANUAL)) {
+        if (existingResult != null && existingResult.getAssessmentType() != null && existingResult.getAssessmentType() == AssessmentType.MANUAL) {
             return modelingSubmission;
         }
         Result automaticResult = compassService.getSuggestionResult(modelingSubmission, modelingExercise);

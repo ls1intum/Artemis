@@ -19,6 +19,8 @@ import { EditLearningGoalComponent } from 'app/course/learning-goals/edit-learni
 import { CourseParticipantScoresComponent } from 'app/course/course-participant-scores/course-participant-scores.component';
 import { CourseManagementStatisticsComponent } from './course-management-statistics.component';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
+import { isOrion } from 'app/shared/orion/orion';
+import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 
 @Injectable({ providedIn: 'root' })
 export class CourseResolve implements Resolve<Course> {
@@ -98,7 +100,7 @@ export const courseManagementState: Routes = [
         children: [
             {
                 path: 'exercises',
-                component: CourseManagementExercisesComponent,
+                component: !isOrion ? CourseManagementExercisesComponent : OrionCourseManagementExercisesComponent,
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA, Authority.ADMIN],
                     pageTitle: 'artemisApp.course.exercises',

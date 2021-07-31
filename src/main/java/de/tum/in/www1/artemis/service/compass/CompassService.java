@@ -136,7 +136,7 @@ public class CompassService {
     private Result getAutomaticResultForSubmission(ModelingSubmission modelingSubmission) {
         Result result = modelingSubmission.getLatestResult();
 
-        if (result == null || !AssessmentType.MANUAL.equals(result.getAssessmentType())) {
+        if (result == null || AssessmentType.MANUAL != result.getAssessmentType()) {
             if (result == null) {
                 StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
                 result = new Result().submission(modelingSubmission).participation(studentParticipation);
