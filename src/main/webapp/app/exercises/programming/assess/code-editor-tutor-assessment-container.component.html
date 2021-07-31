@@ -45,78 +45,81 @@
 
 <ng-template #assessment>
     <ng-container *jhiExtensionPoint="overrideCodeEditor; context: { title: editorTitle, feedback: editorBottom }">
-    <jhi-code-editor-container
-        *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
-        [editable]="false"
-        [participation]="participation"
-        [showEditorInstructions]="showEditorInstructions"
-        [isTutorAssessment]="true"
-        [highlightFileChanges]="true"
-        [readOnlyManualFeedback]="readOnly()"
-        [highlightDifferences]="highlightDifferences"
-        (onUpdateFeedback)="onUpdateFeedback($event)"
-        (onFileLoad)="onFileLoad($event)"
-    >
-        <div editorTitle #editorTitle>
-            <span>{{ exercise?.title }}</span>
-            <span
-                >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}
-                <span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span
-                >]
-                <jhi-included-in-score-badge
-                    *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                    [includedInOverallScore]="exercise.includedInOverallScore"
-                ></jhi-included-in-score-badge>
-            </span>
-        </div>
-        <div editorToolbar>
-            <jhi-programming-assessment-repo-export
-                [exerciseId]="exercise.id!"
-                [singleParticipantMode]="true"
-                [participationIdList]="participation ? [participation!.id!] : []"
-            ></jhi-programming-assessment-repo-export>
-            <a
-                class="ms-2 me-5"
-                href="{{ participation?.userIndependentRepositoryUrl }}"
-                target="_blank"
-                rel="noopener noreferrer"
-                jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"
-            >
-                Go to repository
-            </a>
-            <jhi-result
-                *ngIf="participation"
-                [result]="manualResult"
-                [showUngradedResults]="true"
-                [showGradedBadge]="false"
-                [showTestDetails]="true"
-                [isBuilding]="false"
-                [participation]="participation"
-                [short]="true"
-                class="me-1"
-            ></jhi-result>
-            <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id!" [exerciseHints]="exercise.exerciseHints" class="me-2"></jhi-exercise-hint-student>
-        </div>
-        <jhi-assessment-instructions
-            *ngIf="exercise"
-            editorSidebar
-            class="card-body markdown-preview instructions-wrapper__content overflow-auto"
-            [exercise]="exercise!"
-            [programmingParticipation]="participation"
-        ></jhi-assessment-instructions>
-        <div class="mt-3" editorBottom #editorBottom>
-            <div class="row mt-3">
-                <div class="col-md-6">
-                    <jhi-unreferenced-feedback
-                        [(feedbacks)]="unreferencedFeedback"
-                        (feedbacksChange)="validateFeedback()"
-                        [readOnly]="readOnly()"
-                        [highlightDifferences]="highlightDifferences"
-                    ></jhi-unreferenced-feedback>
-                </div>
+        <jhi-code-editor-container
+            *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
+            [editable]="false"
+            [participation]="participation"
+            [showEditorInstructions]="showEditorInstructions"
+            [isTutorAssessment]="true"
+            [highlightFileChanges]="true"
+            [readOnlyManualFeedback]="readOnly()"
+            [highlightDifferences]="highlightDifferences"
+            (onUpdateFeedback)="onUpdateFeedback($event)"
+            (onFileLoad)="onFileLoad($event)"
+        >
+            <div editorTitle #editorTitle>
+                <span>{{ exercise?.title }}</span>
+                <span
+                    >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}
+                    <span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span
+                    >]
+                    <jhi-included-in-score-badge
+                        *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                        [includedInOverallScore]="exercise.includedInOverallScore"
+                    ></jhi-included-in-score-badge>
+                </span>
             </div>
-        </div>
-    </jhi-code-editor-container>
+            <div editorToolbar>
+                <jhi-programming-assessment-repo-export
+                    [exerciseId]="exercise.id!"
+                    [singleParticipantMode]="true"
+                    [participationIdList]="participation ? [participation!.id!] : []"
+                ></jhi-programming-assessment-repo-export>
+                <a
+                    class="ms-2 me-5"
+                    href="{{ participation?.userIndependentRepositoryUrl }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"
+                >
+                    Go to repository
+                </a>
+                <jhi-result
+                    *ngIf="participation"
+                    [result]="manualResult"
+                    [showUngradedResults]="true"
+                    [showGradedBadge]="false"
+                    [showTestDetails]="true"
+                    [isBuilding]="false"
+                    [participation]="participation"
+                    [short]="true"
+                    class="me-1"
+                ></jhi-result>
+                <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id!" [exerciseHints]="exercise.exerciseHints" class="me-2"></jhi-exercise-hint-student>
+            </div>
+            <jhi-assessment-instructions
+                *ngIf="exercise"
+                editorSidebar
+                class="card-body markdown-preview instructions-wrapper__content overflow-auto"
+                [exercise]="exercise!"
+                [programmingParticipation]="participation"
+            ></jhi-assessment-instructions>
+            <div class="mt-3" editorBottom>
+                <ng-container *ngTemplateOutlet="editorBottom"></ng-container>
+                <ng-template #editorBottom>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <jhi-unreferenced-feedback
+                                [(feedbacks)]="unreferencedFeedback"
+                                (feedbacksChange)="validateFeedback()"
+                                [readOnly]="readOnly()"
+                                [highlightDifferences]="highlightDifferences"
+                            ></jhi-unreferenced-feedback>
+                        </div>
+                    </div>
+                </ng-template>
+            </div>
+        </jhi-code-editor-container>
     </ng-container>
 </ng-template>
 

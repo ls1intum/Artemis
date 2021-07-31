@@ -39,7 +39,12 @@ import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisProgrammingAssessmentDashboardModule,
     ],
-    declarations: [ProgrammingAssessmentRepoExportButtonComponent, ProgrammingAssessmentRepoExportDialogComponent, CodeEditorTutorAssessmentContainerComponent, OrionTutorAssessmentComponent],
+    declarations: [
+        ProgrammingAssessmentRepoExportButtonComponent,
+        ProgrammingAssessmentRepoExportDialogComponent,
+        CodeEditorTutorAssessmentContainerComponent,
+        OrionTutorAssessmentComponent,
+    ],
     entryComponents: [ProgrammingAssessmentRepoExportDialogComponent],
     exports: [ProgrammingAssessmentRepoExportButtonComponent],
 })

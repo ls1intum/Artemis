@@ -4,6 +4,4 @@ import { Component } from '@angular/core';
     selector: 'jhi-orion-course-management-exercises',
     templateUrl: './orion-tutor-assessment.component.html',
 })
-export class OrionTutorAssessmentComponent {
-
-}
+export class OrionTutorAssessmentComponent {}
