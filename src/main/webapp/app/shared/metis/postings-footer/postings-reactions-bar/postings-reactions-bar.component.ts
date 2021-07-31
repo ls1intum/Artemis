@@ -74,7 +74,7 @@ export class PostingsReactionsBarComponent implements OnInit, OnChanges {
         return reactions.reduce((a: ReactionCountMap, b: Reaction) => {
             const hasReacted = b.user?.id === this.metisService.getUser().id;
             const reactionCount = {
-                count: a[b.emojiId!] ? a[b.emojiId!].count++ : 1,
+                count: a[b.emojiId!] ? a[b.emojiId!].count + 1 : 1,
                 hasReacted: a[b.emojiId!] ? a[b.emojiId!].hasReacted || hasReacted : hasReacted,
             };
             return { ...a, [b.emojiId!]: reactionCount };
