@@ -84,8 +84,8 @@ export class AggregatedExamResult {
     public standardDeviation: number;
     public standardDeviationTotal: number;
     public standardGradeDeviationPassed?: number;
-    public standardGradeDeviation: number;
-    public standardGradeDeviationTotal: number;
+    public standardGradeDeviation?: number;
+    public standardGradeDeviationTotal?: number;
     public noOfExamsFilteredForPassed = 0;
     public noOfExamsFiltered = 0;
     public noOfRegisteredUsers = 0;
@@ -113,8 +113,8 @@ export class AggregatedExamResult {
     public standardDeviationInFirstCorrection: number;
     public standardDeviationTotalInFirstCorrection: number;
     public standardGradeDeviationPassedInFirstCorrection?: number;
-    public standardGradeDeviationInFirstCorrection: number;
-    public standardGradeDeviationTotalInFirstCorrection: number;
+    public standardGradeDeviationInFirstCorrection?: number;
+    public standardGradeDeviationTotalInFirstCorrection?: number;
 
     constructor() {}
 }

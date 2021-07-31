@@ -280,7 +280,7 @@
                         }}
                     </td>
                 </tr>
-                <tr *ngIf="gradingScaleExists">
+                <tr *ngIf="gradingScaleExists && hasNumericGrades">
                     <th scope="row">{{ 'artemisApp.examScores.standardGradeDeviationColumn' | artemisTranslate }}</th>
                     <td *ngIf="!isBonus">
                         {{

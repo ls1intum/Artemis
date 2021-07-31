@@ -71,6 +71,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     gradingScale?: GradingScale;
     isBonus?: boolean;
     hasSecondCorrectionAndStarted: boolean;
+    hasNumericGrades: boolean;
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
@@ -132,6 +133,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.gradingScale = gradingScaleResponse.body!;
                         this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
                         this.gradingScale!.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale!.gradeSteps);
+                        this.hasNumericGrades = !this.gradingScale!.gradeSteps.some((step) => isNaN(Number(step.gradeName)));
                     }
                     // Only try to calculate statistics if the exam has exercise groups and student results
                     if (this.studentResults && this.exerciseGroups) {
@@ -393,7 +395,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 }
             }
 
-            if (this.gradingScaleExists) {
+            if (this.gradingScaleExists && this.hasNumericGrades) {
                 const grade = Number(studentResult.overallGrade);
                 const gradeInFirstCorrection = Number(studentResult.overallGradeInFirstCorrection);
                 studentGradesTotal.push(grade);
@@ -454,7 +456,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 examStatistics.medianRelativePassed = (examStatistics.medianPassed / this.examScoreDTO.maxPoints) * 100;
                 examStatistics.meanGradePassed = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.meanPointsRelativePassed)!.gradeName;
                 examStatistics.medianGradePassed = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelativePassed)!.gradeName;
-                examStatistics.standardGradeDeviationPassed = SimpleStatistics.standardDeviation(studentGradesPassed);
+                examStatistics.standardGradeDeviationPassed = this.hasNumericGrades ? SimpleStatistics.standardDeviation(studentGradesPassed) : undefined;
             }
             // Calculate statistics for the first assessments of passed exams if second correction exists
             if (this.hasSecondCorrectionAndStarted) {
@@ -472,7 +474,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.gradingScale!.gradeSteps,
                         examStatistics.medianRelativePassedInFirstCorrection,
                     )!.gradeName;
-                    examStatistics.standardGradeDeviationPassedInFirstCorrection = SimpleStatistics.standardDeviation(studentGradesPassedInFirstCorrectionRound);
+                    examStatistics.standardGradeDeviationPassedInFirstCorrection = this.hasNumericGrades
+                        ? SimpleStatistics.standardDeviation(studentGradesPassedInFirstCorrectionRound)
+                        : undefined;
                 }
             }
         }
@@ -500,7 +504,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 if (this.gradingScaleExists) {
                     examStatistics.meanGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.meanPointsRelative)!.gradeName;
                     examStatistics.medianGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelative)!.gradeName;
-                    examStatistics.standardGradeDeviation = SimpleStatistics.standardDeviation(studentGradesSubmitted);
+                    examStatistics.standardGradeDeviation = this.hasNumericGrades ? SimpleStatistics.standardDeviation(studentGradesSubmitted) : undefined;
                 }
             }
             // Calculate statistics for the first assessments of submitted exams if second correction exists
@@ -520,7 +524,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                             this.gradingScale!.gradeSteps,
                             examStatistics.medianRelativeInFirstCorrection,
                         )!.gradeName;
-                        examStatistics.standardGradeDeviationInFirstCorrection = SimpleStatistics.standardDeviation(studentGradesSubmittedInFirstCorrectionRound);
+                        examStatistics.standardGradeDeviationInFirstCorrection = this.hasNumericGrades
+                            ? SimpleStatistics.standardDeviation(studentGradesSubmittedInFirstCorrectionRound)
+                            : undefined;
                     }
                 }
             }
@@ -552,7 +558,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         examStatistics.meanPointsRelativeTotal,
                     )!.gradeName;
                     examStatistics.medianGradeTotal = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelativeTotal)!.gradeName;
-                    examStatistics.standardGradeDeviationTotal = SimpleStatistics.standardDeviation(studentGradesTotal);
+                    examStatistics.standardGradeDeviationTotal = this.hasNumericGrades ? SimpleStatistics.standardDeviation(studentGradesTotal) : undefined;
                 }
             }
             // Calculate total statistics if second correction exists
@@ -572,7 +578,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                             this.gradingScale!.gradeSteps,
                             examStatistics.medianRelativeTotalInFirstCorrection,
                         )!.gradeName;
-                        examStatistics.standardGradeDeviationTotalInFirstCorrection = SimpleStatistics.standardDeviation(studentGradesTotalInFirstCorrectionRound);
+                        examStatistics.standardGradeDeviationTotalInFirstCorrection = this.hasNumericGrades
+                            ? SimpleStatistics.standardDeviation(studentGradesTotalInFirstCorrectionRound)
+                            : undefined;
                     }
                 }
             }
