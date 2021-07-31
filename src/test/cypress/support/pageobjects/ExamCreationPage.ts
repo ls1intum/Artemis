@@ -6,13 +6,6 @@ import dayjs from 'dayjs';
  */
 export class ExamCreationPage {
     /**
-     * @returns the element of the course title.
-     */
-    getCourseTitle() {
-        return cy.get('#course');
-    }
-
-    /**
      * Sets the title of the exam.
      * @param title the exam title
      */
