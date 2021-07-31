@@ -4,6 +4,15 @@ const buildingAndTesting = 'Building and testing...';
  * A class which encapsulates UI selectors and actions for the Online Editor Page.
  */
 export class OnlineEditorPage {
+    deleteRemainingContent: string;
+
+    constructor() {
+        this.deleteRemainingContent = '';
+        for (var i = 0; i < 100; i++) {
+            this.deleteRemainingContent += '{del}';
+        }
+    }
+
     /**
      * @returns the root element of the file browser. Useful for further querying.
      */
@@ -33,7 +42,7 @@ export class OnlineEditorPage {
                 // Create some padding if the following deletion accidentally also removes a character in front of the focus
                 cy.focused().type('{enter}{enter}');
                 // Delete the remaining content which has been automatically added by the code editor
-                cy.focused().type('{shift}{pagedown}{del}', { delay: 300 });
+                cy.focused().type(this.deleteRemainingContent, { delay: 0 });
             });
         }
     }
@@ -55,7 +64,7 @@ export class OnlineEditorPage {
         cy.intercept('DELETE', '/api/repository/*/**').as('deleteFile');
         this.findFile(name).find('[data-icon="trash"]').click();
         cy.get('[jhitranslate="artemisApp.editor.fileBrowser.delete"]').click();
-        cy.wait('@deleteFile');
+        cy.wait('@deleteFile').its('response.statusCode').should('eq', 200);
         this.findFileBrowser().contains(name).should('not.exist');
     }
 
