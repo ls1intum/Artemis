@@ -47,10 +47,6 @@ spec:
           privileged: false
           readOnlyRootFilesystem: false
           runAsNonRoot: false
-        stdin: true
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        tty: true
         volumeMounts:
         - mountPath: /var/atlassian/application-data/jira
           name: artemis-jira
