@@ -23,24 +23,22 @@ describe('Exam management', () => {
     });
 
     it('Create exam', function () {
+        const creationPage = artemis.pageobjects.examCreation;
         artemis.pageobjects.navigationBar.openCourseManagement();
         artemis.pageobjects.courseManagement.openExamsOfCourse(courseName, courseShortName);
         cy.contains('Create new Exam').click();
-        cy.get('#title').type(examTitle);
-        cy.get('#visibleDate').find('input').clear().type(dayjs().format(TIME_FORMAT), { force: true });
-        cy.get('#startDate').find('input').clear().type(dayjs().add(1, 'day').format(TIME_FORMAT), { force: true });
-        cy.get('#endDate').find('input').clear().type(dayjs().add(2, 'day').format(TIME_FORMAT), { force: true });
-        cy.get('#numberOfExercisesInExam').type('4');
-        cy.get('#maxPoints').type('40');
+        creationPage.setTitle(examTitle);
+        creationPage.setVisibleDate(dayjs());
+        creationPage.setStartDate(dayjs().add(1, 'day'));
+        creationPage.setEndDate(dayjs().add(2, 'day'));
+        creationPage.setNumberOfExercises(4);
+        creationPage.setMaxPoints(40);
 
-        cy.get('#startText').find('.ace_content').type('Cypress exam start text');
-        cy.get('#endText').find('.ace_content').type('Cypress exam end text');
-        cy.get('#confirmationStartText').find('.ace_content').type('Cypress exam confirmation start text');
-        cy.get('#confirmationEndText').find('.ace_content').type('Cypress exam confirmation end text');
-
-        cy.intercept('POST', '/api/courses/*/exams').as('examCreationQuery');
-        cy.get('button[type="submit"]').click();
-        cy.wait('@examCreationQuery');
+        creationPage.setStartText('Cypress exam start text');
+        creationPage.setEndText('Cypress exam end text');
+        creationPage.setConfirmationStartText('Cypress exam confirmation start text');
+        creationPage.setConfirmationEndText('Cypress exam confirmation end text');
+        creationPage.submit().its('response.statusCode').should('eq', 201);
         cy.contains(examTitle).should('be.visible');
     });
 
