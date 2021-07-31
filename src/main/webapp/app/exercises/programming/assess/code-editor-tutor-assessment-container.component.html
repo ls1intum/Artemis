@@ -43,7 +43,8 @@
     <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
 </jhi-assessment-layout>
 
-<ng-template #assessment *jhiExtensionPoint="overrideCodeEditor; context: { title: editorTitle, feedback: editorBottom }">
+<ng-template #assessment>
+    <ng-container *jhiExtensionPoint="overrideCodeEditor; context: { title: editorTitle, feedback: editorBottom }">
     <jhi-code-editor-container
         *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
         [editable]="false"
@@ -116,6 +117,7 @@
             </div>
         </div>
     </jhi-code-editor-container>
+    </ng-container>
 </ng-template>
 
 <ng-template #noSubmission>
