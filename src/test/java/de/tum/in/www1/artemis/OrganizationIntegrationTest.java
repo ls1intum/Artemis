@@ -145,7 +145,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1 = courseRepo.save(course1);
 
-        request.postWithoutLocation("/api/organizations/course/" + course1.getId() + "/organization/" + organization.getId(), null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/organizations/" + organization.getId() + "/courses/" + course1.getId() + "/organization", null, HttpStatus.OK, null);
 
         Organization updatedOrganization = request.get("/api/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
         assertThat(updatedOrganization.getCourses()).contains(course1);
@@ -258,7 +258,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         Organization organization = database.createOrganization();
         organization = organizationRepo.save(organization);
 
-        request.delete("/api/organizations/delete/" + organization.getId(), HttpStatus.OK);
+        request.delete("/api/organizations/" + organization.getId(), HttpStatus.OK);
 
         request.get("/api/organizations/" + organization.getId(), HttpStatus.INTERNAL_SERVER_ERROR, Organization.class);
     }
@@ -278,7 +278,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         organizationRepo.save(organization);
         organizationRepo.save(organization2);
 
-        List<Organization> result = request.getList("/api/organizations/all", HttpStatus.OK, Organization.class);
+        List<Organization> result = request.getList("/api/organizations", HttpStatus.OK, Organization.class);
         assertThat(result).hasSize(2);
     }
 
@@ -373,7 +373,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
 
         courseRepo.addOrganizationToCourse(course1.getId(), organization);
 
-        List<Organization> result = request.getList("/api/organizations/course/" + course1.getId(), HttpStatus.OK, Organization.class);
+        List<Organization> result = request.getList("/api/organizations/courses/" + course1.getId(), HttpStatus.OK, Organization.class);
         assertThat(result).contains(organization);
     }
 
@@ -391,7 +391,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
 
         userRepo.addOrganizationToUser(users.get(0).getId(), organization);
 
-        List<Organization> result = request.getList("/api/organizations/user/" + users.get(0).getId(), HttpStatus.OK, Organization.class);
+        List<Organization> result = request.getList("/api/organizations/users/" + users.get(0).getId(), HttpStatus.OK, Organization.class);
 
         assertThat(result).contains(organization);
     }
