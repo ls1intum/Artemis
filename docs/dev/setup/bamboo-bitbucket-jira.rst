@@ -93,7 +93,7 @@ under ``localhost:7990``.
 
    - Bitbucket: Do not connect Bitbucket with Jira yet
 
-3. Execute the shell script ``atlassian-setup.sh`` in the
+3. Execute the shell script ``atlassian-setup.sh`` (or ``atlassian-setup-k8s.sh`` if you are running on Kubernetes) in the
    ``src/main/docker`` directory (e.g. with
    ``src/main/docker/./atlassian-setup.sh``). This script creates
    groups, users and disabled application links between the 3 applications.
@@ -346,7 +346,7 @@ You can create a programming exercise
 
 Bitbucket → Bamboo
 ^^^^^^^^^^^^^^^^^^^
-The build of the students repository gets started after pushing to it
+The build of the students repository gets started aftemis.ase.in.tum.de/dev/setup/bamboo-bitbucket-jira/#configure-bamboo-bitbucket-and-jira>`__ter pushing to it
 
 Bitbucket → Artemis
 ^^^^^^^^^^^^^^^^^^^^
@@ -355,3 +355,56 @@ When using the code editor, after clicking on *Submit*, the text *Building and t
 Bamboo → Artemis
 ^^^^^^^^^^^^^^^^^
 The build result is displayed in the code editor.
+
+Deployment on Kubernetes
+------------------------
+
+This part of the documentation assumes you have a Kubernetes cluster running, as well as DockerHub account, if not you can find how to set it up here TO DO `<>`__
+
+1. Create artemis-bamboo repository in DockerHub
+2. Build the preconfigured Bamboo
+
+::
+
+   docker build  -t <DockerHubId>/artemis-bamboo -f src/main/docker/bamboo/Dockerfile .
+
+3. Push the image to DockerHub
+   
+::
+
+   docker push <DockerHubId>/artemis-bamboo
+
+4. Add your DockerHub username in ``src/main/kubernetes/atlassian/bamboo.yml``
+   Replace <DockerId> in:
+
+::
+
+   - image: <DockerId>/bamboo
+
+5. Deploy 
+
+
+::
+
+   kubectl apply -k src/main/kubernetes/atlassian
+
+6. Modify the ``/src/main/docker/atlassian-setup-k8s.sh`` script
+
+   1. Open Rancher to get the URLs of Jira, Bamboo and Bitbucket
+   2. Go to workloads
+   3. You can see the three application deployed
+   
+   
+   .. figure:: bamboo-bitbucket-jira/rancher_atlassian.png
+      :align: center
+
+
+   4. Click on each of <port>/tcp links and new tab will be opened with the corresponding application where you can copy the URL from.
+   5. Open ``/src/main/docker/atlassian-setup-k8s.sh`` and add the URL values to the script
+
+   ::
+      jira_url=<jira_url>
+      bamboo_url=<bamboo_url>
+      bitbucket_url=<bitbucket_url>
+
+After successful deployment you can continue with the configuration described here: `Configure Bamboo, Bitbucket and Jira <https://docs.artemis.ase.in.tum.de/dev/setup/bamboo-bitbucket-jira/#configure-bamboo-bitbucket-and-jira>`__

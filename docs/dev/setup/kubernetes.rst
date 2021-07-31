@@ -130,8 +130,6 @@ For more information check out the following documentations:
 `Bitbucket, Jira, Bamboo <https://docs.artemis.ase.in.tum.de/dev/setup/bamboo-bitbucket-jira/>`__ or
 `Gitlab, Jenkins <https://docs.artemis.ase.in.tum.de/dev/setup/jenkins-gitlab/>`__
 
-TO DO: Add documentation how to deploy Jira, Bamboo, Bitbucket, Jenkins, Gitlab on Kubernetes
-
 Build Artemis
 -------------
 Build the Artemis application for Docker using the following command:
@@ -172,7 +170,7 @@ You can do it by executing the following command:
 
 ::
 
-   kubectl apply -k src/main/kubernetes
+   kubectl apply -k src/main/kubernetes/artemis
 
 In the console you will see that the resources are created. It will take a litte bit of time when you are doing this for the first time. Be patient!
 
@@ -187,7 +185,7 @@ It may take some time but at the end you should see that all the workloads have 
 .. figure:: kubernetes/rancher_workloads.png
    :align: center
 
-You can open the Artemis application using the link ``https://artemis-app.default.rancher.localhost/``
+You can open the Artemis application using the link `<https://artemis-app.default.rancher.localhost/>`__
 In case that there is an error with the deployment you can check out the logs. 
 
 Check out the logs
