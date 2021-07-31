@@ -56,7 +56,7 @@ public class PostService extends PostingService {
         if (post.getId() != null) {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
-        final Course course = preCheckUserAndCourse(user, courseId);
+        preCheckUserAndCourse(user, courseId);
         preCheckPostValidity(post);
 
         // set author to current user
