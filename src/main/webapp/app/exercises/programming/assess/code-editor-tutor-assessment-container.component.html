@@ -44,7 +44,6 @@
 </jhi-assessment-layout>
 
 <ng-template #assessment *jhiExtensionPoint="overrideCodeEditor; context: { title: editorTitle, feedback: editorBottom }">
-    }
     <jhi-code-editor-container
         *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
         [editable]="false"
