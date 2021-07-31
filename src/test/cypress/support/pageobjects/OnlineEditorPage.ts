@@ -8,7 +8,7 @@ export class OnlineEditorPage {
 
     constructor() {
         this.deleteRemainingContent = '';
-        for (var i = 0; i < 100; i++) {
+        for (let i = 0; i < 100; i++) {
             this.deleteRemainingContent += '{del}';
         }
     }
