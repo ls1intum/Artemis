@@ -1,7 +1,16 @@
 <jhi-code-editor-tutor-assessment>
-    <ng-template #overrideCodeEditor let-title="title" let-feedback="feedback" let-instructions="instructions">
-        <ng-container *ngTemplateOutlet="title"></ng-container>
-        <ng-container *ngTemplateOutlet="instructions"></ng-container>
+    <ng-template #overrideCodeEditor let-title="title" let-toolbar="toolbar" let-exercise="exercise" let-participation="participation" let-feedback="feedback">
+        <h4><ng-container *ngTemplateOutlet="title"></ng-container></h4>
+        <ng-container *ngTemplateOutlet="toolbar"></ng-container>
+        <jhi-orion-assessment-instructions
+            *ngIf="exercise"
+            class="card-body markdown-preview instructions-wrapper__content overflow-auto"
+            [exercise]="exercise!"
+            [programmingParticipation]="participation"
+        ></jhi-orion-assessment-instructions>
         <ng-container *ngTemplateOutlet="feedback"></ng-container>
+    </ng-template>
+    <ng-template #overrideExportGoToRepository>
+        <!-- Nothing, suppress the buttons -->
     </ng-template>
 </jhi-code-editor-tutor-assessment>

@@ -44,7 +44,9 @@
 </jhi-assessment-layout>
 
 <ng-template #assessment>
-    <ng-container *jhiExtensionPoint="overrideCodeEditor; context: { title: editorTitle, feedback: editorBottom, instructions: editorSidebar }">
+    <ng-container
+        *jhiExtensionPoint="overrideCodeEditor; context: { title: editorTitle, toolbar: editorToolbar, feedback: editorBottom, exercise: exercise, participation: participation }"
+    >
         <jhi-code-editor-container
             *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
             [editable]="false"
@@ -63,7 +65,7 @@
             <div class="mt-3" *ngTemplateOutlet="editorBottom" editorBottom></div>
         </jhi-code-editor-container>
     </ng-container>
-    <!-- The templates must be outside of the ng-container, otherwise @ContentChild cannot find them if the extensionPoint gets activated -->
+    <!-- The templates must be outside of the ng-container, otherwise it cannot be transferred via the context -->
     <ng-template #editorTitle>
         <span>{{ exercise?.title }}</span>
         <span
@@ -77,6 +79,7 @@
         </span>
     </ng-template>
     <ng-template #editorToolbar>
+        <ng-container *jhiExtensionPoint="overrideExportGoToRepository"></ng-container>
         <jhi-programming-assessment-repo-export
             [exerciseId]="exercise.id!"
             [singleParticipantMode]="true"

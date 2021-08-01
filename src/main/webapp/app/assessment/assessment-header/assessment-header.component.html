@@ -84,6 +84,7 @@
                 >Deactivate Diff-View</span
             >
         </button>
+        <div class="w-100 d-block d-md-none"></div>
         <br />
         <ng-container *ngIf="!result?.completionDate">
             <button class="btn ms-2 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">
