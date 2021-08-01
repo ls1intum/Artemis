@@ -45,7 +45,7 @@ $label-color: #6a737d;
 }
 
 .collapsed-discussion {
-    width: 50px;
+    width: 38px;
     justify-content: space-between;
     flex-flow: column nowrap;
     background-color: $background-color;
@@ -57,10 +57,10 @@ $label-color: #6a737d;
         margin: auto;
     }
 
-    fa-icon {
-        display: flex;
-        justify-content: center;
-        padding: 15px 0;
+    .expand-postings-icon {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        place-self: center;
     }
 }
 

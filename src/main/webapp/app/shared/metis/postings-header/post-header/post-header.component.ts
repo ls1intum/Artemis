@@ -11,6 +11,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 export class PostHeaderComponent extends PostingsHeaderDirective<Post> implements OnChanges {
     @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
     numberOfAnswerPosts: number;
+    showAnswers = false;
 
     constructor(protected metisService: MetisService) {
         super(metisService);
@@ -32,9 +33,13 @@ export class PostHeaderComponent extends PostingsHeaderDirective<Post> implement
     }
 
     /**
+     * toggles showAnswers flag to highlight header icon when answers are toggled
      * emits an event of toggling (show, do not show) the answer posts for a post
      */
     toggleAnswers(): void {
+        if (this.getNumberOfAnswerPosts() > 0) {
+            this.showAnswers = !this.showAnswers;
+        }
         this.toggleAnswersChange.emit();
     }
 

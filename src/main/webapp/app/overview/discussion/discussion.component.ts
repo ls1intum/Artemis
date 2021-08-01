@@ -66,7 +66,7 @@ export class DiscussionComponent implements OnInit, AfterViewInit, OnChanges, On
                 modifiers: [
                     // Set maximum width
                     interact.modifiers!.restrictSize({
-                        min: { width: 300, height: 0 },
+                        min: { width: 360, height: 0 },
                         max: { width: 600, height: 4000 },
                     }),
                 ],
