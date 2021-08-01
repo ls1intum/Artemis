@@ -4,15 +4,7 @@ import { checkForMissingTranslationKey } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-alert',
-    template: `
-        <div class="alerts mt-1" role="alert">
-            <div *ngFor="let alert of alerts" [ngClass]="setClasses(alert)">
-                <ngb-alert *ngIf="alert && alert.type && alert.message && alert.close" [type]="alert.type" (close)="alert.close(alerts)">
-                    <pre [innerHTML]="getAlertMessage(alert)"></pre>
-                </ngb-alert>
-            </div>
-        </div>
-    `,
+    templateUrl: './alert.component.html',
 })
 export class AlertComponent implements OnInit, OnDestroy {
     alerts: Alert[] = [];
@@ -44,6 +36,10 @@ export class AlertComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy(): void {
         this.alertService.clear();
+    }
+
+    close(alert: Alert): void {
+        alert.close?.(this.alerts);
     }
 
     /**

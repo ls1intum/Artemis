@@ -8,8 +8,6 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
@@ -32,8 +30,6 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
     declarations: [
         CircularProgressBarComponent,
-        ArtemisDurationFromSecondsPipe,
-        FindLanguageFromKeyPipe,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
         ExtensionPointDirective,
@@ -62,8 +58,6 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
         ArtemisSharedCommonModule,
         ArtemisSharedPipesModule,
         CircularProgressBarComponent,
-        ArtemisDurationFromSecondsPipe,
-        FindLanguageFromKeyPipe,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
         ExtensionPointDirective,

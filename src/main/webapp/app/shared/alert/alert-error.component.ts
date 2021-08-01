@@ -8,15 +8,7 @@ import { EventManager, EventWithContent } from 'app/core/util/event-manager.serv
 
 @Component({
     selector: 'jhi-alert-error',
-    template: `
-        <div class="alerts" role="alert">
-            <div *ngFor="let alert of alerts" [ngClass]="setClasses(alert)">
-                <ngb-alert *ngIf="alert && alert.type && alert.message && alert.close" [type]="alert.type" (close)="alert.close(alerts)">
-                    <pre [innerHTML]="getAlertMessage(alert)"></pre>
-                </ngb-alert>
-            </div>
-        </div>
-    `,
+    templateUrl: './alert-error.component.html',
 })
 export class AlertErrorComponent implements OnDestroy {
     alerts: Alert[] = [];
@@ -109,6 +101,10 @@ export class AlertErrorComponent implements OnDestroy {
         if (this.httpErrorListener) {
             this.eventManager.destroy(this.httpErrorListener);
         }
+    }
+
+    close(alert: Alert): void {
+        alert.close?.(this.alerts);
     }
 
     /**
