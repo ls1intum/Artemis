@@ -51,15 +51,15 @@ public class OrganizationResource {
     }
 
     /**
-     * POST organizations/courses/:courseId/organization/:organizationId :
+     * POST organizations/course/:courseId/organization/:organizationId :
      * Add a course to an organization
      *
      * @param courseId the id of the course to add
      * @param organizationId the id of the organization where the course should be added
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
-    @PostMapping("organizations/{organizationId}/courses/{courseId}/organization") // TODO: this path doesn't make sense, should be organizations/{organizationId}/courses, the
-                                                                                   // courseId should be chosen by the server
+    @PostMapping("organizations/course/{courseId}/organization/{organizationId}") // TODO: this path doesn't make sense, should be organizations/{organizationId}/courses, the
+                                                                                  // courseId should be chosen by the server
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> addCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
         log.debug("REST request to add course to organization : {}", organizationId);

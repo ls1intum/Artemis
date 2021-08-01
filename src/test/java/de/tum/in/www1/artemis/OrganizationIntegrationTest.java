@@ -145,7 +145,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1 = courseRepo.save(course1);
 
-        request.postWithoutLocation("/api/organizations/" + organization.getId() + "/courses/" + course1.getId() + "/organization", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/organizations/course/" + course1.getId() + "/organization/" + organization.getId(), null, HttpStatus.OK, null);
 
         Organization updatedOrganization = request.get("/api/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
         assertThat(updatedOrganization.getCourses()).contains(course1);
