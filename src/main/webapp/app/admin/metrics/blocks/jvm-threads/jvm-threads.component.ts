@@ -46,7 +46,7 @@ export class JvmThreadsComponent {
     constructor(private modalService: NgbModal) {}
 
     open(): void {
-        const modalRef = this.modalService.open(MetricsModalThreadsComponent);
+        const modalRef = this.modalService.open(MetricsModalThreadsComponent, { size: 'xl' });
         modalRef.componentInstance.threads = this.threads;
     }
 }
