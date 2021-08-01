@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ContentChild, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ViewChild } from '@angular/core';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 
 @Component({
@@ -6,7 +6,7 @@ import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/progr
     templateUrl: './orion-tutor-assessment.component.html',
 })
 export class OrionTutorAssessmentComponent implements AfterViewInit {
-    @ContentChild(CodeEditorTutorAssessmentContainerComponent) container: CodeEditorTutorAssessmentContainerComponent;
+    @ViewChild(CodeEditorTutorAssessmentContainerComponent) container: CodeEditorTutorAssessmentContainerComponent;
 
     ngAfterViewInit() {
         console.log(this.container.referencedFeedback);
