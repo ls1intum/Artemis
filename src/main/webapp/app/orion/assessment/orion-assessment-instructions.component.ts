@@ -16,5 +16,5 @@ import { Exercise } from 'app/entities/exercise.model';
 export class OrionAssessmentInstructionsComponent {
     @Input() readOnly: boolean;
     @Input() programmingParticipation?: ProgrammingExerciseStudentParticipation;
-    @Input() exercise?: Exercise;
+    @Input() exercise: Exercise;
 }
