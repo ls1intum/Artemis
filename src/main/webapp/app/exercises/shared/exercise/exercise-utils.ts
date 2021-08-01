@@ -170,7 +170,9 @@ export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean
     return (
         exercise.dueDate == undefined ||
         moment() <= exercise.dueDate! ||
-        (exercise.buildAndTestStudentSubmissionsAfterDueDate == undefined && exercise.assessmentType === AssessmentType.AUTOMATIC)
+        (exercise.buildAndTestStudentSubmissionsAfterDueDate == undefined &&
+            exercise.assessmentType === AssessmentType.AUTOMATIC &&
+            !exercise.allowComplaintsForAutomaticAssessments)
     );
 };
 

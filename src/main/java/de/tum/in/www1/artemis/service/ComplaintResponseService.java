@@ -240,7 +240,7 @@ public class ComplaintResponseService {
      * @return true if the tutor is allowed to respond to the complaint, false otherwise
      */
     public boolean isUserAuthorizedToRespondToComplaint(Complaint complaint, User user) {
-        if (user == null || complaint == null || complaint.getResult() == null || complaint.getResult().getAssessor() == null) {
+        if (user == null || complaint == null || complaint.getResult() == null) {
             throw new IllegalArgumentException();
         }
 
@@ -258,16 +258,16 @@ public class ComplaintResponseService {
             return false;
         }
         // for teams: the tutor who is responsible for team, should evaluate the complaint
-        if (participation.getParticipant() instanceof Team) {
-            return assessor.getLogin().equals(user.getLogin());
+        if (participation.getParticipant() instanceof Team team) {
+            return user.getLogin().equals(team.getOwner().getLogin());
         }
         // for complaints, a different tutor should review the complaint
-        else if (complaint.getComplaintType() == null || complaint.getComplaintType().equals(ComplaintType.COMPLAINT)) {
-            return !assessor.getLogin().equals(user.getLogin());
+        else if (complaint.getComplaintType() == null || complaint.getComplaintType() == ComplaintType.COMPLAINT) {
+            return !user.getLogin().equals(assessor.getLogin());
         }
         // for more feedback requests, the same tutor should review the request
-        else if (complaint.getComplaintType() != null && complaint.getComplaintType().equals(ComplaintType.MORE_FEEDBACK)) {
-            return assessor.getLogin().equals(user.getLogin());
+        else if (complaint.getComplaintType() != null && complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
+            return user.getLogin().equals(assessor.getLogin());
         }
         return false;
     }
