@@ -64,7 +64,6 @@ describe('Metis Service', () => {
         post1.content = 'This is a test post';
         post1.title = 'title';
         post1.tags = ['tag1', 'tag2'];
-        post1.votes = 5;
         post1.author = user1;
 
         post2 = new Post();
@@ -72,7 +71,6 @@ describe('Metis Service', () => {
         post2.content = 'This is a test post';
         post2.title = 'title';
         post2.tags = ['tag1', 'tag2'];
-        post2.votes = 2;
         post2.author = user2;
 
         post3 = new Post();
@@ -80,7 +78,6 @@ describe('Metis Service', () => {
         post3.content = 'This is a test post';
         post3.title = 'title';
         post3.tags = ['tag1', 'tag2'];
-        post3.votes = 1;
         post3.author = user2;
         post3.courseWideContext = CourseWideContext.RANDOM;
 
@@ -170,11 +167,6 @@ describe('Metis Service', () => {
         it('should get posts for course', () => {
             const postServiceSpy = spy(postService, 'getAllPostsByCourseId');
             metisService.getPostsForFilter({});
-            expect(postServiceSpy).to.have.been.called;
-        });
-        it('should update votes for a post', () => {
-            const postServiceSpy = spy(postService, 'updateVotes');
-            metisService.updatePostVotes(post1, 6);
             expect(postServiceSpy).to.have.been.called;
         });
     });

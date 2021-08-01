@@ -4,7 +4,6 @@ import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.m
 import { PostingsThreadComponent } from 'app/shared/metis/postings-thread/postings-thread.component';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
-import { PostVotesComponent } from 'app/shared/metis/post/post-votes/post-votes.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
@@ -23,7 +22,8 @@ import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { PostingsReactionsBarComponent } from 'app/shared/metis/postings-footer/postings-reactions-bar/postings-reactions-bar.component';
+import { PostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/post-reactions-bar/post-reactions-bar.component';
+import { AnswerPostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 
 @NgModule({
     imports: [
@@ -52,9 +52,9 @@ import { PostingsReactionsBarComponent } from 'app/shared/metis/postings-footer/
         PostingsButtonComponent,
         PostingsMarkdownEditorComponent,
         PostComponent,
-        PostVotesComponent,
         AnswerPostComponent,
-        PostingsReactionsBarComponent,
+        PostReactionsBarComponent,
+        AnswerPostReactionsBarComponent,
     ],
     exports: [
         PostingsThreadComponent,
@@ -68,9 +68,9 @@ import { PostingsReactionsBarComponent } from 'app/shared/metis/postings-footer/
         PostingsButtonComponent,
         PostingsMarkdownEditorComponent,
         PostComponent,
-        PostVotesComponent,
         AnswerPostComponent,
-        PostingsReactionsBarComponent,
+        PostReactionsBarComponent,
+        AnswerPostReactionsBarComponent,
     ],
 })
 export class MetisModule {}

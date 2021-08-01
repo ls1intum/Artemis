@@ -72,6 +72,28 @@ public class Post extends Posting {
     @Column(name = "course_wide_context")
     private CourseWideContext courseWideContext;
 
+    @Column(name = "is_pinned")
+    private Boolean isPinned;
+
+    @Column(name = "is_archived")
+    private Boolean isArchived;
+
+    public Boolean isPinned() {
+        return isPinned;
+    }
+
+    public void setIsPinned(Boolean isPinned) {
+        this.isPinned = isPinned;
+    }
+
+    public Boolean isArchived() {
+        return isArchived;
+    }
+
+    public void setIsArchived(Boolean isArchived) {
+        this.isArchived = isArchived;
+    }
+
     public String getTitle() {
         return title;
     }

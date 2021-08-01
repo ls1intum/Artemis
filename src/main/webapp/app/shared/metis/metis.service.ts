@@ -13,6 +13,7 @@ import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 interface PostFilter {
     exercise?: Exercise;
@@ -175,12 +176,23 @@ export class MetisService {
     }
 
     /**
-     * updates post votes by invoking the post service
-     * @param post that is voted on
-     * @param voteChange vote change
+     * updates the pin state of a post by invoking the post service
+     * @param post      post for which the pin state is toggled
+     * @param pinState  updated pin state
      */
-    updatePostVotes(post: Post, voteChange: number): void {
-        this.postService.updateVotes(this.courseId, post.id!, voteChange).subscribe(() => {
+    updatePostPinState(post: Post, pinState: boolean): void {
+        this.postService.updatePinState(this.courseId, post.id!, pinState).subscribe(() => {
+            this.getPostsForFilter(this.currentPostFilter);
+        });
+    }
+
+    /**
+     * updates the archive state of a post by invoking the post service
+     * @param post          post for which the archive state is toggled
+     * @param archiveState  updated archive state
+     */
+    updatePostArchiveState(post: Post, archiveState: boolean): void {
+        this.postService.updateArchiveState(this.courseId, post.id!, archiveState).subscribe(() => {
             this.getPostsForFilter(this.currentPostFilter);
         });
     }
@@ -255,11 +267,22 @@ export class MetisService {
 
     /**
      * sorts posts by two criteria
-     * 1. criterion: votes -> highest number comes first
-     * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
+     * 1. criterion: pin -> pinned posts come first
+     * 2. criterion: archive -> archived posts come last
+     * 3. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      * @return Post[] sorted array of posts
      */
     private static sortPosts(posts: Post[]): Post[] {
-        return posts.sort((postA, postB) => postB.votes! - postA.votes! || postA.creationDate!.valueOf() - postB.creationDate!.valueOf());
+        return posts.sort((postA, postB) =>
+            postA.pinned === postB.pinned
+                ? 0
+                : postA.pinned
+                ? -1
+                : 1 || postA.archived === postA.archived
+                ? 0
+                : postA.archived
+                ? 1
+                : -1 || postA.creationDate!.valueOf() - postB.creationDate!.valueOf(),
+        );
     }
 }

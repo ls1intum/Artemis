@@ -80,6 +80,38 @@ public class PostResource {
     }
 
     /**
+     * PUT /courses/{courseId}/posts/{postId}/pin : Pin an existing post
+     *
+     * @param courseId  id of the course the post belongs to
+     * @param postId    id of the post to pin
+     * @param pinState  updated boolean value of the isPinned property for the given post, true is pinned, false is not pinned
+     * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
+     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     */
+    @PutMapping("courses/{courseId}/posts/{postId}/pin")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<Post> updatePinState(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Boolean pinState) {
+        Post postWithUpdatedPinState = postService.updatePinState(courseId, postId, pinState);
+        return ResponseEntity.ok().body(postWithUpdatedPinState);
+    }
+
+    /**
+     * PUT /courses/{courseId}/posts/{postId}/archive : Archive an existing post
+     *
+     * @param courseId      id of the course the post belongs to
+     * @param postId        id of the post to vote on
+     * @param archiveState  updated boolean value of the isArchived property for the given post, true is archived, false is not archived
+     * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
+     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     */
+    @PutMapping("courses/{courseId}/posts/{postId}/archive")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<Post> updateArchiveState(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Boolean archiveState) {
+        Post postWithUpdatedArchiveState = postService.updateArchiveState(courseId, postId, archiveState);
+        return ResponseEntity.ok().body(postWithUpdatedArchiveState);
+    }
+
+    /**
      * GET /courses/{courseId}/exercises/{exerciseId}/posts : Get all posts for an exercise by its id
      *
      * @param courseId   id of the course the post belongs to
