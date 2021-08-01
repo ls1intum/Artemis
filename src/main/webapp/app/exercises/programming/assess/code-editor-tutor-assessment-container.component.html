@@ -79,21 +79,22 @@
         </span>
     </ng-template>
     <ng-template #editorToolbar>
-        <ng-container *jhiExtensionPoint="overrideExportGoToRepository"></ng-container>
-        <jhi-programming-assessment-repo-export
-            [exerciseId]="exercise.id!"
-            [singleParticipantMode]="true"
-            [participationIdList]="participation ? [participation!.id!] : []"
-        ></jhi-programming-assessment-repo-export>
-        <a
-            class="ms-2 me-5"
-            href="{{ participation?.userIndependentRepositoryUrl }}"
-            target="_blank"
-            rel="noopener noreferrer"
-            jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"
-        >
-            Go to repository
-        </a>
+        <ng-container *jhiExtensionPoint="overrideExportGoToRepository">
+            <jhi-programming-assessment-repo-export
+                [exerciseId]="exercise.id!"
+                [singleParticipantMode]="true"
+                [participationIdList]="participation ? [participation!.id!] : []"
+            ></jhi-programming-assessment-repo-export>
+            <a
+                class="ms-2 me-5"
+                href="{{ participation?.userIndependentRepositoryUrl }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"
+            >
+                Go to repository
+            </a>
+        </ng-container>
         <jhi-result
             *ngIf="participation"
             [result]="manualResult"
