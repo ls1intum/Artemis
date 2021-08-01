@@ -1,66 +1,70 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
+import { ConfigurationComponent } from 'app/admin/configuration/configuration.component';
+import { ConfigurationService } from 'app/admin/configuration/configuration.service';
+import { Bean, PropertySource } from 'app/admin/configuration/configuration.model';
 
-import { ArtemisTestModule } from '../../test.module';
-import { JhiConfigurationComponent } from 'app/admin/configuration/configuration.component';
-import { JhiConfigurationService } from 'app/admin/configuration/configuration.service';
+describe('Component Tests', () => {
+    describe('ConfigurationComponent', () => {
+        let comp: ConfigurationComponent;
+        let fixture: ComponentFixture<ConfigurationComponent>;
+        let service: ConfigurationService;
 
-describe('JhiConfigurationComponent', () => {
-    let comp: JhiConfigurationComponent;
-    let fixture: ComponentFixture<JhiConfigurationComponent>;
-    let service: JhiConfigurationService;
+        beforeEach(
+            waitForAsync(() => {
+                TestBed.configureTestingModule({
+                    imports: [HttpClientTestingModule],
+                    declarations: [ConfigurationComponent],
+                    providers: [ConfigurationService],
+                })
+                    .overrideTemplate(ConfigurationComponent, '')
+                    .compileComponents();
+            }),
+        );
 
-    beforeEach(async(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [JhiConfigurationComponent],
-            providers: [JhiConfigurationService],
-        })
-            .overrideTemplate(JhiConfigurationComponent, '')
-            .compileComponents();
-    }));
-
-    beforeEach(() => {
-        fixture = TestBed.createComponent(JhiConfigurationComponent);
-        comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(JhiConfigurationService);
-    });
-
-    describe('OnInit', () => {
-        it('should set all default values correctly', () => {
-            expect(comp.configKeys).toEqual([]);
-            expect(comp.filter).toBe('');
-            expect(comp.orderProp).toBe('prefix');
-            expect(comp.reverse).toBe(false);
+        beforeEach(() => {
+            fixture = TestBed.createComponent(ConfigurationComponent);
+            comp = fixture.componentInstance;
+            service = TestBed.inject(ConfigurationService);
         });
-        it('Should call load all on init', () => {
-            // GIVEN
-            const body = [{ config: 'test', properties: 'test' }, { config: 'test2' }];
-            const envConfig = { envConfig: 'test' };
-            spyOn(service, 'get').and.returnValue(of(body));
-            spyOn(service, 'getEnv').and.returnValue(of(envConfig));
 
-            // WHEN
-            comp.ngOnInit();
+        describe('OnInit', () => {
+            it('Should call load all on init', () => {
+                // GIVEN
+                const beans: Bean[] = [
+                    {
+                        prefix: 'jhipster',
+                        properties: {
+                            clientApp: {
+                                name: 'jhipsterApp',
+                            },
+                        },
+                    },
+                ];
+                const propertySources: PropertySource[] = [
+                    {
+                        name: 'server.ports',
+                        properties: {
+                            'local.server.port': {
+                                value: '8080',
+                            },
+                        },
+                    },
+                ];
+                jest.spyOn(service, 'getBeans').mockReturnValue(of(beans));
+                jest.spyOn(service, 'getPropertySources').mockReturnValue(of(propertySources));
 
-            // THEN
-            expect(service.get).toHaveBeenCalled();
-            expect(service.getEnv).toHaveBeenCalled();
-            expect(comp.configKeys).toEqual([['0', '1', '2', '3']]);
-            expect(comp.allConfiguration).toEqual(envConfig);
-        });
-    });
-    describe('keys method', () => {
-        it('should return the keys of an Object', () => {
-            // GIVEN
-            const data = {
-                key1: 'test',
-                key2: 'test2',
-            };
+                // WHEN
+                comp.ngOnInit();
 
-            // THEN
-            expect(comp.keys(data)).toEqual(['key1', 'key2']);
-            expect(comp.keys(undefined)).toEqual([]);
+                // THEN
+                expect(service.getBeans).toHaveBeenCalled();
+                expect(service.getPropertySources).toHaveBeenCalled();
+                expect(comp.allBeans).toEqual(beans);
+                expect(comp.beans).toEqual(beans);
+                expect(comp.propertySources).toEqual(propertySources);
+            });
         });
     });
 });
