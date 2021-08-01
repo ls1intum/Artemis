@@ -77,7 +77,7 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testTutorParticipateInModelingExerciseWithExampleSubmissionTooHigh() throws Exception {
         ExampleSubmission exampleSubmission = prepareExampleSubmission(true);
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL));
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createNegativeFeedback(FeedbackType.MANUAL));
         var path = "/api/exercises/" + modelingExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }

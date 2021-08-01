@@ -10,6 +10,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -32,11 +33,14 @@ public class TutorParticipationService {
 
     private final ExampleSubmissionService exampleSubmissionService;
 
+    private final TextBlockRepository textBlockRepository;
+
     public TutorParticipationService(TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            ExampleSubmissionService exampleSubmissionService) {
+            ExampleSubmissionService exampleSubmissionService, TextBlockRepository textBlockRepository) {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.exampleSubmissionService = exampleSubmissionService;
+        this.textBlockRepository = textBlockRepository;
     }
 
     /**
@@ -89,20 +93,90 @@ public class TutorParticipationService {
     }
 
     /**
+     * Validates if tutor text feedback is correct.
+     * Validation rules:
+     * - There should exist a corresponding instructor feedback with the same creditCount(score)
+     * - The text block of the feedback should have the same start and ending point as of the instructor
+     * - If instructor feedback has a grading instruction associated with it, so must the tutor feedback
+     */
+    private boolean isCorrectTextFeedback(Feedback tutorFeedback, List<Feedback> instructorFeedbacks) {
+        var tutorBlock = textBlockRepository.findById(tutorFeedback.getReference()).orElseThrow();
+
+        return instructorFeedbacks.stream().anyMatch(instructorFeedback -> {
+            var instructorBlock = textBlockRepository.findById(instructorFeedback.getReference()).orElseThrow();
+
+            boolean equalStartIndex = instructorBlock.getStartIndex() == tutorBlock.getStartIndex();
+            boolean equalEndIndex = instructorBlock.getEndIndex() == tutorBlock.getEndIndex();
+            boolean equalCredits = Double.compare(instructorFeedback.getCredits(), tutorFeedback.getCredits()) == 0;
+
+            boolean equalGradingInstructions = true;
+            // TODO: test this logic!
+            if (instructorFeedback.getGradingInstruction() != null) {
+                equalGradingInstructions = instructorFeedback.getGradingInstruction().equals(tutorFeedback.getGradingInstruction());
+            }
+
+            return equalStartIndex && equalEndIndex && equalCredits && equalGradingInstructions;
+        });
+    }
+
+    private void validateTutorialExampleSubmission(ExampleSubmission tutorExampleSubmission) {
+        boolean isTextSubmission = tutorExampleSubmission.getSubmission() instanceof TextSubmission;
+        // TODO: implement the logic for modeling exercise in the next PR
+        if (!isTextSubmission) {
+            validateTutorialExampleSubmissionUsingTotalScore(tutorExampleSubmission);
+            return;
+        }
+
+        var instructorFeedbacks = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
+        var tutorFeedbacks = tutorExampleSubmission.getSubmission().getLatestResult().getFeedbacks();
+
+        boolean equalFeedbackCount = instructorFeedbacks.size() == tutorFeedbacks.size();
+        boolean allTutorFeedbacksAreCorrect = tutorFeedbacks.stream().map(tutorFeedback -> isCorrectTextFeedback(tutorFeedback, instructorFeedbacks))
+                .allMatch(Boolean.TRUE::equals);
+
+        boolean validTutorAssessment = equalFeedbackCount && allTutorFeedbacksAreCorrect;
+
+        if (!validTutorAssessment) {
+            throw new BadRequestAlertException("invalid_assessment", ENTITY_NAME, "invalid_assessment");
+        }
+    }
+
+    private void validateTutorialExampleSubmissionUsingTotalScore(ExampleSubmission tutorExampleSubmission) {
+        // Retrieve the example feedback created by the instructor
+        List<Feedback> existingFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
+
+        float instructorScore = calculateTotalScore(existingFeedback);
+        float lowerInstructorScore = instructorScore - instructorScore / scoreRangePercentage;
+        float higherInstructorScore = instructorScore + instructorScore / scoreRangePercentage;
+
+        float tutorScore = calculateTotalScore(tutorExampleSubmission.getSubmission().getLatestResult().getFeedbacks());
+
+        if (lowerInstructorScore > tutorScore) {
+            throw new BadRequestAlertException("tooLow", ENTITY_NAME, "tooLow");
+        }
+
+        if (tutorScore > higherInstructorScore) {
+            throw new BadRequestAlertException("tooHigh", ENTITY_NAME, "tooHigh");
+        }
+    }
+
+    /**
      * Given an exercise, it adds to the tutor participation of that exercise the example submission passed as argument, if it is valid (e.g: if it is an example submission used
      * for tutorial, we check the result is close enough to the one of the instructor)
+     * TODO: change the documentation
      *
-     * @param exercise          - the exercise we are referring to
-     * @param exampleSubmission - the example submission to add
-     * @param user              - the user who invokes this request
+     * @param exercise               - the exercise we are referring to
+     * @param tutorExampleSubmission - the example submission to add
+     * @param user                   - the user who invokes this request
      * @return the updated tutor participation
      * @throws EntityNotFoundException if example submission or tutor participation is not found
      * @throws BadRequestAlertException if tutor didn't review the instructions before assessing example submissions
      */
-    public TutorParticipation addExampleSubmission(Exercise exercise, ExampleSubmission exampleSubmission, User user) throws EntityNotFoundException, BadRequestAlertException {
+    public TutorParticipation addExampleSubmission(Exercise exercise, ExampleSubmission tutorExampleSubmission, User user)
+            throws EntityNotFoundException, BadRequestAlertException {
         TutorParticipation existingTutorParticipation = this.findByExerciseAndTutor(exercise, user);
         // Do not trust the user input
-        Optional<ExampleSubmission> exampleSubmissionFromDatabase = exampleSubmissionRepository.findByIdWithResultsAndTutorParticipations(exampleSubmission.getId());
+        Optional<ExampleSubmission> exampleSubmissionFromDatabase = exampleSubmissionRepository.findByIdWithResultsAndTutorParticipations(tutorExampleSubmission.getId());
 
         if (existingTutorParticipation == null || exampleSubmissionFromDatabase.isEmpty()) {
             throw new EntityNotFoundException("There isn't such example submission, or there isn't any tutor participation for this exercise");
@@ -120,30 +194,13 @@ public class TutorParticipationService {
 
         // If it is a tutorial we check the assessment
         if (isTutorial) {
-            // Retrieve the example feedback created by the instructor
-            List<Feedback> existingFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(exampleSubmission.getId());
-
-            // Check if the result is the same
-            // TODO: at the moment we check only the score +/10%, maybe we want to do something smarter?
-            float instructorScore = calculateTotalScore(existingFeedback);
-            float lowerInstructorScore = instructorScore - instructorScore / scoreRangePercentage;
-            float higherInstructorScore = instructorScore + instructorScore / scoreRangePercentage;
-
-            float tutorScore = calculateTotalScore(exampleSubmission.getSubmission().getLatestResult().getFeedbacks());
-
-            if (lowerInstructorScore > tutorScore) {
-                throw new BadRequestAlertException("tooLow", ENTITY_NAME, "tooLow");
-            }
-
-            if (tutorScore > higherInstructorScore) {
-                throw new BadRequestAlertException("tooHigh", ENTITY_NAME, "tooHigh");
-            }
+            validateTutorialExampleSubmission(tutorExampleSubmission);
         }
 
         List<ExampleSubmission> alreadyAssessedSubmissions = new ArrayList<>(existingTutorParticipation.getTrainedExampleSubmissions());
 
         // If the example submission was already assessed, we do not assess it again, we just return the current participation
-        if (alreadyAssessedSubmissions.contains(exampleSubmission)) {
+        if (alreadyAssessedSubmissions.contains(tutorExampleSubmission)) {
             return existingTutorParticipation;
         }
 

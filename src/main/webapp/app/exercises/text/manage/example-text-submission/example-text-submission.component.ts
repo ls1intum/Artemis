@@ -265,11 +265,9 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                 const errorType = error.headers.get('x-artemisapp-error');
 
                 switch (errorType) {
-                    case 'error.tooLow':
-                        this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooLow');
-                        break;
-                    case 'error.tooHigh':
-                        this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
+                    case 'error.invalid_assessment':
+                        // TODO: what should be the error message here?
+                        this.jhiAlertService.error('Error message here');
                         break;
                     default:
                         onError(this.jhiAlertService, error);
