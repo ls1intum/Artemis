@@ -4,7 +4,6 @@ const buildingAndTesting = 'Building and testing...';
  * A class which encapsulates UI selectors and actions for the Online Editor Page.
  */
 export class OnlineEditorPage {
-    readonly deleteRemainingContent = '{del}'.repeat(100);
     /**
      * @returns the root element of the file browser. Useful for further querying.
      */
@@ -28,13 +27,15 @@ export class OnlineEditorPage {
     typeSubmission(submission: ProgrammingExerciseSubmission, packageName: string) {
         for (const newFile of submission.files) {
             this.createFileInRootPackage(newFile.name);
-            cy.log(`Entering content for file ${newFile.name}`);
             cy.fixture(newFile.path).then(($fileContent) => {
-                this.focusCodeEditor().type(this.sanitizeInput($fileContent, packageName), { delay: 3 });
+                const sanitizedContent = this.sanitizeInput($fileContent, packageName);
+                this.focusCodeEditor().type(sanitizedContent, { delay: 3 });
                 // Create some padding if the following deletion accidentally also removes a character in front of the focus
                 cy.focused().type('{enter}{enter}');
-                // Delete the remaining content which has been automatically added by the code editor
-                cy.focused().type(this.deleteRemainingContent, { delay: 0 });
+                // Delete the remaining content which has been automatically added by the code editor.
+                // We simply send as many {del} keystrokes as the file has characters. This shouldn't increase the test runtime by too long since we set the delay to 0.
+                const deleteRemainingContent = '{del}'.repeat(sanitizedContent.length);
+                cy.focused().type(deleteRemainingContent, { delay: 0 });
             });
         }
     }
