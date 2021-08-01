@@ -102,8 +102,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     // extension points, see shared/extension-point
     @ContentChild('overrideCodeEditor') overrideCodeEditor: TemplateRef<any>;
-    @ContentChild('editorBottom') editorBottom: TemplateRef<any>;
     @ContentChild('editorTitle') editorTitle: TemplateRef<any>;
+    @ContentChild('editorSidebar') editorSidebar: TemplateRef<any>;
+    @ContentChild('editorBottom') editorBottom: TemplateRef<any>;
 
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
