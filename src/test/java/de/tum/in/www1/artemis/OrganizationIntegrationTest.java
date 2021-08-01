@@ -187,7 +187,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         Organization organization = database.createOrganization();
         organization = organizationRepo.save(organization);
 
-        request.postWithoutLocation("/api/organizations/user/" + users.get(0).getLogin() + "/organization/" + organization.getId(), null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/organizations/" + organization.getId() + "/users/" + users.get(0).getLogin(), null, HttpStatus.OK, null);
         Organization updatedOrganization = request.get("/api/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
         assertThat(updatedOrganization.getUsers()).contains(users.get(0));
     }
@@ -207,7 +207,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(organization.getUsers()).contains(users.get(0));
 
-        request.delete("/api/organizations/user/" + users.get(0).getLogin() + "/organization/" + organization.getId(), HttpStatus.OK);
+        request.delete("/api/organizations/" + organization.getId() + "/users/" + users.get(0).getLogin(), HttpStatus.OK);
         Organization updatedOrganization = request.get("/api/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
 
         assertThat(updatedOrganization.getUsers()).doesNotContain(users.get(0));

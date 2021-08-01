@@ -87,14 +87,14 @@ public class OrganizationResource {
     }
 
     /**
-     * POST organizations/user/:userlogin/organization/:organizationId :
+     * POST organizations/:organizationId/users/:userlogin :
      * Add a user to an organization
      *
      * @param userLogin the login of the user to add
      * @param organizationId the id of the organization where the user should be added
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
-    @PostMapping("organizations/user/{userLogin}/organization/{organizationId}") // TODO: should be organizations/{organizationId}/users/{userLogin}
+    @PostMapping("organizations/{organizationId}/users/{userLogin}") // TODO: should be organizations/{organizationId}/users/{userLogin}
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> addUserToOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
         User user = userRepository.getUserByLoginElseThrow(userLogin);
