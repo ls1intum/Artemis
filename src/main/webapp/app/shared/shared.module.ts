@@ -1,7 +1,5 @@
 import { NgModule } from '@angular/core';
 import { SlideToggleComponent } from 'app/exercises/shared/slide-toggle/slide-toggle.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ChartComponent } from 'app/shared/chart/chart.component';
 import { CircularProgressBarComponent } from 'app/shared/circular-progress-bar/circular-progress-bar.component';
@@ -11,10 +9,7 @@ import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.co
 import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
@@ -23,7 +18,6 @@ import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.d
 import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
 import { AdditionalFeedbackComponent } from './additional-feedback/additional-feedback.component';
 import { ResizeableContainerComponent } from './resizeable-container/resizeable-container.component';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/statistics-score-distribution-graph.component';
@@ -37,16 +31,15 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
     declarations: [
-        ArtemisDatePipe,
-        TranslateDirective,
         CircularProgressBarComponent,
         ArtemisDurationFromSecondsPipe,
+        FindLanguageFromKeyPipe,
+        AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
         ExtensionPointDirective,
         SecuredImageComponent,
-        DeleteDialogComponent,
-        AdditionalFeedbackComponent,
         DeleteButtonDirective,
+        DeleteDialogComponent,
         ResizeableContainerComponent,
         SecureLinkDirective,
         SlideToggleComponent,
@@ -56,8 +49,6 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
         CustomMinDirective,
         CustomMaxDirective,
         CustomPatternValidatorDirective,
-        ArtemisTranslatePipe,
-        ArtemisTimeAgoPipe,
         StatisticsGraphComponent,
         StatisticsAverageScoreGraphComponent,
         StatisticsScoreDistributionGraphComponent,
@@ -67,19 +58,15 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [
-        ArtemisDatePipe,
-        TranslateDirective,
-        ArtemisDurationFromSecondsPipe,
         ArtemisSharedLibsModule,
+        ArtemisSharedCommonModule,
+        ArtemisSharedPipesModule,
         CircularProgressBarComponent,
+        ArtemisDurationFromSecondsPipe,
         FindLanguageFromKeyPipe,
-        AlertComponent,
-        AlertErrorComponent,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
         ExtensionPointDirective,
-        ArtemisSharedCommonModule,
-        ArtemisSharedPipesModule,
         SecuredImageComponent,
         DeleteButtonDirective,
         DeleteDialogComponent,
@@ -88,11 +75,10 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
         SlideToggleComponent,
         JhiConnectionStatusComponent,
         ChartComponent,
+        OrganizationSelectorComponent,
         CustomMinDirective,
         CustomMaxDirective,
         CustomPatternValidatorDirective,
-        ArtemisTranslatePipe,
-        ArtemisTimeAgoPipe,
         StatisticsGraphComponent,
         StatisticsAverageScoreGraphComponent,
         StatisticsScoreDistributionGraphComponent,
@@ -100,6 +86,5 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
         DoughnutChartComponent,
         ExerciseDetailStatisticsComponent,
     ],
-    providers: [ArtemisDatePipe, TranslatePipe],
 })
 export class ArtemisSharedModule {}
