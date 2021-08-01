@@ -30,8 +30,6 @@ export class OnlineEditorPage {
             cy.fixture(newFile.path).then(($fileContent) => {
                 const sanitizedContent = this.sanitizeInput($fileContent, packageName);
                 this.focusCodeEditor().type(sanitizedContent, { delay: 3 });
-                // Create some padding if the following deletion accidentally also removes a character in front of the focus
-                cy.focused().type('{enter}{enter}');
                 // Delete the remaining content which has been automatically added by the code editor.
                 // We simply send as many {del} keystrokes as the file has characters. This shouldn't increase the test runtime by too long since we set the delay to 0.
                 const deleteRemainingContent = '{del}'.repeat(sanitizedContent.length);
