@@ -20,7 +20,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as chai from 'chai';
 import * as moment from 'moment';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent } from 'ng-mocks';
 import { MockDirective } from 'ng-mocks';
 import { MockPipe } from 'ng-mocks';
@@ -34,6 +33,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -62,7 +62,7 @@ describe('ExamParticipationCoverComponent', () => {
                 MockComponent(AlertErrorComponent),
                 MockComponent(ExamTimerComponent),
                 MockComponent(ExamInformationComponent),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [

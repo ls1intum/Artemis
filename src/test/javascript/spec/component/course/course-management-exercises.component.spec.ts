@@ -15,13 +15,13 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,7 +43,7 @@ describe('Course Management Exercises Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CourseExerciseCardComponent),
                 MockDirective(NgbCollapse),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockDirective(ExtensionPointDirective),
                 MockComponent(AlertComponent),
                 MockComponent(ProgrammingExerciseComponent),

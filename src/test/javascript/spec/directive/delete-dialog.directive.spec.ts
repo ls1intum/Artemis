@@ -6,7 +6,6 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../test.module';
 import { By } from '@angular/platform-browser';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { AlertService, NgJhipsterModule } from 'ng-jhipster';
 import { FormsModule } from '@angular/forms';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import * as sinon from 'sinon';
@@ -16,6 +15,7 @@ import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.co
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,7 +37,7 @@ describe('DeleteDialogDirective', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), FormsModule, NgJhipsterModule, NgbModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), FormsModule, NgbModule],
             declarations: [TestComponent, DeleteButtonDirective, DeleteDialogComponent, AlertComponent, TranslatePipeMock],
             providers: [JhiLanguageHelper, AlertService],
         })

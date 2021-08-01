@@ -9,7 +9,6 @@ import { NgbAlert, NgbCollapse, NgbDropdownModule, NgbPopover, NgbTooltip } from
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import * as moment from 'moment';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
 import * as chai from 'chai';
@@ -46,6 +45,7 @@ import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -111,7 +111,7 @@ describe('CourseLectureDetails', () => {
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(SidePanelComponent),
                 MockComponent(FaIconComponent),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockComponent(SubmissionResultStatusComponent),
             ],
             providers: [

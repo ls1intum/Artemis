@@ -18,17 +18,19 @@ import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-m
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import { AlertService, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import * as sinon from 'sinon';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('Test Run Management Component', () => {
     let component: TestRunManagementComponent;
@@ -57,7 +59,7 @@ describe('Test Run Management Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
-                MockDirective(JhiSortDirective),
+                MockDirective(SortDirective),
                 MockDirective(DeleteButtonDirective),
             ],
             providers: [
@@ -65,7 +67,7 @@ describe('Test Run Management Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
             ],
         })
             .compileComponents()

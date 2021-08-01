@@ -11,11 +11,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
 import { MockProvider } from 'ng-mocks';
-import { JhiAlert, AlertService } from 'ng-jhipster';
 import { EditTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-text-unit/edit-text-unit.component';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
+import { Alert, AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -72,7 +72,7 @@ describe('EditTextUnitComponent', () => {
                 editTextUnitComponentFixture = TestBed.createComponent(EditTextUnitComponent);
                 editTextUnitComponent = editTextUnitComponentFixture.componentInstance;
                 const alertService = TestBed.inject(AlertService);
-                sinon.stub(alertService, 'error').returns({ msg: '' } as JhiAlert);
+                sinon.stub(alertService, 'error').returns({ message: '' } as Alert);
             });
     });
 

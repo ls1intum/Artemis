@@ -14,6 +14,7 @@ import * as chai from 'chai';
 import * as sinon from 'sinon';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

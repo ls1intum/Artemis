@@ -6,7 +6,6 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
-import { EventManager, NgJhipsterModule } from 'ng-jhipster';
 import { FormsModule } from '@angular/forms';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
@@ -32,6 +31,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -56,7 +56,6 @@ describe('TeamsComponent', () => {
                 TranslateModule.forRoot(),
                 ArtemisTestModule,
                 FormsModule,
-                NgJhipsterModule,
                 NgbModule,
                 ArtemisSharedModule,
                 ArtemisSharedComponentModule,

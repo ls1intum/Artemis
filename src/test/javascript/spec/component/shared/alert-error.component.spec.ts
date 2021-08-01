@@ -4,6 +4,7 @@ import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { ArtemisTestModule } from '../../test.module';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 describe('Alert Error Component', () => {
     let comp: AlertErrorComponent;
@@ -31,14 +32,14 @@ describe('Alert Error Component', () => {
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
         // THEN
         expect(comp.alerts.length).toBe(1);
-        expect(comp.alerts[0].msg).toBe('error.server.not.reachable');
+        expect(comp.alerts[0].message).toBe('error.server.not.reachable');
     });
     it('Should display an alert on status 404', () => {
         // GIVEN
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 404 } });
         // THEN
         expect(comp.alerts.length).toBe(1);
-        expect(comp.alerts[0].msg).toBe('error.url.not.found');
+        expect(comp.alerts[0].message).toBe('error.url.not.found');
     });
     it('Should display an alert on generic error', () => {
         // GIVEN
@@ -46,8 +47,8 @@ describe('Alert Error Component', () => {
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { error: 'Second Error Message' } });
         // THEN
         expect(comp.alerts.length).toBe(2);
-        expect(comp.alerts[0].msg).toBe('Error Message');
-        expect(comp.alerts[1].msg).toBe('Second Error Message');
+        expect(comp.alerts[0].message).toBe('Error Message');
+        expect(comp.alerts[1].message).toBe('Second Error Message');
     });
     it('Should display an alert on status 400 for generic error', () => {
         // GIVEN
@@ -67,7 +68,7 @@ describe('Alert Error Component', () => {
         eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
         // THEN
         expect(comp.alerts.length).toBe(1);
-        expect(comp.alerts[0].msg).toBe('error.validation');
+        expect(comp.alerts[0].message).toBe('error.validation');
     });
     it('Should display an alert on status 400 for generic error without message', () => {
         // GIVEN
@@ -80,7 +81,7 @@ describe('Alert Error Component', () => {
         eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
         // THEN
         expect(comp.alerts.length).toBe(1);
-        expect(comp.alerts[0].msg).toBe('Bad Request');
+        expect(comp.alerts[0].message).toBe('Bad Request');
     });
     it('Should display an alert on status 400 for invalid parameters', () => {
         // GIVEN
@@ -101,7 +102,7 @@ describe('Alert Error Component', () => {
         eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
         // THEN
         expect(comp.alerts.length).toBe(1);
-        expect(comp.alerts[0].msg).toBe('error.Size');
+        expect(comp.alerts[0].message).toBe('error.Size');
     });
     it('Should display an alert on status 400 for error headers', () => {
         // GIVEN
@@ -118,6 +119,6 @@ describe('Alert Error Component', () => {
         eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
         // THEN
         expect(comp.alerts.length).toBe(1);
-        expect(comp.alerts[0].msg).toBe('Error Message');
+        expect(comp.alerts[0].message).toBe('Error Message');
     });
 });

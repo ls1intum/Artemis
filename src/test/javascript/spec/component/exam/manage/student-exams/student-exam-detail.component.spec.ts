@@ -10,7 +10,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { AlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
@@ -36,6 +35,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -150,7 +151,7 @@ describe('StudentExamDetailComponent', () => {
                 }),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockProvider(AlertService),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 {
                     provide: ActivatedRoute,
                     useValue: {

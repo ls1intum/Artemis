@@ -16,12 +16,12 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import * as chai from 'chai';
 import * as moment from 'moment';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -84,7 +84,7 @@ describe('CourseLectures', () => {
                 MockPipe(ArtemisDatePipe),
                 MockComponent(SidePanelComponent),
                 MockComponent(FaIconComponent),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 MockProvider(CourseManagementService, {

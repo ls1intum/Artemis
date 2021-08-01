@@ -17,6 +17,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { SortService } from 'app/shared/service/sort.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

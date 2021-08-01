@@ -8,7 +8,6 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { AlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -32,6 +31,8 @@ import { NgbModal, NgbModule, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -178,7 +179,7 @@ describe('StudentExamsComponent', () => {
                     },
                 }),
                 MockProvider(AlertService),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 {
                     provide: LocalStorageService,
                     useClass: MockLocalStorageService,

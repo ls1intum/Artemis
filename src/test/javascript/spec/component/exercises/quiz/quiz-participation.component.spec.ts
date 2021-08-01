@@ -25,7 +25,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import * as chai from 'chai';
 import * as moment from 'moment';
-import { AlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
@@ -38,6 +37,8 @@ import { ArtemisTestModule } from '../../../test.module';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -90,7 +91,7 @@ const testBedDeclarations = [
     MockComponent(AlertComponent),
     MockPipe(ArtemisTranslatePipe),
     MockPipe(ArtemisDatePipe),
-    MockDirective(JhiTranslateDirective),
+    MockDirective(TranslateDirective),
     MockComponent(MultipleChoiceQuestionComponent),
     MockComponent(DragAndDropQuestionComponent),
     MockComponent(ShortAnswerQuestionComponent),

@@ -18,7 +18,6 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MomentModule } from 'ngx-moment';
@@ -27,6 +26,8 @@ import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overvie
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/entities/exercise.model';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -100,9 +101,9 @@ describe('CourseManagementComponent', () => {
                 MockDirective(OrionFilterDirective),
                 MockComponent(AlertComponent),
                 MockDirective(MockHasAnyAuthorityDirective),
-                MockDirective(JhiSortByDirective),
+                MockDirective(SortByDirective),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(JhiSortDirective),
+                MockDirective(SortDirective),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockComponent(CourseManagementCardComponent),

@@ -3,7 +3,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
 import { Course } from 'app/entities/course.model';
@@ -16,7 +16,6 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -105,7 +104,7 @@ describe('Course Management Update Component', () => {
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(ColorSelectorComponent),
                 MockDirective(HasAnyAuthorityDirective),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockPipe(RemoveKeysPipe),
             ],
         }).compileComponents();

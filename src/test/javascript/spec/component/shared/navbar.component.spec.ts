@@ -13,13 +13,13 @@ import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { LectureService } from 'app/lecture/lecture.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -87,7 +87,7 @@ describe('NavbarComponent', () => {
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(NgbDropdown),
                 MockDirective(ActiveMenuDirective),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockDirective(MockRouterLinkDirective),
                 MockDirective(MockRouterLinkActiveOptionsDirective),
                 MockPipe(ArtemisTranslatePipe),

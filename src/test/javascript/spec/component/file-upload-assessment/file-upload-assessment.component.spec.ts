@@ -459,7 +459,7 @@ describe('FileUploadAssessmentComponent', () => {
             const complaintResponse = new ComplaintResponse();
             comp.onUpdateAssessmentAfterComplaint(complaintResponse);
             expect(comp.isLoading).to.be.false;
-            sinon.assert.calledOnceWithExactly(alertServiceErrorSpy, 'errormessage', []);
+            sinon.assert.calledOnceWithExactly(alertServiceErrorSpy, 'errormessage');
         });
         it('should not update assessment after complaint', () => {
             const alertServiceErrorSpy = sinon.spy(alertService, 'error');

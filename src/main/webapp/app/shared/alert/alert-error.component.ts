@@ -11,7 +11,7 @@ import { EventManager, EventWithContent } from 'app/core/util/event-manager.serv
     template: `
         <div class="alerts" role="alert">
             <div *ngFor="let alert of alerts" [ngClass]="setClasses(alert)">
-                <ngb-alert *ngIf="alert && alert.type && alert.msg && alert.close" [type]="alert.type" (close)="alert.close(alerts)">
+                <ngb-alert *ngIf="alert && alert.type && alert.message && alert.close" [type]="alert.type" (close)="alert.close(alerts)">
                     <pre [innerHTML]="getAlertMessage(alert)"></pre>
                 </ngb-alert>
             </div>

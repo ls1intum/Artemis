@@ -6,7 +6,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -15,6 +14,9 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { LearningGoalCourseDetailModalComponent } from 'app/course/learning-goals/learning-goal-course-detail-modal/learning-goal-course-detail-modal.component';
 import { CourseLearningGoalProgress, CourseLectureUnitProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -33,9 +35,9 @@ describe('LearningGoalCourseDetailModalComponent', () => {
             declarations: [
                 LearningGoalCourseDetailModalComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(JhiTranslateDirective),
-                MockDirective(JhiSortDirective),
-                MockDirective(JhiSortByDirective),
+                MockDirective(TranslateDirective),
+                MockDirective(SortDirective),
+                MockDirective(SortByDirective),
                 MockComponent(FaIconComponent),
             ],
             providers: [

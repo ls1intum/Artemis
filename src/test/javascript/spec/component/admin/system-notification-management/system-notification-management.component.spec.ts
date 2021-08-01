@@ -10,7 +10,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import * as moment from 'moment';
-import { JhiItemCountComponent, JhiSortDirective } from 'ng-jhipster';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
@@ -62,9 +61,7 @@ describe('SystemNotificationManagementComponent', () => {
                 RouterLinkSpy,
                 MockDirective(RouterOutlet),
                 MockDirective(AlertComponent),
-                MockDirective(JhiItemCountComponent),
                 MockDirective(DeleteButtonDirective),
-                MockDirective(JhiSortDirective),
                 MockDirective(NgbPagination),
             ],
             providers: [
