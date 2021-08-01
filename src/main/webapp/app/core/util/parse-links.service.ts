@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
 /**
- * An utility service for link parsing.
+ * A utility service for link parsing. Note: this class comes from the jhipster template
  */
 @Injectable({
     providedIn: 'root',
@@ -20,8 +20,8 @@ export class ParseLinks {
         const links: { [key: string]: number } = {};
 
         // Parse each part into a named link
-        parts.forEach((p) => {
-            const section: string[] = p.split(';');
+        parts.forEach((part) => {
+            const section: string[] = part.split(';');
 
             if (section.length !== 2) {
                 throw new Error('section could not be split on ";"');
