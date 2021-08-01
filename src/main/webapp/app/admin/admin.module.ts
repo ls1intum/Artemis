@@ -8,7 +8,6 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TagInputModule } from 'ngx-chips';
 import { UserManagementDetailComponent } from 'app/admin/user-management/user-management-detail.component';
 import { LogsComponent } from 'app/admin/logs/logs.component';
-import { JhiMetricsMonitoringComponent } from 'app/admin/metrics/metrics.component';
 import { HealthComponent } from 'app/admin/health/health.component';
 import { JhiConfigurationComponent } from 'app/admin/configuration/configuration.component';
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
@@ -25,6 +24,7 @@ import { OrganizationManagementComponent } from './organization-management/organ
 import { OrganizationManagementDetailComponent } from './organization-management/organization-management-detail.component';
 import { OrganizationManagementUpdateComponent } from './organization-management/organization-management-update.component';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
+import { MetricsModule } from 'app/admin/metrics/metrics.module';
 
 /* jhipster-needle-add-admin-module-import - JHipster will add admin modules imports here */
 
@@ -38,6 +38,7 @@ const ENTITY_STATES = [...adminState];
         TagInputModule,
         NgxDatatableModule,
         ArtemisDataTableModule,
+        MetricsModule,
         /* jhipster-needle-add-admin-module - JHipster will add admin modules here */
     ],
     declarations: [
@@ -54,7 +55,6 @@ const ENTITY_STATES = [...adminState];
         HealthComponent,
         HealthModalComponent,
         StatisticsComponent,
-        JhiMetricsMonitoringComponent,
         AdminFeatureToggleComponent,
         UpcomingExamsAndExercisesComponent,
         OrganizationManagementComponent,

@@ -25,6 +25,7 @@ import { RouterModule } from '@angular/router';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
@@ -51,6 +52,7 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
         ExerciseStatisticsComponent,
         DoughnutChartComponent,
         ExerciseDetailStatisticsComponent,
+        ItemCountComponent,
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -79,6 +81,7 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
         ExerciseStatisticsComponent,
         DoughnutChartComponent,
         ExerciseDetailStatisticsComponent,
+        ItemCountComponent,
     ],
 })
 export class ArtemisSharedModule {}

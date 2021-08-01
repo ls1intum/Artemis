@@ -9,10 +9,10 @@ import { JhiConfigurationComponent } from 'app/admin/configuration/configuration
 import { AdminFeatureToggleComponent } from 'app/admin/features/admin-feature-toggle.component';
 import { HealthComponent } from 'app/admin/health/health.component';
 import { LogsComponent } from 'app/admin/logs/logs.component';
-import { JhiMetricsMonitoringComponent } from 'app/admin/metrics/metrics.component';
 import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';
 import { organizationMgmtRoute } from 'app/admin/organization-management/organization-management.route';
+import { MetricsComponent } from 'app/admin/metrics/metrics.component';
 
 export const adminState: Routes = [
     {
@@ -67,7 +67,7 @@ export const adminState: Routes = [
             },
             {
                 path: 'metrics',
-                component: JhiMetricsMonitoringComponent,
+                component: MetricsComponent,
                 data: {
                     pageTitle: 'metrics.title',
                 },
