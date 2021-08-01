@@ -5,6 +5,11 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Notification } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
+import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE } from 'app/shared/notification/notification.constants';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { JhiAlertService } from 'ng-jhipster';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -14,7 +19,16 @@ import { GroupNotification } from 'app/entities/group-notification.model';
 export class NotificationPopupComponent implements OnInit {
     notifications: Notification[] = [];
 
-    constructor(private accountService: AccountService, private notificationService: NotificationService, private router: Router) {}
+    LiveExamExerciseUpdateNotificationTitleHtmlConst = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
+
+    constructor(
+        private accountService: AccountService,
+        private notificationService: NotificationService,
+        private router: Router,
+        private examExerciseUpdateService: ExamExerciseUpdateService,
+        private jhiAlertService: JhiAlertService,
+        private examParticipationService: ExamParticipationService,
+    ) {}
 
     /**
      * Subscribe to notification updates that are received via websocket if the user is logged in.
@@ -40,14 +54,20 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     navigateToTarget(notification: Notification): void {
-        this.router.navigateByUrl(this.notificationTargetRoute(notification));
+        if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
+            const target = JSON.parse(notification.target!);
+            this.examExerciseUpdateService.navigateToExamExercise(target.exercise);
+        } else {
+            this.router.navigateByUrl(this.notificationTargetRoute(notification));
+        }
     }
 
     private notificationTargetRoute(notification: Notification): UrlTree | string {
         if (notification.target) {
             const target = JSON.parse(notification.target);
-
-            if (notification.title === 'Quiz started' && target.status) {
+            if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
+                return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.exam]);
+            } else if (notification.title === 'Quiz started' && target.status) {
                 return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id, target.status]);
             } else {
                 return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id]);
@@ -65,10 +85,12 @@ export class NotificationPopupComponent implements OnInit {
     private addNotification(notification: Notification): void {
         // Only add a notification if it does not already exist.
         if (notification && !this.notifications.some(({ id }) => id === notification.id)) {
-            // For now only notifications about a started quiz should be displayed.
             if (notification.title === 'Quiz started') {
                 this.addQuizNotification(notification);
                 this.setRemovalTimeout(notification);
+            }
+            if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
+                this.checkIfNotificationAffectsCurrentStudentExamExercises(notification);
             }
         }
     }
@@ -94,6 +116,47 @@ export class NotificationPopupComponent implements OnInit {
                 this.notifications.unshift(notification);
             }
         }
+    }
+
+    /**
+     * Adds a notification about a updated exercise during a live exam to the component's state
+     * and pushes updated problemStatement to student exam exercise via BehaviorSubjects
+     *
+     * @param notification {Notification}
+     */
+    private addExamUpdateNotification(notification: Notification): void {
+        try {
+            const target = JSON.parse(notification.target!);
+            this.examExerciseUpdateService.updateLiveExamExercise(target.exercise, target.problemStatement);
+        } catch (error) {
+            this.jhiAlertService.error(error);
+        }
+        // only show pop-up if explicit notification text was set and only inside exam mode
+        if (notification.text != undefined && this.router.isActive(this.notificationTargetRoute(notification), true)) {
+            this.notifications.unshift(notification);
+        }
+    }
+
+    /**
+     * checks if the updated exercise, which notification is based on, is part of the student exam of this client
+     * this might not be the case due to different/optional exerciseGroups
+     * @param notification that hold information about the exercise like problemStatement or different ids
+     */
+    private checkIfNotificationAffectsCurrentStudentExamExercises(notification: Notification): void {
+        if (!notification.target) {
+            return;
+        }
+        const target = JSON.parse(notification.target);
+        const courseId = target.course;
+        const examId = target.exam;
+        const exerciseId = target.exercise;
+        this.examParticipationService.loadStudentExamWithExercisesForSummary(courseId, examId).subscribe((studentExamWithExercises: StudentExam) => {
+            const updatedExerciseIsPartOfStudentExam = studentExamWithExercises?.exercises?.find((studentExamExercise) => studentExamExercise.id === exerciseId);
+            if (updatedExerciseIsPartOfStudentExam != undefined) {
+                this.addExamUpdateNotification(notification);
+                this.setRemovalTimeout(notification);
+            }
+        });
     }
 
     private setRemovalTimeout(notification: Notification): void {

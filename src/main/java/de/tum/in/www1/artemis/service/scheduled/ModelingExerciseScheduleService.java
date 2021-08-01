@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES;
 import static java.time.Instant.now;
 
 import java.time.ZonedDateTime;
@@ -22,6 +23,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import io.github.jhipster.config.JHipsterConstants;
 
@@ -41,14 +43,16 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
 
     private final TaskScheduler scheduler;
 
+    private final ExamDateService examDateService;
+
     public ModelingExerciseScheduleService(ScheduleService scheduleService, ModelingExerciseRepository modelingExerciseRepository, Environment env, CompassService compassService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler) {
+            ExamDateService examDateService, @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.scheduleService = scheduleService;
         this.env = env;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.compassService = compassService;
         this.scheduler = scheduler;
-
+        this.examDateService = examDateService;
     }
 
     @PostConstruct
@@ -66,17 +70,21 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
             List<ModelingExercise> exercisesToBeScheduled = modelingExerciseRepository.findAllToBeScheduled(ZonedDateTime.now());
             exercisesToBeScheduled.forEach(this::scheduleExercise);
 
-            log.info("Scheduled {} programming exercises.", exercisesToBeScheduled.size());
+            List<ModelingExercise> modelingExercisesWithExam = modelingExerciseRepository.findAllWithEagerExamByExamEndDateAfterDate(ZonedDateTime.now());
+            modelingExercisesWithExam.forEach(this::scheduleExamExercise);
+
+            log.info("Scheduled {} modeling exercises.", exercisesToBeScheduled.size());
+            log.info("Scheduled {} exam modeling exercises.", modelingExercisesWithExam.size());
         }
         catch (Exception e) {
-            log.error("Failed to start ProgrammingExerciseScheduleService", e);
+            log.error("Failed to start ModelingExerciseScheduleService", e);
         }
     }
 
     @Override
     public void updateScheduling(ModelingExercise exercise) {
         if (!needsToBeScheduled(exercise)) {
-            // If a programming exercise got changed so that any scheduling becomes unnecessary, we need to cancel all scheduled tasks
+            // If a modeling exercise got changed so that any scheduling becomes unnecessary, we need to cancel all scheduled tasks
             cancelAllScheduledTasks(exercise);
             return;
         }
@@ -84,15 +92,27 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
     }
 
     private static boolean needsToBeScheduled(ModelingExercise exercise) {
+        if (exercise.getAssessmentType() != AssessmentType.SEMI_AUTOMATIC) {
+            return false;
+        }
+
+        // Exam exercises need to be scheduled
+        if (exercise.isExamExercise()) {
+            return true;
+        }
+
         final ZonedDateTime now = ZonedDateTime.now();
         // Semi automatically assessed modeling exercises as well
         // Has a regular due date in the future
-        return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && exercise.getDueDate() != null && now.isBefore(exercise.getDueDate());
+        return exercise.getDueDate() != null && now.isBefore(exercise.getDueDate());
     }
 
     private void scheduleExercise(ModelingExercise exercise) {
         try {
-            if (!exercise.isExamExercise()) {
+            if (exercise.isExamExercise()) {
+                scheduleExamExercise(exercise);
+            }
+            else {
                 scheduleCourseExercise(exercise);
             }
         }
@@ -116,6 +136,23 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.DUE);
         }
+    }
+
+    private void scheduleExamExercise(ModelingExercise exercise) {
+        var exam = exercise.getExerciseGroup().getExam();
+        var endDate = examDateService.getLatestIndividualExamEndDateWithGracePeriod(exam);
+        if (endDate == null) {
+            log.error("Modeling exercise {} for exam {} cannot be scheduled properly, end date is not set", exercise.getId(), exam.getId());
+            return;
+        }
+        if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDateWithGracePeriod(exam))) {
+            var buildDate = endDate.plusMinutes(EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES);
+            exercise.setClusterBuildDate(buildDate);
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_COMPASS_CLUSTERS_AFTER_EXAM, () -> {
+                buildModelingClusters(exercise).run();
+            });
+        }
+        log.debug("Scheduled Exam Modeling Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
     }
 
     /**
@@ -171,5 +208,6 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
         scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.DUE);
         scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
         scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.ASSESSMENT_DUE);
+        scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.BUILD_COMPASS_CLUSTERS_AFTER_EXAM);
     }
 }

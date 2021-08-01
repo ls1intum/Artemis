@@ -4,6 +4,7 @@ import { get } from 'lodash';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-tutor-participation-graph',
@@ -36,6 +37,9 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     percentageLateAssessmentProgressOfCorrectionRound: number[] = [];
 
     routerLink: string;
+
+    shouldShowManualAssessments: boolean;
+
     constructor(private router: Router) {}
 
     /**
@@ -51,6 +55,10 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         }
         this.calculatePercentageAssessmentProgress();
         this.calculatePercentageComplaintsProgress();
+
+        if (this.exercise && this.exercise.type === ExerciseType.PROGRAMMING) {
+            this.shouldShowManualAssessments = !(this.exercise as ProgrammingExercise).allowComplaintsForAutomaticAssessments;
+        }
     }
 
     /**
