@@ -20,7 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
@@ -114,16 +113,15 @@ public class ParticipationResource {
     }
 
     /**
-     * POST /courses/:courseId/exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
+     * POST exercises/:exerciseId/participations : start the "exerciseId" exercise for the current user.
      *
-     * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the participationId of the exercise for which to init a participation
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      * @throws URISyntaxException If the URI for the created participation could not be created
      */
     @PostMapping(Endpoints.START_PARTICIPATION)
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Participation> startParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId) throws URISyntaxException {
+    public ResponseEntity<Participation> startParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -152,8 +150,7 @@ public class ParticipationResource {
 
         // if this is a team-based exercise, set the participant to the team that the user belongs to
         if (exercise.isTeamMode()) {
-            participant = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId())
-                    .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "cannotStart"));
+            participant = teamRepository.findOneByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
         }
 
         StudentParticipation participation = participationService.startExercise(exercise, participant, true);
@@ -163,17 +160,16 @@ public class ParticipationResource {
     }
 
     /**
-     * PUT /courses/:courseId/exercises/:exerciseId/resume-programming-participation: resume the participation of the current user in the given programming exercise
+     * PUT exercises/:exerciseId/resume-programming-participation: resume the participation of the current user in the given programming exercise
      *
-     * @param courseId   only included for API consistency, not actually used
      * @param exerciseId of the exercise for which to resume participation
      * @param principal  current user principal
      * @return ResponseEntity with status 200 (OK) and with updated participation as a body, or with status 500 (Internal Server Error)
      */
-    @PutMapping("/courses/{courseId}/exercises/{exerciseId}/resume-programming-participation")
+    @PutMapping("exercises/{exerciseId}/resume-programming-participation")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<ProgrammingExerciseStudentParticipation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
+    public ResponseEntity<ProgrammingExerciseStudentParticipation> resumeParticipation(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, principal.getName());
@@ -213,14 +209,14 @@ public class ParticipationResource {
     }
 
     /**
-     * PUT /participations : Updates an existing participation.
+     * PUT exercises/{exerciseId}/participations : Updates an existing participation.
      *
      * @param exerciseId the id of the exercise, the participation belongs to
      * @param participation the participation to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated participation, or with status 400 (Bad Request) if the participation is not valid, or with status
      *         500 (Internal Server Error) if the participation couldn't be updated
      */
-    @PutMapping("/exercises/{exerciseId}/participations")
+    @PutMapping("exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Participation> updateParticipation(@PathVariable long exerciseId, @RequestBody StudentParticipation participation) {
         log.debug("REST request to update Participation : {}", participation);
@@ -231,11 +227,11 @@ public class ParticipationResource {
             throw new BadRequestAlertException("The participation needs to be connected to an exercise", ENTITY_NAME, "exerciseidmissing");
         }
         if (participation.getExercise().getId() != exerciseId) {
-            return conflict();
+            return badRequest();
         }
         var originalParticipation = studentParticipationRepository.findByIdElseThrow(participation.getId());
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, originalParticipation.getExercise(), null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, originalParticipation.getExercise(), user);
         if (participation.getPresentationScore() == null || participation.getPresentationScore() < 0) {
             participation.setPresentationScore(0);
         }
@@ -254,13 +250,13 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/participations : get all the participations for an exercise
+     * GET exercises/:exerciseId/participations : get all the participations for an exercise
      *
      * @param exerciseId The participationId of the exercise
      * @param withLatestResult Whether the {@link Result results} for the participations should also be fetched
      * @return A list of all participations for the exercise
      */
-    @GetMapping("/exercises/{exerciseId}/participations")
+    @GetMapping("exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<StudentParticipation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
             @RequestParam(defaultValue = "false") boolean withLatestResult) {
@@ -294,7 +290,7 @@ public class ParticipationResource {
      * @param courseId The participationId of the course
      * @return A list of all participations for the given course
      */
-    @GetMapping("/courses/{courseId}/participations")
+    @GetMapping("courses/{courseId}/participations")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<StudentParticipation>> getAllParticipationsForCourse(@PathVariable Long courseId) {
         long start = System.currentTimeMillis();
@@ -349,12 +345,12 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /participations/:participationId : get the participation for the given "participationId" including its latest result.
+     * GET participations/:participationId : get the participation for the given "participationId" including its latest result.
      *
      * @param participationId the participationId of the participation to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
-    @GetMapping("/participations/{participationId}/withLatestResult")
+    @GetMapping("participations/{participationId}/withLatestResult")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentParticipation> getParticipationWithLatestResult(@PathVariable Long participationId) {
         log.debug("REST request to get Participation : {}", participationId);
@@ -370,12 +366,12 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /participations/:participationId : get the participation for the given "participationId".
+     * GET participations/:participationId : get the participation for the given "participationId".
      *
      * @param participationId the participationId of the participation to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
-    @GetMapping("/participations/{participationId}")
+    @GetMapping("participations/{participationId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentParticipation> getParticipation(@PathVariable Long participationId) {
         log.debug("REST request to get participation : {}", participationId);
@@ -386,12 +382,12 @@ public class ParticipationResource {
     }
 
     /**
-     * Retrieves the latest build artifact of a given programming exercise participation
+     * GET participations/{participationId}/buildArtifact : Retrieves the latest build artifact of a given programming exercise participation
      *
      * @param participationId The participationId of the participation
      * @return The latest build artifact (JAR/WAR) for the participation
      */
-    @GetMapping("/participations/{participationId}/buildArtifact")
+    @GetMapping("participations/{participationId}/buildArtifact")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getParticipationBuildArtifact(@PathVariable Long participationId) {
         log.debug("REST request to get Participation build artifact: {}", participationId);
@@ -403,14 +399,13 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /courses/:courseId/exercises/:exerciseId/participation: get the user's participation for a specific exercise. Please note: 'courseId' is only included in the call for
-     * API consistency, it is not actually used //TODO remove courseId from the URL
+     * GET exercises/:exerciseId/participation: get the user's participation for a specific exercise.
      *
      * @param exerciseId the participationId of the exercise for which to retrieve the participation
      * @param principal The principal in form of the user's identity
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{exerciseId}/participation")
+    @GetMapping("exercises/{exerciseId}/participation")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<MappingJacksonValue> getParticipation(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
@@ -423,11 +418,7 @@ public class ParticipationResource {
             response = participationForQuizExercise(quizExercise, principal.getName());
         }
         else {
-            Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, principal.getName());
-            if (optionalParticipation.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
-            }
-            Participation participation = optionalParticipation.get();
+            StudentParticipation participation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(exercise, principal.getName());
             response = new MappingJacksonValue(participation);
         }
         if (response == null) {
@@ -479,7 +470,7 @@ public class ParticipationResource {
     }
 
     /**
-     * DELETE /participations/:participationId : delete the "participationId" participation. This only works for student participations - other participations should not be deleted here!
+     * DELETE participations/:participationId : delete the "participationId" participation. This only works for student participations - other participations should not be deleted here!
      *
      * @param participationId the participationId of the participation to delete
      * @param deleteBuildPlan True, if the build plan should also get deleted
@@ -487,7 +478,7 @@ public class ParticipationResource {
      * @param principal The identity of the user accessing this resource
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/participations/{participationId}")
+    @DeleteMapping("participations/{participationId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
@@ -499,14 +490,7 @@ public class ParticipationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
 
-        String name = participation.getParticipantName();
-        var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
-                + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
-        auditEventRepository.add(auditEvent);
-        log.info(logMessage);
-        participationService.delete(participationId, deleteBuildPlan, deleteRepository);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
+        return deleteParticipationAndPutLogMessage(participation, deleteBuildPlan, deleteRepository, principal, user);
     }
 
     /**
@@ -519,7 +503,7 @@ public class ParticipationResource {
      * @param principal The identity of the user accessing this resource
      * @return the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
      */
-    @DeleteMapping("/guided-tour/participations/{participationId}")
+    @DeleteMapping("guided-tour/participations/{participationId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteParticipationForGuidedTour(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
@@ -541,8 +525,13 @@ public class ParticipationResource {
         else {
             return forbidden();
         }
+        return deleteParticipationAndPutLogMessage(participation, deleteBuildPlan, deleteRepository, principal, user);
+    }
 
+    private ResponseEntity<Void> deleteParticipationAndPutLogMessage(StudentParticipation participation, boolean deleteBuildPlan, boolean deleteRepository, Principal principal,
+            User user) {
         String name = participation.getParticipantName();
+        Long participationId = participation.getId();
         var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
                 + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
@@ -553,14 +542,14 @@ public class ParticipationResource {
     }
 
     /**
-     * DELETE /participations/:participationId : remove the build plan of the ProgrammingExerciseStudentParticipation of the "participationId".
+     * DELETE participations/{participationId}/build-plan : remove the build plan of the ProgrammingExerciseStudentParticipation of the "participationId".
      * This only works for programming exercises.
      *
      * @param participationId the participationId of the ProgrammingExerciseStudentParticipation for which the build plan should be removed
      * @param principal The identity of the user accessing this resource
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("/participations/{participationId}/cleanupBuildPlan")
+    @DeleteMapping("participations/{participationId}/build-plan")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
@@ -598,11 +587,11 @@ public class ParticipationResource {
     }
 
     /**
-     * fetches all submissions of a specific participation
+     * GET participations/{participationId}/submissions : fetches all submissions of a specific participation
      * @param participationId the id of the participation
      * @return all submissions that belong to the participation
      */
-    @GetMapping("/participations/{participationId}/submissions")
+    @GetMapping("participations/{participationId}/submissions")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<Submission>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
@@ -616,7 +605,7 @@ public class ParticipationResource {
 
         public static final String ROOT = "/api";
 
-        public static final String START_PARTICIPATION = "/courses/{courseId}/exercises/{exerciseId}/participations";
+        public static final String START_PARTICIPATION = "exercises/{exerciseId}/participations";
 
         private Endpoints() {
         }

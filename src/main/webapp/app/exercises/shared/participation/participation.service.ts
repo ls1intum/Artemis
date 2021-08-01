@@ -89,7 +89,7 @@ export class ParticipationService {
     cleanupBuildPlan(participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(participation);
         return this.http
-            .put<StudentParticipation>(`${this.resourceUrl}/${participation.id}/cleanupBuildPlan`, copy, { observe: 'response' })
+            .delete<StudentParticipation>(`${this.resourceUrl}/${participation.id}/build-plan`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 

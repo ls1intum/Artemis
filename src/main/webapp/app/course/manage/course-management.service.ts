@@ -559,7 +559,7 @@ export class CourseManagementService {
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {
-    private resourceUrl = SERVER_API_URL + `api/courses`;
+    private resourceUrl = SERVER_API_URL + `api`;
 
     constructor(private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService, private exerciseService: ExerciseService) {}
 
@@ -570,7 +570,7 @@ export class CourseExerciseService {
      */
     findAllProgrammingExercisesForCourse(courseId: number): Observable<HttpResponse<ProgrammingExercise[]>> {
         return this.http
-            .get<ProgrammingExercise[]>(`${this.resourceUrl}/${courseId}/programming-exercises/`, { observe: 'response' })
+            .get<ProgrammingExercise[]>(`${this.resourceUrl}/courses/${courseId}/programming-exercises/`, { observe: 'response' })
             .pipe(map((res: HttpResponse<ProgrammingExercise[]>) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: HttpResponse<ProgrammingExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)));
     }
@@ -582,7 +582,7 @@ export class CourseExerciseService {
      */
     findAllModelingExercisesForCourse(courseId: number): Observable<HttpResponse<ModelingExercise[]>> {
         return this.http
-            .get<ModelingExercise[]>(`${this.resourceUrl}/${courseId}/modeling-exercises/`, { observe: 'response' })
+            .get<ModelingExercise[]>(`${this.resourceUrl}/courses/${courseId}/modeling-exercises/`, { observe: 'response' })
             .pipe(map((res: HttpResponse<ModelingExercise[]>) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: HttpResponse<ModelingExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)));
     }
@@ -594,7 +594,7 @@ export class CourseExerciseService {
      */
     findAllTextExercisesForCourse(courseId: number): Observable<HttpResponse<TextExercise[]>> {
         return this.http
-            .get<TextExercise[]>(`${this.resourceUrl}/${courseId}/text-exercises/`, { observe: 'response' })
+            .get<TextExercise[]>(`${this.resourceUrl}/courses/${courseId}/text-exercises/`, { observe: 'response' })
             .pipe(map((res: HttpResponse<TextExercise[]>) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: HttpResponse<TextExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)));
     }
@@ -606,7 +606,7 @@ export class CourseExerciseService {
      */
     findAllFileUploadExercisesForCourse(courseId: number): Observable<HttpResponse<FileUploadExercise[]>> {
         return this.http
-            .get<FileUploadExercise[]>(`${this.resourceUrl}/${courseId}/file-upload-exercises/`, { observe: 'response' })
+            .get<FileUploadExercise[]>(`${this.resourceUrl}/courses/${courseId}/file-upload-exercises/`, { observe: 'response' })
             .pipe(map((res: HttpResponse<FileUploadExercise[]>) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: HttpResponse<FileUploadExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)));
     }
@@ -617,7 +617,7 @@ export class CourseExerciseService {
      * @param exerciseId - the unique identifier of the modelling exercise
      */
     startExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
-        return this.http.post<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/participations`, {}).pipe(
+        return this.http.post<StudentParticipation>(`${this.resourceUrl}/exercises/${exerciseId}/participations`, {}).pipe(
             map((participation: StudentParticipation) => {
                 if (participation.type === ParticipationType.PROGRAMMING) {
                     addUserIndependentRepositoryUrl(participation);
@@ -633,7 +633,7 @@ export class CourseExerciseService {
      * @param exerciseId - the unique identifier of the modelling exercise
      */
     resumeProgrammingExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
-        return this.http.put<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/resume-programming-participation`, {}).pipe(
+        return this.http.put<StudentParticipation>(`${this.resourceUrl}/exercises/${exerciseId}/resume-programming-participation`, {}).pipe(
             map((participation: StudentParticipation) => {
                 if (participation.type === ParticipationType.PROGRAMMING) {
                     addUserIndependentRepositoryUrl(participation);

@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsAlreadyAssignedException;
 
 /**
@@ -97,6 +100,12 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
         }
         team.setExercise(exercise);
         return save(team);
+    }
+
+    @NotNull
+    default Team findOneByExerciseIdAndUserIdElseThrow(Long exerciseId, Long userId) {
+        return findOneByExerciseIdAndUserId(exerciseId, userId)
+                .orElseThrow(() -> new EntityNotFoundException("Couldn't an active team for exercise " + exerciseId + " with user " + userId + "!"));
     }
 
     /**
