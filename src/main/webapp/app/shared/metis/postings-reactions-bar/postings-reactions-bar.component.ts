@@ -5,7 +5,9 @@ import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/entities/metis/reaction.model';
 
 const PIN_EMOJI_ID = 'pushpin';
+const PIN_EMOJI_UNICODE = '1F4CC';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
+const ARCHIVE_EMOJI_UNICODE = '1F4C2';
 
 interface ReactionEvent {
     $event: Event;
@@ -25,12 +27,21 @@ interface ReactionCountMap {
 export abstract class PostingsReactionsBarDirective<T extends Posting> implements OnInit, OnChanges {
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
+    categoriesIcons: { [key: string]: string } = {
+        recent: `M10 1h3v21h-3zm10.186 4l1.5 2.598L3.5 18.098 2 15.5zM2 7.598L3.5 5l18.186 10.5-1.5 2.598z`,
+    };
 
     @Input() posting: T;
     showReactionSelector = false;
     selectedCourseEmojis: string[];
     reactionCountMap: ReactionCountMap = {};
-    emojisToShowFilter: (emojiId: string) => boolean = (emojiId) => emojiId !== this.pinEmojiId && emojiId !== this.archiveEmojiId;
+    emojisToShowFilter: (emoji: string | EmojiData) => boolean = (emoji) => {
+        if (typeof emoji === 'string') {
+            return emoji !== PIN_EMOJI_UNICODE && emoji !== ARCHIVE_EMOJI_UNICODE;
+        } else {
+            return emoji.unified !== PIN_EMOJI_UNICODE && emoji.unified !== ARCHIVE_EMOJI_UNICODE;
+        }
+    };
     currentUserIsAtLeastTutor: boolean;
 
     constructor(protected metisService: MetisService) {
