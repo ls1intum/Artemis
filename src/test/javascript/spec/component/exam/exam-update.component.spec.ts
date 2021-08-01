@@ -6,8 +6,6 @@ import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component
 import { TranslateModule } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
@@ -29,6 +27,7 @@ import { Component } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
+import { AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -73,24 +72,7 @@ describe('Exam Update Component', function () {
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                MockProvider(JhiAlertService),
-                MockDirective(JhiTranslateDirective),
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        data: {
-                            subscribe: (fn: (value: Params) => void) =>
-                                fn({
-                                    exam,
-                                }),
-                        },
-                        snapshot: {
-                            paramMap: convertToParamMap({
-                                courseId: '1',
-                            }),
-                        },
-                    },
-                },
+                MockProvider(AlertService),
                 MockProvider(CourseManagementService, {
                     find: () => {
                         return of(
@@ -183,7 +165,7 @@ describe('Exam Update Component', function () {
     }));
 
     it('should correctly catch HTTPError when updating the exam', fakeAsync(() => {
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         fixture.detectChanges();
 
@@ -213,7 +195,7 @@ describe('Exam Update Component', function () {
     }));
 
     it('should correctly catch HTTPError when creating the exam', fakeAsync(() => {
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         fixture.detectChanges();
 

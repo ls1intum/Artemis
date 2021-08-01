@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
@@ -49,7 +49,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     UIStates = UIStates;
 
     constructor(
-        jhiAlertService: JhiAlertService,
+        alertService: AlertService,
         accountService: AccountService,
         assessmentsService: TextAssessmentService,
         structuredGradingCriterionService: StructuredGradingCriterionService,
@@ -64,7 +64,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         private resultService: ResultService,
         private guidedTourService: GuidedTourService,
     ) {
-        super(jhiAlertService, accountService, assessmentsService, structuredGradingCriterionService);
+        super(alertService, accountService, assessmentsService, structuredGradingCriterionService);
         this.textBlockRefs = [];
         this.unusedTextBlockRefs = [];
         this.submission = new TextSubmission();
@@ -169,9 +169,9 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.resultService.createNewExampleResult(this.exerciseId!, this.submission.id!).subscribe((response: HttpResponse<Result>) => {
                 this.result = response.body!;
                 this.state.edit();
-                this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
-            }, this.jhiAlertService.error);
-        }, this.jhiAlertService.error);
+                this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
+            }, this.alertService.error);
+        }, this.alertService.error);
     }
 
     /**
@@ -182,8 +182,8 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.exampleSubmission = exampleSubmissionResponse.body!;
             this.state.edit();
             this.unsavedChanges = false;
-            this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
-        }, this.jhiAlertService.error);
+            this.alertService.success('artemisApp.exampleSubmission.saveSuccessful');
+        }, this.alertService.error);
     }
 
     public async startAssessment(): Promise<void> {
@@ -196,13 +196,13 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     public saveAssessments(): void {
         this.validateFeedback();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
         this.assessmentsService.saveExampleAssessment(this.exerciseId, this.exampleSubmission.id!, this.assessments, this.textBlocksWithFeedback).subscribe((response) => {
             this.result = response.body!;
             this.areNewAssessments = false;
-            this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
+            this.alertService.success('artemisApp.textAssessment.saveSuccessful');
             this.state.assess();
             if (this.unsavedChanges) {
                 this.exampleSubmissionService
@@ -210,7 +210,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                     .subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                         this.exampleSubmission = exampleSubmissionResponse.body!;
                         this.unsavedChanges = false;
-                    }, this.jhiAlertService.error);
+                    }, this.alertService.error);
             }
         });
     }
@@ -256,23 +256,23 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     checkAssessment(): void {
         this.validateFeedback();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId).subscribe(
-            () => this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success'),
+            () => this.alertService.success('artemisApp.exampleSubmission.assessScore.success'),
             (error: HttpErrorResponse) => {
                 const errorType = error.headers.get('x-artemisapp-error');
 
                 switch (errorType) {
                     case 'error.tooLow':
-                        this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooLow');
+                        this.alertService.error('artemisApp.exampleSubmission.assessScore.tooLow');
                         break;
                     case 'error.tooHigh':
-                        this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
+                        this.alertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
                         break;
                     default:
-                        onError(this.jhiAlertService, error);
+                        onError(this.alertService, error);
                         break;
                 }
             },
@@ -307,7 +307,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      */
     readAndUnderstood(): void {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
-            this.jhiAlertService.success('artemisApp.exampleSubmission.readSuccessfully');
+            this.alertService.success('artemisApp.exampleSubmission.readSuccessfully');
             this.back();
         });
     }

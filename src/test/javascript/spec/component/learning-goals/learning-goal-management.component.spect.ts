@@ -10,7 +10,7 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LearningGoalManagementComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-management.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ActivatedRoute } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Component, Input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -49,7 +49,7 @@ describe('LearningGoalManagementComponent', () => {
                 MockDirective(HasAnyAuthorityDirective),
             ],
             providers: [
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(LearningGoalService),
                 {
                     provide: ActivatedRoute,

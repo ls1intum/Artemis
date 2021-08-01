@@ -1,4 +1,4 @@
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Component, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../../manage/course-management.service';
@@ -43,7 +43,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
         private courseService: CourseManagementService,
         private resultService: ResultService,
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private sortService: SortService,
         private accountService: AccountService,
     ) {}
@@ -73,7 +73,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
                 this.course = Course.from(course);
             }),
             catchError((error: HttpErrorResponse) => {
-                onError(this.jhiAlertService, error);
+                onError(this.alertService, error);
                 return of(null);
             }),
         );
@@ -139,10 +139,10 @@ export class InstructorCourseDashboardComponent implements OnInit {
     }
 
     /**
-     * Pass an error to the jhiAlertService.
+     * Pass an error to the alertService.
      * @param error
      */
     private onError(error: string) {
-        this.jhiAlertService.error(error);
+        this.alertService.error(error);
     }
 }

@@ -4,7 +4,7 @@ import * as _ from 'lodash';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
@@ -123,7 +123,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private participationWebsocketService: ParticipationWebsocketService,
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private quizParticipationService: QuizParticipationService,
         private translateService: TranslateService,
         private deviceService: DeviceDetectorService,
@@ -232,7 +232,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             (response: HttpResponse<StudentParticipation>) => {
                 this.updateParticipationFromServer(response.body!);
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -248,7 +248,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     alert('Error: This quiz is not open for practice!');
                 }
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -260,7 +260,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             (res: HttpResponse<QuizExercise>) => {
                 this.startQuizPreviewOrPractice(res.body!);
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -271,7 +271,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 this.initQuiz();
                 this.showingResult = true;
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -768,8 +768,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         if (error) {
             const errorMessage = 'Saving answers failed: ' + error;
             // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-            const jhiAlert = this.jhiAlertService.error(errorMessage);
-            jhiAlert.msg = errorMessage;
+            const jhiAlert = this.alertService.error(errorMessage);
+            jhiAlert.message = errorMessage;
             this.unsavedChanges = true;
             this.isSubmitting = false;
         }
@@ -883,8 +883,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     onSubmitError(error: HttpErrorResponse) {
         const errorMessage = 'Submitting the quiz was not possible. ' + error.headers?.get('X-artemisApp-message') || error.message;
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-        const jhiAlert = this.jhiAlertService.error(errorMessage);
-        jhiAlert.msg = errorMessage;
+        const jhiAlert = this.alertService.error(errorMessage);
+        jhiAlert.message = errorMessage;
         this.isSubmitting = false;
     }
 

@@ -7,7 +7,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { User } from 'app/core/user/user.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -45,7 +45,7 @@ export class StudentExamDetailComponent implements OnInit {
         private studentExamService: StudentExamService,
         private courseService: CourseManagementService,
         private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private modalService: NgbModal,
         private gradingSystemService: GradingSystemService,
     ) {}

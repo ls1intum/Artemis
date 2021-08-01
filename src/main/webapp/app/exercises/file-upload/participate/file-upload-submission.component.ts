@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
@@ -59,7 +59,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private fileUploaderService: FileUploaderService,
         private resultService: ResultService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private location: Location,
         private translateService: TranslateService,
         private fileService: FileService,
@@ -76,7 +76,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     ngOnInit() {
         const participationId = Number(this.route.snapshot.paramMap.get('participationId'));
         if (Number.isNaN(participationId)) {
-            return this.jhiAlertService.error('artemisApp.fileUploadExercise.error');
+            return this.alertService.error('artemisApp.fileUploadExercise.error');
         }
         this.fileUploadSubmissionService.getDataForFileUploadEditor(participationId).subscribe(
             (submission: FileUploadSubmission) => {
@@ -121,7 +121,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 }
                 this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation);
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -151,9 +151,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.result = getLatestSubmissionResult(this.submission)!;
                 this.setSubmittedFile();
                 if (this.isActive) {
-                    this.jhiAlertService.success('artemisApp.fileUploadExercise.submitSuccessful');
+                    this.alertService.success('artemisApp.fileUploadExercise.submitSuccessful');
                 } else {
-                    this.jhiAlertService.warning('artemisApp.fileUploadExercise.submitDeadlineMissed');
+                    this.alertService.warning('artemisApp.fileUploadExercise.submitDeadlineMissed');
                 }
                 this.isSaving = false;
             },
@@ -161,9 +161,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.submission!.submitted = false;
                 const serverError = error.headers.get('X-artemisApp-error');
                 if (serverError) {
-                    this.jhiAlertService.error(serverError, { fileName: file['name'] });
+                    this.alertService.error(serverError, { fileName: file['name'] });
                 } else {
-                    this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
+                    this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
                 }
                 this.fileInput.nativeElement.value = '';
                 this.submissionFile = undefined;
@@ -182,9 +182,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
             const submissionFile = fileList[0];
             const allowedFileExtensions = this.fileUploadExercise.filePattern!.split(',');
             if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
-                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
+                this.alertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
             } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
-                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
+                this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
             } else {
                 this.submissionFile = submissionFile;
             }

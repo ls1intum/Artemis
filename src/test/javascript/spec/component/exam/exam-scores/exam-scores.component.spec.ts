@@ -17,7 +17,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import * as chai from 'chai';
 import { cloneDeep } from 'lodash';
-import { JhiAlertService, JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
+import { AlertService, JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
 import { empty, of } from 'rxjs';
@@ -208,7 +208,7 @@ describe('ExamScoresComponent', () => {
                 MockProvider(TranslateService),
                 MockProvider(ExamManagementService),
                 MockProvider(SortService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(ParticipantScoresService),
                 MockProvider(GradingSystemService, {
                     findGradingScaleForExam: () => {

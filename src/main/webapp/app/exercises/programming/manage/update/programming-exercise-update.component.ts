@@ -1,7 +1,7 @@
 import { ActivatedRoute, Params } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Observable, Subject } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
@@ -113,7 +113,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private modalService: NgbModal,
         private popupService: ExerciseUpdateWarningService,
         private courseService: CourseManagementService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private exerciseService: ExerciseService,
         private fileService: FileService,
         private activatedRoute: ActivatedRoute,
@@ -274,7 +274,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                     (categoryRes: HttpResponse<string[]>) => {
                                         this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                     },
-                                    (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                                    (error: HttpErrorResponse) => onError(this.alertService, error),
                                 );
                             });
                         }
@@ -460,8 +460,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private onSaveError(error: HttpErrorResponse) {
         const errorMessage = error.headers.get('X-artemisApp-alert')!;
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-        const jhiAlert = this.jhiAlertService.error(errorMessage);
-        jhiAlert.msg = errorMessage;
+        const jhiAlert = this.alertService.error(errorMessage);
+        jhiAlert.message = errorMessage;
         this.isSaving = false;
         window.scrollTo(0, 0);
     }

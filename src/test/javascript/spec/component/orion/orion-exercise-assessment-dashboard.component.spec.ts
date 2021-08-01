@@ -12,7 +12,7 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingAssessmentRepoExportService } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { ArtemisTestModule } from '../../test.module';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
@@ -50,7 +50,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
                 MockProvider(OrionConnectorService),
                 MockProvider(ProgrammingAssessmentRepoExportService),
                 MockProvider(ExerciseService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(TranslateService),
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ exerciseId: 10 }) } } },
             ],
@@ -131,7 +131,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         const isCloningSpy = spy(orionConnectorService, 'isCloning');
         const lockAndGetStub = stub(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation');
         const exportSubmissionStub = stub(programmingAssessmentExportService, 'exportReposByParticipations');
-        const errorSpy = spy(TestBed.inject(JhiAlertService), 'error');
+        const errorSpy = spy(TestBed.inject(AlertService), 'error');
 
         // first it loads the submission
         lockAndGetStub.returns(of(programmingSubmission));
@@ -189,7 +189,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         const getForTutorsStub = stub(TestBed.inject(ExerciseService), 'getForTutors');
         getForTutorsStub.returns(throwError(error));
 
-        const errorSpy = spy(TestBed.inject(JhiAlertService), 'error');
+        const errorSpy = spy(TestBed.inject(AlertService), 'error');
         // counter the initialization in beforeEach
         comp.exercise = undefined as any;
 

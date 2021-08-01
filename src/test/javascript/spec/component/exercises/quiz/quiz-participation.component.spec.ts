@@ -25,7 +25,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import * as chai from 'chai';
 import * as moment from 'moment';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
+import { AlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
@@ -295,7 +295,7 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should react to errors', () => {
-            const alertService = fixture.debugElement.injector.get(JhiAlertService);
+            const alertService = fixture.debugElement.injector.get(AlertService);
             const alertStub = sinon.stub(alertService, 'error').returns({ msg: '' } as any);
             fixture.detectChanges();
 

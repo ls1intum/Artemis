@@ -22,7 +22,6 @@ import { examManagementRoute } from 'app/exam/manage/exam-management.route';
 import { SortService } from 'app/shared/service/sort.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
-import { JhiEventManager } from 'ng-jhipster';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -39,7 +38,7 @@ describe('Exam Management Component', () => {
     let courseManagementService: CourseManagementService;
     let sortService: SortService;
     let accountService: AccountService;
-    let eventManager: JhiEventManager;
+    let eventManager: EventManager;
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, url: new Observable<UrlSegment[]>() } as any as ActivatedRoute;
 
@@ -52,7 +51,7 @@ describe('Exam Management Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
-                JhiEventManager,
+                EventManager,
             ],
         })
             .overrideTemplate(ExamManagementComponent, '')
@@ -64,7 +63,7 @@ describe('Exam Management Component', () => {
         courseManagementService = TestBed.inject(CourseManagementService);
         sortService = TestBed.inject(SortService);
         accountService = TestBed.inject(AccountService);
-        eventManager = TestBed.inject(JhiEventManager);
+        eventManager = TestBed.inject(EventManager);
     });
 
     afterEach(function () {

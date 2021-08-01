@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,7 +12,6 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { JhiEventManager } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,6 +22,7 @@ import * as moment from 'moment';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Submission } from 'app/entities/submission.model';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -57,9 +57,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private programmingExerciseService: ProgrammingExerciseService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
         private modalService: NgbModal,
         private translateService: TranslateService,
         private profileService: ProfileService,
@@ -143,10 +143,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     combineTemplateCommits() {
         this.programmingExerciseService.combineTemplateRepositoryCommits(this.programmingExercise.id!).subscribe(
             () => {
-                this.jhiAlertService.success('artemisApp.programmingExercise.combineTemplateCommitsSuccess');
+                this.alertService.success('artemisApp.programmingExercise.combineTemplateCommitsSuccess');
             },
             () => {
-                this.jhiAlertService.error('artemisApp.programmingExercise.combineTemplateCommitsError');
+                this.alertService.error('artemisApp.programmingExercise.combineTemplateCommitsError');
             },
         );
     }
@@ -154,14 +154,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     generateStructureOracle() {
         this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id!).subscribe(
             (res) => {
-                const jhiAlert = this.jhiAlertService.success(res);
-                jhiAlert.msg = res;
+                const jhiAlert = this.alertService.success(res);
+                jhiAlert.message = res;
             },
             (error) => {
                 const errorMessage = error.headers.get('X-artemisApp-alert');
                 // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-                const jhiAlert = this.jhiAlertService.error(errorMessage);
-                jhiAlert.msg = errorMessage;
+                const jhiAlert = this.alertService.error(errorMessage);
+                jhiAlert.message = errorMessage;
             },
         );
     }
@@ -169,14 +169,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     recreateBuildPlans() {
         this.programmingExerciseService.recreateBuildPlans(this.programmingExercise.id!).subscribe(
             (res) => {
-                const jhiAlert = this.jhiAlertService.success(res);
-                jhiAlert.msg = res;
+                const jhiAlert = this.alertService.success(res);
+                jhiAlert.message = res;
             },
             (error) => {
                 const errorMessage = error.headers.get('X-artemisApp-alert');
                 // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-                const jhiAlert = this.jhiAlertService.error(errorMessage);
-                jhiAlert.msg = errorMessage;
+                const jhiAlert = this.alertService.error(errorMessage);
+                jhiAlert.message = errorMessage;
             },
         );
     }
@@ -189,9 +189,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         return this.exerciseService.cleanup(this.programmingExercise.id!, event.deleteRepositories).subscribe(
             () => {
                 if (event.deleteRepositories) {
-                    this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessageWithRepositories');
+                    this.alertService.success('artemisApp.programmingExercise.cleanup.successMessageWithRepositories');
                 } else {
-                    this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessage');
+                    this.alertService.success('artemisApp.programmingExercise.cleanup.successMessage');
                 }
                 this.dialogErrorSource.next('');
             },
@@ -237,11 +237,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.lockingOrUnlockingRepositories = true;
         this.programmingExerciseService.unlockAllRepositories(this.programmingExercise.id!).subscribe(
             (res) => {
-                this.jhiAlertService.addAlert(
+                this.alertService.addAlert(
                     {
                         type: 'success',
-                        msg: 'artemisApp.programmingExercise.unlockAllRepositoriesSuccess',
-                        params: { number: res?.body },
+                        message: 'artemisApp.programmingExercise.unlockAllRepositoriesSuccess',
+                        translationParams: { number: res?.body },
                         timeout: 10000,
                     },
                     [],
@@ -274,11 +274,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.lockingOrUnlockingRepositories = true;
         this.programmingExerciseService.lockAllRepositories(this.programmingExercise.id!).subscribe(
             (res) => {
-                this.jhiAlertService.addAlert(
+                this.alertService.addAlert(
                     {
                         type: 'success',
-                        msg: 'artemisApp.programmingExercise.lockAllRepositoriesSuccess',
-                        params: { number: res?.body },
+                        message: 'artemisApp.programmingExercise.lockAllRepositoriesSuccess',
+                        translationParams: { number: res?.body },
                         timeout: 10000,
                     },
                     [],
@@ -293,7 +293,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
+        this.alertService.error(error.message);
     }
 
     /**

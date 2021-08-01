@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { JhiAlertService, JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
+import { AlertService, JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
@@ -50,7 +50,7 @@ describe('CreateExerciseUnitComponent', () => {
             ],
             providers: [
                 MockProvider(CourseManagementService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(SortService),
                 MockProvider(ExerciseUnitService),
                 { provide: Router, useClass: MockRouter },

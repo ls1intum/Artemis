@@ -24,7 +24,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -125,7 +125,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private serverDateService: ArtemisServerDateService,
         private translateService: TranslateService,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private courseExerciseService: CourseExerciseService,
     ) {
         // show only one synchronization error every 5s
@@ -329,7 +329,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
                         exercise.exerciseHints = [];
                     });
-                    this.alertService.addAlert({ type: 'success', msg: 'studentExam.submitSuccessful', timeout: 20000 }, []);
+                    this.alertService.addAlert({ type: 'success', message: 'studentExam.submitSuccessful', timeout: 20000 }, []);
                 },
                 (error: Error) => {
                     // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible

@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
-import { JhiEventManager } from 'ng-jhipster';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
@@ -12,6 +11,7 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
@@ -34,7 +34,7 @@ export class ExamExerciseRowButtonsComponent {
         private programmingExerciseService: ProgrammingExerciseService,
         private modelingExerciseService: ModelingExerciseService,
         private quizExerciseService: QuizExerciseService,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
     ) {}
 
     /**

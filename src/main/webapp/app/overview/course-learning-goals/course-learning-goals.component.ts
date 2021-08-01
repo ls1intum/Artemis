@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { ActivatedRoute } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, switchMap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -31,7 +31,7 @@ export class CourseLearningGoalsComponent implements OnInit {
 
     constructor(
         private activatedRoute: ActivatedRoute,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private learningGoalService: LearningGoalService,
         private accountService: AccountService,
     ) {}

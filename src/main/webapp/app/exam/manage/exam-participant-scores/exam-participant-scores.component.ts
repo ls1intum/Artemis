@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ParticipantScoreAverageDTO, ParticipantScoreDTO, ParticipantScoresService } from 'app/shared/participant-scores/participant-scores.service';
 import { onError } from 'app/shared/util/global.utils';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
 import { forkJoin } from 'rxjs';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
@@ -31,7 +31,7 @@ export class ExamParticipantScoresComponent implements OnInit {
     constructor(
         private participantScoreService: ParticipantScoresService,
         private activatedRoute: ActivatedRoute,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private gradingSystemService: GradingSystemService,
     ) {}
 

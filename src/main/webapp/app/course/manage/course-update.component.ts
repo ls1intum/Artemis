@@ -2,7 +2,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Observable } from 'rxjs';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
 import { base64StringToBlob } from 'blob-util';
@@ -52,7 +52,7 @@ export class CourseUpdateComponent implements OnInit {
         private courseService: CourseManagementService,
         private activatedRoute: ActivatedRoute,
         private fileUploaderService: FileUploaderService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private profileService: ProfileService,
         private organizationService: OrganizationManagementService,
         private modalService: NgbModal,
@@ -269,8 +269,8 @@ export class CourseUpdateComponent implements OnInit {
         const errorMessage = error.error ? error.error.title : error.headers?.get('x-artemisapp-alert');
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
         if (errorMessage) {
-            const jhiAlert = this.jhiAlertService.error(errorMessage);
-            jhiAlert.msg = errorMessage;
+            const jhiAlert = this.alertService.error(errorMessage);
+            jhiAlert.message = errorMessage;
         }
 
         this.isSaving = false;

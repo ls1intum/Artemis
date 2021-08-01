@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -40,7 +40,7 @@ export class ListOfComplaintsComponent implements OnInit {
 
     constructor(
         private complaintService: ComplaintService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private route: ActivatedRoute,
         private router: Router,
         private location: Location,
@@ -95,7 +95,7 @@ export class ListOfComplaintsComponent implements OnInit {
                     this.hasStudentInformation = true;
                 }
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
             () => (this.loading = false),
         );
     }

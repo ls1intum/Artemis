@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -55,7 +55,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     constructor(
         private courseService: CourseManagementService,
         private examService: ExamManagementService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private websocketService: JhiWebsocketService,
         private translateService: TranslateService,
         private modalService: NgbModal,
@@ -104,7 +104,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         this.archiveButtonText = exportState === 'RUNNING' ? message : this.getArchiveButtonText();
 
         if (exportState === 'COMPLETED') {
-            this.jhiAlertService.success(this.getArchiveSuccessText());
+            this.alertService.success(this.getArchiveSuccessText());
             this.reloadCourseOrExam();
         } else if (exportState === 'COMPLETED_WITH_WARNINGS') {
             this.archiveWarnings = message.split('\n');
@@ -203,12 +203,12 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         if (this.archiveMode === 'Exam' && this.exam) {
             this.examService.downloadExamArchive(this.course.id!, this.exam.id!).subscribe(
                 (response) => downloadZipFileFromResponse(response),
-                () => this.jhiAlertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
+                () => this.alertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
             );
         } else {
             this.courseService.downloadCourseArchive(this.course.id!).subscribe(
                 (response) => downloadZipFileFromResponse(response),
-                () => this.jhiAlertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
+                () => this.alertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
             );
         }
     }
@@ -230,7 +230,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
         this.courseService.cleanupCourse(this.course.id!).subscribe(
             () => {
-                this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessage');
+                this.alertService.success('artemisApp.programmingExercise.cleanup.successMessage');
                 this.dialogErrorSource.next('');
             },
             (error) => {

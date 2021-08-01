@@ -4,7 +4,7 @@ import * as moment from 'moment';
 import { now } from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
@@ -111,7 +111,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private complaintService: ComplaintService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private structuredGradingCriterionService: StructuredGradingCriterionService,
         private repositoryFileService: CodeEditorRepositoryFileService,
         private programmingExerciseService: ProgrammingExerciseService,
@@ -376,14 +376,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, complaintResponse, this.submission!.id!).subscribe(
             (result: Result) => {
                 this.participation.results![0] = this.manualResult = result;
-                this.jhiAlertService.clear();
-                this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
+                this.alertService.clear();
+                this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
             (httpErrorResponse: HttpErrorResponse) => {
-                this.jhiAlertService.clear();
+                this.alertService.clear();
                 const error = httpErrorResponse.error;
                 if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                    this.jhiAlertService.error(error.message, error.params);
+                    this.alertService.error(error.message, error.params);
                 } else {
                     this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
                 }
@@ -442,7 +442,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * The error must already be provided translated by the emitting component.
      */
     onError(error: string) {
-        this.jhiAlertService.error(error);
+        this.alertService.error(error);
         this.saveBusy = this.cancelBusy = this.submitBusy = this.nextSubmissionBusy = false;
     }
 
@@ -469,8 +469,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.participation.results = [];
         }
         this.participation.results![0] = this.manualResult = response.body!;
-        this.jhiAlertService.clear();
-        this.jhiAlertService.success(translationKey);
+        this.alertService.clear();
+        this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
     }
 

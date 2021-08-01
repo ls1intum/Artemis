@@ -4,7 +4,7 @@ import { Team } from 'app/entities/team.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { Course } from 'app/entities/course.model';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { get } from 'lodash';
@@ -53,7 +53,7 @@ export class TeamParticipationTableComponent implements OnInit {
     constructor(
         private teamService: TeamService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private router: Router,
         private accountService: AccountService,
     ) {}
@@ -176,7 +176,7 @@ export class TeamParticipationTableComponent implements OnInit {
     }
 
     private onError(error: HttpErrorResponse) {
-        onError(this.jhiAlertService, error);
+        onError(this.alertService, error);
         this.isLoading = false;
     }
 }

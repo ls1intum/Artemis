@@ -1,6 +1,6 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import * as moment from 'moment';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { ArtemisTestModule } from '../../test.module';
@@ -27,8 +27,8 @@ describe('AssessmentHeaderComponent', () => {
             declarations: [AssessmentHeaderComponent, MockComponent(AssessmentWarningComponent)],
             providers: [
                 {
-                    provide: JhiAlertService,
-                    useClass: JhiAlertService, // use the real one
+                    provide: AlertService,
+                    useClass: AlertService, // use the real one
                 },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -55,7 +55,7 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should display alerts', () => {
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         alertService.success('test-alert-string');
         fixture.detectChanges();
 

@@ -4,7 +4,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Observable } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import * as moment from 'moment';
@@ -23,7 +23,7 @@ export class ExamUpdateComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private examManagementService: ExamManagementService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private courseManagementService: CourseManagementService,
         private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
@@ -36,7 +36,7 @@ export class ExamUpdateComponent implements OnInit {
                     this.exam.course = response.body!;
                     this.course = response.body!;
                 },
-                (err: HttpErrorResponse) => onError(this.jhiAlertService, err),
+                (err: HttpErrorResponse) => onError(this.alertService, err),
             );
             if (!this.exam.gracePeriod) {
                 this.exam.gracePeriod = 180;
@@ -78,7 +78,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        onError(this.jhiAlertService, error);
+        onError(this.alertService, error);
         this.isSaving = false;
     }
 

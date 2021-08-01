@@ -13,7 +13,7 @@ import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -150,7 +150,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         private translateService: TranslateService,
         private fileUploaderService: FileUploaderService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private location: Location,
         private modalService: NgbModal,
         private changeDetector: ChangeDetectorRef,
@@ -207,7 +207,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 this.quizExercise = response.body!;
                 this.init();
                 if (this.isExamMode && this.quizExercise.testRunParticipationsExist) {
-                    this.jhiAlertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
+                    this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
                 }
             });
         }
@@ -248,7 +248,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 (response: HttpResponse<string[]>) => {
                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(response.body!);
                 },
-                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                (error: HttpErrorResponse) => onError(this.alertService, error),
             );
         }
         this.updateDuration();
@@ -455,7 +455,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     this.applyQuestionsAndFilter(quizExercisesResponse.body!);
                 }
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -475,7 +475,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     this.applyQuestionsAndFilter(quizExercisesResponse.body!);
                 }
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -1247,7 +1247,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     private onSaveError = (): void => {
         console.error('Saving Quiz Failed! Please try again later.');
-        this.jhiAlertService.error('artemisApp.quizExercise.saveError');
+        this.alertService.error('artemisApp.quizExercise.saveError');
         this.isSaving = false;
         this.changeDetector.detectChanges();
     };

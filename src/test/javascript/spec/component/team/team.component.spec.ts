@@ -18,7 +18,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
+import { AlertService, NgJhipsterModule } from 'ng-jhipster';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
@@ -40,7 +40,7 @@ describe('TeamComponent', () => {
     let identityStub: SinonStub;
     let exerciseService: ExerciseService;
     let teamService: TeamService;
-    let alertService: JhiAlertService;
+    let alertService: AlertService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -92,7 +92,7 @@ describe('TeamComponent', () => {
                 stub(accountService, 'isAtLeastInstructorInCourse').returns(true);
                 fixture = TestBed.createComponent(TeamComponent);
                 comp = fixture.componentInstance;
-                alertService = TestBed.inject(JhiAlertService);
+                alertService = TestBed.inject(AlertService);
                 router = TestBed.inject(Router);
                 teamService = TestBed.inject(TeamService);
                 exerciseService = TestBed.inject(ExerciseService);

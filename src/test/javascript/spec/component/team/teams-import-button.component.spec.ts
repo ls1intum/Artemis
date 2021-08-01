@@ -8,7 +8,6 @@ import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-impo
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import * as chai from 'chai';
-import { NgJhipsterModule } from 'ng-jhipster';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { restore, SinonStub, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
@@ -31,7 +30,7 @@ describe('TeamsImportButtonComponent', () => {
     beforeEach(
         waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(NgJhipsterModule), MockModule(FeatureToggleModule)],
+                imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(FeatureToggleModule)],
                 declarations: [TeamsImportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe)],
                 providers: [MockProvider(TeamService), MockProvider(NgbModal)],
             }).compileComponents();

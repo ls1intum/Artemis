@@ -7,7 +7,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { By } from '@angular/platform-browser';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
+import { AlertService, NgJhipsterModule } from 'ng-jhipster';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { stub } from 'sinon';
@@ -29,7 +29,7 @@ describe('DeleteDialogComponent', () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgJhipsterModule, NgbModule],
             declarations: [DeleteDialogComponent, AlertComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [JhiLanguageHelper, JhiAlertService],
+            providers: [JhiLanguageHelper, AlertService],
         })
             .compileComponents()
             .then(() => {

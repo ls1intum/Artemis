@@ -8,7 +8,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
+import { AlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -177,7 +177,7 @@ describe('StudentExamsComponent', () => {
                         );
                     },
                 }),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockDirective(JhiTranslateDirective),
                 {
                     provide: LocalStorageService,
@@ -274,7 +274,7 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should correctly catch HTTPError when assessing unsubmitted exams', () => {
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         studentExamOne!.workingTime = 10;
         exam.startDate = moment().subtract(200, 'seconds');
@@ -322,7 +322,7 @@ describe('StudentExamsComponent', () => {
 
     it('should correctly catch HTTPError and get additional error when generating student exams', () => {
         examManagementService = TestBed.inject(ExamManagementService);
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const translationService = TestBed.inject(TranslateService);
         const errorDetailString = 'artemisApp.exam.validation.tooFewExerciseGroups';
         const httpError = new HttpErrorResponse({
@@ -403,7 +403,7 @@ describe('StudentExamsComponent', () => {
 
     it('should correctly catch HTTPError when generating missing student exams', () => {
         examManagementService = TestBed.inject(ExamManagementService);
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         course.isAtLeastInstructor = true;
         exam.startDate = moment().add(120, 'seconds');
@@ -444,7 +444,7 @@ describe('StudentExamsComponent', () => {
 
     it('should correctly catch HTTPError when starting the exercises of the students', () => {
         examManagementService = TestBed.inject(ExamManagementService);
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         course.isAtLeastInstructor = true;
         exam.startDate = moment().add(120, 'seconds');
@@ -495,7 +495,7 @@ describe('StudentExamsComponent', () => {
             result,
         });
 
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         course.isAtLeastInstructor = true;
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         const unlockRepoStub = sinon.stub(examManagementService, 'unlockAllRepositories').returns(throwError(httpError));
@@ -549,7 +549,7 @@ describe('StudentExamsComponent', () => {
             result,
         });
 
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         course.isAtLeastInstructor = true;
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         const lockRepoStub = sinon.stub(examManagementService, 'lockAllRepositories').returns(throwError(httpError));
@@ -593,7 +593,7 @@ describe('StudentExamsComponent', () => {
         course.isAtLeastInstructor = true;
         exam.startDate = moment().subtract(200, 'seconds');
         exam.endDate = moment().subtract(100, 'seconds');
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
 
         studentExamsComponentFixture.detectChanges();
         expect(studentExamsComponent.isLoading).to.equal(false);

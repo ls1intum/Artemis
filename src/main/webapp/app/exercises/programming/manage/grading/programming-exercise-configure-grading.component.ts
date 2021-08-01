@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of, Subscription, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -122,7 +122,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         private programmingExerciseService: ProgrammingExerciseService,
         private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService,
         private route: ActivatedRoute,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private translateService: TranslateService,
         private location: Location,
         private router: Router,

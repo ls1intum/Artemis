@@ -17,7 +17,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { flatMap } from 'lodash';
-import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
+import { AlertService, NgJhipsterModule } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { restore, SinonSpy, SinonStub, spy, stub } from 'sinon';
@@ -32,7 +32,7 @@ describe('TeamsImportDialogComponent', () => {
     let comp: TeamsImportDialogComponent;
     let fixture: ComponentFixture<TeamsImportDialogComponent>;
     let ngbActiveModal: NgbActiveModal;
-    let alertService: JhiAlertService;
+    let alertService: AlertService;
     let teamService: TeamService;
 
     const teams: Team[] = mockTeams;
@@ -83,7 +83,7 @@ describe('TeamsImportDialogComponent', () => {
         fixture = TestBed.createComponent(TeamsImportDialogComponent);
         comp = fixture.componentInstance;
         ngbActiveModal = TestBed.inject(NgbActiveModal);
-        alertService = TestBed.inject(JhiAlertService);
+        alertService = TestBed.inject(AlertService);
         teamService = TestBed.inject(TeamService);
     });
 

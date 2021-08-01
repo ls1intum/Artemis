@@ -36,7 +36,6 @@ import { JhiConnectionStatusComponent } from 'app/shared/connection-status/conne
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as chai from 'chai';
 import * as moment from 'moment';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import * as sinon from 'sinon';
@@ -47,6 +46,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { By } from '@angular/platform-browser';
 import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -59,7 +59,7 @@ describe('ExamParticipationComponent', () => {
     let courseExerciseService: CourseExerciseService;
     let textSubmissionService: TextSubmissionService;
     let modelingSubmissionService: ModelingSubmissionService;
-    let alertService: JhiAlertService;
+    let alertService: AlertService;
     let artemisServerDateService: ArtemisServerDateService;
 
     beforeEach(() => {
@@ -69,7 +69,6 @@ describe('ExamParticipationComponent', () => {
                 MockComponent(ExamExerciseOverviewPageComponent),
                 ExamParticipationComponent,
                 TranslatePipeMock,
-                MockDirective(JhiTranslateDirective),
                 MockComponent(ExamParticipationCoverComponent),
                 MockComponent(ExamNavigationBarComponent),
                 MockComponent(QuizExamSubmissionComponent),
@@ -97,7 +96,7 @@ describe('ExamParticipationComponent', () => {
                 MockProvider(FileUploadSubmissionService),
                 MockProvider(ArtemisServerDateService),
                 MockProvider(TranslateService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(CourseExerciseService),
             ],
             schemas: [],
@@ -111,7 +110,7 @@ describe('ExamParticipationComponent', () => {
                 courseExerciseService = TestBed.inject(CourseExerciseService);
                 textSubmissionService = TestBed.inject(TextSubmissionService);
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
-                alertService = fixture.debugElement.injector.get(JhiAlertService);
+                alertService = fixture.debugElement.injector.get(AlertService);
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
                 fixture.detectChanges();
             });

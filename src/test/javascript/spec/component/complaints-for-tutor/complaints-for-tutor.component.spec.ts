@@ -7,7 +7,7 @@ import { ComplaintResponseService } from 'app/complaints/complaint-response.serv
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { RouterTestingModule } from '@angular/router/testing';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { FormsModule } from '@angular/forms';
@@ -29,7 +29,7 @@ describe('ComplaintsForTutorComponent', () => {
         TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), FormsModule],
             declarations: [ComplaintsForTutorComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
-            providers: [MockProvider(ComplaintResponseService), MockProvider(ComplaintService), MockProvider(JhiAlertService)],
+            providers: [MockProvider(ComplaintResponseService), MockProvider(ComplaintService), MockProvider(AlertService)],
         })
             .compileComponents()
             .then(() => {

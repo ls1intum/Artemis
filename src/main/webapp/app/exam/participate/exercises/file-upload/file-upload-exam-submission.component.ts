@@ -2,7 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild, Input, ChangeDetectorRef } fr
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
@@ -48,7 +48,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private fileUploaderService: FileUploaderService,
         private resultService: ResultService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private location: Location,
         private translateService: TranslateService,
         private fileService: FileService,
@@ -76,9 +76,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
             const submissionFile = fileList[0];
             const allowedFileExtensions = this.exercise.filePattern!.split(',');
             if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
-                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
+                this.alertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
             } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
-                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
+                this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
             } else {
                 this.submissionFile = submissionFile;
                 this.studentSubmission.isSynced = false;
@@ -148,9 +148,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     }
 
     /**
-     * Pass on an error to the browser console and the jhiAlertService.
+     * Pass on an error to the browser console and the alertService.
      */
     private onError() {
-        this.jhiAlertService.error(this.translateService.instant('error.fileUploadSavingError'));
+        this.alertService.error(this.translateService.instant('error.fileUploadSavingError'));
     }
 }

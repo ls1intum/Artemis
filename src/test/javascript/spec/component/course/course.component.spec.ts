@@ -19,7 +19,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as chai from 'chai';
 import * as moment from 'moment';
-import { JhiAlertService, JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
+import { AlertService, JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { MomentModule } from 'ngx-moment';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -98,7 +98,7 @@ describe('CoursesComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseRowComponent },
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: Router, useValue: router },
             ],
         })
@@ -110,7 +110,7 @@ describe('CoursesComponent', () => {
                 TestBed.inject(GuidedTourService);
                 courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
                 serverDateService = TestBed.inject(ArtemisServerDateService);
-                TestBed.inject(JhiAlertService);
+                TestBed.inject(AlertService);
                 exerciseService = TestBed.inject(ExerciseService);
                 fixture.detectChanges();
             });

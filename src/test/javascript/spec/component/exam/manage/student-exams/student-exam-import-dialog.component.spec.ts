@@ -14,7 +14,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
+import { AlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
@@ -45,7 +45,7 @@ describe('StudentExamImportDialogComponent', () => {
                 MockComponent(AlertComponent),
                 MockComponent(AlertErrorComponent),
             ],
-            providers: [{ provide: NgbActiveModal, useValue: sinon.createStubInstance(NgbActiveModal) }, MockProvider(JhiAlertService), MockProvider(ExamManagementService)],
+            providers: [{ provide: NgbActiveModal, useValue: sinon.createStubInstance(NgbActiveModal) }, MockProvider(AlertService), MockProvider(ExamManagementService)],
         })
             .compileComponents()
             .then(() => {

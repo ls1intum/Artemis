@@ -15,7 +15,7 @@ import { Course } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { JhiAlertService, JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
+import { AlertService, JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MomentModule } from 'ngx-moment';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -108,7 +108,7 @@ describe('CourseOverviewComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseRowComponent },
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: Router, useClass: MockRouter },
             ],
         })

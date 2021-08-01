@@ -14,7 +14,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import * as sinon from 'sinon';
 import { HttpResponse } from '@angular/common/http';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
+import { AlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -53,7 +53,7 @@ describe('Course Exam Archive Button Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(NgbModal),
             ],
         }).compileComponents();
@@ -157,7 +157,7 @@ describe('Course Exam Archive Button Component', () => {
             const response: HttpResponse<void> = new HttpResponse({ status: 200 });
             const cleanupStub = sinon.stub(courseManagementService, 'cleanupCourse').returns(of(response));
 
-            const alertService = TestBed.inject(JhiAlertService);
+            const alertService = TestBed.inject(AlertService);
             const alertServiceSpy = sinon.spy(alertService, 'success');
 
             comp.cleanupCourse();
@@ -185,7 +185,7 @@ describe('Course Exam Archive Button Component', () => {
         }));
 
         it('should reload course on archive complete', fakeAsync(() => {
-            const alertService = TestBed.inject(JhiAlertService);
+            const alertService = TestBed.inject(AlertService);
             const alertServiceSpy = sinon.spy(alertService, 'success');
 
             sinon.stub(courseManagementService, 'find').returns(of(new HttpResponse({ status: 200, body: course })));
@@ -269,7 +269,7 @@ describe('Course Exam Archive Button Component', () => {
         }));
 
         it('should reload exam on archive complete', fakeAsync(() => {
-            const alertService = TestBed.inject(JhiAlertService);
+            const alertService = TestBed.inject(AlertService);
             const alertServiceSpy = sinon.spy(alertService, 'success');
 
             sinon.stub(examManagementService, 'find').returns(of(new HttpResponse({ status: 200, body: exam })));

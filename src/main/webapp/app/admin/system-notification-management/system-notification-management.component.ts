@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
@@ -12,7 +11,9 @@ import { Subject } from 'rxjs';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { ParseLinks } from 'app/core/util/parse-links.service';
 
 @Component({
     selector: 'jhi-system-notification-management',
@@ -38,12 +39,12 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     constructor(
         private userService: UserService,
         private systemNotificationService: SystemNotificationService,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private accountService: AccountService,
-        private parseLinks: JhiParseLinks,
+        private parseLinks: ParseLinks,
         private activatedRoute: ActivatedRoute,
         private router: Router,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
     ) {
         this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe((data) => {

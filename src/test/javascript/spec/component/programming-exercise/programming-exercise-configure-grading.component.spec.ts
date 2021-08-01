@@ -10,7 +10,7 @@ import { of, Subject } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { CookieService } from 'ngx-cookie-service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -190,7 +190,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisProgrammingExerciseGradingModule],
             providers: [
-                JhiAlertService,
+                AlertService,
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProgrammingExerciseWebsocketService, useClass: MockProgrammingExerciseWebsocketService },
                 { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
@@ -450,7 +450,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         updateTestCasesStub.returns(of(updateTestCases));
 
         // Initialize spy for error alert
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = spy(alertService, 'error');
 
         const saveButton = getSaveButton();

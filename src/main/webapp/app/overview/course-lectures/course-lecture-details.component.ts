@@ -11,7 +11,7 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { PostingsComponent } from 'app/overview/postings/postings.component';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-course-lecture-details',
@@ -29,7 +29,7 @@ export class CourseLectureDetailsComponent implements OnInit {
 
     readonly LectureUnitType = LectureUnitType;
 
-    constructor(private alertService: JhiAlertService, private lectureService: LectureService, private activatedRoute: ActivatedRoute, private fileService: FileService) {}
+    constructor(private alertService: AlertService, private lectureService: LectureService, private activatedRoute: ActivatedRoute, private fileService: FileService) {}
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {

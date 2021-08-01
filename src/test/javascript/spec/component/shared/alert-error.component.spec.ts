@@ -1,6 +1,5 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../test.module';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
@@ -9,13 +8,13 @@ import { TranslateModule } from '@ngx-translate/core';
 describe('Alert Error Component', () => {
     let comp: AlertErrorComponent;
     let fixture: ComponentFixture<AlertErrorComponent>;
-    let eventManager: JhiEventManager;
+    let eventManager: EventManager;
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot()],
             declarations: [AlertErrorComponent],
-            providers: [JhiEventManager],
+            providers: [EventManager],
         })
             .overrideTemplate(AlertErrorComponent, '')
             .compileComponents();
@@ -24,7 +23,7 @@ describe('Alert Error Component', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(AlertErrorComponent);
         comp = fixture.componentInstance;
-        eventManager = fixture.debugElement.injector.get(JhiEventManager);
+        eventManager = fixture.debugElement.injector.get(EventManager);
     });
 
     it('Should display an alert on status 0', () => {

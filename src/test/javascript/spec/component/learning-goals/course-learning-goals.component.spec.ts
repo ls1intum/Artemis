@@ -8,7 +8,7 @@ import { LearningGoalService } from 'app/course/learning-goals/learningGoal.serv
 import { of } from 'rxjs';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { ActivatedRoute } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { IndividualLearningGoalProgress, IndividualLectureUnitProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
 import { Component, Input } from '@angular/core';
 import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
@@ -53,7 +53,7 @@ describe('CourseLearningGoals', () => {
             imports: [],
             declarations: [CourseLearningGoalsComponent, LearningGoalCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(LearningGoalService),
                 MockProvider(AccountService),
                 {

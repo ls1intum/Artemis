@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import * as moment from 'moment';
 import { now } from 'moment';
 import { AccountService } from 'app/core/auth/account.service';
@@ -93,7 +93,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         private router: Router,
         private location: Location,
         private route: ActivatedRoute,
-        protected jhiAlertService: JhiAlertService,
+        protected alertService: AlertService,
         protected accountService: AccountService,
         protected assessmentsService: TextAssessmentService,
         private complaintService: ComplaintService,
@@ -101,7 +101,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
         private submissionService: SubmissionService,
     ) {
-        super(jhiAlertService, accountService, assessmentsService, structuredGradingCriterionService);
+        super(alertService, accountService, assessmentsService, structuredGradingCriterionService);
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         this.correctionRound = 0;
         this.resetComponent();
@@ -230,7 +230,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     save(): void {
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
 
@@ -254,7 +254,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
 
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
 
@@ -352,7 +352,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     updateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
         this.validateFeedback();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
 
@@ -361,12 +361,12 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             .subscribe(
                 (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
                 (httpErrorResponse: HttpErrorResponse) => {
-                    this.jhiAlertService.clear();
+                    this.alertService.clear();
                     const error = httpErrorResponse.error;
                     if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                        this.jhiAlertService.error(error.message, error.params);
+                        this.alertService.error(error.message, error.params);
                     } else {
-                        this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
+                        this.alertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
                     }
                 },
             );

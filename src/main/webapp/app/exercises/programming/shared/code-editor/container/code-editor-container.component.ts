@@ -17,7 +17,7 @@ import {
     ResizeType,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
@@ -90,7 +90,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         private participationService: ParticipationService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private fileService: CodeEditorFileService,
     ) {
         this.initializeProperties();
@@ -213,7 +213,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
      * The error must already be provided translated by the emitting component.
      */
     onError(error: any) {
-        this.jhiAlertService.error(`artemisApp.editor.errors.${error as string}`);
+        this.alertService.error(`artemisApp.editor.errors.${error as string}`);
     }
 
     /**

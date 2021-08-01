@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, lastValueFrom, Observable, of } from 'rxjs';
@@ -13,6 +12,7 @@ import { setUser } from '@sentry/browser';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface IAccountService {
     fetch: () => Observable<HttpResponse<User>>;
@@ -40,7 +40,7 @@ export class AccountService implements IAccountService {
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
 
     constructor(
-        private languageService: JhiLanguageService,
+        private translateService: TranslateService,
         private sessionStorage: SessionStorageService,
         private http: HttpClient,
         private websocketService: JhiWebsocketService,
@@ -149,7 +149,7 @@ export class AccountService implements IAccountService {
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting
                         const langKey = this.sessionStorage.retrieve('locale') || this.userIdentity.langKey;
-                        this.languageService.changeLanguage(langKey);
+                        this.translateService.use(langKey);
                     } else {
                         this.userIdentity = undefined;
                     }

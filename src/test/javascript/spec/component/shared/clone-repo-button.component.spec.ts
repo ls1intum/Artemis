@@ -14,7 +14,7 @@ import * as sinonChai from 'sinon-chai';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ClipboardModule } from 'ngx-clipboard';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { of, BehaviorSubject, Subject } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { SinonStub, stub } from 'sinon';
@@ -66,7 +66,7 @@ describe('JhiCloneRepoButtonComponent', () => {
             imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisSharedModule, FeatureToggleModule, ClipboardModule],
             declarations: [CloneRepoButtonComponent, MockComponent(ExerciseActionButtonComponent)],
             providers: [
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },

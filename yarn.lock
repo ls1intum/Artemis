@@ -8296,13 +8296,6 @@ next-tick@~1.0.0:
   resolved "https://registry.yarnpkg.com/next-tick/-/next-tick-1.0.0.tgz#ca86d1fe8828169b0120208e3dc8424b9db8342c"
   integrity sha1-yobR/ogoFpsBICCOPchCS524NCw=
 
-ng-jhipster@0.16.0:
-  version "0.16.0"
-  resolved "https://registry.yarnpkg.com/ng-jhipster/-/ng-jhipster-0.16.0.tgz#5d44ddb937e83ad304385a9f9ecd44315585d728"
-  integrity sha512-Rvfm7R5bJLqHS2+rHCDdK1FH5W2H7M0V8yj29ICpfLoLQonr7Co/K6V0AbSCqhdYo1qH5r/NJeTWSAtBS1KpdA==
-  dependencies:
-    tslib "^2.0.0"
-
 ng-mocks@12.3.1:
   version "12.3.1"
   resolved "https://registry.yarnpkg.com/ng-mocks/-/ng-mocks-12.3.1.tgz#23efd95fd57a6ceb1e9edcc1abc37e6e6db4c052"

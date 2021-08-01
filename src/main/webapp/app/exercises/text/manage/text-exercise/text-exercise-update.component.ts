@@ -1,7 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -20,6 +19,8 @@ import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-upda
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise-utils';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -50,14 +51,14 @@ export class TextExerciseUpdateComponent implements OnInit {
     domainCommandsGradingInstructions = [new KatexCommand()];
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private textExerciseService: TextExerciseService,
         private modalService: NgbModal,
         private popupService: ExerciseUpdateWarningService,
         private exerciseService: ExerciseService,
         private exerciseGroupService: ExerciseGroupService,
         private courseService: CourseManagementService,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private navigationUtilService: ArtemisNavigationUtilService,
@@ -103,7 +104,7 @@ export class TextExerciseUpdateComponent implements OnInit {
                                 (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                 },
-                                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                                (error: HttpErrorResponse) => onError(this.alertService, error),
                             );
                         }
                     } else {
@@ -194,7 +195,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        onError(this.jhiAlertService, error);
+        onError(this.alertService, error);
         this.isSaving = false;
     }
 

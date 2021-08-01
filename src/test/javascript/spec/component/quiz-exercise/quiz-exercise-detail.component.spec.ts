@@ -31,7 +31,7 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import * as chai from 'chai';
 import { advanceTo } from 'jest-date-mock';
 import * as moment from 'moment';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
@@ -56,7 +56,7 @@ describe('QuizExercise Management Detail Component', () => {
     let fileUploaderService: FileUploaderService;
     let fixture: ComponentFixture<QuizExerciseDetailComponent>;
     let router: Router;
-    let alertService: JhiAlertService;
+    let alertService: AlertService;
     let dragAndDropQuestionUtil: DragAndDropQuestionUtil;
     let shortAnswerQuestionUtil: ShortAnswerQuestionUtil;
     let changeDetector: ChangeDetectorRef;
@@ -174,7 +174,7 @@ describe('QuizExercise Management Detail Component', () => {
         quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
         router = fixture.debugElement.injector.get(Router);
         fileUploaderService = TestBed.inject(FileUploaderService);
-        alertService = fixture.debugElement.injector.get(JhiAlertService);
+        alertService = fixture.debugElement.injector.get(AlertService);
         dragAndDropQuestionUtil = fixture.debugElement.injector.get(DragAndDropQuestionUtil);
         shortAnswerQuestionUtil = fixture.debugElement.injector.get(ShortAnswerQuestionUtil);
         changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);

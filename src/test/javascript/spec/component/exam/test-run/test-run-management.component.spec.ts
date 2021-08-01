@@ -22,7 +22,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import { JhiAlertService, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
+import { AlertService, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
@@ -137,7 +137,7 @@ describe('Test Run Management Component', () => {
         });
 
         it('should correctly catch error after creating test run', () => {
-            const alertService = TestBed.inject(JhiAlertService);
+            const alertService = TestBed.inject(AlertService);
             const exercise = { id: 1 } as Exercise;
             const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
             exam.exerciseGroups = [exerciseGroup];

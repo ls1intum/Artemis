@@ -3,7 +3,7 @@ import * as Chart from 'chart.js';
 import { ChartDataSets, ChartOptions } from 'chart.js';
 import { BaseChartDirective, Color, Label } from 'ng2-charts';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -41,7 +41,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
     constructor(
         private router: Router,
         private activatedRoute: ActivatedRoute,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private exerciseScoresChartService: ExerciseScoresChartService,
         private translateService: TranslateService,
     ) {}

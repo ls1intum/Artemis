@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, OnChanges } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
@@ -38,7 +38,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     constructor(
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private accountService: AccountService,
         private courseScoreCalculationService: CourseScoreCalculationService,
         private guidedTourService: GuidedTourService,
@@ -94,7 +94,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error('error.unexpectedError', { error }, undefined);
+        this.alertService.error('error.unexpectedError', { error }, undefined);
     }
 
     findNextRelevantExercise() {

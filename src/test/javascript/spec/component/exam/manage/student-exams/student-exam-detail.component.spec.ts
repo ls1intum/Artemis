@@ -10,7 +10,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
+import { AlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
@@ -149,7 +149,7 @@ describe('StudentExamDetailComponent', () => {
                     },
                 }),
                 MockPipe(ArtemisDurationFromSecondsPipe),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockDirective(JhiTranslateDirective),
                 {
                     provide: ActivatedRoute,

@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseExerciseService, CourseManagementService } from '../../../../course/manage/course-management.service';
@@ -13,6 +12,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-text-exercise',
@@ -29,9 +30,9 @@ export class TextExerciseComponent extends ExerciseComponent {
         private router: Router,
         courseService: CourseManagementService,
         translateService: TranslateService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private sortService: SortService,
-        eventManager: JhiEventManager,
+        eventManager: EventManager,
         route: ActivatedRoute,
         private accountService: AccountService,
     ) {
@@ -53,7 +54,7 @@ export class TextExerciseComponent extends ExerciseComponent {
                 });
                 this.emitExerciseCount(this.textExercises.length);
             },
-            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+            (res: HttpErrorResponse) => onError(this.alertService, res),
         );
     }
 

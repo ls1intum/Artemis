@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute } from '@angular/router';
@@ -20,6 +19,8 @@ import * as moment from 'moment';
 import { Moment } from 'moment';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 enum FilterProp {
     ALL = 'all',
@@ -64,8 +65,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     constructor(
         private route: ActivatedRoute,
         private participationService: ParticipationService,
-        private jhiAlertService: JhiAlertService,
-        private eventManager: JhiEventManager,
+        private alertService: AlertService,
+        private eventManager: EventManager,
         private exerciseService: ExerciseService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private accountService: AccountService,
@@ -185,7 +186,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.participationService.update(this.exercise.id!, participation).subscribe(
             () => {},
             () => {
-                this.jhiAlertService.error('artemisApp.participation.addPresentation.error');
+                this.alertService.error('artemisApp.participation.addPresentation.error');
             },
         );
     }
@@ -198,7 +199,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.participationService.update(this.exercise.id!, participation).subscribe(
             () => {},
             () => {
-                this.jhiAlertService.error('artemisApp.participation.removePresentation.error');
+                this.alertService.error('artemisApp.participation.removePresentation.error');
             },
         );
     }

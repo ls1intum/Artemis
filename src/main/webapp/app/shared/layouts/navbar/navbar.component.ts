@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription, of, Observable } from 'rxjs';
 import { tap, map, switchMap, filter } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -27,6 +26,9 @@ import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagram
 import { LectureService } from 'app/lecture/lecture.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/core/util/alert.service';
+import { LANGUAGES } from 'app/core/language/language.constants';
 
 @Component({
     selector: 'jhi-navbar',
@@ -39,7 +41,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     inProduction: boolean;
     isNavbarCollapsed: boolean;
     isTourAvailable: boolean;
-    languages: string[];
+    languages = LANGUAGES;
     openApiEnabled?: boolean;
     modalRef: NgbModalRef;
     version: string;
@@ -57,7 +59,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     constructor(
         private loginService: LoginService,
-        private languageService: JhiLanguageService,
+        private translateService: TranslateService,
         private languageHelper: JhiLanguageHelper,
         private localeConversionService: LocaleConversionService,
         private sessionStorage: SessionStorageService,
@@ -69,7 +71,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private examParticipationService: ExamParticipationService,
         private serverDateService: ArtemisServerDateService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private courseManagementService: CourseManagementService,
         private exerciseService: ExerciseService,
         private hintService: ExerciseHintService,
@@ -83,8 +85,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.languages = this.languageHelper.getAll();
-
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
@@ -417,7 +417,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 const title = response.body ?? segment;
                 this.setBreadcrumb(uri, title, false, index);
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -450,7 +450,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     changeLanguage(languageKey: string) {
         this.sessionStorage.store('locale', languageKey);
-        this.languageService.changeLanguage(languageKey);
+        this.translateService.use(languageKey);
         moment.locale(languageKey);
         this.localeConversionService.locale = languageKey;
     }

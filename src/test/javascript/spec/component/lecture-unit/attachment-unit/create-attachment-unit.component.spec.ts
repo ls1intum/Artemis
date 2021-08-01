@@ -5,7 +5,7 @@ import * as sinon from 'sinon';
 import * as moment from 'moment';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
@@ -47,7 +47,7 @@ describe('CreateAttachmentUnitComponent', () => {
                 MockProvider(AttachmentService),
                 MockProvider(AttachmentUnitService),
                 MockProvider(FileUploaderService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,

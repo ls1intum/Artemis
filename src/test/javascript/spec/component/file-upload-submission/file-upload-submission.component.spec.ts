@@ -7,7 +7,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Router } from '@angular/router';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -50,7 +50,7 @@ describe('FileUploadSubmissionComponent', () => {
     let debugElement: DebugElement;
     let router: Router;
     let fileUploaderService: FileUploaderService;
-    let jhiAlertService: JhiAlertService;
+    let alertService: AlertService;
     let fileUploadSubmissionService: FileUploadSubmissionService;
 
     const result = { id: 1 } as Result;
@@ -91,7 +91,7 @@ describe('FileUploadSubmissionComponent', () => {
                     router.initialNavigation();
                 });
                 fileUploaderService = TestBed.inject(FileUploaderService);
-                jhiAlertService = TestBed.inject(JhiAlertService);
+                alertService = TestBed.inject(AlertService);
                 fileUploadSubmissionService = debugElement.injector.get(FileUploadSubmissionService);
             });
     });
@@ -156,7 +156,7 @@ describe('FileUploadSubmissionComponent', () => {
         const submissionFile = new File([''], 'exampleSubmission.png');
         Object.defineProperty(submissionFile, 'size', { value: MAX_SUBMISSION_FILE_SIZE + 1, writable: false });
         comp.submission = createFileUploadSubmission();
-        const jhiErrorSpy = sinon.spy(jhiAlertService, 'error');
+        const jhiErrorSpy = sinon.spy(alertService, 'error');
         const event = { target: { files: [submissionFile] } };
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
@@ -183,7 +183,7 @@ describe('FileUploadSubmissionComponent', () => {
         // Only png and pdf types are allowed
         const submissionFile = new File([''], 'exampleSubmission.jpg');
         comp.submission = createFileUploadSubmission();
-        const jhiErrorSpy = sinon.spy(jhiAlertService, 'error');
+        const jhiErrorSpy = sinon.spy(alertService, 'error');
         const event = { target: { files: [submissionFile] } };
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();

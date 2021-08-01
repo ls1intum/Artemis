@@ -43,7 +43,7 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import * as sinon from 'sinon';
 import { HttpErrorResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 chai.use(sinonChai);
@@ -61,7 +61,7 @@ describe('FileUploadAssessmentComponent', () => {
     let debugElement: DebugElement;
     let router: Router;
     let navigateByUrlStub: SinonStub;
-    let alertService: JhiAlertService;
+    let alertService: AlertService;
     let submissionService: SubmissionService;
 
     const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD, maxPoints: 100, bonusPoints: 0 } as FileUploadExercise;
@@ -124,7 +124,7 @@ describe('FileUploadAssessmentComponent', () => {
                 fileUploadAssessmentService = fixture.componentRef.injector.get(FileUploadAssessmentService);
                 accountService = TestBed.inject(AccountService);
                 complaintService = TestBed.inject(ComplaintService);
-                alertService = TestBed.inject(JhiAlertService);
+                alertService = TestBed.inject(AlertService);
                 submissionService = TestBed.inject(SubmissionService);
                 getFileUploadSubmissionForExerciseWithoutAssessmentStub = stub(
                     fileUploadSubmissionService,

@@ -11,7 +11,7 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import * as sinon from 'sinon';
@@ -113,7 +113,7 @@ describe('Exercise Scores Component', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: Router, useValue: router },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

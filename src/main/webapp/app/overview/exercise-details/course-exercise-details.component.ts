@@ -27,7 +27,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -105,7 +105,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private guidedTourService: GuidedTourService,
         private courseExerciseSubmissionResultSimulationService: CourseExerciseSubmissionResultSimulationService,
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
         private teamService: TeamService,
         private quizExerciseService: QuizExerciseService,
@@ -294,7 +294,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     changedParticipation.exercise!.dueDate!.isBefore(moment.now()) &&
                     changedParticipation.results?.length! > this.studentParticipation?.results?.length!
                 ) {
-                    this.jhiAlertService.success('artemisApp.exercise.lateSubmissionResultReceived');
+                    this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                 }
                 this.exercise.studentParticipations =
                     this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0
@@ -328,7 +328,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 .subscribe(({ submission }) => {
                     // Notify about received late submission
                     if (submission && this.exercise?.dueDate && this.exercise.dueDate.isBefore(submission.submissionDate)) {
-                        this.jhiAlertService.success('artemisApp.exercise.lateSubmissionReceived');
+                        this.alertService.success('artemisApp.exercise.lateSubmissionReceived');
                     }
                 });
         }
@@ -449,7 +449,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error);
+        this.alertService.error(error);
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
@@ -464,10 +464,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(
             () => {
                 this.wasSubmissionSimulated = true;
-                this.jhiAlertService.success('artemisApp.exercise.submissionSuccessful');
+                this.alertService.success('artemisApp.exercise.submissionSuccessful');
             },
             () => {
-                this.jhiAlertService.error('artemisApp.exercise.submissionUnsuccessful');
+                this.alertService.error('artemisApp.exercise.submissionUnsuccessful');
             },
         );
     }
@@ -490,10 +490,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.studentParticipation.results = [];
                 this.studentParticipation.results[0] = result.body!;
 
-                this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
+                this.alertService.success('artemisApp.exercise.resultCreationSuccessful');
             },
             () => {
-                this.jhiAlertService.error('artemisApp.exercise.resultCreationUnsuccessful');
+                this.alertService.error('artemisApp.exercise.resultCreationUnsuccessful');
             },
         );
     }

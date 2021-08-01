@@ -1,10 +1,10 @@
 import { Component, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiAlert, JhiEventManager, JhiEventWithContent } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
+import { Alert, AlertService } from 'app/core/util/alert.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { checkForMissingTranslationKey } from 'app/shared/util/utils';
+import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-alert-error',
@@ -19,13 +19,13 @@ import { checkForMissingTranslationKey } from 'app/shared/util/utils';
     `,
 })
 export class AlertErrorComponent implements OnDestroy {
-    alerts: JhiAlert[] = [];
+    alerts: Alert[] = [];
     errorListener: Subscription;
     httpErrorListener: Subscription;
 
-    constructor(private alertService: JhiAlertService, private eventManager: JhiEventManager, private translateService: TranslateService) {
-        this.errorListener = eventManager.subscribe('artemisApp.error', (response: JhiEventWithContent<AlertError>) => {
-            const errorResponse = response.content;
+    constructor(private alertService: AlertService, private eventManager: EventManager, private translateService: TranslateService) {
+        this.errorListener = eventManager.subscribe('artemisApp.error', (response: EventWithContent<unknown> | string) => {
+            const errorResponse = (response as EventWithContent<AlertError>).content;
             this.addErrorAlert(errorResponse.message, errorResponse.key, errorResponse.params);
         });
 
@@ -88,10 +88,10 @@ export class AlertErrorComponent implements OnDestroy {
 
     /**
      * set classes for alert
-     * @param {JhiAlert} alert
+     * @param {Alert} alert
      * @return {{ [key: string]: boolean }}
      */
-    setClasses(alert: JhiAlert): { [key: string]: boolean } {
+    setClasses(alert: Alert): { [key: string]: boolean } {
         const classes = { 'jhi-toast': Boolean(alert.toast) };
         if (alert.position) {
             return { ...classes, [alert.position]: true };
@@ -114,31 +114,20 @@ export class AlertErrorComponent implements OnDestroy {
     /**
      * add a new alert
      * @param {string} message
-     * @param {string} key?
-     * @param {any} data?
+     * @param {string} translationKey?
+     * @param {any} translationParams?
      */
-    addErrorAlert(message: string, key?: string, data?: any): void {
-        message = key || message;
-
-        const newAlert: JhiAlert = {
-            type: 'danger',
-            msg: message,
-            params: data,
-            timeout: 5000,
-            toast: this.alertService.isToast(),
-            scoped: true,
-        };
-
-        this.alerts.push(this.alertService.addAlert(newAlert, this.alerts));
+    private addErrorAlert(message?: string, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
+        this.alertService.addAlert({ type: 'danger', message, translationKey, translationParams }, this.alerts);
     }
 
     /**
-     * The recveived alert may contain a message which could not be translated.
+     * The received alert may contain a message which could not be translated.
      * We slice the wrapping 'translation-not-found[..]' and return the response.
      * @param alert which contains the alert message
      */
-    getAlertMessage(alert: JhiAlert): String {
+    getAlertMessage(alert: Alert) {
         checkForMissingTranslationKey(alert);
-        return alert.msg;
+        return alert.message;
     }
 }

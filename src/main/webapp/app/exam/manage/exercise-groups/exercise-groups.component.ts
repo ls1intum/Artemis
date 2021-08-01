@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of, Subject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -23,6 +22,8 @@ import { Moment } from 'moment';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -47,8 +48,8 @@ export class ExerciseGroupsComponent implements OnInit {
         public exerciseService: ExerciseService,
         private examManagementService: ExamManagementService,
         private courseManagementService: CourseManagementService,
-        private jhiEventManager: JhiEventManager,
-        private alertService: JhiAlertService,
+        private eventManager: EventManager,
+        private alertService: AlertService,
         private modalService: NgbModal,
         private router: Router,
     ) {}
@@ -120,7 +121,7 @@ export class ExerciseGroupsComponent implements OnInit {
     deleteExerciseGroup(exerciseGroupId: number, event: { [key: string]: boolean }) {
         this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe(
             () => {
-                this.jhiEventManager.broadcast({
+                this.eventManager.broadcast({
                     name: 'exerciseGroupOverviewModification',
                     content: 'Deleted an exercise group',
                 });

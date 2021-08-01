@@ -1,7 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { JhiEventManager } from 'ng-jhipster';
 import { Subject, Subscription } from 'rxjs';
 import { catchError, map, take, tap } from 'rxjs/operators';
 import { combineLatest, of } from 'rxjs';
@@ -27,6 +26,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -64,7 +64,7 @@ export class ParticipationSubmissionComponent implements OnInit {
         private modelingAssessmentsService: ModelingAssessmentService,
         private textAssessmentService: TextAssessmentService,
         private programmingAssessmentService: ProgrammingAssessmentManualResultService,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
         private translate: TranslateService,
         private profileService: ProfileService,
     ) {}

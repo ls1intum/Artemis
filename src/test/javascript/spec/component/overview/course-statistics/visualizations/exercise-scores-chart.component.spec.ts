@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import * as chai from 'chai';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
@@ -46,7 +46,7 @@ describe('ExerciseScoresChartComponent', () => {
             imports: [ChartsModule, RouterTestingModule.withRoutes([])],
             declarations: [ExerciseScoresChartComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(TranslateService),
                 MockProvider(ExerciseScoresChartService),
 

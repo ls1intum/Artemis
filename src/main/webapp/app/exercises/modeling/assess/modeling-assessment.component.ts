@@ -5,7 +5,7 @@ import { OtherModelElementCount } from 'app/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import interact from 'interactjs';
 import * as $ from 'jquery';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -49,7 +49,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
     @Output() selectionChanged = new EventEmitter<Selection>();
 
-    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2, private artemisTranslatePipe: ArtemisTranslatePipe) {}
+    constructor(private alertService: AlertService, private renderer: Renderer2, private artemisTranslatePipe: ArtemisTranslatePipe) {}
 
     ngAfterViewInit(): void {
         if (this.feedbacks) {

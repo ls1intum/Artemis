@@ -6,7 +6,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { JhiAlertService, JhiSortDirective } from 'ng-jhipster';
+import { AlertService, JhiSortDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import * as sinon from 'sinon';
@@ -43,7 +43,7 @@ describe('InstructorCourseDashboardComponent', () => {
     let component: InstructorCourseDashboardComponent;
     let fixture: ComponentFixture<InstructorCourseDashboardComponent>;
     let service: CourseManagementService;
-    let alertService: JhiAlertService;
+    let alertService: AlertService;
     let sortService: SortService;
     let accountService: AccountService;
 
@@ -108,7 +108,7 @@ describe('InstructorCourseDashboardComponent', () => {
         fixture = TestBed.createComponent(InstructorCourseDashboardComponent);
         component = fixture.componentInstance;
         service = TestBed.inject(CourseManagementService);
-        alertService = TestBed.inject(JhiAlertService);
+        alertService = TestBed.inject(AlertService);
         sortService = TestBed.inject(SortService);
         accountService = TestBed.inject(AccountService);
     });

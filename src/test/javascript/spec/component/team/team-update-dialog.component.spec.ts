@@ -7,7 +7,7 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-dialog.component';
 import { By } from '@angular/platform-browser';
-import { JhiEventManager, NgJhipsterModule } from 'ng-jhipster';
+import { EventManager, NgJhipsterModule } from 'ng-jhipster';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -34,7 +34,7 @@ describe('TeamUpdateDialogComponent', () => {
             imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgJhipsterModule, NgbModule, ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisTeamModule],
             declarations: [],
             providers: [
-                JhiEventManager,
+                EventManager,
                 { provide: TeamService, useClass: MockTeamService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

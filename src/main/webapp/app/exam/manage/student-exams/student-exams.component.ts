@@ -9,7 +9,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
@@ -46,7 +46,7 @@ export class StudentExamsComponent implements OnInit {
         private examManagementService: ExamManagementService,
         private studentExamService: StudentExamService,
         private courseService: CourseManagementService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private modalService: NgbModal,
         private translateService: TranslateService,
         private accountService: AccountService,
@@ -128,15 +128,7 @@ export class StudentExamsComponent implements OnInit {
         this.isLoading = true;
         this.examManagementService.generateStudentExams(this.courseId, this.examId).subscribe(
             (res) => {
-                this.jhiAlertService.addAlert(
-                    {
-                        type: 'success',
-                        msg: 'artemisApp.studentExams.studentExamGenerationSuccess',
-                        params: { number: res?.body?.length },
-                        timeout: 10000,
-                    },
-                    [],
-                );
+                this.alertService.success('artemisApp.studentExams.studentExamGenerationSuccess', { number: res?.body });
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
@@ -154,15 +146,7 @@ export class StudentExamsComponent implements OnInit {
         this.isLoading = true;
         this.examManagementService.generateMissingStudentExams(this.courseId, this.examId).subscribe(
             (res) => {
-                this.jhiAlertService.addAlert(
-                    {
-                        type: 'success',
-                        msg: 'artemisApp.studentExams.missingStudentExamGenerationSuccess',
-                        params: { number: res?.body?.length },
-                        timeout: 10000,
-                    },
-                    [],
-                );
+                this.alertService.success('artemisApp.studentExams.missingStudentExamGenerationSuccess', { number: res?.body });
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
@@ -179,15 +163,7 @@ export class StudentExamsComponent implements OnInit {
         this.isLoading = true;
         this.examManagementService.startExercises(this.courseId, this.examId).subscribe(
             (res) => {
-                this.jhiAlertService.addAlert(
-                    {
-                        type: 'success',
-                        msg: 'artemisApp.studentExams.startExerciseSuccess',
-                        params: { number: res?.body },
-                        timeout: 10000,
-                    },
-                    [],
-                );
+                this.alertService.success('artemisApp.studentExams.startExerciseSuccess', { number: res?.body });
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
@@ -204,15 +180,7 @@ export class StudentExamsComponent implements OnInit {
         this.isLoading = true;
         this.examManagementService.evaluateQuizExercises(this.courseId, this.examId).subscribe(
             (res) => {
-                this.jhiAlertService.addAlert(
-                    {
-                        type: 'success',
-                        msg: 'artemisApp.studentExams.evaluateQuizExerciseSuccess',
-                        params: { number: res?.body },
-                        timeout: 10000,
-                    },
-                    [],
-                );
+                this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
@@ -226,15 +194,7 @@ export class StudentExamsComponent implements OnInit {
         this.isLoading = true;
         this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.courseId, this.examId).subscribe(
             (res) => {
-                this.jhiAlertService.addAlert(
-                    {
-                        type: 'success',
-                        msg: 'artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess',
-                        params: { number: res?.body },
-                        timeout: 10000,
-                    },
-                    [],
-                );
+                this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
@@ -263,15 +223,7 @@ export class StudentExamsComponent implements OnInit {
         this.isLoading = true;
         this.examManagementService.unlockAllRepositories(this.courseId, this.examId).subscribe(
             (res) => {
-                this.jhiAlertService.addAlert(
-                    {
-                        type: 'success',
-                        msg: 'artemisApp.studentExams.unlockAllRepositoriesSuccess',
-                        params: { number: res?.body },
-                        timeout: 10000,
-                    },
-                    [],
-                );
+                this.alertService.success('artemisApp.studentExams.unlockAllRepositoriesSuccess', { number: res?.body });
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
@@ -300,15 +252,7 @@ export class StudentExamsComponent implements OnInit {
         this.isLoading = true;
         this.examManagementService.lockAllRepositories(this.courseId, this.examId).subscribe(
             (res) => {
-                this.jhiAlertService.addAlert(
-                    {
-                        type: 'success',
-                        msg: 'artemisApp.studentExams.lockAllRepositoriesSuccess',
-                        params: { number: res?.body },
-                        timeout: 10000,
-                    },
-                    [],
-                );
+                this.alertService.success('artemisApp.studentExams.lockAllRepositoriesSuccess', { number: res?.body });
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
@@ -374,10 +318,10 @@ export class StudentExamsComponent implements OnInit {
             errorDetail = err?.error?.message;
         }
         if (errorDetail) {
-            this.jhiAlertService.error(translationString, { message: errorDetail });
+            this.alertService.error(translationString, { message: errorDetail });
         } else {
             // Sometimes the response does not have an error field, so we default to generic error handling
-            onError(this.jhiAlertService, err);
+            onError(this.alertService, err);
         }
     }
 }

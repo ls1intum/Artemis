@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { Subject, Subscription } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -39,7 +39,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     constructor(
         private textService: TextEditorService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private artemisMarkdown: ArtemisMarkdownService,
         private translateService: TranslateService,
         private stringCountService: StringCountService,

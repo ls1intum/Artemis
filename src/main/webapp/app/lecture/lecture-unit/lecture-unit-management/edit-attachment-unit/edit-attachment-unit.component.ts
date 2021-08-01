@@ -5,7 +5,7 @@ import { finalize, switchMap, take } from 'rxjs/operators';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
@@ -33,7 +33,7 @@ export class EditAttachmentUnitComponent implements OnInit {
         private router: Router,
         private attachmentUnitService: AttachmentUnitService,
         private attachmentService: AttachmentService,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private fileUploaderService: FileUploaderService,
     ) {}
 

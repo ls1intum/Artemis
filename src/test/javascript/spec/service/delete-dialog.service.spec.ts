@@ -12,7 +12,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { EventEmitter } from '@angular/core';
 import { Observable } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -24,7 +24,7 @@ describe('Delete Dialog Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule, TranslateModule.forRoot()],
-            providers: [DeleteDialogService, JhiAlertService],
+            providers: [DeleteDialogService, AlertService],
         });
 
         service = TestBed.inject(DeleteDialogService);

@@ -18,7 +18,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { LectureService } from 'app/lecture/lecture.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -89,7 +89,7 @@ describe('LectureUnitManagementComponent', () => {
             providers: [
                 MockProvider(LectureUnitService),
                 MockProvider(LectureService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,

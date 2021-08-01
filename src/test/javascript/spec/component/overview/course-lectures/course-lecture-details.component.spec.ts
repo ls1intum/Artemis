@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import * as moment from 'moment';
 import { JhiTranslateDirective } from 'ng-jhipster';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
@@ -122,7 +122,7 @@ describe('CourseLectureDetails', () => {
                         return of(new HttpResponse({ body: lecture, headers, status: 200 }));
                     },
                 }),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 { provide: FileService, useClass: MockFileService },
                 { provide: Router, useValue: mockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },

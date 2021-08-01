@@ -5,7 +5,7 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ActivatedRoute } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ParticipantScoreAverageDTO, ParticipantScoreDTO, ParticipantScoresService } from 'app/shared/participant-scores/participant-scores.service';
 import * as chai from 'chai';
@@ -50,7 +50,7 @@ describe('ExamParticipantScores', () => {
             providers: [
                 MockProvider(GradingSystemService),
                 MockProvider(ParticipantScoresService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 {
                     provide: ActivatedRoute,
                     useValue: { params: of({ courseId: 1, examId: 1 }) },

@@ -9,7 +9,7 @@ import * as moment from 'moment';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { concatMap, finalize } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { combineLatest } from 'rxjs';
 
@@ -34,7 +34,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
         private attachmentService: AttachmentService,
         private fileUploaderService: FileUploaderService,
         private attachmentUnitService: AttachmentUnitService,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit() {

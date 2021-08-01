@@ -6,7 +6,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
-import { JhiEventManager, NgJhipsterModule } from 'ng-jhipster';
+import { EventManager, NgJhipsterModule } from 'ng-jhipster';
 import { FormsModule } from '@angular/forms';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
@@ -65,7 +65,7 @@ describe('TeamsComponent', () => {
             ],
             declarations: [],
             providers: [
-                JhiEventManager,
+                EventManager,
                 DifferencePipe,
                 { provide: TeamService, useClass: MockTeamService },
                 { provide: ExerciseService, useClass: MockExerciseService },

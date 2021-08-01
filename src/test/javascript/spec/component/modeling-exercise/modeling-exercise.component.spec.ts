@@ -13,7 +13,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { JhiEventManager } from 'ng-jhipster';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
@@ -27,7 +26,7 @@ describe('ModelingExercise Management Component', () => {
     let fixture: ComponentFixture<ModelingExerciseComponent>;
     let courseExerciseService: CourseExerciseService;
     let modelingExerciseService: ModelingExerciseService;
-    let eventManager: JhiEventManager;
+    let eventManager: EventManager;
     let sortService: SortService;
 
     const course: Course = { id: 123 } as Course;
@@ -55,7 +54,7 @@ describe('ModelingExercise Management Component', () => {
         modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
         sortService = fixture.debugElement.injector.get(SortService);
 
-        eventManager = fixture.debugElement.injector.get(JhiEventManager);
+        eventManager = fixture.debugElement.injector.get(EventManager);
     });
 
     afterEach(function () {

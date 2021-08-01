@@ -7,7 +7,7 @@ import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ApollonDiagramListComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-list.component';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
@@ -32,7 +32,7 @@ describe('ApollonDiagramList Component', () => {
             imports: [HttpClientTestingModule],
             declarations: [ApollonDiagramListComponent],
             providers: [
-                JhiAlertService,
+                AlertService,
                 ApollonDiagramService,
                 MockProvider(SortService),
                 { provide: NgbModal, useClass: MockNgbModalService },
