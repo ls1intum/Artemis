@@ -9,7 +9,7 @@ import { TagInputModule } from 'ngx-chips';
 import { UserManagementDetailComponent } from 'app/admin/user-management/user-management-detail.component';
 import { LogsComponent } from 'app/admin/logs/logs.component';
 import { HealthComponent } from 'app/admin/health/health.component';
-import { JhiConfigurationComponent } from 'app/admin/configuration/configuration.component';
+import { ConfigurationComponent } from 'app/admin/configuration/configuration.component';
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
 import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
@@ -26,21 +26,10 @@ import { OrganizationManagementUpdateComponent } from './organization-management
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { MetricsModule } from 'app/admin/metrics/metrics.module';
 
-/* jhipster-needle-add-admin-module-import - JHipster will add admin modules imports here */
-
 const ENTITY_STATES = [...adminState];
 
 @NgModule({
-    imports: [
-        RouterModule.forChild(ENTITY_STATES),
-        ArtemisSharedModule,
-        FormDateTimePickerModule,
-        TagInputModule,
-        NgxDatatableModule,
-        ArtemisDataTableModule,
-        MetricsModule,
-        /* jhipster-needle-add-admin-module - JHipster will add admin modules here */
-    ],
+    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, FormDateTimePickerModule, TagInputModule, NgxDatatableModule, ArtemisDataTableModule, MetricsModule],
     declarations: [
         AuditsComponent,
         UserManagementComponent,
@@ -51,7 +40,7 @@ const ENTITY_STATES = [...adminState];
         SystemNotificationManagementUpdateComponent,
         LogsComponent,
         DocsComponent,
-        JhiConfigurationComponent,
+        ConfigurationComponent,
         HealthComponent,
         HealthModalComponent,
         StatisticsComponent,

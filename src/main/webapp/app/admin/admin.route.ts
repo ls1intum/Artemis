@@ -5,7 +5,7 @@ import { systemNotificationManagementRoute } from 'app/admin/system-notification
 import { Authority } from 'app/shared/constants/authority.constants';
 import { upcomingExamsAndExercisesRoute } from 'app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.route';
 import { AuditsComponent } from 'app/admin/audits/audits.component';
-import { JhiConfigurationComponent } from 'app/admin/configuration/configuration.component';
+import { ConfigurationComponent } from 'app/admin/configuration/configuration.component';
 import { AdminFeatureToggleComponent } from 'app/admin/features/admin-feature-toggle.component';
 import { HealthComponent } from 'app/admin/health/health.component';
 import { LogsComponent } from 'app/admin/logs/logs.component';
@@ -32,7 +32,7 @@ export const adminState: Routes = [
             },
             {
                 path: 'configuration',
-                component: JhiConfigurationComponent,
+                component: ConfigurationComponent,
                 data: {
                     pageTitle: 'configuration.title',
                 },
