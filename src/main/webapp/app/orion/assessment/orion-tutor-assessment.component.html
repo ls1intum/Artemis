@@ -1,4 +1,4 @@
-<jhi-code-editor-tutor-assessment>
+<jhi-code-editor-tutor-assessment (onFeedbackLoaded)="initializeFeedback()">
     <ng-template #overrideCodeEditor let-title="title" let-toolbar="toolbar" let-exercise="exercise" let-participation="participation" let-feedback="feedback">
         <div class="d-flex">
             <h4><ng-container *ngTemplateOutlet="title"></ng-container></h4>

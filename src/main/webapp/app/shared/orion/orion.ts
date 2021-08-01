@@ -2,6 +2,7 @@ import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-ed
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Observable } from 'rxjs';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { Feedback } from 'app/entities/feedback.model';
 
 export interface OrionState {
     opened: number;
@@ -62,6 +63,13 @@ export interface OrionExerciseConnector {
      * @param downloadURL URL of the zip file containing the student's repository
      */
     downloadSubmission(submissionId: string, correctionRound: string, downloadURL: string): void;
+
+    /**
+     * Initializes the feedback comments. See {@link OrionConnectorService} for details.
+     * @param submissionId if of the submission, for validation purposes
+     * @param feedback current feedback
+     */
+    initializeAssessment(submissionId: string, feedback: string): void;
 
     /**
      * Import a participation. See {@link OrionConnectorService} for details.
@@ -211,6 +219,13 @@ export interface ArtemisClientConnector {
      * @param exerciseId The exercise id.
      */
     startedBuildInOrion(courseId: number, exerciseId: number): void;
+
+    /**
+     * Updates the assessment of the currently open submission
+     * @param submissionId Id of the open submission, for validation
+     * @param feedback all inline feedback
+     */
+    updateAssessment(submissionId: number, feedback: Array<Feedback>): void
 }
 
 export interface OrionWindow {

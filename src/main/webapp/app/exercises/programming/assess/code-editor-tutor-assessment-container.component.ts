@@ -1,4 +1,4 @@
-import { Component, ContentChild, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, ContentChild, EventEmitter, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import * as moment from 'moment';
 import { now } from 'moment';
@@ -103,6 +103,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // extension points, see shared/extension-point
     @ContentChild('overrideCodeEditor') overrideCodeEditor: TemplateRef<any>;
     @ContentChild('overrideExportGoToRepository') overrideExportGoToRepository: TemplateRef<any>;
+    @Output() onFeedbackLoaded = new EventEmitter();
 
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
@@ -529,6 +530,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
+        this.onFeedbackLoaded.emit();
         this.validateFeedback();
     }
 
