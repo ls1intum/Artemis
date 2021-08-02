@@ -237,7 +237,7 @@ public class ComplaintResource {
     }
 
     /**
-     * Get /exercises/:exerciseId/more-feedback-for-assessment-dashboard
+     * Get exercises/:exerciseId/more-feedback-for-assessment-dashboard
      * <p>
      * Get all the more feedback requests associated to an exercise, that are about the tutor who is doing the request.
      * @param exerciseId the id of the exercise we are interested in
@@ -255,7 +255,7 @@ public class ComplaintResource {
     }
 
     /**
-     * Get /complaints
+     * Get complaints
      * <p>
      * Get all the complaints for tutor.
      * @param complaintType the type of complaints we are interested in
@@ -275,7 +275,7 @@ public class ComplaintResource {
     }
 
     /**
-     * Get /courses/:courseId/complaints/:complaintType
+     * Get courses/:courseId/complaints/:complaintType
      * <p>
      * Get all the complaints filtered by courseId, complaintType and optionally tutorId.
      * @param tutorId the id of the tutor by which we want to filter
@@ -312,7 +312,7 @@ public class ComplaintResource {
     }
 
     /**
-     * Get /exercises/:exerciseId/complaints
+     * Get exercises/:exerciseId/complaints
      * <p>
      * Get all the complaints filtered by exerciseId, complaintType and optionally tutorId.
      * @param tutorId the id of the tutor by which we want to filter
@@ -351,7 +351,7 @@ public class ComplaintResource {
     }
 
     /**
-     * Get /courses/:courseId/exams/:examId/complaints
+     * Get courses/:courseId/exams/:examId/complaints
      * <p>
      * Get all the complaints filtered by courseId, complaintType and optionally tutorId.
      * @param examId the id of the tutor by which we want to filter
