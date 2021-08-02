@@ -266,7 +266,7 @@ public class ExerciseResource {
      * @param exerciseId the exerciseId of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{exerciseId}/details")// TODO: should be courses/{courseId}/exercises/{exerciseId}/details
+    @GetMapping("exercises/{exerciseId}/details")// TODO: should be courses/{courseId}/exercises/{exerciseId}/details
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
         long start = System.currentTimeMillis();
@@ -317,7 +317,7 @@ public class ExerciseResource {
      * @param exerciseId the exerciseId of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @PostMapping("/exercises/{exerciseId}/toggle-second-correction")// TODO: should be courses/{courseId}/exercises/{exerciseId}/stats-for-assessment-dashboard
+    @PostMapping("exercises/{exerciseId}/toggle-second-correction")// TODO: should be courses/{courseId}/exercises/{exerciseId}/stats-for-assessment-dashboard
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
         log.debug("toggleSecondCorrectionEnabled for exercise with id: {}", exerciseId);
