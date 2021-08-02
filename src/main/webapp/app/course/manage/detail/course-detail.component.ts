@@ -12,7 +12,6 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/shared/util/global.utils';
-import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { CheckType, ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
@@ -44,7 +43,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     activeStudents: number[];
     course: Course;
     private eventSubscriber: Subscription;
-    isAdmin: boolean;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -56,7 +54,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private router: Router,
         private jhiAlertService: JhiAlertService,
-        private accountService: AccountService,
         private translateService: TranslateService,
         private modalService: NgbModal,
     ) {}
@@ -67,7 +64,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.fetchData();
         this.registerChangeInCourses();
-        this.isAdmin = this.accountService.isAdmin();
     }
 
     /**

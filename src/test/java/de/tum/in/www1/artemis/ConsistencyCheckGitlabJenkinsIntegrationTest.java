@@ -32,37 +32,37 @@ public class ConsistencyCheckGitlabJenkinsIntegrationTest extends AbstractSpring
      * @throws Exception if an error occurs
      */
     @Test
-    @WithMockUser(username = "admin1", roles = "ADMIN")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void checkConsistencyOfProgrammingExercise_noErrors() throws Exception {
         consistencyCheckServiceTest.checkConsistencyOfProgrammingExercise_noErrors();
     }
 
     @Test
-    @WithMockUser(username = "admin1", roles = "ADMIN")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void checkConsistencyOfProgrammingExercise_missingVCSProject() throws Exception {
         consistencyCheckServiceTest.checkConsistencyOfProgrammingExercise_missingVCSProject();
     }
 
     @Test
-    @WithMockUser(username = "admin1", roles = "ADMIN")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void checkConsistencyOfProgrammingExercise_missingVCSRepos() throws Exception {
         consistencyCheckServiceTest.checkConsistencyOfProgrammingExercise_missingVCSRepos();
     }
 
     @Test
-    @WithMockUser(username = "admin1", roles = "ADMIN")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void checkConsistencyOfProgrammingExercise_buildPlansMissing() throws Exception {
         consistencyCheckServiceTest.checkConsistencyOfProgrammingExercise_buildPlansMissing();
     }
 
     @Test
-    @WithMockUser(username = "admin1", roles = "ADMIN")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void checkConsistencyOfProgrammingExercise_isLocalSimulation() throws Exception {
         consistencyCheckServiceTest.checkConsistencyOfProgrammingExercise_isLocalSimulation();
     }
 
     @Test
-    @WithMockUser(username = "admin1", roles = "ADMIN")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void checkConsistencyOfCourse() throws Exception {
         consistencyCheckServiceTest.checkConsistencyOfCourse();
     }

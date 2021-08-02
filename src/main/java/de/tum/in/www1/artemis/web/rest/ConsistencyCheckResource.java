@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
  */
 @RestController
 @RequestMapping("/api")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('INSTRUCTOR')")
 public class ConsistencyCheckResource {
 
     private final Logger log = LoggerFactory.getLogger(ConsistencyCheckResource.class);
@@ -36,7 +36,7 @@ public class ConsistencyCheckResource {
      * @return List containing the resulting errors, if any.
      */
     @GetMapping("/consistency-check/exercise/{programmingExerciseId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ConsistencyErrorDTO>> checkConsistencyOfProgrammingExercise(@PathVariable long programmingExerciseId) {
         log.debug("REST request to check consistencies of programming exercise [{}]", programmingExerciseId);
         List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfProgrammingExercise(programmingExerciseId);
@@ -50,7 +50,7 @@ public class ConsistencyCheckResource {
      * @return List containing the resulting errors, if any.
      */
     @GetMapping("/consistency-check/course/{courseId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ConsistencyErrorDTO>> checkConsistencyOfCourse(@PathVariable long courseId) {
         log.debug("REST request to check consistencies of course [{}]", courseId);
         List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfCourse(courseId);
