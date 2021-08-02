@@ -273,16 +273,46 @@ export class MetisService {
      * @return Post[] sorted array of posts
      */
     private static sortPosts(posts: Post[]): Post[] {
-        return posts.sort((postA, postB) =>
-            postA.pinned === postB.pinned
-                ? 0
-                : postA.pinned
-                ? -1
-                : 1 || postA.archived === postA.archived
-                ? 0
-                : postA.archived
-                ? 1
-                : -1 || postA.creationDate!.valueOf() - postB.creationDate!.valueOf(),
-        );
+        return posts.sort(function (postA, postB) {
+            const postAPlusEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === 'heavy_plus_sign').length
+                ? postA.reactions?.filter((reaction) => reaction.emojiId === 'heavy_plus_sign').length
+                : 0;
+            const postBPlusEmojiCount = postB.reactions?.filter((reaction) => reaction.emojiId === 'heavy_plus_sign').length
+                ? postB.reactions?.filter((reaction) => reaction.emojiId === 'heavy_plus_sign').length
+                : 0;
+            if (postA.pinned && !postB.pinned) {
+                return -1;
+            }
+            if (!postA.pinned && postB.pinned) {
+                return 1;
+            }
+            if (postAPlusEmojiCount > postBPlusEmojiCount) {
+                return -1;
+            }
+            if (postAPlusEmojiCount < postBPlusEmojiCount) {
+                return 1;
+            }
+            if (postA.archived && !postB.archived) {
+                return 1;
+            }
+            if (!postA.archived && postB.archived) {
+                return -1;
+            }
+            if (Number(postA.creationDate) > Number(postB.pinned)) {
+                return 1;
+            }
+            if (Number(postA.creationDate) < Number(postB.pinned)) {
+                return -1;
+            }
+            return 0;
+        });
+    }
+
+    private static getEmojiCount(reactions: Reaction[] | undefined, searchEmoji: string): number {
+        if (!reactions) {
+            return 0;
+        } else {
+            return reactions.filter((reaction) => reaction.emojiId === searchEmoji).length;
+        }
     }
 }

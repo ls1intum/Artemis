@@ -64,6 +64,9 @@ public class PostService extends PostingService {
 
         // set author to current user
         post.setAuthor(user);
+        // set default value for pin / archive
+        post.setIsPinned(false);
+        post.setIsArchived(false);
         Post savedPost = postRepository.save(post);
 
         sendNotification(savedPost);
