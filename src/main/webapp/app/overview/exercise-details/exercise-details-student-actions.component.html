@@ -188,36 +188,29 @@
         ></button>
         <!-- TODO: Exam mode reuses the whole component at the moment. We need the clone repo button but not the open
         code editor button. We should think about refactoring the clone repo button into a own component -->
-        <button
-            jhi-exercise-action-button
-            buttonIcon="folder-open"
-            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
-            [buttonLoading]="!!exercise.loading"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
-            *ngIf="
-                !examMode &&
-                isOnlineEditorAllowed() &&
-                participationStatusWrapper() == ParticipationStatus.INITIALIZED &&
-                exercise.studentParticipations &&
-                exercise.studentParticipations.length > 0
-            "
-            [routerLink]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor', exercise.studentParticipations[0].id]"
-        ></button>
-        <jhi-clone-repo-button
-            [loading]="!!exercise.loading"
-            [smallButtons]="smallButtons"
-            [repositoryUrl]="repositoryUrl(exercise.studentParticipations![0])!"
-            [isTeamParticipation]="!!exercise.studentParticipations![0].team"
-            *ngIf="
-                isOfflineIdeAllowed() &&
-                exercise.studentParticipations &&
-                participationStatusWrapper() == ParticipationStatus.INITIALIZED &&
-                exercise.studentParticipations.length > 0
-            "
-        >
-        </jhi-clone-repo-button>
+        <ng-container *ngIf="participationStatusWrapper() == ParticipationStatus.INITIALIZED && exercise.studentParticipations && exercise.studentParticipations.length > 0">
+            <ng-container *jhiExtensionPoint="overrideCloneOnlineEditorButton; context: { exercise: exercise }">
+                <button
+                    jhi-exercise-action-button
+                    buttonIcon="folder-open"
+                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                    [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
+                    [buttonLoading]="!!exercise.loading"
+                    [smallButton]="smallButtons"
+                    [hideLabelMobile]="false"
+                    *ngIf="!examMode && isOnlineEditorAllowed()"
+                    [routerLink]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor', exercise.studentParticipations[0].id]"
+                ></button>
+                <jhi-clone-repo-button
+                    [loading]="!!exercise.loading"
+                    [smallButtons]="smallButtons"
+                    [repositoryUrl]="repositoryUrl(exercise.studentParticipations![0])!"
+                    [isTeamParticipation]="!!exercise.studentParticipations![0].team"
+                    *ngIf="isOfflineIdeAllowed()"
+                >
+                </jhi-clone-repo-button>
+            </ng-container>
+        </ng-container>
         <!-- NOTE: we use the same logic 'isStartExerciseAvailable' in ngIf as above because start and resume are not always possible -->
         <button
             jhi-exercise-action-button

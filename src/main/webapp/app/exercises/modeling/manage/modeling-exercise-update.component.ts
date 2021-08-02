@@ -128,7 +128,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                         this.modelingExercise.mode = ExerciseMode.INDIVIDUAL;
                         this.modelingExercise.teamAssignmentConfig = undefined;
                         this.modelingExercise.teamMode = false;
-                        this.modelingExercise.assessmentType = AssessmentType.MANUAL;
                     }
                     if (this.isImport) {
                         if (this.isExamMode) {
@@ -229,7 +228,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * When the diagram type changes, we need to check whether {@link AssessmentType.SEMI_AUTOMATIC} is available for the type. If not, we revert to {@link AssessmentType.MANUAL}
      */
     diagramTypeChanged() {
-        if (this.isExamMode || !this.semiAutomaticAssessmentAvailable) {
+        if (!this.semiAutomaticAssessmentAvailable) {
             this.modelingExercise.assessmentType = AssessmentType.MANUAL;
         }
     }

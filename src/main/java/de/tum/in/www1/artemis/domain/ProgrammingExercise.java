@@ -68,6 +68,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "show_test_names_to_students", table = "programming_exercise_details")
     private boolean showTestNamesToStudents;
 
+    @Column(name = "allow_complaints_for_automatic_assessments", table = "programming_exercise_details")
+    private boolean allowComplaintsForAutomaticAssessments;
+
     @Nullable
     @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
     private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
@@ -536,6 +539,14 @@ public class ProgrammingExercise extends Exercise {
         this.showTestNamesToStudents = showTestNamesToStudents;
     }
 
+    public boolean getAllowComplaintsForAutomaticAssessments() {
+        return allowComplaintsForAutomaticAssessments;
+    }
+
+    public void setAllowComplaintsForAutomaticAssessments(boolean allowComplaintsForAutomaticAssessments) {
+        this.allowComplaintsForAutomaticAssessments = allowComplaintsForAutomaticAssessments;
+    }
+
     @Nullable
     public ZonedDateTime getBuildAndTestStudentSubmissionsAfterDueDate() {
         return buildAndTestStudentSubmissionsAfterDueDate;
@@ -565,7 +576,8 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean needsLockOperation() {
-        return isExamExercise() || !AssessmentType.AUTOMATIC.equals(getAssessmentType()) || getBuildAndTestStudentSubmissionsAfterDueDate() != null;
+        return isExamExercise() || AssessmentType.AUTOMATIC != getAssessmentType() || getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                || allowComplaintsForAutomaticAssessments;
     }
 
     @Nullable
@@ -607,7 +619,8 @@ public class ProgrammingExercise extends Exercise {
     public boolean areManualResultsAllowed() {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
         final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
-        return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
+        return (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || allowComplaintsForAutomaticAssessments)
+                && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
     }
 
     /**
@@ -627,7 +640,7 @@ public class ProgrammingExercise extends Exercise {
      */
     private boolean checkForAssessedResult(Result result) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-        return result.getCompletionDate() != null && ((result.isManual() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC));
+        return result.getCompletionDate() != null && ((result.isManual() && isAssessmentOver) || result.isAutomatic());
     }
 
     @Override

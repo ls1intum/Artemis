@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -59,6 +60,9 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     private TeamRepository teamRepository;
+
+    @Autowired
+    private ParticipationService participationService;
 
     private Course course;
 
@@ -521,6 +525,113 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         var participation = database.addTeamParticipationForExercise(exercise, team.getId());
         var actualParticipation = request.get("/api/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getParticipationByExerciseAndStudentIdWithEagerSubmissionsForTeam() throws Exception {
+        var exercise = createTextExerciseForTeam();
+        var student = database.getUserByLogin("student1");
+        var team = createTeamForExercise(student, exercise);
+        exercise = addTeamToExercise(team, exercise);
+
+        var participation = database.addTeamParticipationForExercise(exercise, team.getId());
+        var actualParticipation = request.get("/api/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        assertThat(actualParticipation).isEqualTo(participation);
+
+        var participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, student.getId());
+        assertThat(participations.size()).isEqualTo(1);
+        assertThat(participations.get(0).getId()).isEqualTo(participation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getParticipationByExerciseAndStudentIdForTeam() throws Exception {
+        var exercise = createTextExerciseForTeam();
+        var student = database.getUserByLogin("student1");
+        var team = createTeamForExercise(student, exercise);
+        exercise = addTeamToExercise(team, exercise);
+
+        var participation = database.addTeamParticipationForExercise(exercise, team.getId());
+        var actualParticipation = request.get("/api/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        assertThat(actualParticipation).isEqualTo(participation);
+
+        var participations = participationService.findByExerciseAndStudentId(exercise, student.getId());
+        assertThat(participations.size()).isEqualTo(1);
+        assertThat(participations.get(0).getId()).isEqualTo(participation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getParticipationByExerciseAndStudentLoginAnyStateWithEagerResultsForTeam() throws Exception {
+        var exercise = createTextExerciseForTeam();
+        var student = database.getUserByLogin("student1");
+        var team = createTeamForExercise(student, exercise);
+        exercise = addTeamToExercise(team, exercise);
+
+        var participation = database.addTeamParticipationForExercise(exercise, team.getId());
+        var actualParticipation = request.get("/api/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        assertThat(actualParticipation).isEqualTo(participation);
+
+        participation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(exercise, student.getLogin());
+        assertThat(participation).isNotNull();
+        assertThat(participation.getId()).isEqualTo(participation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getParticipationByExerciseAndStudentLoginAnyStateForTeam() throws Exception {
+        var exercise = createTextExerciseForTeam();
+        var student = database.getUserByLogin("student1");
+        var team = createTeamForExercise(student, exercise);
+        exercise = addTeamToExercise(team, exercise);
+
+        var participation = database.addTeamParticipationForExercise(exercise, team.getId());
+        var actualParticipation = request.get("/api/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        assertThat(actualParticipation).isEqualTo(participation);
+
+        var participations = participationService.findOneByExerciseAndStudentLoginAnyState(exercise, student.getLogin());
+        assertThat(participations).isPresent();
+        assertThat(participations.get().getId()).isEqualTo(participation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void deleteAllByTeamId() throws Exception {
+        var exercise = createTextExerciseForTeam();
+        var student = database.getUserByLogin("student1");
+        var team = createTeamForExercise(student, exercise);
+        exercise = addTeamToExercise(team, exercise);
+
+        var participation = database.addTeamParticipationForExercise(exercise, team.getId());
+        var actualParticipation = request.get("/api/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        assertThat(actualParticipation).isEqualTo(participation);
+
+        participationService.deleteAllByTeamId(team.getId(), false, false);
+
+        var participations = participationRepo.findByTeamId(team.getId());
+        assertThat(participations).isEmpty();
+    }
+
+    private Exercise createTextExerciseForTeam() {
+        var now = ZonedDateTime.now();
+        var exercise = ModelFactory.generateTextExercise(now.minusDays(2), now.plusDays(2), now.plusDays(4), course);
+        exercise.setMode(ExerciseMode.TEAM);
+        return exerciseRepo.save(exercise);
+    }
+
+    private Team createTeamForExercise(User student, Exercise exercise) {
+        var team = new Team();
+        team.addStudents(student);
+        team.setExercise(exercise);
+        return teamRepository.save(team);
+    }
+
+    private Exercise addTeamToExercise(Team team, Exercise exercise) {
+        var teams = new HashSet<Team>();
+        teams.add(team);
+        exercise.setTeams(teams);
+        return exerciseRepo.save(exercise);
     }
 
     @Test

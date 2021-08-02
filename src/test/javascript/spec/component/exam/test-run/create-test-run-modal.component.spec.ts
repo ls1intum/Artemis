@@ -13,6 +13,8 @@ import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { By } from '@angular/platform-browser';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -31,7 +33,12 @@ describe('Create Test Run Modal Component', () => {
         TestBed.configureTestingModule({
             imports: [FormsModule, ReactiveFormsModule],
             declarations: [CreateTestRunModalComponent],
-            providers: [NgbModal, NgbActiveModal, { provide: ArtemisDurationFromSecondsPipe, useClass: ArtemisDurationFromSecondsPipe }],
+            providers: [
+                NgbModal,
+                NgbActiveModal,
+                { provide: ArtemisDurationFromSecondsPipe, useClass: ArtemisDurationFromSecondsPipe },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CreateTestRunModalComponent);

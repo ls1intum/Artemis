@@ -137,6 +137,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 this.initEditorAfterFileChange();
             }
         }
+        if (changes.commitState && changes.commitState.currentValue === CommitState.CONFLICT) {
+            this.editor.setReadOnly(true);
+        } else if (changes.commitState && changes.commitState.previousValue === CommitState.CONFLICT && changes.commitState.currentValue !== CommitState.CONFLICT) {
+            this.editor.setReadOnly(false);
+        }
     }
 
     /**

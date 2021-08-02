@@ -1,4 +1,5 @@
 @import 'src/main/webapp/content/scss/artemis-mixins';
+@import '../../shared/exercise/_exercise-update.scss';
 
 .title {
     display: flex;
@@ -204,4 +205,9 @@
 .quiz-is-active-background {
     @include position-style(fixed, 0, 0, 0, 0, 6);
     background: rgba(0, 0, 0, 0.4);
+}
+
+label {
+    font-size: 17px;
+    font-weight: bolder;
 }

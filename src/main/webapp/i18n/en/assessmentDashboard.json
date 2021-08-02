@@ -6,24 +6,16 @@
             },
             "title": "Assessment Dashboard",
             "noSubmissionFound": "No submission found",
-            "informationAboutCourse": "Information about the course",
-            "informationAboutExam": "Information about the exam",
+            "assessmentInformation": "Assessment Information",
             "submissions": "Submissions",
             "pageHeader": "Assessment Dashboard for course",
             "pageHeaderExam": "Assessment Dashboard for exam",
             "pageHeaderExamTestRun": "Test Run Assessment Dashboard",
-            "informationAboutYourAssessments": "Information about your assessments",
-            "yourAssessments": "Your assessments",
-            "totalAssessments": "Total assessments",
+            "assessments": "Assessments",
+            "assessmentLocks": "Assessment Locks",
             "totalAssessmentsForCorrectionrounds": "Assessments for correction rounds",
-            "complaintsAboutYourAssessments": "Complaints about your assessments",
             "complaints": "Complaints",
-            "totalComplaints": "Total complaints",
-            "totalLocks": "Total assessment locks",
-            "moreFeedbackRequestsForYourAssessments": "Feedback Requests about your assessments",
-            "yourAssessmentLocks": "Assessments locked by you",
             "moreFeedbackRequests": "More Feedback Requests",
-            "totalMoreFeedbackRequests": "Total More Feedback Requests",
             "showFinishedExercises": "Show finished exercises",
             "exercise": "Exercise",
             "exerciseType": "Exercise type",
@@ -38,7 +30,12 @@
             "assessStudentsLateSubmissions": "Review students' late submissions",
             "evaluateStudentsComplaints": "Evaluate students' complaints and feedback requests",
             "numberOfOpenComplaints": "Number of open complaints",
-            "exerciseTeams": "Exercise Teams"
+            "exerciseTeams": "Exercise Teams",
+            "exerciseTable": {
+                "title": "Exercise Table",
+                "courseInformation": "Exercise table displays all exercises in this course. In order to see all exercises, including the finished ones, just tick the checkbox below. You can click <strong>Exercise Dashboard</strong> to view the exercise details and student submissions.",
+                "examInformation": "Exercise table displays all exercises in this exam. In order to see all exercises, including the finished ones, just tick the checkbox below. You can click <strong>Exercise Dashboard</strong> to view the exercise details and student submissions."
+            }
         }
     }
 }

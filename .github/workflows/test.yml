@@ -99,7 +99,7 @@ jobs:
     timeout-minutes: 30
     steps:
         - name: Setup Node.js
-          uses: actions/setup-node@v2.2.0
+          uses: actions/setup-node@v2.3.0
           with:
               node-version: '${{ env.node }}'
         - uses: actions/checkout@v2
@@ -133,7 +133,7 @@ jobs:
     timeout-minutes: 45
     steps:
         - name: Setup Node.js
-          uses: actions/setup-node@v2.2.0
+          uses: actions/setup-node@v2.3.0
           with:
               node-version: '${{ env.node }}'
         - uses: actions/checkout@v2
@@ -161,7 +161,7 @@ jobs:
     timeout-minutes: 30
     steps:
     - name: Setup Node.js
-      uses: actions/setup-node@v2.2.0
+      uses: actions/setup-node@v2.3.0
       with:
         node-version: '${{ env.node }}'
     - uses: actions/checkout@v2

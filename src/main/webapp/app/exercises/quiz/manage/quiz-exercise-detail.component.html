@@ -1,4 +1,4 @@
-<div class="row justify-content-center" *ngIf="quizExercise">
+<div class="row" *ngIf="quizExercise">
     <div class="col-lg-12">
         <h4 class="title">
             <span *ngIf="quizExercise.id && quizExercise.course" jhiTranslate="artemisApp.quizExercise.edit.title" [translateValues]="{ param: quizExercise.course.title }"> </span>
@@ -12,7 +12,7 @@
         <div class="edit-quiz">
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
-            <div class="form-group-narrow">
+            <div class="form-group">
                 <label for="quiz-title" jhiTranslate="artemisApp.exercise.title">Title</label>
                 <input
                     required
@@ -24,7 +24,7 @@
                     placeholder="{{ 'artemisApp.quizExercise.placeholder.title' | artemisTranslate }}"
                 />
             </div>
-            <div *ngIf="!isExamMode" class="form-group-narrow position-relative">
+            <div *ngIf="!isExamMode" class="form-group position-relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
                 <jhi-category-selector
                     [exerciseCategories]="exerciseCategories"
@@ -35,7 +35,7 @@
             </div>
             <div class="row">
                 <div class="col-lg-4 col-sm-12">
-                    <div class="form-group-narrow">
+                    <div class="form-group">
                         <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
                         <div>
                             <jhi-difficulty-picker (ngModelChange)="cacheValidation()" [exercise]="quizExercise"></jhi-difficulty-picker>
@@ -43,7 +43,7 @@
                     </div>
                 </div>
                 <div class="col-lg-4 col-sm-12">
-                    <div class="form-group-narrow">
+                    <div class="form-group">
                         <ng-container *ngIf="!isExamMode">
                             <label jhiTranslate="artemisApp.quizExercise.duration">Duration</label>
                             <div class="d-flex align-items-center">
@@ -76,7 +76,7 @@
                     </div>
                 </div>
                 <div class="col-lg-4 col-sm-12">
-                    <div class="form-group-narrow">
+                    <div class="form-group">
                         <label jhiTranslate="artemisApp.quizExercise.options">Options</label>
                         <div class="form-check custom-control custom-checkbox">
                             <input
@@ -115,7 +115,7 @@
             </div>
             <div class="row">
                 <div class="col">
-                    <div class="form-group-narrow">
+                    <div class="form-group">
                         <label class="form-control-label">{{
                             'artemisApp.exercise.includedInOverallScore' + (quizExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
                         }}</label>

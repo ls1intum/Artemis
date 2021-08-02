@@ -10,14 +10,14 @@ jobs:
 
       - name: Move to "Ready for review" column
         if: github.event.pull_request.draft == false
-        uses: alex-page/github-project-automation-plus@v0.8.0
+        uses: alex-page/github-project-automation-plus@v0.8.1
         with:
           project: Artemis Development
           column: Ready for review
           repo-token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}
 
       - name: Request Reviews from @ls1intum/artemis Team
-        uses: rowi1de/auto-assign-review-teams@v1.0.1
+        uses: rowi1de/auto-assign-review-teams@v1.0.2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           teams: "@ls1intum/artemis"
