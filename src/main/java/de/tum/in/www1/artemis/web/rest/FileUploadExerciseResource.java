@@ -307,7 +307,7 @@ public class FileUploadExerciseResource {
      * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
      * Server Error) if the fileUploadExercise couldn't be updated
      */
-    @PostMapping(Endpoints.REEVALUATE_EXERCISE)
+    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable long exerciseId, @RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
