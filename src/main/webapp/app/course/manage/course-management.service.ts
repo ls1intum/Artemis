@@ -616,7 +616,7 @@ export class CourseExerciseService {
      * @param courseId - the unique identifier of the course
      * @param exerciseId - the unique identifier of the modelling exercise
      */
-    startExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
+    startExercise(exerciseId: number): Observable<StudentParticipation> {
         return this.http.post<StudentParticipation>(`${this.resourceUrl}/exercises/${exerciseId}/participations`, {}).pipe(
             map((participation: StudentParticipation) => {
                 if (participation.type === ParticipationType.PROGRAMMING) {
@@ -632,7 +632,7 @@ export class CourseExerciseService {
      * @param courseId - the unique identifier of the course
      * @param exerciseId - the unique identifier of the modelling exercise
      */
-    resumeProgrammingExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
+    resumeProgrammingExercise(exerciseId: number): Observable<StudentParticipation> {
         return this.http.put<StudentParticipation>(`${this.resourceUrl}/exercises/${exerciseId}/resume-programming-participation`, {}).pipe(
             map((participation: StudentParticipation) => {
                 if (participation.type === ParticipationType.PROGRAMMING) {

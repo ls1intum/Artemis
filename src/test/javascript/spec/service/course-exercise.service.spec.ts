@@ -186,7 +186,7 @@ describe('Course Management Service', () => {
             participation,
         );
         service
-            .startExercise(course.id!, exerciseId)
+            .startExercise(exerciseId)
             .pipe(take(1))
             .subscribe((res) => expect(res).to.deep.equals(expected));
 
@@ -208,7 +208,7 @@ describe('Course Management Service', () => {
             participation,
         );
         service
-            .resumeProgrammingExercise(course.id!, exerciseId)
+            .resumeProgrammingExercise(exerciseId)
             .pipe(take(1))
             .subscribe((res) => expect(res).to.deep.equals(expected));
 
