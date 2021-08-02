@@ -346,7 +346,7 @@ You can create a programming exercise
 
 Bitbucket → Bamboo
 ^^^^^^^^^^^^^^^^^^^
-The build of the students repository gets started aftemis.ase.in.tum.de/dev/setup/bamboo-bitbucket-jira/#configure-bamboo-bitbucket-and-jira>`__ter pushing to it
+The build of the students repository gets started after pushing to it
 
 Bitbucket → Artemis
 ^^^^^^^^^^^^^^^^^^^^
