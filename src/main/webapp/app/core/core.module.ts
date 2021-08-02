@@ -6,7 +6,7 @@ import { AuthInterceptor } from 'app/core/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
-import { JhiConfigService, JhiLanguageService, missingTranslationHandler, NgJhipsterModule, translatePartialLoader } from 'ng-jhipster';
+import { JhiConfigService, JhiLanguageService, NgJhipsterModule } from 'ng-jhipster';
 import { NgbDateAdapter, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { NgxWebstorageModule } from 'ngx-webstorage';
@@ -23,13 +23,14 @@ import { CookieService } from 'ngx-cookie-service';
 import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { ArtemisVersionInterceptor } from 'app/core/interceptor/artemis-version.interceptor';
+import { missingTranslationHandler, translatePartialLoader } from './config/translation.config';
 
 @NgModule({
     imports: [
         HttpClientModule,
         NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
         /**
-         * @external Moment is a date library for parsing, validating, manipulating, and formatting dates.
+         * @external MomentModule is a date library for parsing, validating, manipulating, and formatting dates.
          */
         MomentModule,
         NgJhipsterModule.forRoot({

@@ -209,14 +209,16 @@
                 *ngIf="
                     exercise &&
                     exercise.type === PROGRAMMING &&
-                    studentParticipation &&
-                    latestRatedResult &&
-                    (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
+                    !!studentParticipation &&
+                    !!latestRatedResult &&
+                    (latestRatedResult.assessmentType === AssessmentType.MANUAL ||
+                        latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
+                        allowComplaintsForAutomaticAssessments)
                 "
                 class="mb-2 mt-2 ms-3"
                 [exercise]="exercise"
                 [participation]="studentParticipation!"
-                [result]="resultWithComplaint ? resultWithComplaint : latestRatedResult"
+                [result]="resultWithComplaint ? resultWithComplaint! : latestRatedResult!"
             >
             </jhi-complaint-interactions>
             <div
