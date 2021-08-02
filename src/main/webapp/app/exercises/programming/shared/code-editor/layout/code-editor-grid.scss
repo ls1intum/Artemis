@@ -9,7 +9,6 @@ Code-Editor Layout Styles
 
     .collapsed--horizontal {
         width: 50px !important;
-        margin-right: 10px !important;
     }
     .collapsed--vertical {
         height: 42px !important;
@@ -95,24 +94,50 @@ Collapsable styling
 
 // File browser
 .editor-sidebar-left.collapsed--horizontal {
-    > * {
-        flex: none !important;
+    flex: none !important;
+    .card-header {
+        height: 100%;
+        width: 100%;
+        > fa-icon {
+            display: none;
+        }
+    }
 
-        .card-header {
-            height: 100%;
-            width: 100%;
-            > fa-icon {
-                display: none;
-            }
+    .card-body,
+    .card-second-header {
+        display: none !important;
+    }
+
+    .collapsed-file-browser {
+        width: 50px;
+        cursor: pointer;
+
+        .header {
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+            position: absolute;
+            top: 27%;
+            left: 25%;
         }
 
-        .card-body,
-        .card-second-header {
-            display: none !important;
+        fa-icon {
+            position: absolute;
+            left: 15px;
         }
 
-        .card-title span {
-            display: none !important;
+        .top-icon {
+            top: 15px;
+        }
+
+        #panel-symbol {
+            padding-right: 0 !important;
+            position: absolute;
+            top: 66%;
+            left: 25%;
+        }
+
+        .bottom-icon {
+            bottom: 15px;
         }
     }
 }
@@ -170,20 +195,33 @@ Collapsable styling
 
     .collapsed-instructions-card {
         width: 50px;
-        justify-content: space-between;
-        flex-flow: column nowrap;
         cursor: pointer;
 
         .header {
-            writing-mode: vertical-rl;
-            margin-left: -3px;
+            writing-mode: vertical-lr;
+            position: absolute;
+            top: 29%;
+            left: 25%;
         }
 
         fa-icon {
-            display: flex;
-            justify-content: center;
-            padding: 15px 0;
-            padding-right: 20px;
+            position: absolute;
+            right: 15px;
+        }
+
+        .top-icon {
+            top: 15px;
+        }
+
+        #panel-symbol {
+            padding-right: 0 !important;
+            position: absolute;
+            top: 18%;
+            left: 40%;
+        }
+
+        .bottom-icon {
+            bottom: 15px;
         }
     }
 

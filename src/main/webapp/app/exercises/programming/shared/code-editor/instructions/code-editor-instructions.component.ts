@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { CodeEditorCollapseService, CollapsableCodeEditorElement } from 'app/exercises/programming/shared/code-editor/code-editor-collapse.service';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
@@ -19,10 +18,9 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
     interactResizable: Interactable;
-
     collapsed = false;
 
-    constructor(private codeEditorCollapseService: CodeEditorCollapseService) {}
+    constructor() {}
 
     /**
      * After the view was initialized, we create an interact.js resizable object,
@@ -41,7 +39,6 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
      */
     toggleEditorCollapse(event: any) {
         this.collapsed = !this.collapsed;
-        this.codeEditorCollapseService.sendToggleCollapseEvent(CollapsableCodeEditorElement.RIGHT_PANEL);
         this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.minInstructionsWidth });
     }
 }

@@ -22,7 +22,6 @@ import { CodeEditorConfirmRefreshModalComponent } from 'app/exercises/programmin
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { CodeEditorCollapseService } from 'app/exercises/programming/shared/code-editor/code-editor-collapse.service';
 
 @NgModule({
     imports: [
@@ -63,6 +62,6 @@ import { CodeEditorCollapseService } from 'app/exercises/programming/shared/code
         CodeEditorContainerComponent,
     ],
     entryComponents: [CodeEditorFileBrowserDeleteComponent, CodeEditorResolveConflictModalComponent, CodeEditorConfirmRefreshModalComponent],
-    providers: [CodeEditorCollapseService],
+    providers: [],
 })
 export class ArtemisCodeEditorModule {}
