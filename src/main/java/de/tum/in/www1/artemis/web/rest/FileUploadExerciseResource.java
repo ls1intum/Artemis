@@ -75,13 +75,13 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * POST /file-upload-exercises : Create a new FileUploadExercise.
+     * POST file-upload-exercises : Create a new FileUploadExercise.
      *
      * @param fileUploadExercise the fileUploadExercise to create
      * @return the ResponseEntity with status 201 (Created) and with body the new fileUploadExercise, or with status 400 (Bad Request) if the fileUploadExercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/file-upload-exercises")
+    @PostMapping("file-upload-exercises")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<FileUploadExercise> createFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise) throws URISyntaxException {
         log.debug("REST request to save FileUploadExercise : {}", fileUploadExercise);
@@ -144,7 +144,7 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * PUT /file-upload-exercises : Updates an existing FileUploadExercise.
+     * PUT file-upload-exercises : Updates an existing FileUploadExercise.
      *
      * @param fileUploadExercise the FileUploadExercise to update
      * @param notificationText the text shown to students
@@ -152,7 +152,7 @@ public class FileUploadExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or with status 400 (Bad Request) if the fileUploadExercise is not valid, or
      *         with status 500 (Internal Server Error) if the fileUploadExercise couldn't be updated
      */
-    @PutMapping("/file-upload-exercises/{exerciseId}")
+    @PutMapping("file-upload-exercises/{exerciseId}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) {
@@ -187,12 +187,12 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * GET /courses/:courseId/file-upload-exercises : get all the exercises.
+     * GET courses/:courseId/file-upload-exercises : get all the exercises.
      *
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and the list of fileUploadExercises in body
      */
-    @GetMapping(value = "/courses/{courseId}/file-upload-exercises")
+    @GetMapping("courses/{courseId}/file-upload-exercises")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<FileUploadExercise>> getFileUploadExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
@@ -209,12 +209,12 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * GET /file-upload-exercises/:exerciseId : get the fileUploadExercise with id exerciseId.
+     * GET file-upload-exercises/:exerciseId : get the fileUploadExercise with id exerciseId.
      *
      * @param exerciseId the id of the fileUploadExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the fileUploadExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/file-upload-exercises/{exerciseId}")
+    @GetMapping("file-upload-exercises/{exerciseId}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<FileUploadExercise> getFileUploadExercise(@PathVariable Long exerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
@@ -244,12 +244,12 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * DELETE /file-upload-exercises/:exerciseId : delete the "id" fileUploadExercise.
+     * DELETE file-upload-exercises/:exerciseId : delete the "id" fileUploadExercise.
      *
      * @param exerciseId the id of the fileUploadExercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/file-upload-exercises/{exerciseId}")
+    @DeleteMapping("file-upload-exercises/{exerciseId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteFileUploadExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete FileUploadExercise : {}", exerciseId);
@@ -273,13 +273,13 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * POST /file-upload-exercises/:exerciseId/export-submissions : sends exercise submissions as zip
+     * POST file-upload-exercises/:exerciseId/export-submissions : sends exercise submissions as zip
      *
      * @param exerciseId the id of the exercise to get the repos from
      * @param submissionExportOptions the options that should be used for the export
      * @return ResponseEntity with status
      */
-    @PostMapping("/file-upload-exercises/{exerciseId}/export-submissions")
+    @PostMapping("file-upload-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
 
@@ -296,7 +296,7 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * POST /file-upload-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing fileUploadExercise.
+     * POST file-upload-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing fileUploadExercise.
      *
      * @param exerciseId                                   of the exercise
      * @param fileUploadExercise                           the fileUploadExercise to re-evaluate and update
@@ -333,7 +333,7 @@ public class FileUploadExerciseResource {
 
         public static final String ROOT = "/api";
 
-        public static final String FILE_UPLOAD_EXERCISES = "/file-upload-exercises";
+        public static final String FILE_UPLOAD_EXERCISES = "file-upload-exercises";
 
         public static final String FILE_UPLOAD_EXERCISE = FILE_UPLOAD_EXERCISES + "/{exerciseId}";
 
