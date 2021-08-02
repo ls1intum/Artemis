@@ -475,6 +475,12 @@ public class RequestUtilService {
         restoreSecurityContext();
     }
 
+    public <R> R deleteWithResponseBody(String path, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+        var res = mvc.perform(MockMvcRequestBuilders.delete(new URI(path))).andExpect(status().is(expectedStatus.value())).andReturn();
+        final var resString = res.getResponse().getContentAsString();
+        return responseType != String.class ? mapper.readValue(resString, responseType) : (R) resString;
+    }
+
     public void delete(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
         mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();

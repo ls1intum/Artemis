@@ -80,7 +80,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("This Submission is written in English", Language.ENGLISH, false);
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
-        request.postWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, Participation.class);
+        request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", null, Participation.class);
         textSubmission = request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class);
 
         Optional<TextSubmission> result = textSubmissionRepository.findById(textSubmission.getId());
