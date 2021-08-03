@@ -531,24 +531,6 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
-     * Delete all temporary zipped repositories created during export
-     *
-     * @param pathsToZipeedRepos A list of all paths to the zip files, that should be deleted
-     */
-    private void deleteTempZipRepoFiles(List<Path> pathsToZipeedRepos) {
-        log.debug("Delete all temporary zip repo files");
-        // delete the temporary zipped repo files
-        for (Path zippedRepoFile : pathsToZipeedRepos) {
-            try {
-                Files.delete(zippedRepoFile);
-            }
-            catch (Exception ex) {
-                log.warn("Could not delete file {}. Error message: {}", zippedRepoFile, ex.getMessage());
-            }
-        }
-    }
-
-    /**
      * delete all files in the directory based on the given programming exercise and target path
      * @param programmingExercise the programming exercise for which repos have been downloaded
      * @param targetPath the path in which the repositories have been downloaded
@@ -562,24 +544,6 @@ public class ProgrammingExerciseExportService {
         }
         catch (IOException ex) {
             log.warn("The project root directory '" + projectPath + "' could not be deleted.", ex);
-        }
-    }
-
-    /**
-     * Deletes the locally checked out repository.
-     *
-     * @param repository The repository that should get deleted
-     */
-    public void deleteTempLocalRepository(Repository repository) {
-        // we do some cleanup here to prevent future errors with file handling
-        // We can always delete the repository as it won't be used by the student (separate path)
-        if (repository != null) {
-            try {
-                gitService.deleteLocalRepository(repository);
-            }
-            catch (IOException ex) {
-                log.warn("Could not delete temporary repository {}: {}", repository.getLocalPath().toString(), ex.getMessage());
-            }
         }
     }
 

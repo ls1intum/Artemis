@@ -36,6 +36,9 @@ public class ExamSession extends AbstractAuditingEntity {
     @Column(name = "ip_address")
     private String ipAddress;
 
+    @Transient
+    private boolean isInitialSessionTransient;
+
     public ExamSession() {
     }
 
@@ -86,6 +89,14 @@ public class ExamSession extends AbstractAuditingEntity {
     public void setIpAddress(IPAddress ipAddress) {
         this.ipAddress = ipAddress != null ? ipAddress.toCanonicalString() : null;
 
+    }
+
+    public boolean isInitialSession() {
+        return isInitialSessionTransient;
+    }
+
+    public void setInitialSession(boolean isInitialSessionTransient) {
+        this.isInitialSessionTransient = isInitialSessionTransient;
     }
 
     public void hideDetails() {

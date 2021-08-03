@@ -34,6 +34,8 @@ import { ParticipationType } from 'app/entities/participation/participation.mode
 import { Result } from 'app/entities/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -52,6 +54,7 @@ describe('StudentExamDetailComponent', () => {
 
     let courseManagementService: any;
     let studentExamService: any;
+    let gradingSystemService: GradingSystemService;
 
     beforeEach(() => {
         course = { id: 1 };
@@ -105,6 +108,7 @@ describe('StudentExamDetailComponent', () => {
                 FontAwesomeTestingModule,
                 ReactiveFormsModule,
                 TranslateModule.forRoot(),
+                HttpClientTestingModule,
             ],
             declarations: [
                 StudentExamDetailComponent,
@@ -178,6 +182,7 @@ describe('StudentExamDetailComponent', () => {
                 studentExamDetailComponent = studentExamDetailComponentFixture.componentInstance;
                 courseManagementService = TestBed.inject(CourseManagementService);
                 studentExamService = TestBed.inject(StudentExamService);
+                gradingSystemService = TestBed.inject(GradingSystemService);
             });
     });
     afterEach(() => {
@@ -186,9 +191,11 @@ describe('StudentExamDetailComponent', () => {
 
     it('initialize', () => {
         const findCourseSpy = sinon.spy(courseManagementService, 'find');
+        const gradeSpy = sinon.spy(gradingSystemService, 'matchPercentageToGradeStepForExam');
         studentExamDetailComponentFixture.detectChanges();
 
         expect(findCourseSpy).to.have.been.calledOnce;
+        expect(gradeSpy).to.have.been.calledOnce;
         expect(course.id).to.equal(1);
         expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
         expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);

@@ -3,7 +3,7 @@ import { addTextAtCursor } from 'app/shared/util/markdown-util';
 import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
 
 export class GradingCriterionCommand extends DomainTagCommand {
-    public static readonly identifier = '[gradingCriterion]';
+    public static readonly identifier = '[criterion]';
     public static readonly text = ' Add criteria title (only visible for tutors)';
 
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addCriterion';
@@ -32,6 +32,6 @@ export class GradingCriterionCommand extends DomainTagCommand {
      * @desc identify the end of the criterion
      */
     getClosingIdentifier(): string {
-        return '[/gradingCriterion]';
+        return '[/criterion]';
     }
 }

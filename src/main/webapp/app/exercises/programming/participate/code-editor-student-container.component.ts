@@ -76,7 +76,10 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed or if they require manual assessment.
                         // (this should match ProgrammingExerciseParticipation.isLocked on the server-side)
                         const dueDateHasPassed = !this.exercise.dueDate || moment(this.exercise.dueDate).isBefore(moment());
-                        const isEditingAfterDueAllowed = !this.exercise.buildAndTestStudentSubmissionsAfterDueDate && this.exercise.assessmentType === AssessmentType.AUTOMATIC;
+                        const isEditingAfterDueAllowed =
+                            !this.exercise.buildAndTestStudentSubmissionsAfterDueDate &&
+                            !this.exercise.allowComplaintsForAutomaticAssessments &&
+                            this.exercise.assessmentType === AssessmentType.AUTOMATIC;
                         this.repositoryIsLocked = !isEditingAfterDueAllowed && !!this.exercise.dueDate && dueDateHasPassed;
                         this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
                         this.isIllegalSubmission = this.latestResult?.submission?.type === SubmissionType.ILLEGAL;

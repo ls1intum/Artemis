@@ -62,7 +62,8 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
             // Editing is allowed if build and test after due date is not set and no manual correction is involved
             // (this should match CodeEditorStudentContainerComponent.repositoryIsLocked on the client-side)
             boolean isEditingAfterDueAllowed = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null
-                    && programmingExercise.getAssessmentType() == AssessmentType.AUTOMATIC;
+                    && programmingExercise.getAssessmentType() != AssessmentType.MANUAL && programmingExercise.getAssessmentType() != AssessmentType.SEMI_AUTOMATIC
+                    && !programmingExercise.areManualResultsAllowed();
             return programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now()) && !isEditingAfterDueAllowed;
         }
         return false;

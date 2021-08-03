@@ -12,7 +12,6 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.modeling.ModelCluster;
 import de.tum.in.www1.artemis.domain.modeling.ModelElement;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -57,6 +56,10 @@ public class CompassService {
      */
     public void build(ModelingExercise modelingExercise) {
         long start = System.nanoTime();
+
+        if (!isSupported(modelingExercise)) {
+            return;
+        }
 
         List<ModelCluster> currentClusters = modelClusterRepository.findAllByExerciseIdWithEagerElements(modelingExercise.getId());
         if (!currentClusters.isEmpty()) {
@@ -133,7 +136,7 @@ public class CompassService {
     private Result getAutomaticResultForSubmission(ModelingSubmission modelingSubmission) {
         Result result = modelingSubmission.getLatestResult();
 
-        if (result == null || !AssessmentType.MANUAL.equals(result.getAssessmentType())) {
+        if (result == null || AssessmentType.MANUAL != result.getAssessmentType()) {
             if (result == null) {
                 StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
                 result = new Result().submission(modelingSubmission).participation(studentParticipation);
@@ -151,15 +154,7 @@ public class CompassService {
      * @return true if the given diagram type is supported by Compass, false otherwise
      */
     public boolean isSupported(ModelingExercise modelingExercise) {
-        // only use compass for course exercises, in exam exercises the additional delay is too much so it is currently deactivated
-        // TODO: we should support compass also for the exam mode
-        if (modelingExercise.isExamExercise()) {
-            return false;
-        }
-
         // In case the instructor specifies in the UI whether the semi-automatic assessment is possible or not.
-        // NOTE: Currently, this is only possible for for exercises with class or activity diagrams
-        DiagramType diagramType = modelingExercise.getDiagramType();
         if (modelingExercise.getAssessmentType() != null) {
             return (modelingExercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC);
         }

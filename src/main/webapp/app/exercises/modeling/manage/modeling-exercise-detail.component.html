@@ -55,18 +55,23 @@
                     ></jhi-modeling-editor>
                 </dd>
 
-                <dt>
-                    {{ 'artemisApp.modelingExercise.exampleSolutionExplanation' | artemisTranslate }}
-                </dt>
-                <dd class="editor-outline-background">
-                    <span [innerHTML]="sampleSolution"></span>
-                </dd>
+                <div *ngIf="modelingExercise.sampleSolutionExplanation">
+                    <dt>
+                        {{ 'artemisApp.modelingExercise.exampleSolutionExplanation' | artemisTranslate }}
+                    </dt>
+                    <dd class="editor-outline-background">
+                        <span [innerHTML]="sampleSolution"></span>
+                    </dd>
+                </div>
             </dl>
             <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN']">
                 <dl class="row-md">
                     <dt>
                         <span jhiTranslate="artemisApp.modelingExercise.clusters">Clusters</span>
                     </dt>
+                    <dd>
+                        <span><span jhiTranslate="artemisApp.modelingExercise.checkClusters.text">Number of Clusters:</span> {{ numberOfClusters }}</span>
+                    </dd>
                     <dd>
                         <button (click)="buildModelClusters()" class="btn btn-primary" jhiTranslate="artemisApp.modelingExercise.buildClusters.action">Build Clusters</button>
                     </dd>
