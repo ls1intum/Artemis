@@ -14,6 +14,7 @@ import { OrionModule } from 'app/shared/orion/orion.module';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { BehaviorSubject } from 'rxjs';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -30,7 +31,7 @@ describe('OrionProgrammingExerciseComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, OrionModule],
             declarations: [OrionProgrammingExerciseComponent, MockComponent(ProgrammingExerciseComponent), MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(TranslateService), MockProvider(OrionConnectorService), { provide: Router, useValue: router }],
+            providers: [MockProvider(TranslateService), MockProvider(OrionConnectorService), MockProvider(ProgrammingExerciseService), { provide: Router, useValue: router }],
         })
             .compileComponents()
             .then(() => {
@@ -54,6 +55,7 @@ describe('OrionProgrammingExerciseComponent', () => {
     });
     it('editInIde should call connector', () => {
         const editExerciseSpy = spy(orionConnectorService, 'editExercise');
+        stub(TestBed.inject(ProgrammingExerciseService), 'find').returns(new BehaviorSubject({ body: programmingExercise } as any));
 
         comp.editInIDE(programmingExercise);
 
