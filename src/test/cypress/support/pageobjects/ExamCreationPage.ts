@@ -14,24 +14,21 @@ export class ExamCreationPage {
     }
 
     /**
-     * Sets the date from when the exam should be visible.
-     * @param date the date
+     * @param date the date from when the exam should be visible
      */
     setVisibleDate(date: dayjs.Dayjs) {
         this.enterDate('#visibleDate', date);
     }
 
     /**
-     * Sets the date when the exam starts.
-     * @param date the date
+     * @param date the date when the exam starts
      */
     setStartDate(date: dayjs.Dayjs) {
         this.enterDate('#startDate', date);
     }
 
     /**
-     * Sets the date when the exam will end.
-     * @param date the date
+     * @param date the date when the exam will end
      */
     setEndDate(date: dayjs.Dayjs) {
         this.enterDate('#endDate', date);
