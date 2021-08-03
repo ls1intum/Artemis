@@ -97,9 +97,14 @@
                     >
                         <fa-icon [icon]="'chart-bar'"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
                     </a>
-                    <button class="btn btn-success" *ngIf="programmingExercise.isAtLeastInstructor" (click)="checkConsistencies(programmingExercise.id!)">
+                    <a
+                        *ngIf="programmingExercise.isAtLeastInstructor"
+                        (click)="checkConsistencies(programmingExercise.id!)"
+                        class="btn btn-success btn-sm me-1"
+                        style="margin-bottom: 10px"
+                    >
                         <fa-icon [icon]="'check-double'"></fa-icon> <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
-                    </button>
+                    </a>
                 </div>
                 <div>
                     <span
