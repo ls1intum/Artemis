@@ -51,7 +51,7 @@ public class Post extends Posting {
     private Set<AnswerPost> answers = new HashSet<>();
 
     // To be used with introduction of Metis
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "post_tag", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "text")
     private Set<String> tags = new HashSet<>();

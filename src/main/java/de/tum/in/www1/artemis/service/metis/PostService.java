@@ -244,6 +244,21 @@ public class PostService extends PostingService {
     }
 
     /**
+     * Checks course and user validity,
+     * retrieves all tags for posts in a certain course
+     *
+     * @param courseId  id of the course the tags belongs to
+     * @return tags of all posts that belong to the course
+     */
+    public List<String> getAllCourseTags(Long courseId) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        preCheckUserAndCourse(user, courseId);
+        return postRepository.findPostTagsForCourse(courseId);
+    }
+
+    /**
      * Method to (i) check if the exercise exists, (ii) check if requesting user is authorized in the exercise context,
      * and (iii) compare the id of the course belonging to the exercise with the path variable courseId,
      *

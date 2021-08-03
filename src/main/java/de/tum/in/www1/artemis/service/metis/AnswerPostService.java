@@ -135,8 +135,8 @@ public class AnswerPostService extends PostingService {
      * Checks course and user validity,
      * determines authority to delete post and deletes the post
      *
-     * @param courseId      id of the course the answer post belongs to
-     * @param answerPostId  id of the answer post to delete
+     * @param courseId     id of the course the answer post belongs to
+     * @param answerPostId id of the answer post to delete
      */
     public void deleteAnswerPostById(Long courseId, Long answerPostId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
