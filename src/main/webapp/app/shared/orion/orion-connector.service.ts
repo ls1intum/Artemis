@@ -201,10 +201,11 @@ export class OrionConnectorService implements ArtemisOrionConnector {
     /**
      * Updates the assessment of the currently open submission
      * @param submissionId Id of the open submission, for validation
-     * @param feedback all inline feedback
+     * @param feedback all inline feedback, as JSON
      */
-    updateAssessment(submissionId: number, feedback: Array<Feedback>) {
-        this.activeAssessmentComponent?.updateFeedback(submissionId, feedback)
+    updateAssessment(submissionId: number, feedback: string) {
+        const feedbackAsArray = JSON.parse(feedback) as Feedback[]
+        this.activeAssessmentComponent?.updateFeedback(submissionId, feedbackAsArray)
     }
 
     /**

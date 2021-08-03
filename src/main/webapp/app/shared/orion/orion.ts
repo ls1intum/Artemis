@@ -2,7 +2,6 @@ import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-ed
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Observable } from 'rxjs';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
-import { Feedback } from 'app/entities/feedback.model';
 
 export interface OrionState {
     opened: number;
@@ -223,9 +222,9 @@ export interface ArtemisClientConnector {
     /**
      * Updates the assessment of the currently open submission
      * @param submissionId Id of the open submission, for validation
-     * @param feedback all inline feedback
+     * @param feedback all inline feedback, as JSON
      */
-    updateAssessment(submissionId: number, feedback: Array<Feedback>): void
+    updateAssessment(submissionId: number, feedback: string): void
 }
 
 export interface OrionWindow {
