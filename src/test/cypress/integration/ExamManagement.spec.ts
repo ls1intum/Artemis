@@ -1,3 +1,4 @@
+import { CypressExamBuilder } from './../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs';
 import { artemis } from '../support/ArtemisTesting';
 import { generateUUID } from '../support/utils';
@@ -54,7 +55,8 @@ describe('Exam management', () => {
 
     describe('Exam deletion', () => {
         beforeEach(() => {
-            courseManagementRequests.createExam(course, examTitle);
+            const exam = new CypressExamBuilder(course).title(examTitle).build();
+            courseManagementRequests.createExam(exam);
         });
 
         it('Deletes an existing exam', () => {
