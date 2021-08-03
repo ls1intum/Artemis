@@ -36,6 +36,7 @@ export class OnlineEditorPage {
                 cy.focused().type(deleteRemainingContent, { delay: 0 });
             });
         }
+        cy.wait(1000);
     }
 
     /**
