@@ -68,36 +68,33 @@ public class UserDTO extends AuditingEntityDTO {
     }
 
     public UserDTO(User user) {
-        this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
-                user.getImageUrl(), user.getLangKey(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations());
+        new Builder().createdBy(user.getCreatedBy()).createdDate(user.getCreatedDate()).lastModifiedBy(user.getLastModifiedBy()).lastModifiedDate(user.getLastModifiedDate())
+                .id(user.getId()).login(user.getLogin()).name(user.getName()).firstName(user.getFirstName()).lastName(user.getLastName()).email(user.getEmail())
+                .visibleRegistrationNumber(user.getVisibleRegistrationNumber()).imageUrl(user.getImageUrl()).activated(user.getActivated()).langKey(user.getLangKey())
+                .lastNotificationRead(user.getLastNotificationRead()).authorities(user.getAuthorities()).groups(user.getGroups()).guidedTourSettings(user.getGuidedTourSettings())
+                .organizations(user.getOrganizations()).build();
     }
 
-    public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
-            String langKey, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead, Set<Authority> authorities,
-            Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations) {
-
-        this.id = id;
-        this.login = login;
-        this.name = name;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.visibleRegistrationNumber = visibleRegistrationNumber;
-        this.activated = activated;
-        this.imageUrl = imageUrl;
-        this.langKey = langKey;
-        this.setCreatedBy(createdBy);
-        this.setCreatedDate(createdDate);
-        this.setLastModifiedBy(lastModifiedBy);
-        this.setLastModifiedDate(lastModifiedDate);
-        this.lastNotificationRead = lastNotificationRead;
-        if (authorities != null && Hibernate.isInitialized(authorities)) {
-            this.authorities = authorities.stream().map(Authority::getName).collect(Collectors.toSet());
+    // Builder Constructor
+    public UserDTO(Builder builder) {
+        super(builder);
+        this.id = builder.id;
+        this.login = builder.login;
+        this.name = builder.name;
+        this.firstName = builder.firstName;
+        this.lastName = builder.lastName;
+        this.email = builder.email;
+        this.visibleRegistrationNumber = builder.visibleRegistrationNumber;
+        this.activated = builder.activated;
+        this.imageUrl = builder.imageUrl;
+        this.langKey = builder.langKey;
+        this.lastNotificationRead = builder.lastNotificationRead;
+        if (builder.authorities != null && Hibernate.isInitialized(builder.authorities)) {
+            this.authorities = builder.authorities.stream().map(Authority::getName).collect(Collectors.toSet());
         }
-        this.groups = groups;
-        this.guidedTourSettings = guidedTourSettings;
-        this.organizations = organizations;
+        this.groups = builder.groups;
+        this.guidedTourSettings = builder.guidedTourSettings;
+        this.organizations = builder.organizations;
     }
 
     public Long getId() {
@@ -226,5 +223,138 @@ public class UserDTO extends AuditingEntityDTO {
                 + imageUrl + '\'' + ", activated=" + activated + ", langKey='" + langKey + '\'' + ", createdBy=" + getCreatedBy() + ", createdDate=" + getCreatedDate()
                 + ", lastModifiedBy='" + getLastModifiedBy() + '\'' + ", lastModifiedDate=" + getLastModifiedDate() + ", lastNotificationRead=" + lastNotificationRead
                 + ", authorities=" + authorities + "}";
+    }
+
+    // Builder class for UserDTO
+    public static class Builder extends AuditingEntityDTO.Builder {
+
+        private Long id;
+
+        private String login;
+
+        private String name;
+
+        private String firstName;
+
+        private String lastName;
+
+        private String email;
+
+        private String visibleRegistrationNumber;
+
+        private String imageUrl;
+
+        private boolean activated = false;
+
+        private String langKey;
+
+        private ZonedDateTime lastNotificationRead;
+
+        private Set<Authority> authorities = new HashSet<>();
+
+        private Set<String> groups = new HashSet<>();
+
+        private Set<GuidedTourSetting> guidedTourSettings = new HashSet<>();
+
+        private Set<Organization> organizations;
+
+        public Builder createdBy(String createdBy) {
+            super.createdBy = createdBy;
+            return this;
+        }
+
+        public Builder createdDate(Instant createdDate) {
+            super.createdDate = createdDate;
+            return this;
+        }
+
+        public Builder lastModifiedBy(String lastModifiedBy) {
+            super.lastModifiedBy = lastModifiedBy;
+            return this;
+        }
+
+        public Builder lastModifiedDate(Instant lastModifiedDate) {
+            super.lastModifiedDate = lastModifiedDate;
+            return this;
+        }
+
+        public Builder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder login(String login) {
+            this.login = login;
+            return this;
+        }
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder firstName(String firstName) {
+            this.firstName = firstName;
+            return this;
+        }
+
+        public Builder lastName(String lastName) {
+            this.lastName = lastName;
+            return this;
+        }
+
+        public Builder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public Builder visibleRegistrationNumber(String visibleRegistrationNumber) {
+            this.visibleRegistrationNumber = visibleRegistrationNumber;
+            return this;
+        }
+
+        public Builder imageUrl(String imageUrl) {
+            this.imageUrl = imageUrl;
+            return this;
+        }
+
+        public Builder activated(boolean activated) {
+            this.activated = activated;
+            return this;
+        }
+
+        public Builder langKey(String langKey) {
+            this.langKey = langKey;
+            return this;
+        }
+
+        public Builder lastNotificationRead(ZonedDateTime lastNotificationRead) {
+            this.lastNotificationRead = lastNotificationRead;
+            return this;
+        }
+
+        public Builder authorities(Set<Authority> authorities) {
+            this.authorities = authorities;
+            return this;
+        }
+
+        public Builder groups(Set<String> groups) {
+            this.groups = groups;
+            return this;
+        }
+
+        public Builder guidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
+            this.guidedTourSettings = guidedTourSettings;
+            return this;
+        }
+
+        public Builder organizations(Set<Organization> organizations) {
+            this.organizations = organizations;
+            return this;
+        }
+
+        public UserDTO build() {
+            return new UserDTO(this);
+        }
     }
 }
