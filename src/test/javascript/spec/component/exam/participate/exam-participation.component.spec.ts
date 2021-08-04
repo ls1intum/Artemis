@@ -47,6 +47,7 @@ import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercise
 import { By } from '@angular/platform-browser';
 import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -78,6 +79,7 @@ describe('ExamParticipationComponent', () => {
                 MockComponent(FileUploadExamSubmissionComponent),
                 MockComponent(JhiConnectionStatusComponent),
                 MockComponent(AlertComponent),
+                MockDirective(TranslateDirective),
                 TestRunRibbonComponent,
                 MockComponent(ExamParticipationSummaryComponent),
             ],

@@ -23,5 +23,8 @@ export class MockAlertService extends SpyObject {
     isToast(): boolean {
         return true;
     }
+    get(): Alert[] {
+        return [];
+    }
     clear = () => {};
 }
