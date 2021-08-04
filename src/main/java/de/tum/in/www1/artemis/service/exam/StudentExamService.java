@@ -499,7 +499,7 @@ public class StudentExamService {
         var participations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructor.getId(),
                 testRun.getExercises());
         testRun.getExercises().forEach(exercise -> {
-            var relevantParticipation = exercise.findRelevantParticipation(participations);
+            var relevantParticipation = exercise.findParticipation(participations);
             if (relevantParticipation != null) {
                 exercise.setStudentParticipations(Set.of(relevantParticipation));
             }

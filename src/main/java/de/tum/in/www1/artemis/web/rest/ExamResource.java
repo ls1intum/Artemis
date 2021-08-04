@@ -211,6 +211,12 @@ public class ExamResource {
                     .map(Exercise::getId).forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
         }
 
+        if (comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0) {
+            // get all exercises
+            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(result.getId());
+            examService.scheduleModelingExercises(examWithExercises);
+        }
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
 

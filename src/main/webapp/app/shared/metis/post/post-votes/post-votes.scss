@@ -1,0 +1,12 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+$background-color: #353d47;
+$label-color: #6a737d;
+
+.icon {
+    color: $label-color;
+
+    &.vote-active {
+        color: $background-color;
+    }
+}

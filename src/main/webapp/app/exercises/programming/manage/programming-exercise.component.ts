@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -11,8 +11,6 @@ import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
-import { isOrion, OrionState, ExerciseView } from 'app/shared/orion/orion';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
@@ -30,14 +28,16 @@ import { ProgrammingExerciseParticipationType } from 'app/entities/programming-e
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
-    readonly ExerciseView = ExerciseView;
-    readonly isOrion = isOrion;
     FeatureToggle = FeatureToggle;
-    orionState: OrionState;
     selectedProgrammingExercises: ProgrammingExercise[];
     solutionParticipationType = ProgrammingExerciseParticipationType.SOLUTION;
     templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
     allChecked = false;
+
+    // extension points, see shared/extension-point
+    @ContentChild('overrideGenerateAndImportButton') overrideGenerateAndImportButton: TemplateRef<any>;
+    @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
+    @ContentChild('overrideButtons') overrideButtons: TemplateRef<any>;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -47,7 +47,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
         private router: Router,
-        private orionConnectorService: OrionConnectorService,
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private sortService: SortService,
         courseService: CourseManagementService,
@@ -62,9 +61,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     ngOnInit(): void {
         super.ngOnInit();
-        this.orionConnectorService.state().subscribe((state) => {
-            this.orionState = state;
-        });
     }
 
     protected loadExercises(): void {
@@ -133,18 +129,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             },
             () => {},
         );
-    }
-
-    editInIDE(programmingExercise: ProgrammingExercise) {
-        this.orionConnectorService.editExercise(programmingExercise);
-    }
-
-    openOrionEditor(exercise: ProgrammingExercise) {
-        try {
-            this.router.navigate(['code-editor', 'ide', exercise.id, 'admin', exercise.templateParticipation?.id]);
-        } catch (e) {
-            this.orionConnectorService.log(e);
-        }
     }
 
     toggleProgrammingExercise(programmingExercise: ProgrammingExercise) {

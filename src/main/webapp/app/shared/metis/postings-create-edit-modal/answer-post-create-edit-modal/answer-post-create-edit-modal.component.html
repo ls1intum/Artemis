@@ -1,0 +1,25 @@
+<ng-template #postingEditor let-c="close">
+    <form [formGroup]="formGroup" (ngSubmit)="confirm()">
+        <div class="modal-header">
+            <h4 class="modal-title">{{ modalTitle | artemisTranslate }}</h4>
+        </div>
+        <div class="modal-body">
+            <div class="row mb-2">
+                <jhi-postings-markdown-editor formControlName="content" [maxContentLength]="maxContentLength"></jhi-postings-markdown-editor>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button
+                jhi-postings-button
+                [buttonLoading]="isLoading"
+                [disabled]="!formGroup.valid"
+                [buttonLabel]="'artemisApp.metis.savePosting' | artemisTranslate"
+                class="btn btn-sm btn-outline-secondary"
+                type="submit"
+            ></button>
+            <button class="btn btn-sm me-1 btn-outline-secondary" type="button" (click)="c()">
+                {{ 'artemisApp.metis.cancel' | artemisTranslate }}
+            </button>
+        </div>
+    </form>
+</ng-template>

@@ -5,4 +5,5 @@ export class ExamSession implements BaseEntity {
     public id?: number;
     public studentExam?: StudentExam;
     public sessionToken?: string;
+    public initialSession?: boolean;
 }

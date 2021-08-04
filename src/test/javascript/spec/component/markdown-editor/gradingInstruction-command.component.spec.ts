@@ -40,7 +40,7 @@ describe('GradingInstructionCommand', () => {
 
         gradingInstructionCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).to.equal(
-            '[gradingInstruction]' +
+            '[instruction]' +
                 '\n' +
                 '\t' +
                 ('[credits]' +
@@ -72,8 +72,6 @@ describe('GradingInstructionCommand', () => {
         comp.ngAfterViewInit();
 
         criterionCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).to.equal(
-            '\n' + '[gradingCriterion]' + GradingCriterionCommand.text + '\n' + gradingInstructionCommand.instructionText(),
-        );
+        expect(comp.aceEditorContainer.getEditor().getValue()).to.equal('\n' + '[criterion]' + GradingCriterionCommand.text + '\n' + gradingInstructionCommand.instructionText());
     });
 });

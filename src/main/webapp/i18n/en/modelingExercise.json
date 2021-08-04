@@ -36,6 +36,10 @@
                 "error": "Apollon conversion is not available"
             },
             "clusters": "Clusters",
+            "checkClusters": {
+                "text": "Number of Clusters:",
+                "error": "Retrieving Number of Clusters failed"
+            },
             "buildClusters": {
                 "action": "Build Clusters",
                 "error": "Building Clusters failed",

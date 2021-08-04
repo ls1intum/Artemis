@@ -57,6 +57,8 @@ public final class Constants {
 
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active-notification";
 
+    public static final String LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = "Live Exam Exercise Update";
+
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
     public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
@@ -146,6 +148,8 @@ public final class Constants {
 
     // same constant as in the client
     public static final int EXAM_START_WAIT_TIME_MINUTES = 5;
+
+    public static final int EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES = 1;
 
     public static final String TOGGLE_STUDENT_EXAM_SUBMITTED = "TOGGLE_STUDENT_EXAM_SUBMITTED";
 

@@ -3,7 +3,7 @@
         "exam": {
             "overview": {
                 "start": "Beginn: {{start}}",
-                "duration": "Dauer: {{duration}} min",
+                "duration": "Dauer: ",
                 "maxPoints": "Punkte: {{points}}"
             },
             "examSummary": {
@@ -37,7 +37,6 @@
             "endExam": "Beenden",
             "date": "Datum",
             "time": "Zeit",
-            "durationWithFormat": "Dauer (mm:ss)",
             "resultInformation": "Dein Ergebnis wird nach Abschluss der Korrektur an dieser Stelle für dich veröffentlicht. Du kommst zu dieser Seite, indem du in der Klausuren Übersicht des Kurses auf diese Klausur klickst.",
             "course": "Kurs",
             "exercises": "Aufgaben",
@@ -75,6 +74,10 @@
             },
             "error": {
                 "cannotRegisterInstructor": "Du kannst keine Personen aus der Lehr- oder Administrationsgruppe zu Klausuren anmelden."
+            },
+            "problemStatementUpdate": {
+                "showDiff": "zeige Unterschiede",
+                "showNew": "zeige nur neue Version"
             }
         },
         "examScores": {
@@ -186,10 +189,13 @@
             "lockAllRepositoriesModalText": "Alle Repositories werden sofort gesperrt! Studierende werden nicht mehr pushen können, auch wenn die Klausur noch läuft!\nDies betrifft auch Studierende mit Nachteilsausgleich!\n\nDie Operation wird automatisch mit dem Ende der Klausur ausgeführt und sollte daher nur genutzt werden, falls das automatische Sperren nicht korrekt ausgeführt wurde!",
             "searchForStudents": "Suche nach Studierenden-Logins oder Namen (Komma getrennt)",
             "student": "Studierende:r",
-            "workingTime": "Bearbeitungszeit (mm:ss)",
+            "workingTime": "Bearbeitungszeit",
             "started": "Gestartet",
             "submitted": "Abgegeben",
             "submissionDate": "Abgabedatum",
+            "grade": "Note",
+            "bonus": "Bonuspunkte",
+            "passed": "Bestanden",
             "participationStatus": "Teilnahme-Status",
             "summary": "Zusammenfassung für Studierende",
             "result": "Ergebnis",
