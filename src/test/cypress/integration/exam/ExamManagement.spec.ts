@@ -91,6 +91,8 @@ describe('Exam management', () => {
     after(() => {
         if (!!course) {
             cy.login(users.getAdmin());
+            // Sometimes the backend fails with a ConstraintViolationError if we delete the course immediately
+            cy.wait(1000);
             courseManagementRequests.deleteCourse(course.id);
         }
     });
