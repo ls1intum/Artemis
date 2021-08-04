@@ -46,7 +46,7 @@ With the following commands you will setup one cluster with 3 agents as well as 
       k3d cluster list 
       kubectl get nodes 
       k3d kubeconfig get $CLUSTER_NAME > $KUBECONFIG_FILE 
-      .. export KUBECONFIG=$KUBECONFIG_FILE
+      export KUBECONFIG=$KUBECONFIG_FILE
 
 
 3. Install cert-manager
@@ -184,6 +184,15 @@ You can do it by executing the following command:
 ::
 
    kubectl apply -k src/main/kubernetes/artemis
+
+or
+
+::
+
+   kubectl apply -k src/main/kubernetes/artemis --kubeconfig "<path-to-kubeconfig-file>"
+
+if it doesn't find the KUBECONFIG file. <path-to-kubeconfig-file> is the path where you created the KUBECONFIG_FILE.
+
 
 In the console you will see that the resources are created. It will take a litte bit of time when you are doing this for the first time. Be patient!
 

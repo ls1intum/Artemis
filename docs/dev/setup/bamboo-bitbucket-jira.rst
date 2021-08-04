@@ -383,10 +383,9 @@ This part of the documentation assumes you have a Kubernetes cluster running, as
 
 5. Deploy 
 
-
 ::
 
-   kubectl apply -k src/main/kubernetes/atlassian
+   kubectl apply -k src/main/kubernetes/atlassian --kubeconfig "<path-to-kubeconfig>"
 
 6. Modify the ``/src/main/docker/atlassian-setup-k8s.sh`` script
 
