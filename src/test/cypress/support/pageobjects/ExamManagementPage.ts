@@ -62,9 +62,16 @@ export class ExamRow {
     }
 
     /**
-     * Opens the exercise groups page from.
+     * Opens the exercise groups page.
      */
     openExerciseGroups() {
         this.root.contains('Exercise Groups').click();
+    }
+
+    /**
+     * Opens the student registration page.
+     */
+    openStudentRegistration() {
+        this.root.contains('Students').click();
     }
 }

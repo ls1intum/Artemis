@@ -36,10 +36,11 @@ describe('Exam participation', () => {
     });
 
     beforeEach(() => {
-        cy.login(users.getAdmin(), '/');
+        cy.login(users.getAdmin());
     });
 
     it('Adds an exercise group with a programming exercise', () => {
+        cy.visit('/');
         navigationBar.openCourseManagement();
         courseManagement.openExamsOfCourse(courseName, courseShortName);
         examManagement.getExamRow(examTitle).openExerciseGroups();
@@ -57,12 +58,24 @@ describe('Exam participation', () => {
         cy.contains('Add Programming Exercise').click();
         const programmingExerciseTitle = 'programming' + uid;
         programmingCreation.setTitle(programmingExerciseTitle);
-        programmingCreation.setShortName(uid);
+        programmingCreation.setShortName('short' + uid);
         programmingCreation.setPackageName('de.test');
         programmingCreation.setPoints(10);
         programmingCreation.checkAllowOnlineEditor();
         programmingCreation.generate().its('response.statusCode').should('eq', 201);
         cy.contains(programmingExerciseTitle).should('be.visible');
+    });
+
+    it('Registers the course students for the exam', () => {
+        // We already verified in the previous test that we can navigate here
+        cy.visit(`/course-management/${course.id}/exams`);
+        examManagement.getExamRow(examTitle).openStudentRegistration();
+        cy.contains('Registered students: 0').should('be.visible');
+        cy.intercept(POST, '/api/courses/*/exams/*/register-course-students').as('registerCourseStudents');
+        cy.get('[jhitranslate="artemisApp.examManagement.examStudents.registerAllFromCourse"]').click();
+        cy.wait('@registerCourseStudents').its('response.statusCode').should('eq', 200);
+        cy.contains(users.getStudentOne().username).should('be.visible');
+        cy.contains('Registered students: 1').should('be.visible');
     });
 
     after(() => {
