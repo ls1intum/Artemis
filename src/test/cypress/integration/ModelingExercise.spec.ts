@@ -98,7 +98,6 @@ describe('Modeling Exercise Spec', () => {
             modelingExerciseExampleSubission.assessComponent(2, 'Good');
             modelingExerciseExampleSubission.openAssessmentForComponent(3);
             modelingExerciseExampleSubission.assessComponent(0, 'Unnecessary');
-            cy.get('.sc-furvIG > :nth-child(1) > :nth-child(1) > :nth-child(2) > :nth-child(1)').should('exist');
             modelingExerciseExampleSubission.saveExampleAssessment();
         });
 
