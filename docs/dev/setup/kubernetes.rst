@@ -5,11 +5,11 @@ This page describes how to set up an environment deployed in Kubernetes.
 
 **Prerequisites:**
 
-* `Docker <https://docs.docker.com/install>`__ v20.10.7 - Docker will be used to build the Artemis image
+* `Docker <https://docs.docker.com/install>`__ v20.10.7 - Docker is a platform for developing, shipping an running application. In our case we will use it to build the images which we will deploy
 * `DockerHub Account <https://hub.docker.com/signup>`__ - DockerHub account is needed in order to push the Artemis image which will be used by Kubernetes
-* `k3d <https://k3d.io/#installation>`__ v4.4.7 - Lightweght Kubernetes distribution needed to crete a cluster
-* `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl/>`__ v1.21 - Kubernetes command-line tool, used for deployments
-* `helm <https://helm.sh/docs/intro/install/>`__ v3.6.3 - Package manager for Kubernetes
+* `k3d <https://k3d.io/#installation>`__ v4.4.7 - Lightweght Kubernetes distribution, which will be used to create and manage clusters
+* `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl/>`__ v1.21 - Kubernetes command-line tool, which will be used to create deployments
+* `helm <https://helm.sh/docs/intro/install/>`__ v3.6.3 - Package manager for Kubernetes, which will be used to install cert-manager and Rancher
 
 
 .. contents:: Content of this document
@@ -25,6 +25,9 @@ With the following commands you will setup one cluster with 3 agents as well as 
 
 1. Set environment variables
    
+   The CLUSTER_NAME, RANCHER_SERVER_HOSTNAME and KUBECONFIG_FILE environment variables need to be set so that they can be used in the following commands.
+   If you don't want to set them you can replace their values in the commands. What you need to do is replace $CLUSTER_NAME with "k3d-rancher", $RANCHER_SERVER_HOSTNAME with "rancher.localhost" and $KUBECONFIG_FILE with "k3d-rancher.yml".
+   
    ::
 
       export CLUSTER_NAME="k3d-rancher" 
@@ -32,40 +35,50 @@ With the following commands you will setup one cluster with 3 agents as well as 
       export KUBECONFIG_FILE="$CLUSTER_NAME.yaml"
 
 2. Create the cluster
-   
+
+   With the help of the commands block below you can create a cluster with 1 server and 3 agents at total 4 nodes. Your deployments will be distributed almost equally among the 4 nodes.
+   You will also write the cluster configuration into the KUBECONFIG_FILE. This configuration will be later needed when you are creating deployments.
+   You can also set a variable KUBECONFIG variable with the location of the KUBECONFIG_FILE, This variable will be later needed 
+
    ::
 
-      k3d cluster create $CLUSTER_NAME --api-port 6550 --servers 1 --agents 3 --port 443:443@loadbalancer --wait #Create a cluster with 1 server, 3 agents and a load balancer
-      k3d cluster list #Show the list of all clusters
-      k3d kubeconfig get $CLUSTER_NAME > $KUBECONFIG_FILE #Get the cluster config file and write it to the $KUBECONFIG_FILE
-      export KUBECONFIG=$KUBECONFIG_FILE #Set KUBECONFIG env variable which will be used to read the Kubernetes configuration from the future commands 
-      kubectl get nodes #Show the list of all nodes(should show k3d-k3d-rancher-server-0, k3d-k3d-rancher-agent-1, k3d-k3d-rancher-agent-2, k3d-k3d-rancher-agent-3 with status READY)
+      k3d cluster create $CLUSTER_NAME --api-port 6550 --servers 1 --agents 3 --port 443:443@loadbalancer --wait 
+      k3d cluster list 
+      kubectl get nodes 
+      k3d kubeconfig get $CLUSTER_NAME > $KUBECONFIG_FILE 
+      .. export KUBECONFIG=$KUBECONFIG_FILE
 
 
-3. Install cert-manager with helm
+3. Install cert-manager
    
+   cert-manager is used to add certificates and certificate issuers as resource types in Kubernetes clusters.
+   You can install it with one single command.
+
    ::
 
-      helm repo add jetstack https://charts.jetstack.io #Add jetstack
-      helm repo update #Update information of available charts locally from chart repositories
-      kubectl create namespace cert-manager #Create cert-manager namespace
-      helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.0.4 --set installCRDs=true --wait #Deploy cert-manager
-      kubectl -n cert-manager rollout status deploy/cert-manager #Rollout cert-manager deployment 
+      helm repo add jetstack https://charts.jetstack.io 
+      helm repo update
+      kubectl create namespace cert-manager
+      helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.0.4 --set installCRDs=true --wait 
+      kubectl -n cert-manager rollout status deploy/cert-manager
 
 4. Install Rancher
 
+   Rancher is a Kubernetes management tool which gives you the opportunity to create and manage Kubernetes deployments using in easier way than with the CLI tools.
+   Using helm you can install it and then check it's status with the last command
+
    ::
 
-      helm repo add rancher-latest https://releases.rancher.com/server-charts/latest #Add Rancher 
+      helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
       helm repo update
-      kubectl create namespace cattle-system #Create namespace called cattle-system 
-      helm install rancher rancher-latest/rancher --namespace cattle-system --set hostname=$RANCHER_SERVER_HOSTNAME --wait #Install and deploy Rancher on the given hostname
-      kubectl -n cattle-system rollout status deploy/rancher #Rollout Rancher deployment
+      kubectl create namespace cattle-system
+      helm install rancher rancher-latest/rancher --namespace cattle-system --set hostname=$RANCHER_SERVER_HOSTNAME --wait 
+      kubectl -n cattle-system rollout status deploy/rancher
 
 5. Open Rancher and update the password
 
 Open Rancher on `<https://rancher.localhost/>`__.
-You will be notified that the connection is not private. You can just proceed to the website.
+You will be notified that the connection is not private. There is currently an issue with the certificate but it's not an issue if you are deploying on dev or test environment and you can just proceed to the website.
 You will be prompted to set a password which later will be used to login to Rancher. The password will be used often, that's why you shouldn't forget it.
 
 .. figure:: kubernetes/rancher_password.png
