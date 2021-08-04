@@ -153,7 +153,7 @@ describe('Alert service test', () => {
 
             expect(service.get().length).toBe(1);
 
-            jest.advanceTimersByTime(6000);
+            jest.advanceTimersByTime(9000);
 
             expect(service.get().length).toBe(0);
         }));
