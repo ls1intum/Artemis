@@ -18,12 +18,13 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { flatMap } from 'lodash';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { restore, SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { mockExercise, mockSourceExercise, mockSourceTeams, mockSourceTeamStudents, mockTeam, mockTeams, mockTeamStudents } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -68,6 +69,7 @@ describe('TeamsImportDialogComponent', () => {
                     TeamsImportDialogComponent,
                     MockComponent(TeamsImportFromFileFormComponent),
                     MockDirective(DeleteButtonDirective),
+                    MockDirective(TranslateDirective),
                     MockPipe(ArtemisTranslatePipe),
                     MockComponent(AlertComponent),
                     MockComponent(AlertErrorComponent),
@@ -606,10 +608,12 @@ describe('TeamsImportDialogComponent', () => {
     });
 
     describe('onSaveSuccess', () => {
+        let alertServiceStub: SinonStub;
         let response: HttpResponse<Team[]>;
         beforeEach(() => {
             resetComponent();
             response = new HttpResponse<Team[]>({ body: mockSourceTeams });
+            alertServiceStub = stub(alertService, 'success');
         });
 
         it('change component files and convert file teams to normal teams', fakeAsync(() => {
@@ -618,7 +622,7 @@ describe('TeamsImportDialogComponent', () => {
             tick(500);
             expect(ngbActiveModal.close).to.have.been.calledWithExactly(mockSourceTeams);
             expect(comp.isImporting).to.equal(false);
-            expect(alertService.success).to.have.been.calledWith('artemisApp.team.importSuccess', { numberOfImportedTeams: comp.numberOfTeamsToBeImported });
+            expect(alertServiceStub).to.have.been.calledWith('artemisApp.team.importSuccess', { numberOfImportedTeams: comp.numberOfTeamsToBeImported });
         }));
     });
 

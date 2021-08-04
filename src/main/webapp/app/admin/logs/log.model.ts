@@ -1,7 +1,7 @@
 export type Level = 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'OFF';
 
 export interface Logger {
-    configuredLevel: Level | null;
+    configuredLevel: Level | undefined;
     effectiveLevel: Level;
 }
 

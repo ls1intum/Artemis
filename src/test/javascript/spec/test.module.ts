@@ -23,12 +23,15 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { MockLanguageHelper } from './helpers/mocks/service/mock-language.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ParseLinks } from 'app/core/util/parse-links.service';
+import { MockTranslateService } from './helpers/mocks/service/mock-translate.service';
 
 @NgModule({
     imports: [HttpClientTestingModule, FontAwesomeModule],
     providers: [
         DatePipe,
         CookieService,
+        ParseLinks,
         {
             provide: JhiLanguageHelper,
             useClass: MockLanguageHelper,
@@ -56,6 +59,10 @@ import { TranslateService } from '@ngx-translate/core';
         {
             provide: AlertService,
             useClass: MockAlertService,
+        },
+        {
+            provide: TranslateService,
+            useClass: MockTranslateService,
         },
         {
             provide: ElementRef,

@@ -74,7 +74,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
             }),
             catchError((error: HttpErrorResponse) => {
                 onError(this.alertService, error);
-                return of(null);
+                return of(undefined);
             }),
         );
 
@@ -88,7 +88,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
             }),
             catchError((response: string) => {
                 this.onError(response);
-                return of(null);
+                return of(undefined);
             }),
         );
 

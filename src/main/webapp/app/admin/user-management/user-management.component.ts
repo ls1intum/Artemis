@@ -141,7 +141,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     private handleNavigation(): void {
         combineLatest(this.activatedRoute.data, this.activatedRoute.queryParamMap, (data: Data, params: ParamMap) => {
             const page = params.get('page');
-            this.page = page !== null ? +page : 1;
+            this.page = page != undefined ? +page : 1;
             const sort = (params.get('sort') ?? data['defaultSort']).split(',');
             this.predicate = sort[0];
             this.ascending = sort[1] === 'asc';

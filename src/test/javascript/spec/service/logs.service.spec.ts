@@ -35,7 +35,7 @@ describe('Logs Service', () => {
         it('should return Logs', fakeAsync(() => {
             const log = new Log('main', 'ERROR');
 
-            service.findAll().subscribe((resp) => expect(resp.body).toEqual(log));
+            service.findAll().subscribe((resp) => expect(resp).toEqual(log));
 
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(log);
@@ -45,7 +45,7 @@ describe('Logs Service', () => {
         it('should change log level', fakeAsync(() => {
             const log = new Log('new', 'ERROR');
 
-            service.changeLevel(log).subscribe((received) => expect(received.body).toEqual(log));
+            service.changeLevel(log.name, log.level).subscribe((received) => expect(received).toEqual(log));
 
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(log);
