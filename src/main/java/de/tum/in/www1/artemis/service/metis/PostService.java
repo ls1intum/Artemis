@@ -159,7 +159,7 @@ public class PostService extends PostingService {
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(postId);
-        preCheckPostValidity(post, courseId);
+        preCheckPostValidity(post);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
         // update pin state
@@ -190,7 +190,7 @@ public class PostService extends PostingService {
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(postId);
-        preCheckPostValidity(post, courseId);
+        preCheckPostValidity(post);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
         // update pin state
