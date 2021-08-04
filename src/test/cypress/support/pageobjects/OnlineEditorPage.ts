@@ -27,15 +27,16 @@ export class OnlineEditorPage {
     typeSubmission(submission: ProgrammingExerciseSubmission, packageName: string) {
         for (const newFile of submission.files) {
             this.createFileInRootPackage(newFile.name);
-            cy.log(`Entering content for file ${newFile.name}`);
             cy.fixture(newFile.path).then(($fileContent) => {
-                this.focusCodeEditor().type(this.sanitizeInput($fileContent, packageName), { delay: 3 });
-                // Create some padding if the following deletion accidentally also removes a character in front of the focus
-                cy.focused().type('{enter}{enter}');
-                // Delete the remaining content which has been automatically added by the code editor
-                cy.focused().type('{shift}{pagedown}{del}', { delay: 300 });
+                const sanitizedContent = this.sanitizeInput($fileContent, packageName);
+                this.focusCodeEditor().type(sanitizedContent, { delay: 3 });
+                // Delete the remaining content which has been automatically added by the code editor.
+                // We simply send as many {del} keystrokes as the file has characters. This shouldn't increase the test runtime by too long since we set the delay to 0.
+                const deleteRemainingContent = '{del}'.repeat(sanitizedContent.length);
+                cy.focused().type(deleteRemainingContent, { delay: 0 });
             });
         }
+        cy.wait(1000);
     }
 
     /**
@@ -55,7 +56,7 @@ export class OnlineEditorPage {
         cy.intercept('DELETE', '/api/repository/*/**').as('deleteFile');
         this.findFile(name).find('[data-icon="trash"]').click();
         cy.get('[jhitranslate="artemisApp.editor.fileBrowser.delete"]').click();
-        cy.wait('@deleteFile');
+        cy.wait('@deleteFile').its('response.statusCode').should('eq', 200);
         this.findFileBrowser().contains(name).should('not.exist');
     }
 
