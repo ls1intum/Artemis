@@ -130,6 +130,11 @@ public class PostService extends PostingService {
 
         // update pin state
         post.setPinned(pinState);
+        // ensure that pin state is consistent with archive state -> either one of them can be true
+        if (post.isArchived() && post.isPinned()) {
+            // if after archive state update both, archived and pinned, would be true the archive flag is flipped
+            post.setArchived(false);
+        }
         Post updatedPost = postRepository.save(post);
 
         if (updatedPost.getExercise() != null) {
@@ -161,6 +166,11 @@ public class PostService extends PostingService {
 
         // update pin state
         post.setArchived(archiveState);
+        // ensure that pin state is consistent with archive state -> either one of them can be true
+        if (post.isPinned() && post.isArchived()) {
+            // if after archive state update both, archived and pinned, would be true, the pin flag is flipped
+            post.setPinned(false);
+        }
         Post updatedPost = postRepository.save(post);
 
         if (updatedPost.getExercise() != null) {

@@ -27,17 +27,25 @@ fa-icon {
     border-radius: 12px;
     margin-right: 5px;
     margin-bottom: 5px;
+
     &:hover {
         --saf-0: rgba(var(--sk_foreground_high, 29, 28, 29), 0.5);
         box-shadow: inset 0 0 0 1px var(--saf-0);
         background: rgba(var(--sk_primary_background, 255, 255, 255), 1);
     }
+
     &:active {
         transform: scale(0.94);
     }
+
     &.reaction-button--reacted {
         --saf-0: rgba(var(--sk_highlight_accent, 29, 155, 209), 1);
         box-shadow: inset 0 0 0 1px var(--saf-0);
         background: rgba(29, 155, 209, 0.1);
+    }
+
+    &.reaction-button--pinnedOrArchived {
+        --saf-0: rgba(var(--sk_foreground_high, 29, 28, 29), 0.5);
+        box-shadow: inset 0 0 0 1px var(--saf-0);
     }
 }

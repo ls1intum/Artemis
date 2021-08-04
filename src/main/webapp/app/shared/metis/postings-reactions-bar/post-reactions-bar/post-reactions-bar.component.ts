@@ -9,6 +9,21 @@ import { PostingsReactionsBarDirective } from 'app/shared/metis/postings-reactio
     styleUrls: ['../postings-reactions-bar.component.scss'],
 })
 export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges {
+    pinTooltip: string;
+    archiveTooltip: string;
+
+    ngOnInit() {
+        super.ngOnInit();
+        this.pinTooltip = this.getPinTooltip();
+        this.archiveTooltip = this.getArchiveTooltip();
+    }
+
+    ngOnChanges() {
+        super.ngOnChanges();
+        this.pinTooltip = this.getPinTooltip();
+        this.archiveTooltip = this.getArchiveTooltip();
+    }
+
     buildReaction(emojiId: string): Reaction {
         const reaction = new Reaction();
         reaction.emojiId = emojiId;
@@ -22,5 +37,27 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
 
     toggleArchive() {
         this.metisService.updatePostArchiveState(this.posting, !this.posting.archived).subscribe(() => {});
+    }
+
+    getPinTooltip(): string {
+        if (this.currentUserIsAtLeastTutor && this.posting.pinned) {
+            return 'artemisApp.metis.removePinPostTutorTooltip';
+        }
+        if (this.currentUserIsAtLeastTutor && !this.posting.pinned) {
+            return 'artemisApp.metis.pinPostTutorTooltip';
+        } else {
+            return 'artemisApp.metis.pinnedPostTooltip';
+        }
+    }
+
+    getArchiveTooltip(): string {
+        if (this.currentUserIsAtLeastTutor && this.posting.archived) {
+            return 'artemisApp.metis.removeArchivePostTutorTooltip';
+        }
+        if (this.currentUserIsAtLeastTutor && !this.posting.archived) {
+            return 'artemisApp.metis.archivePostTutorTooltip';
+        } else {
+            return 'artemisApp.metis.archivedPostTooltip';
+        }
     }
 }

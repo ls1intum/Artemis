@@ -8,21 +8,21 @@
     <div class="col-auto p-0" *ngIf="posting.pinned || currentUserIsAtLeastTutor">
         <button
             class="reaction-button"
-            [class.reaction-button--reacted]="posting.pinned"
-            [class.clickable]="currentUserIsAtLeastTutor"
+            [class.reaction-button--pinnedOrArchived]="posting.pinned"
+            [disabled]="!currentUserIsAtLeastTutor"
             (click)="currentUserIsAtLeastTutor && togglePin()"
         >
-            <ngx-emoji class="emoji" [emoji]="pinEmojiId" [size]="16"> </ngx-emoji>
+            <ngx-emoji class="emoji" [ngbTooltip]="pinTooltip | artemisTranslate" [emoji]="pinEmojiId" [size]="16"> </ngx-emoji>
         </button>
     </div>
     <div class="col-auto p-0" *ngIf="posting.archived || currentUserIsAtLeastTutor">
         <button
             class="reaction-button"
-            [class.reaction-button--reacted]="posting.archived"
+            [class.reaction-button--pinnedOrArchived]="posting.archived"
             [class.clickable]="currentUserIsAtLeastTutor"
             (click)="currentUserIsAtLeastTutor && toggleArchive()"
         >
-            <ngx-emoji class="emoji" [emoji]="archiveEmojiId" [size]="16"> </ngx-emoji>
+            <ngx-emoji class="emoji" [ngbTooltip]="archiveTooltip | artemisTranslate" [emoji]="archiveEmojiId" [size]="16"> </ngx-emoji>
         </button>
     </div>
     <div class="col-auto px-0">
