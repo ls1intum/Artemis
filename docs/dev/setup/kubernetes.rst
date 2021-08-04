@@ -76,7 +76,7 @@ With the following commands you will setup one cluster with 3 agents as well as 
 5. Open Rancher and update the password
 
 Open Rancher on `<https://rancher.localhost/>`__.
-You will be notified that the connection is not private. There is currently an issue with the certificate but it's not an issue if you are deploying on dev or test environment and you can just proceed to the website.
+You will be notified that the connection is not private. There is currently an issue with the certificate but it's not an problem if you are deploying on dev or test environment and you can just proceed to the website.
 You will be prompted to set a password which later will be used to login to Rancher. The password will be used often, that's why you shouldn't forget it.
 
 .. figure:: kubernetes/rancher_password.png
