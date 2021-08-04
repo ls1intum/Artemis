@@ -72,7 +72,7 @@ describe('TeamUpdateDialogComponent', () => {
         // Check that title is correct for creating a team
         const modalTitle = debugElement.query(By.css('.modal-title'));
         expect(modalTitle).to.exist;
-        expect(modalTitle.nativeElement.textContent.trim()).to.equal(`Create Team (${mockExercise.title})`);
+        expect(modalTitle.nativeElement.textContent.trim()).to.equal(`artemisApp.team.createTeam.label(${mockExercise.title})`);
 
         // Check that a submit button exists
         const submitButton = debugElement.query(By.css('button[type=submit]'));
@@ -140,7 +140,7 @@ describe('TeamUpdateDialogComponent', () => {
         // Check that title is correct for updating a team
         const modalTitle = debugElement.query(By.css('.modal-title'));
         expect(modalTitle).to.exist;
-        expect(modalTitle.nativeElement.textContent.trim()).to.equal(`Update Team (${mockExercise.title})`);
+        expect(modalTitle.nativeElement.textContent.trim()).to.equal(`artemisApp.team.updateTeam.label(${mockExercise.title})`);
 
         // Check that a submit button exists
         const submitButton = debugElement.query(By.css('button[type=submit]'));
