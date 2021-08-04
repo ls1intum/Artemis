@@ -251,15 +251,10 @@ describe('CourseExerciseDetailsComponent', () => {
     });
 
     it('should simulate a result', () => {
+        const result = new Result();
         comp.exercise = { id: 2 } as Exercise;
         const courseExerciseSubmissionResultSimulationService = fixture.debugElement.injector.get(CourseExerciseSubmissionResultSimulationService);
-        stub(courseExerciseSubmissionResultSimulationService, 'simulateResult').returns(
-            of(
-                new HttpResponse({
-                    body: new Result(),
-                }),
-            ),
-        );
+        stub(courseExerciseSubmissionResultSimulationService, 'simulateResult').returns(of({ body: result } as HttpResponse<Result>));
         comp.simulateResult();
 
         expect(comp.wasSubmissionSimulated).to.be.false;
