@@ -1,8 +1,7 @@
-import { POST } from './../support/constants';
-import { CypressExamBuilder } from './../support/requests/CourseManagementRequests';
-import dayjs from 'dayjs';
-import { artemis } from '../support/ArtemisTesting';
-import { generateUUID } from '../support/utils';
+import { POST } from '../../support/constants';
+import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
+import { artemis } from '../../support/ArtemisTesting';
+import { generateUUID } from '../../support/utils';
 
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -22,7 +21,7 @@ const courseName = 'Cypress course' + uid;
 const courseShortName = 'cypress' + uid;
 const examTitle = 'exam' + uid;
 
-describe('Exam participation', () => {
+describe('Exam management', () => {
     let course: any;
 
     before(() => {
