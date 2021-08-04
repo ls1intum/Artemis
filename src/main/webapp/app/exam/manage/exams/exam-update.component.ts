@@ -129,10 +129,8 @@ export class ExamUpdateComponent implements OnInit {
 
     get isValidExamStudentReviewEnd(): boolean {
         // allow instructors to set examStudentReviewEnd later
-        if (!this.exam.examStudentReviewEnd && !this.exam.examStudentReviewStart) {
+        if (!this.exam.examStudentReviewEnd) {
             return true;
-        } else if (!this.exam.examStudentReviewEnd && this.exam.examStudentReviewStart) {
-            return false;
         }
         // check for undefined because undefined is otherwise treated as the now moment by moment.js
         return this.exam.examStudentReviewStart !== undefined && moment(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);

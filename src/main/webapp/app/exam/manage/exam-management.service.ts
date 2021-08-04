@@ -409,9 +409,6 @@ export class ExamManagementService {
         return this.http.put(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
     }
     validateReviewPhase(exam: Exam) {
-        exam.reviewPhaseError = exam.examStudentReviewStart ? !exam.examStudentReviewEnd || exam.examStudentReviewEnd.format() === 'Invalid Date' : !exam.examStudentReviewEnd;
-        if (exam.examStudentReviewEnd !== undefined && exam.examStudentReviewEnd.format() === 'Invalid Date') {
-            exam.reviewPhaseError = true;
-        }
+        exam.reviewPhaseError = exam.examStudentReviewStart ? !exam.examStudentReviewEnd : !exam.examStudentReviewEnd;
     }
 }
