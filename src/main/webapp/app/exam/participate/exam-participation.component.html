@@ -20,6 +20,7 @@
                 [exerciseIndex]="exerciseIndex"
                 [endDate]="individualStudentEndDate"
                 [overviewPageOpen]="activePageIndex === -1"
+                [examSessions]="studentExam.examSessions"
                 (onPageChanged)="onPageChange($event)"
                 (examAboutToEnd)="examEnded()"
                 (onExamHandInEarly)="toggleHandInEarly()"

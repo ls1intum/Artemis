@@ -8,7 +8,7 @@ import { Attachment } from 'app/entities/attachment.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { PostingsComponent } from 'app/overview/postings/postings.component';
+import { DiscussionComponent } from 'app/overview/discussion/discussion.component';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
@@ -24,7 +24,7 @@ export class CourseLectureDetailsComponent implements OnInit {
     lecture?: Lecture;
     isDownloadingLink?: string;
     lectureUnits: LectureUnit[] = [];
-    postings?: PostingsComponent;
+    discussionComponent?: DiscussionComponent;
     hasPdfLectureUnit: boolean;
 
     readonly LectureUnitType = LectureUnitType;
@@ -61,10 +61,9 @@ export class CourseLectureDetailsComponent implements OnInit {
                                 (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
                             ).length > 0;
                     }
-                    if (this.postings) {
+                    if (this.discussionComponent) {
                         // We need to manually update the lecture property of the student questions component
-                        this.postings.lecture = this.lecture;
-                        this.postings.loadPosts(); // reload the student questions
+                        this.discussionComponent.lecture = this.lecture;
                     }
                 },
                 (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -98,14 +97,13 @@ export class CourseLectureDetailsComponent implements OnInit {
 
     /**
      * This function gets called if the router outlet gets activated. This is
-     * used only for the PostingsComponent
+     * used only for the DiscussionComponent
      * @param instance The component instance
      */
-    onChildActivate(instance: PostingsComponent) {
-        this.postings = instance; // save the reference to the component instance
+    onChildActivate(instance: DiscussionComponent) {
+        this.discussionComponent = instance; // save the reference to the component instance
         if (this.lecture) {
             instance.lecture = this.lecture;
-            instance.loadPosts(); // reload the student questions
         }
     }
 }
