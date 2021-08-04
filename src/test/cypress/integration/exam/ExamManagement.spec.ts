@@ -85,6 +85,7 @@ describe('Exam management', () => {
         cy.get('#generateStudentExamsButton').click();
         cy.wait('@generateStudentExams');
         cy.contains('1 total').should('be.visible');
+        cy.get('#generateMissingStudentExamsButton').should('be.disabled');
     });
 
     after(() => {
