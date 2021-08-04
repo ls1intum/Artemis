@@ -62,8 +62,8 @@ public class PostService extends PostingService {
         // set author to current user
         post.setAuthor(user);
         // set default value for pin / archive
-        post.setIsPinned(false);
-        post.setIsArchived(false);
+        post.setPinned(false);
+        post.setArchived(false);
         Post savedPost = postRepository.save(post);
 
         sendNotification(savedPost);
@@ -97,43 +97,9 @@ public class PostService extends PostingService {
         existingPost.setContent(post.getContent());
         existingPost.setVisibleForStudents(post.isVisibleForStudents());
         existingPost.setTags(post.getTags());
-        existingPost.setIsArchived(post.isArchived());
-        existingPost.setIsPinned(post.isPinned());
+        existingPost.setArchived(post.isArchived());
+        existingPost.setPinned(post.isPinned());
         Post updatedPost = postRepository.save(existingPost);
-
-        if (updatedPost.getExercise() != null) {
-            // protect sample solution, grading instructions, etc.
-            updatedPost.getExercise().filterSensitiveInformation();
-        }
-
-        return updatedPost;
-    }
-
-    /**
-     * Checks course, user and post validity,
-     * updates the votes, persists the post,
-     * and ensures that sensitive information is filtered out
-     *
-     * @param courseId   id of the course the post belongs to
-     * @param postId     id of the post to vote on
-     * @param voteChange value by which votes are increased / decreased
-     * @return updated post that was persisted
-     */
-    public Post updatePostVotes(Long courseId, Long postId, Integer voteChange) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        preCheckUserAndCourse(user, courseId);
-        Post post = postRepository.findByIdElseThrow(postId);
-        preCheckPostValidity(post);
-        if (voteChange < -2 || voteChange > 2) {
-            throw new BadRequestAlertException("VoteChange can only be changed +1 or -1", METIS_POST_ENTITY_NAME, "400", true);
-        }
-
-        // update votes
-        Integer newVotes = post.getVotes() + voteChange;
-        post.setVotes(newVotes);
-        Post updatedPost = postRepository.save(post);
 
         if (updatedPost.getExercise() != null) {
             // protect sample solution, grading instructions, etc.
@@ -150,7 +116,7 @@ public class PostService extends PostingService {
      *
      * @param courseId  id of the course the post belongs to
      * @param postId    id of the post to change the pin state for
-     * @param pinState  new boolean value of the isPinned property for the given post
+     * @param pinState  new boolean value of the pinned flag for the given post
      * @return updated post that was persisted
      */
     public Post updatePinState(Long courseId, Long postId, Boolean pinState) {
@@ -163,7 +129,7 @@ public class PostService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
         // update pin state
-        post.setIsPinned(pinState);
+        post.setPinned(pinState);
         Post updatedPost = postRepository.save(post);
 
         if (updatedPost.getExercise() != null) {
@@ -181,7 +147,7 @@ public class PostService extends PostingService {
      *
      * @param courseId      id of the course the post belongs to
      * @param postId        id of the post to change the archive state for
-     * @param archiveState  new boolean value of the isArchived property for the given post
+     * @param archiveState  new boolean value of the archived flag for the given post
      * @return updated post that was persisted
      */
     public Post updateArchiveState(Long courseId, Long postId, Boolean archiveState) {
@@ -194,7 +160,7 @@ public class PostService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
         // update pin state
-        post.setIsArchived(archiveState);
+        post.setArchived(archiveState);
         Post updatedPost = postRepository.save(post);
 
         if (updatedPost.getExercise() != null) {

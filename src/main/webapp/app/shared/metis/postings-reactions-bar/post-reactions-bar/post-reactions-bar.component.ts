@@ -17,10 +17,10 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     }
 
     togglePin() {
-        this.metisService.updatePostPinState(this.posting, !this.posting.pinned);
+        this.metisService.updatePostPinState(this.posting, !this.posting.pinned).subscribe(() => {});
     }
 
     toggleArchive() {
-        this.metisService.updatePostArchiveState(this.posting, !this.posting.archived);
+        this.metisService.updatePostArchiveState(this.posting, !this.posting.archived).subscribe(() => {});
     }
 }

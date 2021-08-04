@@ -289,8 +289,5 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         // check if default values are set correctly on creation
         assertThat(expectedAnswerPost.getReactions()).isEmpty();
-
-        // check if associated course is set correctly on creation
-        assertThat(expectedAnswerPost.getCourse()).isEqualTo(expectedAnswerPost.getCourse());
     }
 }

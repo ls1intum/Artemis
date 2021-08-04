@@ -13,7 +13,6 @@ import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
-import { Authority } from 'app/shared/constants/authority.constants';
 
 interface PostFilter {
     exercise?: Exercise;
@@ -180,10 +179,13 @@ export class MetisService {
      * @param post      post for which the pin state is toggled
      * @param pinState  updated pin state
      */
-    updatePostPinState(post: Post, pinState: boolean): void {
-        this.postService.updatePinState(this.courseId, post.id!, pinState).subscribe(() => {
-            this.getPostsForFilter(this.currentPostFilter);
-        });
+    updatePostPinState(post: Post, pinState: boolean): Observable<Post> {
+        return this.postService.updatePinState(this.courseId, post.id!, pinState).pipe(
+            tap(() => {
+                this.getPostsForFilter(this.currentPostFilter);
+            }),
+            map((res: HttpResponse<Post>) => res.body!),
+        );
     }
 
     /**
@@ -191,10 +193,13 @@ export class MetisService {
      * @param post          post for which the archive state is toggled
      * @param archiveState  updated archive state
      */
-    updatePostArchiveState(post: Post, archiveState: boolean): void {
-        this.postService.updateArchiveState(this.courseId, post.id!, archiveState).subscribe(() => {
-            this.getPostsForFilter(this.currentPostFilter);
-        });
+    updatePostArchiveState(post: Post, archiveState: boolean): Observable<Post> {
+        return this.postService.updateArchiveState(this.courseId, post.id!, archiveState).pipe(
+            tap(() => {
+                this.getPostsForFilter(this.currentPostFilter);
+            }),
+            map((res: HttpResponse<Post>) => res.body!),
+        );
     }
 
     /**

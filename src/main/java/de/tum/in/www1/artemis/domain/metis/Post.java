@@ -73,25 +73,25 @@ public class Post extends Posting {
     private CourseWideContext courseWideContext;
 
     @Column(name = "is_pinned")
-    private Boolean isPinned;
+    private Boolean pinned;
 
     @Column(name = "is_archived")
-    private Boolean isArchived;
+    private Boolean archived;
 
     public Boolean isPinned() {
-        return isPinned;
+        return pinned;
     }
 
-    public void setIsPinned(Boolean isPinned) {
-        this.isPinned = isPinned;
+    public void setPinned(Boolean pinned) {
+        this.pinned = pinned;
     }
 
     public Boolean isArchived() {
-        return isArchived;
+        return archived;
     }
 
-    public void setIsArchived(Boolean isArchived) {
-        this.isArchived = isArchived;
+    public void setArchived(Boolean archived) {
+        this.archived = archived;
     }
 
     public String getTitle() {
@@ -173,7 +173,6 @@ public class Post extends Posting {
         this.lecture = lecture;
     }
 
-    @Override
     public Course getCourse() {
         return course;
     }

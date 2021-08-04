@@ -350,47 +350,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.delete("/api/courses/" + courseId + "/posts/" + 9999L, HttpStatus.NOT_FOUND);
     }
 
-    // UPDATE VOTES (tests for post votes will be refactored with the introduction of reactions)
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testEditPostVotes_asInstructor() throws Exception {
-        Post post = existingPosts.get(0);
-
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + post.getId() + "/votes", 1, Post.class, HttpStatus.OK);
-        assertThat(updatedPost.getVotes()).isEqualTo(1);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testEditPostVotesToInvalidAmount() throws Exception {
-        Post post = existingPosts.get(0);
-
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + post.getId() + "/votes", 3, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(updatedPost).isNull();
-
-        updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + post.getId() + "/votes", -3, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(updatedPost).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testEditPostVotes_asTA() throws Exception {
-        Post post = existingExercisePosts.get(0);
-
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + post.getId() + "/votes", 2, Post.class, HttpStatus.OK);
-        assertThat(updatedPost.getVotes()).isEqualTo(2);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testEditPostVotes_asStudent() throws Exception {
-        Post post = existingLecturePosts.get(0);
-
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + post.getId() + "/votes", 2, Post.class, HttpStatus.OK);
-        assertThat(updatedPost.getVotes()).isEqualTo(2);
-    }
-
     // HELPER METHODS
 
     private Post createPostWithoutContext() {
