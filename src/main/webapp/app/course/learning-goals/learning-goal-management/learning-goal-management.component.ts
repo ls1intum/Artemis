@@ -117,7 +117,6 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 const message = `Warning: Learning Goal(id=${learningGoalProgress.learningGoalId}) Course Progress different using participant scores for course ${
                     this.courseId
                 }! Original: ${JSON.stringify(learningGoalProgress)} | Using ParticipantScores: ${JSON.stringify(learningGoalProgressParticipantScoresTable)}!`;
-                console.log(message);
                 Sentry.captureException(new Error(message));
             }
         });
