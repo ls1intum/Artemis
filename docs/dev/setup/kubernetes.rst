@@ -37,16 +37,14 @@ With the following commands you will setup one cluster with 3 agents as well as 
 2. Create the cluster
 
    With the help of the commands block below you can create a cluster with 1 server and 3 agents at total 4 nodes. Your deployments will be distributed almost equally among the 4 nodes.
-   You will also write the cluster configuration into the KUBECONFIG_FILE. This configuration will be later needed when you are creating deployments.
-   You can also set a variable KUBECONFIG variable with the location of the KUBECONFIG_FILE, This variable will be later needed 
-
+   You will also write the cluster configuration into the KUBECONFIG_FILE. This configuration will be later needed when you are creating deployments. You can either set the path to the file as an environment variable or reaplce it with "<path-to-kubeconfig-file>" when needed.
+   
    ::
 
       k3d cluster create $CLUSTER_NAME --api-port 6550 --servers 1 --agents 3 --port 443:443@loadbalancer --wait 
       k3d cluster list 
       kubectl get nodes 
       k3d kubeconfig get $CLUSTER_NAME > $KUBECONFIG_FILE 
-      export KUBECONFIG=$KUBECONFIG_FILE
 
 
 3. Install cert-manager
@@ -68,12 +66,12 @@ With the following commands you will setup one cluster with 3 agents as well as 
    Using helm you can install it and then check it's status with the last command
 
    ::
-
       helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
       helm repo update
       kubectl create namespace cattle-system
       helm install rancher rancher-latest/rancher --namespace cattle-system --set hostname=$RANCHER_SERVER_HOSTNAME --wait 
       kubectl -n cattle-system rollout status deploy/rancher
+
 
 5. Open Rancher and update the password
 
@@ -183,15 +181,9 @@ You can do it by executing the following command:
 
 ::
 
-   kubectl apply -k src/main/kubernetes/artemis
-
-or
-
-::
-
    kubectl apply -k src/main/kubernetes/artemis --kubeconfig "<path-to-kubeconfig-file>"
 
-if it doesn't find the KUBECONFIG file. <path-to-kubeconfig-file> is the path where you created the KUBECONFIG_FILE.
+<path-to-kubeconfig-file> is the path where you created the KUBECONFIG_FILE.
 
 
 In the console you will see that the resources are created. It will take a litte bit of time when you are doing this for the first time. Be patient!

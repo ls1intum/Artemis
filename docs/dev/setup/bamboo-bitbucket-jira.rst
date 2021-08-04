@@ -387,7 +387,9 @@ This part of the documentation assumes you have a Kubernetes cluster running, as
 
    kubectl apply -k src/main/kubernetes/atlassian --kubeconfig "<path-to-kubeconfig>"
 
-6. Modify the ``/src/main/docker/atlassian-setup-k8s.sh`` script
+<path-to-kubeconfig-file> is the path where the KUBECONFIG_FILE is located.
+
+1. Modify the ``/src/main/docker/atlassian-setup-k8s.sh`` script
 
    1. Open Rancher to get the URLs of Jira, Bamboo and Bitbucket
    2. Go to workloads
@@ -398,8 +400,8 @@ This part of the documentation assumes you have a Kubernetes cluster running, as
       :align: center
 
 
-   4. Click on each of <port>/tcp links and new tab will be opened with the corresponding application where you can copy the URL from.
-   5. Open ``/src/main/docker/atlassian-setup-k8s.sh`` and add the URL values without ``http://`` to the script
+   1. Click on each of <port>/tcp links and new tab will be opened with the corresponding application where you can copy the URL from.
+   2. Open ``/src/main/docker/atlassian-setup-k8s.sh`` and add the URL values without ``http://`` to the script
 
    ::
 
