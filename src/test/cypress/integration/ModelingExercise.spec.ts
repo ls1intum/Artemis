@@ -168,6 +168,7 @@ describe('Modeling Exercise Spec', () => {
             // so the submission is not considered 'late'
             cy.wait(1000);
             createModelingExercise.save();
+            cy.url().should('contain', '/modeling-exercises/');
         });
 
         it('Tutor can assess the submission', () => {
@@ -214,7 +215,7 @@ describe('Modeling Exercise Spec', () => {
 
         it('Instructor can see complaint and reject it', () => {
             cy.login(instructor, `/course-management/${testCourse.id}/assessment-dashboard`);
-            cy.get('.col-md-4 > .card > .card-body').contains('Total complaints: 1').click();
+            cy.get(`[href="/course-management/${testCourse.id}/complaints"]`).click();
             cy.get('tr > .text-center >').click();
             cy.get('#responseTextArea').type('lorem ipsum...');
             cy.get('#rejectComplaintButton').click();
