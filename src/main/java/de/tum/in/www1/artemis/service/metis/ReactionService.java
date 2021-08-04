@@ -38,7 +38,7 @@ public class ReactionService {
     }
 
     /**
-     * Checks reaction validity, determines the reactions's user,
+     * Checks reaction validity, determines the reaction's user,
      * retrieves the associated posting and persists the mutual association
      *
      * @param courseId id of the course the post belongs to
@@ -61,7 +61,6 @@ public class ReactionService {
         Reaction savedReaction;
         if (posting instanceof Post) {
             postService.preCheckUserAndCourse(user, courseId);
-            answerPostService.preCheckPostValidity((Post) posting, courseId);
             Post post = postService.findById(posting.getId());
             reaction.setPost(post);
             reaction.setUser(user);

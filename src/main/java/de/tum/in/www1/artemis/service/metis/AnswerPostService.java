@@ -31,8 +31,6 @@ public class AnswerPostService extends PostingService {
 
     private final PostRepository postRepository;
 
-    private final LectureRepository lectureRepository;
-
     private final GroupNotificationService groupNotificationService;
 
     private final SingleUserNotificationService singleUserNotificationService;
@@ -40,11 +38,10 @@ public class AnswerPostService extends PostingService {
     protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService) {
-        super(courseRepository, exerciseRepository, postRepository, authorizationCheckService);
+        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
-        this.lectureRepository = lectureRepository;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
     }
@@ -68,7 +65,6 @@ public class AnswerPostService extends PostingService {
         }
         Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
-        preCheckPostValidity(answerPost.getPost(), courseId);
 
         // answer post is automatically approved if written by an instructor
         answerPost.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
@@ -101,8 +97,7 @@ public class AnswerPostService extends PostingService {
         }
         AnswerPost existingAnswerPost = answerPostRepository.findByIdElseThrow(answerPost.getId());
         Course course = preCheckUserAndCourse(user, courseId);
-        preCheckPostValidity(answerPost.getPost(), courseId);
-        mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user);
+        mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user, course);
 
         // update: allow overwriting of values only for depicted fields
         existingAnswerPost.setContent(answerPost.getContent());
@@ -142,10 +137,9 @@ public class AnswerPostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
+        final Course course = preCheckUserAndCourse(user, courseId);
         AnswerPost answerPost = answerPostRepository.findByIdElseThrow(answerPostId);
-        preCheckUserAndCourse(user, courseId);
-        preCheckPostValidity(answerPost.getPost(), courseId);
-        mayUpdateOrDeletePostingElseThrow(answerPost, user);
+        mayUpdateOrDeletePostingElseThrow(answerPost, user, course);
 
         // delete
         answerPostRepository.deleteById(answerPostId);

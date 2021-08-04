@@ -3,7 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import * as chai from 'chai';
 import { take } from 'rxjs/operators';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { AnswerPostService } from 'app/shared/metis/answer-post.service';
+import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
 
 const expect = chai.expect;
 
