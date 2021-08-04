@@ -3,11 +3,20 @@
  */
 export class ExamManagementPage {
     /**
+     * Searches for an exam with the provided title and returns a pageobject for further interactions.
+     * @param examTitle the title of the exam.
+     * @returns the pageobject which represents this exam row
+     */
+    getExamRow(examTitle: string) {
+        return new ExamRow(this.getExamRowRoot(examTitle));
+    }
+
+    /**
      * Searches for an exam with the provided title.
      * @param examTitle the title of the exam.
      * @returns the row element of the found exam
      */
-    getExamRow(examTitle: string) {
+    getExamRowRoot(examTitle: string) {
         return this.getExamSelector(examTitle).parents('tr');
     }
 
@@ -16,7 +25,7 @@ export class ExamManagementPage {
      * @param examTitle the exam title
      */
     deleteExam(examTitle: string) {
-        this.getExamRow(examTitle).find('[deleteconfirmationtext="artemisApp.examManagement.delete.typeNameToConfirm"]').click();
+        this.getExamRowRoot(examTitle).find('[deleteconfirmationtext="artemisApp.examManagement.delete.typeNameToConfirm"]').click();
         cy.get('.modal-footer').find('.btn-danger').should('be.disabled');
         cy.get('.modal-body').find('input').type(examTitle);
         cy.get('.modal-footer').find('.btn-danger').should('not.be.disabled').click();
@@ -36,5 +45,26 @@ export class ExamManagementPage {
      */
     getExamSelector(examTitle: string) {
         return cy.get('jhi-exam-management').contains(examTitle);
+    }
+}
+
+/**
+ * Pageobject for a table row in the exams table.
+ */
+export class ExamRow {
+    readonly root;
+
+    /**
+     * @param root the root <tr> element of the exam
+     */
+    constructor(root: Cypress.Chainable<JQuery<HTMLTableRowElement>>) {
+        this.root = root;
+    }
+
+    /**
+     * Opens the exercise groups page from.
+     */
+    openExerciseGroups() {
+        this.root.contains('Exercise Groups').click();
     }
 }

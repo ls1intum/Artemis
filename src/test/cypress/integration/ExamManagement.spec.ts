@@ -50,7 +50,7 @@ describe('Exam management', () => {
         creationPage.setConfirmationStartText('Cypress exam confirmation start text');
         creationPage.setConfirmationEndText('Cypress exam confirmation end text');
         creationPage.submit().its('response.statusCode').should('eq', 201);
-        examManagement.getExamRow(examTitle).should('be.visible');
+        examManagement.getExamRowRoot(examTitle).should('be.visible');
     });
 
     describe('Exam deletion', () => {
