@@ -32,7 +32,6 @@ describe('LogsComponent', () => {
         it('should set all default values correctly', () => {
             expect(comp.filter).toBe('');
             expect(comp.orderProp).toBe('name');
-            expect(comp.reverse).toBe(false);
         });
         it('Should call load all on init', () => {
             // GIVEN
@@ -52,7 +51,7 @@ describe('LogsComponent', () => {
 
             // THEN
             expect(service.findAll).toHaveBeenCalled();
-            expect(comp.loggers[0]).toEqual(expect.objectContaining(log));
+            expect(comp.loggers![0]).toEqual(expect.objectContaining(log));
         });
     });
     describe('change log level', () => {
@@ -68,7 +67,7 @@ describe('LogsComponent', () => {
             // THEN
             expect(service.changeLevel).toHaveBeenCalled();
             expect(service.findAll).toHaveBeenCalled();
-            expect(comp.loggers[0]).toEqual(expect.objectContaining(log));
+            expect(comp.loggers![0]).toEqual(expect.objectContaining(log));
         });
     });
 });
