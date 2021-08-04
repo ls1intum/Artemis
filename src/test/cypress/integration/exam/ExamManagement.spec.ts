@@ -77,6 +77,16 @@ describe('Exam management', () => {
         cy.contains('Registered students: 1').should('be.visible');
     });
 
+    it('Generates student exams', () => {
+        cy.visit(`/course-management/${course.id}/exams`);
+        examManagement.getExamRow(examTitle).openStudenExams();
+        cy.contains('0 total').should('be.visible');
+        cy.intercept(POST, '/api/courses/*/exams/*/generate-student-exams').as('generateStudentExams');
+        cy.get('#generateStudentExamsButton').click();
+        cy.wait('@generateStudentExams');
+        cy.contains('1 total').should('be.visible');
+    });
+
     after(() => {
         if (!!course) {
             cy.login(users.getAdmin());

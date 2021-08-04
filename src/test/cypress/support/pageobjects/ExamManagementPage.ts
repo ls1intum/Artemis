@@ -74,4 +74,11 @@ export class ExamRow {
     openStudentRegistration() {
         this.root.contains('Students').click();
     }
+
+    /**
+     * Opens the student exams page.
+     */
+    openStudenExams() {
+        this.root.contains('Student Exams').click();
+    }
 }
