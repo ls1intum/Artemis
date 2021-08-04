@@ -8,7 +8,7 @@ import { of } from 'rxjs';
 import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
 import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
-import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -18,6 +18,7 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Exam Navigation Bar Component', () => {
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
@@ -38,6 +39,7 @@ describe('Exam Navigation Bar Component', () => {
                 { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 

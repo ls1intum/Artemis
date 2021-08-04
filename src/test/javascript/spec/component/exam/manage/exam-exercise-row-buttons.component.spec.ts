@@ -16,7 +16,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import * as moment from 'moment';
 import { of } from 'rxjs';
-import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
 import { ArtemisTestModule } from '../../../test.module';
@@ -31,6 +31,7 @@ import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/tex
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
+import { TranslateService } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -123,7 +124,10 @@ describe('Exam Exercise Row Buttons Component', () => {
                 MockComponent(FileUploadExerciseGroupCellComponent),
                 MockComponent(ModelingExerciseGroupCellComponent),
             ],
-            providers: [{ provide: Router, useClass: MockRouter }],
+            providers: [
+                { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamExerciseRowButtonsComponent);
