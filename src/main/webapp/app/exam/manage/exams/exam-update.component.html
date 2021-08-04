@@ -85,6 +85,7 @@
                         labelName="{{ 'artemisApp.examManagement.examStudentReviewStart' | artemisTranslate }}"
                         [(ngModel)]="exam.examStudentReviewStart"
                         [error]="!isValidExamStudentReviewStart"
+                        (valueChange)="validateReviewPhase()"
                         name="examStudentReviewStart"
                         id="examStudentReviewStart"
                     ></jhi-date-time-picker>
@@ -94,9 +95,13 @@
                         labelName="{{ 'artemisApp.examManagement.examStudentReviewEnd' | artemisTranslate }}"
                         [(ngModel)]="exam.examStudentReviewEnd"
                         [error]="!isValidExamStudentReviewEnd"
+                        (valueChange)="validateReviewPhase()"
                         name="examStudentReviewEnd"
                         id="examStudentReviewEnd"
                     ></jhi-date-time-picker>
+                </div>
+                <div *ngIf="exam.reviewPhaseError" style="position: relative; left: 1250px" class="col-sm-5">
+                    <span class="invalid-feedback"> {{ 'artemisApp.examManagement.reviewWarning' | artemisTranslate }}</span>
                 </div>
             </div>
 
@@ -167,6 +172,12 @@
                 <button type="submit" [disabled]="editForm.form.invalid || !isValidConfiguration || isSaving" class="btn btn-primary">
                     <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                 </button>
+                <ng-template #renderedWarning>
+                    <div>{{ 'artemisApp.examManagement.reviewExpl' | artemisTranslate }}</div>
+                </ng-template>
+                <span *ngIf="exam.reviewPhaseError" class="badge bg-warning" [ngbTooltip]="renderedWarning" tooltip-placement="right">
+                    <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
+                </span>
             </div>
         </form>
     </div>

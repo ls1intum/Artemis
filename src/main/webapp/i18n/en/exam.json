@@ -241,6 +241,8 @@
             }
         },
         "examManagement": {
+            "reviewWarning": "End of Student Review is missing",
+            "reviewExpl": "If the Start of Student Review is set, the End of Student Review has to be set as well.",
             "title": "Exam Management",
             "createExam": "Create a new exam",
             "editExam": "Edit an existing exam",
