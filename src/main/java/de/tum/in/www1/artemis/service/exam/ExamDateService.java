@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -80,6 +81,23 @@ public class ExamDateService {
     public ZonedDateTime getLatestIndividualExamEndDate(Exam exam) {
         var maxWorkingTime = studentExamRepository.findMaxWorkingTimeByExamId(exam.getId());
         return maxWorkingTime.map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).orElse(exam.getEndDate());
+    }
+
+    /**
+     * Returns the latest individual exam end date plus the grace period as determined by the working time of the student exams and exam grace period.
+     * <p>
+     * If no student exams are available, the exam end date plus grace period is returned.
+     *
+     * @param exam the exam
+     * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
+     */
+    public ZonedDateTime getLatestIndividualExamEndDateWithGracePeriod(Exam exam) {
+        ZonedDateTime latestEndDate = getLatestIndividualExamEndDate(exam);
+        if (latestEndDate == null) {
+            return null;
+        }
+        int gracePeriodInSeconds = Objects.requireNonNullElse(exam.getGracePeriod(), 0);
+        return latestEndDate.plusSeconds(gracePeriodInSeconds);
     }
 
     /**

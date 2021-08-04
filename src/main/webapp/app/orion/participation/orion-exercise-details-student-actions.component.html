@@ -1,0 +1,27 @@
+<jhi-exercise-details-student-actions
+    [exercise]="exercise"
+    [courseId]="courseId"
+    [actionsOnly]="actionsOnly"
+    [smallButtons]="smallButtons"
+    [showResult]="showResult"
+    [examMode]="examMode"
+>
+    <ng-template #overrideCloneOnlineEditorButton>
+        <jhi-ide-button
+            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            (clickHandler)="importIntoIDE()"
+            [buttonLabel]="'artemisApp.exerciseActions.importIntoIntelliJ' | artemisTranslate"
+            [buttonLoading]="this.exercise.loading || orionState.cloning"
+            [smallButton]="smallButtons"
+            *ngIf="isOfflineIdeAllowed && (orionState.view !== ExerciseView.STUDENT || orionState.opened !== this.exercise.id)"
+        ></jhi-ide-button>
+        <jhi-ide-button
+            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            (clickHandler)="submitChanges()"
+            buttonLabel="Submit"
+            [buttonLoading]="this.exercise.loading || orionState.building"
+            [smallButton]="smallButtons"
+            *ngIf="isOfflineIdeAllowed && orionState.view === ExerciseView.STUDENT && orionState.opened === this.exercise.id"
+        ></jhi-ide-button>
+    </ng-template>
+</jhi-exercise-details-student-actions>

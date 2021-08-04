@@ -128,7 +128,7 @@
                 <span jhiTranslate="artemisApp.examParticipation.timeUntilPlannedStart"></span>
                 <span class="text-bold">{{ timeUntilStart }}</span>
                 <br />
-                <span>({{ formattedStartDate }})</span>
+                <span>({{ exam.startDate | artemisDate: 'time' }})</span>
             </div>
         </div>
     </ng-container>

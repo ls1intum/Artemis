@@ -155,6 +155,11 @@ public class ProgrammingExerciseTestCaseService {
         testCasesToSave.addAll(newTestCases);
         testCasesToSave.addAll(testCasesWithUpdatedActivation);
 
+        // Ensure no duplicate TestCase is present: TestCases have to have a unique name per exercise.
+        // Just using the uniqueness property of the set is not enough, as the equals/hash functions
+        // consider more attributes of the TestCase rather than only the testName.
+        testCasesToSave.removeIf(candidate -> testCasesToSave.stream().filter(testCase -> testCase.getTestName().equalsIgnoreCase(candidate.getTestName())).count() > 1);
+
         if (testCasesToSave.size() > 0) {
             testCaseRepository.saveAll(testCasesToSave);
             return true;

@@ -4,7 +4,7 @@
             "instructions": "Instruktionen",
             "editor": {
                 "addCredits": "[credits] Punkte",
-                "addInstruction": "[instruction] Bewertungsinstruktion",
+                "addInstruction": "[instruction] Bewertungsanweisungen",
                 "addFeedback": "[feedback] Feedback",
                 "addGradingScale": "[gradingScale] Bewertungsmaßstab",
                 "addCountUsage": "[count] Anzahl Anwendung",
@@ -13,7 +13,7 @@
         },
         "problemStatement": "Aufgabenstellung",
         "sampleSolution": "Beispiellösung",
-        "gradingCriteria": "Bewertungskriterien",
+        "assessmentInstructions": "Bewertungsanweisungen",
         "usageCount": "Anzahl Anwendungen"
     }
 }

@@ -2,12 +2,15 @@
 // You can add more variables in webpack.common.ts or in profile specific webpack.<dev|prod>.ts files.
 // If you change the values in the webpack config files, you need to re run webpack to update the application
 
-export const VERSION = process.env.VERSION;
-// TODO: this value is undefined due to the latest webpack update
-export const DEBUG_INFO_ENABLED = Boolean(process.env.DEBUG_INFO_ENABLED);
-// TODO: this value is undefined due to the latest webpack update
-// export const SERVER_API_URL = process.env.SERVER_API_URL ?? '';
-export const SERVER_API_URL = '';
+declare const __DEBUG_INFO_ENABLED__: boolean;
+declare const __TIMESTAMP__: string;
+declare const __VERSION__: string;
+declare const __SERVER_API_URL__: string;
+
+export const VERSION = __VERSION__;
+export const DEBUG_INFO_ENABLED = __DEBUG_INFO_ENABLED__;
+export const SERVER_API_URL = __SERVER_API_URL__;
+export const TIMESTAMP = __TIMESTAMP__;
 
 export const MIN_SCORE_GREEN = 80;
 export const MIN_SCORE_ORANGE = 40;

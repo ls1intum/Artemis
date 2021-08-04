@@ -8,7 +8,8 @@ Code-Editor Layout Styles
     grid-row-gap: 10px;
 
     .collapsed--horizontal {
-        width: 75px !important;
+        width: 50px !important;
+        margin-right: 10px !important;
     }
     .collapsed--vertical {
         height: 42px !important;
@@ -147,7 +148,6 @@ Collapsable styling
 // Instructions
 .editor-sidebar-right.collapsed--horizontal {
     flex: none !important;
-
     .card-header {
         height: 100%;
         width: 100%;
@@ -162,17 +162,29 @@ Collapsable styling
         .editable-instruction-container__editor {
             display: none;
         }
-        .instructions__content {
-            display: none;
-        }
     }
 
     .card-second-header {
         display: none !important;
     }
 
-    .card-title span {
-        display: none !important;
+    .collapsed-instructions-card {
+        width: 50px;
+        justify-content: space-between;
+        flex-flow: column nowrap;
+        cursor: pointer;
+
+        .header {
+            writing-mode: vertical-rl;
+            margin-left: -3px;
+        }
+
+        fa-icon {
+            display: flex;
+            justify-content: center;
+            padding: 15px 0;
+            padding-right: 20px;
+        }
     }
 
     .editable-instruction-container__status {

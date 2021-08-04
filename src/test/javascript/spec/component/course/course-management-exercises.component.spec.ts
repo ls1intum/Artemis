@@ -21,6 +21,7 @@ import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,6 +44,7 @@ describe('Course Management Exercises Component', () => {
                 MockComponent(CourseExerciseCardComponent),
                 MockDirective(NgbCollapse),
                 MockDirective(JhiTranslateDirective),
+                MockDirective(ExtensionPointDirective),
                 MockComponent(AlertComponent),
                 MockComponent(ProgrammingExerciseComponent),
                 MockDirective(OrionFilterDirective),
