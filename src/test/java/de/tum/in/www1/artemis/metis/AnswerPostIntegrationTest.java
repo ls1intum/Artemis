@@ -62,7 +62,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         existingPostsWithAnswersCourseWide = existingPostsWithAnswers.stream().filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getCourseWideContext() != null)
                 .collect(Collectors.toList());
 
-        courseId = existingPostsWithAnswers.get(0).getCourse().getId();
+        courseId = existingPostsWithAnswersInExercise.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
     }
 
     @AfterEach

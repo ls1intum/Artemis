@@ -735,7 +735,6 @@ public class DatabaseUtilService {
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setLecture(lectureContext);
-            postToAdd.setCourse(lectureContext.getCourse());
             postRepository.save(postToAdd);
             posts.add(postToAdd);
         }
@@ -747,7 +746,6 @@ public class DatabaseUtilService {
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setExercise(exerciseContext);
-            postToAdd.setCourse(exerciseContext.getCourseViaExerciseGroupOrCourseMember());
             postRepository.save(postToAdd);
             posts.add(postToAdd);
         }
@@ -771,6 +769,8 @@ public class DatabaseUtilService {
         post.setTitle(String.format("Title Post %s", (i + 1)));
         post.setContent(String.format("Content Post %s", (i + 1)));
         post.setVisibleForStudents(true);
+        post.setPinned(false);
+        post.setArchived(false);
         post.setAuthor(getUserByLoginWithoutAuthorities(String.format("student%s", (i + 1))));
         post.setCreationDate(ZonedDateTime.of(2015, 11, 28, 23, 45, 59, 1234, ZoneId.of("UTC")));
         String tag = String.format("Tag %s", (i + 1));

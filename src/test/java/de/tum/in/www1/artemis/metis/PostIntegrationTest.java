@@ -72,7 +72,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // filter existing posts with course-wide context
         existingCourseWidePosts = existingPosts.stream().filter(coursePost -> (coursePost.getCourseWideContext() != null)).collect(Collectors.toList());
 
-        course = existingPosts.get(0).getCourse();
+        course = existingExercisePosts.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
 
         courseId = course.getId();
 
@@ -236,6 +236,72 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedPost).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testPinPost_asStudent_forbidden() throws Exception {
+        Post postToNotPin = editExistingPost(existingPosts.get(1));
+
+        // set pin flag to true in request body
+        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotPin.getId() + "/pin", true, Post.class, HttpStatus.FORBIDDEN);
+        assertThat(notUpdatedPost).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testPinPost_asTutor() throws Exception {
+        Post postToPin = editExistingPost(existingPosts.get(0));
+
+        // set pin flag to true in request body
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToPin.getId() + "/pin", true, Post.class, HttpStatus.OK);
+        assertThat(updatedPost).isEqualTo(postToPin);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testArchivePost_asStudent_forbidden() throws Exception {
+        Post postToNotArchive = editExistingPost(existingPosts.get(1));
+
+        // set archive flag to true in request body
+        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotArchive.getId() + "/archive", true, Post.class, HttpStatus.FORBIDDEN);
+        assertThat(notUpdatedPost).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testArchivePost_asTutor() throws Exception {
+        Post postToArchive = editExistingPost(existingPosts.get(0));
+
+        // set archive flag to true in request body
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToArchive.getId() + "/archive", true, Post.class, HttpStatus.OK);
+        assertThat(updatedPost).isEqualTo(postToArchive);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testPinArchivedPost_asTutor() throws Exception {
+        Post postToArchive = editExistingPost(existingPosts.get(0));
+        // post is archived
+        Post archivedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToArchive.getId() + "/archive", true, Post.class, HttpStatus.OK);
+
+        // post is pinned -> archive flag should be flipped
+        Post pinnedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + archivedPost.getId() + "/pin", true, Post.class, HttpStatus.OK);
+        assertThat(pinnedPost.isPinned()).isEqualTo(true);
+        assertThat(pinnedPost.isArchived()).isEqualTo(false);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testArchivePinnedPost_asTutor() throws Exception {
+        Post postToPin = editExistingPost(existingPosts.get(0));
+        // post is archived
+        Post pinnedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToPin.getId() + "/pin", true, Post.class, HttpStatus.OK);
+
+        // post is archived -> pinned flag should be flipped
+        Post archivedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + pinnedPost.getId() + "/archive", true, Post.class, HttpStatus.OK);
+        assertThat(archivedPost.isArchived()).isEqualTo(true);
+        assertThat(archivedPost.isPinned()).isEqualTo(false);
     }
 
     // GET
