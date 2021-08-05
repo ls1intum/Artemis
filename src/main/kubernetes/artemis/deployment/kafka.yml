@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kafka
-  namespace: default
 spec:
   replicas: 1
   selector:
@@ -38,7 +37,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kafka
-  namespace: default
 spec:
   clusterIP: None
   clusterIPs:
@@ -57,7 +55,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: zookeeper
-  namespace: default
 spec:
   replicas: 1
   selector:
@@ -92,7 +89,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: zookeeper
-  namespace: default
 spec:
   selector:
     app: zookeeper

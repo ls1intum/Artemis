@@ -45,7 +45,7 @@ With the following commands you will setup one cluster with 3 agents as well as 
       k3d cluster list 
       kubectl get nodes 
       k3d kubeconfig get $CLUSTER_NAME > $KUBECONFIG_FILE 
-
+      export KUBECONFIG=$KUBECONFIG_FILE 
 
 3. Install cert-manager
    

@@ -5,4 +5,3 @@ data:
 kind: ConfigMap
 metadata:
   name: artemis-app
-  namespace: default

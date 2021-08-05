@@ -13,19 +13,9 @@
 #   Then delete the previous replica pods one by one so that they can be recreated with the correct CLUSTER_SIZE configuration.
 #   `kubectl delete pod jhipster-registry-0`, `kubectl delete pod jhipster-registry-1`
 apiVersion: v1
-kind: Secret
-metadata:
-  name: registry-secret
-  namespace: default
-type: Opaque
-data:
-  registry-admin-password: YWRtaW4= # base64 encoded "admin"
----
-apiVersion: v1
 kind: Service
 metadata:
   name: jhipster-registry
-  namespace: default
   labels:
     app: jhipster-registry
   # annotations:
@@ -42,7 +32,6 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: jhipster-registry
-  namespace: default
 spec:
   # added to circumvent kustomize bug
   volumeClaimTemplates: []

@@ -1,6 +1,6 @@
+namespace: default
+
 resources:
   - jira.yml
   - bamboo.yml
   - bitbucket.yml
-
-patchesJson6902:

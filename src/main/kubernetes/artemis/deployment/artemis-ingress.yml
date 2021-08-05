@@ -2,7 +2,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: artemis-app
-  namespace: default
 spec:
   rules:
   - host: artemis-app.default.rancher.localhost
