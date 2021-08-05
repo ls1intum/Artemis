@@ -242,7 +242,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         Organization organization = database.createOrganization();
         organization.setName("UpdatedName");
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/organizations/update", organization, Organization.class, HttpStatus.OK);
+        Organization updatedOrganization = request.putWithResponseBody("/api/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
         assertThat(updatedOrganization.getName()).isEqualTo("UpdatedName");
     }
 
@@ -411,7 +411,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
 
         organization.setEmailPattern("^" + users.get(0).getEmail() + "$");
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/organizations/update", organization, Organization.class, HttpStatus.OK);
+        Organization updatedOrganization = request.putWithResponseBody("/api/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
         updatedOrganization = request.get("/api/organizations/" + updatedOrganization.getId() + "/full", HttpStatus.OK, Organization.class);
 
         assertThat(updatedOrganization.getUsers()).hasSize(1);
