@@ -47,14 +47,25 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * updates the votes of a post
+     * updates pin state of a post
      * @param {number} courseId
      * @param {number} postId
-     * @param {number} voteChange
+     * @param {boolean} pinState
      * @return {Observable<EntityResponseType>}
      */
-    updateVotes(courseId: number, postId: number, voteChange: number): Observable<EntityResponseType> {
-        return this.http.put(`${this.resourceUrl}${courseId}/posts/${postId}/votes`, voteChange, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+    updatePinState(courseId: number, postId: number, pinState: boolean): Observable<EntityResponseType> {
+        return this.http.put(`${this.resourceUrl}${courseId}/posts/${postId}/pin`, pinState, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+    }
+
+    /**
+     * updates archive state of a post
+     * @param {number} courseId
+     * @param {number} postId
+     * @param {boolean} archiveState
+     * @return {Observable<EntityResponseType>}
+     */
+    updateArchiveState(courseId: number, postId: number, archiveState: boolean): Observable<EntityResponseType> {
+        return this.http.put(`${this.resourceUrl}${courseId}/posts/${postId}/archive`, archiveState, { observe: 'response' }).pipe(map(this.convertDateFromServer));
     }
 
     /**

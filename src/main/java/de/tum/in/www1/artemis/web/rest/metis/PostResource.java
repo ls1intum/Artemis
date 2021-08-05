@@ -60,24 +60,39 @@ public class PostResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @RequestBody Post post) {
         Post updatedPost = postService.updatePost(courseId, post);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, postService.getEntityName(), updatedPost.getId().toString()))
-                .body(updatedPost);
+        return new ResponseEntity<>(updatedPost, null, HttpStatus.OK);
     }
 
     /**
-     * PUT /courses/{courseId}/posts/{postId}/votes : Vote on an existing post
+     * PUT /courses/{courseId}/posts/{postId}/pin : Pin an existing post by setting the pinned flag to true (is used as criterion for sorting the posts)
      *
-     * @param courseId   id of the course the post belongs to
-     * @param postId     id of the post to vote on
-     * @param voteChange value by which votes are increased / decreased
+     * @param courseId  id of the course the post belongs to
+     * @param postId    id of the post to pin
+     * @param pinState  updated boolean value of the pinned flag for the given post
      * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
      * or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
-    @PutMapping("courses/{courseId}/posts/{postId}/votes")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Post> updatePostVotes(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Integer voteChange) {
-        Post postWithUpdatedVotes = postService.updatePostVotes(courseId, postId, voteChange);
-        return ResponseEntity.ok().body(postWithUpdatedVotes);
+    @PutMapping("courses/{courseId}/posts/{postId}/pin")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<Post> updatePinState(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Boolean pinState) {
+        Post postWithUpdatedPinState = postService.updatePinState(courseId, postId, pinState);
+        return ResponseEntity.ok().body(postWithUpdatedPinState);
+    }
+
+    /**
+     * PUT /courses/{courseId}/posts/{postId}/archive : Archive an existing post by setting the archive flag to true (is used as criterion for sorting the posts)
+     *
+     * @param courseId      id of the course the post belongs to
+     * @param postId        id of the post to vote on
+     * @param archiveState  updated boolean value of the archived flag for the given post
+     * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
+     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     */
+    @PutMapping("courses/{courseId}/posts/{postId}/archive")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<Post> updateArchiveState(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Boolean archiveState) {
+        Post postWithUpdatedArchiveState = postService.updateArchiveState(courseId, postId, archiveState);
+        return ResponseEntity.ok().body(postWithUpdatedArchiveState);
     }
 
     /**

@@ -175,14 +175,31 @@ export class MetisService {
     }
 
     /**
-     * updates post votes by invoking the post service
-     * @param post that is voted on
-     * @param voteChange vote change
+     * updates the pin state of a post by invoking the post service
+     * @param post      post for which the pin state is toggled
+     * @param pinState  updated pin state
      */
-    updatePostVotes(post: Post, voteChange: number): void {
-        this.postService.updateVotes(this.courseId, post.id!, voteChange).subscribe(() => {
-            this.getPostsForFilter(this.currentPostFilter);
-        });
+    updatePostPinState(post: Post, pinState: boolean): Observable<Post> {
+        return this.postService.updatePinState(this.courseId, post.id!, pinState).pipe(
+            tap(() => {
+                this.getPostsForFilter(this.currentPostFilter);
+            }),
+            map((res: HttpResponse<Post>) => res.body!),
+        );
+    }
+
+    /**
+     * updates the archive state of a post by invoking the post service
+     * @param post          post for which the archive state is toggled
+     * @param archiveState  updated archive state
+     */
+    updatePostArchiveState(post: Post, archiveState: boolean): Observable<Post> {
+        return this.postService.updateArchiveState(this.courseId, post.id!, archiveState).pipe(
+            tap(() => {
+                this.getPostsForFilter(this.currentPostFilter);
+            }),
+            map((res: HttpResponse<Post>) => res.body!),
+        );
     }
 
     /**
@@ -255,11 +272,52 @@ export class MetisService {
 
     /**
      * sorts posts by two criteria
-     * 1. criterion: votes -> highest number comes first
-     * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
+     * 1. criterion: pin -> pinned posts come first
+     * 2. criterion: archive -> archived posts come last
+     * 3. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      * @return Post[] sorted array of posts
      */
     private static sortPosts(posts: Post[]): Post[] {
-        return posts.sort((postA, postB) => postB.votes! - postA.votes! || postA.creationDate!.valueOf() - postB.creationDate!.valueOf());
+        return posts.sort(function (postA, postB) {
+            const postAPlusEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === 'heavy_plus_sign').length
+                ? postA.reactions?.filter((reaction) => reaction.emojiId === 'heavy_plus_sign').length
+                : 0;
+            const postBPlusEmojiCount = postB.reactions?.filter((reaction) => reaction.emojiId === 'heavy_plus_sign').length
+                ? postB.reactions?.filter((reaction) => reaction.emojiId === 'heavy_plus_sign').length
+                : 0;
+            if (postA.pinned && !postB.pinned) {
+                return -1;
+            }
+            if (!postA.pinned && postB.pinned) {
+                return 1;
+            }
+            if (postAPlusEmojiCount > postBPlusEmojiCount) {
+                return -1;
+            }
+            if (postAPlusEmojiCount < postBPlusEmojiCount) {
+                return 1;
+            }
+            if (postA.archived && !postB.archived) {
+                return 1;
+            }
+            if (!postA.archived && postB.archived) {
+                return -1;
+            }
+            if (Number(postA.creationDate) > Number(postB.pinned)) {
+                return 1;
+            }
+            if (Number(postA.creationDate) < Number(postB.pinned)) {
+                return -1;
+            }
+            return 0;
+        });
+    }
+
+    private static getEmojiCount(reactions: Reaction[] | undefined, searchEmoji: string): number {
+        if (!reactions) {
+            return 0;
+        } else {
+            return reactions.filter((reaction) => reaction.emojiId === searchEmoji).length;
+        }
     }
 }

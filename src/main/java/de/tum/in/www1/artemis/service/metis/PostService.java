@@ -30,16 +30,13 @@ public class PostService extends PostingService {
 
     private final PostRepository postRepository;
 
-    private final LectureRepository lectureRepository;
-
     private final GroupNotificationService groupNotificationService;
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService) {
-        super(courseRepository, exerciseRepository, postRepository, authorizationCheckService);
+        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
-        this.lectureRepository = lectureRepository;
         this.groupNotificationService = groupNotificationService;
     }
 
@@ -60,10 +57,13 @@ public class PostService extends PostingService {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
         preCheckUserAndCourse(user, courseId);
-        preCheckPostValidity(post, courseId);
+        preCheckPostValidity(post);
 
         // set author to current user
         post.setAuthor(user);
+        // set default value for pin / archive
+        post.setPinned(false);
+        post.setArchived(false);
         Post savedPost = postRepository.save(post);
 
         sendNotification(savedPost);
@@ -87,16 +87,18 @@ public class PostService extends PostingService {
         if (post.getId() == null) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
         }
-        preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
         Post existingPost = postRepository.findByIdElseThrow(post.getId());
-        preCheckPostValidity(existingPost, courseId);
-        mayUpdateOrDeletePostingElseThrow(existingPost, user);
+        preCheckPostValidity(existingPost);
+        mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
 
         // update: allow overwriting of values only for depicted fields
         existingPost.setTitle(post.getTitle());
         existingPost.setContent(post.getContent());
         existingPost.setVisibleForStudents(post.isVisibleForStudents());
         existingPost.setTags(post.getTags());
+        existingPost.setArchived(post.isArchived());
+        existingPost.setPinned(post.isPinned());
         Post updatedPost = postRepository.save(existingPost);
 
         if (updatedPost.getExercise() != null) {
@@ -109,28 +111,66 @@ public class PostService extends PostingService {
 
     /**
      * Checks course, user and post validity,
-     * updates the votes, persists the post,
+     * updates the pin state, persists the post,
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId   id of the course the post belongs to
-     * @param postId     id of the post to vote on
-     * @param voteChange value by which votes are increased / decreased
+     * @param courseId  id of the course the post belongs to
+     * @param postId    id of the post to change the pin state for
+     * @param pinState  new boolean value of the pinned flag for the given post
      * @return updated post that was persisted
      */
-    public Post updatePostVotes(Long courseId, Long postId, Integer voteChange) {
+    public Post updatePinState(Long courseId, Long postId, Boolean pinState) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(postId);
-        preCheckPostValidity(post, courseId);
-        if (voteChange < -2 || voteChange > 2) {
-            throw new BadRequestAlertException("VoteChange can only be changed +1 or -1", METIS_POST_ENTITY_NAME, "400", true);
+        preCheckPostValidity(post);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+
+        // update pin state
+        post.setPinned(pinState);
+        // ensure that pin state is consistent with archive state -> either one of them can be true
+        if (post.isArchived() && post.isPinned()) {
+            // if after archive state update both, archived and pinned, would be true the archive flag is flipped
+            post.setArchived(false);
+        }
+        Post updatedPost = postRepository.save(post);
+
+        if (updatedPost.getExercise() != null) {
+            // protect sample solution, grading instructions, etc.
+            updatedPost.getExercise().filterSensitiveInformation();
         }
 
-        // update votes
-        Integer newVotes = post.getVotes() + voteChange;
-        post.setVotes(newVotes);
+        return updatedPost;
+    }
+
+    /**
+     * Checks course, user and post validity,
+     * updates the archive state, persists the post,
+     * and ensures that sensitive information is filtered out
+     *
+     * @param courseId      id of the course the post belongs to
+     * @param postId        id of the post to change the archive state for
+     * @param archiveState  new boolean value of the archived flag for the given post
+     * @return updated post that was persisted
+     */
+    public Post updateArchiveState(Long courseId, Long postId, Boolean archiveState) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        final Course course = preCheckUserAndCourse(user, courseId);
+        Post post = postRepository.findByIdElseThrow(postId);
+        preCheckPostValidity(post);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+
+        // update pin state
+        post.setArchived(archiveState);
+        // ensure that pin state is consistent with archive state -> either one of them can be true
+        if (post.isPinned() && post.isArchived()) {
+            // if after archive state update both, archived and pinned, would be true, the pin flag is flipped
+            post.setPinned(false);
+        }
         Post updatedPost = postRepository.save(post);
 
         if (updatedPost.getExercise() != null) {
@@ -234,10 +274,10 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(postId);
-        preCheckPostValidity(post, courseId);
-        mayUpdateOrDeletePostingElseThrow(post, user);
+        preCheckPostValidity(post);
+        mayUpdateOrDeletePostingElseThrow(post, user, course);
 
         // delete
         postRepository.deleteById(postId);

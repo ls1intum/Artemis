@@ -22,6 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -91,7 +92,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "student1", roles = "USER")
     public void testCreateExercisePost() throws Exception {
         Post postToSave = createPostWithoutContext();
-        postToSave.setExercise(existingExercisePosts.get(0).getExercise());
+        Exercise exercise = existingExercisePosts.get(0).getExercise();
+        postToSave.setExercise(exercise);
+        postToSave.setCourse(exercise.getCourseViaExerciseGroupOrCourseMember());
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
@@ -115,7 +118,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "student1", roles = "USER")
     public void testCreateLecturePost() throws Exception {
         Post postToSave = createPostWithoutContext();
-        postToSave.setLecture(existingLecturePosts.get(0).getLecture());
+        Lecture lecture = existingLecturePosts.get(0).getLecture();
+        postToSave.setLecture(lecture);
+        postToSave.setCourse(lecture.getCourse());
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
@@ -134,18 +139,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId).stream().filter(post -> post.getCourseWideContext() != null).collect(Collectors.toList());
         assertThat(existingCourseWidePosts.size() + 1).isEqualTo(updatedCourseWidePosts.size());
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testCreatePostWithWrongCourseId_badRequest() throws Exception {
-        Course dummyCourse = database.createCourse();
-        Post postToSave = createPostWithoutContext();
-        postToSave.setExercise(existingPosts.get(0).getExercise());
-
-        Post createdPost = request.postWithResponseBody("/api/courses/" + dummyCourse.getId() + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(createdPost).isNull();
-        assertThat(existingPosts.size()).isEqualTo(postRepository.count());
     }
 
     @Test
@@ -242,16 +235,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToUpdate.setId(null);
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(updatedPost).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testEditPostWithWrongCourseId_badRequest() throws Exception {
-        Post postToUpdate = existingPosts.get(0);
-        Course dummyCourse = database.createCourse();
-
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/posts", postToUpdate, Post.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedPost).isNull();
     }
 
@@ -365,67 +348,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testDeleteNonExistentPosts_asTutor_notFound() throws Exception {
         // try to delete non-existing post
         request.delete("/api/courses/" + courseId + "/posts/" + 9999L, HttpStatus.NOT_FOUND);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteWithWrongCourseId_badRequest() throws Exception {
-        Post postToNotDelete = existingLecturePosts.get(0);
-        Course dummyCourse = database.createCourse();
-
-        request.delete("/api/courses/" + dummyCourse.getId() + "/posts/" + postToNotDelete.getId(), HttpStatus.BAD_REQUEST);
-        assertThat(postRepository.count()).isEqualTo(existingPosts.size());
-    }
-
-    // UPDATE VOTES (tests for post votes will be refactored with the introduction of reactions)
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testEditPostVotes_asInstructor() throws Exception {
-        Post post = existingPosts.get(0);
-
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + post.getId() + "/votes", 1, Post.class, HttpStatus.OK);
-        assertThat(updatedPost.getVotes()).isEqualTo(1);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testEditPostVotesToInvalidAmount() throws Exception {
-        Post post = existingPosts.get(0);
-
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + post.getId() + "/votes", 3, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(updatedPost).isNull();
-
-        updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + post.getId() + "/votes", -3, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(updatedPost).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testEditPostVotesWithWrongCourseId_badRequest() throws Exception {
-        Post post = existingPosts.get(0);
-        Course dummyCourse = database.createCourse();
-
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/posts/" + post.getId() + "/votes", 1, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(updatedPost).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testEditPostVotes_asTA() throws Exception {
-        Post post = existingExercisePosts.get(0);
-
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + post.getId() + "/votes", 2, Post.class, HttpStatus.OK);
-        assertThat(updatedPost.getVotes()).isEqualTo(2);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testEditPostVotes_asStudent() throws Exception {
-        Post post = existingLecturePosts.get(0);
-
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + post.getId() + "/votes", 2, Post.class, HttpStatus.OK);
-        assertThat(updatedPost.getVotes()).isEqualTo(2);
     }
 
     // HELPER METHODS

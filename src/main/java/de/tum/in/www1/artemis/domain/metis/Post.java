@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.domain.Lecture;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Post extends Posting {
 
-    // To be used with introduction of Metis
     @Size(max = 200)
     @Column(name = "title")
     private String title;
@@ -43,25 +42,23 @@ public class Post extends Posting {
     @Column(name = "votes", columnDefinition = "integer default 0")
     private Integer votes = 0;
 
-    // To be used with introduction of Metis
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Reaction> reactions = new HashSet<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<AnswerPost> answers = new HashSet<>();
 
-    // To be used with introduction of Metis
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "post_tag", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "text")
     private Set<String> tags = new HashSet<>();
 
     @ManyToOne
-    @JsonIncludeProperties({ "id", "course" })
+    @JsonIncludeProperties({ "id" })
     private Exercise exercise;
 
     @ManyToOne
-    @JsonIncludeProperties({ "id", "course" })
+    @JsonIncludeProperties({ "id" })
     private Lecture lecture;
 
     @ManyToOne
@@ -71,6 +68,28 @@ public class Post extends Posting {
     @Enumerated(EnumType.STRING)
     @Column(name = "course_wide_context")
     private CourseWideContext courseWideContext;
+
+    @Column(name = "is_pinned")
+    private Boolean pinned;
+
+    @Column(name = "is_archived")
+    private Boolean archived;
+
+    public Boolean isPinned() {
+        return pinned;
+    }
+
+    public void setPinned(Boolean pinned) {
+        this.pinned = pinned;
+    }
+
+    public Boolean isArchived() {
+        return archived;
+    }
+
+    public void setArchived(Boolean archived) {
+        this.archived = archived;
+    }
 
     public String getTitle() {
         return title;
@@ -151,23 +170,8 @@ public class Post extends Posting {
         this.lecture = lecture;
     }
 
-    /**
-     * Convenience method to retrieve the relevant Course, if necessary from linked Lecture or Exercise.
-     *
-     * @return related Course object
-     */
-    @Override
     public Course getCourse() {
-        if (getLecture() != null) {
-            return getLecture().getCourse();
-        }
-        else if (getExercise() != null) {
-            return getExercise().getCourseViaExerciseGroupOrCourseMember();
-        }
-        else if (course != null) {
-            return course;
-        }
-        return null;
+        return course;
     }
 
     public void setCourse(Course course) {

@@ -94,19 +94,6 @@ describe('Post Service', () => {
             tick();
         }));
 
-        it('should update the votes of a Post', fakeAsync(() => {
-            const returnedFromService = { ...elemDefault, votes: 42 };
-
-            const expected = { ...returnedFromService };
-            service
-                .updateVotes(1, expected.id!, 0)
-                .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
-            const req = httpMock.expectOne({ method: 'PUT' });
-            req.flush(returnedFromService);
-            tick();
-        }));
-
         it('should return all student posts for a course', fakeAsync(() => {
             const returnedFromService = [...posts];
 

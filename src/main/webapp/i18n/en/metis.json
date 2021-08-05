@@ -4,6 +4,7 @@
             "noPosts": "There are no posts yet.",
             "addNewPost": "New post",
             "answerNow": "Reply now",
+            "startDiscussion": "Start discussion",
             "cancel": "Cancel",
             "savePosting": "Save",
             "toggleThread": "Click to toggle the thread",
@@ -17,6 +18,12 @@
             "approveAnswer": "Approve",
             "approvedAnswer": "Approved",
             "today": "Today",
+            "pinnedPostTooltip": "This post was pinned by a tutor",
+            "archivedPostTooltip": "This post was archived by a tutor",
+            "pinPostTutorTooltip": "Click to pin this post at the top of the list",
+            "archivePostTutorTooltip": "Click to archive this post",
+            "removePinPostTutorTooltip": "Click to unpin this post",
+            "removeArchivePostTutorTooltip": "Click to de-archive this post",
             "chooseReaction": "Choose a reaction...",
             "searchEmoji": "Search emoji",
             "courseEmojiSelectionCategory": "Selected emojis for this course",
@@ -52,7 +59,6 @@
             },
             "answerPost": {
                 "created": "New reply successfully created",
-                "updated": "Reply successfully updated",
                 "deleted": "Reply successfully deleted"
             }
         }

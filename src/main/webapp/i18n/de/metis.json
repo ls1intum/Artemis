@@ -4,6 +4,7 @@
             "noPosts": "Es gibt noch keine Beiträge.",
             "addNewPost": "Neuer Beitrag",
             "answerNow": "Jetzt beantworten",
+            "startDiscussion": "Diskussion beginnen",
             "cancel": "Abbrechen",
             "savePosting": "Speichern",
             "toggleThread": "Klicke, um den Thread ein-/auszuklappen",
@@ -17,6 +18,12 @@
             "approveAnswer": "Bestätigen",
             "approvedAnswer": "Bestätigt",
             "today": "Heute",
+            "pinnedPostTooltip": "Dieser Beitrag wurde von Tutor:in angeheftet",
+            "archivedPostTooltip": "Dieser Beitrag wurde von Tutor:in archiviert",
+            "pinPostTutorTooltip": "Klicke, um diesen Beitrag oben in der Liste anzupinnen",
+            "archivePostTutorTooltip": "Klicke, um diesen Beitrag nach unten zu schieben",
+            "removePinPostTutorTooltip": "Klicke, um den Pin für diesen Beitrag zu entfernen",
+            "removeArchivePostTutorTooltip": "Klicke, um den Post wieder chronologisch einzuordnen",
             "chooseReaction": "Wähle eine Reaktion...",
             "searchEmoji": "Emoji suchen",
             "courseEmojiSelectionCategory": "Ausgewählte emojis für diesen Kurs",
@@ -52,7 +59,6 @@
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",
-                "updated": "Antwort erfolgreich aktualisiert",
                 "deleted": "Antwort erfolgreich gelöscht"
             }
         }

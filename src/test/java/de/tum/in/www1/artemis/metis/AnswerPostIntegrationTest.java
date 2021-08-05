@@ -146,18 +146,6 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateAnswerPostWithWrongCourseId_badRequest() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
-        Course dummyCourse = database.createCourse();
-
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + dummyCourse.getId() + "/answer-posts", answerPostToSave, AnswerPost.class,
-                HttpStatus.BAD_REQUEST);
-        assertThat(createdAnswerPost).isNull();
-        assertThat(existingAnswerPosts.size()).isEqualTo(answerPostRepository.count());
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
     public void testCreateExistingAnswerPost_badRequest() throws Exception {
         AnswerPost existingAnswerPostToSave = existingAnswerPosts.get(0);
 
@@ -258,16 +246,6 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteWithWrongCourseId_badRequest() throws Exception {
-        AnswerPost answerPostToNotDelete = existingAnswerPosts.get(0);
-        Course dummyCourse = database.createCourse();
-
-        request.delete("/api/courses/" + dummyCourse.getId() + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.BAD_REQUEST);
-        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
-    }
-
-    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testToggleAnswerPostApproved() throws Exception {
         AnswerPost answerPostToApprove = existingAnswerPosts.get(0);
@@ -311,8 +289,5 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         // check if default values are set correctly on creation
         assertThat(expectedAnswerPost.getReactions()).isEmpty();
-
-        // check if associated course is set correctly on creation
-        assertThat(expectedAnswerPost.getCourse()).isEqualTo(expectedAnswerPost.getCourse());
     }
 }
