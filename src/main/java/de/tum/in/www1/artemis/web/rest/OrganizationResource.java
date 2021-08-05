@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
+
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -127,12 +129,12 @@ public class OrganizationResource {
     }
 
     /**
-     * POST /organizations : Add a new organization
+     * POST organizations : Add a new organization
      *
      * @param organization the organization entity to add
      * @return the ResponseEntity containing the added organization with status 200 (OK), or 404 (Not Found) otherwise
      */
-    @PostMapping("/organizations")
+    @PostMapping("organizations")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Organization> addOrganization(@RequestBody Organization organization) {
         log.debug("REST request to add new organization : {}", organization);
@@ -142,15 +144,18 @@ public class OrganizationResource {
     }
 
     /**
-     * PUT /organizations/update : Update an existing organization
+     * PUT organizations/{organizationId} : Update an existing organization
      *
      * @param organization the updated organization entity
      * @return the ResponseEntity containing the updated organization with status 200 (OK), or 404 (Not Found) otherwise
      */
-    @PutMapping("/organizations/{organizationId}")
+    @PutMapping("organizations/{organizationId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Organization> updateOrganization(@RequestBody Organization organization) {
+    public ResponseEntity<Organization> updateOrganization(@PathVariable Long organizationId, @RequestBody Organization organization) {
         log.debug("REST request to update organization : {}", organization);
+        if (!organization.getId().equals(organizationId)) {
+            return badRequest("organizationId", "400", "organizationId in path doesn't match the one in the RequestBody!");
+        }
         if (organization.getId() != null && organizationRepository.findOneOrElseThrow(organization.getId()) != null) {
             Organization updated = organizationService.update(organization);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updated.getName())).body(updated);
@@ -189,12 +194,12 @@ public class OrganizationResource {
     }
 
     /**
-     * GET /organizations/:organizationId/count : Get the number of users and courses currently mapped to an organization
+     * GET organizations/:organizationId/count : Get the number of users and courses currently mapped to an organization
      *
      * @param organizationId the id of the organization to retrieve the number of users and courses
      * @return ResponseEntity containing a map containing the numbers of users and courses
      */
-    @GetMapping("/organizations/{organizationId}/count")
+    @GetMapping("organizations/{organizationId}/count")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OrganizationCountDTO> getNumberOfUsersAndCoursesByOrganization(@PathVariable long organizationId) {
         log.debug("REST request to get number of users and courses of organization : {}", organizationId);
@@ -206,12 +211,12 @@ public class OrganizationResource {
     }
 
     /**
-     * GET /organizations/count-all : Get the number of users and courses currently mapped to each organization
+     * GET organizations/count-all : Get the number of users and courses currently mapped to each organization
      *
      * @return ResponseEntity containing a map containing the organizations' id as key and an inner map
      * containing their relative numbers of users and courses
      */
-    @GetMapping("/organizations/count-all")
+    @GetMapping("organizations/count-all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<OrganizationCountDTO>> getNumberOfUsersAndCoursesOfAllOrganizations() {
         log.debug("REST request to get number of users and courses of all organizations");
@@ -227,13 +232,13 @@ public class OrganizationResource {
     }
 
     /**
-     * GET /organizations/:organizationId : Get an organization by its id
+     * GET organizations/:organizationId : Get an organization by its id
      *
      * @param organizationId the id of the organization to get
      * @return ResponseEntity containing the organization with status 200 (OK)
      * if exists, else with status 404 (Not Found)
      */
-    @GetMapping("/organizations/{organizationId}")
+    @GetMapping("organizations/{organizationId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Organization> getOrganizationById(@PathVariable long organizationId) {
         log.debug("REST request to get organization : {}", organizationId);
@@ -242,13 +247,13 @@ public class OrganizationResource {
     }
 
     /**
-     * GET /organizations/:organizationId/full : Get an organization by its id with eagerly loaded users and courses
+     * GET organizations/:organizationId/full : Get an organization by its id with eagerly loaded users and courses
      *
      * @param organizationId the id of the organization to get
      * @return ResponseEntity containing the organization with eagerly loaded users and courses, with status 200 (OK)
      * if exists, else with status 404 (Not Found)
      */
-    @GetMapping("/organizations/{organizationId}/full")
+    @GetMapping("organizations/{organizationId}/full")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Organization> getOrganizationByIdWithUsersAndCourses(@PathVariable long organizationId) {
         log.debug("REST request to get organization with users and courses : {}", organizationId);
@@ -257,12 +262,12 @@ public class OrganizationResource {
     }
 
     /**
-     * GET /organizations/course/:courseId : Get all organizations currently containing a given course
+     * GET organizations/course/:courseId : Get all organizations currently containing a given course
      *
      * @param courseId the id of the course that the organizations should contain
      * @return ResponseEntity containing a set of organizations containing the given course
      */
-    @GetMapping("/organizations/courses/{courseId}")
+    @GetMapping("organizations/courses/{courseId}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Set<Organization>> getAllOrganizationsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all organizations of course : {}", courseId);
@@ -271,12 +276,12 @@ public class OrganizationResource {
     }
 
     /**
-     * GET /organizations/user/:userId : Get all organizations currently containing a given user
+     * GET organizations/user/:userId : Get all organizations currently containing a given user
      *
      * @param userId the id of the user that the organizations should contain
      * @return ResponseEntity containing a set of organizations containing the given user
      */
-    @GetMapping("/organizations/users/{userId}")
+    @GetMapping("organizations/users/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Set<Organization>> getAllOrganizationsByUser(@PathVariable Long userId) {
         log.debug("REST request to get all organizations of user : {}", userId);
