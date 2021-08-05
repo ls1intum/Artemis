@@ -8,9 +8,9 @@ import { CreateModelingExercisePage } from '../support/pageobjects/CreateModelin
 import { ModelingExerciseExampleSubmissionPage } from '../support/pageobjects/ModelingExerciseExampleSubmissionPage';
 
 // pageobjects
-const courseManagement: CourseManagementPage = artemis.pageobjects.courseManagement;
-const createModelingExercise: CreateModelingExercisePage = artemis.pageobjects.createModelingExercise;
-const modelingExerciseExampleSubission: ModelingExerciseExampleSubmissionPage = artemis.pageobjects.modelingExerciseExampleSubmission;
+const courseManagement = artemis.pageobjects.courseManagement;
+const createModelingExercise = artemis.pageobjects.createModelingExercise;
+const modelingExerciseExampleSubission = artemis.pageobjects.modelingExerciseExampleSubmission;
 const modelingEditor = artemis.pageobjects.modelingEditor;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;

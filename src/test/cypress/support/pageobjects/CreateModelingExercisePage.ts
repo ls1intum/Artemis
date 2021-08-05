@@ -3,6 +3,7 @@
  * Path: /course-management/{courseID}/modeling-exercises/{exerciseID}
  */
 export class CreateModelingExercisePage {
+    DIFFICULTY_BAR = 'jhi-difficulty-picker > :nth-child(1) >';
     setTitle(title: string) {
         cy.get('#field_title').clear().type(title);
     }
@@ -53,15 +54,13 @@ export class CreateModelingExercisePage {
 
     pickDifficulty(options: { hard?: boolean; medium?: boolean; easy?: boolean }) {
         if (options.hard) {
-            cy.get('jhi-difficulty-picker > :nth-child(1) > :nth-child(4)').click({ force: true });
-        }
-        if (options.medium) {
-            cy.get('jhi-difficulty-picker > :nth-child(1) > :nth-child(3)').click({ force: true });
-        }
-        if (options.easy) {
-            cy.get('jhi-difficulty-picker > :nth-child(1) > :nth-child(2)').click({ force: true });
+            cy.get(this.DIFFICULTY_BAR).eq(3).click();
+        } else if (options.medium) {
+            cy.get(this.DIFFICULTY_BAR).eq(2).click();
+        } else if (options.easy) {
+            cy.get(this.DIFFICULTY_BAR).eq(1).click();
         } else {
-            cy.get('jhi-difficulty-picker > :nth-child(1) > :nth-child(1)').click({ force: true });
+            cy.get(this.DIFFICULTY_BAR).eq(0).click();
         }
     }
 }

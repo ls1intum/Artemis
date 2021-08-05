@@ -85,20 +85,14 @@ export class CourseManagementRequests {
         return cy.request({
             url: '/api/modeling-exercises',
             method: 'POST',
-            body: modelingExercise,
-            headers: {
-                Authorization: 'Bearer ' + Cypress.env(authTokenKey),
-            },
+            body: modelingExercise
         });
     }
 
     deleteModelingExercise(exerciseID: number) {
         return cy.request({
             url: `/api/modeling-exercises/${exerciseID}`,
-            method: 'DELETE',
-            headers: {
-                Authorization: `Bearer ${Cypress.env(authTokenKey)}`,
-            },
+            method: 'DELETE'
         });
     }
 }
