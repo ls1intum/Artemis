@@ -97,4 +97,12 @@ export class CourseManagementPage {
         cy.get('ngb-highlight').contains(credentials.username).click();
         cy.get('.breadcrumb > :nth-child(2)').click();
     }
+
+    /**
+     * Opens the exams of a course.
+     */
+    openExamsOfCourse(courseName: string, courseShortName: string) {
+        this.getCourseCard(courseName, courseShortName).find('.card-footer').children().eq(1).click();
+        cy.url().should('include', '/exams');
+    }
 }
