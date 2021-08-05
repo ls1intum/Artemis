@@ -15,4 +15,8 @@ export class MockExerciseService {
     private static response<T>(entity: T) {
         return of({ body: entity }) as Observable<HttpResponse<T>>;
     }
+
+    convertExerciseForServer<E extends Exercise>(exercise: E): Exercise {
+        return exercise;
+    }
 }
