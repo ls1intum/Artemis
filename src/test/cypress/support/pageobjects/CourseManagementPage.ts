@@ -50,4 +50,12 @@ export class CourseManagementPage {
     courseSelector(courseName: string, courseShortName: string) {
         return `${courseName} (${courseShortName})`;
     }
+
+    /**
+     * Opens the exams of a course.
+     */
+    openExamsOfCourse(courseName: string, courseShortName: string) {
+        this.getCourseCard(courseName, courseShortName).find('.card-footer').children().eq(1).click();
+        cy.url().should('include', '/exams');
+    }
 }
