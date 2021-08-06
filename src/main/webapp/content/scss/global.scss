@@ -139,6 +139,18 @@ a.btn {
     width: auto;
 }
 
+.form-control,
+.form-select,
+.form-check-input,
+.form-control:hover,
+.form-control:focus {
+    background-color: white;
+}
+
+.form-check-input:checked {
+    background-color: $primary;
+}
+
 .btn-primary input,
 .btn input {
     position: absolute;

@@ -161,7 +161,7 @@
             <select
                 #select
                 required
-                class="form-control"
+                class="form-select"
                 [ngModel]="selectedProgrammingLanguage"
                 (ngModelChange)="select.value = onProgrammingLanguageChange($event)"
                 name="programmingLanguage"
@@ -186,7 +186,7 @@
             <select
                 #select
                 required
-                class="form-control"
+                class="form-select"
                 [ngModel]="selectedProjectType"
                 (ngModelChange)="select.value = onProjectTypeChange($event)"
                 name="projectType"
