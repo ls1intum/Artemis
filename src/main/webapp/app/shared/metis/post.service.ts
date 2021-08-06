@@ -101,10 +101,10 @@ export class PostService extends PostingsService<Post> {
      * deletes a post
      * @param {number} courseId
      * @param {Post} post
-     * @return {Observable<HttpResponse<any>>}
+     * @return {Observable<HttpResponse<void>>}
      */
-    delete(courseId: number, post: Post): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}${courseId}/posts/${post.id}`, { observe: 'response' });
+    delete(courseId: number, post: Post): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}${courseId}/posts/${post.id}`, { observe: 'response' });
     }
 
     /**
