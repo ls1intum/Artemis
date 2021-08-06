@@ -134,17 +134,17 @@ a.btn {
     text-align: left;
 }
 
-.form-inline .form-control {
-    display: inline-block;
-    width: auto;
-}
-
 .form-control,
 .form-select,
 .form-check-input,
 .form-control:hover,
 .form-control:focus {
     background-color: white;
+}
+
+.form-inline .form-control {
+    display: inline-block;
+    width: auto;
 }
 
 .form-check-input:checked {
