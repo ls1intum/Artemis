@@ -84,6 +84,21 @@ export class CourseManagementRequests {
         return cy.request({ url: COURSE_BASE + courseId + '/students/' + studentName, method: POST });
     }
 
+    createModelingExercise(modelingExercise: string) {
+        return cy.request({
+            url: '/api/modeling-exercises',
+            method: 'POST',
+            body: modelingExercise,
+        });
+    }
+
+    deleteModelingExercise(exerciseID: number) {
+        return cy.request({
+            url: `/api/modeling-exercises/${exerciseID}`,
+            method: 'DELETE',
+        });
+    }
+
     /**
      * Creates an exam with the provided settings.
      * @param exam the exam object created by a {@link CypressExamBuilder}
