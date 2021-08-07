@@ -4,6 +4,9 @@ import programmingExerciseTemplate from '../../fixtures/requests/programming_exe
 import { dayjsToString, generateUUID } from '../utils';
 import examTemplate from '../../fixtures/requests/exam_template.json';
 import day from 'dayjs';
+import { CypressCredentials } from '../users';
+import textExercise from '../../fixtures/requests/exam_textExercise_template.json';
+import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 
 const COURSE_BASE = BASE_API + 'courses/';
 const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
@@ -16,7 +19,7 @@ export class CourseManagementRequests {
     /**
      * Deletes the course with the specified id.
      * @param id the course id
-     * @returns the cypress chainable of the request
+     * @returns <Chainable> request response
      */
     deleteCourse(id: number) {
         return cy.request({ method: DELETE, url: COURSE_BASE + id });
@@ -26,7 +29,7 @@ export class CourseManagementRequests {
      * Creates a course with the specified title and short name.
      * @param courseName the title of the course
      * @param courseShortName the short name
-     * @returns the cypress chainable from the request
+     * @returns <Chainable> request response
      */
     createCourse(courseName: string, courseShortName: string) {
         const course = courseTemplate;
@@ -42,7 +45,7 @@ export class CourseManagementRequests {
     /**
      * Deletes the programming exercise with the specified id.
      * @param id the exercise id
-     * @returns the cypress chainable of the request
+     * @returns <Chainable> request response
      */
     deleteProgrammingExercise(id: number) {
         return cy.request({ method: DELETE, url: PROGRAMMING_EXERCISE_BASE + id + '?deleteStudentReposBuildPlans=true&deleteBaseReposBuildPlans=true' });
@@ -56,7 +59,7 @@ export class CourseManagementRequests {
      * @param packageName the package name of the programming exercise
      * @param releaseDate when the programming exercise should be available (default is now)
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
-     * @returns the cypress chainable from the request
+     * @returns <Chainable> request response
      */
     createProgrammingExercise(course: any, title: string, programmingShortName: string, packageName: string, releaseDate = new Date(), dueDate = new Date(Date.now() + oneDay)) {
         const programmingTemplate = programmingExerciseTemplate;
@@ -78,7 +81,7 @@ export class CourseManagementRequests {
      * Adds the specified student to the course.
      * @param courseId the course id
      * @param studentName the student name
-     * @returns the cypress chainable of the request
+     * @returns <Chainable> request response
      */
     addStudentToCourse(courseId: number, studentName: string) {
         return cy.request({ url: COURSE_BASE + courseId + '/students/' + studentName, method: POST });
@@ -87,10 +90,63 @@ export class CourseManagementRequests {
     /**
      * Creates an exam with the provided settings.
      * @param exam the exam object created by a {@link CypressExamBuilder}
-     * @returns the request response
+     * @returns <Chainable> request response
      */
     createExam(exam: any) {
         return cy.request({ url: COURSE_BASE + exam.course.id + '/exams', method: POST, body: exam });
+    }
+
+    /**
+     * Deletes the exam with the given parameters
+     * @returns <Chainable> request response
+     * */
+    deleteExam(course: any, exam: any) {
+        return cy.request({ method: DELETE, url: COURSE_BASE + course.id + '/exams/' + exam.id });
+    }
+
+    /**
+     * register the student for the exam
+     * @returns <Chainable> request response
+     */
+    registerStudentForExam(course: any, exam: any, student: CypressCredentials) {
+        return cy.request({method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/students/' + student.username});
+    }
+
+    /**
+     * add exercise group to exam
+     * @returns <Chainable> request response
+     * */
+    addExerciseGroupForExam(course: any, exam: any, title: string, mandatory: boolean) {
+        exerciseGroup.exam = exam;
+        exerciseGroup.title = title;
+        exerciseGroup.isMandatory = mandatory;
+        return cy.request({method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/exerciseGroups', body: exerciseGroup});
+    }
+
+    /**
+     * add text exercise to exercise group in exam
+     * @returns <Chainable> request response
+     * */
+    addTextExerciseToExam(group: any, title: string) {
+        textExercise.exerciseGroup = group;
+        textExercise.title = title;
+        return cy.request({method: POST, url: BASE_API + 'text-exercises', body: textExercise});
+    }
+
+    /**
+     * generate all missing individual exams
+     * @returns <Chainable> request response
+     */
+    generateMissingIndividualExams(course: any, exam: any, ) {
+        return cy.request({method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/generate-missing-student-exams'});
+    }
+
+    /**
+     * Prepares individual exercises for exam start
+     * @returns <Chainable> request response
+     */
+    prepareExerciseStartForExam(course: any, exam: any, ) {
+        return cy.request({method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/student-exams/start-exercises'});
     }
 }
 

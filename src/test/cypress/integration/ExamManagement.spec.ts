@@ -1,4 +1,4 @@
-import { CypressExamBuilder } from './../support/requests/CourseManagementRequests';
+import { CypressExamBuilder } from '../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs';
 import { artemis } from '../support/ArtemisTesting';
 import { generateUUID } from '../support/utils';
@@ -24,6 +24,7 @@ describe('Exam management', () => {
         cy.login(artemis.users.getAdmin());
         courseManagementRequests.createCourse(courseName, courseShortName).then((response) => {
             course = response.body;
+            courseManagementRequests.addStudentToCourse(course.id, artemis.users.getStudentOne().username);
         });
     });
 
@@ -67,8 +68,77 @@ describe('Exam management', () => {
         });
     });
 
+    describe('Exam timing', () => {
+        let exam: any;
+
+        it('Does not show exam before visible date', () => {
+            const examContent = new CypressExamBuilder(course)
+                .title(examTitle)
+                .visibleDate(dayjs().add(1, 'day')).startDate(dayjs().add(2, 'days')).endDate(dayjs().add(3, 'days'))
+                .build();
+            courseManagementRequests.createExam(examContent).then((response) => {
+                exam = response.body;
+            });
+            cy.login(artemis.users.getStudentOne(), `/courses`);
+            cy.contains(examTitle).should('not.exist');
+            cy.visit(`/courses/${course.id}`);
+            cy.url().should('contain', `${course.id}`);
+            cy.contains(examTitle).should('not.exist');
+        });
+
+        it('Shows after visible date', () => {
+            const examContent = new CypressExamBuilder(course)
+                .title(examTitle)
+                .visibleDate(dayjs().subtract(5, 'days')).startDate(dayjs().add(2, 'days')).endDate(dayjs().add(3, 'days'))
+                .build();
+            courseManagementRequests.createExam(examContent).then((response) => {
+                exam = response.body;
+                courseManagementRequests.registerStudentForExam(course, exam, artemis.users.getStudentOne());
+                cy.login(artemis.users.getStudentOne(), `/courses`);
+                cy.contains(examTitle).should('exist');
+                cy.visit(`/courses/${course.id}`);
+                cy.url().should('contain', `${course.id}`);
+                cy.contains('Exams').click();
+                cy.url().should('contain', '/exams');
+                cy.contains(examTitle).should('exist').click();
+                cy.url().should('contain', `/exams/${exam.id}`);
+            });
+        });
+
+        it.only('Student can start after start Date', () => {
+            let exerciseGroup: any;
+            let textExercise: any;
+            const examContent = new CypressExamBuilder(course)
+                .title(examTitle)
+                .visibleDate(dayjs().subtract(3, 'days')).startDate(dayjs().subtract(2, 'days')).endDate(dayjs().add(3, 'days'))
+                .build();
+            courseManagementRequests.createExam(examContent).then((examResponse) => {
+                exam = examResponse.body;
+                courseManagementRequests.registerStudentForExam(course, exam, artemis.users.getStudentOne());
+                courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
+                    exerciseGroup = groupResponse.body;
+                    courseManagementRequests.addTextExerciseToExam(exerciseGroup, 'Text exercise 1').then((exerciseResponse) => {
+                        textExercise = exerciseResponse.body;
+                        courseManagementRequests.generateMissingIndividualExams(course, exam);
+                        courseManagementRequests.prepareExerciseStartForExam(course, exam);
+                        cy.login(artemis.users.getStudentOne(), `/courses/${course.id}/exams`);
+                        cy.contains(exam.title).click();
+                        cy.url().should('contain', `/exams/${exam.id}`);
+                        cy.contains('Welcome to ' + exam.title).should('exist');
+                    });
+                });
+            });
+        });
+
+        afterEach(() => {
+            cy.login(artemis.users.getAdmin());
+            courseManagementRequests.deleteExam(course, exam);
+        });
+    });
+
     after(() => {
         if (!!course) {
+            cy.login(artemis.users.getAdmin());
             courseManagementRequests.deleteCourse(course.id);
         }
     });
