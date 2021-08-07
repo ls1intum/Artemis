@@ -408,10 +408,4 @@ export class ExamManagementService {
     archiveExam(courseId: number, examId: number): Observable<HttpResponse<any>> {
         return this.http.put(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
     }
-    validateReviewPhase(exam: Exam) {
-        exam.reviewPhaseError = exam.examStudentReviewStart ? !exam.examStudentReviewEnd : false;
-        if (exam.examStudentReviewEnd == undefined || exam.examStudentReviewEnd.format() === 'Invalid date') {
-            exam.reviewPhaseError = true;
-        }
-    }
 }

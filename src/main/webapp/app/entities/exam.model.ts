@@ -40,7 +40,6 @@ export class Exam implements BaseEntity {
     // helper attributes
     public visible?: boolean;
     public started?: boolean;
-    public reviewPhaseError?: boolean;
 
     public examArchivePath?: string;
 

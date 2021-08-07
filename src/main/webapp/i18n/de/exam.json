@@ -239,8 +239,8 @@
             }
         },
         "examManagement": {
-            "reviewWarning": "Ende der Klausureneinsicht fehlt",
-            "reviewExpl": "Ist ein Beginn der Klausureinsicht definiert, muss auch ein Ende definiert werden.",
+            "reviewDatesInvalidWarning": "Das Ende der Klausureneinsicht fehlt",
+            "reviewDatesInvalidExplanation": "Ist ein Beginn der Klausureinsicht definiert, muss auch ein Ende definiert werden.",
             "title": "Klausurverwaltung",
             "createExam": "Erstelle eine neue Klausur",
             "editExam": "Bearbeite eine existierende Klausur",

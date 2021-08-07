@@ -83,7 +83,7 @@ export class ExamUpdateComponent implements OnInit {
 
     get isValidConfiguration(): boolean {
         const examConductionDatesValid = this.isValidVisibleDate && this.isValidStartDate && this.isValidEndDate;
-        const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd && !this.exam.reviewPhaseError;
+        const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
         const examMaxPointsValid = this.isValidMaxPoints;
         return examConductionDatesValid && examReviewDatesValid && examNumberOfCorrectionsValid && examMaxPointsValid;
@@ -119,7 +119,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidExamStudentReviewStart(): boolean {
-        // allow instructors to set examStudentReviewStart later;
+        // allow instructors to set examStudentReviewStart later
         if (!this.exam.examStudentReviewStart) {
             return true;
         }
@@ -130,12 +130,13 @@ export class ExamUpdateComponent implements OnInit {
     get isValidExamStudentReviewEnd(): boolean {
         // allow instructors to set examStudentReviewEnd later
         if (!this.exam.examStudentReviewEnd) {
-            return true;
+            if (!this.exam.examStudentReviewStart || !this.exam.examStudentReviewStart.isValid()) {
+                return true;
+            } else {
+                return false;
+            }
         }
         // check for undefined because undefined is otherwise treated as the now moment by moment.js
         return this.exam.examStudentReviewStart !== undefined && moment(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
-    }
-    validateReviewPhase(): void {
-        this.examManagementService.validateReviewPhase(this.exam);
     }
 }
