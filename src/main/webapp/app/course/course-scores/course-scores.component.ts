@@ -236,13 +236,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
-        console.log(`Performed ${noOfComparisons} comparisons between old and new calculation method.`);
-        console.log(`Found ${noOfPointDifferencesFound} point differences between old and new calculation method.`);
-        console.log(`Found ${noOfScoreDifferencesFound} score differences between old and new calculation method.`);
     }
 
     logErrorOnSentry(errorMessage: string) {
-        console.log(errorMessage);
         Sentry.captureException(new Error(errorMessage));
     }
 
