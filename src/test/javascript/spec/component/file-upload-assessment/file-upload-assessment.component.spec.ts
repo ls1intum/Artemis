@@ -78,7 +78,8 @@ describe('FileUploadAssessmentComponent', () => {
         id: 20,
         results: [resultWithComplaint],
     } as FileUploadSubmission;
-    beforeEach(async () => {
+
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [
                 ArtemisTestModule,
@@ -139,7 +140,7 @@ describe('FileUploadAssessmentComponent', () => {
     });
 
     afterEach(() => {
-        getFileUploadSubmissionForExerciseWithoutAssessmentStub.restore();
+        sinon.restore();
     });
 
     describe('ngOnInit', () => {

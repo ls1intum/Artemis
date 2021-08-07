@@ -37,7 +37,7 @@ describe('CourseExerciseRowComponent', () => {
     let getAllParticipationsStub: SinonStub;
     let participationWebsocketService: ParticipationWebsocketService;
 
-    beforeEach(async () => {
+    beforeAll(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisCoursesModule],
             providers: [

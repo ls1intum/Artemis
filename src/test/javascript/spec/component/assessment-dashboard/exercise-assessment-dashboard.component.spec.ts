@@ -183,7 +183,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     const router = new MockRouter();
     const navigateSpy = sinon.spy(router, 'navigate');
 
-    beforeEach(async () => {
+    beforeAll(() => {
         return TestBed.configureTestingModule({
             imports: [
                 ArtemisTestModule,
@@ -272,20 +272,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     afterEach(() => {
-        modelingSubmissionStubWithoutAssessment.restore();
-        modelingSubmissionStubWithAssessment.restore();
-
-        textSubmissionStubWithoutAssessment.restore();
-        textSubmissionStubWithAssessment.restore();
-
-        fileUploadSubmissionStubWithAssessment.restore();
-        fileUploadSubmissionStubWithoutAssessment.restore();
-
-        programmingSubmissionStubWithAssessment.restore();
-        programmingSubmissionStubWithoutAssessment.restore();
-
-        exerciseServiceGetForTutorsStub.restore();
-        exerciseServiceGetStatsForTutorsStub.restore();
+        sinon.restore();
+        comp.submissionsWithComplaints = [submissionWithComplaintDTO];
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
