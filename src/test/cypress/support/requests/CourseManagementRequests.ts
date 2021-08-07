@@ -147,6 +147,21 @@ export class CourseManagementRequests {
      */
     prepareExerciseStartForExam(course: any, exam: any, ) {
         return cy.request({method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/student-exams/start-exercises'});
+      }
+
+    createModelingExercise(modelingExercise: string) {
+        return cy.request({
+            url: '/api/modeling-exercises',
+            method: 'POST',
+            body: modelingExercise,
+        });
+    }
+
+    deleteModelingExercise(exerciseID: number) {
+        return cy.request({
+            url: `/api/modeling-exercises/${exerciseID}`,
+            method: 'DELETE',
+        });
     }
 }
 
