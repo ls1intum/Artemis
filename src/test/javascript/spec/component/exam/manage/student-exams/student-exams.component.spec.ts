@@ -204,7 +204,7 @@ describe('StudentExamsComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(DataTableComponent),
             ],
-            providers: providers,
+            providers,
         })
             .compileComponents()
             .then(() => {

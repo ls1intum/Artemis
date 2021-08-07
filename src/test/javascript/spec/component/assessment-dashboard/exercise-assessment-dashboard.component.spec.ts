@@ -188,11 +188,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let navigateSpy: sinon.SinonStub;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, exerciseId: modelingExercise.id! }) } } as any as ActivatedRoute;
 
-    const imports = [
-        ArtemisTestModule,
-        RouterTestingModule.withRoutes([]),
-        TranslateTestingModule,
-    ];
+    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), TranslateTestingModule];
     const declarations = [
         ExerciseAssessmentDashboardComponent,
         MockComponent(TutorLeaderboardComponent),
@@ -230,70 +226,68 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     ];
 
     beforeEach(() => {
-        return (
-            TestBed.configureTestingModule({
-                imports: imports,
-                declarations: declarations,
-                providers: providers,
-            })
-                .compileComponents()
-                .then(() => {
-                    fixture = TestBed.createComponent(ExerciseAssessmentDashboardComponent);
-                    comp = fixture.componentInstance;
+        return TestBed.configureTestingModule({
+            imports,
+            declarations,
+            providers,
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ExerciseAssessmentDashboardComponent);
+                comp = fixture.componentInstance;
 
-                    modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
-                    textSubmissionService = TestBed.inject(TextSubmissionService);
-                    fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
-                    exerciseService = TestBed.inject(ExerciseService);
-                    programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
+                modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
+                textSubmissionService = TestBed.inject(TextSubmissionService);
+                fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
+                exerciseService = TestBed.inject(ExerciseService);
+                programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
 
-                    const submissionService = TestBed.inject(SubmissionService);
-                    stub(submissionService, 'getSubmissionsWithComplaintsForTutor').returns(of(new HttpResponse({ body: [] })));
+                const submissionService = TestBed.inject(SubmissionService);
+                stub(submissionService, 'getSubmissionsWithComplaintsForTutor').returns(of(new HttpResponse({ body: [] })));
 
-                    const complaintService = TestBed.inject(ComplaintService);
-                    stub(complaintService, 'getMoreFeedbackRequestsForTutor').returns(of(new HttpResponse({ body: [] })));
+                const complaintService = TestBed.inject(ComplaintService);
+                stub(complaintService, 'getMoreFeedbackRequestsForTutor').returns(of(new HttpResponse({ body: [] })));
 
-                    const router = TestBed.get(Router);
-                    navigateSpy = sinon.stub(router, 'navigate');
+                const router = TestBed.get(Router);
+                navigateSpy = sinon.stub(router, 'navigate');
 
-                    tutorParticipationService = TestBed.inject(TutorParticipationService);
+                tutorParticipationService = TestBed.inject(TutorParticipationService);
 
-                    exerciseServiceGetForTutorsStub = stub(exerciseService, 'getForTutors');
-                    exerciseServiceGetStatsForTutorsStub = stub(exerciseService, 'getStatsForTutors');
+                exerciseServiceGetForTutorsStub = stub(exerciseService, 'getForTutors');
+                exerciseServiceGetStatsForTutorsStub = stub(exerciseService, 'getStatsForTutors');
 
-                    exerciseServiceGetForTutorsStub.returns(of(new HttpResponse({ body: modelingExercise, headers: new HttpHeaders() })));
-                    exerciseServiceGetStatsForTutorsStub.returns(of(new HttpResponse({ body: stats, headers: new HttpHeaders() })));
+                exerciseServiceGetForTutorsStub.returns(of(new HttpResponse({ body: modelingExercise, headers: new HttpHeaders() })));
+                exerciseServiceGetStatsForTutorsStub.returns(of(new HttpResponse({ body: stats, headers: new HttpHeaders() })));
 
-                    guidedTourService = TestBed.inject(GuidedTourService);
+                guidedTourService = TestBed.inject(GuidedTourService);
 
-                    comp.exerciseId = modelingExercise.id!;
+                comp.exerciseId = modelingExercise.id!;
 
-                    modelingSubmissionStubWithoutAssessment = stub(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment');
-                    modelingSubmissionStubWithAssessment = stub(modelingSubmissionService, 'getModelingSubmissionsForExerciseByCorrectionRound');
+                modelingSubmissionStubWithoutAssessment = stub(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment');
+                modelingSubmissionStubWithAssessment = stub(modelingSubmissionService, 'getModelingSubmissionsForExerciseByCorrectionRound');
 
-                    textSubmissionStubWithoutAssessment = stub(textSubmissionService, 'getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment');
-                    textSubmissionStubWithAssessment = stub(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound');
+                textSubmissionStubWithoutAssessment = stub(textSubmissionService, 'getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment');
+                textSubmissionStubWithAssessment = stub(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound');
 
-                    fileUploadSubmissionStubWithAssessment = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
-                    fileUploadSubmissionStubWithoutAssessment = stub(fileUploadSubmissionService, 'getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment');
+                fileUploadSubmissionStubWithAssessment = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+                fileUploadSubmissionStubWithoutAssessment = stub(fileUploadSubmissionService, 'getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment');
 
-                    programmingSubmissionStubWithoutAssessment = stub(programmingSubmissionService, 'getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment');
-                    programmingSubmissionStubWithAssessment = stub(programmingSubmissionService, 'getProgrammingSubmissionsForExerciseByCorrectionRound');
+                programmingSubmissionStubWithoutAssessment = stub(programmingSubmissionService, 'getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment');
+                programmingSubmissionStubWithAssessment = stub(programmingSubmissionService, 'getProgrammingSubmissionsForExerciseByCorrectionRound');
 
-                    textSubmissionStubWithoutAssessment.returns(of(textSubmission));
-                    textSubmissionStubWithAssessment.returns(of(textSubmissionAssessed));
+                textSubmissionStubWithoutAssessment.returns(of(textSubmission));
+                textSubmissionStubWithAssessment.returns(of(textSubmissionAssessed));
 
-                    fileUploadSubmissionStubWithAssessment.returns(of(fileUploadSubmissionAssessed));
-                    fileUploadSubmissionStubWithoutAssessment.returns(of(fileUploadSubmission));
+                fileUploadSubmissionStubWithAssessment.returns(of(fileUploadSubmissionAssessed));
+                fileUploadSubmissionStubWithoutAssessment.returns(of(fileUploadSubmission));
 
-                    programmingSubmissionStubWithAssessment.returns(of(programmingSubmissionAssessed));
-                    programmingSubmissionStubWithoutAssessment.returns(of(programmingSubmission));
+                programmingSubmissionStubWithAssessment.returns(of(programmingSubmissionAssessed));
+                programmingSubmissionStubWithoutAssessment.returns(of(programmingSubmission));
 
-                    modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [modelingSubmissionAssessed], headers: new HttpHeaders() })));
-                    modelingSubmissionStubWithoutAssessment.returns(of(modelingSubmission));
-                    comp.submissionsWithComplaints = [submissionWithComplaintDTO];
-                })
-        );
+                modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [modelingSubmissionAssessed], headers: new HttpHeaders() })));
+                modelingSubmissionStubWithoutAssessment.returns(of(modelingSubmission));
+                comp.submissionsWithComplaints = [submissionWithComplaintDTO];
+            });
     });
 
     afterEach(() => {
