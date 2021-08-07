@@ -22,7 +22,7 @@ module.exports = {
             statements: 77.5,
             branches: 58.4,
             functions: 67.1,
-            lines: 76.99,
+            lines: 76.9,
         },
     },
     preset: 'jest-preset-angular',
