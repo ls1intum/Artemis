@@ -29,6 +29,14 @@ import { Authority } from 'app/shared/constants/authority.constants';
             </div>
         </ng-container>
     `,
+    styles: [
+        `
+            .form-check-label {
+                font-size: 15px;
+                font-weight: bolder;
+            }
+        `,
+    ],
 })
 export class PresentationScoreComponent {
     @Input() exercise: Exercise;
