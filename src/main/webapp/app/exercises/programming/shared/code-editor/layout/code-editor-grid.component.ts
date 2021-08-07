@@ -22,6 +22,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
 
     fileBrowserIsCollapsed = false;
     rightPanelIsCollapsed = false;
+    buildOutputIsCollapsed = false;
 
     interactResizableMain: Interactable;
     resizableMinHeightMain = 480;
@@ -187,6 +188,10 @@ export class CodeEditorGridComponent implements AfterViewInit {
             }
             case '.resizable-filebrowser': {
                 this.fileBrowserIsCollapsed = !this.fileBrowserIsCollapsed;
+                break;
+            }
+            case '.resizable-buildoutput': {
+                this.buildOutputIsCollapsed = !this.buildOutputIsCollapsed;
                 break;
             }
         }
