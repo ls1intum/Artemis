@@ -9,7 +9,6 @@ import { of } from 'rxjs';
 import { CookieService } from 'ngx-cookie-service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisTestModule } from '../test.module';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
@@ -36,7 +35,10 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockCookieService } from '../helpers/mocks/service/mock-cookie.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { JhiTranslateDirective } from 'ng-jhipster';
+import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -94,16 +96,14 @@ describe('GuidedTourService', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule],
+                imports: [ArtemisTestModule, HttpClientTestingModule],
                 providers: [
-                    { provide: DeviceDetectorService },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
+                    MockProvider(DeviceDetectorService),
                     MockProvider(TranslateService),
                 ],
-            })
-                .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
-                .compileComponents();
+            }).compileComponents();
 
             service = TestBed.inject(GuidedTourService);
             httpMock = TestBed.inject(HttpTestingController);
@@ -149,7 +149,6 @@ describe('GuidedTourService', () => {
             TestBed.configureTestingModule({
                 imports: [
                     ArtemisTestModule,
-                    ArtemisSharedModule,
                     RouterTestingModule.withRoutes([
                         {
                             path: 'courses',
@@ -157,17 +156,16 @@ describe('GuidedTourService', () => {
                         },
                     ]),
                 ],
-                declarations: [NavbarComponent, GuidedTourComponent],
+                declarations: [NavbarComponent, GuidedTourComponent, MockPipe(ArtemisTranslatePipe), MockDirective(JhiTranslateDirective), MockPipe(SafeResourceUrlPipe)],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: CookieService, useClass: MockCookieService },
                     { provide: AccountService, useClass: MockAccountService },
-                    { provide: DeviceDetectorService },
+                    MockProvider(DeviceDetectorService),
                     { provide: TranslateService, useClass: MockTranslateService },
                 ],
             })
-                .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
                 .overrideTemplate(NavbarComponent, '<div class="random-selector"></div>')
                 .compileComponents()
                 .then(() => {
