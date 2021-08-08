@@ -109,7 +109,7 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     registerStudentForExam(course: any, exam: any, student: CypressCredentials) {
-        return cy.request({method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/students/' + student.username});
+        return cy.request({ method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/students/' + student.username });
     }
 
     /**
@@ -120,7 +120,7 @@ export class CourseManagementRequests {
         exerciseGroup.exam = exam;
         exerciseGroup.title = title;
         exerciseGroup.isMandatory = mandatory;
-        return cy.request({method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/exerciseGroups', body: exerciseGroup});
+        return cy.request({ method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/exerciseGroups', body: exerciseGroup });
     }
 
     /**
@@ -130,24 +130,24 @@ export class CourseManagementRequests {
     addTextExerciseToExam(group: any, title: string) {
         textExercise.exerciseGroup = group;
         textExercise.title = title;
-        return cy.request({method: POST, url: BASE_API + 'text-exercises', body: textExercise});
+        return cy.request({ method: POST, url: BASE_API + 'text-exercises', body: textExercise });
     }
 
     /**
      * generate all missing individual exams
      * @returns <Chainable> request response
      */
-    generateMissingIndividualExams(course: any, exam: any, ) {
-        return cy.request({method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/generate-missing-student-exams'});
+    generateMissingIndividualExams(course: any, exam: any) {
+        return cy.request({ method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/generate-missing-student-exams' });
     }
 
     /**
      * Prepares individual exercises for exam start
      * @returns <Chainable> request response
      */
-    prepareExerciseStartForExam(course: any, exam: any, ) {
-        return cy.request({method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/student-exams/start-exercises'});
-      }
+    prepareExerciseStartForExam(course: any, exam: any) {
+        return cy.request({ method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
+    }
 
     createModelingExercise(modelingExercise: string) {
         return cy.request({

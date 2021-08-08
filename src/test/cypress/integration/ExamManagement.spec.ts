@@ -74,7 +74,9 @@ describe('Exam management', () => {
         it('Does not show exam before visible date', () => {
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
-                .visibleDate(dayjs().add(1, 'day')).startDate(dayjs().add(2, 'days')).endDate(dayjs().add(3, 'days'))
+                .visibleDate(dayjs().add(1, 'day'))
+                .startDate(dayjs().add(2, 'days'))
+                .endDate(dayjs().add(3, 'days'))
                 .build();
             courseManagementRequests.createExam(examContent).then((response) => {
                 exam = response.body;
@@ -89,7 +91,9 @@ describe('Exam management', () => {
         it('Shows after visible date', () => {
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
-                .visibleDate(dayjs().subtract(5, 'days')).startDate(dayjs().add(2, 'days')).endDate(dayjs().add(3, 'days'))
+                .visibleDate(dayjs().subtract(5, 'days'))
+                .startDate(dayjs().add(2, 'days'))
+                .endDate(dayjs().add(3, 'days'))
                 .build();
             courseManagementRequests.createExam(examContent).then((response) => {
                 exam = response.body;
@@ -109,7 +113,9 @@ describe('Exam management', () => {
             const student = artemis.users.getStudentOne();
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
-                .visibleDate(dayjs().subtract(3, 'days')).startDate(dayjs().subtract(2, 'days')).endDate(dayjs().add(3, 'days'))
+                .visibleDate(dayjs().subtract(3, 'days'))
+                .startDate(dayjs().subtract(2, 'days'))
+                .endDate(dayjs().add(3, 'days'))
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
@@ -125,12 +131,14 @@ describe('Exam management', () => {
                         cy.url().should('contain', `/exams/${exam.id}`);
                         cy.contains('Welcome to ' + exam.title).should('exist');
                         cy.get('#confirmBox').click();
-                        artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName) );
+                        artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName));
                         cy.contains('Start').click();
                         cy.contains('Exam Overview').should('exist');
                         cy.intercept('PUT', `/api/exercises/${textExercise.id}/text-submissions`).as('savedSubmission');
                         cy.contains('Text exercise 1').should('exist').click();
-                        cy.get('#text-editor-tab').type('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.');
+                        cy.get('#text-editor-tab').type(
+                            'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+                        );
                         cy.contains('Save').click();
                         cy.wait('@savedSubmission');
                     });
@@ -140,33 +148,35 @@ describe('Exam management', () => {
 
         it('Exam ends after end time', () => {
             let exerciseGroup: any;
-            let textExercise: any;
             const student = artemis.users.getStudentOne();
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
-                .visibleDate(dayjs().subtract(3, 'days')).startDate(dayjs().subtract(2, 'days')).endDate(dayjs().subtract(119, 'minutes').subtract(45, 'seconds'))
+                .visibleDate(dayjs().subtract(3, 'days'))
+                .startDate(dayjs().subtract(2, 'days'))
+                .endDate(dayjs().subtract(119, 'minutes').subtract(45, 'seconds'))
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
                 courseManagementRequests.registerStudentForExam(course, exam, student);
                 courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.addTextExerciseToExam(exerciseGroup, 'Text exercise 1').then((exerciseResponse) => {
-                        textExercise = exerciseResponse.body;
+                    courseManagementRequests.addTextExerciseToExam(exerciseGroup, 'Text exercise 1').then(() => {
                         courseManagementRequests.generateMissingIndividualExams(course, exam);
                         courseManagementRequests.prepareExerciseStartForExam(course, exam);
                         cy.login(student, `/courses/${course.id}/exams/${exam.id}`);
                         cy.get('#confirmBox').click();
-                        artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName) );
+                        artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName));
                         cy.contains('Start').click();
                         cy.contains('Text exercise 1').should('exist').click();
-                        cy.get('#text-editor-tab').type('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.');
+                        cy.get('#text-editor-tab').type(
+                            'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+                        );
                         cy.intercept('GET', '/api/notifications?page=*').as('examEnd');
                         cy.contains('Save').click();
-                        cy.wait('@examEnd', {timeout: 20000});
+                        cy.wait('@examEnd', { timeout: 20000 });
                         cy.contains('This is the end of ' + exam.title);
                         cy.get('#confirmBox').click();
-                        artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName) );
+                        artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName));
                         cy.get('.btn').click();
                         cy.get('.alert').contains('Your exam was submitted successfully.');
                     });
