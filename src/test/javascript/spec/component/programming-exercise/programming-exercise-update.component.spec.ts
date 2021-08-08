@@ -1,10 +1,12 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { DebugElement, Directive } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import { stub } from 'sinon';
 import * as moment from 'moment';
+
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -12,7 +14,7 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entit
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateDirective, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -22,34 +24,7 @@ import {
     ProgrammingLanguageFeature,
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { AlertComponent } from 'app/shared/alert/alert.component';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
-import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { FormsModule, NgModel } from '@angular/forms';
-import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
-import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
-import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
-import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
-import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
-import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
-import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { JhiTranslateDirective } from 'ng-jhipster';
-import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
-import { SlideToggleComponent } from 'app/exercises/shared/slide-toggle/slide-toggle.component';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
-import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
-import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
+import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 
 describe('ProgrammingExercise Management Update Component', () => {
@@ -66,38 +41,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, FormDateTimePickerModule],
-            declarations: [
-                ProgrammingExerciseUpdateComponent,
-                MockComponent(AlertComponent),
-                MockComponent(AlertErrorComponent),
-                MockComponent(HelpIconComponent),
-                MockComponent(TableEditableFieldComponent),
-                MockDirective(TranslateDirective),
-                MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
-                MockPipe(RemoveKeysPipe),
-                MockDirective(NgModel),
-                MockDirective(NgbTooltip),
-                MockComponent(NgbAlert),
-                MockComponent(RemoveAuxiliaryRepositoryButtonComponent),
-                MockComponent(AddAuxiliaryRepositoryButtonComponent),
-                MockComponent(CategorySelectorComponent),
-                MockComponent(DifficultyPickerComponent),
-                MockComponent(TeamConfigFormGroupComponent),
-                MockComponent(ProgrammingExerciseLifecycleComponent),
-                MockComponent(IncludedInOverallScorePickerComponent),
-                MockComponent(ProgrammingExerciseInstructionComponent),
-                MockComponent(ProgrammingExerciseEditableInstructionComponent),
-                MockComponent(SlideToggleComponent),
-                MockComponent(MarkdownEditorComponent),
-                MockComponent(GradingInstructionsDetailsComponent),
-                MockComponent(ButtonComponent),
-                MockComponent(PresentationScoreComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(JhiTranslateDirective),
-                MockDirective(CustomMaxDirective),
-                MockDirective(CustomMinDirective),
-            ],
+            imports: [ArtemisTestModule, BrowserAnimationsModule, ArtemisProgrammingExerciseUpdateModule, FormDateTimePickerModule],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
