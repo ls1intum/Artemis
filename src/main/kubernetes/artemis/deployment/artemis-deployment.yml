@@ -1,13 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    field.cattle.io/creatorId: user-gpcv5
+  labels:
+    cattle.io/creator: norman
+    workload.user.cattle.io/workloadselector: deployment-artemis-artemis
   name: artemis
 spec:
+  progressDeadlineSeconds: 600
   replicas: 1
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
-      app: artemis
-      version: "v1"
+      workload.user.cattle.io/workloadselector: deployment-artemis-artemis
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -16,30 +22,24 @@ spec:
   template:
     metadata:
       labels:
-        app: artemis
-        version: "v1"
+        workload.user.cattle.io/workloadselector: deployment-artemis-artemis
     spec:
       containers:
-      - env:
-        envFrom:
+      - envFrom:
         - configMapRef:
             name: artemis-app
-        image: <DockerId>/artemis
+            optional: false
+        image: <DockerID>/artemis
         imagePullPolicy: Always
-        name: artemis-app
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1"
+        name: artemis
         ports:
         - containerPort: 8080
-          name: port
+          name: 8080tcp02
           protocol: TCP
+        resources: {}
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities: {}
           privileged: false
           readOnlyRootFilesystem: false
           runAsNonRoot: false
@@ -50,4 +50,5 @@ spec:
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
+      securityContext: {}
       terminationGracePeriodSeconds: 30
