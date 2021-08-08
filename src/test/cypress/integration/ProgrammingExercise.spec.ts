@@ -1,3 +1,4 @@
+import { GROUP_SYNCHRONIZATION } from './../support/constants';
 import { artemis } from '../support/ArtemisTesting';
 import { generateUUID } from '../support/utils';
 
@@ -38,7 +39,7 @@ describe('Programming Exercise Management', () => {
                 expect(body).property('id').to.be.a('number');
                 course = body;
                 // Wait for group synchronization
-                cy.wait(65000);
+                cy.wait(GROUP_SYNCHRONIZATION);
             });
     });
 
