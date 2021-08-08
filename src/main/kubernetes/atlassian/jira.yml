@@ -14,12 +14,19 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    field.cattle.io/creatorId: user-gpcv5
+  labels:
+    cattle.io/creator: norman
+    workload.user.cattle.io/workloadselector: deployment-artemis-artemis-jira
   name: artemis-jira
 spec:
+  progressDeadlineSeconds: 600
   replicas: 1
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
-      workload.user.cattle.io/workloadselector: deployment-default-artemis-jira
+      workload.user.cattle.io/workloadselector: deployment-artemis-artemis-jira
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -27,8 +34,10 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations:
+        field.cattle.io/ports: '[[{"containerPort":8080,"dnsName":"artemis-jira-nodeport","hostPort":0,"kind":"NodePort","name":"8080tcp1","protocol":"TCP"}]]'
       labels:
-        workload.user.cattle.io/workloadselector: deployment-default-artemis-jira
+        workload.user.cattle.io/workloadselector: deployment-artemis-artemis-jira
     spec:
       containers:
       - image: atlassian/jira-core:8.16.0
@@ -36,7 +45,7 @@ spec:
         name: artemis-jira
         ports:
         - containerPort: 8080
-          name: 8080tcp01
+          name: 8080tcp1
           protocol: TCP
         resources: {}
         securityContext:
@@ -45,6 +54,10 @@ spec:
           privileged: false
           readOnlyRootFilesystem: false
           runAsNonRoot: false
+        stdin: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        tty: true
         volumeMounts:
         - mountPath: /var/atlassian/application-data/jira
           name: artemis-jira
@@ -57,41 +70,3 @@ spec:
       - name: artemis-jira
         persistentVolumeClaim:
           claimName: artemis-jira
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: artemis-jira
-spec:
-  ipFamilies:
-  - IPv4
-  ipFamilyPolicy: SingleStack
-  ports:
-  - name: 8080tcp01-artemis-jira
-    port: 8080
-    protocol: TCP
-    targetPort: 8080
-  selector:
-    workload.user.cattle.io/workloadselector: deployment-default-artemis-jira
-  sessionAffinity: None
-  type: ClusterIP
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: artemis-jira-nodeport
-spec:
-  externalTrafficPolicy: Cluster
-  ipFamilies:
-  - IPv4
-  ipFamilyPolicy: SingleStack
-  ports:
-  - name: 8080tcp01
-    nodePort: 32149
-    port: 8080
-    protocol: TCP
-    targetPort: 8080
-  selector:
-    workload.user.cattle.io/workloadselector: deployment-default-artemis-jira
-  sessionAffinity: None
-  type: NodePort
