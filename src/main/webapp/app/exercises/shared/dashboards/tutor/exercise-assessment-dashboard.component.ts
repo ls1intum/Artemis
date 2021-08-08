@@ -608,18 +608,57 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         }
 
         this.openingAssessmentEditorForNewSubmission = true;
-        const submissionId: number | 'new' = submission === 'new' ? 'new' : submission.id!;
+        const url = this.getAssessmentLink(submission);
+        this.router.navigate(url, { queryParams: this.getAssessmentQueryParams(correctionRound) });
+        this.openingAssessmentEditorForNewSubmission = false;
+    }
+
+    /**
+     * Generates and returns the link to the assessment editor without query parameters
+     * @param submission Either submission or 'new'.
+     */
+    getAssessmentLink(submission: Submission | 'new'): string[] {
+        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
         let participationId = undefined;
         if (submission !== 'new' && submission.participation !== undefined) {
             participationId = submission.participation!.id;
         }
-        const url = getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, submissionId, this.examId, this.exerciseGroupId);
+        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId!, this.exerciseId, participationId, submissionUrlParameter, this.examId, this.exerciseGroupId);
+    }
+
+    /**
+     * Generates and returns the query parameters required for opening the assessment editor
+     * @param correctionRound
+     */
+    getAssessmentQueryParams(correctionRound = 0): object {
         if (this.isTestRun) {
-            this.router.navigate(url, { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
+            return {
+                testRun: this.isTestRun,
+                'correction-round': correctionRound,
+            };
         } else {
-            this.router.navigate(url, { queryParams: { 'correction-round': correctionRound } });
+            return { 'correction-round': correctionRound };
         }
-        this.openingAssessmentEditorForNewSubmission = false;
+    }
+
+    /**
+     * Generates and returns the query parameters required for opening a complaint
+     * @param complaint
+     */
+    getComplaintQueryParams(complaint: Complaint) {
+        const submission: Submission = complaint.result?.submission!;
+        // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
+        if (complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
+            return this.getAssessmentQueryParams(this.numberOfAssessmentsOfCorrectionRounds.length - 1);
+        }
+        const submissionToView = this.submissionsWithComplaints.filter((dto) => dto.submission.id === submission.id).pop()?.submission;
+        if (submissionToView) {
+            if (!submissionToView.results) {
+                submissionToView.results = [];
+            }
+            submissionToView.results = submissionToView.results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC);
+            return this.getAssessmentQueryParams(submissionToView.results!.length - 1);
+        }
     }
 
     /**
