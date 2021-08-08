@@ -42,7 +42,7 @@ export class OrionAssessmentService {
      * @param submissionId id of the submission to send to Orion
      * @param correctionRound correction round
      */
-    private sendSubmissionToOrion(exerciseId: number, submissionId: number, correctionRound = 0) {
+    sendSubmissionToOrion(exerciseId: number, submissionId: number, correctionRound = 0) {
         this.orionConnectorService.isCloning(true);
         const exportOptions: RepositoryExportOptions = {
             exportAllParticipants: false,
