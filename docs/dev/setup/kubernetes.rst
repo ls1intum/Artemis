@@ -233,7 +233,7 @@ It may take some time but at the end you should see that all the workloads have 
 .. figure:: kubernetes/rancher_workloads.png
    :align: center
 
-You can open the Artemis application using the link `<https://artemis-app.default.rancher.localhost/>`__
+You can open the Artemis application using the link `<https://artemis-app.artemis.rancher.localhost/>`__
 You will get the same "Connection is not private" issue as you did when opening `<https://rancher.localhost/>`__. As said before this is because a self-signed certificate is used and it is safe to proceeed.
 It takes several minutes for the application to start. If you get a "Bad Gateway" error it may happen that the application has not been started yet. 
 Wait everal minutes and if you still have this issue or another one you can check out the pod logs (described in the next chapter). 

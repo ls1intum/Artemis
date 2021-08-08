@@ -15,13 +15,13 @@ spec:
       containers:
       - env:
         - name: KAFKA_ADVERTISED_LISTENERS
-          value: PLAINTEXT://kafka.default.svc.cluster.local:9092
+          value: PLAINTEXT://kafka.artemis.svc.cluster.local:9092
         - name: KAFKA_BROKER_ID
           value: "2"
         - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
           value: "1"
         - name: KAFKA_ZOOKEEPER_CONNECT
-          value: zookeeper.default.svc.cluster.local:2181
+          value: zookeeper.artemis.svc.cluster.local:2181
         image: confluentinc/cp-kafka:5.5.3
         imagePullPolicy: IfNotPresent
         name: kafka

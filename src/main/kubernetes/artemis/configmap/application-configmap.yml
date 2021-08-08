@@ -29,4 +29,4 @@ data:
     eureka:
       client:
         service-url:
-          defaultZone: http://admin:${spring.security.user.password}@jhipster-registry-0.jhipster-registry.default.svc.cluster.local:8761/eureka/,http://admin:${spring.security.user.password}@jhipster-registry-1.jhipster-registry.default.svc.cluster.local:8761/eureka/
+          defaultZone: http://admin:${spring.security.user.password}@jhipster-registry-0.jhipster-registry.artemis.svc.cluster.local:8761/eureka/,http://admin:${spring.security.user.password}@jhipster-registry-1.jhipster-registry.artemis.svc.cluster.local:8761/eureka/
