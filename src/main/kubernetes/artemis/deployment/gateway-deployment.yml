@@ -1,12 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    field.cattle.io/creatorId: user-gpcv5
+  labels:
+    cattle.io/creator: norman
+    workload.user.cattle.io/workloadselector: deployment-artemis-gateway
   name: gateway
 spec:
+  progressDeadlineSeconds: 600
   replicas: 1
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
-      app: gateway
+      workload.user.cattle.io/workloadselector: deployment-artemis-gateway
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -15,7 +22,7 @@ spec:
   template:
     metadata:
       labels:
-        app: gateway
+        workload.user.cattle.io/workloadselector: deployment-artemis-gateway
     spec:
       containers:
       - env:
@@ -34,21 +41,16 @@ spec:
         - name: _JAVA_OPTIONS
           value: -Xmx512m -Xms256m
         image: mmehmed/artemis-gateway
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         name: gateway
         ports:
         - containerPort: 8080
-          name: 8080tcp2
+          name: 8080tcp02
           protocol: TCP
-        resources: 
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1"
+        resources: {}
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities: {}
           privileged: false
           readOnlyRootFilesystem: false
           runAsNonRoot: false
