@@ -224,7 +224,7 @@ export interface ArtemisClientConnector {
      * @param submissionId Id of the open submission, for validation
      * @param feedback all inline feedback, as JSON
      */
-    updateAssessment(submissionId: number, feedback: string): void
+    updateAssessment(submissionId: number, feedback: string): void;
 }
 
 export interface OrionWindow {

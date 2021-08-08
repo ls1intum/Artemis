@@ -1,4 +1,5 @@
 <h3 class="top-container">
+    <jhi-alert></jhi-alert>
     <!--back button only used in assessment dashboard-->
     <div class="row-container me-2">
         <span *ngIf="!isTestRun" jhiTranslate="artemisApp.assessment.assessment">Assessment</span>
@@ -7,7 +8,6 @@
             Warning: You are viewing an illegal submission.
         </span>
     </div>
-    <jhi-alert></jhi-alert>
     <ngb-alert
         *ngIf="hasAssessmentDueDatePassed && !result?.completionDate"
         [style.fontSize]="'65%'"
@@ -47,7 +47,7 @@
             There is a complaint for this assessment. Another tutor must respond.
         </span>
         <span
-            id="assessmentReadOnlyhandled"
+            id="assessmentReadOnlyHandled"
             *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && complaintHandled"
             class="ms-3"
             style="font-size: 65%"
@@ -84,7 +84,6 @@
                 >Deactivate Diff-View</span
             >
         </button>
-        <div class="w-100 d-block d-md-none"></div>
         <br />
         <ng-container *ngIf="!result?.completionDate">
             <button class="btn ms-2 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">

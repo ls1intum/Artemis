@@ -5,14 +5,18 @@
                 "outdated": "Das installierte Orion Plugin ist veraltet!",
                 "usedVersion": "Installierte Version: ",
                 "allowedVersion": "Erlaubte Version (mindestens): "
+            },
+            "assessment": {
+                "updateFailed": "Aktualisieren der Bewertung fehlgeschlagen. Zugehörige Bewertung konnte nicht gefunden werden. Stelle sicher, dass die korrekte Seite geöffnet ist, und versuche es erneut.",
+                "submissionIdDontMatch": "Id der geöffneten Seite stimmt nicht mit der in Orion geladenen Abgabe überein. Aktualisieren des Feedbacks wurde abgebrochen. Stelle sicher, dass die korrekte Seite geöffnet ist, und versuche es erneut."
             }
+        },
+        "orionExerciseAssessmentDashboard": {
+            "startYourParticipation": "Aufgabe in Orion bewerten",
+            "startAssessment": "Neue Bewertung in Orion starten",
+            "continueAssessment": "Bewertung in Orion fortsetzen",
+            "openAssessment": "Bewertung in Orion öffnen",
+            "downloadFailed": "Abgabe konnte nicht heruntergeladen werden. Datei möglicherweise zu groß. Versuche, sie manuell herunterzuladen."
         }
-    },
-    "orionExerciseAssessmentDashboard": {
-        "startYourParticipation": "Aufgabe in Orion bewerten",
-        "startAssessment": "Neue Bewertung in Orion starten",
-        "continueAssessment": "Bewertung in Orion fortsetzen",
-        "openAssessment": "Bewertung in Orion öffnen",
-        "downloadFailed": "Abgabe konnte nicht heruntergeladen werden. Datei möglicherweise zu groß. Versuche manuelles Herunterladen."
     }
 }

@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { Exercise } from 'app/entities/exercise.model';
 
 @Component({

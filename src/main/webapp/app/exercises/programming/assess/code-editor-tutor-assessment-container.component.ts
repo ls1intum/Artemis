@@ -104,6 +104,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     @ContentChild('overrideCodeEditor') overrideCodeEditor: TemplateRef<any>;
     @ContentChild('overrideExportGoToRepository') overrideExportGoToRepository: TemplateRef<any>;
     @Output() onFeedbackLoaded = new EventEmitter();
+    @Output() onNextSubmissionLoaded = new EventEmitter();
 
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
@@ -338,6 +339,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe(
             (response: ProgrammingSubmission) => {
                 this.loadingParticipation = false;
+                this.onNextSubmissionLoaded.emit(response.id!);
 
                 // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.onSameUrlNavigation = 'reload';
