@@ -14,12 +14,21 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+    field.cattle.io/creatorId: user-hwfmq
+  generation: 1
+  labels:
+    cattle.io/creator: norman
+    workload.user.cattle.io/workloadselector: deployment-artemis-artemis-mysql
   name: artemis-mysql
 spec:
+  progressDeadlineSeconds: 600
   replicas: 1
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
-      app: artemis-mysql
+      workload.user.cattle.io/workloadselector: deployment-artemis-artemis-mysql
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -28,7 +37,7 @@ spec:
   template:
     metadata:
       labels:
-        app: artemis-mysql
+        workload.user.cattle.io/workloadselector: deployment-artemis-artemis-mysql
     spec:
       containers:
       - args:
@@ -37,26 +46,21 @@ spec:
         - --character_set_server=utf8mb4
         - --explicit_defaults_for_timestamp
         env:
-          - name: MYSQL_ALLOW_EMPTY_PASSWORD
-            value: "yes"
-          - name: MYSQL_DATABASE
-            value: Artemis
-          - name: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_ALLOW_EMPTY_PASSWORD
+          value: "yes"
+        - name: MYSQL_DATABASE
+          value: Artemis
+        - name: MYSQL_ROOT_PASSWORD
         image: mysql:8.0.25
         imagePullPolicy: Always
         name: artemis-mysql
         ports:
-          - containerPort: 3306
-            protocol: TCP
-        resources: 
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1"
+        - containerPort: 3306
+          protocol: TCP
+        resources: {}
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities: {}
           privileged: false
           readOnlyRootFilesystem: false
           runAsNonRoot: false
@@ -65,8 +69,8 @@ spec:
         terminationMessagePolicy: File
         tty: true
         volumeMounts:
-          - mountPath: /var/lib/mysql/
-            name: artemis-data
+        - mountPath: /var/lib/mysql/
+          name: artemis-data
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
@@ -76,13 +80,3 @@ spec:
       - name: artemis-data
         persistentVolumeClaim:
           claimName: artemis-data
----
-apiVersion: v1
-kind: Service
-metadata:
-    name: artemis-mysql
-spec:
-    selector:
-        app: artemis-mysql
-    ports:
-        - port: 3306
