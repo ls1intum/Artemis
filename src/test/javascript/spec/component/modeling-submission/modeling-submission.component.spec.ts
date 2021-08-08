@@ -10,7 +10,7 @@ import { MockParticipationWebsocketService } from '../../helpers/mocks/service/m
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -19,32 +19,36 @@ import { By } from '@angular/platform-browser';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
-import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { routes } from 'app/exercises/modeling/participate/modeling-participation.route';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
-import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
-import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
-import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { UMLElement, UMLModel } from '@ls1intum/apollon';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-participate-info-box/team-participate-info-box.component';
+import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
+import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
+import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
+import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
+import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
+import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
+import {ArtemisTranslatePipe} from "app/shared/pipes/artemis-translate.pipe";
+import {AlertComponent} from "app/shared/alert/alert.component";
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -68,24 +72,28 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [
-                    ArtemisTestModule,
-                    TranslateModule.forRoot(),
-                    MockModule(ArtemisSharedModule),
-                    MockModule(ArtemisResultModule),
-                    MockModule(ArtemisSharedComponentModule),
-                    ModelingAssessmentModule,
-                    MockModule(ArtemisComplaintsModule),
-                    MockModule(ArtemisTeamModule),
-                    MockModule(ArtemisFullscreenModule),
-                    MockModule(ArtemisTeamSubmissionSyncModule),
-                    MockModule(ArtemisHeaderExercisePageWithDetailsModule),
-                    MockModule(RatingModule),
-                    RouterTestingModule.withRoutes([routes[0]]),
+                imports: [ArtemisTestModule, RouterTestingModule.withRoutes([routes[0]])],
+                declarations: [
+                    ModelingSubmissionComponent,
+                    MockComponent(ModelingEditorComponent),
+                    MockPipe(HtmlForMarkdownPipe),
+                    MockPipe(ArtemisTranslatePipe),
+                    MockComponent(HeaderParticipationPageComponent),
+                    MockComponent(ButtonComponent),
+                    MockComponent(ResizeableContainerComponent),
+                    MockComponent(TeamParticipateInfoBoxComponent),
+                    MockComponent(TeamSubmissionSyncComponent),
+                    MockComponent(ModelingAssessmentComponent),
+                    MockComponent(FullscreenComponent),
+                    MockComponent(AdditionalFeedbackComponent),
+                    MockComponent(RatingComponent),
+                    MockComponent(ComplaintInteractionsComponent),
+                    MockComponent(AlertComponent),
+                    MockComponent(FaIconComponent),
                 ],
-                declarations: [ModelingSubmissionComponent, MockComponent(ModelingEditorComponent), MockPipe(HtmlForMarkdownPipe)],
                 providers: [
                     MockProvider(ChangeDetectorRef),
+                    { provide: TranslateService, useClass: MockTranslateService },
                     { provide: ComplaintService, useClass: MockComplaintService },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
