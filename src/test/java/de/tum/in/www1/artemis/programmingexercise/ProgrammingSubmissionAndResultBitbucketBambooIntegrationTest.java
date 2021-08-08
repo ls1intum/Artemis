@@ -5,8 +5,10 @@ import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.C;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,6 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -42,6 +45,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -82,6 +86,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     @Autowired
     private ResultRepository resultRepository;
+
+    @Autowired
+    private ExamDateService examDateService;
 
     private Long exerciseId;
 
@@ -575,7 +582,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         exam = examRepository.save(exam);
 
         var studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId()).get();
-        studentExam.setWorkingTime(0);
+        studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).getSeconds());
         studentExam.setExercises(new ArrayList<>(exam.getExerciseGroups().get(6).getExercises()));
         studentExam.setUser(user);
         studentExam = studentExamRepository.save(studentExam);
@@ -605,6 +612,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
 
         // Mock result from bamboo
+        assertThat(examDateService.getLatestIndividualExamEndDateWithGracePeriod(studentExam.getExam())).isBefore(ZonedDateTime.now());
         postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
 
         // Check that the result was created successfully and is linked to the participation and submission.
@@ -612,6 +620,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(results).hasSize(1);
         Result createdResult = results.get(0);
         createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).get();
+
+        // Student should not receive a result over WebSocket, the exam is over and therefore test after due date would be visible
+        verify(messagingTemplate, never()).convertAndSendToUser(eq(user.getLogin()), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
 
         // Assert that the submission is illegal
         assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
@@ -644,6 +655,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
 
         // Mock result from bamboo
+        assertThat(examDateService.getLatestIndividualExamEndDateWithGracePeriod(studentExam.getExam())).isAfter(ZonedDateTime.now());
         postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
 
         // Check that the result was created successfully and is linked to the participation and submission.
@@ -651,6 +663,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(results).hasSize(1);
         Result createdResult = results.get(0);
         createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).get();
+
+        // Student should receive a result over WebSocket, the exam not over (grace period still active)
+        verify(messagingTemplate, times(1)).convertAndSendToUser(eq(user.getLogin()), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
 
         // Assert that the submission is illegal
         assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
