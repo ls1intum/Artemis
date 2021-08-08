@@ -54,19 +54,9 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Retrieves a new submission if necessary and then delegates to the
-     * {@link OrionAssessmentService} to download the submission
-     *
-     * @param submission submission to send to Orion or 'new' if a new one should be loaded
-     * @param correctionRound correction round
+     * Delegates to the {@link OrionAssessmentService} to load a new submission
      */
     downloadSubmissionInOrion(submission: Submission | 'new', correctionRound = 0) {
-        if (submission === 'new') {
-            this.programmingSubmissionService
-                .getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exerciseId, true, correctionRound)
-                .subscribe((newSubmission) => this.orionAssessmentService.sendSubmissionToOrion(this.exerciseId, newSubmission.id!, correctionRound));
-        } else {
-            this.orionAssessmentService.sendSubmissionToOrion(this.exerciseId, submission.id!, correctionRound);
-        }
+        this.orionAssessmentService.downloadSubmissionInOrion(this.exerciseId, submission, correctionRound)
     }
 }

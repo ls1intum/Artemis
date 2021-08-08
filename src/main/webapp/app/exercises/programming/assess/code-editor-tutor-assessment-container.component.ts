@@ -1,4 +1,4 @@
-import { Component, ContentChild, EventEmitter, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
+import { Component, ContentChild, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import * as moment from 'moment';
 import { now } from 'moment';
@@ -103,8 +103,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // extension points, see shared/extension-point
     @ContentChild('overrideCodeEditor') overrideCodeEditor: TemplateRef<any>;
     @ContentChild('overrideExportGoToRepository') overrideExportGoToRepository: TemplateRef<any>;
+    // listener, will get notified upon loading of feedback
     @Output() onFeedbackLoaded = new EventEmitter();
-    @Output() onNextSubmissionLoaded = new EventEmitter();
+    // function override, if set will be executed instead of going to the next submission page
+    @Input() overrideNextSubmission?: () => { } = undefined;
 
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
@@ -339,7 +341,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe(
             (response: ProgrammingSubmission) => {
                 this.loadingParticipation = false;
-                this.onNextSubmissionLoaded.emit(response.id!);
+
+                // the remainder of the function will be skipped if it got overridden
+                if (this.overrideNextSubmission) {
+                    this.overrideNextSubmission();
+                    return;
+                }
 
                 // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.onSameUrlNavigation = 'reload';

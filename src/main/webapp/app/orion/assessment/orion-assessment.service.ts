@@ -3,6 +3,7 @@ import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { JhiAlertService } from 'ng-jhipster';
+import { Submission } from 'app/entities/submission.model';
 
 /**
  * Provides methods to retrieve information about running exercise builds.
@@ -17,13 +18,31 @@ export class OrionAssessmentService {
     ) {}
 
     /**
+     * Retrieves a new submission if necessary and then delegates to sendSubmissionToOrion
+     * to download the submission
+     *
+     * @param exerciseId if of the exercise the submission belongs to
+     * @param submission submission to send to Orion or 'new' if a new one should be loaded
+     * @param correctionRound correction round
+     */
+    downloadSubmissionInOrion(exerciseId: number, submission: Submission | 'new', correctionRound = 0) {
+        if (submission === 'new') {
+            this.programmingSubmissionService
+                .getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, correctionRound)
+                .subscribe((newSubmission) => this.sendSubmissionToOrion(exerciseId, newSubmission.id!, correctionRound));
+        } else {
+            this.sendSubmissionToOrion(exerciseId, submission.id!, correctionRound);
+        }
+    }
+
+    /**
      * Locks the given submission, exports it, transforms it to base64, and sends it to Orion
      *
      * @param exerciseId id of the exercise the submission belongs to
      * @param submissionId id of the submission to send to Orion
      * @param correctionRound correction round
      */
-    sendSubmissionToOrion(exerciseId: number, submissionId: number, correctionRound = 0) {
+    private sendSubmissionToOrion(exerciseId: number, submissionId: number, correctionRound = 0) {
         this.orionConnectorService.isCloning(true);
         const exportOptions: RepositoryExportOptions = {
             exportAllParticipants: false,

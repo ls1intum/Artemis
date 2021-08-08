@@ -38,10 +38,10 @@ export class OrionTutorAssessmentComponent {
     }
 
     /**
-     * Makes Orion load the submission with the given id, triggered on clicking the "next submission" button
-     * @param submissionId that should be loaded
+     * Delegates to the {@link OrionAssessmentService} to make Orion load a new submission.
+     * Triggered on clicking the "next submission" button
      */
-    openNextSubmission(submissionId: number) {
-        this.orionAssessmentService.sendSubmissionToOrion(this.container.exerciseId, submissionId, this.container.correctionRound);
+    openNextSubmission() {
+        this.orionAssessmentService.downloadSubmissionInOrion(this.container.exerciseId, 'new', this.container.correctionRound);
     }
 }
