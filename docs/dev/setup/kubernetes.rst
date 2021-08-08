@@ -5,11 +5,23 @@ This page describes how to set up an environment deployed in Kubernetes.
 
 **Prerequisites:**
 
-* `Docker <https://docs.docker.com/install>`__ v20.10.7 - Docker is a platform for developing, shipping an running application. In our case we will use it to build the images which we will deploy
-* `DockerHub Account <https://hub.docker.com/signup>`__ - DockerHub account is needed in order to push the Artemis image which will be used by Kubernetes
-* `k3d <https://k3d.io/#installation>`__ v4.4.7 - Lightweght Kubernetes distribution, which will be used to create and manage clusters
-* `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl/>`__ v1.21 - Kubernetes command-line tool, which will be used to create deployments
-* `helm <https://helm.sh/docs/intro/install/>`__ v3.6.3 - Package manager for Kubernetes, which will be used to install cert-manager and Rancher
+Follow the links to install the tools which will be needed in order to proceed with the Kubernetes cluster setup.
+
+* `Docker <https://docs.docker.com/get-docker/>`__ - v20.10.7 
+   Docker is a platform for developing, shipping an running application. 
+   In our case we will use it to build the images which we will deploy. 
+   It is also needed from k3d in order to create cluster. The cluster nodes are deployed on Docker containers.
+* `DockerHub Account <https://hub.docker.com/signup>`__ 
+   Docker Hub is a service provided by Docker for finding and sharing container images. 
+   Account in DockerHub is needed in order to push the Artemis image which will be used by the Kubernetes deployment.
+* `k3d <https://k3d.io/#installation>`__ - v4.4.7
+   k3d is lightweight wrapper to run k3s which is a lightweght Kubernetes distribution in Docker. 
+   k3d makes it very easy to create k3s clusters especially for local deployment on Kubernetes. 
+* `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl/>`__ - v1.21 
+   kubectl is the Kubernetes command-line tool, which allows you to run commands against Kubernetes clusters. 
+   It can be used to deploy applications, inspect and manage cluster resources, and view logs.
+* `helm <https://helm.sh/docs/intro/install/>`__ - v3.6.3 
+   Helm is the package manager for Kubernetes. We will be use it to install cert-manager and Rancher
 
 
 .. contents:: Content of this document
@@ -18,15 +30,16 @@ This page describes how to set up an environment deployed in Kubernetes.
 
 Setup Kubernetes cluster
 ------------------------
-In order to be able to deploy Artemis on Kubernetes, you need to setup a cluster.
+In order to be able to deploy Artemis on Kubernetes, you need to setup a cluster. A cluster is a set of nodes that run containerized applications. Kubernetes clusters allow for applications to be more easily developed, moved and managed.
+
 With the following commands you will setup one cluster with 3 agents as well as Rancher which is a platform for cluster management with easy to use user interface.
 
-**IMPORTANT: The following commands may differ for your OS, the examples are working for Linux machine.**
+**IMPORTANT: The following commands may differ for your OS, the examples are working for Linux machines.**
 
 1. Set environment variables
    
-   The CLUSTER_NAME, RANCHER_SERVER_HOSTNAME and KUBECONFIG_FILE environment variables need to be set so that they can be used in the following commands.
-   If you don't want to set them you can replace their values in the commands. What you need to do is replace $CLUSTER_NAME with "k3d-rancher", $RANCHER_SERVER_HOSTNAME with "rancher.localhost" and $KUBECONFIG_FILE with "k3d-rancher.yml".
+   The CLUSTER_NAME, RANCHER_SERVER_HOSTNAME and KUBECONFIG_FILE environment variables need to be set so that they can be used in the next commands.
+   If you don't want to set environment variables you can replace their values in the commands. What you need to do is replace $CLUSTER_NAME with "k3d-rancher", $RANCHER_SERVER_HOSTNAME with "rancher.localhost" and $KUBECONFIG_FILE with "k3d-rancher.yml".
    
    ::
 
@@ -36,8 +49,15 @@ With the following commands you will setup one cluster with 3 agents as well as 
 
 2. Create the cluster
 
+
    With the help of the commands block below you can create a cluster with 1 server and 3 agents at total 4 nodes. Your deployments will be distributed almost equally among the 4 nodes.
-   You will also write the cluster configuration into the KUBECONFIG_FILE. This configuration will be later needed when you are creating deployments. You can either set the path to the file as an environment variable or reaplce it with "<path-to-kubeconfig-file>" when needed.
+   
+   Using ``k3d cluster list`` you can see whether your cluster is created and how many of its nodes are running.
+   
+   Using ``kubectl get nodes`` you can see the status of each node of the newly created cluster.
+   
+   You should also write the cluster configuration into the KUBECONFIG_FILE. This configuration will be later needed when you are creating deployments. 
+   You can either set the path to the file as an environment variable or replce it with "<path-to-kubeconfig-file>" when needed.
    
    ::
 
@@ -49,8 +69,14 @@ With the following commands you will setup one cluster with 3 agents as well as 
 
 3. Install cert-manager
    
-   cert-manager is used to add certificates and certificate issuers as resource types in Kubernetes clusters.
-   You can install it with one single command.
+   cert-manager is used to add certificates and certificate issuers as resource types in Kubernetes clusters. 
+   It simplifies the process of obtaining, renewing and using those certificates.
+   It can issue certificates from a variety of supported sources, i.e. Let’s Encrypt, HashiCorp Vault, Venafi.
+   
+   In our case it will issue self-signed certificates to our Kubernetes deployments to secure the communication between the different deployments.
+
+   Before the installation, you need to add the Jetstack repository and update the local Helm chart repository cache.
+   cert-manager has to be installed in a separate namespace called ``cert-manager`` so one should be created as well. After the installation you can check the status of the installation.
 
    ::
 
@@ -62,10 +88,14 @@ With the following commands you will setup one cluster with 3 agents as well as 
 
 4. Install Rancher
 
-   Rancher is a Kubernetes management tool which gives you the opportunity to create and manage Kubernetes deployments using in easier way than with the CLI tools.
-   Using helm you can install it and then check it's status with the last command
+   Rancher is a Kubernetes management tool which gives you the opportunity to create and manage Kubernetes deployments more easily than with the CLI tools.
+   
+   You can install Rancher using helm - the package manager for Kubernetes. It has to be installed in a namespace called ``cattle-system`` and we should create such a namespace before the installation itself.
+   During the installation we set the namespace and the hostname which Ranchen will be accessible on.
+   Then we can check the installation status. 
 
    ::
+
       helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
       helm repo update
       kubectl create namespace cattle-system
@@ -75,7 +105,10 @@ With the following commands you will setup one cluster with 3 agents as well as 
 5. Open Rancher and update the password
 
 Open Rancher on `<https://rancher.localhost/>`__.
-You will be notified that the connection is not private. The reason for that is that the Rancher deployment uses a self-signed certificate by an unknown authority 'dynamiclistener-ca'. It is used for secure communication between internal components. Since it's your local environment this is not an issue and you can just proceed to the website.
+
+You will be notified that the connection is not private. The reason for that is that the Rancher deployment uses a self-signed certificate by an unknown authority 'dynamiclistener-ca'. 
+It is used for secure communication between internal components. Since it's your local environment this is not an issue and you can proceed to the website.
+
 You will be prompted to set a password which later will be used to login to Rancher. The password will be used often, that's why you shouldn't forget it.
 
 .. figure:: kubernetes/rancher_password.png
@@ -86,7 +119,7 @@ Then you should save the Rancher Server URL, please use the predefined name.
 .. figure:: kubernetes/rancher_url.png
    :align: center
 
-After saving you be redirected to the main page of rancher, where you see your cluters. There will be one local cluster.
+After saving you will be redirected to the main page of Rancher, where you see your cluters. There will be one local cluster.
 
 .. figure:: kubernetes/rancher_cluster.png
    :align: center
@@ -100,10 +133,13 @@ You can open the workloads using the menu, there will be no workloads deployed a
 .. figure:: kubernetes/rancher_empty_workloads.png
    :align: center
 
-6. Create namespace
+6. Create new namespace in Rancher
 
-We want to deploy Artemis deployments in a separate namespace which will be used only for the Artemis application.
-Using Rancher you can create a new namespace.
+Namespaces are virtual clusters backed by the same physical cluster. Namespaces provide a scope for names. Names of resources need to be unique within a namespace, but not across namespaces.
+Usually different namespaces are created to separate environments deployments i.e. development, staging, production.
+
+For our development purposes we will create a namespace called artemis.
+It can be done easily using Rancher.
 
 a. Navigate to Namespaces using the top menu of Rancher
 
@@ -165,6 +201,7 @@ Configure Artemis resources
 ---------------------------
 In order to run Artemis, you need to configure the Artemis resources with the configuration you are going to use it with i.e. Jira, Bitbucket, Bamboo or Jenkins, Gitlab.
 Make sure you have configured the ``src/main/resources/config/application-prod.yml`` or ``src/main/resources/config/application-artemis.yml`` file with the proper configuration. 
+
 Since the deployment is done on a Kubernetes cluster, localhost connections to Jira, Bamboo, Bitbucket or Gitlab, Jenkins will not work. 
 For this reason you should set the connection to existing servers or to local Kubernetes deployments.
 
@@ -199,9 +236,11 @@ Push the image to DockerHub from where it will be pulled during the deployment:
    docker push <DockerId>/artemis
 
 
-Configure Artemis profiles
+Configure Spring profiles
 --------------------------
-ConfigMaps are used to store configuration data in key-value pairs, If you want you can configure the profiles for running Artemis in the ``src/main/kubernetes/artemis-k8s/artemis-configmap.yml`` file by changing ``SPRING_PROFILES_ACTIVE``.
+ConfigMaps are used to store configuration data in key-value pairs.
+
+You can change the current Spring profiles used for running Artemis in the ``src/main/kubernetes/artemis-k8s/artemis-configmap.yml`` file by changing ``SPRING_PROFILES_ACTIVE``.
 The current ones are set to use Bitbucket, Jira and Bamboo. If you want to use Jenkins and Gitlab please replace ``bamboo,bitbucket,jira`` with ``jenkins,gitlab``.
 You can also change ``prod`` to ``dev`` if you want to run in development profile.
 
@@ -228,13 +267,16 @@ In the console you will see that the resources are created. It will take a litte
 Check the deployments in Rancher
 --------------------------------
 Open Rancher using `<https://rancher.localhost/>`__ and navigate to your cluster.
+
 It may take some time but at the end you should see that all the workloads have Active status. In case there is aa problem with some of the workloads you can check the logs to see what the issue is.
 
 .. figure:: kubernetes/rancher_workloads.png
    :align: center
 
 You can open the Artemis application using the link `<https://artemis-app.artemis.rancher.localhost/>`__
+
 You will get the same "Connection is not private" issue as you did when opening `<https://rancher.localhost/>`__. As said before this is because a self-signed certificate is used and it is safe to proceeed.
+
 It takes several minutes for the application to start. If you get a "Bad Gateway" error it may happen that the application has not been started yet. 
 Wait everal minutes and if you still have this issue or another one you can check out the pod logs (described in the next chapter). 
 
