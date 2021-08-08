@@ -274,7 +274,7 @@ public abstract class Exercise extends DomainObject {
      */
     @JsonIgnore
     public boolean isAssessmentDueDateOver() {
-        assert isDateUsageAllowed() : "assessment due date is not defined for exam exercises";
+        assert !isExamExercise() : "assessment due date is not defined for exam exercises";
         return this.assessmentDueDate == null || ZonedDateTime.now().isAfter(this.assessmentDueDate);
     }
 
@@ -508,7 +508,7 @@ public abstract class Exercise extends DomainObject {
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     public Boolean isEnded() {
-        assert isDateUsageAllowed() : "due date is not defined for exam exercises";
+        assert !isExamExercise() : "due date is not defined for exam exercises";
         if (getDueDate() == null) {
             return Boolean.FALSE;
         }
@@ -522,7 +522,7 @@ public abstract class Exercise extends DomainObject {
      */
     @JsonIgnore
     public boolean isBeforeDueDate() {
-        assert isDateUsageAllowed() : "due date is not defined for exam exercises";
+        assert !isExamExercise() : "due date is not defined for exam exercises";
         if (dueDate == null) {
             return true;
         }
@@ -556,7 +556,7 @@ public abstract class Exercise extends DomainObject {
      */
     @JsonView(QuizView.Before.class)
     public Boolean isVisibleToStudents() {
-        assert isDateUsageAllowed() : "release date is not defined for exam exercises";
+        assert !isExamExercise() : "release date is not defined for exam exercises";
         if (releaseDate == null) {  // no release date means the exercise is visible to students
             return Boolean.TRUE;
         }
@@ -696,7 +696,7 @@ public abstract class Exercise extends DomainObject {
      * @return all results of given participation, or null, if none exist
      */
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        assert isDateUsageAllowed() : "assessment due date is not defined for exam exercises";
+        assert !isExamExercise() : "assessment due date is not defined for exam exercises";
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
         if (!isAssessmentOver) {
             return Set.of();
@@ -1060,9 +1060,4 @@ public abstract class Exercise extends DomainObject {
         return previousDate.isBefore(laterDate);
     }
 
-    private boolean isDateUsageAllowed() {
-        // We want to allow serialization to JSON for exam exercises
-        return !isExamExercise()
-                || StackWalker.getInstance().walk(stackFrames -> stackFrames.anyMatch(frame -> frame.getClassName().contains("com.fasterxml.jackson.databind.ser")));
-    }
 }
