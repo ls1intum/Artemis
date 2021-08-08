@@ -23,6 +23,7 @@ import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -221,6 +222,12 @@ describe('CourseStatisticsComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
+            .overrideModule(ArtemisTestModule, {
+                remove: {
+                    declarations: [MockComponent(FaIconComponent)],
+                    exports: [MockComponent(FaIconComponent)],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseStatisticsComponent);
