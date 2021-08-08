@@ -385,7 +385,7 @@ This part of the documentation assumes you have a Kubernetes cluster running, as
 
 ::
 
-   kubectl apply -k src/main/kubernetes/atlassian --kubeconfig "<path-to-kubeconfig>"
+   kubectl apply -k src/main/kubernetes/atlassian --kubeconfig <path-to-kubeconfig-file>
 
 <path-to-kubeconfig-file> is the path where the KUBECONFIG_FILE is located.
 

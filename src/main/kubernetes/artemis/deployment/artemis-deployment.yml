@@ -24,7 +24,7 @@ spec:
         envFrom:
         - configMapRef:
             name: artemis-app
-        image: mmehmed/artemis
+        image: <DockerId>/artemis
         imagePullPolicy: Always
         name: artemis-app
         resources:
