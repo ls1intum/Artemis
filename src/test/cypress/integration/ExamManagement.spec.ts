@@ -127,6 +127,8 @@ describe('Exam management', () => {
                         cy.get('#confirmBox').click();
                         artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName) );
                         cy.contains('Start').click();
+                        cy.contains('Exam Overview').should('exist');
+                        cy.contains('Text exercise 1').should('exist');
                     });
                 });
             });
