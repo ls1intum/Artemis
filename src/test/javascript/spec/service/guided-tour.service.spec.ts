@@ -538,6 +538,16 @@ describe('GuidedTourService', () => {
                 guidedTourService.nextStep();
                 expect(currentDotSubjectSpy.calls.count()).to.equal(1);
             });
+            it('nextStep and backStep should return to initial step', fakeAsync(() => {
+                guidedTourService.currentTour = tour;
+                const initialStep = guidedTourService.currentTourStepIndex;
+                guidedTourService.nextStep();
+                tick();
+                guidedTourService.backStep();
+                tick();
+                expect(currentDotSubjectSpy.calls.count()).to.equal(2);
+                expect(guidedTourService.currentTourStepIndex).to.equal(initialStep);
+            }));
         });
         describe('finishGuidedTour', () => {
             it('should just return if currentTour is not defined', () => {
