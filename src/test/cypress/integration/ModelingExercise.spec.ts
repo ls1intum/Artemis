@@ -3,9 +3,6 @@ import { artemis } from '../support/ArtemisTesting';
 
 // https://day.js.org/docs is a tool for date/time
 import dayjs from 'dayjs';
-import { CourseManagementPage } from '../support/pageobjects/CourseManagementPage';
-import { CreateModelingExercisePage } from '../support/pageobjects/CreateModelingExercisePage';
-import { ModelingExerciseExampleSubmissionPage } from '../support/pageobjects/ModelingExerciseExampleSubmissionPage';
 
 // pageobjects
 const courseManagement = artemis.pageobjects.courseManagement;
