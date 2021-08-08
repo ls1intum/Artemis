@@ -1,4 +1,4 @@
-namespace: default
+namespace: artemis
 
 resources:
   - jira.yml

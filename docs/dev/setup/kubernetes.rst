@@ -100,6 +100,25 @@ You can open the workloads using the menu, there will be no workloads deployed a
 .. figure:: kubernetes/rancher_empty_workloads.png
    :align: center
 
+6. Create namespace
+
+We want to deploy Artemis deployments in a separate namespace which will be used only for the Artemis application.
+Using Rancher you can create a new namespace.
+
+a. Navigate to Namespaces using the top menu of Rancher
+
+b. Select ``Add Namespace`` to open the form for namespace creation  
+
+   .. figure:: kubernetes/rancher_namespaces.png
+      :align: center
+
+c. Put ``artemis`` as namespace's name and select the ``Create`` button
+
+   .. figure:: kubernetes/rancher_create_namespace.png
+      :align: center
+
+
+
 Create DockerHub repository
 ---------------------------
 The Artemis image will be stored and managed in DockerHub. Kubernetes will pull it from there and deploy it afterwards.
