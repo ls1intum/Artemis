@@ -43,6 +43,6 @@ describe('CourseExamDetailComponent', () => {
     it('should calculate exam duration', () => {
         component.exam = testExam;
         componentFixture.detectChanges();
-        expect(component.examDuration).to.deep.equal(30);
+        expect(component.examDuration).to.deep.equal(30 * 60);
     });
 });

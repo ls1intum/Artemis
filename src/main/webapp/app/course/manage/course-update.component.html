@@ -125,7 +125,7 @@
                 </div>
                 <div class="form-group">
                     <label jhiTranslate="artemisApp.course.semester"></label>
-                    <select class="form-control" formControlName="semester">
+                    <select class="form-select" formControlName="semester">
                         <option *ngFor="let semester of getSemesters()" [value]="semester">{{ semester }}</option>
                     </select>
                 </div>

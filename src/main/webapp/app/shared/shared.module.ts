@@ -31,6 +31,7 @@ import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exe
 import { DoughnutChartComponent } from 'app/exercises/shared/statistics/doughnut-chart.component';
 import { RouterModule } from '@angular/router';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
 
 @NgModule({
@@ -40,6 +41,7 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
         CircularProgressBarComponent,
         ArtemisDurationFromSecondsPipe,
         HasAnyAuthorityDirective,
+        ExtensionPointDirective,
         SecuredImageComponent,
         DeleteDialogComponent,
         AdditionalFeedbackComponent,
@@ -73,6 +75,7 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
         AlertErrorComponent,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
+        ExtensionPointDirective,
         ArtemisSharedCommonModule,
         ArtemisSharedPipesModule,
         SecuredImageComponent,

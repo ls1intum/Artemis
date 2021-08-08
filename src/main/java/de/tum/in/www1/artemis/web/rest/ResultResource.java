@@ -361,11 +361,10 @@ public class ResultResource {
 
         List<Feedback> feedbacks;
         // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise) && result.getAssessmentType() != null && !AssessmentType.AUTOMATIC.equals(result.getAssessmentType())
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise) && result.getAssessmentType() != null && AssessmentType.AUTOMATIC != result.getAssessmentType()
                 && exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate())) {
             // filter all non-automatic feedbacks
-            feedbacks = result.getFeedbacks().stream().filter(feedback -> feedback.getType() != null && FeedbackType.AUTOMATIC.equals(feedback.getType()))
-                    .collect(Collectors.toList());
+            feedbacks = result.getFeedbacks().stream().filter(feedback -> feedback.getType() != null && FeedbackType.AUTOMATIC == feedback.getType()).collect(Collectors.toList());
         }
         else {
             feedbacks = result.getFeedbacks();

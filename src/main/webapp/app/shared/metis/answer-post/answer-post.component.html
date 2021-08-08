@@ -1,0 +1,5 @@
+<div class="row m-1 answer-post">
+    <jhi-answer-post-header [posting]="posting"> </jhi-answer-post-header>
+    <div class="col markdown-preview" [innerHTML]="posting.content ? (posting.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"></div>
+    <jhi-answer-post-footer [posting]="posting"> </jhi-answer-post-footer>
+</div>
