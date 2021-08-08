@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -317,14 +316,7 @@ public class ProgrammingExerciseGradingService {
      * @return testCases, but the ones based on the described visibility criterion removed.
      */
     private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCases) {
-        boolean isBeforeDueDate;
-        if (exercise.isExamExercise()) {
-            ZonedDateTime latestExamEndDate = examDateService.getLatestIndividualExamEndDateWithGracePeriod(exercise.getExamViaExerciseGroupOrCourseMember());
-            isBeforeDueDate = ZonedDateTime.now().isBefore(latestExamEndDate);
-        }
-        else {
-            isBeforeDueDate = exercise.isBeforeDueDate();
-        }
+        boolean isBeforeDueDate = !examDateService.isExerciseWorkingPeriodOver(exercise);
         return testCases.stream().filter(testCase -> !testCase.isInvisible()).filter(testCase -> !(isBeforeDueDate && testCase.isAfterDueDate())).collect(Collectors.toSet());
     }
 
