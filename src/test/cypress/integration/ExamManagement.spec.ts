@@ -6,7 +6,7 @@ import { generateUUID } from '../support/utils';
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
 
-// Pageobjects
+// Page objects
 const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagement = artemis.pageobjects.courseManagement;
 const examManagement = artemis.pageobjects.examManagement;
@@ -94,9 +94,7 @@ describe('Exam management', () => {
             courseManagementRequests.createExam(examContent).then((response) => {
                 exam = response.body;
                 courseManagementRequests.registerStudentForExam(course, exam, artemis.users.getStudentOne());
-                cy.login(artemis.users.getStudentOne(), `/courses`);
-                cy.contains(examTitle).should('exist');
-                cy.visit(`/courses/${course.id}`);
+                cy.login(artemis.users.getStudentOne(), `/courses/${course.id}`);
                 cy.url().should('contain', `${course.id}`);
                 cy.contains('Exams').click();
                 cy.url().should('contain', '/exams');
@@ -108,23 +106,27 @@ describe('Exam management', () => {
         it.only('Student can start after start Date', () => {
             let exerciseGroup: any;
             let textExercise: any;
+            const student = artemis.users.getStudentOne();
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days')).startDate(dayjs().subtract(2, 'days')).endDate(dayjs().add(3, 'days'))
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                courseManagementRequests.registerStudentForExam(course, exam, artemis.users.getStudentOne());
+                courseManagementRequests.registerStudentForExam(course, exam, student);
                 courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
                     courseManagementRequests.addTextExerciseToExam(exerciseGroup, 'Text exercise 1').then((exerciseResponse) => {
                         textExercise = exerciseResponse.body;
                         courseManagementRequests.generateMissingIndividualExams(course, exam);
                         courseManagementRequests.prepareExerciseStartForExam(course, exam);
-                        cy.login(artemis.users.getStudentOne(), `/courses/${course.id}/exams`);
+                        cy.login(student, `/courses/${course.id}/exams`);
                         cy.contains(exam.title).click();
                         cy.url().should('contain', `/exams/${exam.id}`);
                         cy.contains('Welcome to ' + exam.title).should('exist');
+                        cy.get('#confirmBox').click();
+                        artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName) );
+                        cy.contains('Start').click();
                     });
                 });
             });
