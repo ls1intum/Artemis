@@ -239,7 +239,7 @@
             }
         },
         "examManagement": {
-            "reviewDatesInvalidWarning": "Das Ende der Klausureneinsicht fehlt",
+            "reviewDatesInvalidWarning": "Das Ende der Klausureinsicht fehlt",
             "reviewDatesInvalidExplanation": "Ist ein Beginn der Klausureinsicht definiert, muss auch ein Ende definiert werden.",
             "title": "Klausurverwaltung",
             "createExam": "Erstelle eine neue Klausur",
