@@ -274,7 +274,6 @@ public abstract class Exercise extends DomainObject {
      */
     @JsonIgnore
     public boolean isAssessmentDueDateOver() {
-        assert !isExamExercise() : "assessment due date is not defined for exam exercises";
         return this.assessmentDueDate == null || ZonedDateTime.now().isAfter(this.assessmentDueDate);
     }
 
@@ -508,7 +507,6 @@ public abstract class Exercise extends DomainObject {
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     public Boolean isEnded() {
-        assert !isExamExercise() : "due date is not defined for exam exercises";
         if (getDueDate() == null) {
             return Boolean.FALSE;
         }
@@ -522,7 +520,6 @@ public abstract class Exercise extends DomainObject {
      */
     @JsonIgnore
     public boolean isBeforeDueDate() {
-        assert !isExamExercise() : "due date is not defined for exam exercises";
         if (dueDate == null) {
             return true;
         }
@@ -556,7 +553,6 @@ public abstract class Exercise extends DomainObject {
      */
     @JsonView(QuizView.Before.class)
     public Boolean isVisibleToStudents() {
-        assert !isExamExercise() : "release date is not defined for exam exercises";
         if (releaseDate == null) {  // no release date means the exercise is visible to students
             return Boolean.TRUE;
         }
@@ -696,7 +692,6 @@ public abstract class Exercise extends DomainObject {
      * @return all results of given participation, or null, if none exist
      */
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        assert !isExamExercise() : "assessment due date is not defined for exam exercises";
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
         if (!isAssessmentOver) {
             return Set.of();
