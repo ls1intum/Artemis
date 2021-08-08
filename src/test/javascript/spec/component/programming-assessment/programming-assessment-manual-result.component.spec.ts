@@ -1,8 +1,6 @@
 import * as ace from 'brace';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import { NgbModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { FormsModule } from '@angular/forms';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
@@ -12,9 +10,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
-import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -77,7 +73,6 @@ import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { AceEditorComponent } from 'ng2-ace-editor';
-import * as sinon from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;

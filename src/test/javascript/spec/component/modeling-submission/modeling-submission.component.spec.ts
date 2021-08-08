@@ -46,8 +46,8 @@ import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component'
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
-import {ArtemisTranslatePipe} from "app/shared/pipes/artemis-translate.pipe";
-import {AlertComponent} from "app/shared/alert/alert.component";
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AlertComponent } from 'app/shared/alert/alert.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 chai.use(sinonChai);

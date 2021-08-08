@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import * as moment from 'moment';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ChartsModule } from 'ng2-charts';
@@ -9,8 +9,6 @@ import { TreeviewModule } from 'ngx-treeview';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
@@ -23,6 +21,8 @@ import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -201,9 +201,9 @@ describe('CourseStatisticsComponent', () => {
     course.exercises = [];
     course.presentationScore = 1;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, TreeviewModule.forRoot(), RouterTestingModule.withRoutes([]), ArtemisSharedModule, ChartsModule],
+            imports: [ArtemisTestModule, TreeviewModule.forRoot(), RouterTestingModule.withRoutes([]), ArtemisSharedModule, ChartsModule],
             declarations: [CourseStatisticsComponent, MockComponent(CourseLearningGoalsComponent), MockComponent(ExerciseScoresChartComponent)],
             providers: [
                 {
@@ -216,16 +216,11 @@ describe('CourseStatisticsComponent', () => {
                         },
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
-            .overrideModule(ArtemisTestModule, {
-                remove: {
-                    declarations: [MockComponent(FaIconComponent)],
-                    exports: [MockComponent(FaIconComponent)],
-                },
-            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseStatisticsComponent);

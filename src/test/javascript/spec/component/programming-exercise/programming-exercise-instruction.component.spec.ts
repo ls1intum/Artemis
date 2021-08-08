@@ -41,7 +41,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { MockTranslateService, TranslatePipeMock, TranslateServiceStub } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockComponent } from 'ng-mocks';
 
 chai.use(sinonChai);
