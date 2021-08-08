@@ -33,7 +33,7 @@ import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { PostingsComponent } from 'app/overview/postings/postings.component';
+import { DiscussionComponent } from 'app/overview/discussion/discussion.component';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
@@ -73,9 +73,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private submissionSubscription: Subscription;
     studentParticipation?: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
+    allowComplaintsForAutomaticAssessments: boolean;
     public gradingCriteria: GradingCriterion[];
     showWelcomeAlert = false;
-    private postings?: PostingsComponent;
+    private discussionComponent?: DiscussionComponent;
     baseResource: string;
     isExamExercise: boolean;
 
@@ -172,8 +173,19 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exercise.studentParticipations = this.filterParticipations(newExercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.exercise.participationStatus = participationStatus(this.exercise);
-        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
+        const now = moment();
+        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || now.isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exercise.categories || [];
+        this.allowComplaintsForAutomaticAssessments = false;
+
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            const programmingExercise = this.exercise as ProgrammingExercise;
+            const isAfterDateForComplaint =
+                (!this.exercise.dueDate || now.isAfter(this.exercise.dueDate)) &&
+                (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
+
+            this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
+        }
 
         // This is only needed in the local environment
         if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && (<ProgrammingExercise>this.exercise).isLocalSimulation) {
@@ -188,10 +200,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.subscribeForNewSubmissions();
         }
 
-        if (this.postings && this.exercise) {
+        if (this.discussionComponent && this.exercise) {
             // We need to manually update the exercise property of the posts component
-            this.postings.exercise = this.exercise;
-            this.postings.loadPosts(); // reload the posts
+            this.discussionComponent.exercise = this.exercise;
         }
         this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
     }
@@ -425,14 +436,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     /**
      * This function gets called if the router outlet gets activated. This is
-     * used only for the PostingsComponent
+     * used only for the DiscussionComponent
      * @param instance The component instance
      */
-    onChildActivate(instance: PostingsComponent) {
-        this.postings = instance; // save the reference to the component instance
+    onChildActivate(instance: DiscussionComponent) {
+        this.discussionComponent = instance; // save the reference to the component instance
         if (this.exercise) {
             instance.exercise = this.exercise;
-            instance.loadPosts(); // reload the posts
         }
     }
 

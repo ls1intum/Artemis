@@ -735,6 +735,7 @@ public class DatabaseUtilService {
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setLecture(lectureContext);
+            postToAdd.setCourse(lectureContext.getCourse());
             postRepository.save(postToAdd);
             posts.add(postToAdd);
         }
@@ -746,6 +747,7 @@ public class DatabaseUtilService {
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setExercise(exerciseContext);
+            postToAdd.setCourse(exerciseContext.getCourseViaExerciseGroupOrCourseMember());
             postRepository.save(postToAdd);
             posts.add(postToAdd);
         }
@@ -2529,7 +2531,7 @@ public class DatabaseUtilService {
         result.setSubmission(submission);
         submission.addResult(result);
         // Manual results are always rated and have a resultString which is defined in the client
-        if (assessmentType.equals(AssessmentType.SEMI_AUTOMATIC)) {
+        if (assessmentType == AssessmentType.SEMI_AUTOMATIC) {
             result.rated(true);
             result.resultString("1 of 13 passed, 1 issue, 5 of 10 points");
         }
