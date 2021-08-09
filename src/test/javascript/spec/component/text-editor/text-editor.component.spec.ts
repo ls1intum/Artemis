@@ -17,7 +17,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
@@ -41,6 +41,16 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import {HeaderParticipationPageComponent} from "app/exercises/shared/exercise-headers/header-participation-page.component";
+import {ResizeableContainerComponent} from "app/shared/resizeable-container/resizeable-container.component";
+import {ArtemisTranslatePipe} from "app/shared/pipes/artemis-translate.pipe";
+import {TeamParticipateInfoBoxComponent} from "app/exercises/shared/team/team-participate-info-box/team-participate-info-box.component";
+import {TeamSubmissionSyncComponent} from "app/exercises/shared/team-submission-sync/team-submission-sync.component";
+import {AdditionalFeedbackComponent} from "app/shared/additional-feedback/additional-feedback.component";
+import {RatingComponent} from "app/exercises/shared/rating/rating.component";
+import {AlertComponent} from "app/shared/alert/alert.component";
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgModel } from '@angular/forms';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -74,12 +84,7 @@ describe('TextEditorComponent', () => {
             imports: [
                 TranslateModule.forRoot(),
                 ArtemisTestModule,
-                ArtemisSharedModule,
-                ArtemisTeamModule,
-                ArtemisTeamSubmissionSyncModule,
-                ArtemisHeaderExercisePageWithDetailsModule,
                 RouterTestingModule.withRoutes([textEditorRoute[0]]),
-                RatingModule,
             ],
             declarations: [
                 TextEditorComponent,
@@ -89,6 +94,16 @@ describe('TextEditorComponent', () => {
                 MockComponent(ComplaintsComponent),
                 MockComponent(ComplaintInteractionsComponent),
                 MockPipe(HtmlForMarkdownPipe),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(HeaderParticipationPageComponent),
+                MockComponent(ResizeableContainerComponent),
+                MockComponent(TeamParticipateInfoBoxComponent),
+                MockComponent(TeamSubmissionSyncComponent),
+                MockComponent(AdditionalFeedbackComponent),
+                MockComponent(RatingComponent),
+                MockComponent(AlertComponent),
+                MockComponent(FaIconComponent),
+                MockDirective(NgModel),
             ],
             providers: [
                 JhiAlertService,
