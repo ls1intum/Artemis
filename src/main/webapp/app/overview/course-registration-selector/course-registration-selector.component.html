@@ -10,7 +10,7 @@
         {{ 'artemisApp.studentDashboard.register.registerSuccessful' | artemisTranslate }}
     </div>
     <div class="col-12 col-sm-auto" *ngIf="showCourseSelection && coursesToSelect.length > 0 && userIsAllowedToRegister">
-        <select class="form-control" id="field_course" name="course" [(ngModel)]="courseToRegister">
+        <select class="form-select" id="field_course" name="course" [(ngModel)]="courseToRegister">
             <option [ngValue]="undefined" selected disabled>{{ 'artemisApp.studentDashboard.register.pleaseSelectCourse' | artemisTranslate }}</option>
             <option [ngValue]="course" *ngFor="let course of coursesToSelect; trackBy: trackCourseById">{{ course.title }}</option>
         </select>

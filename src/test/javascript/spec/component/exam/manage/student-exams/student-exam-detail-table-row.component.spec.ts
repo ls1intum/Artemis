@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
@@ -26,6 +25,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -50,16 +50,14 @@ describe('StudentExamDetailTableRowComponent', () => {
         exercise.studentParticipations = [studentParticipation];
 
         return TestBed.configureTestingModule({
-            imports: [
-                RouterTestingModule.withRoutes([]),
-                ArtemisDataTableModule,
-                NgbModule,
-                NgxDatatableModule,
-                FontAwesomeTestingModule,
-                ReactiveFormsModule,
-                TranslateModule.forRoot(),
+            imports: [RouterTestingModule.withRoutes([]), NgbModule, NgxDatatableModule, FontAwesomeTestingModule, ReactiveFormsModule, TranslateModule.forRoot()],
+            declarations: [
+                StudentExamDetailTableRowComponent,
+                MockComponent(AlertComponent),
+                MockComponent(DataTableComponent),
+                MockTranslateValuesDirective,
+                MockPipe(ArtemisTranslatePipe),
             ],
-            declarations: [StudentExamDetailTableRowComponent, MockComponent(AlertComponent), MockTranslateValuesDirective, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(JhiAlertService), MockDirective(JhiTranslateDirective)],
         })
             .compileComponents()

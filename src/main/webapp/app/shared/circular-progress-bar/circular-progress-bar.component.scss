@@ -1,5 +1,6 @@
 /* stylelint-disable at-rule-no-unknown */
 
+@use "sass:math";
 @import '../../../content/scss/bootstrap-variables.scss';
 
 // Code for circular progress bar adapted from https://codepen.io/fuzzywalrus/pen/OxYENY
@@ -60,8 +61,8 @@ $howManySteps: 100; //this needs to be even.
 
     .progress-left .progress-bar-circle {
         left: 100%;
-        border-top-right-radius: ($size/2);
-        border-bottom-right-radius: ($size/2);
+        border-top-right-radius: math.div($size, 2);
+        border-bottom-right-radius: math.div($size, 2);
         border-left: 0;
         -webkit-transform-origin: center left;
         transform-origin: center left;
@@ -73,8 +74,8 @@ $howManySteps: 100; //this needs to be even.
 
         .progress-bar-circle {
             left: -100%;
-            border-top-left-radius: ($size/2);
-            border-bottom-left-radius: ($size/2);
+            border-top-left-radius: math.div($size, 2);
+            border-bottom-left-radius: math.div($size, 2);
             border-right: 0;
             -webkit-transform-origin: center right;
             transform-origin: center right;
@@ -109,7 +110,7 @@ $howManySteps: 100; //this needs to be even.
 Due to the split circle of progress-left and progress right, we must use the animations on each side.
 */
 @for $i from 1 through $howManySteps {
-    $stepName: ($i * (100 / $howManySteps));
+    $stepName: ($i * math.div(100, $howManySteps));
 
     //animation only the left side if below 50%
     @if $i <= ($howManySteps/2) {

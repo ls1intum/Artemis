@@ -1,6 +1,9 @@
 import { BASE_API, DELETE, POST } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
+import { dayjsToString, generateUUID } from '../utils';
+import examTemplate from '../../fixtures/requests/exam_template.json';
+import day from 'dayjs';
 
 const COURSE_BASE = BASE_API + 'courses/';
 const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
@@ -79,5 +82,129 @@ export class CourseManagementRequests {
      */
     addStudentToCourse(courseId: number, studentName: string) {
         return cy.request({ url: COURSE_BASE + courseId + '/students/' + studentName, method: POST });
+    }
+
+    createModelingExercise(modelingExercise: string) {
+        return cy.request({
+            url: '/api/modeling-exercises',
+            method: 'POST',
+            body: modelingExercise,
+        });
+    }
+
+    deleteModelingExercise(exerciseID: number) {
+        return cy.request({
+            url: `/api/modeling-exercises/${exerciseID}`,
+            method: 'DELETE',
+        });
+    }
+
+    /**
+     * Creates an exam with the provided settings.
+     * @param exam the exam object created by a {@link CypressExamBuilder}
+     * @returns the request response
+     */
+    createExam(exam: any) {
+        return cy.request({ url: COURSE_BASE + exam.course.id + '/exams', method: POST, body: exam });
+    }
+}
+
+/**
+ * Helper class to construct exam objects for the {@link CourseManagementRequests.createExam} method.
+ */
+export class CypressExamBuilder {
+    readonly template = examTemplate;
+
+    /**
+     * Initializes the exam builder.
+     * @param course the course dto of a previous createCourse request
+     */
+    constructor(course: any) {
+        this.template.course = course;
+        this.template.title = 'exam' + generateUUID();
+        this.template.visibleDate = dayjsToString(day());
+        this.template.startDate = dayjsToString(day().add(1, 'day'));
+        this.template.endDate = dayjsToString(day().add(2, 'day'));
+    }
+
+    /**
+     * @param title the title of the exam
+     */
+    title(title: string) {
+        this.template.title = title;
+        return this;
+    }
+
+    /**
+     * @param randomize if the exercise order should be randomized
+     */
+    randomizeOrder(randomize: boolean) {
+        this.template.randomizeExerciseOrder = randomize;
+        return this;
+    }
+
+    /**
+     * @param rounds how many correction rounds there are for this exam (default is 1)
+     */
+    correctionRounds(rounds: number) {
+        this.template.numberOfCorrectionRoundsInExam = rounds;
+        return this;
+    }
+
+    /**
+     * @param points the maximum amount of points achieved in the exam (default is 10)
+     */
+    maxPoints(points: number) {
+        this.template.maxPoints = points;
+        return this;
+    }
+
+    /**
+     * @param period the grace period in seconds for this exam (default is 30)
+     */
+    gracePeriod(period: number) {
+        this.template.gracePeriod = period;
+        return this;
+    }
+
+    /**
+     * @param amount the amount of exercises in this exam
+     */
+    numberOfExercises(amount: number) {
+        this.template.numberOfExercisesInExam = amount;
+        return this;
+    }
+
+    /**
+     * @param date the date when the exam should be visible
+     */
+    visibleDate(date: day.Dayjs) {
+        this.template.visibleDate = dayjsToString(date);
+        return this;
+    }
+
+    /**
+     *
+     * @param date the date when the exam should start
+     */
+    startDate(date: day.Dayjs) {
+        this.template.startDate = dayjsToString(date);
+        return this;
+    }
+
+    /**
+     *
+     * @param date the date when the exam should end
+     */
+    endDate(date: day.Dayjs) {
+        this.template.endDate = dayjsToString(date);
+        return this;
+    }
+
+    /**
+     * @returns the exam object
+     */
+    build() {
+        return this.template;
     }
 }
