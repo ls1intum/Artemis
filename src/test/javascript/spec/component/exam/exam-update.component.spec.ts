@@ -18,7 +18,6 @@ import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testi
 import { Course } from 'app/entities/course.model';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -27,6 +26,7 @@ import { Component } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
@@ -52,20 +52,13 @@ describe('Exam Update Component', function () {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                RouterTestingModule.withRoutes(routes),
-                ArtemisDataTableModule,
-                MockModule(NgbModule),
-                TranslateModule.forRoot(),
-                FontAwesomeTestingModule,
-                FormsModule,
-                HttpClientModule,
-            ],
+            imports: [RouterTestingModule.withRoutes(routes), MockModule(NgbModule), TranslateModule.forRoot(), FontAwesomeTestingModule, FormsModule, HttpClientModule],
             declarations: [
                 ExamUpdateComponent,
                 MockComponent(AlertErrorComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(MarkdownEditorComponent),
+                MockComponent(DataTableComponent),
                 DummyComponent,
                 MockPipe(ArtemisTranslatePipe),
             ],

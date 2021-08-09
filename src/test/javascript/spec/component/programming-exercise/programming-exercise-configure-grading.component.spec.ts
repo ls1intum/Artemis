@@ -17,8 +17,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisProgrammingExerciseGradingModule } from 'app/exercises/programming/manage/grading/programming-exercise-grading.module';
 import { expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { MockProgrammingExerciseWebsocketService } from '../../helpers/mocks/service/mock-programming-exercise-websocket.service';
@@ -42,6 +40,20 @@ import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/grading/charts/category-issues-chart.component';
 import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-status.component';
+import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
+import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-table-actions.component';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgModel } from '@angular/forms';
+import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
+import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
+import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-re-evaluate-button.component';
+import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -188,7 +200,25 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisProgrammingExerciseGradingModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, NgxDatatableModule],
+            declarations: [
+                ProgrammingExerciseConfigureGradingComponent,
+                ProgrammingExerciseConfigureGradingStatusComponent,
+                ProgrammingExerciseConfigureGradingActionsComponent,
+                ProgrammingExerciseGradingTableActionsComponent,
+                MockComponent(ProgrammingExerciseReEvaluateButtonComponent),
+                MockComponent(ProgrammingExerciseTriggerAllButtonComponent),
+                MockComponent(AlertComponent),
+                TableEditableFieldComponent,
+                TestCasePassedBuildsChartComponent,
+                MockComponent(TestCaseDistributionChartComponent),
+                CategoryIssuesChartComponent,
+                MockComponent(ScaCategoryDistributionChartComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(NgbTooltip),
+                MockDirective(NgbPopover),
+                MockDirective(NgModel),
+            ],
             providers: [
                 AlertService,
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },

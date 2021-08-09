@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -35,6 +34,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -103,7 +103,6 @@ describe('StudentExamDetailComponent', () => {
         return TestBed.configureTestingModule({
             imports: [
                 RouterTestingModule.withRoutes([]),
-                ArtemisDataTableModule,
                 NgbModule,
                 NgxDatatableModule,
                 FontAwesomeTestingModule,
@@ -114,6 +113,7 @@ describe('StudentExamDetailComponent', () => {
             declarations: [
                 StudentExamDetailComponent,
                 MockComponent(AlertComponent),
+                MockComponent(DataTableComponent),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
                 MockTranslateValuesDirective,

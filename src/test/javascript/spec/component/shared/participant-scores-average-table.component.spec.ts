@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ParticipantScoresAverageTableComponent } from 'app/shared/participant-scores/participant-scores-average-table/participant-scores-average-table.component';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { JhiTranslateDirective } from 'ng-jhipster';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import * as chai from 'chai';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
@@ -15,6 +15,7 @@ import { ParticipantScoreAverageDTO } from 'app/shared/participant-scores/partic
 import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { BaseEntity } from 'app/shared/model/base-entity';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -25,8 +26,14 @@ describe('ParticipantScoresAverageTable', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisDataTableModule, NgxDatatableModule, NgbTooltipModule, TranslateModule.forRoot()],
-            declarations: [ParticipantScoresAverageTableComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, NgxDatatableModule, NgbTooltipModule, TranslateModule.forRoot()],
+            declarations: [
+                ParticipantScoresAverageTableComponent,
+                MockDirective(JhiTranslateDirective),
+                MockPipe(ArtemisTranslatePipe),
+                DataTableComponent,
+                MockDirective(NgbTypeahead),
+            ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 {
