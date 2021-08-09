@@ -123,6 +123,7 @@ describe('Exam management', () => {
                     courseManagementRequests.generateMissingIndividualExams(course, exam);
                     courseManagementRequests.prepareExerciseStartForExam(course, exam);
                     cy.login(student, `/courses/${course.id}/exams/${exam.id}`);
+                    cy.contains('Welcome to ' + exam.title).should('exist');
                     cy.get('#confirmBox').click();
                     artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName));
                     cy.contains('Start').click();
