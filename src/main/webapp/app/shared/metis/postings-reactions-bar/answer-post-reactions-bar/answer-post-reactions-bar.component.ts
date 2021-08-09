@@ -9,6 +9,10 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
     styleUrls: ['../postings-reactions-bar.component.scss'],
 })
 export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirective<AnswerPost> implements OnInit, OnChanges {
+    /**
+     * builds and returns a Reaction model out of an emojiId and thereby sets the answerPost property properly
+     * @param emojiId emojiId to build the model for
+     */
     buildReaction(emojiId: string): Reaction {
         const reaction = new Reaction();
         reaction.emojiId = emojiId;

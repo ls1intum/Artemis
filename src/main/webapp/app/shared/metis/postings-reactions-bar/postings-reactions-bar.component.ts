@@ -33,8 +33,24 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
 
     @Input() posting: T;
     showReactionSelector = false;
+    currentUserIsAtLeastTutor: boolean;
+
+    /*
+    Currently predefined fixed set of emojis that should be used within a course,
+    they will be listed on first page of the emoji-mart selector
+     */
     selectedCourseEmojis: string[];
+
+    /*
+    A map that lists associated reaction (by emojiId) for the current posting together with its count
+    and a flag that indicates if the current user has used this reaction
+     */
     reactionCountMap: ReactionCountMap = {};
+
+    /*
+     Emojis that have a predefined meaning, i.e. pin and archive emoji,
+     should not appear in the emoji-mart selector
+     */
     emojisToShowFilter: (emoji: string | EmojiData) => boolean = (emoji) => {
         if (typeof emoji === 'string') {
             return emoji !== PIN_EMOJI_UNICODE && emoji !== ARCHIVE_EMOJI_UNICODE;
@@ -42,17 +58,23 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
             return emoji.unified !== PIN_EMOJI_UNICODE && emoji.unified !== ARCHIVE_EMOJI_UNICODE;
         }
     };
-    currentUserIsAtLeastTutor: boolean;
-
     constructor(protected metisService: MetisService) {
         this.selectedCourseEmojis = ['smile', 'joy', 'sunglasses', 'tada', 'rocket', 'heavy_plus_sign', 'thumbsup', 'memo', 'coffee', 'recycle'];
     }
 
+    /**
+     * on initialization: updates the current posting and its reactions,
+     * invokes metis service to check user authority
+     */
     ngOnInit(): void {
         this.updatePostingWithReactions();
         this.currentUserIsAtLeastTutor = this.metisService.metisUserIsAtLeastTutorInCourse();
     }
 
+    /**
+     * on changes: updates the current posting and its reactions,
+     * invokes metis service to check user authority
+     */
     ngOnChanges(): void {
         this.updatePostingWithReactions();
         this.currentUserIsAtLeastTutor = this.metisService.metisUserIsAtLeastTutorInCourse();
@@ -61,7 +83,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     abstract buildReaction(emojiId: string): Reaction;
 
     /**
-     * updates the reaction based on the emitted event
+     * updates the reaction based on the ReactionEvent emitted by the emoji-mart selector component
      */
     selectReaction(reactionEvent: ReactionEvent): void {
         if (reactionEvent.emoji !== undefined) {
@@ -69,12 +91,21 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
         }
     }
 
+    /**
+     * updates the reaction based when a displayed emoji reaction is clicked,
+     * i.e. when agree on an existing reaction (+1) or removing own reaction (-1)
+     */
     updateReaction(emojiId: string): void {
         if (emojiId !== undefined) {
             this.addOrRemoveReaction(emojiId);
         }
     }
 
+    /**
+     * adds or removes a reaction by invoking the metis service,
+     * depending on if the current user already reacted with the given emojiId (remove) or not (add)
+     * @param emojiId emojiId representing the reaction to be added/removed
+     */
     addOrRemoveReaction(emojiId: string): void {
         const existingReactionIdx = this.posting.reactions
             ? this.posting.reactions.findIndex((reaction) => reaction.user?.id === this.metisService.getUser().id && reaction.emojiId === emojiId)
@@ -90,6 +121,10 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
         }
     }
 
+    /**
+     * builds the ReactionCountMap data structure out of a given array of reactions
+     * @param reactions array of reactions associated to the current posting
+     */
     buildEmojiIdCountMap(reactions: Reaction[]): ReactionCountMap {
         return reactions.reduce((a: ReactionCountMap, b: Reaction) => {
             if (b.emojiId === this.pinEmojiId || b.emojiId === this.archiveEmojiId) {
@@ -104,6 +139,9 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
         }, {});
     }
 
+    /**
+     * updates the posting's reactions by calling the build function for the reactionCountMap if there are any reaction on the posting
+     */
     updatePostingWithReactions(): void {
         if (this.posting.reactions && this.posting.reactions.length > 0) {
             this.reactionCountMap = this.buildEmojiIdCountMap(this.posting.reactions!);

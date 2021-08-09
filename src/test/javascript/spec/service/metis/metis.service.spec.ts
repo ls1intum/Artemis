@@ -1,6 +1,6 @@
 import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { SinonStub, spy, stub } from 'sinon';
+import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as sinon from 'sinon';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
@@ -18,6 +18,9 @@ import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { User } from 'app/core/user/user.model';
+import { ReactionService } from 'app/shared/metis/reaction.service';
+import { MockReactionService } from '../../helpers/mocks/service/mock-reaction.service';
+import { Reaction } from 'app/entities/metis/reaction.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -26,6 +29,8 @@ describe('Metis Service', () => {
     let injector: TestBed;
     let metisService: MetisService;
     let metisServiceUserStub: SinonStub;
+    let metisServiceGetPostsForFilterSpy: SinonSpy;
+    let reactionService: MockReactionService;
     let postService: MockPostService;
     let answerPostService: MockAnswerPostService;
     let accountService: MockAccountService;
@@ -36,6 +41,7 @@ describe('Metis Service', () => {
     let user1: User;
     let user2: User;
     let answerPost: AnswerPost;
+    let reaction: Reaction;
     let courseDefault: Course;
     let exerciseDefault: TextExercise;
     let lectureDefault: Lecture;
@@ -45,6 +51,7 @@ describe('Metis Service', () => {
             imports: [HttpClientTestingModule, ArtemisTestModule],
             providers: [
                 { provide: MetisService, useClass: MetisService },
+                { provide: ReactionService, useClass: MockReactionService },
                 { provide: PostService, useClass: MockPostService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -52,9 +59,11 @@ describe('Metis Service', () => {
         });
         injector = getTestBed();
         metisService = injector.get(MetisService);
+        reactionService = injector.get(ReactionService);
         postService = injector.get(PostService);
         answerPostService = injector.get(AnswerPostService);
         accountService = injector.get(AccountService);
+        metisServiceGetPostsForFilterSpy = spy(metisService, 'getPostsForFilter');
 
         user1 = { id: 1, name: 'usersame1', login: 'login1' } as User;
         user2 = { id: 2, name: 'usersame2', login: 'login2' } as User;
@@ -88,6 +97,11 @@ describe('Metis Service', () => {
         answerPost.creationDate = undefined;
         answerPost.content = 'This is a test answer post';
 
+        reaction = new Reaction();
+        reaction.emojiId = 'smile';
+        reaction.user = user1;
+        reaction.post = post1;
+
         courseDefault = new Course();
         courseDefault.id = 1;
 
@@ -119,13 +133,16 @@ describe('Metis Service', () => {
             });
             expect(postServiceSpy).to.have.been.called;
             tick();
+            expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
             createdPostSub.unsubscribe();
         }));
-        it('should delete a post', () => {
+        it('should delete a post', fakeAsync(() => {
             const postServiceSpy = spy(postService, 'delete');
             metisService.deletePost(post1);
             expect(postServiceSpy).to.have.been.called;
-        });
+            tick();
+            expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
+        }));
         it('should update a post', fakeAsync(() => {
             const postServiceSpy = spy(postService, 'update');
             const updatedPostSub = metisService.updatePost(post1).subscribe((updatedPost) => {
@@ -133,6 +150,7 @@ describe('Metis Service', () => {
             });
             expect(postServiceSpy).to.have.been.called;
             tick();
+            expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
             updatedPostSub.unsubscribe();
         }));
         it('should get correct list of posts when set', fakeAsync(() => {
@@ -179,13 +197,16 @@ describe('Metis Service', () => {
             });
             expect(answerPostServiceSpy).to.have.been.called;
             tick();
+            expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
             createdAnswerPostSub.unsubscribe();
         }));
-        it('should delete an answer post', () => {
+        it('should delete an answer post', fakeAsync(() => {
             const answerPostServiceSpy = spy(answerPostService, 'delete');
             metisService.deleteAnswerPost(answerPost);
             expect(answerPostServiceSpy).to.have.been.called;
-        });
+            tick();
+            expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
+        }));
         it('should create a post', fakeAsync(() => {
             const answerPostServiceSpy = spy(answerPostService, 'update');
             const updatedAnswerPostSub = metisService.updateAnswerPost(answerPost).subscribe((updatedAnswerPost) => {
@@ -193,7 +214,29 @@ describe('Metis Service', () => {
             });
             expect(answerPostServiceSpy).to.have.been.called;
             tick();
+            expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
             updatedAnswerPostSub.unsubscribe();
+        }));
+    });
+
+    describe('Invoke reaction service methods', () => {
+        it('should create a reaction', fakeAsync(() => {
+            const reactionServiceSpy = spy(reactionService, 'create');
+            const createdReactionSub = metisService.createReaction(reaction).subscribe((createdReaction) => {
+                expect(createdReaction).to.be.deep.equal(reaction);
+            });
+            expect(reactionServiceSpy).to.have.been.called;
+            tick();
+            expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
+            createdReactionSub.unsubscribe();
+        }));
+        it('should delete a reaction', fakeAsync(() => {
+            const reactionServiceSpy = spy(reactionService, 'delete');
+            metisService.deleteReaction(reaction).subscribe(() => {
+                expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
+            });
+            tick();
+            expect(reactionServiceSpy).to.have.been.called;
         }));
     });
 

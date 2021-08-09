@@ -53,10 +53,35 @@ describe('AnswerPostReactionsBarComponent', () => {
     it('should initialize user authority and reactions correctly', () => {
         metisServiceUserAuthorityStub.returns(true);
         component.ngOnInit();
-        expect(component.currentUserIsAtLeastTutor).to.deep.equal(true);
         fixture.detectChanges();
-        const reaction = getElement(debugElement, 'emoji-mart');
+        const triggerEmojiMartButton = getElement(debugElement, '.trigger-emoji-mart-selector');
+        expect(triggerEmojiMartButton).to.exist;
+        const reaction = getElement(debugElement, 'ngx-emoji');
         expect(reaction).to.not.exist;
         expect(component.reactionCountMap).to.deep.equal({});
     });
+
+    it('should increase count for an existing reaction when clicked by the user for the first time', () => {
+        // add one existing reaction, made by another user
+        component.reactionCountMap = {
+            smile: {
+                count: 1,
+                hasReacted: false,
+            },
+        };
+        component.ngOnInit();
+        expect(component.showReactionSelector).to.be.equal(false);
+        const triggerEmojiMartButton = getElement(debugElement, '.trigger-emoji-mart-selector');
+        triggerEmojiMartButton.click();
+        fixture.detectChanges();
+        expect(component.showReactionSelector).to.be.equal(true);
+        // add reaction to existing reaction
+        // in map: check emojiId present, check count 1 -> 2, check reacted flag
+        // check emoji displayed
+    });
+
+    it('should decrease count for an existing reaction when clicked by the user that already reacted');
+    // remove existing reaction
+    // check count 2 -> 1 in map
+    // check emoji displayed
 });

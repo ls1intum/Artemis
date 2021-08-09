@@ -29,7 +29,7 @@ describe('PostHeaderComponent', () => {
     let metisServiceUserIsAtLeastTutorStub: SinonStub;
     let metisServiceDeletePostStub: SinonStub;
 
-    const user = { id: 1, name: 'usersame', login: 'login' } as User;
+    const user = { id: 1, name: 'username', login: 'login' } as User;
 
     const post = {
         id: 1,
