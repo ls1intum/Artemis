@@ -28,7 +28,7 @@ export const routes: Routes = [
     },
     {
         path: ':courseId/programming-exercises/:exerciseId/submissions/:submissionId/assessment/correction-round/:correctionRound',
-        redirectTo: ':courseId/programming-exercises/:exerciseId/submissions/:submissionId/assessment?correction-round=:correctionRound'
+        redirectTo: ':courseId/programming-exercises/:exerciseId/submissions/:submissionId/assessment?correction-round=:correctionRound',
     },
 ];
 

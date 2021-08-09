@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { calculateSubmissionStatusIsDraft, Submission } from 'app/entities/submission.model';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
@@ -28,7 +27,6 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private exerciseService: ExerciseService,
-        private programmingSubmissionService: ProgrammingSubmissionService,
         private orionAssessmentService: OrionAssessmentService,
         private orionConnectorService: OrionConnectorService,
         private jhiAlertService: JhiAlertService,
@@ -57,6 +55,6 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
      * Delegates to the {@link OrionAssessmentService} to load a new submission
      */
     downloadSubmissionInOrion(submission: Submission | 'new', correctionRound = 0) {
-        this.orionAssessmentService.downloadSubmissionInOrion(this.exerciseId, submission, correctionRound)
+        this.orionAssessmentService.downloadSubmissionInOrion(this.exerciseId, submission, correctionRound);
     }
 }

@@ -106,7 +106,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // listener, will get notified upon loading of feedback
     @Output() onFeedbackLoaded = new EventEmitter();
     // function override, if set will be executed instead of going to the next submission page
-    @Input() overrideNextSubmission?: (submissionId: number) => { } = undefined;
+    @Input() overrideNextSubmission?: (submissionId: number) => {} = undefined;
 
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
