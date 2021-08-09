@@ -108,6 +108,8 @@ public class ExerciseService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
+    private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService,
             QuizExerciseService quizExerciseService, QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository,
@@ -117,7 +119,7 @@ public class ExerciseService {
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
             PlagiarismResultRepository plagiarismResultRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
-            ProgrammingAssessmentService programmingAssessmentService) {
+            ProgrammingAssessmentService programmingAssessmentService, TextAssessmentKnowledgeService textAssessmentKnowledgeService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
@@ -147,6 +149,7 @@ public class ExerciseService {
         this.feedbackRepository = feedbackRepository;
         this.programmingAssessmentService = programmingAssessmentService;
         this.plagiarismResultRepository = plagiarismResultRepository;
+        this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
     }
 
     /**
@@ -444,6 +447,12 @@ public class ExerciseService {
         }
         else {
             exerciseRepository.delete(exercise);
+            // delete text assessment knowledge if exercise is of type TextExercise and if no other exercise uses same knowledge
+            if (exercise instanceof TextExercise) {
+                log.info("Deleting knowledge of exercise");
+
+                textAssessmentKnowledgeService.deleteKnowledge(((TextExercise) exercise).getKnowledge().getId());
+            }
         }
     }
 
