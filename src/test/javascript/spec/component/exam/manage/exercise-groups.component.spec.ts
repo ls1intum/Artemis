@@ -33,6 +33,7 @@ import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-gro
 import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
 import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();
@@ -58,7 +59,7 @@ describe('Exercise Groups Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, RouterModule],
+            imports: [ArtemisTestModule, RouterModule],
             declarations: [
                 ExerciseGroupsComponent,
                 ExamExerciseRowButtonsComponent,
@@ -74,6 +75,7 @@ describe('Exercise Groups Component', () => {
                 MockComponent(ModelingExerciseGroupCellComponent),
                 MockComponent(ProgrammingExerciseGroupCellComponent),
                 MockComponent(QuizExerciseGroupCellComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },

@@ -17,6 +17,8 @@ import { HttpResponse } from '@angular/common/http';
 import * as _ from 'lodash';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ApollonDiagramList Component', () => {
     let apollonDiagramService: ApollonDiagramService;
@@ -37,6 +39,7 @@ describe('ApollonDiagramList Component', () => {
                 MockProvider(SortService),
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(CourseManagementService),
                 MockProvider(AccountService),
             ],

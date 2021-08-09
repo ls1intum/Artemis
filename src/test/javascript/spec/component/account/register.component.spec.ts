@@ -11,6 +11,8 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Component Tests', () => {
     describe('RegisterComponent', () => {
@@ -26,6 +28,7 @@ describe('Component Tests', () => {
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: ProfileService, useClass: MockProfileService },
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
             })
                 .overrideTemplate(RegisterComponent, '')
