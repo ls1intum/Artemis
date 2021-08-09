@@ -4,6 +4,7 @@ import static com.google.gson.JsonParser.parseString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -28,6 +29,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.ResourceUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -58,6 +60,7 @@ import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import liquibase.util.csv.CSVReader;
 
 /**
  * Service responsible for initializing the database with specific testdata for a testscenario
@@ -225,6 +228,9 @@ public class DatabaseUtilService {
 
     @Autowired
     private OrganizationRepository organizationRepository;
+
+    @Autowired
+    private ModelingExerciseRepository modelingExerciseRepository;
 
     @Autowired
     private DatabaseCleanupService databaseCleanupService;
@@ -733,6 +739,7 @@ public class DatabaseUtilService {
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setLecture(lectureContext);
+            postToAdd.setCourse(lectureContext.getCourse());
             postRepository.save(postToAdd);
             posts.add(postToAdd);
         }
@@ -744,6 +751,7 @@ public class DatabaseUtilService {
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setExercise(exerciseContext);
+            postToAdd.setCourse(exerciseContext.getCourseViaExerciseGroupOrCourseMember());
             postRepository.save(postToAdd);
             posts.add(postToAdd);
         }
@@ -1604,6 +1612,17 @@ public class DatabaseUtilService {
 
         addTestCasesToProgrammingExercise(programmingExercise);
         return programmingExercise;
+    }
+
+    public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise() {
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
+                exerciseGroup.getExam().getCourse());
+        classExercise.setTitle("ClassDiagram");
+        classExercise.setExerciseGroup(exerciseGroup);
+
+        classExercise = modelingExerciseRepository.save(classExercise);
+        return classExercise;
     }
 
     public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed, String commitHash) {
@@ -2516,7 +2535,7 @@ public class DatabaseUtilService {
         result.setSubmission(submission);
         submission.addResult(result);
         // Manual results are always rated and have a resultString which is defined in the client
-        if (assessmentType.equals(AssessmentType.SEMI_AUTOMATIC)) {
+        if (assessmentType == AssessmentType.SEMI_AUTOMATIC) {
             result.rated(true);
             result.resultString("1 of 13 passed, 1 issue, 5 of 10 points");
         }
@@ -3474,6 +3493,39 @@ public class DatabaseUtilService {
         gradeStep3.setUpperBoundInclusive(true);
 
         return Set.of(gradeStep1, gradeStep2, gradeStep3);
+    }
+
+    public GradingScale generateGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex, Optional<String[]> gradeNames) {
+        if (gradeStepCount != intervals.length - 1 || firstPassingIndex >= gradeStepCount || firstPassingIndex < 0) {
+            fail("Invalid grading scale parameters");
+        }
+        GradingScale gradingScale = new GradingScale();
+        Set<GradeStep> gradeSteps = new HashSet<>();
+        for (int i = 0; i < gradeStepCount; i++) {
+            GradeStep gradeStep = new GradeStep();
+            gradeStep.setLowerBoundPercentage(intervals[i]);
+            gradeStep.setUpperBoundPercentage(intervals[i + 1]);
+            gradeStep.setLowerBoundInclusive(i == 0 || lowerBoundInclusivity);
+            gradeStep.setUpperBoundInclusive(i + 1 == gradeStepCount || !lowerBoundInclusivity);
+            gradeStep.setIsPassingGrade(i >= firstPassingIndex);
+            gradeStep.setGradeName(gradeNames.isPresent() ? gradeNames.get()[i] : "Step" + i);
+            gradeStep.setGradingScale(gradingScale);
+            gradeSteps.add(gradeStep);
+        }
+        gradingScale.setGradeSteps(gradeSteps);
+        gradingScale.setGradeType(GradeType.GRADE);
+        return gradingScale;
+    }
+
+    public List<String[]> loadPercentagesAndGrades(String path) throws Exception {
+        CSVReader reader = new CSVReader(new FileReader(ResourceUtils.getFile("classpath:" + path)));
+        List<String[]> rows = reader.readAll();
+        // delete first row with column headers
+        rows.remove(0);
+        List<String[]> percentagesAndGrades = new ArrayList<>();
+        // copy only percentages, whether the student has submitted, and their grade
+        rows.forEach(row -> percentagesAndGrades.add(new String[] { row[2], row[3], row[4] }));
+        return percentagesAndGrades;
     }
 
     public Course createCourseWithTestModelingAndFileUploadExercisesAndSubmissions() throws Exception {

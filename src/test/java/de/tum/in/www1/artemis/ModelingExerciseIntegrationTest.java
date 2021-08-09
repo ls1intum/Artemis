@@ -689,4 +689,12 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     public void testReEvaluateAndUpdateModelingExercise_notFound() throws Exception {
         request.put("/api/modeling-exercises/" + 123456789 + "/re-evaluate", classExercise, HttpStatus.NOT_FOUND);
     }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void deleteModelingExerciseClustersAndElementsAsAdmin() throws Exception {
+        final Course course = database.addCourseWithOneModelingExercise();
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseId(course.getId()).get(0);
+        request.delete("/api/modeling-exercises/" + modelingExercise.getId() + "/clusters", HttpStatus.OK);
+    }
 }

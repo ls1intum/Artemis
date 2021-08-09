@@ -43,7 +43,7 @@
                 "saveFailed": "Das Speichern deiner Bewertung ist fehlgeschlagen!",
                 "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
                 "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
-                "removeGradingInstructionLink": "Möchtest du den Link zum Benotungshinweis entfernen?"
+                "removeAssessmentInstructionLink": "Möchtest du den Link zum Bewertungsanweisung entfernen?"
             },
             "dashboard": {
                 "warning": "Achtung: Die Einreichungsfrist ist noch nicht abgelaufen und Studierende dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen.",

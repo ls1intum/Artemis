@@ -107,7 +107,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         var exerciseList = new HashSet<Long>();
         exerciseList.add(exercise.getId());
-        var activeStudents = courseService.getActiveStudents(exerciseList, 0);
+        var activeStudents = courseService.getActiveStudents(exerciseList, 0, 4);
         assertThat(activeStudents.length).isEqualTo(4);
         assertThat(activeStudents).isEqualTo(new Integer[] { 0, 1, 1, 2 });
     }

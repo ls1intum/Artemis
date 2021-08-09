@@ -8,4 +8,5 @@ export class ExpandableSectionComponent {
     @Input() headerKey: string;
     @Input() isCollapsed = false;
     @Input() hasTranslation = true;
+    @Input() isSubHeader = false;
 }

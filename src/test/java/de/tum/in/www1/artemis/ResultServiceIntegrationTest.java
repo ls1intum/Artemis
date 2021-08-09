@@ -631,6 +631,19 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createExampleResult_notExampleSubmission() throws Exception {
+        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
+        var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
+        exampleSubmission = database.addExampleSubmission(exampleSubmission);
+        modelingSubmission.setExampleSubmission(false);
+        submissionRepository.save(modelingSubmission);
+
+        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission,
+                Result.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createResultForExternalSubmission() throws Exception {
         Result result = new Result().rated(false);
         var createdResult = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,

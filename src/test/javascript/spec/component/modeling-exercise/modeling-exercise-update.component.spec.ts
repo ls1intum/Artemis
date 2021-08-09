@@ -256,14 +256,7 @@ describe('ModelingExercise Management Update Component', () => {
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         comp.isExamMode = true;
         comp.diagramTypeChanged();
-        expect(comp.modelingExercise.assessmentType).toEqual(AssessmentType.MANUAL);
-    });
-
-    it('should set assessmentType to manual if diagram type is not class or activity diagram', () => {
-        comp.modelingExercise = new ModelingExercise(UMLDiagramType.Flowchart, undefined, undefined);
-        comp.isExamMode = false;
-        comp.diagramTypeChanged();
-        expect(comp.modelingExercise.assessmentType).toEqual(AssessmentType.MANUAL);
+        expect(comp.modelingExercise.assessmentType).toEqual(AssessmentType.SEMI_AUTOMATIC);
     });
 
     it('should set checked flag to given value', () => {
