@@ -1,7 +1,6 @@
 <div *ngIf="!exercise.gradingInstructionFeedbackUsed">
     <jhi-markdown-editor
         #markdownEditor
-        style="height: 350px"
         class="markdown-editor"
         [markdown]="questionEditorText"
         [showPreviewButton]="true"
@@ -88,7 +87,6 @@
                                 [domainCommands]="domainCommandsGradingInstructions"
                                 (markdownChange)="prepareForSave()"
                                 (textWithDomainCommandsFound)="onInstructionChange($event, instruction)"
-                                [enableResize]="true"
                                 class="editor"
                                 style="width: 65%"
                             ></jhi-markdown-editor>
