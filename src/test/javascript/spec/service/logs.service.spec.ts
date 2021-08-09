@@ -23,7 +23,7 @@ describe('Logs Service', () => {
 
     describe('Service methods', () => {
         it('should call correct URL', fakeAsync(() => {
-            const resourceUrl = SERVER_API_URL + 'management/logs';
+            const resourceUrl = SERVER_API_URL + 'management/loggers';
 
             service.findAll().subscribe(() => {});
 
@@ -47,7 +47,7 @@ describe('Logs Service', () => {
 
             service.changeLevel(log.name, log.level).subscribe((received) => expect(received).toEqual(log));
 
-            const req = httpMock.expectOne({ method: 'PUT' });
+            const req = httpMock.expectOne({ method: 'POST' });
             req.flush(log);
             tick();
         }));
