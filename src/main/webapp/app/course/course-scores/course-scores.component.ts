@@ -197,7 +197,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         for (const courseScoreDTO of courseScoreDTOs) {
             this.studentIdToCourseScoreDTOs.set(courseScoreDTO.studentId!, courseScoreDTO);
         }
-        let noOfComparisons = 0;
         for (const student of this.students) {
             const overAllPoints = round(student.overallPoints, 1);
             const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100, 1);
@@ -214,7 +213,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 const errorMessage = `User scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
                 this.logErrorOnSentry(errorMessage);
             } else {
-                noOfComparisons += 1;
                 courseScoreDTO.scoreAchieved = round(courseScoreDTO.scoreAchieved, 1);
                 courseScoreDTO.pointsAchieved = round(courseScoreDTO.pointsAchieved, 1);
 
