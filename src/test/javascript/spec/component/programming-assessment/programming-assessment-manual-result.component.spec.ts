@@ -16,7 +16,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
 import { JhiAlertService } from 'ng-jhipster';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -73,6 +73,7 @@ import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { AceEditorComponent } from 'ng2-ace-editor';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -191,6 +192,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
+                MockDirective(ExtensionPointDirective),
             ],
             providers: [
                 ProgrammingAssessmentManualResultService,
