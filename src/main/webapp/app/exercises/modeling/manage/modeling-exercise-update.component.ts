@@ -36,7 +36,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
     UMLDiagramType = UMLDiagramType;
-    checkedFlag: boolean;
 
     modelingExercise: ModelingExercise;
     backupExercise: ModelingExercise;
@@ -48,7 +47,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
-    domainCommandsGradingInstructions = [new KatexCommand()];
     examCourseId?: number;
     isImport: boolean;
     isExamMode: boolean;
@@ -80,7 +78,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * Initializes all relevant data for creating or editing modeling exercise
      */
     ngOnInit(): void {
-        this.checkedFlag = false; // default value of grading instructions toggle
         // This is used to scroll page to the top of the page, because the routing keeps the position for the
         // new page from previous page.
 
@@ -215,13 +212,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     private onSaveError(error: HttpErrorResponse): void {
         onError(this.jhiAlertService, error);
         this.isSaving = false;
-    }
-
-    /**
-     * gets the flag of the structured grading instructions slide toggle
-     */
-    getCheckedFlag(event: boolean) {
-        this.checkedFlag = event;
     }
 
     /**

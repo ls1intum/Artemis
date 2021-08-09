@@ -301,6 +301,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             if (!this.instructions[index]) {
                 break;
             }
+            if (command === null && text.length > 0) {
+                this.exercise.gradingInstructions = text;
+            }
             if (command instanceof CreditsCommand) {
                 this.instructions[index].credits = parseFloat(text);
             } else if (command instanceof GradingScaleCommand) {

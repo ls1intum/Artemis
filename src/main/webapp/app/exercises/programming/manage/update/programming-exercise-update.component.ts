@@ -56,7 +56,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText?: string;
-    domainCommandsGradingInstructions = [new KatexCommand()];
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
     rerenderSubject = new Subject<void>();
@@ -83,7 +82,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     existingCategories: ExerciseCategory[];
 
     public inProductionEnvironment: boolean;
-    checkedFlagForStructuredGradingInstructions = false;
 
     public supportsJava = true;
     public supportsPython = false;
@@ -539,13 +537,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
-    }
-
-    /**
-     * gets the flag of the structured grading instructions slide toggle
-     */
-    getCheckedFlag(event: boolean) {
-        this.checkedFlagForStructuredGradingInstructions = event;
     }
 
     /**
