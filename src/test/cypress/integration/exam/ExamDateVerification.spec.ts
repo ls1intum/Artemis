@@ -129,10 +129,8 @@ describe('Exam management', () => {
                     cy.contains('Start').click();
                     cy.contains('Text exercise 1').should('exist').click();
                     cy.get('#text-editor-tab').type('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.');
-                    cy.intercept('GET', '/api/notifications?page=*').as('examEnd');
                     cy.contains('Save').click();
-                    cy.wait('@examEnd', { timeout: 20000 });
-                    cy.contains('This is the end of ' + exam.title);
+                    cy.contains('This is the end of ' + exam.title, {timeout: 20000});
                     cy.get('#confirmBox').click();
                     artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName));
                     cy.get('.btn').click();
