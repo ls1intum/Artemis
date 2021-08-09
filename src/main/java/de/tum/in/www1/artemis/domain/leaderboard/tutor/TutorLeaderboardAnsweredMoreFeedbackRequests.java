@@ -24,7 +24,7 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequests {
         return userId;
     }
 
-    public TutorLeaderboardAnsweredMoreFeedbackRequests(long userId, long answeredRequests, double points) {
+    public TutorLeaderboardAnsweredMoreFeedbackRequests(Long userId, Long answeredRequests, Double points) {
         this.userId = userId;
         this.answeredRequests = answeredRequests;
         this.points = points;
