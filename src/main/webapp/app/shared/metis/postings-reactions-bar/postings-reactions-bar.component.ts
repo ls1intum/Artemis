@@ -111,11 +111,13 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
             ? this.posting.reactions.findIndex((reaction) => reaction.user?.id === this.metisService.getUser().id && reaction.emojiId === emojiId)
             : -1;
         if (this.posting.reactions && existingReactionIdx > -1) {
-            this.metisService.deleteReaction(this.posting.reactions[existingReactionIdx]).subscribe(() => {
+            const reactionToDelete = this.posting.reactions[existingReactionIdx];
+            this.metisService.deleteReaction(reactionToDelete).subscribe(() => {
                 this.showReactionSelector = false;
             });
         } else {
-            this.metisService.createReaction(this.buildReaction(emojiId)).subscribe(() => {
+            const reactionToCreate = this.buildReaction(emojiId);
+            this.metisService.createReaction(reactionToCreate).subscribe(() => {
                 this.showReactionSelector = false;
             });
         }

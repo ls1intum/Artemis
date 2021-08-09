@@ -8,7 +8,7 @@ import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { getElement } from '../../../../../helpers/utils/general.utils';
+import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
 import { PostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { Reaction } from 'app/entities/metis/reaction.model';
@@ -30,21 +30,11 @@ describe('PostReactionsBarComponent', () => {
     let metisService: MetisService;
     let accountService: MockAccountService;
     let accountServiceAuthorityStub: SinonStub;
+    let post: Post;
+    let reactionToCreate: Reaction;
+    let reactionToDelete: Reaction;
 
     const user = { id: 1, name: 'username', login: 'login' } as User;
-
-    const reaction = {
-        id: 1,
-        emojiId: 'smile',
-        user,
-    } as Reaction;
-
-    const post = {
-        id: 1,
-        content: 'post with reaction',
-        reactions: [reaction],
-        author: user,
-    } as Post;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -66,6 +56,15 @@ describe('PostReactionsBarComponent', () => {
                 debugElement = fixture.debugElement;
                 component = fixture.componentInstance;
                 accountServiceAuthorityStub = stub(accountService, 'isAtLeastTutorInCourse');
+                post = new Post();
+                post.id = 1;
+                post.author = user;
+                reactionToDelete = new Reaction();
+                reactionToDelete.id = 1;
+                reactionToDelete.emojiId = 'smile';
+                reactionToDelete.user = user;
+                reactionToDelete.post = post;
+                post.reactions = [reactionToDelete];
                 component.posting = post;
             });
     });
@@ -95,8 +94,9 @@ describe('PostReactionsBarComponent', () => {
         component.ngOnInit();
         expect(component.currentUserIsAtLeastTutor).to.deep.equal(true);
         fixture.detectChanges();
-        const reactions = getElement(debugElement, 'ngx-emoji');
-        expect(reactions).to.exist;
+        const reactions = getElements(debugElement, 'ngx-emoji');
+        // emojis to be displayed it the user reaction, the pin emoji and the archive emoji
+        expect(reactions).to.have.length(3);
         expect(component.reactionCountMap).to.be.deep.equal({
             smile: {
                 count: 1,
@@ -105,22 +105,25 @@ describe('PostReactionsBarComponent', () => {
         });
     });
 
-    // add reaction for the first time
-    // in map: check emojiId present, check count 0 -> 1, check reacted flag
-    // check emoji displayed
-    it('should update reactionCountMap and display a new emoji when method addOrRemoveReaction is called', () => {
+    it('should invoke metis service method with correctly built reaction to create it', () => {
         component.ngOnInit();
         fixture.detectChanges();
         const metisServiceCreateReactionSpy = sinon.spy(metisService, 'createReaction');
-        component.addOrRemoveReaction('+1');
-        expect(metisServiceCreateReactionSpy).to.have.been.called;
-        // expect(metisServiceCreateReactionSpy).to.have.been.calledWith({
-        //     emojiId: '+1',
-        //     post: component.posting,
-        // });
+        reactionToCreate = new Reaction();
+        reactionToCreate.emojiId = '+1';
+        reactionToCreate.post = component.posting;
+        component.addOrRemoveReaction(reactionToCreate.emojiId);
+        expect(metisServiceCreateReactionSpy).to.have.been.calledWith(reactionToCreate);
+        expect(component.showReactionSelector).to.be.equal(false);
     });
 
-    // remove existing reaction
-    // in map: check emojiId not present, check count 0 -> 1, check reacted flag
-    // check emoji not displayed
+    it('should invoke metis service method with own reaction to delete it', () => {
+        component.posting!.author!.id = 99;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const metisServiceDeleteReactionSpy = sinon.spy(metisService, 'deleteReaction');
+        component.addOrRemoveReaction(reactionToDelete.emojiId!);
+        expect(metisServiceDeleteReactionSpy).to.have.been.calledWith(reactionToDelete);
+        expect(component.showReactionSelector).to.be.equal(false);
+    });
 });
