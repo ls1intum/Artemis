@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -8,9 +9,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.ListBranchCommand;
@@ -25,10 +26,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.FileType;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -40,6 +40,9 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private RepositoryService repositoryService;
 
     private final String testRepoBaseUrl = "/api/test-repository/";
 
@@ -55,7 +58,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @BeforeEach
     public void setup() throws Exception {
-        database.addUsers(0, 0, 0, 1);
+        database.addUsers(1, 1, 0, 1);
         Course course = database.addEmptyCourse();
         programmingExercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
@@ -106,6 +109,20 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetFilesAsStudent() throws Exception {
+
+        programmingExerciseRepository.save(programmingExercise);
+        var files = request.getMap(testRepoBaseUrl + programmingExercise.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).isNotEmpty();
+
+        // Check if all files exist
+        for (String key : files.keySet()) {
+            assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + key))).isTrue();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -125,6 +142,33 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         params.add("file", "newFile");
         request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
         assertThat(Files.isRegularFile(Paths.get(testRepo.localRepoFile + "/newFile"))).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateFile_alreadyExists() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFile"))).isFalse();
+        params.add("file", "newFile");
+
+        doReturn(Optional.of(true)).when(gitService).getFileByName(any(), any());
+        request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.BAD_REQUEST, params);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateFile_invalidRepository() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFile"))).isFalse();
+        params.add("file", "newFile");
+
+        Repository mockRepository = mock(Repository.class);
+        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
+        doReturn(testRepo.localRepoFile.toPath()).when(mockRepository).getLocalPath();
+        doReturn(false).when(mockRepository).isValidFile(any());
+        request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.BAD_REQUEST, params);
     }
 
     @Test
@@ -155,6 +199,43 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRenameFile_alreadyExists() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        FileMove fileMove = createRenameFileMove();
+
+        doReturn(Optional.empty()).when(gitService).getFileByName(any(), any());
+        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.NOT_FOUND, null);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRenameFile_invalidExistingFile() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        FileMove fileMove = createRenameFileMove();
+
+        doReturn(Optional.of(testRepo.localRepoFile)).when(gitService).getFileByName(any(), eq(fileMove.getCurrentFilePath()));
+
+        Repository mockRepository = mock(Repository.class);
+        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
+        doReturn(testRepo.localRepoFile.toPath()).when(mockRepository).getLocalPath();
+        doReturn(false).when(mockRepository).isValidFile(argThat(file -> file.getName().contains(currentLocalFileName)));
+        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.BAD_REQUEST, null);
+    }
+
+    private FileMove createRenameFileMove() {
+        String newLocalFileName = "newFileName";
+
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + newLocalFileName))).isFalse();
+
+        FileMove fileMove = new FileMove();
+        fileMove.setCurrentFilePath(currentLocalFileName);
+        fileMove.setNewFilename(newLocalFileName);
+        return fileMove;
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRenameFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFolderName))).isTrue();
@@ -177,6 +258,56 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         params.add("file", currentLocalFileName);
         request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteFile_notFound() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        params.add("file", currentLocalFileName);
+
+        doReturn(Optional.empty()).when(gitService).getFileByName(any(), any());
+
+        request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.NOT_FOUND, params);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteFile_invalidFile() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        params.add("file", currentLocalFileName);
+
+        doReturn(Optional.of(testRepo.localRepoFile)).when(gitService).getFileByName(any(), eq(currentLocalFileName));
+
+        Repository mockRepository = mock(Repository.class);
+        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
+        doReturn(false).when(mockRepository).isValidFile(argThat(file -> file.getName().contains(currentLocalFileName)));
+
+        request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.BAD_REQUEST, params);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteFile_validFile() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        params.add("file", currentLocalFileName);
+
+        File mockFile = mock(File.class);
+        doReturn(Optional.of(mockFile)).when(gitService).getFileByName(any(), eq(currentLocalFileName));
+        doReturn(currentLocalFileName).when(mockFile).getName();
+        doReturn(false).when(mockFile).isFile();
+
+        Repository mockRepository = mock(Repository.class);
+        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
+        doReturn(true).when(mockRepository).isValidFile(argThat(file -> file.getName().contains(currentLocalFileName)));
+
+        request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
     }
 
     @Test
@@ -337,5 +468,25 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         // Check if the status of git is "clean" after the commit
         var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testIsClean() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        doReturn(true).when(gitService).isRepositoryCached(any());
+        var status = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, HashMap.class);
+        assertThat(status.size()).isGreaterThan(0);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCheckoutRepositoryByNameAsStudent() {
+        ProgrammingExercise exercise = programmingExerciseRepository.save(programmingExercise);
+        assertThrows(IllegalAccessException.class, () -> repositoryService.checkoutRepositoryByName(exercise, exercise.getVcsTemplateRepositoryUrl(), false));
+
+        Principal mockPrincipal = mock(Principal.class);
+        doReturn("student1").when(mockPrincipal).getName();
+        assertThrows(IllegalAccessException.class, () -> repositoryService.checkoutRepositoryByName(mockPrincipal, exercise, exercise.getVcsTemplateRepositoryUrl()));
     }
 }

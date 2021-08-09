@@ -27,7 +27,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { HttpResponse } from '@angular/common/http';
 import { JhiEventManager } from 'ng-jhipster';
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
-import { CourseDetailBarChartComponent } from 'app/course/manage/detail/course-detail-bar-chart.component';
+import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { RouterTestingModule } from '@angular/router/testing';
 
@@ -82,7 +82,7 @@ describe('Course Management Detail Component', () => {
                 MockComponent(CourseExamArchiveButtonComponent),
                 MockDirective(HasAnyAuthorityDirective),
                 MockComponent(CourseDetailDoughnutChartComponent),
-                MockComponent(CourseDetailBarChartComponent),
+                MockComponent(CourseDetailLineChartComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },

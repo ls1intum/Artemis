@@ -211,7 +211,9 @@ public class CourseExamExportService {
 
         // Export the exercises of the course exams
         List<Path> exportedExercises = exportExams(notificationTopic, courseExams, outputDir, progress, totalExercises, exportErrors, reportData);
-        exportedFiles.addAll(new ArrayList<>(exportedExercises));
+        if (!exportedExercises.isEmpty()) {
+            exportedFiles.addAll(new ArrayList<>(exportedExercises));
+        }
 
         // Add total to report
         reportData.add(new ArchivalReportEntry(null, "Total Exercises", totalExercises, exportedFiles.size(), 0));

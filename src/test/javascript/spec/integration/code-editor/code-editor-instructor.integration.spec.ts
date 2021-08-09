@@ -50,9 +50,31 @@ import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
-import { ArtemisCodeEditorManagementModule } from 'app/exercises/programming/manage/code-editor/code-editor-management.module';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
-import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
+import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
+import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
+import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
+import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
+import { KeysPipe } from 'app/shared/pipes/keys.pipe';
+import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -83,10 +105,35 @@ describe('CodeEditorInstructorIntegration', () => {
 
     const exerciseHints = [{ id: 1 }, { id: 2 }];
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisCodeEditorManagementModule, ArtemisCodeEditorModule],
-            declarations: [],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule],
+            declarations: [
+                CodeEditorInstructorAndEditorContainerComponent,
+                CodeEditorContainerComponent,
+                KeysPipe,
+                CodeEditorInstructionsComponent,
+                MockComponent(CodeEditorGridComponent),
+                MockComponent(CodeEditorActionsComponent),
+                MockComponent(CodeEditorFileBrowserComponent),
+                MockComponent(CodeEditorAceComponent),
+                CodeEditorBuildOutputComponent,
+                MockPipe(ArtemisDatePipe),
+                MockComponent(AlertComponent),
+                MockComponent(IncludedInScoreBadgeComponent),
+                ProgrammingExerciseInstructorExerciseStatusComponent,
+                UpdatingResultComponent,
+                MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
+                MockComponent(ExerciseHintStudentComponent),
+                ProgrammingExerciseEditableInstructionComponent,
+                MockComponent(MarkdownEditorComponent),
+                ProgrammingExerciseInstructionComponent,
+                MockComponent(ProgrammingExerciseInstructionAnalysisComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(NgbTooltip),
+                MockComponent(ResultComponent),
+                MockComponent(ProgrammingExerciseInstructionStepWizardComponent),
+            ],
             providers: [
                 JhiLanguageHelper,
                 ChangeDetectorRef,
