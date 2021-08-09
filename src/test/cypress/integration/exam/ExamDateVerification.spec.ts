@@ -93,11 +93,11 @@ describe('Exam management', () => {
                         artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName));
                         cy.contains('Start').click();
                         cy.contains('Exam Overview').should('exist');
-                        cy.intercept('PUT', `/api/exercises/${textExercise.id}/text-submissions`).as('savedSubmission');
                         cy.contains('Text exercise 1').should('be.visible').click();
                         cy.get('#text-editor-tab').type(
                             'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                         );
+                        cy.intercept('PUT', `/api/exercises/${textExercise.id}/text-submissions`).as('savedSubmission');
                         cy.contains('Save').click();
                         cy.wait('@savedSubmission');
                     });
