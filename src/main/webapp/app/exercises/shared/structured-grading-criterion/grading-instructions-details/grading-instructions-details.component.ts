@@ -95,6 +95,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             this.criteria.push(dummyCriterion);
             this.criteria.push(exampleCriterion);
         }
+        if (this.exercise.gradingInstructions) {
+            markdownText += this.exercise.gradingInstructions + '\n';
+        } else {
+            markdownText += 'Add Assessment Instruction text here' + '\n';
+        }
         for (const criterion of this.criteria) {
             if (criterion.title == undefined) {
                 // if it is a dummy criterion, leave out the command identifier
@@ -189,9 +194,14 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     prepareForSave(): void {
+        this.cleanupExerciseGradingInstructions();
         this.markdownEditors.forEach((component) => {
             component.parse();
         });
+    }
+
+    private cleanupExerciseGradingInstructions() {
+        this.exercise.gradingInstructions = undefined;
     }
 
     hasCriterionCommand(domainCommands: [string, DomainCommand | null][]): boolean {
