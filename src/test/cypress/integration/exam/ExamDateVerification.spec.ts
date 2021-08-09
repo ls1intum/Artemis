@@ -6,6 +6,9 @@ import { generateUUID } from '../../support/utils';
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
 
+// page objects
+const examStartEnd = artemis.pageobjects.examStartEnd;
+
 // Common primitives
 const uid = generateUUID();
 const courseName = 'Cypress course' + uid;
@@ -89,9 +92,9 @@ describe('Exam management', () => {
                         cy.contains(exam.title).click();
                         cy.url().should('contain', `/exams/${exam.id}`);
                         cy.contains('Welcome to ' + exam.title).should('be.visible');
-                        cy.get('#confirmBox').click();
-                        artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName));
-                        cy.contains('Start').click();
+                        examStartEnd.setConfirmCheckmark();
+                        examStartEnd.enterFirstnameLastname();
+                        examStartEnd.startExam();
                         cy.contains('Exam Overview').should('exist');
                         cy.contains('Text exercise 1').should('be.visible').click();
                         cy.get('#text-editor-tab').type(
@@ -125,18 +128,18 @@ describe('Exam management', () => {
                         cy.login(student, `/courses/${course.id}/exams`);
                         cy.contains(exam.title).click();
                         cy.contains('Welcome to ' + exam.title).should('be.visible');
-                        cy.get('#confirmBox').click();
-                        artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName));
-                        cy.contains('Start').click();
+                        examStartEnd.setConfirmCheckmark();
+                        examStartEnd.enterFirstnameLastname();
+                        examStartEnd.startExam();
                         cy.contains('Text exercise 1').should('be.visible').click();
                         cy.get('#text-editor-tab').type(
                             'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                         );
                         cy.contains('Save').click();
                         cy.contains('This is the end of ' + exam.title, { timeout: 20000 });
-                        cy.get('#confirmBox').click();
-                        artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName));
-                        cy.get('.btn').click();
+                        examStartEnd.setConfirmCheckmark();
+                        examStartEnd.enterFirstnameLastname();
+                        examStartEnd.finishExam();
                         cy.get('.alert').contains('Your exam was submitted successfully.');
                     });
                 });
