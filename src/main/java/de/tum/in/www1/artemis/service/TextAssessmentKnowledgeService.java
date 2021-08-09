@@ -20,4 +20,8 @@ public class TextAssessmentKnowledgeService {
         this.textAssesmentKnowledgeRepository = textAssesmentKnowledgeRepository;
     }
 
+    // delete only when no exercises use the knowledge
+
+    // create only when we create exercise
+
 }

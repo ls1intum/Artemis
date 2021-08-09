@@ -91,13 +91,15 @@ public class TextExerciseResource {
 
     private final CourseRepository courseRepository;
 
+    private final TextAssesmentKnowledgeRepository textAssesmentKnowledgeRepository;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, GroupNotificationService groupNotificationService,
             TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository,
             ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository,
             ExerciseGroupRepository exerciseGroupRepository, InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService,
-            CourseRepository courseRepository) {
+            CourseRepository courseRepository, TextAssesmentKnowledgeRepository textAssesmentKnowledgeRepository) {
         this.feedbackRepository = feedbackRepository;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.textBlockRepository = textBlockRepository;
@@ -118,6 +120,7 @@ public class TextExerciseResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
+        this.textAssesmentKnowledgeRepository = textAssesmentKnowledgeRepository;
     }
 
     /**
@@ -157,6 +160,11 @@ public class TextExerciseResource {
         if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
             return forbidden();
         }
+
+        TextAssessmentKnowledge textAssessmentKnowledge = new TextAssessmentKnowledge();
+        textAssesmentKnowledgeRepository.save(textAssessmentKnowledge);
+
+        textExercise.setKnowledge(textAssessmentKnowledge);
 
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
