@@ -61,10 +61,7 @@
                         <span *ngIf="numberOfSubmissions.late > 0"> | </span>
                         <span *ngIf="numberOfSubmissions.late > 0" class="text-danger">{{ numberOfSubmissions.late }}</span>
                         /
-                        <a
-                            [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'submissions']"
-                            [queryParams]="{ tutorId: tutor?.id }"
-                            title="{{ 'artemisApp.exerciseAssessmentDashboard.numberOfSubmissionsAssessedByYou' | artemisTranslate }}"
+                        <a [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'submissions']" [queryParams]="{ tutorId: tutor?.id }"
                             >{{ numberOfTutorAssessments }} ({{ tutorAssessmentPercentage }}%)</a
                         >
                     </div>
