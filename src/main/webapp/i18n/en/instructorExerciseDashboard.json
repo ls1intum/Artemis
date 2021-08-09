@@ -11,7 +11,9 @@
             "assessmentDueDate": "Assessment due date",
             "assessments": "Assessments",
             "open": "open",
-            "leaderboardTitle": "Tutor Leaderboard for this Exercise"
+            "leaderboardTitle": "Tutor Leaderboard for this Exercise",
+            "totalComplaints": "Total complaints",
+            "totalMoreFeedbackRequests": "Total More Feedback Requests"
         }
     }
 }
