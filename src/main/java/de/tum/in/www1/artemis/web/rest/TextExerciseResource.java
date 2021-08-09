@@ -91,7 +91,7 @@ public class TextExerciseResource {
 
     private final CourseRepository courseRepository;
 
-    private final TextAssesmentKnowledgeRepository textAssesmentKnowledgeRepository;
+    private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
@@ -99,7 +99,7 @@ public class TextExerciseResource {
             TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository,
             ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository,
             ExerciseGroupRepository exerciseGroupRepository, InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService,
-            CourseRepository courseRepository, TextAssesmentKnowledgeRepository textAssesmentKnowledgeRepository) {
+            CourseRepository courseRepository, TextAssessmentKnowledgeService textAssessmentKnowledgeService) {
         this.feedbackRepository = feedbackRepository;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.textBlockRepository = textBlockRepository;
@@ -120,7 +120,7 @@ public class TextExerciseResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
-        this.textAssesmentKnowledgeRepository = textAssesmentKnowledgeRepository;
+        this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
     }
 
     /**
@@ -161,10 +161,7 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        TextAssessmentKnowledge textAssessmentKnowledge = new TextAssessmentKnowledge();
-        textAssesmentKnowledgeRepository.save(textAssessmentKnowledge);
-
-        textExercise.setKnowledge(textAssessmentKnowledge);
+        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
 
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
