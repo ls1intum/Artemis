@@ -18,7 +18,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { ArtemisTestModule } from '../test.module';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -57,7 +57,7 @@ describe('IdeBuildAndTestService', () => {
                 OrionBuildAndTestService,
                 { provide: SubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                MockComponent(OrionConnectorService),
+                MockProvider(OrionConnectorService),
                 { provide: BuildLogService, useClass: MockCodeEditorBuildLogService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
