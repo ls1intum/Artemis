@@ -108,11 +108,12 @@ describe('Exam management', () => {
         it('Exam ends after end time', () => {
             let exerciseGroup: any;
             const student = artemis.users.getStudentOne();
+            cy.log(dayjs().toString());
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(2, 'days'))
-                .endDate(dayjs().subtract(119, 'minutes').subtract(45, 'seconds'))
+                .endDate(dayjs().add(15, 'seconds'))
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
