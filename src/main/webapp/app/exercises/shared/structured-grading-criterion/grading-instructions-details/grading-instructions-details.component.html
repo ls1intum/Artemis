@@ -43,6 +43,19 @@
 
 <div class="edit-sqi" *ngIf="exercise.gradingInstructionFeedbackUsed">
     <div class="grading-instructions-update-border">
+        <jhi-markdown-editor
+            class="markdown-editor"
+            [metaCommands]="[]"
+            [defaultCommands]="[]"
+            [headerCommands]="[]"
+            [colorCommands]="[]"
+            [showEditButton]="false"
+            [showPreviewButton]="false"
+            [markdown]="exercise.gradingInstructions"
+            [domainCommands]="domainCommandsGradingInstructions"
+            (markdownChange)="prepareForSave()"
+            (textWithDomainCommandsFound)="domainCommandsFound($event)"
+        ></jhi-markdown-editor>
         <div *ngFor="let criteria of exercise.gradingCriteria">
             <div class="criteria-content" style="padding-bottom: 12px">
                 <div class="row">

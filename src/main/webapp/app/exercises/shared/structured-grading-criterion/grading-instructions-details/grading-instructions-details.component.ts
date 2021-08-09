@@ -96,9 +96,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             this.criteria.push(exampleCriterion);
         }
         if (this.exercise.gradingInstructions) {
-            markdownText += this.exercise.gradingInstructions + '\n';
+            markdownText += this.exercise.gradingInstructions + '\n' + '\n';
         } else {
-            markdownText += 'Add Assessment Instruction text here' + '\n';
+            markdownText += 'Add Assessment Instruction text here' + '\n' + '\n';
         }
         for (const criterion of this.criteria) {
             if (criterion.title == undefined) {
@@ -200,7 +200,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         });
     }
 
-    private cleanupExerciseGradingInstructions() {
+    /**
+     * @function cleanupExerciseGradingInstructions
+     * @desc Clear the exercise grading instruction text to avoid double assignments
+     */
+    cleanupExerciseGradingInstructions() {
         this.exercise.gradingInstructions = undefined;
     }
 
