@@ -130,7 +130,9 @@ describe('Exam management', () => {
                         artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName));
                         cy.contains('Start').click();
                         cy.contains('Text exercise 1').should('exist').click();
-                        cy.get('#text-editor-tab').type('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.');
+                        cy.get('#text-editor-tab').type(
+                            'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+                        );
                         cy.contains('Save').click();
                         cy.contains('This is the end of ' + exam.title, { timeout: 20000 });
                         cy.get('#confirmBox').click();
