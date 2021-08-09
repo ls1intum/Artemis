@@ -34,7 +34,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -622,7 +621,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).get();
 
         // Student should not receive a result over WebSocket, the exam is over and therefore test after due date would be visible
-        verify(messagingTemplate, never()).convertAndSendToUser(eq(user.getLogin()), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
+        verify(messagingTemplate, never()).convertAndSendToUser(eq(user.getLogin()), eq(NEW_RESULT_TOPIC), isA(Result.class));
 
         // Assert that the submission is illegal
         assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
@@ -665,7 +664,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).get();
 
         // Student should receive a result over WebSocket, the exam not over (grace period still active)
-        verify(messagingTemplate, times(1)).convertAndSendToUser(eq(user.getLogin()), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
+        verify(messagingTemplate, times(1)).convertAndSendToUser(eq(user.getLogin()), eq(NEW_RESULT_TOPIC), isA(Result.class));
 
         // Assert that the submission is illegal
         assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
