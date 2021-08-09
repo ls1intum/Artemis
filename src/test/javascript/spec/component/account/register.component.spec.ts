@@ -18,6 +18,7 @@ describe('Component Tests', () => {
     describe('RegisterComponent', () => {
         let fixture: ComponentFixture<RegisterComponent>;
         let comp: RegisterComponent;
+        let translateService: TranslateService;
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
@@ -37,8 +38,10 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             fixture = TestBed.createComponent(RegisterComponent);
+            translateService = TestBed.inject(TranslateService);
             comp = fixture.componentInstance;
             comp.isRegistrationEnabled = true;
+            translateService.currentLang = 'en';
         });
 
         it('should ensure the two passwords entered match', () => {
