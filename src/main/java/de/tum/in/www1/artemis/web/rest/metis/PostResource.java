@@ -60,8 +60,7 @@ public class PostResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @RequestBody Post post) {
         Post updatedPost = postService.updatePost(courseId, post);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, postService.getEntityName(), updatedPost.getId().toString()))
-                .body(updatedPost);
+        return new ResponseEntity<>(updatedPost, null, HttpStatus.OK);
     }
 
     /**
@@ -108,6 +107,20 @@ public class PostResource {
     public ResponseEntity<List<Post>> getAllPostsForLecture(@PathVariable Long courseId, @PathVariable Long lectureId) {
         List<Post> lecturePosts = postService.getAllLecturePosts(courseId, lectureId);
         return new ResponseEntity<>(lecturePosts, null, HttpStatus.OK);
+    }
+
+    /**
+     * GET /courses/{courseId}/posts/tags : Get all tags for posts in a certain course
+     *
+     * @param courseId  id of the course the post belongs to
+     * @return the ResponseEntity with status 200 (OK) and with body all tags for posts in that course,
+     * or 400 (Bad Request) if the checks on user or course validity fail
+     */
+    @GetMapping("courses/{courseId}/posts/tags")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<String>> getAllPostTagsForCourse(@PathVariable Long courseId) {
+        List<String> tags = postService.getAllCourseTags(courseId);
+        return new ResponseEntity<>(tags, null, HttpStatus.OK);
     }
 
     /**
