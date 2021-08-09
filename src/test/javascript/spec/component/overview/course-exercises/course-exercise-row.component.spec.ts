@@ -1,5 +1,6 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
+import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { SinonStub, stub } from 'sinon';
@@ -11,13 +12,11 @@ import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-c
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { Result } from 'app/entities/result.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import * as moment from 'moment';
 import { MockCourseService } from '../../../helpers/mocks/service/mock-course.service';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
-import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
@@ -26,6 +25,15 @@ import { CourseExerciseService, CourseManagementService } from 'app/course/manag
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/entities/course.model';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
+import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
+import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,9 +45,20 @@ describe('CourseExerciseRowComponent', () => {
     let getAllParticipationsStub: SinonStub;
     let participationWebsocketService: ParticipationWebsocketService;
 
-    beforeEach(async () => {
+    beforeAll(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisCoursesModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule],
+            declarations: [
+                MockComponent(SubmissionResultStatusComponent),
+                MockComponent(ExerciseDetailsStudentActionsComponent),
+                MockComponent(NotReleasedTagComponent),
+                MockComponent(DifficultyBadgeComponent),
+                MockComponent(IncludedInScoreBadgeComponent),
+                MockPipe(ArtemisTimeAgoPipe),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(OrionFilterDirective),
+                CourseExerciseRowComponent,
+            ],
             providers: [
                 DeviceDetectorService,
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
@@ -50,7 +69,6 @@ describe('CourseExerciseRowComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseExerciseRowComponent);
@@ -63,7 +81,7 @@ describe('CourseExerciseRowComponent', () => {
     });
 
     afterEach(() => {
-        getAllParticipationsStub.restore();
+        sinon.restore();
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_STARTED if release date is in the past and not planned to start', () => {
@@ -153,8 +171,8 @@ describe('CourseExerciseRowComponent', () => {
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.INITIALIZED);
     });
 
-    it('Participation status of programming exercise should evaluate to INACTIVE', () => {
-        setupExercise(ExerciseType.PROGRAMMING, moment());
+    it('Participation status of programming exercise should evaluate to EXERCISE_MISSED', () => {
+        setupExercise(ExerciseType.PROGRAMMING, moment().subtract(1, 'day'));
 
         const studentParticipation = {
             id: 1,
@@ -162,10 +180,10 @@ describe('CourseExerciseRowComponent', () => {
         } as StudentParticipation;
         comp.exercise.studentParticipations = [studentParticipation];
 
-        getAllParticipationsStub.returns(of(studentParticipation));
+        getAllParticipationsStub.returns(studentParticipation);
         comp.ngOnInit();
 
-        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.INACTIVE);
+        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.EXERCISE_MISSED);
     });
 
     const setupForTestingParticipationStatusExerciseTypeQuiz = (

@@ -602,7 +602,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * @param submission Either submission or 'new'.
      * @param correctionRound
      */
-    async openAssessmentEditor(submission: Submission | 'new', correctionRound = 0): Promise<void> {
+    openAssessmentEditor(submission: Submission | 'new', correctionRound = 0): void {
         if (!this.exercise || !this.exercise.type || !submission) {
             return;
         }
@@ -615,9 +615,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         }
         const url = getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, submissionId, this.examId, this.exerciseGroupId);
         if (this.isTestRun) {
-            await this.router.navigate(url, { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
+            this.router.navigate(url, { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
         } else {
-            await this.router.navigate(url, { queryParams: { 'correction-round': correctionRound } });
+            this.router.navigate(url, { queryParams: { 'correction-round': correctionRound } });
         }
         this.openingAssessmentEditorForNewSubmission = false;
     }
