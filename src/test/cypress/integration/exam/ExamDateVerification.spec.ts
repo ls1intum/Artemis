@@ -88,13 +88,13 @@ describe('Exam management', () => {
                         cy.login(student, `/courses/${course.id}/exams`);
                         cy.contains(exam.title).click();
                         cy.url().should('contain', `/exams/${exam.id}`);
-                        cy.contains('Welcome to ' + exam.title).should('exist');
+                        cy.contains('Welcome to ' + exam.title).should('be.visible');
                         cy.get('#confirmBox').click();
                         artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName));
                         cy.contains('Start').click();
                         cy.contains('Exam Overview').should('exist');
                         cy.intercept('PUT', `/api/exercises/${textExercise.id}/text-submissions`).as('savedSubmission');
-                        cy.contains('Text exercise 1').should('exist').click();
+                        cy.contains('Text exercise 1').should('be.visible').click();
                         cy.get('#text-editor-tab').type(
                             'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                         );
@@ -108,7 +108,6 @@ describe('Exam management', () => {
         it('Exam ends after end time', () => {
             let exerciseGroup: any;
             const student = artemis.users.getStudentOne();
-            cy.log(dayjs().toString());
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
@@ -125,11 +124,11 @@ describe('Exam management', () => {
                         courseManagementRequests.prepareExerciseStartForExam(course, exam);
                         cy.login(student, `/courses/${course.id}/exams`);
                         cy.contains(exam.title).click();
-                        cy.contains('Welcome to ' + exam.title).should('exist');
+                        cy.contains('Welcome to ' + exam.title).should('be.visible');
                         cy.get('#confirmBox').click();
                         artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type(account.firstName + ' ' + account.lastName));
                         cy.contains('Start').click();
-                        cy.contains('Text exercise 1').should('exist').click();
+                        cy.contains('Text exercise 1').should('be.visible').click();
                         cy.get('#text-editor-tab').type(
                             'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                         );
