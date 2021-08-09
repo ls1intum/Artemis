@@ -651,13 +651,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
             return this.getAssessmentQueryParams(this.numberOfAssessmentsOfCorrectionRounds.length - 1);
         }
-        const submissionToView = this.submissionsWithComplaints.filter((dto) => dto.submission.id === submission.id).pop()?.submission;
-        if (submissionToView) {
-            if (!submissionToView.results) {
-                submissionToView.results = [];
-            }
-            submissionToView.results = submissionToView.results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC);
-            return this.getAssessmentQueryParams(submissionToView.results!.length - 1);
+        const result = this.getSubmissionToViewFromComplaintSubmission(submission);
+
+        if (result !== undefined) {
+            return this.getAssessmentQueryParams(result.results!.length - 1);
         }
     }
 
@@ -671,13 +668,26 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
             this.openAssessmentEditor(submission, this.numberOfAssessmentsOfCorrectionRounds.length - 1);
         }
+        const result = this.getSubmissionToViewFromComplaintSubmission(submission);
+
+        if (result !== undefined) {
+            this.openAssessmentEditor(result, result.results!.length - 1);
+        }
+    }
+
+    /**
+     * Returns either the corresponding submission to view or undefined.
+     * This complaint has to be a true complaint or else issues can arise.
+     * @param submission
+     */
+    getSubmissionToViewFromComplaintSubmission(submission: Submission) {
         const submissionToView = this.submissionsWithComplaints.filter((dto) => dto.submission.id === submission.id).pop()?.submission;
         if (submissionToView) {
             if (!submissionToView.results) {
                 submissionToView.results = [];
             }
             submissionToView.results = submissionToView.results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC);
-            this.openAssessmentEditor(submissionToView, submissionToView.results!.length - 1);
+            return submissionToView;
         }
     }
 
