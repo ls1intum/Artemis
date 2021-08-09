@@ -49,10 +49,28 @@ import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/moc
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
-import { ArtemisProgrammingParticipationModule } from 'app/exercises/programming/participate/programming-participation.module';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { omit } from 'lodash';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
+import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
+import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
+import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
+import { KeysPipe } from 'app/shared/pipes/keys.pipe';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CodeEditorFileBrowserCreateNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-create-node.component';
+import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
+import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
+import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
+import { TreeviewComponent } from 'ngx-treeview';
+import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
+import { AceEditorModule } from 'ng2-ace-editor';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -81,10 +99,29 @@ describe('CodeEditorContainerIntegration', () => {
 
     const result = { id: 3, successful: false, completionDate: moment().subtract(2, 'days') };
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisProgrammingParticipationModule],
-            declarations: [],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule],
+            declarations: [
+                CodeEditorContainerComponent,
+                MockComponent(CodeEditorGridComponent),
+                MockComponent(CodeEditorInstructionsComponent),
+                KeysPipe,
+                MockDirective(FeatureToggleDirective),
+                MockDirective(FeatureToggleLinkDirective),
+                MockPipe(ArtemisTranslatePipe),
+                CodeEditorActionsComponent,
+                CodeEditorFileBrowserComponent,
+                CodeEditorBuildOutputComponent,
+                CodeEditorAceComponent,
+                MockComponent(CodeEditorFileBrowserCreateNodeComponent),
+                MockComponent(CodeEditorFileBrowserFolderComponent),
+                MockComponent(CodeEditorFileBrowserFileComponent),
+                MockComponent(CodeEditorStatusComponent),
+                MockComponent(TreeviewComponent),
+                MockPipe(ArtemisDatePipe),
+                MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
+            ],
             providers: [
                 JhiLanguageHelper,
                 ChangeDetectorRef,
