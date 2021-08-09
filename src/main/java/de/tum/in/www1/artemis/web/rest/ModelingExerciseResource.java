@@ -6,6 +6,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -173,7 +174,7 @@ public class ModelingExerciseResource {
         ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
 
         // Forbid changes of course exercise belongs to.
-        if (!modelingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId().equals(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+        if (!Objects.equals(modelingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
             return conflict("The modeling exercise course cannot be changed", ENTITY_NAME, "cannotChangeCourseId");
         }
 

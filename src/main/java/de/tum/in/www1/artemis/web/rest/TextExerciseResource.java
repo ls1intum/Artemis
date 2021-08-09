@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -206,7 +207,7 @@ public class TextExerciseResource {
         TextExercise textExerciseBeforeUpdate = textExerciseRepository.findByIdElseThrow(textExercise.getId());
 
         // Forbid changes of course exercise belongs to.
-        if (!textExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId().equals(textExercise.getCourseViaExerciseGroupOrCourseMember().getId().longValue())) {
+        if (!Objects.equals(textExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), textExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
             return conflict("The text exercise course cannot be changed", ENTITY_NAME, "cannotChangeCourseId");
         }
 

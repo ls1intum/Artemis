@@ -597,8 +597,8 @@ public class ProgrammingExerciseResource {
         }
 
         // Forbid changes of course exercise belongs to.
-        if (!programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId()
-                .equals(updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+        if (!Objects.equals(programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(),
+                updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
             return conflict("The programming exercise course cannot be changed", ENTITY_NAME, "cannotChangeCourseId");
         }
 
