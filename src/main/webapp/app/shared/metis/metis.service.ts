@@ -265,10 +265,10 @@ export class MetisService {
             if (postAVoteEmojiCount < postBVoteEmojiCount) {
                 return 1;
             }
-            if (Number(postA.creationDate) > Number(postB.pinned)) {
+            if (Number(postA.creationDate) > Number(postB.creationDate)) {
                 return 1;
             }
-            if (Number(postA.creationDate) < Number(postB.pinned)) {
+            if (Number(postA.creationDate) < Number(postB.creationDate)) {
                 return -1;
             }
             return 0;

@@ -769,8 +769,6 @@ public class DatabaseUtilService {
         post.setTitle(String.format("Title Post %s", (i + 1)));
         post.setContent(String.format("Content Post %s", (i + 1)));
         post.setVisibleForStudents(true);
-        post.setPinned(false);
-        post.setArchived(false);
         post.setAuthor(getUserByLoginWithoutAuthorities(String.format("student%s", (i + 1))));
         post.setCreationDate(ZonedDateTime.of(2015, 11, 28, 23, 45, 59, 1234, ZoneId.of("UTC")));
         String tag = String.format("Tag %s", (i + 1));
