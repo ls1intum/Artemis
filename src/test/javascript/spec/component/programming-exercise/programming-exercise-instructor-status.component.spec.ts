@@ -1,13 +1,11 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
-import { AceEditorModule } from 'ng2-ace-editor';
 import * as chai from 'chai';
 import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { SinonStub, stub } from 'sinon';
@@ -21,7 +19,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 
 const expect = chai.expect;
 
@@ -32,10 +30,10 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
     let subscribeForLatestResultStub: SinonStub;
     let latestResultSubject: Subject<Result>;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, NgbModule],
-            declarations: [ProgrammingExerciseInstructorStatusComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule],
+            declarations: [ProgrammingExerciseInstructorStatusComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip)],
             providers: [
                 { provide: CookieService, useClass: MockCookieService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -53,7 +51,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
                 latestResultSubject = new Subject();
                 subscribeForLatestResultStub.returns(latestResultSubject);
             });
-    }));
+    });
 
     afterEach(() => {
         subscribeForLatestResultStub.restore();

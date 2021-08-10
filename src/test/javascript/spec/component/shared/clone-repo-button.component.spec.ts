@@ -1,8 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-
 import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
@@ -22,11 +21,12 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -63,8 +63,8 @@ describe('JhiCloneRepoButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisSharedModule, FeatureToggleModule, ClipboardModule],
-            declarations: [CloneRepoButtonComponent, MockComponent(ExerciseActionButtonComponent)],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, FeatureToggleModule, ClipboardModule],
+            declarations: [CloneRepoButtonComponent, MockComponent(ExerciseActionButtonComponent), MockPipe(ArtemisTranslatePipe), MockPipe(SafeUrlPipe)],
             providers: [
                 { provide: JhiAlertService, useClass: MockAlertService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },

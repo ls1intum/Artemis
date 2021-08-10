@@ -13,7 +13,6 @@ import { MockTextEditorService } from '../../helpers/mocks/service/mock-text-edi
 import * as sinonChai from 'sinon-chai';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { BehaviorSubject } from 'rxjs';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -29,10 +28,6 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { ComplaintsComponent } from 'app/complaints/complaints.component';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
-import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
-import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text-submission.service';
 import { Language } from 'app/entities/tutor-group.model';
@@ -41,14 +36,14 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import {HeaderParticipationPageComponent} from "app/exercises/shared/exercise-headers/header-participation-page.component";
-import {ResizeableContainerComponent} from "app/shared/resizeable-container/resizeable-container.component";
-import {ArtemisTranslatePipe} from "app/shared/pipes/artemis-translate.pipe";
-import {TeamParticipateInfoBoxComponent} from "app/exercises/shared/team/team-participate-info-box/team-participate-info-box.component";
-import {TeamSubmissionSyncComponent} from "app/exercises/shared/team-submission-sync/team-submission-sync.component";
-import {AdditionalFeedbackComponent} from "app/shared/additional-feedback/additional-feedback.component";
-import {RatingComponent} from "app/exercises/shared/rating/rating.component";
-import {AlertComponent} from "app/shared/alert/alert.component";
+import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-participate-info-box/team-participate-info-box.component';
+import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
+import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
+import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgModel } from '@angular/forms';
 
@@ -81,11 +76,7 @@ describe('TextEditorComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [
-                TranslateModule.forRoot(),
-                ArtemisTestModule,
-                RouterTestingModule.withRoutes([textEditorRoute[0]]),
-            ],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, RouterTestingModule.withRoutes([textEditorRoute[0]])],
             declarations: [
                 TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),

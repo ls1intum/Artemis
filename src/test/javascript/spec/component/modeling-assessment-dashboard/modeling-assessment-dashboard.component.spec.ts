@@ -1,5 +1,5 @@
-import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { Router } from '@angular/router';
 import { of, Subscription } from 'rxjs';
@@ -56,9 +56,9 @@ describe('ModelingAssessmentDashboardComponent', () => {
     let exerciseFindSpy: jasmine.Spy;
     let courseFindSpy: jasmine.Spy;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([routes[2]]), TranslateModule.forRoot(), ArtemisTestModule],
+            imports: [RouterTestingModule.withRoutes([routes[2]]), ArtemisTestModule],
             declarations: [ModelingAssessmentDashboardComponent],
             providers: [
                 JhiLanguageHelper,
@@ -84,7 +84,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
                 courseFindSpy = spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
                 fixture.detectChanges();
             });
-    }));
+    });
 
     afterEach(() => {
         component.ngOnDestroy();
