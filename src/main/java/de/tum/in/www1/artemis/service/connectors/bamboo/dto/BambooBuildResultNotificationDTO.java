@@ -422,6 +422,8 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         private List<String> errors = new ArrayList<>();
 
+        private BambooTestJobSuccessInfosDTO successInfos;
+
         public String getName() {
             return name;
         }
@@ -452,6 +454,28 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         public void setErrors(List<String> errors) {
             this.errors = errors;
+        }
+
+        public BambooTestJobSuccessInfosDTO getSuccessInfos() {
+            return successInfos;
+        }
+
+        public void setSuccessInfos(BambooTestJobSuccessInfosDTO successInfos) {
+            this.successInfos = successInfos;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static final class BambooTestJobSuccessInfosDTO {
+
+        private String message;
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
         }
     }
 }

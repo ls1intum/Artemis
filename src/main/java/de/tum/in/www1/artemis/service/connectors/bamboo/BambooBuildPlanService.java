@@ -83,6 +83,8 @@ public class BambooBuildPlanService {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final static String CUSTOM_FEEDBACK_DIRECTORY = "customFeedbacks";
+
     public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, Optional<VersionControlService> versionControlService) {
         this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
@@ -160,6 +162,9 @@ public class BambooBuildPlanService {
         }
         Stage defaultStage = new Stage("Default Stage");
         Job defaultJob = new Job("Default Job", new BambooKey("JOB1")).cleanWorkingDirectory(true);
+
+        // Create artifact that will host possible custom feedbacks (required by the Bamboo notification plugin).
+        defaultJob.artifacts(new Artifact().name(CUSTOM_FEEDBACK_DIRECTORY).location(CUSTOM_FEEDBACK_DIRECTORY).copyPattern("*.json").shared(false));
 
         /*
          * We need the profiles to not run the jobs within Docker containers in the dev-setup as the Bamboo server itself runs in a Docker container when developing.

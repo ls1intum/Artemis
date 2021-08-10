@@ -611,7 +611,12 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
             // 2) add feedback for passed test cases
             for (final var successfulTest : job.getSuccessfulTests()) {
-                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getErrors(), true, programmingLanguage));
+                List<String> testMessages = successfulTest.getErrors();
+                var successInfos = successfulTest.getSuccessInfos();
+                if (successInfos != null) {
+                    testMessages.add(successInfos.getMessage());
+                }
+                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(successfulTest.getName(), testMessages, true, programmingLanguage));
             }
 
             // 3) process static code analysis feedback
