@@ -598,22 +598,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Uses the router to navigate to the assessment editor for a given/new submission
-     * @param submission Either submission or 'new'.
-     * @param correctionRound
-     */
-    openAssessmentEditor(submission: Submission | 'new', correctionRound = 0): void {
-        if (!this.exercise || !this.exercise.type || !submission) {
-            return;
-        }
-
-        this.openingAssessmentEditorForNewSubmission = true;
-        const url = this.getAssessmentLink(submission);
-        this.router.navigate(url, { queryParams: this.getAssessmentQueryParams(correctionRound) });
-        this.openingAssessmentEditorForNewSubmission = false;
-    }
-
-    /**
      * Generates and returns the link to the assessment editor without query parameters
      * @param submission Either submission or 'new'.
      */
@@ -655,23 +639,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
         if (result !== undefined) {
             return this.getAssessmentQueryParams(result.results!.length - 1);
-        }
-    }
-
-    /**
-     * Show complaint depending on the exercise type
-     * @param complaint that we want to show
-     */
-    viewComplaint(complaint: Complaint) {
-        const submission: Submission = complaint.result?.submission!;
-        // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
-        if (complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
-            this.openAssessmentEditor(submission, this.numberOfAssessmentsOfCorrectionRounds.length - 1);
-        }
-        const result = this.getSubmissionToViewFromComplaintSubmission(submission);
-
-        if (result !== undefined) {
-            this.openAssessmentEditor(result, result.results!.length - 1);
         }
     }
 
