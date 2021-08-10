@@ -16,15 +16,20 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -51,6 +56,12 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Autowired
     private ExerciseService exerciseService;
+
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private AnswerPostRepository answerPostRepository;
 
     @BeforeEach
     public void init() {
@@ -556,6 +567,46 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
             }
         }
         assertThat(participationRepository.findAll()).hasSize(0);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testPostAnonymizationOnResetExercise() throws Exception {
+        Course course = database.createCoursesWithExercisesAndLectures(true).get(0);
+        Exercise exercise = exerciseRepository.findByIdWithDetailsForStudent(course.getExercises().iterator().next().getId()).get();
+        Set<Post> posts = new HashSet<>();
+        Post post = new Post();
+        post.setTitle("Test Post");
+        post.setAuthor(userRepository.getUser());
+        post.setExercise(exercise);
+        Set<AnswerPost> answerPosts = new HashSet();
+        AnswerPost answerPost = new AnswerPost();
+        answerPost.setAuthor(userRepository.getUser());
+        answerPost.setContent("Test Answer Post");
+        answerPosts.add(answerPost);
+        post = postRepository.save(post);
+        answerPost.setPost(post);
+        answerPostRepository.save(answerPost);
+        post.setAnswers(answerPosts);
+        posts.add(post);
+        postRepository.save(post);
+        exercise.setPosts(posts);
+        exerciseRepository.save(exercise);
+
+        User anonymousUser;
+        try {
+            anonymousUser = userRepository.getUserByLoginElseThrow("anonymous");
+        }
+        catch (EntityNotFoundException e) {
+            anonymousUser = userRepository.save(ModelFactory.generateActivatedUser("anonymous"));
+        }
+
+        request.delete("/api/exercises/" + exercise.getId() + "/reset", HttpStatus.OK);
+
+        exercise = exerciseRepository.findByIdWithDetailsForStudent(exercise.getId()).get();
+
+        assertThat(exercise.getPosts().iterator().next().getAuthor()).isEqualTo(anonymousUser);
+        assertThat(exercise.getPosts().iterator().next().getAnswers().iterator().next().getAuthor()).isEqualTo(anonymousUser);
     }
 
     @Test

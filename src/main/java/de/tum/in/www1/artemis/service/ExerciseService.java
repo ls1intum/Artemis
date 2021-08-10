@@ -23,12 +23,16 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
@@ -106,6 +110,10 @@ public class ExerciseService {
 
     private final FeedbackRepository feedbackRepository;
 
+    private final PostRepository postRepository;
+
+    private final AnswerPostRepository answerPostRepository;
+
     private final PlagiarismResultRepository plagiarismResultRepository;
 
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
@@ -117,7 +125,7 @@ public class ExerciseService {
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
             PlagiarismResultRepository plagiarismResultRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
-            ProgrammingAssessmentService programmingAssessmentService) {
+            ProgrammingAssessmentService programmingAssessmentService, PostRepository postRepository,AnswerPostRepository answerPostRepository) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
@@ -143,6 +151,8 @@ public class ExerciseService {
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.complaintResponseRepository = complaintResponseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.postRepository = postRepository;
+        this.answerPostRepository = answerPostRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.feedbackRepository = feedbackRepository;
         this.programmingAssessmentService = programmingAssessmentService;
@@ -366,8 +376,8 @@ public class ExerciseService {
     }
 
     /**
-     * Resets an Exercise by deleting all its participations and plagiarsim results
-     *
+     * Resets an Exercise by deleting all its participations, plagiarism results
+     * and anonymizing its Postings
      * @param exercise which should be reset
      */
     public void reset(Exercise exercise) {
@@ -379,6 +389,23 @@ public class ExerciseService {
         // delete all participations for this exercise
         participationService.deleteAllByExerciseId(exercise.getId(), true, true);
 
+        // anonymize Postings
+        exercise = exerciseRepository.findByIdWithDetailsForStudent(exercise.getId()).orElseThrow();
+        Optional<User> anonymousUser = userRepository.findOneByLogin("anonymous");
+        if (anonymousUser.isPresent()) {
+            for (Post post : exercise.getPosts()) {
+                post.setAuthor(anonymousUser.get());
+
+                for (AnswerPost answerPost : post.getAnswers()) {
+                    answerPost.setAuthor(anonymousUser.get());
+                    answerPostRepository.save(answerPost);
+                }
+                postRepository.save(post);
+            }
+        }
+        else {
+            log.warn("Anonymization could not be completed. Anonymous user missing.");
+        }
         if (exercise instanceof QuizExercise) {
             quizExerciseService.resetExercise(exercise.getId());
         }

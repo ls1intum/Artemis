@@ -100,6 +100,7 @@ public class UserService {
 
     /**
      * Make sure that the internal artemis admin (in case it is defined in the yml configuration) is available in the database
+     * and add an anonymous user (if not already present) to anonymize Posts
      */
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
@@ -134,6 +135,19 @@ public class UserService {
                     userDto.setGroups(new HashSet<>());
                     userCreationService.createUser(userDto);
                 }
+            }
+            // adding anonymous user at startup for Q&A / Posts anonymization
+            if (userRepository.findOneWithGroupsAndAuthoritiesByLogin("anonymous").isEmpty()) {
+                log.info("Create internal anonymous user");
+                ManagedUserVM userDto = new ManagedUserVM();
+                userDto.setLogin("anonymous");
+                userDto.setActivated(true);
+                userDto.setFirstName("anonymous");
+                userDto.setLastName("anonymous");
+                userDto.setEmail("anonymous@anonymous");
+                userDto.setCreatedBy("system");
+                userDto.setLastModifiedBy("system");
+                userCreationService.createUser(userDto);
             }
         }
         catch (Exception ex) {
