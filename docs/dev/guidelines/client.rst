@@ -63,7 +63,14 @@ Some general aspects:
 1. Use single quotes for strings.
 2. All strings visible to the user need to be localized (make an entry in the corresponding ``*.json`` file).
 
-8. Style
+8. Buttons and Links
+========
+
+1. Be aware that Buttons navigate only in the same tab while Links provide the option to use the context menu or a middle-click to open the page in a new tab. Therefore:
+2. Buttons are best used to trigger certain functionalities
+3. Links are best for navigating on Artemis
+
+9. Style
 ========
 
 1. Use arrow functions over anonymous function expressions.
@@ -90,7 +97,7 @@ Some general aspects:
 We use ``prettier`` to style code automatically and ``eslint`` to find additional issues.
 You can find the corresponding commands to invoked those tools in ``package.json``.
 
-9. Testing
+10. Testing
 ===========
 
 **If you are new to client testing, it is highly recommended that you work through the testing part of the angular tutorial:** https://angular.io/guide/testing
@@ -243,7 +250,7 @@ Some guidelines:
         });
     });
 
-10. Preventing Memory Leaks
+11. Preventing Memory Leaks
 ===========================
 
 It is crucial that you try to prevent memory leaks in both your components and your tests.
@@ -319,7 +326,7 @@ or
    jest --detectLeaks
 
 
-11. Defining Routes and Breadcrumbs
+12. Defining Routes and Breadcrumbs
 ===================================
 
 The ideal schema for routes is that every variable in a path is preceded by a unique path segment: ``\entityA\:entityIDA\entityB\:entityIDB``
@@ -354,7 +361,7 @@ When creating a completely new route you will have to register the new paths in 
 		}
 	}
 
-12. Strict Template Check
+13. Strict Template Check
 =========================
 
 To prevent errors for strict template rule in TypeScript, Artemis uses following approaches.

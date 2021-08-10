@@ -387,7 +387,7 @@
                                                 *jhiExtensionPoint="overrideNewButton; context: { correctionRound: correctionRound }"
                                                 class="btn btn-success btn-sm guided-tour-new-assessment-btn"
                                                 [routerLink]="getAssessmentLink('new')"
-                                                [queryParams]="getComplaintQueryParams(correctionRound)"
+                                                [queryParams]="getAssessmentQueryParams(correctionRound)"
                                                 [class.disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
                                                 [class.guided-tour]="exercise === exerciseForGuidedTour"
                                                 [ngStyle]="exercise === exerciseForGuidedTour ? { cursor: 'not-allowed' } : {}"
