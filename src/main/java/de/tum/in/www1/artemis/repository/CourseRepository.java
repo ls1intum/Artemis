@@ -216,7 +216,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     default Set<Exercise> getInterestingExercisesForAssessmentDashboards(Set<Exercise> exercises) {
         return exercises.stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
-                || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType() != AUTOMATIC)).collect(Collectors.toSet());
+                || (exercise instanceof ProgrammingExercise && (exercise.getAssessmentType() != AUTOMATIC || ((ProgrammingExercise) exercise).getAllowComplaintsForAutomaticAssessments()))).collect(Collectors.toSet());
     }
 
     /**
