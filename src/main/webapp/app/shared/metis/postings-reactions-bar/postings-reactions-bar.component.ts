@@ -20,7 +20,12 @@ interface ReactionCountMap {
 
 @Directive()
 export abstract class PostingsReactionsBarDirective<T extends Posting> implements OnInit, OnChanges {
+    /**
+     * Icons (as svg paths) to be used as category preview image in emoji mart selector
+     */
     categoriesIcons: { [key: string]: string } = {
+        // category 'recent' (would show recently used emojis) is overwritten by a preselected set of emojis for that course,
+        // therefore category icon is an asterisk (indicating customization) instead of a clock (indicating the "recently used"-use case)
         recent: `M10 1h3v21h-3zm10.186 4l1.5 2.598L3.5 18.098 2 15.5zM2 7.598L3.5 5l18.186 10.5-1.5 2.598z`,
     };
 

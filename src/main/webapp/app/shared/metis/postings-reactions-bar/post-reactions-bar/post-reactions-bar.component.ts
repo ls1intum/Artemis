@@ -8,24 +8,7 @@ import { PostingsReactionsBarDirective } from 'app/shared/metis/postings-reactio
     templateUrl: './post-reactions-bar.component.html',
     styleUrls: ['../postings-reactions-bar.component.scss'],
 })
-export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges {
-    pinTooltip: string;
-    archiveTooltip: string;
-
-    /**
-     * on initialization: sets the required tooltips
-     */
-    ngOnInit() {
-        super.ngOnInit();
-    }
-
-    /**
-     * on changes: sets the required tooltips
-     */
-    ngOnChanges() {
-        super.ngOnChanges();
-    }
-
+export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> {
     /**
      * builds and returns a Reaction model out of an emojiId and thereby sets the post property properly
      * @param emojiId emojiId to build the model for

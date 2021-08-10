@@ -2,7 +2,7 @@
     <div class="col-auto p-0" *ngFor="let reactionCount of reactionCountMap | keyvalue">
         <button class="reaction-button clickable" [class.reaction-button--reacted]="reactionCount.value.hasReacted" (click)="updateReaction(reactionCount.key)">
             <ngx-emoji class="emoji" [emoji]="reactionCount.key" [size]="16"></ngx-emoji>
-            <span class="posting-footer">{{ reactionCount.value.count }}</span>
+            <span class="emoji-count">{{ reactionCount.value.count }}</span>
         </button>
     </div>
     <div class="col-auto px-0">

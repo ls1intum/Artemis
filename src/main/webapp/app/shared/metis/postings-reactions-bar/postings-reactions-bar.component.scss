@@ -7,16 +7,8 @@
     height: 16px;
 }
 
-.emoji-mart-emoji {
-    vertical-align: text-bottom;
-}
-
-fa-icon {
-    font-size: 16px !important;
-}
-
 .reaction-button {
-    font-size: 11px;
+    font-size: 16px;
     line-height: 16px;
     padding: 4px 6px;
     display: inline-flex;
@@ -27,6 +19,10 @@ fa-icon {
     border-radius: 12px;
     margin-right: 5px;
     margin-bottom: 5px;
+
+    .emoji-count {
+        font-size: 11px;
+    }
 
     &:hover {
         --saf-0: rgba(var(--sk_foreground_high, 29, 28, 29), 0.5);
