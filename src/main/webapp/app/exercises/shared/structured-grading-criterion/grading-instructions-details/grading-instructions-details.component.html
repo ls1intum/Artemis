@@ -43,19 +43,29 @@
 
 <div class="edit-sqi" *ngIf="exercise.gradingInstructionFeedbackUsed">
     <div class="grading-instructions-update-border">
-        <jhi-markdown-editor
-            class="markdown-editor"
-            [metaCommands]="[]"
-            [defaultCommands]="[]"
-            [headerCommands]="[]"
-            [colorCommands]="[]"
-            [showEditButton]="false"
-            [showPreviewButton]="false"
-            [markdown]="exercise.gradingInstructions"
-            [domainCommands]="domainCommandsGradingInstructions"
-            (markdownChange)="prepareForSave()"
-            (textWithDomainCommandsFound)="domainCommandsFound($event)"
-        ></jhi-markdown-editor>
+        <div class="instructions" style="padding-bottom: 12px">
+            <jhi-markdown-editor
+                class="editor"
+                style="width: 65%"
+                [markdown]="exercise.gradingInstructions"
+                [domainCommands]="domainCommandsGradingInstructions"
+                (markdownChange)="prepareForSave()"
+                (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                [enableFileUpload]="false"
+                [shouldDisplayAlert]="false"
+                [enableResize]="true"
+                [showEditButton]="false"
+                [showPreviewButton]="false"
+            ></jhi-markdown-editor>
+            <div class="form-group text-center" style="width: 25%">
+                <span class="re-evaluate-button">
+                    <fa-icon [icon]="'undo'" size="2x" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentInstruction' | artemisTranslate }}"></fa-icon>
+                </span>
+                <span class="re-evaluate-button">
+                    <fa-icon [icon]="'trash'" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"></fa-icon>
+                </span>
+            </div>
+        </div>
         <div *ngFor="let criteria of exercise.gradingCriteria">
             <div class="criteria-content" style="padding-bottom: 12px">
                 <div class="row">
@@ -100,6 +110,8 @@
                                 [domainCommands]="domainCommandsGradingInstructions"
                                 (markdownChange)="prepareForSave()"
                                 (textWithDomainCommandsFound)="onInstructionChange($event, instruction)"
+                                [enableFileUpload]="false"
+                                [shouldDisplayAlert]="false"
                                 class="editor"
                                 style="width: 65%"
                             ></jhi-markdown-editor>
