@@ -8,7 +8,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisTestModule } from '../../test.module';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from '../../helpers/mocks/service/mock-text-editor.service';
 import * as sinonChai from 'sinon-chai';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
@@ -46,7 +46,7 @@ import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgModel } from '@angular/forms';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import {MockTranslateService} from "../../helpers/mocks/service/mock-translate.service";
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -104,7 +104,7 @@ describe('TextEditorComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TextSubmissionService, useClass: MockTextSubmissionService },
-                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: TranslateService, useClass: MockTranslateService }
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })

@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
@@ -27,7 +27,7 @@ import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-featu
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import {MockTranslateService} from "../../helpers/mocks/service/mock-translate.service";
 
 chai.use(sinonChai);
 const expect = chai.expect;
