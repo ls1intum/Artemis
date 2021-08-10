@@ -89,18 +89,25 @@ public class StaticCodeAnalysisConfigurer {
     }
 
     /**
-     * Create an unmodifiable List of default static code analysis categories for Swift
+     * Create an unmodifiable List of default static code analysis categories for C
      *
      * @return unmodifiable static code analysis categories
      */
     private List<StaticCodeAnalysisDefaultCategory> createDefaultCategoriesForC() {
-        return List.of(new StaticCodeAnalysisDefaultCategory("Code Style", 0.2D, 2D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, "cppcheck"))),
-            // TODO: rene: add correct category rules
-            new StaticCodeAnalysisDefaultCategory("Idiomatic", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, "n/a"))),
-            new StaticCodeAnalysisDefaultCategory("Code Metrics", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, "n/a"))),
-            new StaticCodeAnalysisDefaultCategory("Lint", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, "n/a"))),
-            new StaticCodeAnalysisDefaultCategory("Performance", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, "n/a"))),
-            new StaticCodeAnalysisDefaultCategory("Miscellaneous", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, "n/a"))));
+        return List.of(
+                // TODO: Think about better categories that work with GCC
+                new StaticCodeAnalysisDefaultCategory("Code Style", 0.2D, 2D, CategoryState.FEEDBACK,
+                        List.of(createMapping(StaticCodeAnalysisTool.CPPCHECK, "cppcheck"),
+                                createMapping(StaticCodeAnalysisTool.GCC, "gcc"))),
+                new StaticCodeAnalysisDefaultCategory("Memory Management", 0D, 0D, CategoryState.INACTIVE,
+                        List.of(createMapping(StaticCodeAnalysisTool.CPPCHECK, "cppcheck"),
+                                createMapping(StaticCodeAnalysisTool.GCC, "gcc"))),
+                new StaticCodeAnalysisDefaultCategory("Undefined behavior", 0D, 0D, CategoryState.INACTIVE,
+                        List.of(createMapping(StaticCodeAnalysisTool.CPPCHECK, "cppcheck"),
+                                createMapping(StaticCodeAnalysisTool.GCC, "gcc"))),
+                new StaticCodeAnalysisDefaultCategory("Miscellaneous", 0D, 0D, CategoryState.INACTIVE,
+                        List.of(createMapping(StaticCodeAnalysisTool.CPPCHECK, "cppcheck"),
+                                createMapping(StaticCodeAnalysisTool.GCC, "gcc"))));
     }
 
     @Bean(name = "staticCodeAnalysisConfiguration")
