@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { TranslateModule } from '@ngx-translate/core';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
@@ -15,6 +14,7 @@ import { By } from '@angular/platform-browser';
 import { ParticipantScoresTableComponent } from 'app/shared/participant-scores/participant-scores-table/participant-scores-table.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -26,7 +26,7 @@ describe('ParticipantScoresTable', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgxDatatableModule, TranslateModule.forRoot()],
-            declarations: [ParticipantScoresTableComponent, MockPipe(ArtemisTranslatePipe), MockDirective(JhiTranslateDirective), DataTableComponent, MockDirective(NgbTypeahead)],
+            declarations: [ParticipantScoresTableComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), DataTableComponent, MockDirective(NgbTypeahead)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 {
