@@ -43,7 +43,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Language } from 'app/entities/tutor-group.model';
-import { SubmissionExerciseType } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
@@ -428,76 +428,57 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     describe('getAssessmentLink', () => {
+        const fakeExerciseType = ExerciseType.TEXT;
+        const fakeCourseId = 42;
+        const fakeExerciseId = 1337;
+        const fakeExamId = 69;
+        const fakeExerciseGroupId = 27;
         it('Expect new submission to delegate correct link', () => {
             const submission = 'new';
-            const fakes = initComponentAndReturnFakes();
+            initComponent();
             const expectedParticipationId = undefined;
             const expectedSubmissionUrlParameter = 'new';
-            const expectedLink = getLinkToSubmissionAssessment(
-                fakes.exerciseType,
-                fakes.courseId,
-                fakes.exerciseId,
-                expectedParticipationId,
-                expectedSubmissionUrlParameter,
-                fakes.examId,
-                fakes.exerciseGroupId,
-            );
-
-            const link = comp.getAssessmentLink(submission);
-
-            expect(link).to.eql(expectedLink);
+            testLink(expectedParticipationId, expectedSubmissionUrlParameter, submission);
         });
 
         it('Expect existing submission without participation to delegate correct link', () => {
             const submission = { id: 42 };
-            const fakes = initComponentAndReturnFakes();
+            initComponent();
             const expectedParticipationId = undefined;
             const expectedSubmissionUrlParameter = 42;
-            const expectedLink = getLinkToSubmissionAssessment(
-                fakes.exerciseType,
-                fakes.courseId,
-                fakes.exerciseId,
-                expectedParticipationId,
-                expectedSubmissionUrlParameter,
-                fakes.examId,
-                fakes.exerciseGroupId,
-            );
-
-            const link = comp.getAssessmentLink(submission);
-
-            expect(link).to.eql(expectedLink);
+            testLink(expectedParticipationId, expectedSubmissionUrlParameter, submission);
         });
 
         it('Expect existing submission with participation to delegate correct link', () => {
             const submission = { id: 42, participation: { id: 1337 } };
-            const fakes = initComponentAndReturnFakes();
+            initComponent();
             const expectedParticipationId = 1337;
             const expectedSubmissionUrlParameter = 42;
+            testLink(expectedParticipationId, expectedSubmissionUrlParameter, submission);
+        });
+
+        function initComponent() {
+            comp.exercise = { type: fakeExerciseType, numberOfAssessmentsOfCorrectionRounds: [], studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false };
+            comp.courseId = fakeCourseId;
+            comp.exerciseId = fakeExerciseId;
+            comp.examId = fakeExamId;
+            comp.exerciseGroupId = fakeExerciseGroupId;
+        }
+
+        function testLink(expectedParticipationId: number | undefined, expectedSubmissionUrlParameter: number | 'new', submission: Submission | 'new') {
             const expectedLink = getLinkToSubmissionAssessment(
-                fakes.exerciseType,
-                fakes.courseId,
-                fakes.exerciseId,
+                fakeExerciseType,
+                fakeCourseId,
+                fakeExerciseId,
                 expectedParticipationId,
                 expectedSubmissionUrlParameter,
-                fakes.examId,
-                fakes.exerciseGroupId,
+                fakeExamId,
+                fakeExerciseGroupId,
             );
 
             const link = comp.getAssessmentLink(submission);
 
             expect(link).to.eql(expectedLink);
-        });
-
-        function initComponentAndReturnFakes() {
-            const fakes = { exerciseType: ExerciseType.TEXT, courseId: 42, exerciseId: 1337, examId: 69, exerciseGroupId: 27 };
-
-            comp.exercise = { type: fakes.exerciseType, numberOfAssessmentsOfCorrectionRounds: [], studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false };
-            comp.courseId = fakes.courseId;
-            comp.exerciseId = fakes.exerciseId;
-            comp.examId = fakes.examId;
-            comp.exerciseGroupId = fakes.exerciseGroupId;
-
-            return fakes;
         }
     });
 
@@ -582,6 +563,59 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(submissionToView).to.eql(expectedSubmissionToView);
         });
     });
+
+    /*describe('openAssessmentEditor', () => {
+        it('should not openExampleSubmission', () => {
+            navigateSpy.resetHistory();
+            const submission = { id: 8 };
+            comp.openAssessmentEditor(submission);
+            expect(navigateSpy).to.have.not.been.called;
+        });
+
+        it('should openExampleSubmission with modelingExercise', () => {
+            comp.exercise = exercise;
+            comp.exercise.type = ExerciseType.MODELING;
+            comp.courseId = 4;
+            comp.exercise = exercise;
+            comp.exerciseId = exercise.id!;
+            const submission = { id: 8 };
+            comp.openAssessmentEditor(submission);
+
+            const expectedUrl = [
+                '/course-management',
+                comp.courseId.toString(),
+                'modeling-exercises',
+                exercise.id!.toString(),
+                'submissions',
+                submission.id.toString(),
+                'assessment',
+            ];
+            expect(navigateSpy).to.have.been.calledWith(expectedUrl, { queryParams: { 'correction-round': 0 } });
+        });
+
+        it('should openExampleSubmission with programmingExercise', () => {
+            comp.exercise = exercise;
+            comp.exercise.type = ExerciseType.PROGRAMMING;
+            comp.courseId = 4;
+            comp.exerciseId = exercise.id!;
+            const submission = { id: 8 };
+
+            const expectedUrl = [
+                '/course-management',
+                comp.courseId.toString(),
+                'programming-exercises',
+                exercise.id!.toString(),
+                'submissions',
+                submission.id.toString(),
+                'assessment',
+            ];
+            comp.openAssessmentEditor(submission);
+            expect(navigateSpy).to.have.been.calledWith(expectedUrl);
+            comp.isTestRun = true;
+            comp.openAssessmentEditor(submission);
+            expect(navigateSpy).to.have.been.calledWith(expectedUrl);
+        });
+    });*/
 
     describe('openExampleSubmission', () => {
         const courseId = 4;
