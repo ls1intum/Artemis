@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { Directive, HostListener, Input } from '@angular/core';
-import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { async, ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
@@ -41,7 +41,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import * as chai from 'chai';
 import { cloneDeep } from 'lodash';
 import * as moment from 'moment';
@@ -56,6 +55,12 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -95,7 +100,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisSharedModule],
+            imports: [],
             declarations: [
                 CourseExerciseDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -113,6 +118,13 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ComplaintInteractionsComponent),
                 MockComponent(RatingComponent),
                 RouterLinkSpy,
+                MockComponent(AlertComponent),
+                MockComponent(AlertErrorComponent),
+                MockComponent(ExerciseDetailsStudentActionsComponent),
+                MockComponent(FaIconComponent),
+                MockDirective(ExtensionPointDirective),
+                MockPipe(ArtemisDatePipe),
+                MockDirective(NgbTooltip),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -250,14 +262,17 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.wasSubmissionSimulated).to.be.true;
     });
 
-    it('should simulate a result', () => {
+    it('should simulate a result', fakeAsync(() => {
         const result = new Result();
+        result.participation = new StudentParticipation();
         comp.exercise = { id: 2 } as Exercise;
         const courseExerciseSubmissionResultSimulationService = fixture.debugElement.injector.get(CourseExerciseSubmissionResultSimulationService);
         stub(courseExerciseSubmissionResultSimulationService, 'simulateResult').returns(of({ body: result } as HttpResponse<Result>));
         comp.simulateResult();
+        tick();
+        flush();
 
         expect(comp.wasSubmissionSimulated).to.be.false;
         expect(comp.exercise?.participationStatus).to.equal(ParticipationStatus.EXERCISE_SUBMITTED);
-    });
+    }));
 });
