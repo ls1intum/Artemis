@@ -157,7 +157,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                 getExamWithInterestingExercisesForAssessmentDashboardStub = stub(examManagementService, 'getExamWithInterestingExercisesForAssessmentDashboard');
                 getStatsForExamAssessmentDashboardStub = stub(examManagementService, 'getStatsForExamAssessmentDashboard');
                 toggleSecondCorrectionStub = stub(exerciseService, 'toggleSecondCorrection');
-                //
+
                 getCourseWithInterestingExercisesForTutorsStub = stub(courseManagementService, 'getCourseWithInterestingExercisesForTutors');
                 getStatsForTutorsStub = stub(courseManagementService, 'getStatsForTutors');
 
@@ -185,14 +185,7 @@ describe('AssessmentDashboardInformationComponent', () => {
             getCourseWithInterestingExercisesForTutorsStub = getCourseWithInterestingExercisesForTutorsStub.returns(of({ body: course }));
             getStatsForTutorsStub = getStatsForTutorsStub.returns(of(courseTutorStats));
 
-            // let getCourseWithReturnValue: Observable<Course> = of({});
-            //  getCourseWithInterestingExercisesForTutorsStub.returns(getCourseWithReturnValue);
-            // getStatsForTutorsStub = stub(courseManagementService, 'getStatsForTutors').returns(of(new HttpResponse({body: courseTutorStats })));
-            // sinon.replace(courseManagementService, 'getStatsForTutors', sinon.fake.returns(of(new HttpResponse({body: courseTutorStats }))));
-
             comp.ngOnInit();
-            // expect(getCourseWithInterestingExercisesForTutorsStub).to.have.been.called;
-            // expect(getStatsForTutorsStub).to.have.been.called;
         });
         it('should loadAll for exam', () => {
             getExamWithInterestingExercisesForAssessmentDashboardStub.returns(of({ body: exam }));

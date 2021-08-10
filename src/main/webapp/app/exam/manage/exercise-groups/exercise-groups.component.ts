@@ -17,7 +17,6 @@ import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/ma
 import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { Moment } from 'moment';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -46,7 +45,6 @@ export class ExerciseGroupsComponent implements OnInit {
         private exerciseGroupService: ExerciseGroupService,
         public exerciseService: ExerciseService,
         private examManagementService: ExamManagementService,
-        private courseManagementService: CourseManagementService,
         private jhiEventManager: JhiEventManager,
         private alertService: JhiAlertService,
         private modalService: NgbModal,
@@ -66,7 +64,6 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.exam = examRes.body!;
                 this.exerciseGroups = this.exam.exerciseGroups;
                 this.course = this.exam.course!;
-                this.courseManagementService.checkAndSetCourseRights(this.course);
                 this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined;
                 this.setupExerciseGroupToExerciseTypesDict();
             },

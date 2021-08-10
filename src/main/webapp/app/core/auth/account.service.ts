@@ -235,6 +235,30 @@ export class AccountService implements IAccountService {
     }
 
     /**
+     * Sets the appropriate access rights for the passed exercise.
+     *
+     * @param exercise for which the access rights shall be set
+     */
+    // TODO: find a static solution that can be directly used when handling REST responses
+    setAccessRightsForExercise(exercise: Exercise): void {
+        exercise.isAtLeastTutor = this.isAtLeastTutorForExercise(exercise);
+        exercise.isAtLeastEditor = this.isAtLeastEditorForExercise(exercise);
+        exercise.isAtLeastInstructor = this.isAtLeastInstructorForExercise(exercise);
+    }
+
+    /**
+     * Sets the appropriate access rights for the passed course.
+     *
+     * @param course for which the access rights shall be set
+     */
+    // TODO: find a static solution that can be directly used when handling REST responses
+    setAccessRightsForCourse(course: Course): void {
+        course.isAtLeastTutor = this.isAtLeastTutorInCourse(course);
+        course.isAtLeastEditor = this.isAtLeastEditorInCourse(course);
+        course.isAtLeastInstructor = this.isAtLeastInstructorInCourse(course);
+    }
+
+    /**
      * Checks whether current user is owner of the participation or whether he is part of the team
      *
      * @param participation - Participation that is checked

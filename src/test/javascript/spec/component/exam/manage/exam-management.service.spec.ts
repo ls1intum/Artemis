@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick, inject } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTestModule } from '../../../test.module';
@@ -13,6 +13,8 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 const expect = chai.expect;
 describe('Exam Management Service Tests', () => {
@@ -32,7 +34,7 @@ describe('Exam Management Service Tests', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [ExamManagementService],
+            providers: [ExamManagementService, { provide: AccountService, useClass: MockAccountService }],
             imports: [ArtemisTestModule, HttpClientTestingModule],
         });
 
@@ -83,6 +85,7 @@ describe('Exam Management Service Tests', () => {
         const mockExam: Exam = { id: 1 };
         const expected: Exam = { id: 1 };
         const mockCopyExam = ExamManagementService.convertDateFromClient(expected);
+
         // WHEN
         service.find(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.deep.equal(mockCopyExam));
 
