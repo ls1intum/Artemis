@@ -192,6 +192,17 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * Loads all information from the server regarding this exercise that is needed for the tutor exercise dashboard
      */
     loadAll() {
+        console.error('ERROR 0');
+        this.exerciseService.getClusterStats().subscribe(
+            (res: HttpResponse<any[]>) => {
+                console.log('RESPONSE', res);
+            },
+            (error: HttpErrorResponse) => {
+                console.log('error here!');
+                onError(this.jhiAlertService, error);
+            },
+        );
+        console.error('ERROR 1');
         this.exerciseService.getForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<Exercise>) => {
                 this.exercise = res.body!;
@@ -278,6 +289,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
             this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
                 (res: HttpResponse<StatsForDashboard>) => {
+                    console.log('getStatsForTutors !!!!!!!!!!!!!');
                     this.statsForDashboard = StatsForDashboard.from(res.body!);
                     this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                     this.totalNumberOfAssessments = this.statsForDashboard.totalNumberOfAssessments;

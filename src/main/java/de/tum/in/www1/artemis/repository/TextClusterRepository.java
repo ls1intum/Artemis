@@ -27,4 +27,26 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
     @Query("SELECT distinct cluster FROM TextCluster cluster LEFT JOIN FETCH cluster.blocks b LEFT JOIN FETCH b.submission blocksub LEFT JOIN FETCH blocksub.results WHERE cluster.id IN :#{#clusterIds}")
     List<TextCluster> findAllByIdsWithEagerTextBlocks(@Param("clusterIds") Set<Long> clusterIds);
 
+    interface TextClusterStats {
+
+        Long getClusterId();
+
+        Long getClusterSize();
+
+        Long getNumberOfAutomaticFeedbacks();
+    }
+
+    @Query("""
+            SELECT textblock.cluster.id AS clusterId, COUNT(DISTINCT textblock.id) AS clusterSize, SUM( CASE WHEN (feedback.type = 'AUTOMATIC' ) THEN 1 ELSE 0 END) AS numberOfAutomaticFeedbacks FROM TextBlock textblock
+            LEFT JOIN  Submission submission
+            ON textblock.submission.id = submission.id
+            LEFT JOIN  Result result
+            ON  submission.id = result.submission.id
+            LEFT JOIN   Feedback feedback
+            ON result.id = feedback.result.id
+            GROUP BY clusterId
+            HAVING textblock.cluster.id > 0
+            """)
+    List<TextClusterStats> findCountOfAutoFeedbacks();
+
 }
