@@ -48,7 +48,6 @@ describe('AnswerPostReactionsBarComponent', () => {
                 fixture = TestBed.createComponent(AnswerPostReactionsBarComponent);
                 injector = getTestBed();
                 metisService = injector.get(MetisService);
-                debugElement = fixture.debugElement;
                 component = fixture.componentInstance;
                 answerPost = new AnswerPost();
                 answerPost.id = 1;
@@ -86,5 +85,12 @@ describe('AnswerPostReactionsBarComponent', () => {
         const metisServiceCreateReactionSpy = sinon.spy(metisService, 'deleteReaction');
         component.addOrRemoveReaction(reactionToDelete.emojiId!);
         expect(metisServiceCreateReactionSpy).to.have.been.calledWith(reactionToDelete);
+    });
+
+    it('should invoke metis service method with own reaction to delete it', () => {
+        component.ngOnInit();
+        const addOrRemoveSpy = sinon.spy(component, 'addOrRemoveReaction');
+        component.updateReaction(reactionToDelete.emojiId!);
+        expect(addOrRemoveSpy).to.have.been.calledWith(reactionToDelete.emojiId!);
     });
 });
