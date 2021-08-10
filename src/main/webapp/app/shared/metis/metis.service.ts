@@ -20,7 +20,7 @@ interface PostFilter {
     courseWideContext?: CourseWideContext;
 }
 
-const VOTE_EMOJI_ID = 'heavy_plus_sign';
+export const VOTE_EMOJI_ID = 'heavy_plus_sign';
 
 @Injectable()
 export class MetisService {
