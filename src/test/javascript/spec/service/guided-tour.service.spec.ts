@@ -37,11 +37,11 @@ import { MockCookieService } from '../helpers/mocks/service/mock-cookie.service'
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { User } from 'app/core/user/user.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -171,7 +171,7 @@ describe('GuidedTourService', () => {
                         },
                     ]),
                 ],
-                declarations: [NavbarComponent, GuidedTourComponent, MockPipe(ArtemisTranslatePipe), MockDirective(JhiTranslateDirective), MockPipe(SafeResourceUrlPipe)],
+                declarations: [NavbarComponent, GuidedTourComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockPipe(SafeResourceUrlPipe)],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -751,7 +751,7 @@ describe('GuidedTourService', () => {
                         },
                     ]),
                 ],
-                declarations: [NavbarComponent, GuidedTourComponent, MockPipe(ArtemisTranslatePipe), MockDirective(JhiTranslateDirective), MockPipe(SafeResourceUrlPipe)],
+                declarations: [NavbarComponent, GuidedTourComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockPipe(SafeResourceUrlPipe)],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
