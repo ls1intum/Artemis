@@ -227,8 +227,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         if (!this.hasCriterionCommand(domainCommands)) {
             this.setParentForInstructionsWithNoCriterion(domainCommands);
         } else {
-            for (const [, command] of domainCommands) {
+            for (const [text, command] of domainCommands) {
                 endOfInstructionsCommand++;
+                if (command === null && text.length > 0) {
+                    this.exercise.gradingInstructions = text;
+                }
                 if (command instanceof GradingCriterionCommand) {
                     instructionCommands = domainCommands.slice(0, endOfInstructionsCommand - 1);
                     if (instructionCommands.length !== 0) {
@@ -314,9 +317,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         for (const [text, command] of domainCommands) {
             if (!this.instructions[index]) {
                 break;
-            }
-            if (command === null && text.length > 0) {
-                this.exercise.gradingInstructions = text;
             }
             if (command instanceof CreditsCommand) {
                 this.instructions[index].credits = parseFloat(text);
