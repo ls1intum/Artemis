@@ -20,6 +20,8 @@ interface PostFilter {
     courseWideContext?: CourseWideContext;
 }
 
+export const VOTE_EMOJI_ID = 'heavy_plus_sign';
+
 @Injectable()
 export class MetisService {
     private posts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([]);
@@ -273,8 +275,9 @@ export class MetisService {
     /**
      * sorts posts by two criteria
      * 1. criterion: pin -> pinned posts come first
-     * 2. criterion: archive -> archived posts come last
-     * 3. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
+     * 2. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
+     * 3. criterion: archive -> archived posts come last
+     * 4. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      * @return Post[] sorted array of posts
      */
     static sortPosts(posts: Post[]): Post[] {
@@ -303,21 +306,13 @@ export class MetisService {
             if (!postA.archived && postB.archived) {
                 return -1;
             }
-            if (Number(postA.creationDate) > Number(postB.pinned)) {
+            if (Number(postA.creationDate) > Number(postB.creationDate)) {
                 return 1;
             }
-            if (Number(postA.creationDate) < Number(postB.pinned)) {
+            if (Number(postA.creationDate) < Number(postB.creationDate)) {
                 return -1;
             }
             return 0;
         });
-    }
-
-    private static getEmojiCount(reactions: Reaction[] | undefined, searchEmoji: string): number {
-        if (!reactions) {
-            return 0;
-        } else {
-            return reactions.filter((reaction) => reaction.emojiId === searchEmoji).length;
-        }
     }
 }

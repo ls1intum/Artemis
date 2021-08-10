@@ -6,6 +6,7 @@ import { Moment } from 'moment';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { PostService } from 'app/shared/metis/post.service';
+import { VOTE_EMOJI_ID } from 'app/shared/metis/metis.service';
 
 export type PostForOverview = {
     id: number;
@@ -21,6 +22,9 @@ export type PostForOverview = {
     lecture: Lecture;
 };
 
+/**
+ * @deprecated This component will be replaced by the Metis Overview Component
+ */
 @Component({
     selector: 'jhi-course-posts',
     styles: ['.question-cell { max-width: 40vw; max-height: 120px; overflow: auto;}'],
@@ -30,9 +34,7 @@ export class CoursePostsComponent implements OnInit {
     courseId: number;
     posts: PostForOverview[];
     postsToDisplay: PostForOverview[];
-
     showPostsWithApprovedAnswerPosts = false;
-
     predicate = 'id';
     reverse = true;
 
@@ -44,22 +46,7 @@ export class CoursePostsComponent implements OnInit {
      */
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.postService.getAllPostsByCourseId(this.courseId).subscribe((res) => {
-            this.posts = res.body!.map((post: Post) => ({
-                id: post.id!,
-                content: post.content!,
-                creationDate: post.creationDate!,
-                answers: post.answers ? post.answers!.length : 0,
-                approvedAnswerPosts: this.getNumberOfApprovedAnswerPosts(post),
-                votes: post.votes!,
-                exerciseOrLectureId: post.exercise ? post.exercise!.id! : post.lecture!.id!,
-                exerciseOrLectureTitle: post.exercise ? post.exercise!.title! : post.lecture!.title!,
-                belongsToExercise: !!post.exercise,
-                exercise: post.exercise!,
-                lecture: post.lecture!,
-            }));
-            this.postsToDisplay = this.posts.filter((post) => post.approvedAnswerPosts === 0);
-        });
+        this.updatePosts();
     }
 
     /**
@@ -72,6 +59,25 @@ export class CoursePostsComponent implements OnInit {
 
     sortRows() {
         this.sortService.sortByProperty(this.postsToDisplay, this.predicate, this.reverse);
+    }
+
+    updatePosts() {
+        this.postService.getAllPostsByCourseId(this.courseId).subscribe((res) => {
+            this.posts = res.body!.map((post: Post) => ({
+                id: post.id!,
+                content: post.content!,
+                creationDate: post.creationDate!,
+                answers: post.answers ? post.answers!.length : 0,
+                approvedAnswerPosts: this.getNumberOfApprovedAnswerPosts(post),
+                votes: post.reactions ? post.reactions!.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length : 0,
+                exerciseOrLectureId: post.exercise ? post.exercise!.id! : post.lecture!.id!,
+                exerciseOrLectureTitle: post.exercise ? post.exercise!.title! : post.lecture!.title!,
+                belongsToExercise: !!post.exercise,
+                exercise: post.exercise!,
+                lecture: post.lecture!,
+            }));
+            this.postsToDisplay = this.posts.filter((post) => post.approvedAnswerPosts === 0);
+        });
     }
 
     /**

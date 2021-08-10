@@ -11,7 +11,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { MockPostService } from '../../helpers/mocks/service/mock-post.service';
 import { MockAnswerPostService } from '../../helpers/mocks/service/mock-answer-post.service';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisService, VOTE_EMOJI_ID } from 'app/shared/metis/metis.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ArtemisTestModule } from '../../test.module';
 import { PostService } from 'app/shared/metis/post.service';
@@ -71,7 +71,7 @@ describe('Metis Service', () => {
         user2 = { id: 2, name: 'usersame2', login: 'login2' } as User;
 
         reactionWithVoteEmoji = new Reaction();
-        reactionWithVoteEmoji.emojiId = 'heavy_plus_sign';
+        reactionWithVoteEmoji.emojiId = VOTE_EMOJI_ID;
         reactionWithVoteEmoji.user = user1;
 
         post1 = new Post();
