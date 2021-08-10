@@ -277,7 +277,7 @@ export class MetisService {
      * 3. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      * @return Post[] sorted array of posts
      */
-    private static sortPosts(posts: Post[]): Post[] {
+    static sortPosts(posts: Post[]): Post[] {
         return posts.sort(function (postA, postB) {
             const postAPlusEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === 'heavy_plus_sign').length
                 ? postA.reactions?.filter((reaction) => reaction.emojiId === 'heavy_plus_sign').length
