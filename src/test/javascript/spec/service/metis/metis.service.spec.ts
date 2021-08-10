@@ -4,6 +4,7 @@ import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as sinon from 'sinon';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
+import * as moment from 'moment';
 import { CourseWideContext, Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -35,6 +36,7 @@ describe('Metis Service', () => {
     let answerPostService: MockAnswerPostService;
     let accountService: MockAccountService;
     let accountServiceIsAtLeastTutorStub: SinonStub;
+    let reactionWithVoteEmoji: Reaction;
     let post1: Post;
     let post2: Post;
     let post3: Post;
@@ -68,12 +70,17 @@ describe('Metis Service', () => {
         user1 = { id: 1, name: 'usersame1', login: 'login1' } as User;
         user2 = { id: 2, name: 'usersame2', login: 'login2' } as User;
 
+        reactionWithVoteEmoji = new Reaction();
+        reactionWithVoteEmoji.emojiId = 'heavy_plus_sign';
+        reactionWithVoteEmoji.user = user1;
+
         post1 = new Post();
         post1.id = 1;
         post1.content = 'This is a test post';
         post1.title = 'title';
         post1.tags = ['tag1', 'tag2'];
         post1.author = user1;
+        post1.creationDate = moment();
 
         post2 = new Post();
         post2.id = 2;
@@ -81,6 +88,7 @@ describe('Metis Service', () => {
         post2.title = 'title';
         post2.tags = ['tag1', 'tag2'];
         post2.author = user2;
+        post2.creationDate = moment().subtract(1, 'day');
 
         post3 = new Post();
         post3.id = 3;
@@ -89,6 +97,8 @@ describe('Metis Service', () => {
         post3.tags = ['tag1', 'tag2'];
         post3.author = user2;
         post3.courseWideContext = CourseWideContext.RANDOM;
+        post3.creationDate = moment().subtract(2, 'day');
+        post3.reactions = [reactionWithVoteEmoji];
 
         const posts: Post[] = [post1, post2, post3];
 
@@ -119,10 +129,10 @@ describe('Metis Service', () => {
 
         metisServiceUserStub = stub(metisService, 'getUser');
         accountServiceIsAtLeastTutorStub = stub(accountService, 'isAtLeastTutorInCourse');
+    });
 
-        afterEach(() => {
-            sinon.restore();
-        });
+    afterEach(() => {
+        sinon.restore();
     });
 
     describe('Invoke post service methods', () => {
@@ -238,6 +248,12 @@ describe('Metis Service', () => {
             tick();
             expect(reactionServiceSpy).to.have.been.called;
         }));
+    });
+
+    it('should sort posts', () => {
+        // first is the post with highest voteEmoji count, second is newest post, third is oldest post
+        const sortedPosts: Post[] = [post3, post2, post1];
+        expect(MetisService.sortPosts([post1, post2, post3])).to.be.deep.equal(sortedPosts);
     });
 
     it('should determine that metis user is at least tutor in course', () => {

@@ -30,7 +30,6 @@ export class MetisService {
     private currentPostFilter?: PostFilter;
     private user: User;
     private course: Course;
-    private voteEmojiId: string = VOTE_EMOJI_ID;
 
     constructor(private postService: PostService, private answerPostService: AnswerPostService, private reactionService: ReactionService, private accountService: AccountService) {
         this.accountService.identity().then((user: User) => {
@@ -251,7 +250,7 @@ export class MetisService {
      * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      * @return Post[] sorted array of posts
      */
-    private static sortPosts(posts: Post[]): Post[] {
+    static sortPosts(posts: Post[]): Post[] {
         return posts.sort(function (postA, postB) {
             const postAVoteEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length
                 ? postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length
