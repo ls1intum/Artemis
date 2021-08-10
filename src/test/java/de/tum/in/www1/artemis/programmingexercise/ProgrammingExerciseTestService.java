@@ -890,7 +890,7 @@ public class ProgrammingExerciseTestService {
         exportProgrammingExerciseInstructorMaterial(HttpStatus.FORBIDDEN);
     }
 
-    private java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus) throws Exception {
+    public java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus) throws Exception {
         generateProgrammingExerciseForExport();
 
         // Mock template repo

@@ -17,7 +17,7 @@
     <span
         class="badge bg-warning"
         *ngIf="!conflictMode && feedback.conflictingTextAssessments && feedback.conflictingTextAssessments.length > 0"
-        (click)="onConflictsClicked.emit(feedback.id)"
+        (click)="onConflictClicked(feedback.id)"
     >
         <fa-icon [icon]="'balance-scale-right'"></fa-icon>
         <span jhiTranslate="artemisApp.textAssessment.conflict.conflictingAssessments" [translateValues]="{ number: feedback.conflictingTextAssessments?.length }"></span>
@@ -67,6 +67,7 @@
                     [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.impactWarningTooltip' | artemisTranslate"
                     placement="bottom"
                     class="impactWarningLabel"
+                    (mouseenter)="mouseEnteredWarningLabel()"
                     [translateValues]="{ affectedSubmissionsCount: textBlock.numberOfAffectedSubmissions }"
                     >This feedback might affect <b>{{ textBlock.numberOfAffectedSubmissions }}</b> other similar submission/s.</span
                 >

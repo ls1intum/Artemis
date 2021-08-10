@@ -8,6 +8,7 @@ import { GroupNotification } from 'app/entities/group-notification.model';
 import { Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
+import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE } from 'app/shared/notification/notification.constants';
 
 @Component({
     selector: 'jhi-notification-sidebar',
@@ -107,13 +108,23 @@ export class NotificationSidebarComponent implements OnInit {
 
     private loadNotificationsSuccess(notifications: Notification[], headers: HttpHeaders): void {
         this.totalNotifications = Number(headers.get('X-Total-Count')!);
-        this.addNotifications(notifications);
+        this.addNotifications(this.filterLoadedNotifiactions(notifications));
         this.page += 1;
         this.loading = false;
     }
 
+    // filter out every exam related notification
+    private filterLoadedNotifiactions(notifications: Notification[]): Notification[] {
+        return notifications.filter((notification) => notification.title !== LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE);
+    }
+
     private subscribeToNotificationUpdates(): void {
         this.notificationService.subscribeToNotificationUpdates().subscribe((notification: Notification) => {
+            // ignores live exam notifications because the sidebar is not visible during the exam mode
+            if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
+                return;
+            }
+
             // Increase total notifications count if the notification does not already exist.
             if (!this.notifications.some(({ id }) => id === notification.id)) {
                 this.totalNotifications += 1;

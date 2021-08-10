@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -65,6 +65,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private statisticsService: StatisticsService,
         private sortService: SortService,
+        private router: Router,
     ) {}
 
     ngOnInit() {
@@ -206,6 +207,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     content: 'Deleted a programming exercise',
                 });
                 this.dialogErrorSource.next('');
+
+                if (!this.isExamExercise) {
+                    this.router.navigateByUrl(`/course-management/${this.courseId}/exercises`);
+                } else {
+                    this.router.navigateByUrl(`/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/exercise-groups`);
+                }
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
@@ -287,5 +294,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
+    }
+
+    /**
+     * Generates the link to any participation's submissions, used for the link to template and solution submissions
+     * @param id of the participation
+     */
+    getParticipationSubmissionLink(id: number) {
+        const link = [this.baseResource, 'participations', id];
+        // For unknown reason normal exercises append /submissions to the submission view whereas exam exercises do not
+        if (!this.isExamExercise) {
+            link.push('submissions');
+        }
+        return link;
     }
 }

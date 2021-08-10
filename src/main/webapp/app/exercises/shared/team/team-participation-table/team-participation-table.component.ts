@@ -14,6 +14,8 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
+import { Participation } from 'app/entities/participation/participation.model';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 
@@ -117,12 +119,13 @@ export class TeamParticipationTableComponent implements OnInit {
     /**
      * Uses the router to navigate to the assessment editor for a given/new submission
      * @param exercise Exercise to which the submission belongs
+     * @param participation Participation for which the editor should be opened
      * @param submission Either submission or 'new'
      */
-    async openAssessmentEditor(exercise: Exercise, submission: Submission | 'new'): Promise<void> {
+    async openAssessmentEditor(exercise: Exercise, participation: Participation, submission: Submission | 'new'): Promise<void> {
         const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
-        const route = `/course-management/${this.course.id}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionUrlParameter}/assessment`;
-        await this.router.navigate([route]);
+        const route = getLinkToSubmissionAssessment(exercise.type!, this.course.id!, exercise.id!, participation.id, submissionUrlParameter, 0, 0);
+        await this.router.navigate(route);
     }
 
     /**

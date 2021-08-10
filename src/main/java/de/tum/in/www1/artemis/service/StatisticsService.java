@@ -208,7 +208,7 @@ public class StatisticsService {
 
         scores.forEach(score -> {
             var index = (int) (score.getScore() / 10.0);
-            if (index == 10) {
+            if (index >= 10) {
                 scoreDistribution[9] += 1;
             }
             else {

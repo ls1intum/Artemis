@@ -3,29 +3,47 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExamSession } from 'app/entities/exam-session.model';
+import { of } from 'rxjs';
 import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
+import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { BehaviorSubject } from 'rxjs';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 describe('Exam Navigation Bar Component', () => {
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
     let comp: ExamNavigationBarComponent;
+    let repositoryService: CodeEditorRepositoryService;
+
+    const examExerciseIdForNavigationSourceMock = new BehaviorSubject<number>(-1);
+    const mockExamExerciseUpdateService = {
+        currentExerciseIdForNavigation: examExerciseIdForNavigationSourceMock.asObservable(),
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule],
             declarations: [ExamNavigationBarComponent, MockComponent(ExamTimerComponent), MockDirective(NgbTooltip)],
-            providers: [ExamParticipationService, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
+            providers: [
+                ExamParticipationService,
+                { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamNavigationBarComponent);
         comp = fixture.componentInstance;
+        repositoryService = fixture.debugElement.injector.get(CodeEditorRepositoryService);
         TestBed.inject(ExamParticipationService);
 
         comp.endDate = moment();
@@ -35,7 +53,7 @@ describe('Exam Navigation Bar Component', () => {
                 type: ExerciseType.PROGRAMMING,
                 studentParticipations: [
                     {
-                        submissions: [{ id: 3 } as Submission],
+                        submissions: [{ id: 3, isSynced: true } as Submission],
                     } as StudentParticipation,
                 ],
             } as Exercise,
@@ -48,6 +66,21 @@ describe('Exam Navigation Bar Component', () => {
         fixture.detectChanges();
         tick();
     }));
+
+    it('should update the submissions onInit if their CommitState is UNCOMMITTED_CHANGES to isSynced false, if not in initial session', () => {
+        // Given
+        // Create an exam session, which is not an initial session.
+        comp.examSessions = [{ initialSession: false } as ExamSession];
+        const exerciseToBeSynced = comp.exercises[0];
+        spyOn(repositoryService, 'getStatus').and.returnValue(of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }));
+
+        // When
+        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toEqual(true);
+        comp.ngOnInit();
+
+        // Then
+        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toEqual(false);
+    });
 
     it('trigger when the exam is about to end', () => {
         spyOn(comp, 'saveExercise');
@@ -204,5 +237,12 @@ describe('Exam Navigation Bar Component', () => {
         const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
 
         expect(result).toEqual('notSubmitted');
+    });
+
+    it('should navigate to other Exercise', () => {
+        const updatedExerciseId = 2;
+        spyOn(comp, 'changeExerciseById');
+        examExerciseIdForNavigationSourceMock.next(updatedExerciseId);
+        expect(comp.changeExerciseById).toHaveBeenCalled();
     });
 });

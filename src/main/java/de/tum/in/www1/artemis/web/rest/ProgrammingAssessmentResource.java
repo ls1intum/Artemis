@@ -190,7 +190,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
-            ((StudentParticipation) newManualResult.getParticipation()).filterSensitiveInformation();
+            newManualResult.getParticipation().filterSensitiveInformation();
         }
         // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
         ltiService.onNewResult((StudentParticipation) newManualResult.getParticipation());

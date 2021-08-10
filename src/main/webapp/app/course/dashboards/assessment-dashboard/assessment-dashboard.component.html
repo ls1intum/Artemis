@@ -25,10 +25,12 @@
     </div>
     <div *ngIf="isExamMode && !isTestRun" class="row justify-content-between">
         <div class="col-8">
-            <ul>
-                <li><span jhiTranslate="artemisApp.exam.endDate">Exam End Date</span> : {{ exam?.endDate | artemisDate }}</li>
-                <li><span jhiTranslate="artemisApp.exam.publishResultsDate">Publish Results Date</span> : {{ exam?.publishResultsDate | artemisDate }}</li>
-            </ul>
+            <h4>
+                <span class="me-2"> {{ 'artemisApp.exam.endDate' | artemisTranslate }} : {{ exam?.endDate | artemisDate }} </span>
+            </h4>
+            <h4>
+                <span class="me-2"> {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }} : {{ exam?.publishResultsDate | artemisDate }} </span>
+            </h4>
         </div>
     </div>
 </div>
@@ -71,8 +73,9 @@
         </div>
     </div>
 
-    <div class="table-responsive">
-        <div *ngIf="!isTestRun" class="guided-tour-form-check form-check col-6 align-baseline">
+    <div class="container-fluid table-responsive">
+        <h4 jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></h4>
+        <div *ngIf="!isTestRun" class="guided-tour-form-check col-6 align-baseline">
             <input type="checkbox" name="showFinishedExercise" id="field_showFinishedExercise" [ngModel]="showFinishedExercises" (ngModelChange)="triggerFinishedExercises()" />
             <label class="form-check-label" for="field_showFinishedExercise">
                 {{ 'artemisApp.assessmentDashboard.showFinishedExercises' | artemisTranslate }}
@@ -183,7 +186,10 @@
         </table>
     </div>
 
-    <h2 *ngIf="!isExamMode">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | artemisTranslate }}</h2>
+    <div class="container-fluid" style="padding-top: 25px">
+        <h4 *ngIf="!isExamMode">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | artemisTranslate }}</h4>
+        <h4 *ngIf="isExamMode">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.examTitle' | artemisTranslate }}</h4>
 
-    <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
+        <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
+    </div>
 </div>

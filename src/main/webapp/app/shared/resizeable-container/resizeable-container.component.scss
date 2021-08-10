@@ -56,6 +56,12 @@
             align-items: center;
             cursor: pointer;
 
+            fa-icon {
+                /* increased hitbox */
+                padding: 15px;
+                margin: -15px;
+            }
+
             .card-title {
                 display: flex;
                 margin-top: 0;
@@ -115,10 +121,6 @@
         }
         .card {
             margin-bottom: 30px;
-        }
-
-        .card-header {
-            pointer-events: none;
         }
 
         #right-header-icon {

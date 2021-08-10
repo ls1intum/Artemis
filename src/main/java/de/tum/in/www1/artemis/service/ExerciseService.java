@@ -401,9 +401,10 @@ public class ExerciseService {
 
         log.info("Checking if exercise is modeling exercise", exercise.getId());
         if (exercise instanceof ModelingExercise) {
-            log.info("Deleting clusters and elements", exercise.getId());
+            log.info("Deleting clusters, elements and cancel scheduled operations", exercise.getId());
 
             modelingExerciseService.deleteClustersAndElements((ModelingExercise) exercise);
+            modelingExerciseService.cancelScheduledOperations(exerciseId);
         }
 
         participantScoreRepository.deleteAllByExerciseIdTransactional(exerciseId);

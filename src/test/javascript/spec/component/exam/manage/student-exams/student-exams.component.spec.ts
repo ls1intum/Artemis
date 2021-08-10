@@ -3,13 +3,12 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
@@ -32,6 +31,7 @@ import { NgbModal, NgbModule, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,6 +48,119 @@ describe('StudentExamsComponent', () => {
     let exam: Exam;
     let modalService: NgbModal;
     let examManagementService: ExamManagementService;
+
+    const providers = [
+        MockProvider(ExamManagementService, {
+            find: () => {
+                return of(
+                    new HttpResponse({
+                        body: exam,
+                        status: 200,
+                    }),
+                );
+            },
+            assessUnsubmittedExamModelingAndTextParticipations: () => {
+                return of(
+                    new HttpResponse({
+                        body: 1,
+                        status: 200,
+                    }),
+                );
+            },
+            generateStudentExams: () => {
+                return of(
+                    new HttpResponse({
+                        body: [studentExamOne!, studentExamTwo!],
+                        status: 200,
+                    }),
+                );
+            },
+            generateMissingStudentExams: () => {
+                return of(
+                    new HttpResponse({
+                        body: studentExamTwo ? [studentExamTwo] : [],
+                        status: 200,
+                    }),
+                );
+            },
+            startExercises: () => {
+                return of(
+                    new HttpResponse({
+                        body: 2,
+                        status: 200,
+                    }),
+                );
+            },
+            unlockAllRepositories: () => {
+                return of(
+                    new HttpResponse({
+                        body: 2,
+                        status: 200,
+                    }),
+                );
+            },
+            lockAllRepositories: () => {
+                return of(
+                    new HttpResponse({
+                        body: 2,
+                        status: 200,
+                    }),
+                );
+            },
+            evaluateQuizExercises: () => {
+                return of(
+                    new HttpResponse({
+                        body: 1,
+                        status: 200,
+                    }),
+                );
+            },
+        }),
+        MockProvider(StudentExamService, {
+            findAllForExam: () => {
+                return of(
+                    new HttpResponse({
+                        body: studentExams,
+                        status: 200,
+                    }),
+                );
+            },
+        }),
+        MockProvider(CourseManagementService, {
+            find: () => {
+                return of(
+                    new HttpResponse({
+                        body: course,
+                        status: 200,
+                    }),
+                );
+            },
+        }),
+        MockProvider(JhiAlertService),
+        MockDirective(JhiTranslateDirective),
+        {
+            provide: LocalStorageService,
+            useClass: MockLocalStorageService,
+        },
+        {
+            provide: ActivatedRoute,
+            useValue: {
+                params: {
+                    subscribe: (fn: (value: Params) => void) =>
+                        fn({
+                            courseId: 1,
+                        }),
+                },
+                snapshot: {
+                    paramMap: convertToParamMap({
+                        courseId: '1',
+                        examId: '1',
+                    }),
+                },
+            },
+        },
+        { provide: AccountService, useClass: MockAccountService },
+    ];
 
     beforeEach(() => {
         course = new Course();
@@ -81,7 +194,7 @@ describe('StudentExamsComponent', () => {
         studentExams = [studentExamOne, studentExamTwo];
 
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), ArtemisDataTableModule, MockModule(NgbModule), NgxDatatableModule, FontAwesomeTestingModule, TranslateModule.forRoot()],
+            imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), NgxDatatableModule, FontAwesomeTestingModule, TranslateModule.forRoot()],
             declarations: [
                 StudentExamsComponent,
                 MockComponent(StudentExamStatusComponent),
@@ -89,119 +202,9 @@ describe('StudentExamsComponent', () => {
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
+                MockComponent(DataTableComponent),
             ],
-            providers: [
-                MockProvider(ExamManagementService, {
-                    find: () => {
-                        return of(
-                            new HttpResponse({
-                                body: exam,
-                                status: 200,
-                            }),
-                        );
-                    },
-                    assessUnsubmittedExamModelingAndTextParticipations: () => {
-                        return of(
-                            new HttpResponse({
-                                body: 1,
-                                status: 200,
-                            }),
-                        );
-                    },
-                    generateStudentExams: () => {
-                        return of(
-                            new HttpResponse({
-                                body: [studentExamOne!, studentExamTwo!],
-                                status: 200,
-                            }),
-                        );
-                    },
-                    generateMissingStudentExams: () => {
-                        return of(
-                            new HttpResponse({
-                                body: studentExamTwo ? [studentExamTwo] : [],
-                                status: 200,
-                            }),
-                        );
-                    },
-                    startExercises: () => {
-                        return of(
-                            new HttpResponse({
-                                body: 2,
-                                status: 200,
-                            }),
-                        );
-                    },
-                    unlockAllRepositories: () => {
-                        return of(
-                            new HttpResponse({
-                                body: 2,
-                                status: 200,
-                            }),
-                        );
-                    },
-                    lockAllRepositories: () => {
-                        return of(
-                            new HttpResponse({
-                                body: 2,
-                                status: 200,
-                            }),
-                        );
-                    },
-                    evaluateQuizExercises: () => {
-                        return of(
-                            new HttpResponse({
-                                body: 1,
-                                status: 200,
-                            }),
-                        );
-                    },
-                }),
-                MockProvider(StudentExamService, {
-                    findAllForExam: () => {
-                        return of(
-                            new HttpResponse({
-                                body: studentExams,
-                                status: 200,
-                            }),
-                        );
-                    },
-                }),
-                MockProvider(CourseManagementService, {
-                    find: () => {
-                        return of(
-                            new HttpResponse({
-                                body: course,
-                                status: 200,
-                            }),
-                        );
-                    },
-                }),
-                MockProvider(JhiAlertService),
-                MockDirective(JhiTranslateDirective),
-                {
-                    provide: LocalStorageService,
-                    useClass: MockLocalStorageService,
-                },
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        params: {
-                            subscribe: (fn: (value: Params) => void) =>
-                                fn({
-                                    courseId: 1,
-                                }),
-                        },
-                        snapshot: {
-                            paramMap: convertToParamMap({
-                                courseId: '1',
-                                examId: '1',
-                            }),
-                        },
-                    },
-                },
-                { provide: AccountService, useClass: MockAccountService },
-            ],
+            providers,
         })
             .compileComponents()
             .then(() => {
@@ -320,10 +323,15 @@ describe('StudentExamsComponent', () => {
         expect(studentExamsComponent.studentExams.length).to.equal(2);
     });
 
-    it('should correctly catch HTTPError when generating student exams', () => {
+    it('should correctly catch HTTPError and get additional error when generating student exams', () => {
         examManagementService = TestBed.inject(ExamManagementService);
         const alertService = TestBed.inject(JhiAlertService);
-        const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
+        const translationService = TestBed.inject(TranslateService);
+        const errorDetailString = 'artemisApp.exam.validation.tooFewExerciseGroups';
+        const httpError = new HttpErrorResponse({
+            error: { errorKey: errorDetailString },
+            status: 400,
+        });
         course.isAtLeastInstructor = true;
         exam.startDate = moment().add(120, 'seconds');
 
@@ -334,11 +342,13 @@ describe('StudentExamsComponent', () => {
 
         expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).to.equal(false);
         const alertServiceSpy = sinon.spy(alertService, 'error');
+        const translationServiceSpy = sinon.spy(translationService, 'instant');
         const generateStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateStudentExamsButton'));
         expect(generateStudentExamsButton).to.exist;
         expect(generateStudentExamsButton.nativeElement.disabled).to.equal(false);
         generateStudentExamsButton.nativeElement.click();
         expect(alertServiceSpy).to.have.been.calledOnce;
+        expect(translationServiceSpy).to.have.been.calledOnceWithExactly(errorDetailString);
 
         generateStudentExamsStub.restore();
     });
@@ -350,7 +360,10 @@ describe('StudentExamsComponent', () => {
         studentExamsComponentFixture.detectChanges();
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
+            componentInstance,
+            result,
+        });
 
         expect(studentExamsComponent.isLoading).to.equal(false);
         expect(studentExamsComponent.isExamStarted).to.equal(false);
@@ -455,7 +468,10 @@ describe('StudentExamsComponent', () => {
     it('should unlock all repositories of the students', () => {
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
+            componentInstance,
+            result,
+        });
 
         course.isAtLeastInstructor = true;
 
@@ -477,7 +493,10 @@ describe('StudentExamsComponent', () => {
     it('should correctly catch HTTPError when unlocking all repositories', () => {
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
+            componentInstance,
+            result,
+        });
 
         const alertService = TestBed.inject(JhiAlertService);
         course.isAtLeastInstructor = true;
@@ -503,7 +522,10 @@ describe('StudentExamsComponent', () => {
     it('should lock all repositories of the students', () => {
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
+            componentInstance,
+            result,
+        });
 
         course.isAtLeastInstructor = true;
 
@@ -525,7 +547,10 @@ describe('StudentExamsComponent', () => {
     it('should correctly catch HTTPError when locking all repositories', () => {
         const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
+            componentInstance,
+            result,
+        });
 
         const alertService = TestBed.inject(JhiAlertService);
         course.isAtLeastInstructor = true;

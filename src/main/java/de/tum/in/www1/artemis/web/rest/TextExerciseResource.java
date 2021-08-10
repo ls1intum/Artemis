@@ -227,8 +227,7 @@ public class TextExerciseResource {
             updatedTextExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
-        // Only notify students about changes if a regular exercise was updated
-        if (notificationText != null && textExercise.isCourseExercise()) {
+        if ((notificationText != null && textExercise.isCourseExercise()) || textExercise.isExamExercise()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
         }
 
