@@ -27,6 +27,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -36,7 +38,18 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 
-public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+/**
+ * Tests the {@link ProgrammingExerciseGradingService}.
+ * <p>
+ * This includes: calculation of (re-)evaluation automatic feedback, test cases, static code analysis, result scores and points.
+ * <p>
+ * This <b>abstract</b> test class two nested subclasses that run all tests for different exercise setups:
+ * <ul>
+ * <li> {@link CourseProgrammingExerciseGradingServiceTest} - for exercises in courses.</li>
+ * <li>{@link ExamProgrammingExerciseGradingServiceTest} - for exercises in an exam setting.</li>
+ * </ul>
+ */
+public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
@@ -49,6 +62,9 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
     @Autowired
     private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
+
+    @Autowired
+    private ExamRepository examRepository;
 
     @Autowired
     private ProgrammingExerciseTestCaseService testCaseService;
@@ -72,15 +88,96 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         database.addUsers(5, 1, 0, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        programmingExerciseSCAEnabled = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        programmingExercise = generateDefaultProgrammingExercise();
+        database.addTestCasesToProgrammingExercise(programmingExercise);
+
+        programmingExerciseSCAEnabled = generateScaProgrammingExercise();
         database.addTestCasesToProgrammingExercise(programmingExerciseSCAEnabled);
-        var programmingExercises = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations();
-        programmingExercise = programmingExercises.get(0);
 
         ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         result = new Result();
         result.setParticipation(participation);
         bambooRequestMockProvider.enableMockingOfRequests();
+    }
+
+    /**
+     * Generates a new default, non-SCA programming exercise with 42.0 points, no bonus points and no test cases.
+     */
+    abstract ProgrammingExercise generateDefaultProgrammingExercise();
+
+    /**
+     * Generates a new programming exercise with SCA enabled and 42.0 points, no bonus points, no test cases and a SCA penalty of 40%. The SCA categories must be saved in the database.
+     */
+    abstract ProgrammingExercise generateScaProgrammingExercise();
+
+    /**
+     * Set the date after which students cannot work on the exercise anymore. May differ depending on the type of the exercise.
+     */
+    abstract ProgrammingExercise changeRelevantExerciseEndDate(ProgrammingExercise programmingExercise, ZonedDateTime endDate);
+
+    /**
+     * Test class for COURSE exercises
+     */
+    public static class CourseProgrammingExerciseGradingServiceTest extends ProgrammingExerciseGradingServiceTest {
+
+        @Override
+        ProgrammingExercise generateDefaultProgrammingExercise() {
+            Course course = database.addEmptyCourse();
+            Long programmingExerciseId = database.addProgrammingExerciseToCourse(course, false).getId();
+            return super.programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
+        }
+
+        @Override
+        ProgrammingExercise generateScaProgrammingExercise() {
+            Long programmingExerciseId = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories().getId();
+            return super.programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
+        }
+
+        @Override
+        ProgrammingExercise changeRelevantExerciseEndDate(ProgrammingExercise programmingExercise, ZonedDateTime endDate) {
+            programmingExercise.setDueDate(endDate);
+            return super.programmingExerciseRepository.save(programmingExercise);
+        }
+    }
+
+    /**
+     * Test class for EXAM exercises
+     */
+    public static class ExamProgrammingExerciseGradingServiceTest extends ProgrammingExerciseGradingServiceTest {
+
+        @Override
+        ProgrammingExercise generateDefaultProgrammingExercise() {
+            ProgrammingExercise programmingExercise = newExamProgrammingExercise();
+            return super.programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
+        }
+
+        @Override
+        ProgrammingExercise generateScaProgrammingExercise() {
+            ProgrammingExercise programmingExercise = newExamProgrammingExercise();
+            database.addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
+            return super.programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
+        }
+
+        private ProgrammingExercise newExamProgrammingExercise() {
+            ExerciseGroup group = database.addExerciseGroupWithExamAndCourse(true);
+            ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(group);
+            // Adjust settings so that exam and course exercises can use the same tests
+            programmingExercise.setMaxPoints(42.0);
+            programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
+            programmingExercise = super.programmingExerciseRepository.save(programmingExercise);
+            programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+            programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+            return programmingExercise;
+        }
+
+        @Override
+        ProgrammingExercise changeRelevantExerciseEndDate(ProgrammingExercise programmingExercise, ZonedDateTime endDate) {
+            Exam exam = programmingExercise.getExamViaExerciseGroupOrCourseMember();
+            // Only change the exam end date, as exam exercises don't have individual dates (all dates are null)
+            exam.setEndDate(endDate);
+            super.examRepository.save(exam);
+            return programmingExercise;
+        }
     }
 
     @AfterEach
@@ -375,7 +472,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassed() {
         // Set programming exercise due date in future.
-        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
+        programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().plusHours(10));
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -403,7 +500,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldNotIncludeTestsInResultWithAfterDueDateFlagIfDueDateHasNotPassedForNonStudentParticipation() {
         // Set programming exercise due date in future.
-        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
+        programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().plusHours(10));
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -431,7 +528,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed() {
         // Set programming exercise due date in past.
-        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(10));
+        programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().minusHours(10));
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -518,11 +615,11 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     public void shouldNotIncludeTestsMarkedAsNeverVisibleInScoreCalculation(boolean isAfterDueDate) throws Exception {
         // test case marked as never should not affect score for students neither before nor after due date
         if (isAfterDueDate) {
-            programmingExercise.setDueDate(ZonedDateTime.now().minusHours(10));
+            programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().minusHours(10));
         }
         else {
             // Set programming exercise due date in future.
-            programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
+            programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().plusHours(10));
         }
 
         var invisibleTestCase = new ProgrammingExerciseTestCase().testName("test4").exercise(programmingExercise);
