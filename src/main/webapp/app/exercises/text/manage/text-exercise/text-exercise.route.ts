@@ -16,6 +16,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
+import { ClusterStatisticsComponent } from 'app/exercises/text/manage/cluster-statistics/cluster-statistics.component';
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {
@@ -131,6 +132,18 @@ export const textExerciseRoute: Routes = [
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'exercise-statistics.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/text-exercises/:exerciseId/text-cluster-statistics',
+        component: ClusterStatisticsComponent,
+        resolve: {
+            exercise: TextExerciseResolver,
+        },
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.textExercise.clusterStatistics.title',
         },
         canActivate: [UserRouteAccessService],
     },
