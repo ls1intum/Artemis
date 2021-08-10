@@ -20,6 +20,8 @@ interface PostFilter {
     courseWideContext?: CourseWideContext;
 }
 
+const VOTE_EMOJI_ID = 'heavy_plus_sign';
+
 @Injectable()
 export class MetisService {
     private posts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([]);
@@ -28,6 +30,7 @@ export class MetisService {
     private currentPostFilter?: PostFilter;
     private user: User;
     private course: Course;
+    private voteEmojiId: string = VOTE_EMOJI_ID;
 
     constructor(private postService: PostService, private answerPostService: AnswerPostService, private reactionService: ReactionService, private accountService: AccountService) {
         this.accountService.identity().then((user: User) => {
@@ -175,34 +178,6 @@ export class MetisService {
     }
 
     /**
-     * updates the pin state of a post by invoking the post service
-     * @param post      post for which the pin state is toggled
-     * @param pinState  updated pin state
-     */
-    updatePostPinState(post: Post, pinState: boolean): Observable<Post> {
-        return this.postService.updatePinState(this.courseId, post.id!, pinState).pipe(
-            tap(() => {
-                this.getPostsForFilter(this.currentPostFilter);
-            }),
-            map((res: HttpResponse<Post>) => res.body!),
-        );
-    }
-
-    /**
-     * updates the archive state of a post by invoking the post service
-     * @param post          post for which the archive state is toggled
-     * @param archiveState  updated archive state
-     */
-    updatePostArchiveState(post: Post, archiveState: boolean): Observable<Post> {
-        return this.postService.updateArchiveState(this.courseId, post.id!, archiveState).pipe(
-            tap(() => {
-                this.getPostsForFilter(this.currentPostFilter);
-            }),
-            map((res: HttpResponse<Post>) => res.body!),
-        );
-    }
-
-    /**
      * deletes a post by invoking the post service
      * fetches the posts for the currently set filter on response and updates course tags
      * @param post post to delete
@@ -272,36 +247,23 @@ export class MetisService {
 
     /**
      * sorts posts by two criteria
-     * 1. criterion: pin -> pinned posts come first
-     * 2. criterion: archive -> archived posts come last
-     * 3. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
+     * 1. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
+     * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      * @return Post[] sorted array of posts
      */
     private static sortPosts(posts: Post[]): Post[] {
         return posts.sort(function (postA, postB) {
-            const postAPlusEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === 'heavy_plus_sign').length
-                ? postA.reactions?.filter((reaction) => reaction.emojiId === 'heavy_plus_sign').length
+            const postAVoteEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length
+                ? postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length
                 : 0;
-            const postBPlusEmojiCount = postB.reactions?.filter((reaction) => reaction.emojiId === 'heavy_plus_sign').length
-                ? postB.reactions?.filter((reaction) => reaction.emojiId === 'heavy_plus_sign').length
+            const postBVoteEmojiCount = postB.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length
+                ? postB.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length
                 : 0;
-            if (postA.pinned && !postB.pinned) {
+            if (postAVoteEmojiCount > postBVoteEmojiCount) {
                 return -1;
             }
-            if (!postA.pinned && postB.pinned) {
+            if (postAVoteEmojiCount < postBVoteEmojiCount) {
                 return 1;
-            }
-            if (postAPlusEmojiCount > postBPlusEmojiCount) {
-                return -1;
-            }
-            if (postAPlusEmojiCount < postBPlusEmojiCount) {
-                return 1;
-            }
-            if (postA.archived && !postB.archived) {
-                return 1;
-            }
-            if (!postA.archived && postB.archived) {
-                return -1;
             }
             if (Number(postA.creationDate) > Number(postB.pinned)) {
                 return 1;
@@ -311,13 +273,5 @@ export class MetisService {
             }
             return 0;
         });
-    }
-
-    private static getEmojiCount(reactions: Reaction[] | undefined, searchEmoji: string): number {
-        if (!reactions) {
-            return 0;
-        } else {
-            return reactions.filter((reaction) => reaction.emojiId === searchEmoji).length;
-        }
     }
 }

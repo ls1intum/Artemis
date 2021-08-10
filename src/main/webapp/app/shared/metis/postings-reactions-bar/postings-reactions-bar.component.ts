@@ -4,11 +4,6 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/entities/metis/reaction.model';
 
-const PIN_EMOJI_ID = 'pushpin';
-const PIN_EMOJI_UNICODE = '1F4CC';
-const ARCHIVE_EMOJI_ID = 'open_file_folder';
-const ARCHIVE_EMOJI_UNICODE = '1F4C2';
-
 interface ReactionEvent {
     $event: Event;
     emoji?: EmojiData;
@@ -25,8 +20,6 @@ interface ReactionCountMap {
 
 @Directive()
 export abstract class PostingsReactionsBarDirective<T extends Posting> implements OnInit, OnChanges {
-    pinEmojiId: string = PIN_EMOJI_ID;
-    archiveEmojiId: string = ARCHIVE_EMOJI_ID;
     categoriesIcons: { [key: string]: string } = {
         recent: `M10 1h3v21h-3zm10.186 4l1.5 2.598L3.5 18.098 2 15.5zM2 7.598L3.5 5l18.186 10.5-1.5 2.598z`,
     };
@@ -47,17 +40,6 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      */
     reactionCountMap: ReactionCountMap = {};
 
-    /*
-     Emojis that have a predefined meaning, i.e. pin and archive emoji,
-     should not appear in the emoji-mart selector
-     */
-    emojisToShowFilter: (emoji: string | EmojiData) => boolean = (emoji) => {
-        if (typeof emoji === 'string') {
-            return emoji !== PIN_EMOJI_UNICODE && emoji !== ARCHIVE_EMOJI_UNICODE;
-        } else {
-            return emoji.unified !== PIN_EMOJI_UNICODE && emoji.unified !== ARCHIVE_EMOJI_UNICODE;
-        }
-    };
     constructor(protected metisService: MetisService) {
         this.selectedCourseEmojis = ['smile', 'joy', 'sunglasses', 'tada', 'rocket', 'heavy_plus_sign', 'thumbsup', 'memo', 'coffee', 'recycle'];
     }
@@ -129,9 +111,6 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      */
     buildEmojiIdCountMap(reactions: Reaction[]): ReactionCountMap {
         return reactions.reduce((a: ReactionCountMap, b: Reaction) => {
-            if (b.emojiId === this.pinEmojiId || b.emojiId === this.archiveEmojiId) {
-                return a;
-            }
             const hasReacted = b.user?.id === this.metisService.getUser().id;
             const reactionCount = {
                 count: a[b.emojiId!] ? a[b.emojiId!].count + 1 : 1,

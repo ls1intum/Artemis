@@ -95,8 +95,8 @@ describe('PostReactionsBarComponent', () => {
         expect(component.currentUserIsAtLeastTutor).to.deep.equal(true);
         fixture.detectChanges();
         const reactions = getElements(debugElement, 'ngx-emoji');
-        // emojis to be displayed it the user reaction, the pin emoji and the archive emoji
-        expect(reactions).to.have.length(3);
+        // emojis to be displayed it the user reaction
+        expect(reactions).to.have.length(1);
         expect(component.reactionCountMap).to.be.deep.equal({
             smile: {
                 count: 1,

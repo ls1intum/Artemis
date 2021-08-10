@@ -5,26 +5,6 @@
             <span class="posting-footer">{{ reactionCount.value.count }}</span>
         </button>
     </div>
-    <div class="col-auto p-0" *ngIf="posting.pinned || currentUserIsAtLeastTutor">
-        <button
-            class="reaction-button"
-            [class.reaction-button--pinnedOrArchived]="posting.pinned"
-            [disabled]="!currentUserIsAtLeastTutor"
-            (click)="currentUserIsAtLeastTutor && togglePin()"
-        >
-            <ngx-emoji class="emoji" [ngbTooltip]="pinTooltip | artemisTranslate" [emoji]="pinEmojiId" [size]="16"> </ngx-emoji>
-        </button>
-    </div>
-    <div class="col-auto p-0" *ngIf="posting.archived || currentUserIsAtLeastTutor">
-        <button
-            class="reaction-button"
-            [class.reaction-button--pinnedOrArchived]="posting.archived"
-            [class.clickable]="currentUserIsAtLeastTutor"
-            (click)="currentUserIsAtLeastTutor && toggleArchive()"
-        >
-            <ngx-emoji class="emoji" [ngbTooltip]="archiveTooltip | artemisTranslate" [emoji]="archiveEmojiId" [size]="16"> </ngx-emoji>
-        </button>
-    </div>
     <div class="col-auto px-0">
         <fa-icon
             [icon]="['far', 'smile']"
@@ -38,7 +18,6 @@
     </div>
     <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="trigger" [cdkConnectedOverlayOpen]="showReactionSelector">
         <emoji-mart
-            [emojisToShowFilter]="emojisToShowFilter"
             (emojiSelect)="selectReaction($event)"
             [emojiSize]="20"
             [categoriesIcons]="categoriesIcons"
