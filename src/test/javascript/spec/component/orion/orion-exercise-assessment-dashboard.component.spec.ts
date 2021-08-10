@@ -44,7 +44,12 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [OrionExerciseAssessmentDashboardComponent, MockComponent(ExerciseAssessmentDashboardComponent), MockPipe(ArtemisTranslatePipe), MockComponent(OrionButtonComponent)],
+            declarations: [
+                OrionExerciseAssessmentDashboardComponent,
+                MockComponent(ExerciseAssessmentDashboardComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(OrionButtonComponent),
+            ],
             providers: [
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(OrionConnectorService),

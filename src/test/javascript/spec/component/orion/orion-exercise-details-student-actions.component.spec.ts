@@ -38,8 +38,13 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [OrionExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent), MockComponent(ExerciseDetailsStudentActionsComponent), MockComponent(OrionButtonComponent),
-                MockPipe(ArtemisTranslatePipe)],
+            declarations: [
+                OrionExerciseDetailsStudentActionsComponent,
+                MockComponent(ExerciseActionButtonComponent),
+                MockComponent(ExerciseDetailsStudentActionsComponent),
+                MockComponent(OrionButtonComponent),
+                MockPipe(ArtemisTranslatePipe),
+            ],
             providers: [
                 MockProvider(OrionBuildAndTestService),
                 MockProvider(OrionConnectorService),
