@@ -8,7 +8,7 @@ import { User } from 'app/core/user/user.model';
 import { ArtemisTestModule } from '../../../test.module';
 import { PostService } from 'app/shared/metis/post.service';
 import { MockPostService } from '../../../helpers/mocks/service/mock-post.service';
-import { stub } from 'sinon';
+import { spy } from 'sinon';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { MockPipe } from 'ng-mocks';
@@ -84,7 +84,7 @@ describe('CoursePostsComponent', () => {
     });
 
     it('should initialize post for overview correctly', () => {
-        const postServiceGetPostByCourseIdSpy = stub(postService, 'getAllPostsByCourseId');
+        const postServiceGetPostByCourseIdSpy = spy(postService, 'getAllPostsByCourseId');
         component.updatePosts();
         expect(postServiceGetPostByCourseIdSpy).to.have.been.called;
     });
