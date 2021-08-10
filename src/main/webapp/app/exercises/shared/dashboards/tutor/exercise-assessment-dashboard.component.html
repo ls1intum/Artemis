@@ -383,18 +383,19 @@
                                         </td>
 
                                         <td>
-                                            <button
+                                            <a
                                                 *jhiExtensionPoint="overrideNewButton; context: { correctionRound: correctionRound }"
                                                 class="btn btn-success btn-sm guided-tour-new-assessment-btn"
-                                                (click)="openAssessmentEditor('new', correctionRound)"
-                                                [disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
+                                                [routerLink]="getAssessmentLink('new')"
+                                                [queryParams]="getComplaintQueryParams(correctionRound)"
+                                                [class.disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
                                                 [class.guided-tour]="exercise === exerciseForGuidedTour"
                                                 [ngStyle]="exercise === exerciseForGuidedTour ? { cursor: 'not-allowed' } : {}"
                                             >
                                                 <fa-icon *ngIf="openingAssessmentEditorForNewSubmission" [icon]="'spinner'" [spin]="true"></fa-icon>
                                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                                 {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}
-                                            </button>
+                                            </a>
                                         </td>
                                     </tr>
                                 </ng-container>
@@ -552,16 +553,21 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <button
+                                    <a
                                         *ngIf="moreFeedbackRequest.accepted === undefined; else continueButton"
                                         class="btn btn-success btn-sm"
-                                        (click)="viewComplaint(moreFeedbackRequest)"
+                                        [routerLink]="getAssessmentLink(moreFeedbackRequest)"
+                                        [queryParams]="getComplaintQueryParams(moreFeedbackRequest)"
                                     >
                                         <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                         {{ 'artemisApp.exerciseAssessmentDashboard.evaluateMoreFeedbackRequest' | artemisTranslate }}
-                                    </button>
+                                    </a>
                                     <ng-template #continueButton>
-                                        <button class="btn btn-primary btn-sm" (click)="viewComplaint(moreFeedbackRequest)">
+                                        <button
+                                            class="btn btn-primary btn-sm"
+                                            [routerLink]="getAssessmentLink(moreFeedbackRequest)"
+                                            [queryParams]="getComplaintQueryParams(moreFeedbackRequest)"
+                                        >
                                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                             {{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate }}
                                         </button>
