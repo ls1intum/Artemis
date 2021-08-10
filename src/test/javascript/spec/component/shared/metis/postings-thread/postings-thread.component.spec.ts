@@ -56,7 +56,7 @@ describe('PostingsThreadComponent', () => {
         answers: unsortedAnswerArray,
     } as Post;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [],
             providers: [

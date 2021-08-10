@@ -3,13 +3,9 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, getTestBed, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
-import { Post } from 'app/entities/metis/post.model';
 import * as sinon from 'sinon';
-import { SinonStub, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
-import { PostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { User } from 'app/core/user/user.model';
@@ -36,7 +32,7 @@ describe('AnswerPostReactionsBarComponent', () => {
 
     const user = { id: 1, name: 'username', login: 'login' } as User;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, OverlayModule],
             providers: [

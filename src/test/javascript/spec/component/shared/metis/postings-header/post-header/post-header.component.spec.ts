@@ -51,7 +51,7 @@ describe('PostHeaderComponent', () => {
 
     const answerPosts: AnswerPost[] = [answerPost1, answerPost2];
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [],
             providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],

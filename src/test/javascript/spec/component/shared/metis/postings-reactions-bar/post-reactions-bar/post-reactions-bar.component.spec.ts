@@ -36,7 +36,7 @@ describe('PostReactionsBarComponent', () => {
 
     const user = { id: 1, name: 'username', login: 'login' } as User;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, OverlayModule],
             providers: [
