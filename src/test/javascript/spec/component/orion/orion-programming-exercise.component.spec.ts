@@ -15,6 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { BehaviorSubject } from 'rxjs';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -29,8 +30,8 @@ describe('OrionProgrammingExerciseComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OrionModule],
-            declarations: [OrionProgrammingExerciseComponent, MockComponent(ProgrammingExerciseComponent), MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule],
+            declarations: [OrionProgrammingExerciseComponent, MockComponent(ProgrammingExerciseComponent), MockPipe(ArtemisTranslatePipe), MockComponent(OrionButtonComponent)],
             providers: [MockProvider(TranslateService), MockProvider(OrionConnectorService), MockProvider(ProgrammingExerciseService), { provide: Router, useValue: router }],
         })
             .compileComponents()

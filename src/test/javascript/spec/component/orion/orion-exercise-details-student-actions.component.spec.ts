@@ -4,10 +4,8 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
-import { TranslateModule } from '@ngx-translate/core';
 import { BehaviorSubject, of } from 'rxjs';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
 import { Exercise } from 'app/entities/exercise.model';
@@ -15,10 +13,11 @@ import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-ac
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisOrionConnector, OrionState } from 'app/shared/orion/orion';
-import { OrionModule } from 'app/shared/orion/orion.module';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { ActivatedRoute } from '@angular/router';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,8 +37,9 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), OrionModule, ArtemisSharedModule],
-            declarations: [OrionExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent), MockComponent(ExerciseDetailsStudentActionsComponent)],
+            imports: [ArtemisTestModule],
+            declarations: [OrionExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent), MockComponent(ExerciseDetailsStudentActionsComponent), MockComponent(OrionButtonComponent),
+                MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(OrionBuildAndTestService),
                 MockProvider(OrionConnectorService),
