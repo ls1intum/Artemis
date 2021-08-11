@@ -107,18 +107,6 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="studentExam" [minWidth]="80" [width]="80">
-                <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('studentExam')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.exam"> Exam </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('studentExam')"></fa-icon>
-                    </span>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    <a routerLink="/course-management/{{ courseId }}/exams/{{ examId }}">{{ exam?.title }}</a>
-                </ng-template>
-            </ngx-datatable-column>
-
             <ngx-datatable-column prop="user" [minWidth]="120" [width]="120">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('user.name')">

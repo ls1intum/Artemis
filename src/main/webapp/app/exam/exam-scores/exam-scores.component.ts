@@ -729,9 +729,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         for (const examScoreDTO of examScoreDTOs) {
             this.studentIdToExamScoreDTOs.set(examScoreDTO.studentId!, examScoreDTO);
         }
-        let noOfScoreDifferencesFound = 0;
-        let noOfPointDifferencesFound = 0;
-        let noOfComparisons = 0;
         for (const studentResult of this.studentResults) {
             const overAllPoints = round(studentResult.overallPointsAchieved, 1);
             const overallScore = round(studentResult.overallScoreAchieved, 1);
@@ -748,7 +745,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 const errorMessage = `Exam scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
                 this.logErrorOnSentry(errorMessage);
             } else {
-                noOfComparisons += 1;
                 examScoreDTO.scoreAchieved = round(examScoreDTO.scoreAchieved, 1);
                 examScoreDTO.pointsAchieved = round(examScoreDTO.pointsAchieved, 1);
 
@@ -756,25 +752,19 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     const errorMessage = `Different exam points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
                         examScoreDTO,
                     )}`;
-                    noOfPointDifferencesFound += 1;
                     this.logErrorOnSentry(errorMessage);
                 }
                 if (Math.abs(examScoreDTO.scoreAchieved - regularCalculation.scoreAchieved) > 0.1) {
                     const errorMessage = `Different exam score in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation : ${JSON.stringify(
                         examScoreDTO,
                     )}`;
-                    noOfScoreDifferencesFound += 1;
                     this.logErrorOnSentry(errorMessage);
                 }
             }
         }
-        console.log(`Performed ${noOfComparisons} comparisons between old and new calculation method.`);
-        console.log(`Found ${noOfPointDifferencesFound} point differences between old and new calculation method.`);
-        console.log(`Found ${noOfScoreDifferencesFound} point differences between old and new calculation method.`);
     }
 
     logErrorOnSentry(errorMessage: string) {
-        console.log(errorMessage);
         Sentry.captureException(new Error(errorMessage));
     }
 
