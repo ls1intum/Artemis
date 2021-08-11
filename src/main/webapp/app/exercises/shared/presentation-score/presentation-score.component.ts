@@ -29,14 +29,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
             </div>
         </ng-container>
     `,
-    styles: [
-        `
-            .form-check-label {
-                font-size: 15px;
-                font-weight: bolder;
-            }
-        `,
-    ],
+    styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
 export class PresentationScoreComponent {
     @Input() exercise: Exercise;
