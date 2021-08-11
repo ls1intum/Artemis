@@ -1,27 +1,24 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
-import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 
 @Component({
     selector: 'jhi-exam-exercise-update-highlighter',
     templateUrl: './exam-exercise-update-highlighter.component.html',
     styleUrls: ['./exam-exercise-update-highlighter.component.scss'],
 })
-export abstract class ExamExerciseUpdateHighlighterComponent extends ExamSubmissionComponent implements OnInit {
+export class ExamExerciseUpdateHighlighterComponent implements OnInit {
     subscriptionToLiveExamExerciseUpdates: Subscription;
     previousProblemStatementUpdate: string;
     updatedProblemStatementWithHighlightedDifferences: string;
     updatedProblemStatement: string;
     showHighlightedDifferences = true;
 
-    exercise: Exercise;
+    @Input() exercise: Exercise;
 
-    protected constructor(private examExerciseUpdateService: ExamExerciseUpdateService, changeDetectorReference: ChangeDetectorRef) {
-        super(changeDetectorReference);
-    }
+    constructor(private examExerciseUpdateService: ExamExerciseUpdateService) {}
 
     ngOnInit(): void {
         this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {

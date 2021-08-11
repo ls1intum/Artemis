@@ -1,8 +1,5 @@
-<!--
-<button right-header id="highlightDiffButton" class="btn" [hidden]="previousProblemStatementUpdate == undefined" (click)="toggleHighlightedProblemStatement()">
-    {{showHighlightedDifferences
-        ? ('artemisApp.exam.problemStatementUpdate.showNew' | artemisTranslate)
-        : ('artemisApp.exam.problemStatementUpdate.showDiff' | artemisTranslate)
+<button id="highlightDiffButton" class="btn" [hidden]="previousProblemStatementUpdate == undefined" (click)="toggleHighlightedProblemStatement()">
+    {{
+        showHighlightedDifferences ? ('artemisApp.exam.problemStatementUpdate.showNew' | artemisTranslate) : ('artemisApp.exam.problemStatementUpdate.showDiff' | artemisTranslate)
     }}
 </button>
--->
