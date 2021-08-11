@@ -6,29 +6,21 @@ import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
-import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent } from 'ng-mocks';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
-import { TranslateModule } from '@ngx-translate/core';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
@@ -37,7 +29,6 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
@@ -60,8 +51,22 @@ import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
-import { SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
+import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
 import { InfoPanelComponent } from 'app/shared/info-panel/info-panel.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockTranslateValuesDirective } from '../course/course-scores/course-scores.component.spec';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
+import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { ComplaintService } from 'app/complaints/complaint.service';
+import { RouterTestingModule } from '@angular/router/testing';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -93,7 +98,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let exerciseServiceGetStatsForTutorsStub: SinonStub;
 
     let tutorParticipationService: TutorParticipationService;
-    let tutorParticipationServiceCreateStub: SinonStub;
 
     let guidedTourService: GuidedTourService;
     const result1 = { id: 11 } as Result;
@@ -180,47 +184,53 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         },
     } as SubmissionWithComplaintDTO;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
-    const router = new MockRouter();
-    const navigateSpy = sinon.spy(router, 'navigate');
 
-    beforeEach(async () => {
+    let navigateSpy: sinon.SinonStub;
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, exerciseId: modelingExercise.id! }) } } as any as ActivatedRoute;
+
+    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), TranslateTestingModule];
+    const declarations = [
+        ExerciseAssessmentDashboardComponent,
+        MockComponent(TutorLeaderboardComponent),
+        MockComponent(TutorParticipationGraphComponent),
+        MockComponent(HeaderExercisePageWithDetailsComponent),
+        MockComponent(HeaderParticipationPageComponent),
+        MockComponent(SidePanelComponent),
+        MockComponent(InfoPanelComponent),
+        MockComponent(ModelingEditorComponent),
+        MockComponent(SecondCorrectionEnableButtonComponent),
+        MockComponent(CollapsableAssessmentInstructionsComponent),
+        MockComponent(AssessmentInstructionsComponent),
+        MockComponent(StructuredGradingInstructionsAssessmentLayoutComponent),
+        MockComponent(LanguageTableCellComponent),
+        MockComponent(ProgrammingExerciseInstructionComponent),
+        MockComponent(ButtonComponent),
+        MockComponent(ResultComponent),
+        MockComponent(AlertComponent),
+        MockPipe(ArtemisTranslatePipe),
+        MockPipe(ArtemisDatePipe),
+        MockDirective(ExtensionPointDirective),
+        MockHasAnyAuthorityDirective,
+        MockTranslateValuesDirective,
+        MockDirective(NgbTooltip),
+        MockComponent(AssessmentWarningComponent),
+    ];
+    const providers = [
+        JhiLanguageHelper,
+        DeviceDetectorService,
+        MockProvider(HttpClient),
+        MockProvider(ArtemisDatePipe),
+        { provide: ActivatedRoute, useValue: route },
+        { provide: LocalStorageService, useClass: MockSyncStorage },
+        { provide: SessionStorageService, useClass: MockSyncStorage },
+    ];
+
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                ArtemisSharedModule,
-                ArtemisSharedComponentModule,
-                ArtemisProgrammingAssessmentModule,
-                ArtemisProgrammingExerciseInstructionsRenderModule,
-                ArtemisResultModule,
-                RouterModule,
-                TranslateModule.forRoot(),
-                ArtemisAssessmentSharedModule,
-            ],
-            declarations: [
-                ExerciseAssessmentDashboardComponent,
-                MockComponent(TutorLeaderboardComponent),
-                MockComponent(TutorParticipationGraphComponent),
-                MockComponent(HeaderExercisePageWithDetailsComponent),
-                MockComponent(HeaderParticipationPageComponent),
-                MockComponent(SidePanelComponent),
-                MockComponent(InfoPanelComponent),
-                MockComponent(ModelingEditorComponent),
-                MockComponent(SecondCorrectionEnableButtonComponent),
-                MockComponent(CollapsableAssessmentInstructionsComponent),
-                MockComponent(AssessmentInstructionsComponent),
-                MockComponent(StructuredGradingInstructionsAssessmentLayoutComponent),
-                MockComponent(LanguageTableCellComponent),
-            ],
-            providers: [
-                JhiLanguageHelper,
-                DeviceDetectorService,
-                { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
-                { provide: Router, useValue: router },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-            ],
+            imports,
+            declarations,
+            providers,
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseAssessmentDashboardComponent);
@@ -231,6 +241,15 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
                 exerciseService = TestBed.inject(ExerciseService);
                 programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
+
+                const submissionService = TestBed.inject(SubmissionService);
+                stub(submissionService, 'getSubmissionsWithComplaintsForTutor').returns(of(new HttpResponse({ body: [] })));
+
+                const complaintService = TestBed.inject(ComplaintService);
+                stub(complaintService, 'getMoreFeedbackRequestsForTutor').returns(of(new HttpResponse({ body: [] })));
+
+                const router = TestBed.get(Router);
+                navigateSpy = sinon.stub(router, 'navigate');
 
                 tutorParticipationService = TestBed.inject(TutorParticipationService);
 
@@ -272,20 +291,12 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     afterEach(() => {
-        modelingSubmissionStubWithoutAssessment.restore();
-        modelingSubmissionStubWithAssessment.restore();
+        sinon.restore();
+    });
 
-        textSubmissionStubWithoutAssessment.restore();
-        textSubmissionStubWithAssessment.restore();
-
-        fileUploadSubmissionStubWithAssessment.restore();
-        fileUploadSubmissionStubWithoutAssessment.restore();
-
-        programmingSubmissionStubWithAssessment.restore();
-        programmingSubmissionStubWithoutAssessment.restore();
-
-        exerciseServiceGetForTutorsStub.restore();
-        exerciseServiceGetStatsForTutorsStub.restore();
+    it('should initialize', () => {
+        fixture.detectChanges();
+        expect(comp).to.be.ok;
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
@@ -367,7 +378,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should call readInstruction', () => {
-        tutorParticipationServiceCreateStub = stub(tutorParticipationService, 'create');
+        const tutorParticipationServiceCreateStub = stub(tutorParticipationService, 'create');
         const tutorParticipation = { id: 1, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS };
         tutorParticipationServiceCreateStub.returns(of(new HttpResponse({ body: tutorParticipation, headers: new HttpHeaders() })));
 
@@ -424,7 +435,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const courseId = 4;
 
         it('should not openExampleSubmission', () => {
-            navigateSpy.resetHistory();
             const submission = { id: 8 };
             comp.openExampleSubmission(submission!.id);
             expect(navigateSpy).to.have.not.been.called;
