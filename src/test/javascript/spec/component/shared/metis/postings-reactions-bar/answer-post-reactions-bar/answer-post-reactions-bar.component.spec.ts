@@ -24,7 +24,6 @@ describe('AnswerPostReactionsBarComponent', () => {
     let component: AnswerPostReactionsBarComponent;
     let injector: TestBed;
     let fixture: ComponentFixture<AnswerPostReactionsBarComponent>;
-    let debugElement: DebugElement;
     let metisService: MetisService;
     let answerPost: AnswerPost;
     let reactionToCreate: Reaction;
