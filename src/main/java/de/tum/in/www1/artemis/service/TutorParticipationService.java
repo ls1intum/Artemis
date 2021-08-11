@@ -13,7 +13,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -26,11 +25,11 @@ public class TutorParticipationService {
 
     class FeedbackCorrectionError {
 
+        public String reference;
+
         public FeedbackCorrectionError(String reference) {
             this.reference = reference;
         }
-
-        public String reference;
     }
 
     private static final String ENTITY_NAME = "TutorParticipation";
@@ -45,14 +44,11 @@ public class TutorParticipationService {
 
     private final ExampleSubmissionService exampleSubmissionService;
 
-    private final TextBlockRepository textBlockRepository;
-
     public TutorParticipationService(TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            ExampleSubmissionService exampleSubmissionService, TextBlockRepository textBlockRepository) {
+            ExampleSubmissionService exampleSubmissionService) {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.exampleSubmissionService = exampleSubmissionService;
-        this.textBlockRepository = textBlockRepository;
     }
 
     /**
@@ -147,10 +143,10 @@ public class TutorParticipationService {
         // If invalid, get all incorrect feedbacks and send an array of the corresponding `FeedbackCorrectionError`s to the client.
         // Pack this information into bad request exception.
         var wrongFeedbacks = tutorFeedbacks.stream().filter(tutorFeedback -> !isCorrectTutorFeedback(tutorFeedback, instructorFeedbacks)).map(tutorFeedback -> {
-            var ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+            var objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
             try {
                 // Build JSON string for the corresponding `FeedbackCorrectionError` object.
-                return ow.writeValueAsString(new FeedbackCorrectionError(tutorFeedback.getReference()));
+                return objectWriter.writeValueAsString(new FeedbackCorrectionError(tutorFeedback.getReference()));
             }
             catch (JsonProcessingException e) {
                 return "";

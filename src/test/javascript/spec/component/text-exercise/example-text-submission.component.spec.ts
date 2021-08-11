@@ -281,7 +281,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(feedbackB.isCorrect).toBeUndefined;
 
         const tutorParticipationService = fixture.debugElement.injector.get(TutorParticipationService);
-        let errorResponse = new HttpErrorResponse({
+        const errorResponse = new HttpErrorResponse({
             error: { error: { title: "{'errors': [{'reference': '" + feedbackA.reference + "'}]}" } },
             headers: new HttpHeaders().append('x-artemisapp-error', 'error.invalid_assessment'),
             status: 400,

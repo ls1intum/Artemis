@@ -274,14 +274,13 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                                 feedback!.isCorrect = true;
                             });
 
-                        let correctionErrors: FeedbackCorrectionError[] = JSON.parse(error['error']['title'])['errors'];
-
-                        let msg =
+                        const correctionErrors: FeedbackCorrectionError[] = JSON.parse(error['error']['title'])['errors'];
+                        const msg =
                             correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
                         this.jhiAlertService.error(msg);
 
                         // Mark all wrongly made feedbacks as incorrect.
-                        let findTextBlockRefForCorrectionError = (res: FeedbackCorrectionError) => this.textBlockRefs.find((ref) => ref.feedback?.reference == res.reference);
+                        const findTextBlockRefForCorrectionError = (res: FeedbackCorrectionError) => this.textBlockRefs.find((ref) => ref.feedback?.reference == res.reference);
                         correctionErrors
                             .map(findTextBlockRefForCorrectionError)
                             .filter((ref) => ref && ref.feedback)
