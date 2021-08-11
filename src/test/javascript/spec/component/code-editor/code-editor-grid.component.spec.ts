@@ -1,13 +1,11 @@
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { DebugElement, SimpleChange } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { SinonStub, spy, stub } from 'sinon';
-import * as sinon from 'sinon';
 
 import { AceEditorModule } from 'ng2-ace-editor';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
@@ -18,7 +16,6 @@ import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-featu
 
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
-import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/mock-code-editor-conflict-state.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
@@ -30,12 +27,9 @@ import { InteractableEvent } from 'app/exercises/programming/shared/code-editor/
 chai.use(sinonChai);
 const expect = chai.expect;
 
-//dummy based on original event browser output
-/*
-const toggleEventFileBrowser : PointerEvent = {
-    height: 1,
-}
- */
+const fileBrowserWindowName = 'FileBrowser';
+const instructionsWindowName = 'Instructions';
+const buildOutputWindowName = 'BuildOutput';
 
 describe('CodeEditorGridComponent', () => {
     let comp: CodeEditorGridComponent;
@@ -64,32 +58,88 @@ describe('CodeEditorGridComponent', () => {
             });
     });
 
-    it('should hide draggable icons', () => {
-        fixture.detectChanges();
-        let draggableIconForFileBrowser = fixture.debugElement.query(By.css('#draggableIconForFileBrowser'));
+    describe('Hide draggable icons', () => {
+        it('should hide draggable icon for file browser', () => {
+            executeHideDraggableIconTestForWindow(fileBrowserWindowName);
+        });
 
-        expect(draggableIconForFileBrowser).to.exist;
+        // right panel = Instruction / Problem Statement
+        it('should hide draggable icon for right panel', () => {
+            executeHideDraggableIconTestForWindow(instructionsWindowName);
+        });
 
-        const fileBrowserInteractable: Interactable = { target: '.resizable-filebrowser' } as Interactable;
-        const iconSVGName = {} as unknown as HTMLElement;
-        //iconSVGName.blur();
-        //spy(iconSVGName, "blur");
-        //sinon.mock(iconSVGName).expects("blur()");
-        //sinon.stub(iconSVGName, "blur()");
-        //const pointerEvent : PointerEvent = {type: "click", target: iconSVGName} as unknown as PointerEvent;
-        const pointerEvent: PointerEvent = { type: 'click' } as unknown as PointerEvent;
-        const fileBrowserCollapseEvent: InteractableEvent = { event: pointerEvent, horizontal: true, interactable: fileBrowserInteractable };
+        it('should hide draggable icon for build output', () => {
+            executeHideDraggableIconTestForWindow(buildOutputWindowName);
+        });
 
-        sinon.stub(fileBrowserInteractable, 'resizable');
+        const executeHideDraggableIconTestForWindow = (windowName: string) => {
+            fixture.detectChanges();
+            let draggableIconForWindow = getDebugElement(windowName);
 
-        comp.toggleCollapse(fileBrowserCollapseEvent);
-        expect(comp.fileBrowserIsCollapsed).to.be.false;
+            expect(draggableIconForWindow).to.exist;
 
-        //comp.fileBrowserIsCollapsed = true;
-        fixture.detectChanges();
+            const resizable = () => {};
+            const windowInteractable: Interactable = { target: '.resizable-' + windowName.toLowerCase(), resizable } as Interactable;
 
-        draggableIconForFileBrowser = fixture.debugElement.query(By.css('#draggableIconForFileBrowser'));
-        expect(comp.fileBrowserIsCollapsed).to.be.true;
-        expect(draggableIconForFileBrowser).not.to.exist;
+            const blur = () => {};
+            const pointerEvent: PointerEvent = { type: 'click', target: { blur } as unknown as HTMLElement } as unknown as PointerEvent;
+
+            const windowCollapseEvent: InteractableEvent = { event: pointerEvent, horizontal: true, interactable: windowInteractable };
+
+            expectWindowToBeCollapsed(windowName, false);
+
+            comp.toggleCollapse(windowCollapseEvent);
+
+            fixture.detectChanges();
+
+            draggableIconForWindow = getDebugElement(windowName);
+            expectWindowToBeCollapsed(windowName, true);
+            expect(draggableIconForWindow).not.to.exist;
+        };
+
+        const getDebugElement = (windowName: string) => {
+            return fixture.debugElement.query(By.css('#draggableIconFor' + windowName));
+        };
+
+        const expectAllWindowsToNotBeCollapsed = () => {
+            expect(comp.fileBrowserIsCollapsed).to.be.false;
+            expect(comp.rightPanelIsCollapsed).to.be.false;
+            expect(comp.buildOutputIsCollapsed).to.be.false;
+        };
+
+        const expectWindowToBeCollapsed = (windowName: string, collapsed: boolean) => {
+            switch (windowName) {
+                case fileBrowserWindowName: {
+                    if (collapsed) {
+                        expect(comp.fileBrowserIsCollapsed).to.be.true;
+                        expect(comp.rightPanelIsCollapsed).to.be.false;
+                        expect(comp.buildOutputIsCollapsed).to.be.false;
+                    } else {
+                        expectAllWindowsToNotBeCollapsed();
+                    }
+                    break;
+                }
+                case instructionsWindowName: {
+                    if (collapsed) {
+                        expect(comp.fileBrowserIsCollapsed).to.be.false;
+                        expect(comp.rightPanelIsCollapsed).to.be.true;
+                        expect(comp.buildOutputIsCollapsed).to.be.false;
+                    } else {
+                        expectAllWindowsToNotBeCollapsed();
+                    }
+                    break;
+                }
+                case buildOutputWindowName: {
+                    if (collapsed) {
+                        expect(comp.fileBrowserIsCollapsed).to.be.false;
+                        expect(comp.rightPanelIsCollapsed).to.be.false;
+                        expect(comp.buildOutputIsCollapsed).to.be.true;
+                    } else {
+                        expectAllWindowsToNotBeCollapsed();
+                    }
+                    break;
+                }
+            }
+        };
     });
 });
