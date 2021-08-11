@@ -1,25 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { CookieService } from 'ngx-cookie-service';
-import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 
-import { AceEditorModule } from 'ng2-ace-editor';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ArtemisTestModule } from '../../test.module';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
-import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/mock-code-editor-conflict-state.service';
-import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
-import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
-import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import { Interactable } from '@interactjs/core/Interactable';
 import { InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
@@ -36,19 +21,10 @@ describe('CodeEditorGridComponent', () => {
     let fixture: ComponentFixture<CodeEditorGridComponent>;
     let debugElement: DebugElement;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, FeatureToggleModule],
+            imports: [ArtemisTestModule],
             declarations: [CodeEditorGridComponent],
-            providers: [
-                { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
-                { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
-                { provide: CodeEditorConflictStateService, useClass: MockCodeEditorConflictStateService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: CookieService, useClass: MockCookieService },
-                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-            ],
         })
             .compileComponents()
             .then(() => {
