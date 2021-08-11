@@ -56,11 +56,12 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit {
         // checks if first update i.e. no highlight
         if (!this.previousProblemStatementUpdate) {
             outdatedProblemStatement = this.exercise.problemStatement!;
-            this.previousProblemStatementUpdate = this.updatedProblemStatement;
             // else use previousProblemStatementUpdate as new outdatedProblemStatement to avoid inserted HTML elements
         } else {
             outdatedProblemStatement = this.previousProblemStatementUpdate;
         }
+
+        this.previousProblemStatementUpdate = this.updatedProblemStatement;
 
         // finds the initial difference then cleans the text with added html & css elements
         const diff = dmp.diff_main(outdatedProblemStatement!, this.updatedProblemStatement);
