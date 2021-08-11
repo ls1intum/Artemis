@@ -3,7 +3,6 @@ import { ParticipantScoresAverageTableComponent } from 'app/shared/participant-s
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import * as chai from 'chai';

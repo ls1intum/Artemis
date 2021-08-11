@@ -98,7 +98,7 @@ describe('CourseExerciseDetailsComponent', () => {
     const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [] } as unknown as Exercise;
     const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
-    beforeEach(async(() => {
+    beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [
