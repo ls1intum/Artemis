@@ -1,3 +1,4 @@
+import { ProgrammingExerciseCreationPage } from './ProgrammingExerciseCreationPage';
 import { ExamManagementPage } from './ExamManagementPage';
 import { ExamCreationPage } from './ExamCreationPage';
 import { CourseManagementPage } from './CourseManagementPage';
@@ -6,6 +7,7 @@ import { OnlineEditorPage } from './OnlineEditorPage';
 import { CreateModelingExercisePage } from './CreateModelingExercisePage';
 import { ModelingExerciseExampleSubmissionPage } from './ModelingExerciseExampleSubmissionPage';
 import { ModelingEditor } from './ModelingEditor';
+import { ExamStartEndPage } from './ExamStartEndPage';
 
 /**
  * A class which encapsulates all pageobjects, which can be used to automate the Artemis UI.
@@ -14,9 +16,11 @@ export class ArtemisPageobjects {
     courseManagement = new CourseManagementPage();
     navigationBar = new NavigationBar();
     onlineEditor = new OnlineEditorPage();
+    examCreation = new ExamCreationPage();
+    examManagement = new ExamManagementPage();
+    programmingExerciseCreation = new ProgrammingExerciseCreationPage();
     createModelingExercise = new CreateModelingExercisePage();
     modelingExerciseExampleSubmission = new ModelingExerciseExampleSubmissionPage();
     modelingEditor = new ModelingEditor();
-    examCreation = new ExamCreationPage();
-    examManagement = new ExamManagementPage();
+    examStartEnd = new ExamStartEndPage();
 }

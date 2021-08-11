@@ -24,7 +24,7 @@ public class TutorLeaderboardComplaintResponses {
         return userId;
     }
 
-    public TutorLeaderboardComplaintResponses(long userId, long complaintResponses, double points) {
+    public TutorLeaderboardComplaintResponses(Long userId, Long complaintResponses, Double points) {
         this.userId = userId;
         this.complaintResponses = complaintResponses;
         this.points = points;
