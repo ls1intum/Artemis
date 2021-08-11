@@ -25,6 +25,14 @@ export interface DropInfo {
     instruction: GradingInstruction;
 }
 
+/**
+ * Wraps the information returned by the server upon validating tutor feedbacks.
+ */
+export class FeedbackCorrectionError {
+    // Corresponds to `Feedback.reference` that is used to reference the corresponding `TextBlock`
+    public reference: string;
+}
+
 export class Feedback implements BaseEntity {
     public id?: number;
     public gradingInstruction?: GradingInstruction;
@@ -39,6 +47,11 @@ export class Feedback implements BaseEntity {
     public suggestedFeedbackReference?: string;
     public suggestedFeedbackOriginSubmissionReference?: number;
     public suggestedFeedbackParticipationReference?: number;
+
+    // Specifies whether or not the tutor feedback is correct relative to the instructor feedback (during tutor training).
+    //
+    // Client only property.
+    public isCorrect?: boolean;
 
     // helper attributes for modeling exercise assessments stored in Feedback
     public referenceType?: string; // this string needs to follow UMLModelElementType in Apollon in typings.d.ts

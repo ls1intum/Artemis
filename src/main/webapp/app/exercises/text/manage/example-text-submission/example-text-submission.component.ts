@@ -12,7 +12,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -266,8 +266,29 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
 
                 switch (errorType) {
                     case 'error.invalid_assessment':
-                        // TODO: what should be the error message here?
-                        this.jhiAlertService.error('Error message here');
+                        // Mark all tutor created feedback as correct.
+                        this.textBlockRefs
+                            .map((ref) => ref.feedback)
+                            .filter((feedback) => feedback != undefined)
+                            .forEach((feedback) => {
+                                feedback!.isCorrect = true;
+                            });
+
+                        let correctionErrors: FeedbackCorrectionError[] = JSON.parse(error['error']['title'])['errors'];
+
+                        let msg =
+                            correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
+                        this.jhiAlertService.error(msg);
+
+                        // Mark all wrongly made feedbacks as incorrect.
+                        let findTextBlockRefForCorrectionError = (res: FeedbackCorrectionError) => this.textBlockRefs.find((ref) => ref.feedback?.reference == res.reference);
+                        correctionErrors
+                            .map(findTextBlockRefForCorrectionError)
+                            .filter((ref) => ref && ref.feedback)
+                            .forEach((ref) => {
+                                ref!.feedback!.isCorrect = false;
+                            });
+
                         break;
                     default:
                         onError(this.jhiAlertService, error);

@@ -5,6 +5,14 @@
                 "title": "Beispielabgabe-Board",
                 "editor": "Beispielabgabe-Editor"
             },
+            "feedback": {
+                "correct": "correct assessment ✅",
+                "incorrect": "incorrect assessment ❌"
+            },
+            "submissionValidation": {
+                "missing": "Not enough feedbacks provided. Number of feedbacks should be the same as of the instructors",
+                "wrong": "Wrong assessment"
+            },
             "assessScore": {
                 "success": "Herzlichen Glückwunsch! Das ist eine gute Beurteilung!",
                 "tooLow": "Die Punktzahl deiner Bewertung dieser Abgabe ist zu niedrig. Bitte überprüfe die Bewertungskriterien und die Abgabe noch einmal sorgfältig und reiche deine verbesserte Bewertung ein.",

@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.core.JsonProcessingException;
+import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -20,6 +23,15 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Service
 public class TutorParticipationService {
+
+    class FeedbackCorrectionError {
+
+        public FeedbackCorrectionError(String reference) {
+            this.reference = reference;
+        }
+
+        public String reference;
+    }
 
     private static final String ENTITY_NAME = "TutorParticipation";
 
@@ -93,77 +105,63 @@ public class TutorParticipationService {
     }
 
     /**
-     * Validates if tutor text feedback is correct.
+     * Validates if tutor feedback is correct.
      * Validation rules:
      * - There should exist a corresponding instructor feedback with the same creditCount(score)
-     * - The text block of the feedback should have the same start and ending point as of the instructor
+     * - The feedback should reference the same object as of the instructor
      * - If instructor feedback has a grading instruction associated with it, so must the tutor feedback
      */
-    private boolean isCorrectTextFeedback(Feedback tutorFeedback, List<Feedback> instructorFeedbacks) {
-        var tutorBlock = textBlockRepository.findById(tutorFeedback.getReference()).orElseThrow();
-
+    private boolean isCorrectTutorFeedback(Feedback tutorFeedback, List<Feedback> instructorFeedbacks) {
         return instructorFeedbacks.stream().anyMatch(instructorFeedback -> {
-            var instructorBlock = textBlockRepository.findById(instructorFeedback.getReference()).orElseThrow();
-
-            boolean equalStartIndex = instructorBlock.getStartIndex() == tutorBlock.getStartIndex();
-            boolean equalEndIndex = instructorBlock.getEndIndex() == tutorBlock.getEndIndex();
+            boolean equalReference = Objects.equals(tutorFeedback.getReference(), instructorFeedback.getReference());
             boolean equalCredits = Double.compare(instructorFeedback.getCredits(), tutorFeedback.getCredits()) == 0;
 
             boolean equalGradingInstructions = true;
-            // TODO: test this logic!
             if (instructorFeedback.getGradingInstruction() != null) {
                 equalGradingInstructions = instructorFeedback.getGradingInstruction().equals(tutorFeedback.getGradingInstruction());
             }
 
-            return equalStartIndex && equalEndIndex && equalCredits && equalGradingInstructions;
+            return equalReference && equalCredits && equalGradingInstructions;
         });
     }
 
-    private void validateTutorialExampleSubmission(ExampleSubmission tutorExampleSubmission) {
-        boolean isTextSubmission = tutorExampleSubmission.getSubmission() instanceof TextSubmission;
-        // TODO: implement the logic for modeling exercise in the next PR
-        if (!isTextSubmission) {
-            validateTutorialExampleSubmissionUsingTotalScore(tutorExampleSubmission);
-            return;
-        }
-
-        var instructorFeedbacks = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
-        var tutorFeedbacks = tutorExampleSubmission.getSubmission().getLatestResult().getFeedbacks();
-
+    private boolean isValidTutorialExampleSubmission(List<Feedback> tutorFeedbacks, List<Feedback> instructorFeedbacks) {
         boolean equalFeedbackCount = instructorFeedbacks.size() == tutorFeedbacks.size();
-        boolean allTutorFeedbacksAreCorrect = tutorFeedbacks.stream().map(tutorFeedback -> isCorrectTextFeedback(tutorFeedback, instructorFeedbacks))
+        boolean allTutorFeedbacksAreCorrect = tutorFeedbacks.stream().map(tutorFeedback -> isCorrectTutorFeedback(tutorFeedback, instructorFeedbacks))
                 .allMatch(Boolean.TRUE::equals);
 
-        boolean validTutorAssessment = equalFeedbackCount && allTutorFeedbacksAreCorrect;
-
-        if (!validTutorAssessment) {
-            throw new BadRequestAlertException("invalid_assessment", ENTITY_NAME, "invalid_assessment");
-        }
-    }
-
-    private void validateTutorialExampleSubmissionUsingTotalScore(ExampleSubmission tutorExampleSubmission) {
-        // Retrieve the example feedback created by the instructor
-        List<Feedback> existingFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
-
-        float instructorScore = calculateTotalScore(existingFeedback);
-        float lowerInstructorScore = instructorScore - instructorScore / scoreRangePercentage;
-        float higherInstructorScore = instructorScore + instructorScore / scoreRangePercentage;
-
-        float tutorScore = calculateTotalScore(tutorExampleSubmission.getSubmission().getLatestResult().getFeedbacks());
-
-        if (lowerInstructorScore > tutorScore) {
-            throw new BadRequestAlertException("tooLow", ENTITY_NAME, "tooLow");
-        }
-
-        if (tutorScore > higherInstructorScore) {
-            throw new BadRequestAlertException("tooHigh", ENTITY_NAME, "tooHigh");
-        }
+        return equalFeedbackCount && allTutorFeedbacksAreCorrect;
     }
 
     /**
-     * Given an exercise, it adds to the tutor participation of that exercise the example submission passed as argument, if it is valid (e.g: if it is an example submission used
-     * for tutorial, we check the result is close enough to the one of the instructor)
-     * TODO: change the documentation
+     * Validates the tutor example submission. If invalid, throw bad request exception with information which feedbacks are incorrect.
+     */
+    private void validateTutorialExampleSubmission(ExampleSubmission tutorExampleSubmission) {
+        var tutorFeedbacks = tutorExampleSubmission.getSubmission().getLatestResult().getFeedbacks();
+        var instructorFeedbacks = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
+
+        if (isValidTutorialExampleSubmission(tutorFeedbacks, instructorFeedbacks)) {
+            return;
+        }
+
+        // If invalid, get all incorrect feedbacks and send an array of the corresponding `FeedbackCorrectionError`s to the client.
+        // Pack this information into bad request exception.
+        var wrongFeedbacks = tutorFeedbacks.stream().filter(tutorFeedback -> !isCorrectTutorFeedback(tutorFeedback, instructorFeedbacks)).map(tutorFeedback -> {
+            var ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+            try {
+                // Build JSON string for the corresponding `FeedbackCorrectionError` object.
+                return ow.writeValueAsString(new FeedbackCorrectionError(tutorFeedback.getReference()));
+            }
+            catch (JsonProcessingException e) {
+                return "";
+            }
+        }).collect(Collectors.joining(","));
+        throw new BadRequestAlertException("{\"errors\": [" + wrongFeedbacks + "]}", ENTITY_NAME, "invalid_assessment");
+    }
+
+    /**
+     * Given an exercise, it adds to the tutor participation of that exercise the example submission passed as argument.
+     * If it is valid (e.g: if it is an example submission used for tutorial, we check the result is close enough to the one of the instructor)
      *
      * @param exercise               - the exercise we are referring to
      * @param tutorExampleSubmission - the example submission to add

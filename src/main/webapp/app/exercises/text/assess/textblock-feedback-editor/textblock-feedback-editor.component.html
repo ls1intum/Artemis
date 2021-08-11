@@ -93,6 +93,9 @@
         </div>
     </div>
 
+    <!-- Text showing whether the tutor feedback is correct or not (upon validation on the server) -->
+    <span *ngIf="feedback.isCorrect != undefined"> {{ getCorrectionStatus() | artemisTranslate }} </span>
+
     <ng-template #toggleMore let-modal>
         <div class="modal-header">
             <h4 class="modal-title">

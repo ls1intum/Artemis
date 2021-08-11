@@ -137,6 +137,9 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      */
     onScoreClick(event: MouseEvent): void {
         event.preventDefault();
+
+        // Reset the feedback correction status upon score change in order to hide it.
+        this.feedback.isCorrect = undefined;
     }
 
     /**
@@ -216,5 +219,16 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      */
     mouseEnteredWarningLabel() {
         this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING, this.feedback.type, this.textBlock.type);
+    }
+
+    /**
+     * Status string describing whether the tutor feedback (submitted during the tutor training) is correct or not.
+     */
+    getCorrectionStatus(): string {
+        if (this.feedback.isCorrect!) {
+            return 'artemisApp.exampleSubmission.feedback.correct';
+        }
+
+        return 'artemisApp.exampleSubmission.feedback.incorrect';
     }
 }

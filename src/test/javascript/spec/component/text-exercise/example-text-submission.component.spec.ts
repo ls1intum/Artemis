@@ -263,5 +263,47 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalled();
     });
 
+    it('when wrong tutor assessment, upon backend response should mark feedback as incorrect', fakeAsync(() => {
+        // GIVEN
+        const textBlockRefA = TextBlockRef.new();
+        textBlockRefA.block!.id = 'ID';
+        const feedbackA = new Feedback();
+        feedbackA.reference = textBlockRefA.block!.id;
+        textBlockRefA.feedback = feedbackA;
+
+        const textBlockRefB = TextBlockRef.new();
+        const feedbackB = new Feedback();
+        textBlockRefB.feedback = feedbackB;
+
+        comp.textBlockRefs = [textBlockRefA, textBlockRefB];
+
+        expect(feedbackA.isCorrect).toBeUndefined;
+        expect(feedbackB.isCorrect).toBeUndefined;
+
+        const tutorParticipationService = fixture.debugElement.injector.get(TutorParticipationService);
+        let errorResponse = new HttpErrorResponse({
+            error: { error: { title: "{'errors': [{'reference': '" + feedbackA.reference + "'}]}" } },
+            headers: new HttpHeaders().append('x-artemisapp-error', 'error.invalid_assessment'),
+            status: 400,
+        });
+        console.error(errorResponse);
+        // spyOn(tutorParticipationService, 'assessExampleSubmission').and.returnValue(throwError(() => errorResponse));
+        // spyOn(tutorParticipationService, 'assessExampleSubmission').and.returnValue(of(errorResponse));
+
+        console.error(tutorParticipationService);
+
+        // WHEN
+        comp.ngOnInit();
+        tick();
+
+        comp.assessmentsAreValid = true;
+        comp.checkAssessment();
+        tick();
+
+        // THEN
+        expect(feedbackA.isCorrect).toEqual(false);
+        expect(feedbackB.isCorrect).toEqual(true);
+    }));
+
     const httpResponse = (body: any) => of(new HttpResponse({ body }));
 });

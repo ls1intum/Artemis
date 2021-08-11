@@ -5,6 +5,14 @@
                 "title": "Example Submissions Board",
                 "editor": "Example Submission Editor"
             },
+            "feedback": {
+                "correct": "correct assessment ✅",
+                "incorrect": "incorrect assessment ❌"
+            },
+            "submissionValidation": {
+                "missing": "Not enough feedbacks provided. Number of feedbacks should be the same as of the instructors",
+                "wrong": "Wrong assessment"
+            },
             "assessScore": {
                 "success": "Congratulations! This is a good assessment!",
                 "tooLow": "The number of points in your assessment of this submission is too low. Please carefully review the grading criteria and the submission again, and submit your improved assessment.",
