@@ -13,14 +13,19 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { SearchResult } from 'app/shared/table/pageable-table';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockProgrammingExercisePagingService } from '../../helpers/mocks/service/mock-programming-exercise-paging.service';
-import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { NgModel } from '@angular/forms';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { NgbHighlight, NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,8 +43,21 @@ describe('ProgrammingExerciseImportComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedCommonModule, FeatureToggleModule, ArtemisSharedPipesModule],
-            declarations: [ProgrammingExerciseImportComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, FeatureToggleModule],
+            declarations: [
+                ProgrammingExerciseImportComponent,
+                ButtonComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(NgModel),
+                MockDirective(SortDirective),
+                MockComponent(FaIconComponent),
+                MockDirective(SortByDirective),
+                MockDirective(NgbHighlight),
+                NgbPagination, // do not mock this directive as we need it for the test
+                MockPipe(ExerciseCourseTitlePipe),
+                MockDirective(NgbTooltip),
+                MockDirective(TranslateDirective),
+            ],
             providers: [
                 DifferencePipe,
                 { provide: ProgrammingExercisePagingService, useClass: MockProgrammingExercisePagingService },
@@ -55,10 +73,6 @@ describe('ProgrammingExerciseImportComponent', () => {
                 pagingService = debugElement.injector.get(ProgrammingExercisePagingService);
                 pagingStub = stub(pagingService, 'searchForExercises');
             });
-    });
-
-    afterEach(() => {
-        pagingStub.restore();
     });
 
     it('should parse the pageable search result into the correct state', fakeAsync(() => {
