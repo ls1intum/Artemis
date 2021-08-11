@@ -67,6 +67,20 @@ export class ExamParticipationService {
     }
 
     /**
+     * Retrieves the exercise ids of the user exam of the current user from server or localstorage.
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     */
+    public loadStudentExamExerciseIds(courseId: number, examId: number): Observable<number[]> {
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/exercise-ids';
+        return this.httpClient.get<number[]>(url).pipe(
+            map((exerciseIds: number[]) => {
+                return exerciseIds;
+            }),
+        );
+    }
+
+    /**
      * Retrieves a {@link StudentExam} from server or localstorage.
      */
     private getStudentExamFromServer(url: string, courseId: number, examId: number): Observable<StudentExam> {

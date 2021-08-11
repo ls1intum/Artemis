@@ -9,7 +9,6 @@ import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE } from 'app/shared/notific
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -150,8 +149,9 @@ export class NotificationPopupComponent implements OnInit {
         const courseId = target.course;
         const examId = target.exam;
         const exerciseId = target.exercise;
-        this.examParticipationService.loadStudentExamWithExercisesForSummary(courseId, examId).subscribe((studentExamWithExercises: StudentExam) => {
-            const updatedExerciseIsPartOfStudentExam = studentExamWithExercises?.exercises?.find((studentExamExercise) => studentExamExercise.id === exerciseId);
+
+        this.examParticipationService.loadStudentExamExerciseIds(courseId, examId).subscribe((exerciseIds: number[]) => {
+            const updatedExerciseIsPartOfStudentExam = exerciseIds?.find((exerciseIdentifier) => exerciseIdentifier === exerciseId);
             if (updatedExerciseIsPartOfStudentExam != undefined) {
                 this.addExamUpdateNotification(notification);
                 this.setRemovalTimeout(notification);
