@@ -218,8 +218,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         return exercises.stream()
                 .filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
                         || (exercise instanceof ProgrammingExercise
-                                && (exercise.getAssessmentType() != AUTOMATIC
-                                        || ((ProgrammingExercise) exercise).getAllowComplaintsForAutomaticAssessments())))
+                                && (exercise.getAssessmentType() != AUTOMATIC || ((ProgrammingExercise) exercise).getAllowComplaintsForAutomaticAssessments())))
                 .collect(Collectors.toSet());
     }
 
