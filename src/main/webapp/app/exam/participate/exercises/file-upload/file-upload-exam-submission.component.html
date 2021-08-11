@@ -48,6 +48,10 @@
     <!--region Right Panel-->
     <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
     <span right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
+
+    <!-- problem statement update & difference highlighter -->
+    <jhi-exam-exercise-update-highlighter *ngIf="exercise" [exercise]="exercise"></jhi-exam-exercise-update-highlighter>
+
     <p right-body class="mb-3 markdown-preview" *ngIf="exercise!.problemStatement">
         <span [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></span>
     </p>

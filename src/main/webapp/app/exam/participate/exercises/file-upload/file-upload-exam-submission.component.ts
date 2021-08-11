@@ -66,6 +66,13 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     }
 
     /**
+     * Used to detect changes from the problem statement updater/highlighter
+     */
+    ngAfterViewInit() {
+        this.changeDetectorReference.detectChanges();
+    }
+
+    /**
      * Sets file submission for exercise
      * Here the file selected with the -browse- button is handeled.
      * @param event {object} Event object which contains the uploaded file

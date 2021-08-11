@@ -45,6 +45,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.updateViewFromSubmission();
     }
 
+    //Used to detect changes from the problem statement updater/highlighter
     ngAfterViewInit() {
         this.changeDetectorReference.detectChanges();
     }
