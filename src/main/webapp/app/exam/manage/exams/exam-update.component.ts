@@ -128,13 +128,9 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidExamStudentReviewEnd(): boolean {
-        // allow instructors to set examStudentReviewEnd later
+        // checks whether the end date can be undefined depending on if there is an undefined or manually deleted start date
         if (!this.exam.examStudentReviewEnd) {
-            if (!this.exam.examStudentReviewStart || !this.exam.examStudentReviewStart.isValid()) {
-                return true;
-            } else {
-                return false;
-            }
+            return !this.exam.examStudentReviewStart || !this.exam.examStudentReviewStart.isValid();
         }
         // check for undefined because undefined is otherwise treated as the now moment by moment.js
         return this.exam.examStudentReviewStart !== undefined && moment(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
