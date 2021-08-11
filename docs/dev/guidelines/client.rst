@@ -67,8 +67,8 @@ Some general aspects:
 ========
 
 1. Be aware that Buttons navigate only in the same tab while Links provide the option to use the context menu or a middle-click to open the page in a new tab. Therefore:
-2. Buttons are best used to trigger certain functionalities
-3. Links are best for navigating on Artemis
+2. Buttons are best used to trigger certain functionalities (e.g. ``<button (click)='deleteExercise(exercise)'>...</button``)
+3. Links are best for navigating on Artemis (e.g. ``<a [routerLink]='openExerciseEditor(exercise)' [queryParams]='getQueryParamsForEditor(exercise)'>...</a>``)
 
 9. Style
 ========
