@@ -24,7 +24,7 @@ import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exe
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
-    styleUrls: ['./text-exercise-update.scss'],
+    styleUrls: ['../../../shared/exercise/_exercise-update.scss'],
 })
 export class TextExerciseUpdateComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
