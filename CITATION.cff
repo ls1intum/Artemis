@@ -1,0 +1,75 @@
+authors:
+  -
+    affiliation: "Technische Universität München"
+    family-names: Krusche
+    given-names: Stephan
+cff-version: "1.2.0"
+keywords:
+  - learning
+  - university
+  - feedback
+  - autograding
+  - assessment
+  - lti
+  - lms
+  - exercises
+  - programming-exercises
+  - interactive-learning
+  - artemis
+  - double-blind
+  - text-exercises
+  - modeling-exercises
+  - apollon
+  - exam-mode
+  - automatic-feedback
+license: MIT
+version: 5.1.3
+message: "If you want to reference ArTEMis in your work, please cite this paper."
+repository-code: "https://github.com/ls1intum/Artemis/"
+title: "ArTEMiS"
+preferred-citation:
+  authors:
+    -
+      affiliation: "Technische Universität München"
+      family-names: Krusche
+      given-names: Stephan
+    -
+      affiliation: "Technische Universität München"
+      family-names: Seitz
+      given-names: Andreas
+  title: "ArTEMiS: An Automatic Assessment Management System for Interactive Learning"
+  doi: 10.1145/3159450.3159602
+  year: 2018
+  isbn: "9781450351034"
+  publisher:
+    name: "Association for Computing Machinery"
+  keywords:
+    - "Automated Assessment"
+    - "Programming Exercises"
+    - "Continuous Integration"
+    - "Version Control"
+    - "Instant Feedback"
+    - "Online Editor"
+    - "Interactive Exercise Instructions"
+    - "Online Courses"
+    - "In-class Exercises"
+  url: "https://doi.org/10.1145/3159450.3159602"
+  abstract: "The increasing number of students in computer science courses leads to high efforts
+             in manual assessment of exercises. Existing assessment systems are not designed for
+             exercises with immediate feedback in large classes. In this paper, we present an AuTomated
+             assEssment Management System for interactive learning.ArTEMiS assesses solutions to
+             programming exercises automatically and provides instant feedback so that students
+             can iteratively solve the exercise. It is open source and highly scalable based on
+             version control, regression testing and continuous integration. ArTEMiS offers an
+             online code editor with interactive exercise instructions, is programming language
+             independent and applicable to a variety of computer science courses. By using it,
+             students gain experiences in version control, dependency management and continuous
+             integration.We used ArTEMiS in 3 university and 1 online courses and report about
+             our experiences. We figured out that ArTEMiS is suitable for beginners, helps students
+             to realize their progress and to gradually improve their solutions. It reduces the
+             effort of instructors and enhances the learning experience of students."
+  collection-title: "Proceedings of the 49th ACM Technical Symposium on Computer Science Education"
+  pages: 6
+  start: 284
+  end: 289
+  type: conference-paper
