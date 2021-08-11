@@ -65,10 +65,8 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         this.updateViewFromSubmission();
     }
 
-    /**
-     * Used to detect changes from the problem statement updater/highlighter
-     */
-    ngAfterViewInit() {
+    updateProblemStatement(newProblemStatement: string): void {
+        this.exercise.problemStatement = newProblemStatement;
         this.changeDetectorReference.detectChanges();
     }
 

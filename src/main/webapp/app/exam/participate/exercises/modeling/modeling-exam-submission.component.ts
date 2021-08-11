@@ -41,6 +41,11 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         this.updateViewFromSubmission();
     }
 
+    updateProblemStatement(newProblemStatement: string): void {
+        this.exercise.problemStatement = newProblemStatement;
+        this.changeDetectorReference.detectChanges();
+    }
+
     getSubmission(): Submission {
         return this.studentSubmission;
     }

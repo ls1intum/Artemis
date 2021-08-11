@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -18,6 +18,8 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit {
 
     @Input() exercise: Exercise;
 
+    @Output() problemStatementUpdateEvent: EventEmitter<string> = new EventEmitter<string>();
+
     constructor(private examExerciseUpdateService: ExamExerciseUpdateService) {}
 
     ngOnInit(): void {
@@ -33,6 +35,7 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit {
             this.exercise.problemStatement = this.updatedProblemStatementWithHighlightedDifferences;
         }
         this.showHighlightedDifferences = !this.showHighlightedDifferences;
+        this.problemStatementUpdateEvent.emit(this.exercise.problemStatement);
     }
 
     updateExerciseProblemStatementById(exerciseId: number, updatedProblemStatement: string) {
@@ -40,6 +43,7 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit {
             this.updatedProblemStatement = updatedProblemStatement;
             this.exercise.problemStatement = this.highlightProblemStatementDifferences();
         }
+        this.problemStatementUpdateEvent.emit(this.exercise.problemStatement);
     }
 
     highlightProblemStatementDifferences() {

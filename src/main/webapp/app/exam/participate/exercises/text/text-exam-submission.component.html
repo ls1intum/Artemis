@@ -38,7 +38,8 @@
     <span right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
 
     <!-- problem statement update & difference highlighter -->
-    <jhi-exam-exercise-update-highlighter *ngIf="exercise" [exercise]="exercise"></jhi-exam-exercise-update-highlighter>
+    <jhi-exam-exercise-update-highlighter *ngIf="exercise" [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)">
+    </jhi-exam-exercise-update-highlighter>
 
     <p right-body class="markdown-preview mb-3" *ngIf="exercise.problemStatement">
         <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
