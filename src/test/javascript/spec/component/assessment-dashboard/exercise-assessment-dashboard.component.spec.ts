@@ -24,7 +24,7 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
@@ -158,8 +158,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         participation,
     } as TextSubmission;
     const programmingSubmissionAssessed = { id: 28, results: [result1, result2], participation } as ProgrammingSubmission;
-
-    const complaint = { id: 29, result: { id: 30, submission: textSubmission } } as Complaint;
 
     const numberOfAssessmentsOfCorrectionRounds = [
         { inTime: 1, late: 1 },
