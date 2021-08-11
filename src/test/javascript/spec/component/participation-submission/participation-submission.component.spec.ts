@@ -7,9 +7,7 @@ import * as moment from 'moment';
 import { restore, SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent } from 'ng-mocks';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MomentModule } from 'ngx-moment';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { AssessmentDetailComponent } from 'app/assessment/assessment-detail/assessment-detail.component';
@@ -21,11 +19,8 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { ParticipationSubmissionComponent } from 'app/exercises/shared/participation-submission/participation-submission.component';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { TranslateModule } from '@ngx-translate/core';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
-import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { Submission, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -48,6 +43,17 @@ import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/fi
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { Result } from 'app/entities/result.model';
+import { MockTranslateValuesDirective } from '../course/course-scores/course-scores.component.spec';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -86,17 +92,26 @@ describe('ParticipationSubmissionComponent', () => {
     const fileUploadExercise = { id: 100, type: ExerciseType.FILE_UPLOAD } as Exercise;
     const textExercise = { id: 100, type: ExerciseType.TEXT } as Exercise;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, ArtemisResultModule, ArtemisSharedModule, TranslateModule.forRoot(), RouterTestingModule, MomentModule],
+            imports: [ArtemisTestModule, RouterTestingModule, NgxDatatableModule],
             declarations: [
                 ParticipationSubmissionComponent,
                 MockComponent(UpdatingResultComponent),
                 MockComponent(AssessmentDetailComponent),
                 MockComponent(ComplaintsForTutorComponent),
+                MockTranslateValuesDirective,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockPipe(ArtemisTimeAgoPipe),
+                MockDirective(DeleteButtonDirective),
+                MockComponent(AlertComponent),
+                MockComponent(ResultComponent),
+                MockComponent(FaIconComponent),
             ],
             providers: [
                 JhiLanguageHelper,
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

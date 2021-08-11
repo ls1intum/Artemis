@@ -1,7 +1,7 @@
-import { CypressExamBuilder } from './../support/requests/CourseManagementRequests';
+import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs';
-import { artemis } from '../support/ArtemisTesting';
-import { generateUUID } from '../support/utils';
+import { artemis } from '../../support/ArtemisTesting';
+import { generateUUID } from '../../support/utils';
 
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -16,7 +16,7 @@ const uid = generateUUID();
 const courseName = 'Cypress course' + uid;
 const courseShortName = 'cypress' + uid;
 
-describe('Exam management', () => {
+describe('Exam creation/deletion', () => {
     let course: any;
     let examTitle: string;
 
@@ -50,7 +50,7 @@ describe('Exam management', () => {
         creationPage.setConfirmationStartText('Cypress exam confirmation start text');
         creationPage.setConfirmationEndText('Cypress exam confirmation end text');
         creationPage.submit().its('response.statusCode').should('eq', 201);
-        examManagement.getExamRow(examTitle).should('be.visible');
+        examManagement.getExamRowRoot(examTitle).should('be.visible');
     });
 
     describe('Exam deletion', () => {
