@@ -277,6 +277,8 @@ Configure Artemis
 
 1. Modify ``src/main/resources/config/application-artemis.yml``
 
+   For Docker setup: 
+
    .. code:: yaml
 
            repo-clone-path: ./repos/
@@ -307,6 +309,40 @@ Configure Artemis
                vcs-application-link-name: LS1 Bitbucket Server
                empty-commit-necessary: true
                artemis-authentication-token-value: <artemis-authentication-token-value>
+
+   For Kubernetes setup you shoud use the same URLs you used for the atlassian-setup-k8s.sh file: 
+
+   .. code:: yaml
+
+           repo-clone-path: ./repos/
+           repo-download-clone-path: ./repos-download/
+           encryption-password: artemis-encrypt     # arbitrary password for encrypting database values
+           user-management:
+               use-external: true
+               external:
+                   url: http://jira:8080
+                   user:  <jira-admin-user>
+                   password: <jira-admin-password>
+                   admin-group-name: instructors
+               internal-admin:
+                   username: artemis_admin
+                   password: artemis_admin
+           version-control:
+               url: http://bitbucket:7990
+               user:  <bitbucket-admin-user>
+               password: <bitbucket-admin-password>
+               token: <bitbucket-admin-token>
+               ssh-private-key-folder-path: <ssh-private-key-folder-path>
+               ssh-private-key-password: <ssh-private-key-password>
+           continuous-integration:
+               url: http://bamboo:8085
+               user:  <bamboo-admin-user>
+               password: <bamboo-admin-password>
+               token: <bamboo-admin-token>
+               vcs-application-link-name: LS1 Bitbucket Server
+               empty-commit-necessary: true
+               artemis-authentication-token-value: <artemis-authentication-token-value>
+
 
 2. Modify the application-dev.yml
 
@@ -400,8 +436,8 @@ This part of the documentation assumes you have a Kubernetes cluster running, as
       :align: center
 
 
-   1. Click on each of <port>/tcp links and new tab will be opened with the corresponding application where you can copy the URL from.
-   2. Open ``/src/main/docker/atlassian-setup-k8s.sh`` and add the URL values without ``http://`` to the script
+   4. Click on each of the <port>/tcp links and new tab will be opened with the corresponding application where you can copy the URL from.
+   5. Open ``/src/main/docker/atlassian-setup-k8s.sh`` and add the URL values without ``http://`` to the script
 
    ::
 

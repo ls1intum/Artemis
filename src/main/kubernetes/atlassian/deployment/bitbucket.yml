@@ -1,16 +1,3 @@
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: artemis-bamboo
-spec:
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 2Gi
-  storageClassName: local-path
-  volumeMode: Filesystem
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,15 +5,15 @@ metadata:
     field.cattle.io/creatorId: user-gpcv5
   labels:
     cattle.io/creator: norman
-    workload.user.cattle.io/workloadselector: deployment-artemis-artemis-bamboo
-  name: artemis-bamboo
+    workload.user.cattle.io/workloadselector: deployment-artemis-bitbucket
+  name: bitbucket
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      workload.user.cattle.io/workloadselector: deployment-artemis-artemis-bamboo
+      workload.user.cattle.io/workloadselector: deployment-artemis-bitbucket
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -35,17 +22,20 @@ spec:
   template:
     metadata:
       annotations:
-        field.cattle.io/ports: '[[{"containerPort":8085,"dnsName":"artemis-bamboo-nodeport","hostPort":0,"kind":"NodePort","name":"8085tcp01","protocol":"TCP","sourcePort":0}]]'
+        field.cattle.io/ports: '[[{"containerPort":7990,"dnsName":"bitbucket-nodeport","hostPort":0,"kind":"NodePort","name":"7990tcp1","protocol":"TCP"}]]'
       labels:
-        workload.user.cattle.io/workloadselector: deployment-artemis-artemis-bamboo
+        workload.user.cattle.io/workloadselector: deployment-artemis-bitbucket
     spec:
       containers:
-      - image: <DockerId>/bamboo
+      - env:
+        - name: SPRING_APPLICATION_JSON
+          value: '{"plugin":{"ssh":{"baseurl":"ssh://bitbucket:7999"}}}'
+        image: atlassian/bitbucket-server:7.10.1
         imagePullPolicy: Always
-        name: artemis-bamboo
+        name: bitbucket
         ports:
-        - containerPort: 8085
-          name: 8085tcp01
+        - containerPort: 7990
+          name: 7990tcp1
           protocol: TCP
         resources: {}
         securityContext:
@@ -59,14 +49,14 @@ spec:
         terminationMessagePolicy: File
         tty: true
         volumeMounts:
-        - mountPath: /var/atlassian/application-data/bamboo
-          name: artemis-bamboo
+        - mountPath: /var/atlassian/application-data/bitbucket
+          name: bitbucket
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30
       volumes:
-      - name: artemis-bamboo
+      - name: bitbucket
         persistentVolumeClaim:
-          claimName: artemis-bamboo
+          claimName: bitbucket

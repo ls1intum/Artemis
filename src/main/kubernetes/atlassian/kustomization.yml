@@ -1,6 +1,11 @@
 namespace: artemis
 
 resources:
-  - jira.yml
-  - bamboo.yml
-  - bitbucket.yml
+  #Persistence Volume Claims
+  - pvc/jira.yml
+  - pvc/bamboo.yml
+  - pvc/bitbucket.yml
+  #Deployment
+  - deployment/jira.yml
+  - deployment/bamboo.yml
+  - deployment/bitbucket.yml

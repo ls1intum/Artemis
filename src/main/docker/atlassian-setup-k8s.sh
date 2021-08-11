@@ -4,6 +4,10 @@ jira_url=<jira_url>
 bamboo_url=<bamboo_url>
 bitbucket_url=<bitbucket_url>
 
+jira_port=8080
+bamboo_port=8085
+bitbucket_port=7990
+
 same_credentials=false
 
 set -e
@@ -51,11 +55,12 @@ fi
 
 declare -a group_names=("tutors" "instructors" "students" "editors")
 
-jira_group_url="http://$jira_url/rest/api/latest/group"
+jira_group_url="$jira_url/rest/api/latest/group"
 
 for group_name in "${group_names[@]}"; do
     curl -u $jira_uservar:$jira_passvar \
     -s \
+    -k \
     --header "Content-Type: application/json" \
     --request POST \
     --fail \
@@ -69,8 +74,8 @@ done
 # create users
 
 base_user_name="artemis_test_user_"
-jira_user_url="http://$jira_url/rest/api/latest/user"
-jira_group_add_url="http://$jira_url/rest/api/2/group/user?groupname="
+jira_user_url="$jira_url/rest/api/latest/user"
+jira_group_add_url="$jira_url/rest/api/2/group/user?groupname="
 
 for i in {1..20}; do
     # User 1-5 are students, 6-10 are tutors, 11-15 are editors and 16-20 are instructors
@@ -88,6 +93,7 @@ for i in {1..20}; do
     # Create user
     curl -u $jira_uservar:$jira_passvar \
     -s \
+    -k \
     --header "Content-Type: application/json" \
     --request POST \
     --fail \
@@ -116,19 +122,20 @@ done
 
 # Application Links
 
-jira_url="http://$jira_url/rest/applinks/latest/applicationlinkForm/createAppLink"
-bamboo_url="http://$bamboo_url/rest/applinks/latest/applicationlinkForm/createAppLink"
-bitbucket_url="http://$bitbucket_url/rest/applinks/latest/applicationlinkForm/createAppLink"
+jira_url="$jira_url/rest/applinks/latest/applicationlinkForm/createAppLink"
+bamboo_url="$bamboo_url/rest/applinks/latest/applicationlinkForm/createAppLink"
+bitbucket_url="$bitbucket_url/rest/applinks/latest/applicationlinkForm/createAppLink"
 
-internal_jira_url="http://$jira_url"
-internal_bamboo_url="http://$bamboo_url"
-internal_bitbucket_url="http://$bitbucket_url"
+internal_jira_url="http://jira:$jira_port"
+internal_bamboo_url="http://bamboo:$bamboo_port"
+internal_bitbucket_url="http://bitbucket:$bitbucket_port"
 
 echo $'\nConfiguring ApplicationLinks'
 # Jira
 # add link from jira to bitbucket
 curl -u $jira_uservar:$jira_passvar \
     -s \
+    -k \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -155,6 +162,7 @@ curl -u $jira_uservar:$jira_passvar \
     $jira_url
 # add link from jira to bamboo
 curl -u $jira_uservar:$jira_passvar \
+    -k \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -182,6 +190,7 @@ curl -u $jira_uservar:$jira_passvar \
 # Bamboo
 # add link from bamboo to bitbucket
 curl -u $bamboo_uservar:$bamboo_passvar \
+    -k \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -208,6 +217,7 @@ curl -u $bamboo_uservar:$bamboo_passvar \
     $bamboo_url
 # add link from bamboo to jira
 curl -u $bamboo_uservar:$bamboo_passvar \
+    -k \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -235,6 +245,7 @@ curl -u $bamboo_uservar:$bamboo_passvar \
 #Bitbucket
 # add link from bitbucket to jira
 curl -u $bitbucket_uservar:$bitbucket_passvar \
+    -k \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -261,6 +272,7 @@ curl -u $bitbucket_uservar:$bitbucket_passvar \
     $bitbucket_url
 # add link from bitbucket to bamboo
 curl -u $bitbucket_uservar:$bitbucket_passvar \
+    -k \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -288,9 +300,9 @@ curl -u $bitbucket_uservar:$bitbucket_passvar \
 echo ApplicationLinks created
 echo Please finish configuration of ApplicationLinks in browser
 
-jira_application_links_url="http://$jira_url/plugins/servlet/applinks/listApplicationLinks"
-bamboo_application_links_url="http://$bamboo_url/plugins/servlet/applinks/listApplicationLinks"
-bitbucket_application_links_url="http://$bitbucket_url/plugins/servlet/applinks/listApplicationLinks"
+jira_application_links_url="$jira_url/plugins/servlet/applinks/listApplicationLinks"
+bamboo_application_links_url="$bamboo_url/plugins/servlet/applinks/listApplicationLinks"
+bitbucket_application_links_url="$bitbucket_url/plugins/servlet/applinks/listApplicationLinks"
 
 xdg-open $jira_application_links_url
 xdg-open $bamboo_application_links_url

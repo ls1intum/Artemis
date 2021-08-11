@@ -1,16 +1,3 @@
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: artemis-jira
-spec:
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 2Gi
-  storageClassName: local-path
-  volumeMode: Filesystem
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,15 +5,15 @@ metadata:
     field.cattle.io/creatorId: user-gpcv5
   labels:
     cattle.io/creator: norman
-    workload.user.cattle.io/workloadselector: deployment-artemis-artemis-jira
-  name: artemis-jira
+    workload.user.cattle.io/workloadselector: deployment-artemis-bamboo
+  name: bamboo
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      workload.user.cattle.io/workloadselector: deployment-artemis-artemis-jira
+      workload.user.cattle.io/workloadselector: deployment-artemis-bamboo
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -35,17 +22,17 @@ spec:
   template:
     metadata:
       annotations:
-        field.cattle.io/ports: '[[{"containerPort":8080,"dnsName":"artemis-jira-nodeport","hostPort":0,"kind":"NodePort","name":"8080tcp1","protocol":"TCP"}]]'
+        field.cattle.io/ports: '[[{"containerPort":8085,"dnsName":"bamboo-nodeport","hostPort":0,"kind":"NodePort","name":"8085tcp1","protocol":"TCP"}]]'
       labels:
-        workload.user.cattle.io/workloadselector: deployment-artemis-artemis-jira
+        workload.user.cattle.io/workloadselector: deployment-artemis-bamboo
     spec:
       containers:
-      - image: atlassian/jira-core:8.16.0
+      - image: mmehmed/bamboo
         imagePullPolicy: Always
-        name: artemis-jira
+        name: bamboo
         ports:
-        - containerPort: 8080
-          name: 8080tcp1
+        - containerPort: 8085
+          name: 8085tcp1
           protocol: TCP
         resources: {}
         securityContext:
@@ -59,14 +46,14 @@ spec:
         terminationMessagePolicy: File
         tty: true
         volumeMounts:
-        - mountPath: /var/atlassian/application-data/jira
-          name: artemis-jira
+        - mountPath: /var/atlassian/application-data/bamboo
+          name: bamboo
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30
       volumes:
-      - name: artemis-jira
+      - name: bamboo
         persistentVolumeClaim:
-          claimName: artemis-jira
+          claimName: bamboo

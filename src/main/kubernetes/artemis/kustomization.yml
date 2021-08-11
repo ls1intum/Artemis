@@ -1,6 +1,9 @@
 namespace: artemis
 
 resources:
+  #Persistence Volume Claims
+  - pvc/artemis-mysql.yml
+  - pvc/artemis.yml
   #Secrets
   - secrets/jhipster-registry-secret.yml
   #ConfigMaps
@@ -8,9 +11,8 @@ resources:
   - configmap/artemis-configmap.yml
   #Stateful sets
   - statefulset/jhipster-registry.yml
-  #Deployment
+  #Deployments
   - deployment/artemis-deployment.yml
-  - deployment/artemis-service.yml
   - deployment/artemis-ingress.yml
   - deployment/artemis-mysql.yml
   - deployment/kafka.yml
