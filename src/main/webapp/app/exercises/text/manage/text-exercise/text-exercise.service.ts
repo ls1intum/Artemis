@@ -13,6 +13,12 @@ import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/Plagiar
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
 
+export interface ClusterInfo {
+    clusterId: number;
+    clusterSize: number;
+    numberOfAutomaticFeedbacks: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TextExerciseService implements ExerciseServicable<TextExercise> {
     private resourceUrl = SERVER_API_URL + 'api/text-exercises';
@@ -143,5 +149,9 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
             map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
         );
+    }
+
+    public getClusterStats(exerciseId: number): Observable<HttpResponse<ClusterInfo[]>> {
+        return this.http.get<ClusterInfo[]>(`api/cluster-stats/${exerciseId}`, { observe: 'response' });
     }
 }

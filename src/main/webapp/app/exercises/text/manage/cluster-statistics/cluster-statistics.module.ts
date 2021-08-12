@@ -10,6 +10,8 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess/text-submission-assessment.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
+import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 
 const ENTITY_STATES = [...clusterStatisticsRoute];
 
@@ -24,6 +26,7 @@ const ENTITY_STATES = [...clusterStatisticsRoute];
         ArtemisAssessmentSharedModule,
         AssessmentInstructionsModule,
         ArtemisMarkdownModule,
+        ArtemisTutorParticipationGraphModule,
     ],
     declarations: [ClusterStatisticsComponent],
 })

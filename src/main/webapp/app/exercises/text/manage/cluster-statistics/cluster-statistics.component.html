@@ -12,10 +12,6 @@
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
                 <th>
-                    Success
-                    <fa-icon [icon]="'sort'"></fa-icon>
-                </th>
-                <th>
                     Cluster Size
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
@@ -26,13 +22,26 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <!--   *ngFor="let exercise of exercises"     -->
-                <td>test</td>
-                <td>test</td>
-                <td>test</td>
-                <td>test</td>
-                <td>test</td>
+            <tr *ngFor="let cluster of clusters">
+                <td>{{ cluster.clusterId }}</td>
+                <td>
+                    <div style="padding-top: 5px">
+                        <jhi-progress-bar
+                            [tooltip]="'Number of Automatic Feedbacks Kept / Total Cluster Size'"
+                            [percentage]="(cluster.numberOfAutomaticFeedbacks / cluster.clusterSize) * 100 || 0"
+                            [numerator]="cluster.numberOfAutomaticFeedbacks || 0"
+                            [denominator]="cluster.clusterSize || 0"
+                        >
+                        </jhi-progress-bar>
+                    </div>
+                </td>
+
+                <td>{{ cluster.clusterSize }}</td>
+                <td>
+                    <button class="btn btn-danger">
+                        <span>Disable</span>
+                    </button>
+                </td>
             </tr>
         </tbody>
     </table>

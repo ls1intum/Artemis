@@ -38,15 +38,18 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
 
     @Query("""
             SELECT textblock.cluster.id AS clusterId, COUNT(DISTINCT textblock.id) AS clusterSize, SUM( CASE WHEN (feedback.type = 'AUTOMATIC' ) THEN 1 ELSE 0 END) AS numberOfAutomaticFeedbacks FROM TextBlock textblock
-            LEFT JOIN  Submission submission
+            LEFT JOIN Submission submission
             ON textblock.submission.id = submission.id
-            LEFT JOIN  Result result
-            ON  submission.id = result.submission.id
-            LEFT JOIN   Feedback feedback
+            LEFT JOIN Result result
+            ON submission.id = result.submission.id
+            LEFT JOIN Feedback feedback
             ON result.id = feedback.result.id
+            LEFT JOIN Participation participation
+            ON participation.id = submission.participation.id
+            WHERE participation.exercise.id = :exerciseId
             GROUP BY clusterId
             HAVING textblock.cluster.id > 0
             """)
-    List<TextClusterStats> findCountOfAutoFeedbacks();
+    List<TextClusterStats> findCountOfAutoFeedbacks(@Param("exerciseId") Long exerciseId);
 
 }

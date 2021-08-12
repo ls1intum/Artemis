@@ -1,27 +1,39 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from '../text-exercise/text-exercise.service';
-import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
-import { TranslateService } from '@ngx-translate/core';
-import { onError } from 'app/shared/util/global.utils';
-import { AccountService } from 'app/core/auth/account.service';
-import { SortService } from 'app/shared/service/sort.service';
-import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ActivatedRoute } from '@angular/router';
+
+export interface ClusterInfo {
+    clusterId: number;
+    clusterSize: number;
+    numberOfAutomaticFeedbacks: number;
+}
 
 @Component({
     selector: 'jhi-text-exercise-cluster-statistics',
     templateUrl: './cluster-statistics.component.html',
 })
 export class ClusterStatisticsComponent implements OnInit {
-    constructor() {}
+    readonly MIN_POINTS_GREEN = 100;
+    readonly MIN_POINTS_ORANGE = 50;
+    clusters: ClusterInfo[] = [];
+
+    constructor(private textExerciseService: TextExerciseService, private route: ActivatedRoute, jhiAlertService: JhiAlertService) {}
 
     ngOnInit(): void {
-        // throw new Error('Method not implemented.');
+        this.route.params.subscribe((params) => {
+            const exerciseId = Number(params['exerciseId']);
+            this.loadClusterFromExercise(exerciseId);
+        });
+    }
+
+    loadClusterFromExercise(exerciseId: number) {
+        this.textExerciseService.getClusterStats(exerciseId).subscribe({
+            next: (res: HttpResponse<ClusterInfo[]>) => {
+                console.error(res.body, 'RESSSS!');
+                this.clusters = res.body!;
+            },
+        });
     }
 }
