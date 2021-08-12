@@ -437,7 +437,7 @@ This part of the documentation assumes you have a Kubernetes cluster running, as
 
 
    4. Click on each of the <port>/tcp links and new tab will be opened with the corresponding application where you can copy the URL from.
-   5. Open ``/src/main/docker/atlassian-setup-k8s.sh`` and add the URL values without ``http://`` to the script
+   5. Open ``/src/main/docker/atlassian-setup-k8s.sh`` and add the URL values to the script
 
    ::
 
@@ -449,7 +449,7 @@ This part of the documentation assumes you have a Kubernetes cluster running, as
 
    ::
    
-      jira_url=172.18.0.3:32149
-      bamboo_url=172.18.0.3:31449
-      bitbucket_url=172.18.0.3:31463
+      jira_url=http://172.18.0.3:32149
+      bamboo_url=http://172.18.0.3:31449
+      bitbucket_url=http://172.18.0.3:31463
 After successful deployment you can continue with the configuration described here: `Configure Bamboo, Bitbucket and Jira <https://docs.artemis.ase.in.tum.de/dev/setup/bamboo-bitbucket-jira/#configure-bamboo-bitbucket-and-jira>`__

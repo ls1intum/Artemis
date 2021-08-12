@@ -60,7 +60,6 @@ jira_group_url="$jira_url/rest/api/latest/group"
 for group_name in "${group_names[@]}"; do
     curl -u $jira_uservar:$jira_passvar \
     -s \
-    -k \
     --header "Content-Type: application/json" \
     --request POST \
     --fail \
@@ -93,7 +92,6 @@ for i in {1..20}; do
     # Create user
     curl -u $jira_uservar:$jira_passvar \
     -s \
-    -k \
     --header "Content-Type: application/json" \
     --request POST \
     --fail \
@@ -135,7 +133,6 @@ echo $'\nConfiguring ApplicationLinks'
 # add link from jira to bitbucket
 curl -u $jira_uservar:$jira_passvar \
     -s \
-    -k \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -162,7 +159,6 @@ curl -u $jira_uservar:$jira_passvar \
     $jira_url
 # add link from jira to bamboo
 curl -u $jira_uservar:$jira_passvar \
-    -k \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -190,7 +186,6 @@ curl -u $jira_uservar:$jira_passvar \
 # Bamboo
 # add link from bamboo to bitbucket
 curl -u $bamboo_uservar:$bamboo_passvar \
-    -k \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -217,7 +212,6 @@ curl -u $bamboo_uservar:$bamboo_passvar \
     $bamboo_url
 # add link from bamboo to jira
 curl -u $bamboo_uservar:$bamboo_passvar \
-    -k \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -245,7 +239,6 @@ curl -u $bamboo_uservar:$bamboo_passvar \
 #Bitbucket
 # add link from bitbucket to jira
 curl -u $bitbucket_uservar:$bitbucket_passvar \
-    -k \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -272,7 +265,6 @@ curl -u $bitbucket_uservar:$bitbucket_passvar \
     $bitbucket_url
 # add link from bitbucket to bamboo
 curl -u $bitbucket_uservar:$bitbucket_passvar \
-    -k \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
