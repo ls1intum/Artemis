@@ -73,7 +73,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      * updates the reaction based on the ReactionEvent emitted by the emoji-mart selector component
      */
     selectReaction(reactionEvent: ReactionEvent): void {
-        if (reactionEvent.emoji !== undefined) {
+        if (reactionEvent.emoji != undefined) {
             this.addOrRemoveReaction(reactionEvent.emoji.id);
         }
     }
