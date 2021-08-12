@@ -161,11 +161,11 @@ describe('TeamParticipationTableComponent', () => {
 
     let router: any;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         router = new MockRouter();
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(NgxDatatableModule), MockModule(RouterModule), MockModule(NgJhipsterModule), MockModule(NgbModule)],
-            declarations: [TeamParticipationTableComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockComponent(DataTableComponent)],
+            declarations: [TeamParticipationTableComponent, MockComponent(DataTableComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             providers: [
                 MockProvider(TranslateService),
                 ExerciseService,

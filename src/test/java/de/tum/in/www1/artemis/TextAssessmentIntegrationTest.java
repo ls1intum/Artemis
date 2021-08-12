@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis;
 import static java.time.ZonedDateTime.now;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -20,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -1445,6 +1448,9 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
                 paramsGetAssessedCR1);
 
         assertThat(assessedSubmissionList.size()).isEqualTo(0);
+
+        // Student should not have received a result over WebSocket as manual correction is ongoing
+        verify(messagingTemplate, never()).convertAndSendToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
     }
 
     @NotNull
