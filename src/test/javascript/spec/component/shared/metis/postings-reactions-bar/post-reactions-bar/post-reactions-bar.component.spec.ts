@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, getTestBed, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, DebugElement } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
@@ -18,6 +18,7 @@ import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../../../../helpers/mocks/service/mock-reaction.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
+import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,14 +39,14 @@ describe('PostReactionsBarComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, OverlayModule],
+            imports: [HttpClientTestingModule, OverlayModule, EmojiModule],
             providers: [
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
             declarations: [PostReactionsBarComponent, MockPipe(ArtemisTranslatePipe)],
-            schemas: [NO_ERRORS_SCHEMA],
+            schemas: [CUSTOM_ELEMENTS_SCHEMA],
         })
             .compileComponents()
             .then(() => {
