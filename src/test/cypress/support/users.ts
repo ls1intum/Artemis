@@ -1,4 +1,4 @@
-import { USER_ID_SELECTOR } from './constants';
+import { BASE_API, GET, USER_ID_SELECTOR } from './constants';
 
 /**
  * Class to encompass user management logic for cypress tests.
@@ -66,6 +66,16 @@ export class CypressUserManagement {
      */
     private getPasswordTemplate(): string {
         return Cypress.env('password') ?? 'password_' + USER_ID_SELECTOR;
+    }
+
+    /**
+     * Provides the entire account info for the user that is currently logged in
+     * Use like this: artemis.users.getAccountInfo((account) => { someFunction(account); });
+     * */
+    public getAccountInfo(func: Function) {
+        cy.request({ method: GET, url: BASE_API + 'account' }).then((response) => {
+            func(response.body);
+        });
     }
 }
 

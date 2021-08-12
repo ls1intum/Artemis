@@ -505,7 +505,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private getComplaint(): void {
-        console.log(this.submission);
         const resultWithComplaint = getFirstResultWithComplaint(this.submission);
         if (!resultWithComplaint) {
             return;
