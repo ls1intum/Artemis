@@ -5,7 +5,7 @@ import { dayjsToString, generateUUID } from '../utils';
 import examTemplate from '../../fixtures/requests/exam_template.json';
 import day from 'dayjs';
 import { CypressCredentials } from '../users';
-import textExercise from '../../fixtures/requests/exam_textExercise_template.json';
+import textExercise from '../../fixtures/requests/textExercise_template.json';
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 
 const COURSE_BASE = BASE_API + 'courses/';

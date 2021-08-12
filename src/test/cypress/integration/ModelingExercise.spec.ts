@@ -118,12 +118,15 @@ describe('Modeling Exercise Spec', () => {
 
     describe('Modeling Exercise Flow', () => {
         before('create Modeling Exercise with future release date', () => {
-            cy.fixture('requests/modeling-exercise.json').then((exercise) => {
+            cy.fixture('requests/modelingExercise_template.json').then((exercise) => {
                 exercise.title = 'Cypress Modeling Exercise ' + uid;
                 exercise.course = testCourse;
                 exercise.releaseDate = dayjs().add(1, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
                 exercise.dueDate = dayjs().add(2, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
                 exercise.assessmentDueDate = dayjs().add(3, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+                // these need to be nulled because its not an exam exercise and because we dont want the sampleSolution in the DOM
+                exercise.exerciseGroup = null;
+                exercise.sampleSolutionModel = null;
                 courseManagementRequests.createModelingExercise(exercise).then((resp) => {
                     modelingExercise = resp.body;
                 });
