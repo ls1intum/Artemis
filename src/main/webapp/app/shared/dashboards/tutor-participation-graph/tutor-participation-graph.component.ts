@@ -38,7 +38,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
     routerLink: string;
 
-    shouldShowManualAssessments: boolean;
+    shouldShowManualAssessments = true;
 
     constructor(private router: Router) {}
 
