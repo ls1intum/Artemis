@@ -18,7 +18,6 @@
     "assessmentDueDateError": false,
     "dueDateError": false,
     "presentationScoreEnabled": false,
-    "exerciseGroup": "<exercise group | null>",
     "assessmentType": "MANUAL",
     "title": "Text Exercise 1",
     "maxPoints": 10,

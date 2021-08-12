@@ -128,9 +128,9 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      * */
     addTextExerciseToExam(group: any, title: string) {
-        textExercise.exerciseGroup = group;
-        textExercise.title = title;
-        return cy.request({ method: POST, url: BASE_API + 'text-exercises', body: textExercise });
+        const examTextExercise = this.getCourseOrExamExercise(textExercise, null, group);
+        examTextExercise.title = title;
+        return cy.request({ method: POST, url: BASE_API + 'text-exercises', body: examTextExercise });
     }
 
     /**
@@ -162,6 +162,15 @@ export class CourseManagementRequests {
             url: `/api/modeling-exercises/${exerciseID}`,
             method: 'DELETE',
         });
+    }
+
+    private getCourseOrExamExercise(exercise: object, course?: any, group?: any) {
+        const newExercise: any = {};
+        Object.keys(exercise).forEach((key) => {
+            newExercise[key] = exercise[key];
+        });
+        course ? newExercise['course'] = course : newExercise['exerciseGroup'] = group;
+        return newExercise;
     }
 }
 
