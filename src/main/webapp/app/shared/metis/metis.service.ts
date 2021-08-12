@@ -282,9 +282,7 @@ export class MetisService {
      */
     static sortPosts(posts: Post[]): Post[] {
         return posts.sort(function (postA, postB) {
-            const postAVoteEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length
-                ? postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length
-                : 0;
+            const postAVoteEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
             const postBVoteEmojiCount = postB.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
             if (postA.pinned && !postB.pinned) {
                 return -1;
