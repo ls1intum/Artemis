@@ -1,0 +1,3 @@
+xcode_summary.report 'xcodebuild.json'
+
+xcode_summary.ignores_warnings = true

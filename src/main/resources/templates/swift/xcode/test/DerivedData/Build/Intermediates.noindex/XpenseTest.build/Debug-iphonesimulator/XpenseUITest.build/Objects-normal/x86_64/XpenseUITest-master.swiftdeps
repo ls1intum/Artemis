@@ -1,0 +1,5 @@
+version: "Apple Swift version 5.3.1 (swiftlang-1200.0.41 clang-1200.0.32.8)"
+options: "a54bfe72d63779721b245ae925678495"
+build_time: [1628527473, 197320000]
+inputs:
+  "/Users/g-e-k-k-k-o/Desktop/stephan-test-main@36bf930bae4/XpenseUITest/XpenseUITest.swift": [1628526952, 95274128]

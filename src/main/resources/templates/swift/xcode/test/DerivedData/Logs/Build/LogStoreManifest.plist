@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>logFormatVersion</key>
+	<integer>10</integer>
+	<key>logs</key>
+	<dict>
+		<key>1612BC22-5FA0-4C3D-8388-53EAAFEEDE8F</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>1612BC22-5FA0-4C3D-8388-53EAAFEEDE8F.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>XpenseTest project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>XpenseUITest</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Testing workspace XpenseTest with scheme XpenseUITest</string>
+			<key>timeStartedRecording</key>
+			<real>650220273.10139799</real>
+			<key>timeStoppedRecording</key>
+			<real>650220274.19322395</real>
+			<key>title</key>
+			<string>Testing workspace XpenseTest with scheme XpenseUITest</string>
+			<key>uniqueIdentifier</key>
+			<string>1612BC22-5FA0-4C3D-8388-53EAAFEEDE8F</string>
+		</dict>
+		<key>43687C62-00B1-43F3-9302-748A9F2C8CA3</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>43687C62-00B1-43F3-9302-748A9F2C8CA3.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>XpenseTest project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>XpenseUITest</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building workspace XpenseTest with scheme XpenseUITest</string>
+			<key>timeStartedRecording</key>
+			<real>650220268.66970599</real>
+			<key>timeStoppedRecording</key>
+			<real>650220273.10078204</real>
+			<key>title</key>
+			<string>Building workspace XpenseTest with scheme XpenseUITest</string>
+			<key>uniqueIdentifier</key>
+			<string>43687C62-00B1-43F3-9302-748A9F2C8CA3</string>
+		</dict>
+		<key>AD69F566-6A88-40C5-8A4B-49292B1EC05A</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>AD69F566-6A88-40C5-8A4B-49292B1EC05A.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>Xpense project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>Xpense</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Testing workspace XpenseTest with scheme Xpense</string>
+			<key>timeStartedRecording</key>
+			<real>650220084.19881403</real>
+			<key>timeStoppedRecording</key>
+			<real>650220085.76025903</real>
+			<key>title</key>
+			<string>Testing workspace XpenseTest with scheme Xpense</string>
+			<key>uniqueIdentifier</key>
+			<string>AD69F566-6A88-40C5-8A4B-49292B1EC05A</string>
+		</dict>
+		<key>C9AF2E5D-08D7-4F57-A824-238561941ECC</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>C9AF2E5D-08D7-4F57-A824-238561941ECC.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>XpenseTest project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>XpenseUITest</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Cleaning workspace XpenseTest with scheme XpenseUITest</string>
+			<key>timeStartedRecording</key>
+			<real>650220268.49921095</real>
+			<key>timeStoppedRecording</key>
+			<real>650220268.668841</real>
+			<key>title</key>
+			<string>Cleaning workspace XpenseTest with scheme XpenseUITest</string>
+			<key>uniqueIdentifier</key>
+			<string>C9AF2E5D-08D7-4F57-A824-238561941ECC</string>
+		</dict>
+	</dict>
+</dict>
+</plist>
