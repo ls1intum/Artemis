@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -24,9 +24,10 @@ import { ResizeableContainerComponent } from 'app/shared/resizeable-container/re
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
+import { TextBlockRef } from 'app/entities/text-block-ref.model';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -269,10 +270,12 @@ describe('ExampleTextSubmissionComponent', () => {
         textBlockRefA.block!.id = 'ID';
         const feedbackA = new Feedback();
         feedbackA.reference = textBlockRefA.block!.id;
+        feedbackA.detailText = 'feedbackA';
         textBlockRefA.feedback = feedbackA;
 
         const textBlockRefB = TextBlockRef.new();
         const feedbackB = new Feedback();
+        feedbackB.detailText = 'feebbackB';
         textBlockRefB.feedback = feedbackB;
 
         comp.textBlockRefs = [textBlockRefA, textBlockRefB];
@@ -286,17 +289,13 @@ describe('ExampleTextSubmissionComponent', () => {
             headers: new HttpHeaders().append('x-artemisapp-error', 'error.invalid_assessment'),
             status: 400,
         });
-        console.error(errorResponse);
-        // spyOn(tutorParticipationService, 'assessExampleSubmission').and.returnValue(throwError(() => errorResponse));
-        // spyOn(tutorParticipationService, 'assessExampleSubmission').and.returnValue(of(errorResponse));
 
-        console.error(tutorParticipationService);
+        spyOn(tutorParticipationService, 'assessExampleSubmission').and.returnValue(throwError(() => errorResponse));
 
         // WHEN
         comp.ngOnInit();
         tick();
 
-        comp.assessmentsAreValid = true;
         comp.checkAssessment();
         tick();
 
