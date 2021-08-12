@@ -54,7 +54,7 @@ export class CoursePostsComponent implements OnInit {
      * @param { Post }post
      */
     getNumberOfApprovedAnswerPosts(post: Post): number {
-        return post.answers ? post.answers.filter((answerPost) => answerPost.tutorApproved).length : 0;
+        return post.answers?.filter((answerPost) => answerPost.tutorApproved).length ?? 0;
     }
 
     sortRows() {
