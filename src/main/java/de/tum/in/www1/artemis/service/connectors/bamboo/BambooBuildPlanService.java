@@ -217,9 +217,12 @@ public class BambooBuildPlanService {
             }
             case SWIFT -> {
                 var isXcodeProject = ProjectType.XCODE.equals(projectType);
-                var subDirectory = isXcodeProject ? "/xcode" : "";
+                var subDirectory = ""; // isXcodeProject ? "/xcode" : "";
                 Map<String, String> replacements = Map.of("${packageName}", packageName);
-                final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/tests.xml");
+                var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/tests.xml");
+                if (isXcodeProject) {
+                    testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/report.junit");
+                }
                 var tasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, sequentialBuildRuns, false, replacements);
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask);
@@ -234,9 +237,12 @@ public class BambooBuildPlanService {
                     defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
                 }
                 if (isXcodeProject) {
+                    // add a requirement to be able to run the Xcode build tasks using fastlane
+                    var requirement1 = new Requirement("system.builder.xcode.fastlane");
                     // add a requirement to be able to run the Xcode build tasks
-                    var requirement = new Requirement("system.builder.xcode.Simulator - iOS 14.5");
-                    defaultJob.requirements(requirement);
+                    var requirement2 = new Requirement("system.builder.xcode.Simulator - iOS 14.5");
+                    defaultJob.requirements(requirement1);
+                    defaultJob.requirements(requirement2);
                 }
                 return defaultStage.jobs(defaultJob);
             }
