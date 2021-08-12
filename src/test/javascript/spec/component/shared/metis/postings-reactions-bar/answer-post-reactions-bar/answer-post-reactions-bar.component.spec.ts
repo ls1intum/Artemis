@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, getTestBed, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import * as sinon from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
@@ -16,6 +16,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -33,14 +34,14 @@ describe('AnswerPostReactionsBarComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, OverlayModule],
+            imports: [HttpClientTestingModule, OverlayModule, EmojiModule],
+            schemas: [CUSTOM_ELEMENTS_SCHEMA],
             providers: [
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
             declarations: [AnswerPostReactionsBarComponent, MockPipe(ArtemisTranslatePipe)],
-            schemas: [NO_ERRORS_SCHEMA],
         })
             .compileComponents()
             .then(() => {
