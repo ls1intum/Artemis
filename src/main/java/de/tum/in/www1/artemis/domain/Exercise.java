@@ -643,7 +643,7 @@ public abstract class Exercise extends DomainObject {
             // Check that submission was submitted in time (rated). For non programming exercises we check if the assessment due date has passed (if set)
             if (Boolean.TRUE.equals(result.isRated()) && (!isProgrammingExercise && isAssessmentOver
                     // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
-                    || isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)))) {
+                    || isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.isAutomatic()))) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;
@@ -1033,7 +1033,7 @@ public abstract class Exercise extends DomainObject {
      * This method is used to validate the assesmentDueDate of an exercise. An assessmentDueDate is valid if it is after the releaseDate and dueDate. A given assesmentDueDate is invalid without an according dueDate
      * @return true if there is no assessmentDueDateError
      */
-    private boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+    private static boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
         if (assessmentDueDate == null) {
             return true;
         }
@@ -1048,7 +1048,7 @@ public abstract class Exercise extends DomainObject {
      * This method is used to validate if the previousDate is before the laterDate.
      * @return true if the previousDate is valid
      */
-    private boolean isBeforeAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {
+    private static boolean isBeforeAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {
         if (previousDate == null || laterDate == null) {
             return true;
         }

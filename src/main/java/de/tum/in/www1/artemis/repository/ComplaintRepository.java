@@ -243,6 +243,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                     c.complaintType = 'COMPLAINT'
                 and e.course.id = :courseId
                 and r.completionDate IS NOT NULL
+                and r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByCourseId(@Param("courseId") long courseId);
@@ -267,6 +268,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                     c.complaintType = 'COMPLAINT'
                 and e.id = :#{#exerciseId}
                 and r.completionDate IS NOT NULL
+                and r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByExerciseId(@Param("exerciseId") long exerciseId);
@@ -291,6 +293,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                     c.complaintType = 'COMPLAINT'
                 and eg.exam.id = :#{#examId}
                 and r.completionDate IS NOT NULL
+                and r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByExamId(@Param("examId") long examId);
