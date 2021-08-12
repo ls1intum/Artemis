@@ -149,11 +149,12 @@ export class CourseManagementRequests {
         return cy.request({ method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
     }
 
-    createModelingExercise(modelingExercise: string) {
+    createModelingExercise(modelingExercise: any, course?: any,  group?: any) {
+        const newModelingExercise = this.getCourseOrExamExercise(modelingExercise, course, group);
         return cy.request({
             url: '/api/modeling-exercises',
             method: 'POST',
-            body: modelingExercise,
+            body: newModelingExercise,
         });
     }
 

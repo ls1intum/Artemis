@@ -18,8 +18,6 @@
     "assessmentDueDateError": false,
     "dueDateError": false,
     "presentationScoreEnabled": false,
-    "course": "<course | null>",
-    "exerciseGroup": "<exercise group | null",
     "diagramType": "ClassDiagram",
     "assessmentType": "MANUAL",
     "title": "Cypress Modeling Exercise",
