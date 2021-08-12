@@ -5,9 +5,6 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { JhiAlertService } from 'ng-jhipster';
 import { Submission } from 'app/entities/submission.model';
 
-/**
- * Provides methods to retrieve information about running exercise builds.
- */
 @Injectable({ providedIn: 'root' })
 export class OrionAssessmentService {
     constructor(
