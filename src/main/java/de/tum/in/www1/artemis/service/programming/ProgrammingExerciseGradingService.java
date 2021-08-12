@@ -21,16 +21,14 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -67,12 +65,14 @@ public class ProgrammingExerciseGradingService {
 
     private final ResultService resultService;
 
+    private final ExamDateService examDateService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService) {
+            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExamDateService examDateService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -87,6 +87,7 @@ public class ProgrammingExerciseGradingService {
         this.auditEventRepository = auditEventRepository;
         this.groupNotificationService = groupNotificationService;
         this.resultService = resultService;
+        this.examDateService = examDateService;
     }
 
     /**
@@ -315,7 +316,7 @@ public class ProgrammingExerciseGradingService {
      * @return testCases, but the ones based on the described visibility criterion removed.
      */
     private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCases) {
-        boolean isBeforeDueDate = exercise.isBeforeDueDate();
+        boolean isBeforeDueDate = !examDateService.isExerciseWorkingPeriodOver(exercise);
         return testCases.stream().filter(testCase -> !testCase.isInvisible()).filter(testCase -> !(isBeforeDueDate && testCase.isAfterDueDate())).collect(Collectors.toSet());
     }
 
