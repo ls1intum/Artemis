@@ -41,7 +41,7 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { ComplaintType } from 'app/entities/complaint.model';
 import { Language } from 'app/entities/tutor-group.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
@@ -561,59 +561,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(submissionToView).to.eql(expectedSubmissionToView);
         });
     });
-
-    /*describe('openAssessmentEditor', () => {
-        it('should not openExampleSubmission', () => {
-            navigateSpy.resetHistory();
-            const submission = { id: 8 };
-            comp.openAssessmentEditor(submission);
-            expect(navigateSpy).to.have.not.been.called;
-        });
-
-        it('should openExampleSubmission with modelingExercise', () => {
-            comp.exercise = exercise;
-            comp.exercise.type = ExerciseType.MODELING;
-            comp.courseId = 4;
-            comp.exercise = exercise;
-            comp.exerciseId = exercise.id!;
-            const submission = { id: 8 };
-            comp.openAssessmentEditor(submission);
-
-            const expectedUrl = [
-                '/course-management',
-                comp.courseId.toString(),
-                'modeling-exercises',
-                exercise.id!.toString(),
-                'submissions',
-                submission.id.toString(),
-                'assessment',
-            ];
-            expect(navigateSpy).to.have.been.calledWith(expectedUrl, { queryParams: { 'correction-round': 0 } });
-        });
-
-        it('should openExampleSubmission with programmingExercise', () => {
-            comp.exercise = exercise;
-            comp.exercise.type = ExerciseType.PROGRAMMING;
-            comp.courseId = 4;
-            comp.exerciseId = exercise.id!;
-            const submission = { id: 8 };
-
-            const expectedUrl = [
-                '/course-management',
-                comp.courseId.toString(),
-                'programming-exercises',
-                exercise.id!.toString(),
-                'submissions',
-                submission.id.toString(),
-                'assessment',
-            ];
-            comp.openAssessmentEditor(submission);
-            expect(navigateSpy).to.have.been.calledWith(expectedUrl);
-            comp.isTestRun = true;
-            comp.openAssessmentEditor(submission);
-            expect(navigateSpy).to.have.been.calledWith(expectedUrl);
-        });
-    });*/
 
     describe('openExampleSubmission', () => {
         const courseId = 4;
