@@ -27,7 +27,7 @@ import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-featu
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
-import {MockTranslateService} from "../../helpers/mocks/service/mock-translate.service";
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
