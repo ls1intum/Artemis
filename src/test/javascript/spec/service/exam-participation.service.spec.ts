@@ -65,6 +65,16 @@ describe('Exam Participation Service', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
+    it('should load exerciseIds of a student exam', async () => {
+        const exerciseIds = [1, 2, 3];
+        const returnedFromService = Object.assign({}, exerciseIds);
+        service
+            .loadStudentExamExerciseIds(1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: exerciseIds }));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+    });
     it('should load a StudentExam', async () => {
         const sendExam = Object.assign(
             {
