@@ -27,7 +27,7 @@ spec:
         workload.user.cattle.io/workloadselector: deployment-artemis-bamboo
     spec:
       containers:
-      - image: mmehmed/bamboo
+      - image: <DockerId>/bamboo
         imagePullPolicy: Always
         name: bamboo
         ports:
