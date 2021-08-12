@@ -192,7 +192,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(ExtensionPointDirective),
+                ExtensionPointDirective,
             ],
             providers: [
                 ProgrammingAssessmentManualResultService,
