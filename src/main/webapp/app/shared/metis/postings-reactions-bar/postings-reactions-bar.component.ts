@@ -96,7 +96,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      * i.e. when agree on an existing reaction (+1) or removing own reaction (-1)
      */
     updateReaction(emojiId: string): void {
-        if (emojiId !== undefined) {
+        if (emojiId != undefined) {
             this.addOrRemoveReaction(emojiId);
         }
     }
