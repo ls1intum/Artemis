@@ -1,9 +1,15 @@
+//
+//  ContentView.swift
+//  Xpense
+//
+//  Created by Daniel Kainz on 06.08.21.
+//
+
 import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        let sampleText = SampleText(text: "Hello, Artemis!")
-        Text(sampleText.getText())
+        Text(Greeting.greet())
             .padding()
     }
 }
