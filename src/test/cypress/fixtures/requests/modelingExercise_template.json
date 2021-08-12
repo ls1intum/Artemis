@@ -26,7 +26,7 @@
     "releaseDate": "2030-07-10T12:11:00.000Z",
     "dueDate": "2030-07-11T12:11:00.000Z",
     "assessmentDueDate": "2030-07-12T12:11:00.000Z",
-    "maxPoints": 100,
+    "maxPoints": 10,
     "problemStatement": "Problem Statement",
     "gradingInstructions": "Grading Instruction ",
     "sampleSolutionExplanation": "Example Solution Explanation",

@@ -9,11 +9,23 @@ export class ExamStartEndPage {
         cy.get('#confirmBox').click();
     }
 
-    startExam() {
+    pressStart() {
         cy.contains('Start').click();
     }
 
-    finishExam() {
+    pressFinish() {
         cy.get('.btn').contains('Finish').click();
+    }
+
+    startExam() {
+        this.setConfirmCheckmark();
+        this.enterFirstnameLastname();
+        this.pressStart();
+    }
+
+    finishExam() {
+        this.setConfirmCheckmark();
+        this.enterFirstnameLastname();
+        this.pressFinish();
     }
 }

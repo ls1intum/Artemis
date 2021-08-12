@@ -165,6 +165,13 @@ export class CourseManagementRequests {
         });
     }
 
+    /**
+     * Because the only difference between course exercises and exam exercises is the "course" or "exerciseGroup" field
+     * This function takes an exercise template and adds one of the fields to it
+     * @param exercise the exercise template
+     * @param course the course response object
+     * @param group the exercise group of the exam the exercise will be added to
+     * */
     private getCourseOrExamExercise(exercise: object, course?: any, group?: any) {
         const newExercise: any = {};
         Object.keys(exercise).forEach((key) => {

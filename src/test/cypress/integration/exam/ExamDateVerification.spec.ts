@@ -94,7 +94,7 @@ describe('Exam management', () => {
                         cy.contains('Welcome to ' + exam.title).should('be.visible');
                         examStartEnd.setConfirmCheckmark();
                         examStartEnd.enterFirstnameLastname();
-                        examStartEnd.startExam();
+                        examStartEnd.pressStart();
                         cy.contains('Exam Overview').should('exist');
                         cy.contains('Text exercise 1').should('be.visible').click();
                         cy.get('#text-editor-tab').type(
@@ -130,7 +130,7 @@ describe('Exam management', () => {
                         cy.contains('Welcome to ' + exam.title).should('be.visible');
                         examStartEnd.setConfirmCheckmark();
                         examStartEnd.enterFirstnameLastname();
-                        examStartEnd.startExam();
+                        examStartEnd.pressStart();
                         cy.contains('Text exercise 1').should('be.visible').click();
                         cy.get('#text-editor-tab').type(
                             'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
@@ -139,7 +139,7 @@ describe('Exam management', () => {
                         cy.contains('This is the end of ' + exam.title, { timeout: 20000 });
                         examStartEnd.setConfirmCheckmark();
                         examStartEnd.enterFirstnameLastname();
-                        examStartEnd.finishExam();
+                        examStartEnd.pressFinish();
                         cy.get('.alert').contains('Your exam was submitted successfully.');
                     });
                 });
