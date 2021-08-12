@@ -255,9 +255,7 @@ export class MetisService {
             const postAVoteEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length
                 ? postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length
                 : 0;
-            const postBVoteEmojiCount = postB.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length
-                ? postB.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length
-                : 0;
+            const postBVoteEmojiCount = postB.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
             if (postAVoteEmojiCount > postBVoteEmojiCount) {
                 return -1;
             }
