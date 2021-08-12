@@ -15,7 +15,7 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" [callback]="sortRows.bind(this)">
-                    <th class="d-none d-md-table-cell" jhiSortBy="id">
+                    <th class="d-md-table-cell" jhiSortBy="id">
                         <span>{{ 'global.field.id' | artemisTranslate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
