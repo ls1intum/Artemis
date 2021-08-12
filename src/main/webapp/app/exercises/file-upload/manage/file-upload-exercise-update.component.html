@@ -133,6 +133,7 @@
                 [domainCommands]="domainCommandsProblemStatement"
                 [(markdown)]="fileUploadExercise.problemStatement"
                 [editorMode]="EditorMode.LATEX"
+                [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
         <!-- TODO we want to have a file upload here and store a PDF, not a text. We could allow to add text in the sample_solution_explanation field -->
@@ -143,6 +144,7 @@
                 [domainCommands]="domainCommandsSampleSolution"
                 [(markdown)]="fileUploadExercise.sampleSolution"
                 [editorMode]="EditorMode.LATEX"
+                [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
         <div class="form-group" name="gradingInstructions" id="field_gradingInstructions">
@@ -153,6 +155,7 @@
                 [domainCommands]="domainCommandsGradingInstructions"
                 [(markdown)]="fileUploadExercise.gradingInstructions"
                 [editorMode]="EditorMode.LATEX"
+                [enableResize]="true"
             ></jhi-markdown-editor>
             <jhi-grading-instructions-details *ngIf="this.checkedFlag" [exercise]="fileUploadExercise"></jhi-grading-instructions-details>
         </div>

@@ -47,7 +47,7 @@
             </div>
         </div>
 
-        <div *ngIf="!isExamMode" class="col-sm-4" style="min-width: 400px">
+        <div class="col-sm-4" style="min-width: 400px">
             <jhi-side-panel
                 [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exerciseInformation' | artemisTranslate"
                 [panelDescriptionHeader]="'artemisApp.exerciseAssessmentDashboard.totalYours' | artemisTranslate"
@@ -275,13 +275,15 @@
             </div>
             <div *ngFor="let roundState of numberOfAssessmentsOfCorrectionRounds; let correctionRound = index">
                 <ng-container *ngIf="numberOfCorrectionRoundsEnabled > correctionRound">
-                    <h4 *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isTestRun && !isExamMode">
-                        {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | artemisTranslate }}
-                    </h4>
+                    <ng-container *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isTestRun">
+                        <h4 *ngIf="!isExamMode">
+                            {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | artemisTranslate }}
+                        </h4>
 
-                    <h4 *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isTestRun && isExamMode">
-                        {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | artemisTranslate }}, Correction Round {{ correctionRound + 1 }}:
-                    </h4>
+                        <h4 *ngIf="isExamMode">
+                            {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | artemisTranslate }}, Correction Round {{ correctionRound + 1 }}:
+                        </h4>
+                    </ng-container>
 
                     <h4 *ngIf="isTestRun">
                         {{ 'artemisApp.exerciseAssessmentDashboard.testRunSubmissions' | artemisTranslate }}
