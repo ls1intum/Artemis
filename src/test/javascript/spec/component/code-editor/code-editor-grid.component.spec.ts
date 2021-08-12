@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 
@@ -19,7 +18,6 @@ const buildOutputWindowName = 'BuildOutput';
 describe('CodeEditorGridComponent', () => {
     let comp: CodeEditorGridComponent;
     let fixture: ComponentFixture<CodeEditorGridComponent>;
-    let debugElement: DebugElement;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -30,7 +28,6 @@ describe('CodeEditorGridComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CodeEditorGridComponent);
                 comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
             });
     });
 
