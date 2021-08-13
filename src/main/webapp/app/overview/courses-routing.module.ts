@@ -9,6 +9,7 @@ import { CourseStatisticsComponent } from 'app/overview/course-statistics/course
 import { TeamComponent } from 'app/exercises/shared/team/team.component';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { PlagiarismCasesReviewComponent } from 'app/course/plagiarism-cases/plagiarism-cases-review.component';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 
 const routes: Routes = [
@@ -72,6 +73,15 @@ const routes: Routes = [
                 pathMatch: 'full',
             },
         ],
+    },
+    {
+        path: 'courses/:courseId/plagiarism/:plagiarismComparisonId',
+        component: PlagiarismCasesReviewComponent,
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.plagiarism.cases.plagiarism-review',
+        },
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'courses/:courseId/statistics/grading-key',

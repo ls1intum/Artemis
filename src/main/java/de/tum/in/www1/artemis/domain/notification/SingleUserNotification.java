@@ -78,6 +78,23 @@ public class SingleUserNotification extends Notification {
         return target.toString();
     }
 
+    /**
+     * Adds the appropriate target to the plagiarismReview page to the notification
+     *
+     * @param plagiarismComparisonId the id of the plagiarismComparison
+     * @param courseID               the id of the course
+     * @return JSON string with all properties for the notification target field
+     */
+    public String targetForPlagiarismCase(Long plagiarismComparisonId, Long courseID) {
+        JsonObject target = new JsonObject();
+        target.addProperty("message", "plagiarismDetected");
+        target.addProperty("id", plagiarismComparisonId);
+        target.addProperty("entity", "plagiarism");
+        target.addProperty("course", courseID);
+        target.addProperty("mainPage", "courses");
+        return target.toString();
+    }
+
     @Override
     public String toString() {
         return "SingleUserNotification{" + "id=" + getId() + "}";

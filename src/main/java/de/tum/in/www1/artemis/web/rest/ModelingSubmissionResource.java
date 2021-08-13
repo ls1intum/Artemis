@@ -27,8 +27,8 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCasesService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
@@ -58,23 +58,23 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
-    private final CompassService compassService;
-
     private final GradingCriterionRepository gradingCriterionRepository;
 
     private final ExamSubmissionService examSubmissionService;
 
+    private final PlagiarismCasesService plagiarismCasesService;
+
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ModelingSubmissionService modelingSubmissionService,
-            ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, CompassService compassService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService,
-            StudentParticipationRepository studentParticipationRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
+            ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
+            GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService, StudentParticipationRepository studentParticipationRepository,
+            ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismCasesService plagiarismCasesService) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
-        this.compassService = compassService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examSubmissionService = examSubmissionService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.plagiarismCasesService = plagiarismCasesService;
     }
 
     /**
@@ -185,7 +185,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      *         found
      */
     @GetMapping("/modeling-submissions/{submissionId}")
-    @PreAuthorize("hasRole('TA')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId,
             @RequestParam(value = "withoutResults", defaultValue = "false") boolean withoutResults) {
@@ -197,12 +197,15 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
         modelingExercise.setGradingCriteria(gradingCriteria);
 
+        boolean forplagiarism = false;
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToAssesExercise(modelingExercise, user, resultId)) {
-            return forbidden();
+            // request is made by student for plagiarism, make sure they are affected by this case:
+            plagiarismCasesService.anonymizeSubmissionForStudentOrThrow(modelingSubmission, user);
+            forplagiarism = true;
         }
 
-        if (!withoutResults) {
+        if (forplagiarism || !withoutResults) {
             // load submission with results either by resultId or by correctionRound
             if (resultId != null) {
                 // load the submission with additional needed properties
@@ -231,7 +234,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         if (!withoutResults) {
             modelingSubmission.removeNotNeededResults(correctionRound, resultId);
         }
-
         return ResponseEntity.ok(modelingSubmission);
     }
 

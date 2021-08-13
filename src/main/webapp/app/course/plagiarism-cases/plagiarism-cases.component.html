@@ -1,0 +1,48 @@
+<h3 jhiTranslate="artemisApp.plagiarism.cases.plagiarism-cases">Plagiarism Cases></h3>
+<h4 jhiTranslate="artemisApp.plagiarism.cases.page-subtitle"></h4>
+
+<div *ngIf="confirmedPlagiarismCases">
+    <div class="row">
+        <p class="col text-center m-0">{{ 'artemisApp.plagiarism.cases.notifications-sent' | artemisTranslate }}</p>
+        <p class="col text-center m-0">{{ 'artemisApp.plagiarism.cases.responses-assessed' | artemisTranslate }}</p>
+    </div>
+    <div class="bg-light row">
+        <div class="col">
+            <jhi-progress-bar
+                [denominator]="numberOfCases()"
+                [numerator]="notificationsSent()"
+                [percentage]="100 * (notificationsSent() / numberOfCases())"
+                [tooltip]="'artemisApp.plagiarism.cases.notifications-sent' | artemisTranslate"
+            >
+            </jhi-progress-bar>
+        </div>
+        <div class="col">
+            <jhi-progress-bar
+                [denominator]="numberOfResponses()"
+                [numerator]="responsesAssessed()"
+                [percentage]="100 * (responsesAssessed() / numberOfResponses())"
+                [tooltip]="'artemisApp.plagiarism.cases.responses-assessed' | artemisTranslate"
+            >
+            </jhi-progress-bar>
+        </div>
+    </div>
+    <div>
+        <label>
+            <span>{{ 'artemisApp.plagiarism.cases.hide-finished' | artemisTranslate }}</span>
+            <input id="hideDone" type="checkbox" [(ngModel)]="hideFinished" />
+        </label>
+    </div>
+    <div *ngFor="let plagiarismCase of confirmedPlagiarismCases; let i = index">
+        <div class="card mb-2">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    {{ plagiarismCase.exercise.title }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <jhi-plagiarism-cases-list [plagiarismCase]="plagiarismCase" [hideFinished]="hideFinished"></jhi-plagiarism-cases-list>
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-primary" (click)="export()">{{ 'artemisApp.plagiarism.cases.export-csv' | artemisTranslate }}</button>
+</div>
