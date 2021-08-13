@@ -316,7 +316,7 @@ public class StudentExamResource {
     public ResponseEntity<Long[]> getStudentExamExerciseIds(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
+        log.debug("REST request to get the student exam exercise ids of user {} for exam {}", user.getLogin(), examId);
 
         // 1st: load the studentExam with all associated exercises
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId);
