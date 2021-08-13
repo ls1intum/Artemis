@@ -115,6 +115,7 @@ describe('TextExamSubmissionComponent', () => {
     });
 
     it('should update problem statement of the exercise', () => {
+        component.exercise = exercise;
         component.exercise.problemStatement = 'old problem statement';
         const newProblemStatement = 'new problem statement';
 
