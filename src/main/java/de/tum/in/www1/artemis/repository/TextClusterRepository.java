@@ -45,7 +45,7 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
             FROM text_block
             LEFT JOIN submission ON text_block.submission_id = submission.id
             LEFT JOIN result ON result.submission_id = submission.id
-            LEFT JOIN feedback ON feedback.result_id = result.id
+            LEFT JOIN feedback ON ( feedback.result_id = result.id and feedback.reference = text_block.id )
             LEFT JOIN participation ON participation.id = submission.participation_id
             WHERE participation.exercise_id = ?1
             GROUP BY clusterId HAVING clusterId > 0
