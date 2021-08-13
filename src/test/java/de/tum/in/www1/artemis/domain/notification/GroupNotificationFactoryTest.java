@@ -50,8 +50,6 @@ public class GroupNotificationFactoryTest {
 
     private String expectedTarget;
 
-    private static String defaultExpectedTargetForExercises;
-
     private NotificationPriority expectedPriority;
 
     private GroupNotification createdNotification;
@@ -83,7 +81,6 @@ public class GroupNotificationFactoryTest {
 
         attachment = mock(Attachment.class);
         when(attachment.getLecture()).thenReturn(lecture);
-
     }
 
     private void checkCreatedNotification(GroupNotification createdNotification, String expectedTitle, String expectedText, String expectedTarget,
