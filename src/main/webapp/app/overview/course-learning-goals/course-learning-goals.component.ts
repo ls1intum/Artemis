@@ -107,7 +107,6 @@ export class CourseLearningGoalsComponent implements OnInit {
                 }) Progress different using participant scores for user ${userName}! Original: ${JSON.stringify(learningGoalProgress)} | Using ParticipantScores: ${JSON.stringify(
                     learningGoalProgressParticipantScoresTable,
                 )}!`;
-                console.log(message);
                 Sentry.captureException(new Error(message));
             }
         });

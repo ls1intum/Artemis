@@ -30,7 +30,7 @@ public class TutorLeaderboardComplaints {
         return userId;
     }
 
-    public TutorLeaderboardComplaints(long userId, long allComplaints, long acceptedComplaints, double points) {
+    public TutorLeaderboardComplaints(Long userId, Long allComplaints, Long acceptedComplaints, Double points) {
         this.userId = userId;
         this.allComplaints = allComplaints;
         this.acceptedComplaints = acceptedComplaints;
