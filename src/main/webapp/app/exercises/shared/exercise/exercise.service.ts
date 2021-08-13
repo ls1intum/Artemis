@@ -384,10 +384,6 @@ export class ExerciseService {
         return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-assessment-dashboard`, { observe: 'response' });
     }
 
-    public getClusterStats(): Observable<HttpResponse<any[]>> {
-        return this.http.get<any[]>(`api/cluster-stats`, { observe: 'response' });
-    }
-
     /**
      * Retrieve a collection of useful statistics for the instructor exercise dashboard of the exercise with the given exerciseId
      * @param { number } exerciseId - Id of exercise to retreive the stats for

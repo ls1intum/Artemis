@@ -173,10 +173,6 @@ export class TextAssessmentService {
         return this.http.get<TextSubmission[]>(`${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/feedback/${feedbackId}/feedback-conflicts`);
     }
 
-    public getClusterStats(): Observable<any[]> {
-        return this.http.get<any[]>(`${this.resourceUrl}/cluster-stats`);
-    }
-
     /**
      * Set feedback conflict as solved. (Tutor decides it is not a conflict)
      *

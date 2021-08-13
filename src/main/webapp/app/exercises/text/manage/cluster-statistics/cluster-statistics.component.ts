@@ -8,6 +8,7 @@ export interface ClusterInfo {
     clusterId: number;
     clusterSize: number;
     numberOfAutomaticFeedbacks: number;
+    disabled: boolean;
 }
 
 @Component({
@@ -18,13 +19,14 @@ export class ClusterStatisticsComponent implements OnInit {
     readonly MIN_POINTS_GREEN = 100;
     readonly MIN_POINTS_ORANGE = 50;
     clusters: ClusterInfo[] = [];
+    currentExerciseId: number;
 
     constructor(private textExerciseService: TextExerciseService, private route: ActivatedRoute, jhiAlertService: JhiAlertService) {}
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
-            const exerciseId = Number(params['exerciseId']);
-            this.loadClusterFromExercise(exerciseId);
+            this.currentExerciseId = Number(params['exerciseId']);
+            this.loadClusterFromExercise(this.currentExerciseId);
         });
     }
 
@@ -34,6 +36,13 @@ export class ClusterStatisticsComponent implements OnInit {
                 console.error(res.body, 'RESSSS!');
                 this.clusters = res.body!;
             },
+        });
+    }
+
+    setClusterDisabledPredicate(clusterId: number, disabled: boolean): void {
+        this.textExerciseService.setClusterDisabledPredicate(clusterId, disabled).subscribe(() => {
+            // reload content again
+            this.loadClusterFromExercise(this.currentExerciseId);
         });
     }
 }

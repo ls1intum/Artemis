@@ -34,22 +34,24 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
         Long getClusterSize();
 
         Long getNumberOfAutomaticFeedbacks();
+
+        Boolean getDisabled();
     }
 
-    @Query("""
-            SELECT textblock.cluster.id AS clusterId, COUNT(DISTINCT textblock.id) AS clusterSize, SUM( CASE WHEN (feedback.type = 'AUTOMATIC' ) THEN 1 ELSE 0 END) AS numberOfAutomaticFeedbacks FROM TextBlock textblock
-            LEFT JOIN Submission submission
-            ON textblock.submission.id = submission.id
-            LEFT JOIN Result result
-            ON submission.id = result.submission.id
-            LEFT JOIN Feedback feedback
-            ON result.id = feedback.result.id
-            LEFT JOIN Participation participation
-            ON participation.id = submission.participation.id
-            WHERE participation.exercise.id = :exerciseId
-            GROUP BY clusterId
-            HAVING textblock.cluster.id > 0
-            """)
-    List<TextClusterStats> findCountOfAutoFeedbacks(@Param("exerciseId") Long exerciseId);
+    @Query(value = """
+            SELECT cluster_stats.*, text_cluster.disabled FROM
+            (
+            SELECT text_block.cluster_id AS clusterId, count(DISTINCT text_block.id) AS clusterSize, SUM(if(feedback.type = 'AUTOMATIC', 1, 0)) AS numberOfAutomaticFeedbacks
+            FROM text_block
+            LEFT JOIN submission ON text_block.submission_id = submission.id
+            LEFT JOIN result ON result.submission_id = submission.id
+            LEFT JOIN feedback ON feedback.result_id = result.id
+            LEFT JOIN participation ON participation.id = submission.participation_id
+            WHERE participation.exercise_id = ?1
+            GROUP BY clusterId HAVING clusterId > 0
+            ) AS cluster_stats
+            LEFT JOIN text_cluster ON text_cluster.id = cluster_stats.clusterId;
+            """, nativeQuery = true)
+    List<TextClusterStats> getClusterStatistics(@Param("exerciseId") Long exerciseId);
 
 }

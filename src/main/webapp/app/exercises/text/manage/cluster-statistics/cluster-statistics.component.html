@@ -1,6 +1,6 @@
 <div class="container-fluid table-responsive">
     <h4 jhiTranslate="artemisApp.textExercise.clusterStatistics.title"></h4>
-    <table class="table exercise-table guided-tour-exercise-table">
+    <table *ngIf="clusters.length > 0" class="table exercise-table guided-tour-exercise-table">
         <thead>
             <tr>
                 <th>
@@ -38,11 +38,15 @@
 
                 <td>{{ cluster.clusterSize }}</td>
                 <td>
-                    <button class="btn btn-danger">
+                    <button *ngIf="!cluster.disabled" class="btn btn-danger" (click)="setClusterDisabledPredicate(cluster.clusterId, true)">
                         <span>Disable</span>
+                    </button>
+                    <button *ngIf="cluster.disabled" class="btn btn-success" (click)="setClusterDisabledPredicate(cluster.clusterId, false)">
+                        <span>Enable</span>
                     </button>
                 </td>
             </tr>
         </tbody>
     </table>
+    <span *ngIf="clusters.length == 0"><b>No clusters found for this exercise</b></span>
 </div>

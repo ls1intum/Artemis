@@ -76,7 +76,6 @@ export class TextAssessmentDashboardComponent implements OnInit {
                 this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
                 this.setPermissions();
             });
-        this.assessmentsService.getClusterStats();
     }
 
     public sortRows() {

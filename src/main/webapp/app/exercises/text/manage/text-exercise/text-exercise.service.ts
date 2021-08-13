@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
@@ -17,6 +17,7 @@ export interface ClusterInfo {
     clusterId: number;
     clusterSize: number;
     numberOfAutomaticFeedbacks: number;
+    disabled: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -153,5 +154,11 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
 
     public getClusterStats(exerciseId: number): Observable<HttpResponse<ClusterInfo[]>> {
         return this.http.get<ClusterInfo[]>(`api/cluster-stats/${exerciseId}`, { observe: 'response' });
+    }
+
+    public setClusterDisabledPredicate(clusterId: number, disabled: boolean): Observable<boolean> {
+        let params = new HttpParams();
+        params = params.set('disabled', disabled);
+        return this.http.put<boolean>(`api/clusters/${clusterId}/disable`, {}, { params: { disabled: disabled } });
     }
 }
