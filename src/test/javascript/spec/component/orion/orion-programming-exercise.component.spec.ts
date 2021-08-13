@@ -10,7 +10,6 @@ import { OrionProgrammingExerciseComponent } from 'app/orion/management/orion-pr
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { OrionModule } from 'app/shared/orion/orion.module';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { BehaviorSubject } from 'rxjs';
