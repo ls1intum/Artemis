@@ -862,12 +862,6 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    // Required for Orion; Orion's integrated browser does not properly support http query params
-    // Angular requires the redirect to be absolute for the query params
-    {
-        path: '/course-management/:courseId/exams/:examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessment/correction-round/:correctionRound',
-        redirectTo: '/course-management/:courseId/exams/:examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessment?correction-round=:correctionRound',
-    },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
         component: FileUploadAssessmentComponent,
