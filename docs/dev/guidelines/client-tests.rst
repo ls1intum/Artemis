@@ -93,7 +93,7 @@ Example of a bad test practice:
             });
         });
 
-Running time:
+Running time: 313.931s:
 
 .. code-block:: text
 
@@ -135,37 +135,43 @@ Example of a good test practice:
             });
         });
 
-Running time:
+Running time: 13.685s:
+
 .. code-block:: text
 
    PASS  src/test/javascript/spec/component/participation-submission/participation-submission.component.spec.ts (13.685 s, 535 MB heap size)
 
 Now the whole testing suite is running **~25 times faster**!
+
 Here are the improvements for the test above:
 
-- **Removed** production module imports:
+* **Removed** production module imports:
 
-   - ArtemisResultModule
-   - ArtemisSharedModule
-   - TranslateModule.forRoot()
-   - MomentModule
+.. code-block:: text
 
-- **Mocked** pipes, directives and components that are not supposed to be tested
+  - ArtemisResultModule
+  - ArtemisSharedModule
+  - TranslateModule.forRoot()
+  - MomentModule
 
-   - MockTranslateValuesDirective
-   - MockPipe(ArtemisTranslatePipe)
-   - MockPipe(ArtemisDatePipe)
-   - MockPipe(ArtemisTimeAgoPipe)
-   - MockDirective(DeleteButtonDirective)
-   - MockComponent(AlertComponent)
-   - MockComponent(ResultComponent)
-   - MockComponent(FaIconComponent)
+* **Mocked** pipes, directives and components that are not supposed to be tested:
+
+.. code-block:: text
+
+  + MockTranslateValuesDirective
+  + MockPipe(ArtemisTranslatePipe)
+  + MockPipe(ArtemisDatePipe)
+  + MockPipe(ArtemisTimeAgoPipe)
+  + MockDirective(DeleteButtonDirective)
+  + MockComponent(AlertComponent)
+  + MockComponent(ResultComponent)
+  + MockComponent(FaIconComponent)
 
 More examples on test speed improvement can be found in the following PR: https://github.com/ls1intum/Artemis/pull/3879/files
 
-   *  Services should be mocked if they simply return some data from the server. However, if the service has some form of logic included (for exampling converting dates to moments),
-      and this logic is important for the component, do not mock the service methods, but mock the http requests and responses from the api. This allows us to test the interaction
-      of the component with the service and in addition test that the service logic works correctly. A good explanation can be found in the official angular documentation: https://angular.io/guide/http#testing-http-requests
+Services should be mocked if they simply return some data from the server. However, if the service has some form of logic included (for exampling converting dates to moments),
+and this logic is important for the component, do not mock the service methods, but mock the http requests and responses from the api. This allows us to test the interaction
+of the component with the service and in addition test that the service logic works correctly. A good explanation can be found in the official angular documentation: https://angular.io/guide/http#testing-http-requests
 
     .. code:: ts
 
