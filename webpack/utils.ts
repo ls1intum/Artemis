@@ -2,18 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const tsconfig = require('../tsconfig.json');
 
-// Returns the second occurrence of the version number from `build.gradle` file
-export function parseVersion() {
-    const versionRegex = /^version\s*=\s*[',"]([^',"]*)[',"]/gm; // Match and group the version number
-    const buildGradle = fs.readFileSync('build.gradle', 'utf8');
-    const versionResultArray = versionRegex.exec(buildGradle);
-    if (versionResultArray && versionResultArray.length > 0) {
-        return versionResultArray[1];
-    } else {
-        return 'unspecified';
-    }
-}
-
 const _root = path.resolve(__dirname, '..');
 
 export function root(args: any) {

@@ -1,12 +1,16 @@
-<h5 *ngIf="hasTranslation === false && headerKey !== null" class="expandable-header" (click)="isCollapsed = !isCollapsed">
+<h5 *ngIf="hasTranslation === false && headerKey !== null && isSubHeader === false" class="expandable-header" (click)="isCollapsed = !isCollapsed">
     {{ headerKey }}
     <fa-icon [icon]="isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
 </h5>
 
-<h5 *ngIf="hasTranslation === true && headerKey !== null" class="expandable-header" (click)="isCollapsed = !isCollapsed">
+<h5 *ngIf="hasTranslation === true && headerKey !== null && isSubHeader === false" class="expandable-header" (click)="isCollapsed = !isCollapsed">
     {{ headerKey | artemisTranslate }}
     <fa-icon [icon]="isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
 </h5>
+<h6 *ngIf="hasTranslation === false && headerKey !== null && isSubHeader === true" class="expandable-header" (click)="isCollapsed = !isCollapsed">
+    {{ headerKey }}
+    <fa-icon [icon]="isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
+</h6>
 <div [ngbCollapse]="isCollapsed">
     <ng-content></ng-content>
 </div>

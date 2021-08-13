@@ -1,6 +1,6 @@
 <div class="row justify-content-center">
     <div *ngIf="course" class="col-12">
-        <div class="course-info-bar" [class.course-info-bar--ide]="isOrion" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
+        <div class="course-info-bar" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
             <div class="row">
                 <div class="col general-info">
                     <h3>{{ course.title }}</h3>
@@ -137,12 +137,12 @@
                     ></jhi-course-detail-doughnut-chart>
                 </div>
             </div>
-            <jhi-course-detail-bar-chart
+            <jhi-course-detail-line-chart
                 class="col-md-8"
                 [courseId]="course.id!"
                 [numberOfStudentsInCourse]="course.numberOfStudents!"
                 [initialStats]="activeStudents"
-            ></jhi-course-detail-bar-chart>
+            ></jhi-course-detail-line-chart>
         </div>
         <hr />
         <div>

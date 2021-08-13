@@ -7,12 +7,12 @@ import static org.mockito.Mockito.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.ListBranchCommand;
@@ -22,6 +22,7 @@ import org.eclipse.jgit.merge.MergeStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.mockito.stubbing.Answer;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -210,6 +211,21 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetFilesWithContent_shouldNotThrowException() throws Exception {
+        Map<de.tum.in.www1.artemis.domain.File, FileType> mockedFiles = new HashMap<>();
+        mockedFiles.put(mock(de.tum.in.www1.artemis.domain.File.class), FileType.FILE);
+        doReturn(mockedFiles).when(gitService).listFilesAndFolders(any(Repository.class));
+
+        MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class);
+        mockedFileUtils.when(() -> FileUtils.readFileToString(any(File.class), eq(StandardCharsets.UTF_8))).thenThrow(IOException.class);
+
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content", HttpStatus.OK, String.class, String.class);
+        assertThat(files).isEmpty();
+        mockedFileUtils.close();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetFilesWithInfoAboutChange_noChange() throws Exception {
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-change", HttpStatus.OK, String.class, Boolean.class);
         assertThat(files).isNotEmpty();
@@ -296,6 +312,17 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetFile_shouldThrowException() throws Exception {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFileName);
+
+        doReturn(Optional.empty()).when(gitService).getFileByName(any(Repository.class), eq(currentLocalFileName));
+        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.NOT_FOUND, byte[].class, params);
+        assertThat(file).isNull();
     }
 
     @Test

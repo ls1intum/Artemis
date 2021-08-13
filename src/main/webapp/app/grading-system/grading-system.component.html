@@ -1,6 +1,6 @@
 <div>
     <jhi-alert></jhi-alert>
-    <jhi-alert-error *ngIf="!notFound"></jhi-alert-error>
+    <jhi-alert-error></jhi-alert-error>
     <h2 style="margin-bottom: 0.5em">
         {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
         {{ isExam ? examId : courseId }}
@@ -14,19 +14,21 @@
         </div>
         <div class="dropdown-container">
             <div class="form-group">
-                <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.examManagement.maxPoints.title">Maximum number of points for exam</span>
+                <span class="colon-suffix no-flex-shrink">
+                    {{ isExam ? ('artemisApp.examManagement.maxPoints.title' | artemisTranslate) : ('artemisApp.course.maxPoints.title' | artemisTranslate) }}
+                </span>
                 <input type="number" class="form-control" [(ngModel)]="maxPoints" min="1" (change)="onChangeMaxPoints(maxPoints)" />
             </div>
             <div class="form-group">
                 <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.gradeType.title">Grade Type</span>
-                <select class="form-control" [(ngModel)]="gradingScale.gradeType" (change)="deleteGradeNames()" title="grade type">
+                <select class="form-select" [(ngModel)]="gradingScale.gradeType" (change)="deleteGradeNames()" title="grade type">
                     <option value="GRADE" jhiTranslate="artemisApp.gradingSystem.gradeType.grade">Grade</option>
                     <option value="BONUS" jhiTranslate="artemisApp.gradingSystem.gradeType.bonus">Bonus</option>
                 </select>
             </div>
             <div class="form-group">
                 <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.inclusivity.title">Inclusivity</span>
-                <select class="form-control" [(ngModel)]="lowerBoundInclusivity" title="inclusivity">
+                <select class="form-select" [(ngModel)]="lowerBoundInclusivity" title="inclusivity">
                     <option [ngValue]="true" jhiTranslate="artemisApp.gradingSystem.inclusivity.lower">Lower Bound Inclusive</option>
                     <option [ngValue]="false" jhiTranslate="artemisApp.gradingSystem.inclusivity.upper">Upper Bound Inclusive</option>
                 </select>
@@ -34,7 +36,7 @@
             <div class="form-group">
                 <ng-container *ngIf="this.gradingScale.gradeType == GradeType.GRADE">
                     <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.firstPassingGrade">First Passing Grade</span>
-                    <select class="form-control" title="first passing grade" [(ngModel)]="firstPassingGrade">
+                    <select class="form-select" title="first passing grade" [(ngModel)]="firstPassingGrade">
                         <option *ngFor="let gradeStep of gradeStepsWithNonemptyNames()" [ngValue]="gradeStep.gradeName">
                             {{ gradeStep.gradeName }}
                         </option>

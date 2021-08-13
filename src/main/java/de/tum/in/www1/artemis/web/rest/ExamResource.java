@@ -211,6 +211,12 @@ public class ExamResource {
                     .map(Exercise::getId).forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
         }
 
+        if (comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0) {
+            // get all exercises
+            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(result.getId());
+            examService.scheduleModelingExercises(examWithExercises);
+        }
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
 
@@ -345,8 +351,8 @@ public class ExamResource {
             exerciseGroup.setExercises(courseRepository.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
             exercises.addAll(exerciseGroup.getExercises());
         }
+        List<TutorParticipation> tutorParticipations = tutorParticipationRepository.findAllByAssessedExercise_ExerciseGroup_Exam_IdAndTutor_Id(examId, user.getId());
 
-        List<TutorParticipation> tutorParticipations = tutorParticipationRepository.findAllByAssessedExercise_Course_IdAndTutor_Id(course.getId(), user.getId());
         assessmentDashboardService.generateStatisticsForExercisesForAssessmentDashboard(exercises, tutorParticipations, true);
 
         return ResponseEntity.ok(exam);

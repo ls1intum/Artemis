@@ -78,6 +78,16 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
             """)
     List<ModelingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
+    /**
+     * Returns the modeling exercises that are part of an exam with an end date after than the provided date.
+     * This method also fetches the exercise group and exam.
+     *
+     * @param dateTime ZonedDatetime object.
+     * @return List<ModelingExercise> (can be empty)
+     */
+    @Query("SELECT me FROM ModelingExercise me LEFT JOIN FETCH me.exerciseGroup eg LEFT JOIN FETCH eg.exam e WHERE e.endDate > :#{#dateTime}")
+    List<ModelingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
+
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
 

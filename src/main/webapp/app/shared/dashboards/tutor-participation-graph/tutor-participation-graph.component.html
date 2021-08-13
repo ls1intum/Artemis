@@ -12,26 +12,32 @@
         >
             <fa-icon [icon]="'chalkboard-teacher'"></fa-icon>
         </li>
-        <li *ngFor="let stat of numberOfAssessmentsOfCorrectionRounds; let i = index" class="progress-bar-li stacked-li" [ngClass]="calculateClassProgressBar()">
-            <div class="stacked-item">
-                <jhi-progress-bar
-                    [tooltip]="'artemisApp.assessmentDashboard.assessStudentsSubmissions' | artemisTranslate"
-                    [percentage]="percentageInTimeAssessmentProgressOfCorrectionRound[i]"
-                    [numerator]="stat.inTime"
-                    [denominator]="numberOfSubmissions?.inTime || 0"
-                >
-                </jhi-progress-bar>
-            </div>
-            <div class="stacked-item" *ngIf="numberOfSubmissions && numberOfSubmissions!.late > 0">
-                <jhi-progress-bar
-                    [tooltip]="'artemisApp.assessmentDashboard.assessStudentsLateSubmissions' | artemisTranslate"
-                    [percentage]="percentageLateAssessmentProgressOfCorrectionRound[i]"
-                    [numerator]="stat.late"
-                    [denominator]="numberOfSubmissions?.late || 0"
-                >
-                </jhi-progress-bar>
-            </div>
-        </li>
+        <ng-container *ngIf="shouldShowManualAssessments">
+            <li
+                *ngFor="let numberOfAssessedSubmissions of numberOfAssessmentsOfCorrectionRounds; let i = index"
+                class="progress-bar-li stacked-li"
+                [ngClass]="calculateClassProgressBar()"
+            >
+                <div class="stacked-item">
+                    <jhi-progress-bar
+                        [tooltip]="'artemisApp.assessmentDashboard.assessStudentsSubmissions' | artemisTranslate"
+                        [percentage]="percentageInTimeAssessmentProgressOfCorrectionRound[i]"
+                        [numerator]="numberOfAssessedSubmissions.inTime"
+                        [denominator]="numberOfSubmissions?.inTime || 0"
+                    >
+                    </jhi-progress-bar>
+                </div>
+                <div class="stacked-item" *ngIf="numberOfSubmissions && numberOfSubmissions!.late > 0">
+                    <jhi-progress-bar
+                        [tooltip]="'artemisApp.assessmentDashboard.assessStudentsLateSubmissions' | artemisTranslate"
+                        [percentage]="percentageLateAssessmentProgressOfCorrectionRound[i]"
+                        [numerator]="numberOfAssessedSubmissions.late"
+                        [denominator]="numberOfSubmissions?.late || 0"
+                    >
+                    </jhi-progress-bar>
+                </div>
+            </li>
+        </ng-container>
         <li class="progress-bar-li" [ngClass]="calculateClassProgressBar()">
             <jhi-progress-bar
                 [tooltip]="'artemisApp.assessmentDashboard.evaluateStudentsComplaints' | artemisTranslate"

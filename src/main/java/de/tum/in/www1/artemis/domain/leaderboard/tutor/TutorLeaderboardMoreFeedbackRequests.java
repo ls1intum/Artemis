@@ -30,7 +30,7 @@ public class TutorLeaderboardMoreFeedbackRequests {
         return userId;
     }
 
-    public TutorLeaderboardMoreFeedbackRequests(long userId, long allRequests, long notAnsweredRequests, double points) {
+    public TutorLeaderboardMoreFeedbackRequests(Long userId, Long allRequests, Long notAnsweredRequests, Double points) {
         this.userId = userId;
         this.allRequests = allRequests;
         this.notAnsweredRequests = notAnsweredRequests;

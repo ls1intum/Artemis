@@ -499,6 +499,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * Find a programming exercise by its id, including template and solution but without results.
+     * TODO: we should remove this method later on and use 'findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow' in all places,
+     *  they have same functionality.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id

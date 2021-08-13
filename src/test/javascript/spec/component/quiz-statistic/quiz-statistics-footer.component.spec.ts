@@ -12,16 +12,16 @@ import { QuizStatisticsFooterComponent } from 'app/exercises/quiz/manage/statist
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { SinonStub, stub } from 'sinon';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
-const question = { id: 1 } as QuizQuestion;
+const question = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as QuizQuestion;
 const course = { id: 2 } as Course;
 let quizExercise = { id: 42, started: true, course, quizQuestions: [question] } as QuizExercise;
+let examQuizExercise = { id: 43, started: true, course, quizQuestions: [question], exerciseGroup: { id: 11, exam: { id: 10 } } } as QuizExercise;
 const route = { params: of({ questionId: 1, exerciseId: 42 }) };
 
 describe('QuizExercise Statistic Footer Component', () => {
@@ -32,7 +32,6 @@ describe('QuizExercise Statistic Footer Component', () => {
     let accountSpy: SinonStub;
     let routerSpy: SinonStub;
     let router: Router;
-    let quizStatisticUtil: QuizStatisticUtil;
     let quizServiceFindSpy: SinonStub;
 
     beforeEach(() => {
@@ -56,7 +55,6 @@ describe('QuizExercise Statistic Footer Component', () => {
                 quizService = fixture.debugElement.injector.get(QuizExerciseService);
                 accountService = fixture.debugElement.injector.get(AccountService);
                 router = fixture.debugElement.injector.get(Router);
-                quizStatisticUtil = fixture.debugElement.injector.get(QuizStatisticUtil);
                 routerSpy = stub(router, 'navigateByUrl');
                 accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(true);
                 quizServiceFindSpy = stub(quizService, 'find').returns(of(new HttpResponse({ body: quizExercise })));
@@ -66,6 +64,7 @@ describe('QuizExercise Statistic Footer Component', () => {
     afterEach(() => {
         comp.ngOnDestroy();
         quizExercise = { id: 42, started: true, course, quizQuestions: [question] } as QuizExercise;
+        examQuizExercise = { id: 43, started: true, course, quizQuestions: [question], exerciseGroup: { id: 11, exam: { id: 10 } } } as QuizExercise;
     });
 
     it('Should load Quiz on Init', fakeAsync(() => {
@@ -142,7 +141,6 @@ describe('QuizExercise Statistic Footer Component', () => {
 
         it('should go to previous statistic', () => {
             // setup
-            const quizStatisticUtilSpy = spyOn(quizStatisticUtil, 'navigateToStatisticOf');
             comp.quizExercise = quizExercise;
             comp.isQuizStatistic = false;
             comp.isQuizPointStatistic = true;
@@ -151,22 +149,77 @@ describe('QuizExercise Statistic Footer Component', () => {
             comp.previousStatistic();
 
             // check
-            expect(quizStatisticUtilSpy).toHaveBeenCalledWith(quizExercise, question);
+            expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/quiz-exercises/42/mc-question-statistic/1`);
         });
 
-        it('should call util previous Statistic ', () => {
+        it('should call util previous Statistic', () => {
             // setup
-            const quizStatisticUtilSpy = spyOn(quizStatisticUtil, 'previousStatistic');
             comp.quizExercise = quizExercise;
             comp.question = question;
             comp.isQuizStatistic = false;
             comp.isQuizPointStatistic = false;
 
             // call
-            // comp.previousStatistic();
+            comp.previousStatistic();
 
             // check
-            expect(quizStatisticUtilSpy).not.toHaveBeenCalledWith(quizExercise, question);
+            expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/quiz-exercises/42/quiz-point-statistic`);
+        });
+    });
+
+    describe('test previous statistic for exams', () => {
+        // setup
+        it('should go to quiz-point-statistic for exam', () => {
+            // setup
+            comp.quizExercise = examQuizExercise;
+            comp.isQuizStatistic = true;
+
+            // call
+            comp.previousStatistic();
+
+            // check
+            expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/exams/10/exercise-groups/11/quiz-exercises/43/quiz-point-statistic`);
+        });
+
+        it('should go to quiz-statistic for exam', () => {
+            // setup
+            examQuizExercise.quizQuestions = [];
+            comp.quizExercise = examQuizExercise;
+            comp.isQuizStatistic = false;
+            comp.isQuizPointStatistic = true;
+
+            // check
+            comp.previousStatistic();
+
+            // check
+            expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/exams/10/exercise-groups/11/quiz-exercises/43/quiz-statistic`);
+        });
+
+        it('should go to previous statistic for exam', () => {
+            // setup
+            comp.quizExercise = examQuizExercise;
+            comp.isQuizStatistic = false;
+            comp.isQuizPointStatistic = true;
+
+            // call
+            comp.previousStatistic();
+
+            // check
+            expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/exams/10/exercise-groups/11/quiz-exercises/43/mc-question-statistic/1`);
+        });
+
+        it('should call util previous Statistic for exam', () => {
+            // setup
+            comp.quizExercise = examQuizExercise;
+            comp.question = question;
+            comp.isQuizStatistic = false;
+            comp.isQuizPointStatistic = false;
+
+            // call
+            comp.previousStatistic();
+
+            // check
+            expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/exams/10/exercise-groups/11/quiz-exercises/43/quiz-point-statistic`);
         });
     });
 
@@ -199,7 +252,6 @@ describe('QuizExercise Statistic Footer Component', () => {
 
         it('should go to next statistic', () => {
             // setup
-            const quizStatisticUtilSpy = spyOn(quizStatisticUtil, 'navigateToStatisticOf');
             comp.quizExercise = quizExercise;
             comp.isQuizPointStatistic = false;
             comp.isQuizStatistic = true;
@@ -208,12 +260,11 @@ describe('QuizExercise Statistic Footer Component', () => {
             comp.nextStatistic();
 
             // check
-            expect(quizStatisticUtilSpy).toHaveBeenCalledWith(quizExercise, question);
+            expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/quiz-exercises/42/mc-question-statistic/1`);
         });
 
-        it('should call util next Statistic ', () => {
+        it('should call util next Statistic', () => {
             // setup
-            const quizStatisticUtilSpy = spyOn(quizStatisticUtil, 'nextStatistic');
             comp.quizExercise = quizExercise;
             comp.question = question;
             comp.isQuizPointStatistic = false;
@@ -223,7 +274,62 @@ describe('QuizExercise Statistic Footer Component', () => {
             comp.nextStatistic();
 
             // check
-            expect(quizStatisticUtilSpy).toHaveBeenCalledWith(quizExercise, question);
+            expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/quiz-exercises/42/quiz-point-statistic`);
+        });
+    });
+
+    describe('test next statistic for exams', () => {
+        it('should go to quiz-statistic for exam', () => {
+            // setup
+            comp.quizExercise = examQuizExercise;
+            comp.isQuizPointStatistic = true;
+
+            // call
+            comp.nextStatistic();
+
+            // check
+            expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/exams/10/exercise-groups/11/quiz-exercises/43/quiz-statistic`);
+        });
+
+        it('should go to quiz-statistic for exam', () => {
+            // setup
+            examQuizExercise.quizQuestions = [];
+            comp.quizExercise = examQuizExercise;
+            comp.isQuizPointStatistic = false;
+            comp.isQuizStatistic = true;
+
+            // call
+            comp.nextStatistic();
+
+            // check
+            expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/exams/10/exercise-groups/11/quiz-exercises/43/quiz-point-statistic`);
+        });
+
+        it('should go to next statistic for exam', () => {
+            // setup
+            comp.quizExercise = examQuizExercise;
+            comp.isQuizPointStatistic = false;
+            comp.isQuizStatistic = true;
+
+            // call
+            comp.nextStatistic();
+
+            // check
+            expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/exams/10/exercise-groups/11/quiz-exercises/43/mc-question-statistic/1`);
+        });
+
+        it('should call util next Statistic for exam', () => {
+            // setup
+            comp.quizExercise = examQuizExercise;
+            comp.question = question;
+            comp.isQuizPointStatistic = false;
+            comp.isQuizStatistic = false;
+
+            // call
+            comp.nextStatistic();
+
+            // check
+            expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/exams/10/exercise-groups/11/quiz-exercises/43/quiz-point-statistic`);
         });
     });
 });
