@@ -50,6 +50,8 @@ public class GroupNotificationFactoryTest {
 
     private String expectedTarget;
 
+    private static String defaultExpectedTargetForExercises;
+
     private NotificationPriority expectedPriority;
 
     private GroupNotification createdNotification;
@@ -81,6 +83,7 @@ public class GroupNotificationFactoryTest {
 
         attachment = mock(Attachment.class);
         when(attachment.getLecture()).thenReturn(lecture);
+
     }
 
     private void checkCreatedNotification(GroupNotification createdNotification, String expectedTitle, String expectedText, String expectedTarget,
@@ -100,6 +103,11 @@ public class GroupNotificationFactoryTest {
         // without notification text
         createdNotification = groupNotificationFactory.createNotification(exercise, user, groupNotificationType, notificationType, null);
         checkCreatedNotification(createdNotification, expectedTitle, expectedText, expectedTarget, expectedPriority);
+    }
+
+    private String createDefaultExpectedTargetForExercises(String message) {
+        return "{\"message\":\"" + message + "\",\"id\":" + exercise.getId() + ",\"entity\":\"exercises\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
+
     }
 
     // Based on Attachment
@@ -130,7 +138,7 @@ public class GroupNotificationFactoryTest {
         notificationType = NotificationType.EXERCISE_CREATED;
         expectedTitle = "Exercise created";
         expectedText = "A new exercise \"" + exercise.getTitle() + "\" got created.";
-        expectedTarget = "{\"message\":\"exerciseCreated\",\"id\":" + exercise.getId() + ",\"entity\":\"exercises\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
+        expectedTarget = createDefaultExpectedTargetForExercises("exerciseCreated");
         expectedPriority = NotificationPriority.MEDIUM;
 
         createAndCheckNotificationBasedOnExercise();
@@ -142,7 +150,7 @@ public class GroupNotificationFactoryTest {
         notificationType = NotificationType.EXERCISE_PRACTICE;
         expectedTitle = "Exercise open for practice";
         expectedText = "Exercise \"" + exercise.getTitle() + "\" is now open for practice.";
-        expectedTarget = "{\"message\":\"exerciseUpdated\",\"id\":" + exercise.getId() + ",\"entity\":\"exercises\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
+        expectedTarget = createDefaultExpectedTargetForExercises("exerciseUpdated");
         expectedPriority = NotificationPriority.MEDIUM;
 
         createAndCheckNotificationBasedOnExercise();
@@ -154,7 +162,7 @@ public class GroupNotificationFactoryTest {
         notificationType = NotificationType.QUIZ_EXERCISE_STARTED;
         expectedTitle = "Quiz started";
         expectedText = "Quiz \"" + exercise.getTitle() + "\" just started.";
-        expectedTarget = "{\"message\":\"exerciseUpdated\",\"id\":" + exercise.getId() + ",\"entity\":\"exercises\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
+        expectedTarget = createDefaultExpectedTargetForExercises("exerciseUpdated");
         expectedPriority = NotificationPriority.MEDIUM;
 
         createAndCheckNotificationBasedOnExercise();
@@ -192,7 +200,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = "Exercise updated";
         expectedText = "Exercise \"" + exercise.getTitle() + "\" updated.";
         expectedPriority = NotificationPriority.MEDIUM;
-        expectedTarget = "{\"message\":\"exerciseUpdated\",\"id\":" + exercise.getId() + ",\"entity\":\"exercises\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
+        expectedTarget = createDefaultExpectedTargetForExercises("exerciseUpdated");
 
         createAndCheckNotificationBasedOnExercise();
     }
