@@ -114,6 +114,15 @@ describe('TextExamSubmissionComponent', () => {
         expect(component.studentSubmission.text).to.equal('Text');
     });
 
+    it('should update problem statement of the exercise', () => {
+        component.exercise.problemStatement = 'old problem statement';
+        const newProblemStatement = 'new problem statement';
+
+        component.updateProblemStatement(newProblemStatement);
+
+        expect(component.exercise.problemStatement).to.equal(newProblemStatement);
+    });
+
     it('should trigger text editor events', () => {
         component.exercise = exercise;
         textSubmission.text = 'Hello World';

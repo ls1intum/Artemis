@@ -150,6 +150,13 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
     });
 
+    it('should update problem statement', () => {
+        resetComponent();
+        const newProblemStatement = 'new problem statement';
+        comp.updateProblemStatement(newProblemStatement);
+        expect(comp.getExercise().problemStatement).to.equal(newProblemStatement);
+    });
+
     describe('updateSubmissionFromView', () => {
         beforeEach(() => {
             resetComponent();

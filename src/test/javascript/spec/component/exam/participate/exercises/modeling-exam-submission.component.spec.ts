@@ -167,6 +167,16 @@ describe('ModelingExamSubmissionComponent', () => {
         });
     });
 
+    it('should update problem statement of the exercise', () => {
+        resetComponent();
+        comp.exercise.problemStatement = 'old problem statement';
+        const newProblemStatement = 'new problem statement';
+
+        comp.updateProblemStatement(newProblemStatement);
+
+        expect(comp.exercise.problemStatement).to.equal(newProblemStatement);
+    });
+
     describe('updateSubmissionFromView', () => {
         beforeEach(() => {
             resetComponent();
