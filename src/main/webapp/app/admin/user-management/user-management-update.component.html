@@ -144,13 +144,13 @@
 
                 <div class="form-group" *ngIf="languages && languages.length > 0">
                     <label jhiTranslate="userManagement.langKey">Lang Key</label>
-                    <select class="form-control" id="langKey" name="langKey" [(ngModel)]="user.langKey">
+                    <select class="form-select" id="langKey" name="langKey" [(ngModel)]="user.langKey">
                         <option *ngFor="let language of languages" [value]="language">{{ language | findLanguageFromKey }}</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label jhiTranslate="userManagement.profiles">Profiles</label>
-                    <select class="form-control" multiple name="authority" [(ngModel)]="user.authorities">
+                    <select class="form-select" multiple name="authority" [(ngModel)]="user.authorities">
                         <option *ngFor="let authority of authorities" [value]="authority">{{ authority }}</option>
                     </select>
                 </div>
