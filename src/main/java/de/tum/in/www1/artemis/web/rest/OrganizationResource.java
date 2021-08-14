@@ -154,18 +154,14 @@ public class OrganizationResource {
     public ResponseEntity<Organization> updateOrganization(@PathVariable Long organizationId, @RequestBody Organization organization) {
         log.debug("REST request to update organization : {}", organization);
         if (organization.getId() == null) {
-            return badRequest("organization.Id", "400", "Id of the organization in the RequestBody isn't set!");
+            return badRequest("organization.Id", "400", "The ID of the organization in the RequestBody isn't set!");
         }
         if (!organization.getId().equals(organizationId)) {
             return badRequest("organizationId", "400", "organizationId in path doesn't match the one in the RequestBody!");
         }
-        if (organization.getId() != null && organizationRepository.findOneOrElseThrow(organization.getId()) != null) {
-            Organization updated = organizationService.update(organization);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updated.getName())).body(updated);
-        }
-        else {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The organization to update doesn't have an ID.", "NoIdProvided")).body(null);
-        }
+        organizationRepository.findOneOrElseThrow(organization.getId());
+        Organization updated = organizationService.update(organization);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updated.getName())).body(updated);
     }
 
     /**

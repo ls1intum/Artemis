@@ -247,6 +247,42 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
+     * Test updating an existing organization
+     * @throws Exception exception
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUpdateOrganization_IdInBodyNull() throws Exception {
+        jiraRequestMockProvider.enableMockingOfRequests();
+
+        Organization organization = database.createOrganization();
+        Organization initialOrganization = organization;
+        organization.setName("UpdatedName");
+        organization.setId(null);
+
+        Organization updatedOrganization = request.putWithResponseBody("/api/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.BAD_REQUEST);
+        assertThat(updatedOrganization).isEqualTo(initialOrganization);
+    }
+
+    /**
+     * Test updating an existing organization
+     * @throws Exception exception
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUpdateOrganization_IdInPathWrong() throws Exception {
+        jiraRequestMockProvider.enableMockingOfRequests();
+
+        Organization organization = database.createOrganization();
+        Organization initialOrganization = organization;
+        organization.setName("UpdatedName");
+        long randomId = 1337420;
+
+        Organization updatedOrganization = request.putWithResponseBody("/api/organizations/" + randomId, organization, Organization.class, HttpStatus.BAD_REQUEST);
+        assertThat(updatedOrganization).isEqualTo(initialOrganization);
+    }
+
+    /**
      * Test delete an organization
      * @throws Exception exception
      */
