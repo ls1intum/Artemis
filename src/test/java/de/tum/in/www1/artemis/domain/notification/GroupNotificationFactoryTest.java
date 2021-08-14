@@ -148,22 +148,18 @@ public class GroupNotificationFactoryTest {
                 break;
             }
             case POST: {
-                // post base method call does not utilize manually set notification text, thus only one notification is created
                 createdNotification = groupNotificationFactory.createNotification(post, user, groupNotificationType, notificationType);
                 break;
             }
             case ANSWER_POST: {
-                // answer post also do not use manually set notification texts
                 createdNotification = groupNotificationFactory.createNotification(answerPost, user, groupNotificationType, notificationType);
                 break;
             }
             case COURSE: {
-                // answer post also do not use manually set notification texts
                 createdNotification = groupNotificationFactory.createNotification(course, user, groupNotificationType, notificationType, archiveErrors);
                 break;
             }
             case EXAM: {
-                // answer post also do not use manually set notification texts
                 createdNotification = groupNotificationFactory.createNotification(exam, user, groupNotificationType, notificationType, archiveErrors);
                 break;
             }
