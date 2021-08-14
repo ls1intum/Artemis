@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
@@ -356,6 +357,24 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         Result result = request.postWithResponseBody("/api/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class,
                 HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
+        verifyNoInteractions(messagingTemplate);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testQuizSubmitPractice_badRequest_exam() throws Exception {
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        QuizExercise quizExerciseServer = database.createQuizForExam(exerciseGroup);
+        quizExerciseService.save(quizExerciseServer);
+
+        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
+
+        QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExerciseServer, 1, true, null);
+        // exam quiz not open for practice --> bad request expected
+        Result result = request.postWithResponseBody("/api/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class,
+                HttpStatus.BAD_REQUEST);
+        assertThat(result).isNull();
+        verifyNoInteractions(messagingTemplate);
     }
 
     @Test
@@ -378,6 +397,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
         quizExerciseService.save(quizExercise);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
+        verifyNoInteractions(messagingTemplate);
     }
 
     @Test
