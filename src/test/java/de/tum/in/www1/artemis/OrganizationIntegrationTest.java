@@ -247,7 +247,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * Test updating an existing organization
+     * Test updating an existing organization when the Id in the RequestBody is null
      * @throws Exception exception
      */
     @Test
@@ -261,11 +261,12 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         organization.setId(null);
 
         Organization updatedOrganization = request.putWithResponseBody("/api/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.BAD_REQUEST);
-        assertThat(updatedOrganization).isEqualTo(initialOrganization);
+        assertThat(updatedOrganization).isNull();
+        assertThat(organizationRepo.getById(initialOrganization.getId())).isEqualTo(initialOrganization);
     }
 
     /**
-     * Test updating an existing organization
+     * Test updating an existing organization when the Id in the path doesn't match the one in the Body
      * @throws Exception exception
      */
     @Test
@@ -279,7 +280,8 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         long randomId = 1337420;
 
         Organization updatedOrganization = request.putWithResponseBody("/api/organizations/" + randomId, organization, Organization.class, HttpStatus.BAD_REQUEST);
-        assertThat(updatedOrganization).isEqualTo(initialOrganization);
+        assertThat(updatedOrganization).isNull();
+        assertThat(organizationRepo.getById(initialOrganization.getId())).isEqualTo(initialOrganization);
     }
 
     /**
