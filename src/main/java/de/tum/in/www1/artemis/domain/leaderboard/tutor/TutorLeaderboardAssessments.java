@@ -24,7 +24,7 @@ public class TutorLeaderboardAssessments {
         return userId;
     }
 
-    public TutorLeaderboardAssessments(long userId, long assessments, double points) {
+    public TutorLeaderboardAssessments(Long userId, Long assessments, Double points) {
         this.userId = userId;
         this.assessments = assessments;
         this.points = points;
