@@ -24,11 +24,7 @@ const courseName = 'Cypress course' + uid;
 const courseShortName = 'cypress' + uid;
 const programmingExerciseName = 'Cypress programming exercise ' + uid;
 const programmingExerciseShortName = courseShortName;
-const exercisePath = '/exercises';
 const packageName = 'de.test';
-
-// Selectors
-const exerciseRow = '.course-exercise-row';
 
 describe('Programming exercise participations', () => {
     before(() => {
@@ -144,13 +140,7 @@ function startParticipationInProgrammingExercise(credentials: CypressCredentials
     cy.login(credentials, '/');
     cy.url().should('include', '/courses');
     cy.log('Participating in the programming exercise as a student...');
-    cy.contains(courseName).parents('.card-header').click();
-    cy.url().should('include', exercisePath);
-    cy.intercept('POST', '/api/courses/*/exercises/*/participations').as('participateInExerciseQuery');
-    cy.get(exerciseRow).contains(programmingExerciseName).should('be.visible');
-    cy.get(exerciseRow).find('.start-exercise').click();
-    cy.wait('@participateInExerciseQuery');
-    cy.intercept('GET', '/api/programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
-    cy.get(exerciseRow).find('[buttonicon="folder-open"]').click();
-    cy.wait('@initialQuery').wait(2000);
+    artemis.pageobjects.courses.openCourse(courseName);
+    artemis.pageobjects.courseOverview.startExercise(programmingExerciseName);
+    artemis.pageobjects.courseOverview.openRunningProgrammingExercise(programmingExerciseName);
 }

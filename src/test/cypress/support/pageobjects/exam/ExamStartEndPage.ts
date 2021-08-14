@@ -1,4 +1,4 @@
-import { artemis } from '../ArtemisTesting';
+import { artemis } from '../../ArtemisTesting';
 
 export class ExamStartEndPage {
     enterFirstnameLastname() {
