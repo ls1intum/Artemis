@@ -13,6 +13,8 @@ import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.Post;
 
 public class GroupNotificationFactoryTest {
 
@@ -43,6 +45,12 @@ public class GroupNotificationFactoryTest {
 
     @Mock
     private static Exercise exercise;
+
+    @Mock
+    private static Post post;
+
+    @Mock
+    private static AnswerPost answerPost;
 
     private String expectedTitle;
 
@@ -81,6 +89,13 @@ public class GroupNotificationFactoryTest {
 
         attachment = mock(Attachment.class);
         when(attachment.getLecture()).thenReturn(lecture);
+
+        post = mock(Post.class);
+        when(post.getExercise()).thenReturn(exercise);
+        when(post.getLecture()).thenReturn(lecture);
+
+        answerPost = mock(AnswerPost.class);
+        when(answerPost.getPost()).thenReturn(post);
     }
 
     private void checkCreatedNotification(GroupNotification createdNotification, String expectedTitle, String expectedText, String expectedTarget,
@@ -92,19 +107,55 @@ public class GroupNotificationFactoryTest {
         assertThat(createdNotification.getAuthor()).isEqualTo(user);
     }
 
-    private void createAndCheckNotificationBasedOnExercise() {
-        // with notification text
-        createdNotification = groupNotificationFactory.createNotification(exercise, user, groupNotificationType, notificationType, notificationText);
+    private void checkCreatedNotificationWithNotificationText() {
         checkCreatedNotification(createdNotification, expectedTitle, notificationText, expectedTarget, expectedPriority);
+    }
 
-        // without notification text
-        createdNotification = groupNotificationFactory.createNotification(exercise, user, groupNotificationType, notificationType, null);
+    private void checkCreatedNotificationWithoutNotificationText() {
         checkCreatedNotification(createdNotification, expectedTitle, expectedText, expectedTarget, expectedPriority);
     }
 
-    private String createDefaultExpectedTargetForExercises(String message) {
-        return "{\"message\":\"" + message + "\",\"id\":" + exercise.getId() + ",\"entity\":\"exercises\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
+    private String createDefaultExpectedTarget(String message, String entity) {
+        return "{\"message\":\"" + message + "\",\"id\":" + exercise.getId() + ",\"entity\":\"" + entity + "\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
+    }
 
+    private enum Base {
+        ATTACHMENT, EXERCISE, POST, ANSWER_POST
+    }
+
+    /** Calls the real createNotification method of the groupNotificationFactory and tests if the result is correct.
+     * Usually two notifications are created for each case with and without the use of a notification text
+     * @param base is the first input parameter used in the respective factory method to create the group notification.
+     */
+    private void createAndCheckNotification(Base base) {
+        switch (base) {
+            case ATTACHMENT: {
+                createdNotification = groupNotificationFactory.createNotification(attachment, user, groupNotificationType, notificationType, notificationText);
+                checkCreatedNotificationWithNotificationText();
+                createdNotification = groupNotificationFactory.createNotification(attachment, user, groupNotificationType, notificationType, null);
+                checkCreatedNotificationWithoutNotificationText();
+                break;
+            }
+            case EXERCISE: {
+                createdNotification = groupNotificationFactory.createNotification(exercise, user, groupNotificationType, notificationType, notificationText);
+                checkCreatedNotificationWithNotificationText();
+                createdNotification = groupNotificationFactory.createNotification(exercise, user, groupNotificationType, notificationType, null);
+                checkCreatedNotificationWithoutNotificationText();
+                break;
+            }
+            case POST: {
+                // post base method call does not utilize manually set notification text, thus only one notification is created
+                createdNotification = groupNotificationFactory.createNotification(post, user, groupNotificationType, notificationType);
+                checkCreatedNotification(createdNotification, expectedTitle, expectedText, expectedTarget, expectedPriority);
+                break;
+            }
+            case ANSWER_POST: {
+                // answer post also do not use manually set notification texts
+                createdNotification = groupNotificationFactory.createNotification(answerPost, user, groupNotificationType, notificationType);
+                checkCreatedNotification(createdNotification, expectedTitle, expectedText, expectedTarget, expectedPriority);
+                break;
+            }
+        }
     }
 
     // Based on Attachment
@@ -118,13 +169,7 @@ public class GroupNotificationFactoryTest {
         expectedTarget = "{\"message\":\"attachmentUpdated\",\"id\":" + lectureId + ",\"entity\":\"lectures\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
         expectedPriority = NotificationPriority.MEDIUM;
 
-        // with notification text
-        createdNotification = groupNotificationFactory.createNotification(attachment, user, groupNotificationType, notificationType, notificationText);
-        checkCreatedNotification(createdNotification, expectedTitle, notificationText, expectedTarget, expectedPriority);
-
-        // without notification text
-        createdNotification = groupNotificationFactory.createNotification(attachment, user, groupNotificationType, notificationType, null);
-        checkCreatedNotification(createdNotification, expectedTitle, expectedText, expectedTarget, expectedPriority);
+        createAndCheckNotification(Base.ATTACHMENT);
     }
 
     // Based on Exercise
@@ -135,10 +180,10 @@ public class GroupNotificationFactoryTest {
         notificationType = NotificationType.EXERCISE_CREATED;
         expectedTitle = "Exercise created";
         expectedText = "A new exercise \"" + exercise.getTitle() + "\" got created.";
-        expectedTarget = createDefaultExpectedTargetForExercises("exerciseCreated");
+        expectedTarget = createDefaultExpectedTarget("exerciseCreated", "exercises");
         expectedPriority = NotificationPriority.MEDIUM;
 
-        createAndCheckNotificationBasedOnExercise();
+        createAndCheckNotification(Base.EXERCISE);
     }
 
     @Test
@@ -147,10 +192,10 @@ public class GroupNotificationFactoryTest {
         notificationType = NotificationType.EXERCISE_PRACTICE;
         expectedTitle = "Exercise open for practice";
         expectedText = "Exercise \"" + exercise.getTitle() + "\" is now open for practice.";
-        expectedTarget = createDefaultExpectedTargetForExercises("exerciseUpdated");
+        expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises");
         expectedPriority = NotificationPriority.MEDIUM;
 
-        createAndCheckNotificationBasedOnExercise();
+        createAndCheckNotification(Base.EXERCISE);
     }
 
     @Test
@@ -159,10 +204,10 @@ public class GroupNotificationFactoryTest {
         notificationType = NotificationType.QUIZ_EXERCISE_STARTED;
         expectedTitle = "Quiz started";
         expectedText = "Quiz \"" + exercise.getTitle() + "\" just started.";
-        expectedTarget = createDefaultExpectedTargetForExercises("exerciseUpdated");
+        expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises");
         expectedPriority = NotificationPriority.MEDIUM;
 
-        createAndCheckNotificationBasedOnExercise();
+        createAndCheckNotification(Base.EXERCISE);
     }
 
     @Test
@@ -178,14 +223,17 @@ public class GroupNotificationFactoryTest {
         expectedTarget = "{\"problemStatement\":\"" + exercise.getProblemStatement() + "\",\"exercise\":" + exercise.getId() + ",\"exam\":" + exam.getId()
                 + ",\"entity\":\"exams\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
 
+        // EXERCISE_UPDATED's implementation differs from the other types therefore the testing has to be adjusted (more explicit)
+
         // with notification text -> exam popup
         createdNotification = groupNotificationFactory.createNotification(exercise, user, groupNotificationType, notificationType, notificationText);
-        checkCreatedNotification(createdNotification, expectedTitle, notificationText, expectedTarget, NotificationPriority.HIGH);
+        checkCreatedNotificationWithNotificationText();
 
         // without notification text -> silent exam update (expectedText = null)
         createdNotification = groupNotificationFactory.createNotification(exercise, user, groupNotificationType, notificationType, null);
         checkCreatedNotification(createdNotification, expectedTitle, null, expectedTarget, NotificationPriority.HIGH);
 
+        // set behavior back to course exercise
         when(exercise.isExamExercise()).thenReturn(false);
     }
 
@@ -197,8 +245,51 @@ public class GroupNotificationFactoryTest {
         expectedTitle = "Exercise updated";
         expectedText = "Exercise \"" + exercise.getTitle() + "\" updated.";
         expectedPriority = NotificationPriority.MEDIUM;
-        expectedTarget = createDefaultExpectedTargetForExercises("exerciseUpdated");
+        expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises");
 
-        createAndCheckNotificationBasedOnExercise();
+        createAndCheckNotification(Base.EXERCISE);
+    }
+
+    // Based on Post
+
+    @Test
+    public void createNotificationBasedOnPost_withNotificationType_NewPostForExercise() {
+
+        notificationType = NotificationType.NEW_POST_FOR_EXERCISE;
+
+        expectedTitle = "New Post";
+        expectedText = "Exercise \"" + exercise.getTitle() + "\" got a new post.";
+        expectedPriority = NotificationPriority.MEDIUM;
+        expectedTarget = createDefaultExpectedTarget("newPost", "exercises");
+
+        createAndCheckNotification(Base.POST);
+    }
+
+    @Test
+    public void createNotificationBasedOnPost_withNotificationType_NewPostForLecture() {
+
+        notificationType = NotificationType.NEW_POST_FOR_LECTURE;
+
+        expectedTitle = "New Post";
+        expectedText = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
+        expectedPriority = NotificationPriority.MEDIUM;
+        expectedTarget = createDefaultExpectedTarget("newPost", "lectures");
+
+        createAndCheckNotification(Base.POST);
+    }
+
+    // Based on AnswerPost
+
+    @Test
+    public void createNotificationBasedOnPost_withNotificationType_NewAnswerPostForExercise() {
+
+        notificationType = NotificationType.NEW_ANSWER_POST_FOR_EXERCISE;
+
+        expectedTitle = "New Reply";
+        expectedText = "Exercise \"" + exercise.getTitle() + "\" got a new reply.";
+        expectedPriority = NotificationPriority.MEDIUM;
+        expectedTarget = createDefaultExpectedTarget("newAnswerPost", "exercises");
+
+        createAndCheckNotification(Base.ANSWER_POST);
     }
 }
