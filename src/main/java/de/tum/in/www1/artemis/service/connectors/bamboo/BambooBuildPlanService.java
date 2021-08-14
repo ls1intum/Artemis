@@ -217,13 +217,16 @@ public class BambooBuildPlanService {
             }
             case SWIFT -> {
                 var isXcodeProject = ProjectType.XCODE.equals(projectType);
-                var subDirectory = ""; // isXcodeProject ? "/xcode" : "";
+                var subDirectory = isXcodeProject ? "/xcode" : "";
                 Map<String, String> replacements = Map.of("${packageName}", packageName);
                 var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/tests.xml");
                 if (isXcodeProject) {
                     testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/report.junit");
                 }
                 var tasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, sequentialBuildRuns, false, replacements);
+                if (isXcodeProject) {
+                    tasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, sequentialBuildRuns, false, null);
+                }
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask);
                 // SCA for Xcode is not supported yet
