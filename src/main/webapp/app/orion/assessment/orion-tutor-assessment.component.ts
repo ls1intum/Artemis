@@ -30,7 +30,7 @@ export class OrionTutorAssessmentComponent {
      * @param feedback updated feedback from Orion
      */
     updateFeedback(submissionId: number, feedback: Feedback[]) {
-        if (submissionId != this.container.submission?.id) {
+        if (submissionId !== this.container.submission?.id) {
             this.jhiAlertService.error('artemisApp.orion.assessment.submissionIdDontMatch');
         } else {
             this.container.onUpdateFeedback(feedback);

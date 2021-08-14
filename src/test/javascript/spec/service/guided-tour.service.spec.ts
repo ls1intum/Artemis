@@ -734,7 +734,6 @@ describe('GuidedTourService', () => {
     });
 
     describe('GuidedTourService init', () => {
-        let guidedTourComponent: GuidedTourComponent;
         let guidedTourComponentFixture: ComponentFixture<GuidedTourComponent>;
         let accountService: AccountService;
         let profileService: ProfileService;
@@ -766,7 +765,6 @@ describe('GuidedTourService', () => {
                 .compileComponents()
                 .then(() => {
                     guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
-                    guidedTourComponent = guidedTourComponentFixture.componentInstance;
 
                     TestBed.createComponent(NavbarComponent);
 
