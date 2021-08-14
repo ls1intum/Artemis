@@ -32,8 +32,8 @@ public class TextAssessmentKnowledge extends DomainObject {
     }
 
     public TextAssessmentKnowledge addExercises(TextExercise exercise) {
-        this.exercises.add(exercise);
         exercise.setKnowledge(this);
+        this.exercises.add(exercise);
         return this;
     }
 
@@ -42,8 +42,8 @@ public class TextAssessmentKnowledge extends DomainObject {
     }
 
     public TextAssessmentKnowledge addTextBlocks(TextBlock textBlock) {
-        this.textBlocks.add(textBlock);
         textBlock.setKnowledge(this);
+        this.textBlocks.add(textBlock);
         return this;
     }
 }
