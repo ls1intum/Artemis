@@ -263,7 +263,6 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         Organization updatedOrganization = request.putWithResponseBody("/api/organizations/" + initialOrganizationId, initialOrganization, Organization.class,
                 HttpStatus.BAD_REQUEST);
         assertThat(updatedOrganization).isNull();
-        assertThat(organizationRepo.getById(initialOrganizationId)).isEqualTo(initialOrganization);
     }
 
     /**
@@ -284,7 +283,6 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         Organization updatedOrganization = request.putWithResponseBody("/api/organizations/" + randomId, organization, Organization.class, HttpStatus.BAD_REQUEST);
         organization.setName(initialName);
         assertThat(updatedOrganization).isNull();
-        assertThat(organizationRepo.getById(organization.getId())).isEqualTo(organization);
     }
 
     /**

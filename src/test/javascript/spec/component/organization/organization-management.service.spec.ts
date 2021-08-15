@@ -52,6 +52,14 @@ describe('Organization Service', () => {
         req.flush(JSON.stringify(returnElement));
     });
 
+    it('should return number of users and courses of organization', async () => {
+        const returnElement = createTestReturnElement();
+        service.getNumberOfUsersAndCoursesOfOrganizations().subscribe((data) => expect(data).toMatchObject({ body: returnElement }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(JSON.stringify(returnElement));
+    });
+
     it('should return all Organizations a course is assigned to', async () => {
         const returnElement = createTestReturnElement();
         service.getOrganizationsByCourse(1).subscribe((data) => expect(data).toMatchObject({ body: returnElement }));

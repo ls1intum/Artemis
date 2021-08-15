@@ -146,6 +146,7 @@ public class OrganizationResource {
     /**
      * PUT organizations/{organizationId} : Update an existing organization
      *
+     * @param organizationId id of the organization in the body
      * @param organization the updated organization entity
      * @return the ResponseEntity containing the updated organization with status 200 (OK), or 404 (Not Found) otherwise
      */
