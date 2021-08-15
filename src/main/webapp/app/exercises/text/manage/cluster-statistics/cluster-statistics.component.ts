@@ -1,27 +1,18 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { Component, OnInit } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
 import { TextExerciseService } from '../text-exercise/text-exercise.service';
 import { ActivatedRoute } from '@angular/router';
-
-export interface ClusterInfo {
-    clusterId: number;
-    clusterSize: number;
-    numberOfAutomaticFeedbacks: number;
-    disabled: boolean;
-}
+import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
 
 @Component({
     selector: 'jhi-text-exercise-cluster-statistics',
     templateUrl: './cluster-statistics.component.html',
 })
 export class ClusterStatisticsComponent implements OnInit {
-    readonly MIN_POINTS_GREEN = 100;
-    readonly MIN_POINTS_ORANGE = 50;
-    clusters: ClusterInfo[] = [];
+    clusters: TextExerciseClusterStatistics[] = [];
     currentExerciseId: number;
 
-    constructor(private textExerciseService: TextExerciseService, private route: ActivatedRoute, jhiAlertService: JhiAlertService) {}
+    constructor(private textExerciseService: TextExerciseService, private route: ActivatedRoute) {}
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
@@ -32,8 +23,7 @@ export class ClusterStatisticsComponent implements OnInit {
 
     loadClusterFromExercise(exerciseId: number) {
         this.textExerciseService.getClusterStats(exerciseId).subscribe({
-            next: (res: HttpResponse<ClusterInfo[]>) => {
-                console.error(res.body, 'RESSSS!');
+            next: (res: HttpResponse<TextExerciseClusterStatistics[]>) => {
                 this.clusters = res.body!;
             },
         });

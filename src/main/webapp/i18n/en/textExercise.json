@@ -31,7 +31,14 @@
             "saveSuccessful": "Your answer was saved successfully!",
             "error": "An error occurred. Please try again later.",
             "clusterStatistics": {
-                "title": "Cluster Statistics"
+                "title": "Cluster Statistics",
+                "clusterId": "Cluster ID",
+                "reusedFeedbackRatio": "Cluster Reused Feedback Ratio",
+                "reusedFeedbackRatioTooltip": "Number of Automatic Feedbacks Reused / Cluster Size",
+                "action": "Action",
+                "disable": "Disable",
+                "enable": "Enable",
+                "noClustersFound": "<b>No text clusters found for this exercise</b>"
             }
         }
     }

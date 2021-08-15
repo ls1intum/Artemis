@@ -278,7 +278,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
             this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
                 (res: HttpResponse<StatsForDashboard>) => {
-                    console.log('getStatsForTutors !!!!!!!!!!!!!');
                     this.statsForDashboard = StatsForDashboard.from(res.body!);
                     this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                     this.totalNumberOfAssessments = this.statsForDashboard.totalNumberOfAssessments;

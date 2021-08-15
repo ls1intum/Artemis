@@ -28,13 +28,13 @@ public class TextClusterResource {
     }
 
     /**
-     * Get /cluster-stats
+     * Get /text-execises/{exerciseId}/cluster-statistics/
      * <p>
      * Get text cluster stats
-     *
-     * @return The list of cluster ids adjacent to their respective sizes and automatically graded textblocks
+     * @param exerciseId The id of the text exercise to fetch cluster statistics data from
+     * @return The list of cluster ids adjacent to their respective sizes and automatically graded text blocks
      */
-    @GetMapping("/cluster-stats/{exerciseId}")
+    @GetMapping("/text-execises/{exerciseId}/cluster-statistics/")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<TextClusterRepository.TextClusterStats>> getClusterStats(@PathVariable Long exerciseId) {
         var clusterStats = textClusterRepository.getClusterStatistics(exerciseId);
@@ -43,15 +43,17 @@ public class TextClusterResource {
     }
 
     /**
-     * Put /clusters/{clusterId}/disable
+     * Put /text-clusters/{clusterId}
      * <p>
-     * Sets cluster disabled boolean value
+     * Sets a text cluster's disabled boolean value
      *
+     * @param clusterId The id of the cluster to be disabled/enabled
+     * @param disabled The predicate value defining the disabled state of the cluster
      * @return The status whether the boolean value was set successfully or the setting failed.
      */
-    @PutMapping("/clusters/{clusterId}/disable")
+    @PutMapping("/text-clusters/{clusterId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> setClusterDisabledPredicate(@PathVariable Long clusterId, @RequestParam(value = "disabled") boolean disabled) {
+    public ResponseEntity<Void> toggleClusterDisabledPredicate(@PathVariable Long clusterId, @RequestParam boolean disabled) {
         log.info("REST request to disable Cluster : {}", clusterId);
         final Optional<TextCluster> cluster = textClusterRepository.findById(clusterId);
         if (cluster.isPresent()) {

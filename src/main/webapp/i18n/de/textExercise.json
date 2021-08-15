@@ -31,7 +31,14 @@
             "saveSuccessful": "Dein Antwort wurde erfolgreich gespeichert!",
             "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
             "clusterStatistics": {
-                "title": "Cluster Statistik"
+                "title": "Cluster Statistik",
+                "clusterId": "Cluster ID",
+                "reusedFeedbackRatio": "Cluster Wiederverwendete Rückkopplungsquote",
+                "reusedFeedbackRatioTooltip": "Anzahl der wiederverwendeten automatischen Rückmeldungen / Clustergröße",
+                "action": "Aktion",
+                "disable": "Deaktivieren",
+                "enable": "Aktivieren",
+                "noClustersFound": "<b>Keine Textcluster für diese Übung gefunden</b>"
             }
         }
     }

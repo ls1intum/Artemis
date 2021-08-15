@@ -9,16 +9,10 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
-
-export interface ClusterInfo {
-    clusterId: number;
-    clusterSize: number;
-    numberOfAutomaticFeedbacks: number;
-    disabled: boolean;
-}
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseService implements ExerciseServicable<TextExercise> {
@@ -152,13 +146,22 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
         );
     }
 
-    public getClusterStats(exerciseId: number): Observable<HttpResponse<ClusterInfo[]>> {
-        return this.http.get<ClusterInfo[]>(`api/cluster-stats/${exerciseId}`, { observe: 'response' });
+    /**
+     * Fetches the cluster statistics data for a specific text exercise
+     * @param exerciseId The id of the exercise to get the cluster information from
+     * @returns An Observable resolving to a TextExerciseClusterStatistics containing the returned data from the server
+     */
+    public getClusterStats(exerciseId: number): Observable<HttpResponse<TextExerciseClusterStatistics[]>> {
+        return this.http.get<TextExerciseClusterStatistics[]>(`api/text-execises/${exerciseId}/cluster-statistics`, { observe: 'response' });
     }
 
+    /**
+     * Sets the cluster disabled predicate value
+     * @param clusterId The id of the cluster to be disabled/enabled
+     * @param disabled Boolean describing the disable state of the cluster
+     * @returns An Observable resolving to a boolean predicate
+     */
     public setClusterDisabledPredicate(clusterId: number, disabled: boolean): Observable<boolean> {
-        let params = new HttpParams();
-        params = params.set('disabled', disabled);
-        return this.http.put<boolean>(`api/clusters/${clusterId}/disable`, {}, { params: { disabled: disabled } });
+        return this.http.put<boolean>(`api/text-clusters/${clusterId}`, {}, { params: { disabled } });
     }
 }
