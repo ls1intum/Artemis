@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChildren, QueryList, ChangeDetectorRef, AfterContentInit } from '@angular/core';
+import { Component, OnInit, Input, ViewChildren, ViewChild, QueryList, ChangeDetectorRef, AfterContentInit } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
@@ -20,9 +20,11 @@ import { cloneDeep } from 'lodash';
 })
 export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
     /** Ace Editor configuration constants **/
-    questionEditorText = '';
-    @ViewChildren('markdownEditor')
+    markdownEditorText? = '';
+    @ViewChildren('markdownEditors')
     private markdownEditors: QueryList<MarkdownEditorComponent>;
+    @ViewChild('markdownEditor', { static: false })
+    private markdownEditor: MarkdownEditorComponent;
     @Input()
     exercise: Exercise;
     private instructions: GradingInstruction[];
@@ -61,11 +63,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     ngOnInit() {
         this.criteria = this.exercise.gradingCriteria || [];
         this.backupExercise = cloneDeep(this.exercise);
-        this.questionEditorText = this.generateMarkdown();
+        this.markdownEditorText = this.generateMarkdown();
     }
 
     ngAfterContentInit() {
         if (this.exercise.gradingInstructionFeedbackUsed) {
+            this.markdownEditorText = this.initializeExerciseGradingInstructionText();
             this.initializeMarkdown();
         }
     }
@@ -95,11 +98,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             this.criteria.push(dummyCriterion);
             this.criteria.push(exampleCriterion);
         }
-        if (this.exercise.gradingInstructions) {
-            markdownText += this.exercise.gradingInstructions + '\n' + '\n';
-        } else {
-            markdownText += 'Add Assessment Instruction text here' + '\n' + '\n';
-        }
+        markdownText += this.initializeExerciseGradingInstructionText();
         for (const criterion of this.criteria) {
             if (criterion.title == undefined) {
                 // if it is a dummy criterion, leave out the command identifier
@@ -193,11 +192,23 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         return UsageCountCommand.identifier + ' ' + instruction.usageCount;
     }
 
+    initializeExerciseGradingInstructionText(): string {
+        if (this.exercise.gradingInstructions) {
+           return this.exercise.gradingInstructions + '\n' + '\n';
+        } else {
+            return 'Add Assessment Instruction text here' + '\n' + '\n';
+        }
+    }
+
     prepareForSave(): void {
         this.cleanupExerciseGradingInstructions();
-        this.markdownEditors.forEach((component) => {
-            component.parse();
-        });
+        this.markdownEditor.parse();
+        if (this.exercise.gradingInstructionFeedbackUsed) {
+            this.markdownEditors.forEach((component) => {
+                component.parse();
+            });
+        }
+
     }
 
     /**
@@ -254,7 +265,10 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     setParentForInstructionsWithNoCriterion(domainCommands: [string, DomainCommand | null][]): void {
-        for (const [, command] of domainCommands) {
+        for (const [text, command] of domainCommands) {
+            if (command === null && text.length > 0) {
+                this.exercise.gradingInstructions = text;
+            }
             if (command instanceof GradingInstructionCommand) {
                 const dummyCriterion = new GradingCriterion();
                 const newInstruction = new GradingInstruction();
@@ -476,4 +490,18 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
         this.exercise.gradingCriteria!.splice(criterionIndex, 1);
     }
+
+    /**
+     * @function setExerciseGradingInstructionText
+     * @desc Gets a tuple of text and domainCommandIdentifiers and assigns text values as grading instructions of exercise
+     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     */
+    setExerciseGradingInstructionText(domainCommands: [string, DomainCommand | null][]): void {
+        for (const [text, command] of domainCommands) {
+            if (command === null && text.length > 0) {
+                this.exercise.gradingInstructions = text;
+            }
+        }
+    }
+
 }

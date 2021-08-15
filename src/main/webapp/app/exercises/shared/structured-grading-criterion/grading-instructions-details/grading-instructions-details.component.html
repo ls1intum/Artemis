@@ -2,7 +2,7 @@
     <jhi-markdown-editor
         #markdownEditor
         class="markdown-editor"
-        [markdown]="questionEditorText"
+        [markdown]="markdownEditorText"
         [showPreviewButton]="true"
         [domainCommands]="domainCommands"
         (markdownChange)="prepareForSave()"
@@ -45,12 +45,13 @@
     <div class="grading-instructions-update-border">
         <div class="instructions" style="padding-bottom: 12px">
             <jhi-markdown-editor
+                #markdownEditor
                 class="editor"
                 style="width: 65%"
-                [markdown]="exercise.gradingInstructions"
+                [markdown]="markdownEditorText"
                 [domainCommands]="domainCommandsGradingInstructions"
                 (markdownChange)="prepareForSave()"
-                (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                (textWithDomainCommandsFound)="setExerciseGradingInstructionText($event)"
                 [enableFileUpload]="false"
                 [shouldDisplayAlert]="false"
                 [enableResize]="true"
@@ -58,12 +59,6 @@
                 [showPreviewButton]="false"
             ></jhi-markdown-editor>
             <div class="form-group text-center" style="width: 25%">
-                <span class="re-evaluate-button">
-                    <fa-icon [icon]="'undo'" size="2x" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentInstruction' | artemisTranslate }}"></fa-icon>
-                </span>
-                <span class="re-evaluate-button">
-                    <fa-icon [icon]="'trash'" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"></fa-icon>
-                </span>
             </div>
         </div>
         <div *ngFor="let criteria of exercise.gradingCriteria">
@@ -100,7 +95,7 @@
                     <div *ngFor="let instruction of criteria.structuredGradingInstructions">
                         <div class="instructions">
                             <jhi-markdown-editor
-                                #markdownEditor
+                                #markdownEditors
                                 [metaCommands]="[]"
                                 [defaultCommands]="[]"
                                 [headerCommands]="[]"
