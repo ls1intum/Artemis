@@ -48,8 +48,9 @@ describe('Grading Instructions Management Component', () => {
 
             // THEN
             expect(component.backupExercise.id).to.equal(component.exercise.id);
-            expect(component.questionEditorText).to.equal(
-                '[instruction]\n' +
+            expect(component.markdownEditorText).to.equal(
+                'Add Assessment Instruction text here\n\n' +
+                    '[instruction]\n' +
                     '\t[credits] 0\n' +
                     '\t[gradingScale] Add instruction grading scale here (only visible for tutors)\n' +
                     '\t[description] Add grading instruction here (only visible for tutors)\n' +
@@ -79,8 +80,9 @@ describe('Grading Instructions Management Component', () => {
             component.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(component.questionEditorText).to.equal(
-                '[criterion]' +
+            expect(component.markdownEditorText).to.equal(
+                'Add Assessment Instruction text here\n\n' +
+                    '[criterion]' +
                     'testCriteria' +
                     '\n' +
                     '\t' +
