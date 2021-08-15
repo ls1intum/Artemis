@@ -193,7 +193,7 @@ export class CourseManagementRequests {
  * Helper class to construct exam objects for the {@link CourseManagementRequests.createExam} method.
  */
 export class CypressExamBuilder {
-    readonly template = examTemplate;
+    readonly template: any = examTemplate;
 
     /**
      * Initializes the exam builder.
@@ -278,6 +278,21 @@ export class CypressExamBuilder {
      */
     endDate(date: day.Dayjs) {
         this.template.endDate = dayjsToString(date);
+        return this;
+    }
+
+    publishResultsDate(date: day.Dayjs) {
+        this.template.publishResultsDate = dayjsToString(date);
+        return this;
+    }
+
+    examStudentReviewStart(date: day.Dayjs) {
+        this.template.examStudentReviewStart = dayjsToString(date);
+        return this;
+    }
+
+    examStudentReviewEnd(date: day.Dayjs) {
+        this.template.examStudentReviewEnd = dayjsToString(date);
         return this;
     }
 

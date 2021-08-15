@@ -50,7 +50,8 @@ describe('Exam Assessment', () => {
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(3, 'hours'))
-                .endDate(dayjs().add(15, 'seconds'))
+                .endDate(dayjs().subtract(2, 'hours').add(20, 'seconds')) // //.add(15, 'seconds'))
+                .publishResultsDate(dayjs().subtract(2, 'hours').add(30, 'seconds'))
                 .gracePeriod(1)
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
@@ -99,6 +100,8 @@ describe('Exam Assessment', () => {
                 modelingAssessment.openAssessmentForComponent(3);
                 modelingAssessment.assessComponent(-1, 'Wrong');
                 cy.contains('Submit').click();
+                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                cy.get('.question-options').contains('2 of 10 points').should('be.visible');
             });
         });
     });
