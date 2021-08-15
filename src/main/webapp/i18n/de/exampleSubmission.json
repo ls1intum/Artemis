@@ -6,12 +6,15 @@
                 "editor": "Beispielabgabe-Editor"
             },
             "feedback": {
-                "correct": "correct assessment ✅",
-                "incorrect": "incorrect assessment ❌"
+                "CORRECT": "Richtiges Feedback ✅",
+                "INCORRECT_SCORE": "Falsche Punktzahl ❌",
+                "UNNECESSARY_FEEDBACK": "Redundantes Feedback ❌",
+                "MISSING_GRADING_INSTRUCTION": "Fehlende Bewertungsanweisung ❌",
+                "INCORRECT_GRADING_INSTRUCTION": "Falsche Bewertungsanweisung ❌"
             },
             "submissionValidation": {
-                "missing": "Not enough feedbacks provided. Number of feedbacks should be the same as of the instructors",
-                "wrong": "Wrong assessment"
+                "missing": "Nicht genügend Feedbacks. Die Anzahl der Feedbacks sollte die gleiche sein wie die der Instruktoren",
+                "wrong": "Falsche Beurteilung. Bitte überprüfe die Bewertungskriterien und die Abgabe noch einmal sorgfältig und reiche deine verbesserte Bewertung ein."
             },
             "assessScore": {
                 "success": "Herzlichen Glückwunsch! Das ist eine gute Beurteilung!",

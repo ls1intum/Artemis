@@ -12,7 +12,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { Feedback, FeedbackCorrectionError } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError, FeedbackCorrectionErrorType } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -271,7 +271,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                             .map((ref) => ref.feedback)
                             .filter((feedback) => feedback != undefined)
                             .forEach((feedback) => {
-                                feedback!.isCorrect = true;
+                                feedback!.correctionStatus = 'CORRECT';
                             });
 
                         const correctionErrors: FeedbackCorrectionError[] = JSON.parse(error['error']['title'])['errors'];
@@ -279,14 +279,14 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                             correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
                         this.jhiAlertService.error(msg);
 
-                        // Mark all wrongly made feedbacks as incorrect.
-                        const findTextBlockRefForCorrectionError = (res: FeedbackCorrectionError) => this.textBlockRefs.find((ref) => ref.feedback?.reference == res.reference);
-                        correctionErrors
-                            .map(findTextBlockRefForCorrectionError)
-                            .filter((ref) => ref && ref.feedback)
-                            .forEach((ref) => {
-                                ref!.feedback!.isCorrect = false;
-                            });
+                        // Mark all wrongly made feedbacks accordingly.
+                        correctionErrors.forEach((res) => {
+                            const textBlockRef = this.textBlockRefs.find((ref) => ref.feedback?.reference == res.reference);
+                            if (textBlockRef == undefined || textBlockRef.feedback == undefined) {
+                                return;
+                            }
+                            textBlockRef.feedback!.correctionStatus = res.type;
+                        });
 
                         break;
                     default:

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,12 +24,25 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class TutorParticipationService {
 
+    /**
+     * Wraps the information of tutor feedback validation (during tutor training).
+     */
     class FeedbackCorrectionError {
+
+        /**
+         * Possible feedback validation states.
+         */
+        enum Type {
+            INCORRECT_SCORE, UNNECESSARY_FEEDBACK, MISSING_GRADING_INSTRUCTION, INCORRECT_GRADING_INSTRUCTION,
+        }
 
         public String reference;
 
-        public FeedbackCorrectionError(String reference) {
+        public Type type;
+
+        public FeedbackCorrectionError(String reference, Type type) {
             this.reference = reference;
+            this.type = type;
         }
     }
 
@@ -101,30 +115,45 @@ public class TutorParticipationService {
     }
 
     /**
-     * Validates if tutor feedback is correct.
+     * Validates tutor feedback. Returns empty if correct, error type otherwise.
      * Validation rules:
-     * - There should exist a corresponding instructor feedback with the same creditCount(score)
-     * - The feedback should reference the same object as of the instructor
+     * - There should exist a corresponding instructor feedback that references the same object
      * - If instructor feedback has a grading instruction associated with it, so must the tutor feedback
+     * - The feedback should have the same creditCount(score)
      */
-    private boolean isCorrectTutorFeedback(Feedback tutorFeedback, List<Feedback> instructorFeedbacks) {
-        return instructorFeedbacks.stream().anyMatch(instructorFeedback -> {
-            boolean equalReference = Objects.equals(tutorFeedback.getReference(), instructorFeedback.getReference());
-            boolean equalCredits = Double.compare(instructorFeedback.getCredits(), tutorFeedback.getCredits()) == 0;
+    private Optional<FeedbackCorrectionError.Type> validateTutorFeedback(Feedback tutorFeedback, List<Feedback> instructorFeedbacks) {
+        Optional<Feedback> maybeMatchingInstructorFeedback = instructorFeedbacks.stream()
+                .filter(instructorFeedback -> Objects.equals(tutorFeedback.getReference(), instructorFeedback.getReference())).findFirst();
 
-            boolean equalGradingInstructions = true;
-            if (instructorFeedback.getGradingInstruction() != null) {
-                equalGradingInstructions = instructorFeedback.getGradingInstruction().equals(tutorFeedback.getGradingInstruction());
+        // In case there is no instructor feedback that is referencing the same element (text/model), then tutor's feedback is unnecessary.
+        if (maybeMatchingInstructorFeedback.isEmpty()) {
+            return Optional.of(FeedbackCorrectionError.Type.UNNECESSARY_FEEDBACK);
+        }
+
+        var matchingInstructorFeedback = maybeMatchingInstructorFeedback.get();
+
+        if (matchingInstructorFeedback.getGradingInstruction() != null) {
+            // If instructor used grading instruction while creating the feedback but the tutor didn't use it return missing grading instruction.
+            if (tutorFeedback.getGradingInstruction() == null) {
+                return Optional.of(FeedbackCorrectionError.Type.MISSING_GRADING_INSTRUCTION);
             }
 
-            return equalReference && equalCredits && equalGradingInstructions;
-        });
+            if (!Objects.equals(matchingInstructorFeedback.getGradingInstruction().getId(), tutorFeedback.getGradingInstruction().getId())) {
+                return Optional.of(FeedbackCorrectionError.Type.INCORRECT_GRADING_INSTRUCTION);
+            }
+        }
+
+        boolean equalCredits = Double.compare(matchingInstructorFeedback.getCredits(), tutorFeedback.getCredits()) == 0;
+        if (!equalCredits) {
+            return Optional.of(FeedbackCorrectionError.Type.INCORRECT_SCORE);
+        }
+
+        return Optional.empty();
     }
 
     private boolean isValidTutorialExampleSubmission(List<Feedback> tutorFeedbacks, List<Feedback> instructorFeedbacks) {
         boolean equalFeedbackCount = instructorFeedbacks.size() == tutorFeedbacks.size();
-        boolean allTutorFeedbacksAreCorrect = tutorFeedbacks.stream().map(tutorFeedback -> isCorrectTutorFeedback(tutorFeedback, instructorFeedbacks))
-                .allMatch(Boolean.TRUE::equals);
+        boolean allTutorFeedbacksAreCorrect = tutorFeedbacks.stream().map(tutorFeedback -> validateTutorFeedback(tutorFeedback, instructorFeedbacks)).allMatch(Optional::isEmpty);
 
         return equalFeedbackCount && allTutorFeedbacksAreCorrect;
     }
@@ -133,6 +162,12 @@ public class TutorParticipationService {
      * Validates the tutor example submission. If invalid, throw bad request exception with information which feedbacks are incorrect.
      */
     private void validateTutorialExampleSubmission(ExampleSubmission tutorExampleSubmission) {
+        boolean isTextSubmission = tutorExampleSubmission.getSubmission() instanceof TextSubmission;
+        if (!isTextSubmission) {
+            validateTutorialExampleSubmissionUsingTotalScore(tutorExampleSubmission);
+            return;
+        }
+
         var tutorFeedbacks = tutorExampleSubmission.getSubmission().getLatestResult().getFeedbacks();
         var instructorFeedbacks = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
 
@@ -142,17 +177,42 @@ public class TutorParticipationService {
 
         // If invalid, get all incorrect feedbacks and send an array of the corresponding `FeedbackCorrectionError`s to the client.
         // Pack this information into bad request exception.
-        var wrongFeedbacks = tutorFeedbacks.stream().filter(tutorFeedback -> !isCorrectTutorFeedback(tutorFeedback, instructorFeedbacks)).map(tutorFeedback -> {
+        var wrongFeedbacks = tutorFeedbacks.stream().flatMap(tutorFeedback -> {
+            var validationError = validateTutorFeedback(tutorFeedback, instructorFeedbacks);
+            if (validationError.isEmpty()) {
+                return Stream.empty();
+            }
+
             var objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
             try {
                 // Build JSON string for the corresponding `FeedbackCorrectionError` object.
-                return objectWriter.writeValueAsString(new FeedbackCorrectionError(tutorFeedback.getReference()));
+                var FeedbackCorrectionErrorJSON = objectWriter.writeValueAsString(new FeedbackCorrectionError(tutorFeedback.getReference(), validationError.get()));
+                return Stream.of(FeedbackCorrectionErrorJSON);
             }
             catch (JsonProcessingException e) {
-                return "";
+                return Stream.empty();
             }
         }).collect(Collectors.joining(","));
         throw new BadRequestAlertException("{\"errors\": [" + wrongFeedbacks + "]}", ENTITY_NAME, "invalid_assessment");
+    }
+
+    private void validateTutorialExampleSubmissionUsingTotalScore(ExampleSubmission tutorExampleSubmission) {
+        // Retrieve the example feedback created by the instructor
+        List<Feedback> existingFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
+
+        float instructorScore = calculateTotalScore(existingFeedback);
+        float lowerInstructorScore = instructorScore - instructorScore / scoreRangePercentage;
+        float higherInstructorScore = instructorScore + instructorScore / scoreRangePercentage;
+
+        float tutorScore = calculateTotalScore(tutorExampleSubmission.getSubmission().getLatestResult().getFeedbacks());
+
+        if (lowerInstructorScore > tutorScore) {
+            throw new BadRequestAlertException("tooLow", ENTITY_NAME, "tooLow");
+        }
+
+        if (tutorScore > higherInstructorScore) {
+            throw new BadRequestAlertException("tooHigh", ENTITY_NAME, "tooHigh");
+        }
     }
 
     /**

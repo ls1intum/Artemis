@@ -139,7 +139,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         event.preventDefault();
 
         // Reset the feedback correction status upon score change in order to hide it.
-        this.feedback.isCorrect = undefined;
+        this.feedback.correctionStatus = undefined;
     }
 
     /**
@@ -158,6 +158,10 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     connectFeedbackWithInstruction(event: Event) {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
         this.disableEditScore = !!(this.feedback.gradingInstruction && this.feedback.gradingInstruction.usageCount !== 0);
+
+        // Reset the feedback correction status upon setting grading instruction in order to hide it.
+        this.feedback.correctionStatus = undefined;
+
         this.didChange();
     }
 
@@ -219,16 +223,5 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      */
     mouseEnteredWarningLabel() {
         this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING, this.feedback.type, this.textBlock.type);
-    }
-
-    /**
-     * Status string describing whether the tutor feedback (submitted during the tutor training) is correct or not.
-     */
-    getCorrectionStatus(): string {
-        if (this.feedback.isCorrect!) {
-            return 'artemisApp.exampleSubmission.feedback.correct';
-        }
-
-        return 'artemisApp.exampleSubmission.feedback.incorrect';
     }
 }
