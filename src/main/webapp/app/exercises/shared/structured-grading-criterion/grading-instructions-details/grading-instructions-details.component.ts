@@ -237,11 +237,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         if (!this.hasCriterionCommand(domainCommands)) {
             this.setParentForInstructionsWithNoCriterion(domainCommands);
         } else {
-            for (const [text, command] of domainCommands) {
+            for (const [, command] of domainCommands) {
                 endOfInstructionsCommand++;
-                if (command === null && text.length > 0) {
-                    this.exercise.gradingInstructions = text;
-                }
+                this.setExerciseGradingInstructionText(domainCommands);
                 if (command instanceof GradingCriterionCommand) {
                     instructionCommands = domainCommands.slice(0, endOfInstructionsCommand - 1);
                     if (instructionCommands.length !== 0) {
@@ -264,10 +262,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     setParentForInstructionsWithNoCriterion(domainCommands: [string, DomainCommand | null][]): void {
-        for (const [text, command] of domainCommands) {
-            if (command === null && text.length > 0) {
-                this.exercise.gradingInstructions = text;
-            }
+        for (const [, command] of domainCommands) {
+            this.setExerciseGradingInstructionText(domainCommands);
             if (command instanceof GradingInstructionCommand) {
                 const dummyCriterion = new GradingCriterion();
                 const newInstruction = new GradingInstruction();
@@ -496,10 +492,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     setExerciseGradingInstructionText(domainCommands: [string, DomainCommand | null][]): void {
-        for (const [text, command] of domainCommands) {
-            if (command === null && text.length > 0) {
-                this.exercise.gradingInstructions = text;
-            }
+        const [text, command] = domainCommands[0];
+        if (command === null && text.length > 0) {
+            this.exercise.gradingInstructions = text;
         }
     }
 }
