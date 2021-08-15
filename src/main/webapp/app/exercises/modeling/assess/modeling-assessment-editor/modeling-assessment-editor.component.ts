@@ -531,4 +531,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.totalScore = 0;
         }
     }
+
+    importStudentSubmissionAsExampleSubmission(): void {
+
+    }
 }

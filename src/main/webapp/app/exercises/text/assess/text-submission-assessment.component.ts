@@ -457,4 +457,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         super.handleError(error);
         this.saveBusy = this.submitBusy = false;
     }
+
+    importStudentSubmissionAsExampleSubmission(): void {
+
+    }
 }

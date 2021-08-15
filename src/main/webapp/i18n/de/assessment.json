@@ -28,7 +28,8 @@
             "button": {
                 "overrideAssessment": "Bewertung überschreiben",
                 "nextSubmission": "Nächste Abgabe bewerten",
-                "resolveConflict": "Konflikte behandeln"
+                "resolveConflict": "Konflikte behandeln",
+                "importExampleSubmission": "Import als Beispielabgabe"
             },
             "detail": {
                 "feedback": "Feedback",
