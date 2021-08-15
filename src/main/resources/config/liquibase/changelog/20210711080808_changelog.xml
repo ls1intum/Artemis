@@ -1,6 +1,7 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
-    <changeSet id="20210711080808" author="argertboja">
+    <!--Text Exercises' required database changes-->
+    <changeSet id="20210711080808-1" author="argertboja">
         <createTable tableName="text_assessment_knowledge">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints primaryKey="true"/>
@@ -20,7 +21,8 @@
         </addColumn>
         <addForeignKeyConstraint baseColumnNames="knowledge_id" baseTableName="text_block" constraintName="fk_text_block_knowledge_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="text_assessment_knowledge"/>
     </changeSet>
-    <changeSet id="20210815080808" author="argertboja">
+    <changeSet id="20210711080808-2" author="argertboja">
+        <!--Text Exercises' required database changes-->
         <createTable tableName="model_assessment_knowledge">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints primaryKey="true"/>
@@ -39,4 +41,16 @@
         </addColumn>
         <addForeignKeyConstraint baseColumnNames="knowledge_id" baseTableName="model_element" constraintName="fk_model_element_knowledge_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="model_assessment_knowledge"/>
     </changeSet>
+    <!--Database migration, update all text blocks with their respective feedback id-->
+    <!--
+    <changeSet id="20210815080808-1" author="argertboja">
+        <sql>
+            UPDATE text_block b
+            INNER JOIN result r ON r.submission_id = b.submission_id
+            INNER JOIN feedback f ON (r.id = f.result_id and f.reference like b.id)
+            SET feedback_id = f.id
+            WHERE feedback_id is null;
+        </sql>
+    </changeSet>
+    -->
 </databaseChangeLog>
