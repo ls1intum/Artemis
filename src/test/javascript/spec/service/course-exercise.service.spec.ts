@@ -28,7 +28,7 @@ describe('Course Management Service', () => {
     let service: CourseExerciseService;
     let httpMock: HttpTestingController;
     let exerciseId: number;
-    const resourceUrl = SERVER_API_URL + 'api/courses';
+    const resourceUrl = SERVER_API_URL + 'api';
     let course: Course;
     let exercises: Exercise[];
     let returnedFromService: any;
@@ -136,7 +136,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal([programmingExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/programming-exercises/`, returnedFromService, programmingExercise);
+        requestAndExpectDateConversion('GET', `${resourceUrl}/courses/${course.id}/programming-exercises/`, returnedFromService, programmingExercise);
         tick();
     }));
 
@@ -147,7 +147,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal([modelingExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/modeling-exercises/`, returnedFromService, modelingExercise);
+        requestAndExpectDateConversion('GET', `${resourceUrl}/courses/${course.id}/modeling-exercises/`, returnedFromService, modelingExercise);
         tick();
     }));
 
@@ -158,7 +158,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equals([textExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/text-exercises/`, returnedFromService, textExercise);
+        requestAndExpectDateConversion('GET', `${resourceUrl}/courses/${course.id}/text-exercises/`, returnedFromService, textExercise);
         tick();
     }));
 
@@ -169,7 +169,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equals([fileUploadExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/file-upload-exercises/`, returnedFromService, fileUploadExercise);
+        requestAndExpectDateConversion('GET', `${resourceUrl}/courses/${course.id}/file-upload-exercises/`, returnedFromService, fileUploadExercise);
         tick();
     }));
 
@@ -190,7 +190,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res).to.deep.equals(expected));
 
-        requestAndExpectDateConversion('POST', `${resourceUrl}/${course.id}/exercises/${exerciseId}/participations`, returnedFromService, participation.exercise, true);
+        requestAndExpectDateConversion('POST', `${resourceUrl}/exercises/${exerciseId}/participations`, returnedFromService, participation.exercise, true);
         expect(programmingExercise.studentParticipations?.[0]?.id).to.eq(participationId);
         tick();
     }));
@@ -212,13 +212,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res).to.deep.equals(expected));
 
-        requestAndExpectDateConversion(
-            'PUT',
-            `${resourceUrl}/${course.id}/exercises/${exerciseId}/resume-programming-participation`,
-            returnedFromService,
-            participation.exercise,
-            true,
-        );
+        requestAndExpectDateConversion('PUT', `${resourceUrl}/exercises/${exerciseId}/resume-programming-participation`, returnedFromService, participation.exercise, true);
         expect(programmingExercise.studentParticipations?.[0]?.id).to.eq(participationId);
         tick();
     }));
