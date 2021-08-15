@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 // pageobjects
 const courseManagement = artemis.pageobjects.courseManagement;
 const createModelingExercise = artemis.pageobjects.createModelingExercise;
-const modelingExerciseExampleSubmission = artemis.pageobjects.modelingExerciseExampleSubmission;
+const modelingExerciseExampleSubmission = artemis.pageobjects.modelingExerciseAssessmentEditor;
 const modelingEditor = artemis.pageobjects.modelingEditor;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
