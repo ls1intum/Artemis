@@ -5,6 +5,10 @@
 # Setup makefile
 # ------------------------------
 
+# Updating assignment and test-reports ownership...
+chown artemis_user:artemis_user assignment/ -R
+
+# Overwrite students makefile
 shadowFilePath="../tests/testUtils/c/shadow_exec.c"
 
 foundIncludeDirs=`grep -m 1 'INCLUDEDIRS\s*=' assignment/Makefile`
@@ -15,6 +19,5 @@ foundSource="$foundSource $shadowFilePath"
 rm -f assignment/GNUmakefile
 rm -f assignment/makefile
 
-# Use Makefile that prints output formatted in JSON
-cp -f tests/MakefileJSON assignment/Makefile || exit 2
-
+cp -f tests/Makefile assignment/Makefile || exit 2
+sed -i "s~\bINCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~\bSOURCE\s*=.*~${foundSource}~" assignment/Makefile
