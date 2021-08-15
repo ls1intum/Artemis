@@ -88,6 +88,12 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     private StudentExamService studentExamService;
 
     @Autowired
+    private ExerciseRepository exerciseRepository;
+
+    @Autowired
+    private ExerciseGroupRepository exerciseGroupRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private List<User> users;
@@ -1138,6 +1144,48 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             }
             assertThat(submittedAnswersAsString).isEqualTo(versionedSubmission.get().getContent());
             assertThat(submission).isEqualTo(versionedSubmission.get().getSubmission());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "STUDENT")
+    public void testGetStudentExamExerciseIds() throws Exception {
+
+        // preparation
+        int numberOfExercises = 3;
+        Long[] expectedExerciseIds = new Long[numberOfExercises];
+
+        TextExercise textExerciseA = database.createIndividualTextExercise(course1, null, null, null);
+        TextExercise textExerciseB = database.createIndividualTextExercise(course1, null, null, null);
+        TextExercise textExerciseC = database.createIndividualTextExercise(course1, null, null, null);
+        expectedExerciseIds[0] = textExerciseA.getId();
+        expectedExerciseIds[1] = textExerciseB.getId();
+        expectedExerciseIds[2] = textExerciseC.getId();
+
+        textExerciseA = exerciseRepository.save(textExerciseA);
+        textExerciseB = exerciseRepository.save(textExerciseB);
+        textExerciseC = exerciseRepository.save(textExerciseC);
+
+        List<Exercise> exercises = new ArrayList<>();
+        exercises.add(textExerciseA);
+        exercises.add(textExerciseB);
+        exercises.add(textExerciseC);
+
+        studentExam1.setExercises(exercises);
+
+        studentExam1 = studentExamRepository.save(studentExam1);
+
+        exam1.addStudentExam(studentExam1);
+        exam1 = examRepository.save(exam1);
+
+        // user tries to access exam exercise ids
+        database.changeUser(studentExam1.getUser().getLogin());
+        var studentExamExerciseIds = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/exercise-ids", HttpStatus.OK, Long[].class);
+
+        assertThat(studentExamExerciseIds).isNotEmpty();
+        assertThat(studentExamExerciseIds).hasSize(numberOfExercises);
+        for (int i = 0; i < numberOfExercises; i++) {
+            assertThat(studentExamExerciseIds[i]).isEqualTo(expectedExerciseIds[i]);
         }
     }
 
