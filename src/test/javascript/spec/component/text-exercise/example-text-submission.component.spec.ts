@@ -6,7 +6,7 @@ import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angu
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionErrorType } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -280,12 +280,16 @@ describe('ExampleTextSubmissionComponent', () => {
 
         comp.textBlockRefs = [textBlockRefA, textBlockRefB];
 
-        expect(feedbackA.isCorrect).toBeUndefined;
-        expect(feedbackB.isCorrect).toBeUndefined;
+        expect(feedbackA.correctionStatus).toBeUndefined;
+        expect(feedbackB.correctionStatus).toBeUndefined;
 
         const tutorParticipationService = fixture.debugElement.injector.get(TutorParticipationService);
+        const feedbackError = {
+            reference: feedbackA.reference,
+            type: FeedbackCorrectionErrorType.INCORRECT_SCORE,
+        };
         const errorResponse = new HttpErrorResponse({
-            error: { title: JSON.stringify({ errors: [{ reference: feedbackA.reference }] }) },
+            error: { title: JSON.stringify({ errors: [feedbackError] }) },
             headers: new HttpHeaders().append('x-artemisapp-error', 'error.invalid_assessment'),
             status: 400,
         });
@@ -300,8 +304,8 @@ describe('ExampleTextSubmissionComponent', () => {
         tick();
 
         // THEN
-        expect(feedbackA.isCorrect).toEqual(false);
-        expect(feedbackB.isCorrect).toEqual(true);
+        expect(feedbackA.correctionStatus).toEqual(FeedbackCorrectionErrorType.INCORRECT_SCORE);
+        expect(feedbackB.correctionStatus).toEqual('CORRECT');
     }));
 
     const httpResponse = (body: any) => of(new HttpResponse({ body }));
