@@ -194,7 +194,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
     initializeExerciseGradingInstructionText(): string {
         if (this.exercise.gradingInstructions) {
-           return this.exercise.gradingInstructions + '\n' + '\n';
+            return this.exercise.gradingInstructions + '\n' + '\n';
         } else {
             return 'Add Assessment Instruction text here' + '\n' + '\n';
         }
@@ -208,7 +208,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
                 component.parse();
             });
         }
-
     }
 
     /**
@@ -503,5 +502,4 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             }
         }
     }
-
 }
