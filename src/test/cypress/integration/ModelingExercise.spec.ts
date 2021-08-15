@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 // pageobjects
 const courseManagement = artemis.pageobjects.courseManagement;
 const createModelingExercise = artemis.pageobjects.createModelingExercise;
-const modelingExerciseExampleSubission = artemis.pageobjects.modelingExerciseExampleSubmission;
+const modelingExerciseExampleSubmission = artemis.pageobjects.modelingExerciseExampleSubmission;
 const modelingEditor = artemis.pageobjects.modelingEditor;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -82,20 +82,20 @@ describe('Modeling Exercise Spec', () => {
 
         it('Creates Example Submission', () => {
             cy.visit(`/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
-            modelingExerciseExampleSubission.createExampleSubmission();
+            cy.contains('Create Example Submission').click();
             modelingEditor.addComponentToModel(1);
             modelingEditor.addComponentToModel(2);
             modelingEditor.addComponentToModel(3);
-            modelingExerciseExampleSubission.createNewExampleSubmission();
+            cy.contains('Create new Example Submission').click();
             cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
-            modelingExerciseExampleSubission.switchToAssessmentView();
-            modelingExerciseExampleSubission.openAssessmentForComponent(1);
-            modelingExerciseExampleSubission.assessComponent(-1, 'False');
-            modelingExerciseExampleSubission.openAssessmentForComponent(2);
-            modelingExerciseExampleSubission.assessComponent(2, 'Good');
-            modelingExerciseExampleSubission.openAssessmentForComponent(3);
-            modelingExerciseExampleSubission.assessComponent(0, 'Unnecessary');
-            modelingExerciseExampleSubission.saveExampleAssessment();
+            cy.contains('Show Assessment').click();
+            modelingExerciseExampleSubmission.openAssessmentForComponent(1);
+            modelingExerciseExampleSubmission.assessComponent(-1, 'False');
+            modelingExerciseExampleSubmission.openAssessmentForComponent(2);
+            modelingExerciseExampleSubmission.assessComponent(2, 'Good');
+            modelingExerciseExampleSubmission.openAssessmentForComponent(3);
+            modelingExerciseExampleSubmission.assessComponent(0, 'Unnecessary');
+            modelingExerciseExampleSubmission.saveExampleAssessment();
         });
 
         it('Edit Existing Modeling Exercise', () => {
@@ -180,12 +180,12 @@ describe('Modeling Exercise Spec', () => {
             cy.get('jhi-unreferenced-feedback > .btn').click();
             cy.get('jhi-assessment-detail > .card > .card-body > :nth-child(1) > :nth-child(2)').clear().type('1');
             cy.get('jhi-assessment-detail > .card > .card-body > :nth-child(2) > :nth-child(2)').clear().type('thanks, i hate it');
-            modelingExerciseExampleSubission.openAssessmentForComponent(1);
-            modelingExerciseExampleSubission.assessComponent(-1, 'False');
-            modelingExerciseExampleSubission.openAssessmentForComponent(2);
-            modelingExerciseExampleSubission.assessComponent(2, 'Good');
-            modelingExerciseExampleSubission.openAssessmentForComponent(3);
-            modelingExerciseExampleSubission.assessComponent(0, 'Unnecessary');
+            modelingExerciseExampleSubmission.openAssessmentForComponent(1);
+            modelingExerciseExampleSubmission.assessComponent(-1, 'False');
+            modelingExerciseExampleSubmission.openAssessmentForComponent(2);
+            modelingExerciseExampleSubmission.assessComponent(2, 'Good');
+            modelingExerciseExampleSubmission.openAssessmentForComponent(3);
+            modelingExerciseExampleSubmission.assessComponent(0, 'Unnecessary');
             cy.get('.top-container > :nth-child(3) > :nth-child(4)').click();
             cy.get('.alerts').should('contain.text', 'Your assessment was submitted successfully!');
         });

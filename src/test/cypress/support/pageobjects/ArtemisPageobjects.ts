@@ -5,7 +5,7 @@ import { CourseManagementPage } from './CourseManagementPage';
 import { NavigationBar } from './NavigationBar';
 import { OnlineEditorPage } from './OnlineEditorPage';
 import { CreateModelingExercisePage } from './CreateModelingExercisePage';
-import { ModelingExerciseExampleSubmissionPage } from './ModelingExerciseExampleSubmissionPage';
+import { ModelingExerciseAssessmentEditor } from './ModelingExerciseAssessmentEditor';
 import { ModelingEditor } from './ModelingEditor';
 import { ExamStartEndPage } from './ExamStartEndPage';
 
@@ -20,7 +20,7 @@ export class ArtemisPageobjects {
     examManagement = new ExamManagementPage();
     programmingExerciseCreation = new ProgrammingExerciseCreationPage();
     createModelingExercise = new CreateModelingExercisePage();
-    modelingExerciseExampleSubmission = new ModelingExerciseExampleSubmissionPage();
+    modelingExerciseExampleSubmission = new ModelingExerciseAssessmentEditor();
     modelingEditor = new ModelingEditor();
     examStartEnd = new ExamStartEndPage();
 }
