@@ -88,6 +88,13 @@ export class CourseManagementRequests {
     }
 
     /**
+     * Adds the specified user to the tutor group in the course
+     * */
+    addTutorToCourse(course: any, user: CypressCredentials) {
+        return cy.request({method: POST, url: COURSE_BASE + course.id + '/tutors/' + user.username});
+    }
+
+    /**
      * Creates an exam with the provided settings.
      * @param exam the exam object created by a {@link CypressExamBuilder}
      * @returns <Chainable> request response

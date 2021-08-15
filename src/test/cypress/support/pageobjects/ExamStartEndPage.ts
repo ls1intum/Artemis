@@ -5,8 +5,8 @@ export class ExamStartEndPage {
         artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type((account.firstName ?? '') + ' ' + (account.lastName ?? '')));
     }
 
-    setConfirmCheckmark() {
-        cy.get('#confirmBox').click();
+    setConfirmCheckmark(timeout?: number) {
+        cy.get('#confirmBox', {timeout}).click();
     }
 
     pressStart() {
@@ -23,8 +23,8 @@ export class ExamStartEndPage {
         this.pressStart();
     }
 
-    finishExam() {
-        this.setConfirmCheckmark();
+    finishExam(timeout = 20000) {
+        this.setConfirmCheckmark(timeout);
         this.enterFirstnameLastname();
         this.pressFinish();
     }

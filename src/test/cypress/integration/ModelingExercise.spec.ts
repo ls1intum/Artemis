@@ -199,7 +199,7 @@ describe('Modeling Exercise Spec', () => {
         it('Student can view the assessment and complain', () => {
             cy.intercept('POST', '/api/complaints').as('complaintCreated');
             cy.login(student, `/courses/${testCourse.id}/exercises/${modelingExercise.id}`);
-            cy.get('jhi-submission-result-status > .col-auto').should('contain.text', 'Score').and('contain.text', '2 of 100 points');
+            cy.get('jhi-submission-result-status > .col-auto').should('contain.text', 'Score').and('contain.text', '2 of 10 points');
             cy.get('jhi-exercise-details-student-actions.col > > :nth-child(2)').click();
             cy.url().should('contain', `/courses/${testCourse.id}/modeling-exercises/${modelingExercise.id}/participate/`);
             cy.get('.col-xl-8').should('contain.text', 'thanks, i hate it');
