@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TextExerciseService } from '../text-exercise/text-exercise.service';
 import { ActivatedRoute } from '@angular/router';
 import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
@@ -21,18 +21,35 @@ export class ClusterStatisticsComponent implements OnInit {
         });
     }
 
+    /**
+     * Subscribes to api call that fetched cluster statistics data and sets this components clusters upon successful fetching
+     * @param exerciseId The id of the exercise to fetch the cluster stats for
+     */
     loadClusterFromExercise(exerciseId: number) {
         this.textExerciseService.getClusterStats(exerciseId).subscribe({
             next: (res: HttpResponse<TextExerciseClusterStatistics[]>) => {
                 this.clusters = res.body!;
             },
+            error: (error: HttpErrorResponse) => {
+                console.log('Error while retrieving cluster statistics: ', error);
+            },
         });
     }
 
+    /**
+     * Sets the cluster disabled predicate and reloads the cluster data to refresh the table
+     * @param clusterId The id of the cluster to disable
+     * @param disabled The predicate specifying whether the cluster should be disabled or not
+     */
     setClusterDisabledPredicate(clusterId: number, disabled: boolean): void {
-        this.textExerciseService.setClusterDisabledPredicate(clusterId, disabled).subscribe(() => {
-            // reload content again
-            this.loadClusterFromExercise(this.currentExerciseId);
+        this.textExerciseService.setClusterDisabledPredicate(clusterId, disabled).subscribe({
+            next: () => {
+                // reload content again
+                this.loadClusterFromExercise(this.currentExerciseId);
+            },
+            error: (error: HttpErrorResponse) => {
+                console.log('Error while setting cluster disabled state: ', error);
+            },
         });
     }
 }

@@ -152,7 +152,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * @returns An Observable resolving to a TextExerciseClusterStatistics containing the returned data from the server
      */
     public getClusterStats(exerciseId: number): Observable<HttpResponse<TextExerciseClusterStatistics[]>> {
-        return this.http.get<TextExerciseClusterStatistics[]>(`api/text-execises/${exerciseId}/cluster-statistics`, { observe: 'response' });
+        return this.http.get<TextExerciseClusterStatistics[]>(`api/text-exercises/${exerciseId}/cluster-statistics`, { observe: 'response' });
     }
 
     /**

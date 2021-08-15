@@ -28,17 +28,18 @@ public class TextClusterResource {
     }
 
     /**
-     * Get /text-execises/{exerciseId}/cluster-statistics/
+     * Get /text-exercises/{exerciseId}/cluster-statistics/
      * <p>
      * Get text cluster stats
      * @param exerciseId The id of the text exercise to fetch cluster statistics data from
      * @return The list of cluster ids adjacent to their respective sizes and automatically graded text blocks
      */
-    @GetMapping("/text-execises/{exerciseId}/cluster-statistics/")
+    @GetMapping("/text-exercises/{exerciseId}/cluster-statistics")
+    // /text-exercises/{exerciseId}/cluster-statistics/
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<TextClusterRepository.TextClusterStats>> getClusterStats(@PathVariable Long exerciseId) {
         var clusterStats = textClusterRepository.getClusterStatistics(exerciseId);
-        log.debug("REST request to get clusterStats: {}", clusterStats);
+        log.debug("REST request to get clusterStats-: {}", clusterStats);
         return ResponseEntity.ok().body(clusterStats);
     }
 
