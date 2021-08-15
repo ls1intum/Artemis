@@ -224,7 +224,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         Long newCourseId = oldCourseId + 1;
         Course newCourse = databaseUtilService.createCourse(newCourseId);
 
-        // Assing new course to the modeling exercise.
+        // Assign new course to the modeling exercise.
         ModelingExercise updatedModelingExercise = createdModelingExercise;
         updatedModelingExercise.setCourse(newCourse);
 
