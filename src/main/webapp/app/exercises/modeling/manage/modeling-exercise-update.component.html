@@ -161,6 +161,7 @@
                 [(markdown)]="modelingExercise.problemStatement"
                 [editorMode]="EditorMode.LATEX"
                 [shouldDisplayAlert]="false"
+                [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
         <div class="form-group">
@@ -181,6 +182,7 @@
                 [(markdown)]="modelingExercise.sampleSolutionExplanation"
                 [editorMode]="EditorMode.LATEX"
                 [shouldDisplayAlert]="false"
+                [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
         <div class="form-group" *ngIf="!modelingExercise.id || isImport">
