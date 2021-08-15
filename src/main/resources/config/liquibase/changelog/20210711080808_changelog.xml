@@ -20,4 +20,23 @@
         </addColumn>
         <addForeignKeyConstraint baseColumnNames="knowledge_id" baseTableName="text_block" constraintName="fk_text_block_knowledge_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="text_assessment_knowledge"/>
     </changeSet>
+    <changeSet id="20210815080808" author="argertboja">
+        <createTable tableName="model_assessment_knowledge">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true"/>
+            </column>
+        </createTable>
+        <createTable tableName="model_exercise_details">
+            <column name="id" type="bigint">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="knowledge_id" type="BIGINT"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="knowledge_id" baseTableName="model_exercise_details" constraintName="fk_model_exercise_knowledge_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="model_assessment_knowledge"/>
+        <addForeignKeyConstraint baseColumnNames="id" baseTableName="model_exercise_details" constraintName="fk_model_exercise_details" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise"/>
+        <addColumn tableName="model_element">
+            <column name="knowledge_id" type="BIGINT"/>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="knowledge_id" baseTableName="model_element" constraintName="fk_model_element_knowledge_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="model_assessment_knowledge"/>
+    </changeSet>
 </databaseChangeLog>
