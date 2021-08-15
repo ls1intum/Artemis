@@ -208,7 +208,7 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should find reults for the course', fakeAsync(() => {
+    it('should find results for the course', fakeAsync(() => {
         service.findAllResultsOfCourseForExerciseAndCurrentUser(course.id!).subscribe((res) => expect(res).to.deep.equal(course));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/results` });
         req.flush(returnedFromService);
@@ -242,6 +242,18 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(stats));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/stats-for-assessment-dashboard` });
+        req.flush(returnedFromService);
+        tick();
+    }));
+
+    it('should get stats of course for detail view', fakeAsync(() => {
+        const stats = new StatsForDashboard();
+        returnedFromService = { ...stats };
+        service
+            .getCourseStatisticsForDetailView(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).to.deep.equal(stats));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/management-detail` });
         req.flush(returnedFromService);
         tick();
     }));

@@ -87,7 +87,7 @@ export class ParticipationService {
     }
 
     cleanupBuildPlan(participation: StudentParticipation): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(participation);
+        this.convertDateFromClient(participation);
         return this.http
             .delete<StudentParticipation>(`${this.resourceUrl}/${participation.id}/build-plan`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
