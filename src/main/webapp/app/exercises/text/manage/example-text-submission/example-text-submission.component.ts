@@ -12,7 +12,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { Feedback, FeedbackCorrectionError, FeedbackCorrectionErrorType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -281,7 +281,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
 
                         // Mark all wrongly made feedbacks accordingly.
                         correctionErrors.forEach((res) => {
-                            const textBlockRef = this.textBlockRefs.find((ref) => ref.feedback?.reference == res.reference);
+                            const textBlockRef = this.textBlockRefs.find((ref) => ref.feedback?.reference === res.reference);
                             if (textBlockRef == undefined || textBlockRef.feedback == undefined) {
                                 return;
                             }

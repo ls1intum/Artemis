@@ -186,8 +186,8 @@ public class TutorParticipationService {
             var objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
             try {
                 // Build JSON string for the corresponding `FeedbackCorrectionError` object.
-                var FeedbackCorrectionErrorJSON = objectWriter.writeValueAsString(new FeedbackCorrectionError(tutorFeedback.getReference(), validationError.get()));
-                return Stream.of(FeedbackCorrectionErrorJSON);
+                var feedbackCorrectionErrorJSON = objectWriter.writeValueAsString(new FeedbackCorrectionError(tutorFeedback.getReference(), validationError.get()));
+                return Stream.of(feedbackCorrectionErrorJSON);
             }
             catch (JsonProcessingException e) {
                 return Stream.empty();
