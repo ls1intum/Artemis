@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import sys, getopt
-
-from json2xml import json2xml
-from json2xml.utils import readfromjson, readfromstring
+from xml.sax.saxutils import escape
 
 def main(argv):
     inputfile = ''
@@ -22,13 +20,24 @@ def main(argv):
             outputfile = arg
     print('Input file is:', inputfile)
     print('Output file is:', outputfile)
+
     f = open(inputfile, "r")
-    raw = f.readlines()
-    jsonInput = raw[0]
-    data = readfromstring(jsonInput)
-    convertedData = json2xml.Json2xml(data).to_xml()
+
+    # Read whole file to a string
+    data = f.read()
+
+    f.close()
+
+    xmlHeader = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
+    rootOpening = "<root>\n"
+    rootClosing = "</root>\n"
+
+    # Escape text so it will not cause issues with XML
+    escapedText = escape(data)
+
     out = open(outputfile, "w")
-    out.write(convertedData)
+    out.write(xmlHeader + rootOpening + escapedText + rootClosing)
+    out.close()
 
 if __name__ == "__main__":
     main(sys.argv[1:])
