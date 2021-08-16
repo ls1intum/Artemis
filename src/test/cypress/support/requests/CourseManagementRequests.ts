@@ -198,7 +198,11 @@ export class CourseManagementRequests {
         Object.keys(exercise).forEach((key) => {
             newExercise[key] = exercise[key];
         });
-        course ? (newExercise['course'] = course) : (newExercise['exerciseGroup'] = group);
+        if (course) {
+            newExercise['course'] = course;
+        } else {
+            newExercise['exerciseGroup'] = group;
+        }
         return newExercise;
     }
 }
