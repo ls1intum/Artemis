@@ -1,3 +1,4 @@
+import { GET } from './../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
@@ -23,6 +24,8 @@ const courseName = 'Cypress course' + uid;
 const courseShortName = 'cypress' + uid;
 const examTitle = 'exam' + uid;
 const textExerciseTitle = 'Text exercise 1';
+const programmingExerciseTitle = 'Programming exercise';
+const programmingShortName = 'short' + uid;
 const submissionText = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.';
 
 describe('Exam management', () => {
@@ -38,12 +41,17 @@ describe('Exam management', () => {
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(2, 'days'))
                 .endDate(dayjs().add(3, 'days'))
+                .maxPoints(20)
+                .numberOfExercises(2)
                 .build();
             courseRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
                 examRequests.registerStudent(course, exam, student);
                 examRequests.addExerciseGroup(course, exam, 'group 1', true).then((groupResponse) => {
                     examRequests.addTextExercise(groupResponse.body, textExerciseTitle);
+                });
+                examRequests.addExerciseGroup(course, exam, 'group 2', true).then((groupResponse) => {
+                    examRequests.addProgrammingExercise(groupResponse.body, programmingExerciseTitle, programmingShortName, 'de.test');
                 });
                 examRequests.generateMissingIndividualExams(course, exam);
                 examRequests.prepareExerciseStart(course, exam);
@@ -54,8 +62,10 @@ describe('Exam management', () => {
     it('Participates as a student in a registered exam', () => {
         navigateToExam();
         startParticipation();
-        examNavigation.openExerciseAtIndex(0);
+        openTextExercise();
         makeTextExerciseSubmission();
+        openProgrammingExercise();
+        makeProgrammingExerciseSubmission();
         handInEarly();
         verifyFinalPage();
     });
@@ -74,11 +84,25 @@ describe('Exam management', () => {
         examStartEnd.startExam();
     }
 
+    function openTextExercise() {
+        examNavigation.openExerciseAtIndex(0);
+    }
+
     function makeTextExerciseSubmission() {
         artemis.pageobjects.textEditor.typeSubmission(submissionText);
         cy.intercept('PUT', `/api/exercises/*/text-submissions`).as('savedSubmission');
         cy.contains('Save').click();
         cy.wait('@savedSubmission').its('request.body.text').should('eq', submissionText);
+    }
+
+    function openProgrammingExercise() {
+        cy.intercept(GET, '/api/repository/*/files').as('getFiles');
+        examNavigation.navigateRight();
+        cy.wait('@getFiles').its('response.statusCode').should('eq', 200);
+    }
+
+    function makeProgrammingExerciseSubmission() {
+        // TODO
     }
 
     function handInEarly() {

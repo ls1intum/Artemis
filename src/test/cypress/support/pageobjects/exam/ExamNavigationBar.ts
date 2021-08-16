@@ -10,8 +10,18 @@ export class ExamNavigationBar {
         this.clickNavigationItemAtIndex(index + 2);
     }
 
+    /**
+     * Presses the right arrow in the navigation bar.
+     */
+    navigateRight() {
+        this.getNavigationItems().last().click();
+    }
+
+    /**
+     * Presses the hand in early button in the navigation bar.
+     */
     handInEarly() {
-        cy.get('.btn-danger').click();
+        this.getNavigationBarRoot().find('.btn-danger').click();
     }
 
     /**
@@ -19,7 +29,11 @@ export class ExamNavigationBar {
      * @param index the navigation item index. If the exam has x exercises: index = 0 -> navigation overview, 1 -> left arrow, 2 -> first exercise, x + 1 -> last exercise, x + 2 -> right arrow
      */
     private clickNavigationItemAtIndex(index: number) {
-        this.getNavigationBarRoot().find('.navigation-item').eq(index).click();
+        this.getNavigationItems().eq(index).click();
+    }
+
+    private getNavigationItems() {
+        return this.getNavigationBarRoot().find('.navigation-item');
     }
 
     private getNavigationBarRoot() {
