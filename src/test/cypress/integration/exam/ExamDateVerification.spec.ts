@@ -84,7 +84,7 @@ describe('Exam management', () => {
                 courseManagementRequests.registerStudentForExam(course, exam, student);
                 courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.createTextExercise(exerciseGroup, 'Text exercise 1').then((exerciseResponse) => {
+                    courseManagementRequests.createTextExercise('Text exercise 1', null, exerciseGroup).then((exerciseResponse) => {
                         textExercise = exerciseResponse.body;
                         courseManagementRequests.generateMissingIndividualExams(course, exam);
                         courseManagementRequests.prepareExerciseStartForExam(course, exam);
@@ -122,7 +122,7 @@ describe('Exam management', () => {
                 courseManagementRequests.registerStudentForExam(course, exam, student);
                 courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.createTextExercise(exerciseGroup, 'Text exercise 1').then(() => {
+                    courseManagementRequests.createTextExercise( 'Text exercise 1', null, exerciseGroup).then(() => {
                         courseManagementRequests.generateMissingIndividualExams(course, exam);
                         courseManagementRequests.prepareExerciseStartForExam(course, exam);
                         cy.login(student, `/courses/${course.id}/exams`);
