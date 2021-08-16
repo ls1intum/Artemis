@@ -1144,16 +1144,16 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         }
     }
 
-    private void getStudentExamExerciseIdsAuxiliaryCreateExercises(int numberOfExercisesToCreate, Long[] expectedExerciseIds, Course courseToBeAddedTo, StudentExam studentExam) {
+    private void studentExamExerciseIdsAuxiliaryCreateExercises(int numberOfExercisesToCreate, Long[] expectedExerciseIds, Course courseToBeAddedTo, StudentExam studentExam) {
         List<Exercise> exercises = new ArrayList<>();
         for (int i = 0; i < numberOfExercisesToCreate; i++) {
-            getStudentExamExerciseIdsAuxiliaryCreateSingleExercise(i, exercises, expectedExerciseIds, courseToBeAddedTo);
+            studentExamExerciseIdsAuxiliaryCreateSingleExercise(i, exercises, expectedExerciseIds, courseToBeAddedTo);
         }
         studentExam.setExercises(exercises);
         studentExamRepository.save(studentExam);
     }
 
-    private void getStudentExamExerciseIdsAuxiliaryCreateSingleExercise(int currentExerciseNumber, List<Exercise> exercises, Long[] expectedExerciseIds, Course courseToBeAddedTo) {
+    private void studentExamExerciseIdsAuxiliaryCreateSingleExercise(int currentExerciseNumber, List<Exercise> exercises, Long[] expectedExerciseIds, Course courseToBeAddedTo) {
         TextExercise exercise = database.createIndividualTextExercise(courseToBeAddedTo, null, null, null);
         expectedExerciseIds[currentExerciseNumber] = exercise.getId();
         exercise = exerciseRepository.save(exercise);
@@ -1168,7 +1168,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         int numberOfExercises = 3;
         Long[] expectedExerciseIds = new Long[numberOfExercises];
 
-        getStudentExamExerciseIdsAuxiliaryCreateExercises(numberOfExercises, expectedExerciseIds, course1, studentExam1);
+        studentExamExerciseIdsAuxiliaryCreateExercises(numberOfExercises, expectedExerciseIds, course1, studentExam1);
 
         exam1.addStudentExam(studentExam1);
         exam1 = examRepository.save(exam1);
