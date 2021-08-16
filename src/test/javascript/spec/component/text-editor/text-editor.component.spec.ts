@@ -75,7 +75,7 @@ describe('TextEditorComponent', () => {
         result.id = 1;
     });
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([textEditorRoute[0]])],
             declarations: [
