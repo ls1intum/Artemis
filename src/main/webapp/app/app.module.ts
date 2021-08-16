@@ -27,6 +27,9 @@ import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { NotificationOptionsComponent } from 'app/shared/notification/notification-options/notification-options.component';
+import { RouterModule } from '@angular/router';
+import { UserSettingsComponent } from 'app/shared/user-settings/user-settings.component';
+import { userSettingsState } from 'app/shared/user-settings/user-settings.route';
 
 // NOTE: this module should only include the most important modules for normal users, all course management, admin and account functionality should be lazy loaded if possible
 @NgModule({
@@ -45,10 +48,12 @@ import { NotificationOptionsComponent } from 'app/shared/notification/notificati
         ArtemisSystemNotificationModule,
         ArtemisComplaintsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
+        RouterModule.forChild(userSettingsState),
     ],
     declarations: [
         JhiMainComponent,
         NavbarComponent,
+        UserSettingsComponent,
         ErrorComponent,
         OrionOutdatedComponent,
         PageRibbonComponent,
