@@ -4,8 +4,8 @@ import { generateUUID } from '../../support/utils';
 import dayjs from 'dayjs';
 
 // Requests
-const courseManagementRequests = artemis.requests.courseManagement;
-const examManagementRequests = artemis.requests.examManagement;
+const courseRequests = artemis.requests.courseManagement;
+const examRequests = artemis.requests.examManagement;
 
 // User management
 const users = artemis.users;
@@ -23,6 +23,7 @@ const courseName = 'Cypress course' + uid;
 const courseShortName = 'cypress' + uid;
 const examTitle = 'exam' + uid;
 const textExerciseTitle = 'Text exercise 1';
+const submissionText = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.';
 
 describe('Exam management', () => {
     let course: any;
@@ -30,7 +31,7 @@ describe('Exam management', () => {
 
     before(() => {
         cy.login(users.getAdmin());
-        courseManagementRequests.createCourse(courseName, courseShortName).then((response) => {
+        courseRequests.createCourse(courseName, courseShortName).then((response) => {
             course = response.body;
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
@@ -38,50 +39,66 @@ describe('Exam management', () => {
                 .startDate(dayjs().subtract(2, 'days'))
                 .endDate(dayjs().add(3, 'days'))
                 .build();
-            courseManagementRequests.createExam(examContent).then((examResponse) => {
+            courseRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                examManagementRequests.registerStudent(course, exam, student);
-                examManagementRequests.addExerciseGroup(course, exam, 'group 1', true).then((groupResponse) => {
-                    examManagementRequests.addTextExercise(groupResponse.body, textExerciseTitle);
+                examRequests.registerStudent(course, exam, student);
+                examRequests.addExerciseGroup(course, exam, 'group 1', true).then((groupResponse) => {
+                    examRequests.addTextExercise(groupResponse.body, textExerciseTitle);
                 });
-                examManagementRequests.generateMissingIndividualExams(course, exam);
-                examManagementRequests.prepareExerciseStart(course, exam);
+                examRequests.generateMissingIndividualExams(course, exam);
+                examRequests.prepareExerciseStart(course, exam);
             });
         });
     });
 
-    beforeEach(() => {
-        cy.login(student, '/');
+    it('Participates as a student in a registered exam', () => {
+        navigateToExam();
+        startParticipation();
+        examNavigation.openExerciseAtIndex(0);
+        makeTextExerciseSubmission();
+        handInEarly();
+        verifyFinalPage();
     });
 
-    it('Participates as a student in a registered exam', () => {
+    function navigateToExam() {
+        cy.login(student, '/');
         courses.openCourse(courseName);
         courseOverview.openExamsTab();
         courseOverview.openExam(examTitle);
         cy.url().should('contain', `/exams/${exam.id}`);
+    }
+
+    function startParticipation() {
         examStartEnd.setConfirmCheckmark();
         examStartEnd.enterFirstnameLastname();
         examStartEnd.startExam();
-        examNavigation.openExerciseAtIndex(0);
-        const submissionText = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.';
+    }
+
+    function makeTextExerciseSubmission() {
         artemis.pageobjects.textEditor.typeSubmission(submissionText);
         cy.intercept('PUT', `/api/exercises/*/text-submissions`).as('savedSubmission');
         cy.contains('Save').click();
         cy.wait('@savedSubmission').its('request.body.text').should('eq', submissionText);
+    }
+
+    function handInEarly() {
         examNavigation.handInEarly();
         cy.get('[jhitranslate="artemisApp.examParticipation.handInEarlyNoticeFirstSentence"]').should('be.visible');
         examStartEnd.setConfirmCheckmark();
         examStartEnd.enterFirstnameLastname();
         examStartEnd.finishExam().its('response.statusCode').should('eq', 200);
+    }
+
+    function verifyFinalPage() {
         cy.get('.alert').contains('Your exam was submitted successfully.');
         cy.contains(textExerciseTitle).should('be.visible');
         cy.contains(submissionText).should('be.visible');
-    });
+    }
 
     after(() => {
         if (!!course) {
             cy.login(users.getAdmin());
-            courseManagementRequests.deleteCourse(course.id);
+            courseRequests.deleteCourse(course.id);
         }
     });
 });
