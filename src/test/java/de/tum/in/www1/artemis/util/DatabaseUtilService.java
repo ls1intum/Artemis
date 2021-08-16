@@ -56,10 +56,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.AssessmentService;
-import de.tum.in.www1.artemis.service.ModelingSubmissionService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import liquibase.util.csv.CSVReader;
 
@@ -106,6 +103,9 @@ public class DatabaseUtilService {
 
     @Autowired
     private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
+
+    @Autowired
+    private ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
     @Autowired
     private AttachmentRepository attachmentRepo;
@@ -1604,6 +1604,17 @@ public class DatabaseUtilService {
         course.addExercises(textExercise);
         courseRepo.save(course);
         exerciseRepo.save(textExercise);
+        return course;
+    }
+
+    public Course addCourseWithOneReleasedModelExerciseWithKnowledge() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+        modelingExercise.setTitle("Text");
+        modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
+        course.addExercises(modelingExercise);
+        courseRepo.save(course);
+        exerciseRepo.save(modelingExercise);
         return course;
     }
 
