@@ -59,6 +59,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import liquibase.util.csv.CSVReader;
 
@@ -102,6 +103,9 @@ public class DatabaseUtilService {
 
     @Autowired
     private ExerciseRepository exerciseRepo;
+
+    @Autowired
+    private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
     @Autowired
     private AttachmentRepository attachmentRepo;
@@ -1589,6 +1593,17 @@ public class DatabaseUtilService {
         assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(textExercise);
         assertThat(textExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
+        return course;
+    }
+
+    public Course addCourseWithOneReleasedTextExerciseWithKnowledge() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        textExercise.setTitle("Text");
+        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
+        course.addExercises(textExercise);
+        courseRepo.save(course);
+        exerciseRepo.save(textExercise);
         return course;
     }
 
