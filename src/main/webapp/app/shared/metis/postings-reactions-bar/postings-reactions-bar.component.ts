@@ -9,16 +9,26 @@ const PIN_EMOJI_UNICODE = '1F4CC';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
 const ARCHIVE_EMOJI_UNICODE = '1F4C2';
 
+/*
+Event triggered by the emoji mart component, including EmojiData
+ */
 interface ReactionEvent {
     $event: Event;
     emoji?: EmojiData;
 }
 
+/*
+Calculated per emojiId on a post, counts the amount of users reacted with a certain emoji;
+hasReacted indicates if the currently logged in user is among those counted users, used for highlighting
+ */
 interface ReactionCount {
     count: number;
     hasReacted: boolean;
 }
 
+/*
+DataStructure used for displaying emoji reactions with counts on postings, Maps the ReactionCount to each emojiId
+ */
 interface ReactionCountMap {
     [emojiId: string]: ReactionCount;
 }
@@ -28,6 +38,8 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
     categoriesIcons: { [key: string]: string } = {
+        // category 'recent' (would show recently used emojis) is overwritten by a preselected set of emojis for that course,
+        // therefore category icon is an asterisk (indicating customization) instead of a clock (indicating the "recently used"-use case)
         recent: `M10 1h3v21h-3zm10.186 4l1.5 2.598L3.5 18.098 2 15.5zM2 7.598L3.5 5l18.186 10.5-1.5 2.598z`,
     };
 
@@ -48,7 +60,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     reactionCountMap: ReactionCountMap = {};
 
     /*
-     Emojis that have a predefined meaning, i.e. pin and archive emoji,
+     emojis that have a predefined meaning, i.e. pin and archive emoji,
      should not appear in the emoji-mart selector
      */
     emojisToShowFilter: (emoji: string | EmojiData) => boolean = (emoji) => {
@@ -128,16 +140,16 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      * @param reactions array of reactions associated to the current posting
      */
     buildEmojiIdCountMap(reactions: Reaction[]): ReactionCountMap {
-        return reactions.reduce((a: ReactionCountMap, b: Reaction) => {
-            if (b.emojiId === this.pinEmojiId || b.emojiId === this.archiveEmojiId) {
-                return a;
+        return reactions.reduce((countMap: ReactionCountMap, reaction: Reaction) => {
+            if (reaction.emojiId === this.pinEmojiId || reaction.emojiId === this.archiveEmojiId) {
+                return countMap;
             }
-            const hasReacted = b.user?.id === this.metisService.getUser().id;
+            const hasReacted = reaction.user?.id === this.metisService.getUser().id;
             const reactionCount = {
-                count: a[b.emojiId!] ? a[b.emojiId!].count + 1 : 1,
-                hasReacted: a[b.emojiId!] ? a[b.emojiId!].hasReacted || hasReacted : hasReacted,
+                count: countMap[reaction.emojiId!] ? countMap[reaction.emojiId!].count + 1 : 1,
+                hasReacted: countMap[reaction.emojiId!] ? countMap[reaction.emojiId!].hasReacted || hasReacted : hasReacted,
             };
-            return { ...a, [b.emojiId!]: reactionCount };
+            return { ...countMap, [reaction.emojiId!]: reactionCount };
         }, {});
     }
 

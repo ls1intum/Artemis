@@ -146,6 +146,7 @@ describe('Metis Service', () => {
             expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
             createdPostSub.unsubscribe();
         }));
+
         it('should delete a post', fakeAsync(() => {
             const postServiceSpy = spy(postService, 'delete');
             metisService.deletePost(post1);
@@ -153,6 +154,7 @@ describe('Metis Service', () => {
             tick();
             expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
         }));
+
         it('should update a post', fakeAsync(() => {
             const postServiceSpy = spy(postService, 'update');
             const updatedPostSub = metisService.updatePost(post1).subscribe((updatedPost) => {
@@ -163,6 +165,7 @@ describe('Metis Service', () => {
             expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
             updatedPostSub.unsubscribe();
         }));
+
         it('should get correct list of posts when set', fakeAsync(() => {
             metisService.setPosts([post1]);
             tick();
@@ -172,26 +175,31 @@ describe('Metis Service', () => {
             tick();
             postsSub.unsubscribe();
         }));
+
         it('should update post tags', () => {
             const postServiceSpy = spy(postService, 'getAllPostTagsByCourseId');
             metisService.updateCoursePostTags();
             expect(postServiceSpy).to.have.been.called;
         });
+
         it('should get posts for lecture filter', () => {
             const postServiceSpy = spy(postService, 'getAllPostsByLectureId');
             metisService.getPostsForFilter({ lecture: lectureDefault });
             expect(postServiceSpy).to.have.been.called;
         });
+
         it('should get posts for exercise filter', () => {
             const postServiceSpy = spy(postService, 'getAllPostsByExerciseId');
             metisService.getPostsForFilter({ exercise: exerciseDefault });
             expect(postServiceSpy).to.have.been.called;
         });
+
         it('should get posts for course-context filter', () => {
             const postServiceSpy = spy(postService, 'getAllPostsByCourseId');
             metisService.getPostsForFilter({ courseWideContext: CourseWideContext.RANDOM });
             expect(postServiceSpy).to.have.been.called;
         });
+
         it('should get posts for course', () => {
             const postServiceSpy = spy(postService, 'getAllPostsByCourseId');
             metisService.getPostsForFilter({});
@@ -210,6 +218,7 @@ describe('Metis Service', () => {
             expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
             createdAnswerPostSub.unsubscribe();
         }));
+
         it('should delete an answer post', fakeAsync(() => {
             const answerPostServiceSpy = spy(answerPostService, 'delete');
             metisService.deleteAnswerPost(answerPost);
@@ -217,6 +226,7 @@ describe('Metis Service', () => {
             tick();
             expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
         }));
+
         it('should create a post', fakeAsync(() => {
             const answerPostServiceSpy = spy(answerPostService, 'update');
             const updatedAnswerPostSub = metisService.updateAnswerPost(answerPost).subscribe((updatedAnswerPost) => {
@@ -240,6 +250,7 @@ describe('Metis Service', () => {
             expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
             createdReactionSub.unsubscribe();
         }));
+
         it('should delete a reaction', fakeAsync(() => {
             const reactionServiceSpy = spy(reactionService, 'delete');
             metisService.deleteReaction(reaction).subscribe(() => {
