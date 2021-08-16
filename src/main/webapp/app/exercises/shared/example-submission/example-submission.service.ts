@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { map } from 'rxjs/operators';
+import {Submission} from "app/entities/submission.model";
+import {Exercise} from "app/entities/exercise.model";
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
@@ -55,6 +57,21 @@ export class ExampleSubmissionService {
      */
     delete(exampleSubmissionId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`api/example-submissions/${exampleSubmissionId}`, { observe: 'response' });
+    }
+
+    import(submission: Submission, exerciseId: number): Observable<EntityResponseType> {
+        const copy = Object.assign({}, submission);
+        // avoid circular structure
+        copy.participation = undefined;
+        copy.results?.forEach(result => {
+            result.submission = undefined;
+            result.participation = undefined;
+        });
+        return this.http
+            .post<ExampleSubmission>(`api/exercises/${exerciseId}/example-submissions/import`, copy, {
+                observe: 'response',
+            })
+            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

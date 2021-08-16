@@ -28,6 +28,9 @@ import { getFirstResultWithComplaint, getSubmissionResultByCorrectionRound, getS
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -84,6 +87,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         private complaintService: ComplaintService,
         private structuredGradingCriterionService: StructuredGradingCriterionService,
         private submissionService: SubmissionService,
+        private exampleSubmissionService: ExampleSubmissionService,
     ) {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -533,6 +537,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     importStudentSubmissionAsExampleSubmission(): void {
-
+        if (this.submission && this.modelingExercise) {
+            this.exampleSubmissionService.import(this.submission, this.modelingExercise.id!).subscribe(
+                () => this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful'),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            );
+        }
     }
 }

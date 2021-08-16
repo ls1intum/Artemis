@@ -129,8 +129,10 @@ public class TextExerciseImportService extends ExerciseImportService {
             newSubmission.setParticipation(originalSubmission.getParticipation());
             newSubmission.setText(((TextSubmission) originalSubmission).getText());
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
-            newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
             newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission));
+            if (((TextSubmission) originalSubmission).getBlocks() != null) {
+                newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
+            }
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
         }
         return newSubmission;

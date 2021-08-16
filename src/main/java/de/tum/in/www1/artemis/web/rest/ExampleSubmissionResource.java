@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
@@ -144,5 +145,25 @@ public class ExampleSubmissionResource {
         exampleSubmissionService.deleteById(exampleSubmission.get().getId());
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+    }
+
+    /**
+     * POST /exercises/{exerciseId}/example-submissions : Create a new exampleSubmission.
+     *
+     * @param exerciseId        the id of the corresponding exercise for which to init a participation
+     * @param submission the submission to be imported as an example submmission
+     * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
+     */
+    @PostMapping("/exercises/{exerciseId}/example-submissions/import")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId, @RequestBody Submission submission) {
+        log.debug("REST request to save ExampleSubmission : {}", submission);
+        // if (exampleSubmission.getId() != null) {
+        // throw new BadRequestAlertException("A new exampleSubmission cannot already have an ID", ENTITY_NAME, "idexists");
+        // }
+
+        ExampleSubmission exampleSubmission = exampleSubmissionService.importStudentSubmissionAsExampleSubmission(submission, exerciseId);
+
+        return ResponseEntity.ok(exampleSubmission);
     }
 }

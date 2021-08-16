@@ -126,7 +126,7 @@
         <button
             class="btn ms-2 btn-primary"
             id="importExampleSubmission"
-            *ngIf="result?.completionDate && isAtLeastInstructor && (exercise.type === exerciseType.MODELING || exercise.type === exerciseType.TEXT)"
+            *ngIf="result?.completionDate && isAtLeastInstructor && (exercise!.type === exerciseType.MODELING || exercise!.type === exerciseType.TEXT)"
             [disabled]="submitBusy"
             (click)="importExampleSubmission.emit()"
         >
