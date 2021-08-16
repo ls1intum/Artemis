@@ -85,7 +85,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     public void submitComplaintAboutModelingAssessment() throws Exception {
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
-        Optional<Complaint> storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId());
+        Optional<Complaint> storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId());
         assertThat(storedComplaint).as("complaint is saved").isPresent();
         assertThat(storedComplaint.get().getComplaintText()).as("complaint text got correctly saved").isEqualTo(complaint.getComplaintText());
         assertThat(storedComplaint.get().isAccepted()).as("accepted flag of complaint is not set").isNull();
@@ -118,7 +118,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
-        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId())).as("complaint is saved").isPresent();
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
     }
@@ -130,7 +130,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
-        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is false").isFalse();
     }
@@ -142,13 +142,13 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
-        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId())).as("complaint is saved").isPresent();
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
 
         // Only one complaint is possible for exercise regardless of its type
         request.post("/api/complaints", moreFeedbackRequest, HttpStatus.BAD_REQUEST);
-        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId()).get().getComplaintType() == ComplaintType.MORE_FEEDBACK).as("more feedback request is not saved")
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).get().getComplaintType() == ComplaintType.MORE_FEEDBACK).as("more feedback request is not saved")
                 .isFalse();
     }
 
@@ -161,7 +161,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
-        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId())).as("complaint is saved").isPresent();
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
     }
@@ -175,7 +175,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
-        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is false").isFalse();
     }
@@ -191,7 +191,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", complaintResponse, HttpStatus.OK);
 
-        Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
+        Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
         Result storedResult = resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(modelingAssessment.getId()).get();
         Result updatedResult = storedResult.getSubmission().getLatestResult();
@@ -215,7 +215,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
                 Result.class, HttpStatus.OK);
 
         assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
-        Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
+        Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is accepted").isTrue();
         Result result = storedComplaint.getResult();
         // set dates to UTC and round to milliseconds for comparison
@@ -239,7 +239,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         complaintRepo.save(complaint);
         complaintRepo.save(complaint);
 
-        Complaint receivedComplaint = request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
+        Complaint receivedComplaint = request.get("/api/complaints/results/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
 
         assertThat(receivedComplaint.getResult().getAssessor()).as("assessor is not set").isNull();
     }
@@ -250,7 +250,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
-        request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.FORBIDDEN, Complaint.class);
+        request.get("/api/complaints/results/" + complaint.getResult().getId(), HttpStatus.FORBIDDEN, Complaint.class);
     }
 
     @Test
@@ -258,7 +258,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     public void getComplaintByResultid_instructor_sensitiveDataHidden() throws Exception {
         complaintRepo.save(complaint);
 
-        final var received = request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
+        final var received = request.get("/api/complaints/results/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
 
         assertThat(received.getResult().getParticipation()).as("Complaint should not contain participation").isNull();
     }
@@ -269,7 +269,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
-        final var received = request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
+        final var received = request.get("/api/complaints/results/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
 
         assertThat(received.getResult().getAssessor()).as("Tutors should not see the assessor of a complaint").isNull();
         assertThat(received.getParticipant()).as("Tutors should not see the student of a complaint").isNull();
@@ -680,7 +680,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
         request.post(url, examExerciseComplaint, HttpStatus.CREATED);
 
-        Optional<Complaint> storedComplaint = complaintRepo.findByResult_Id(textSubmission.getLatestResult().getId());
+        Optional<Complaint> storedComplaint = complaintRepo.findByResultId(textSubmission.getLatestResult().getId());
         assertThat(storedComplaint).as("complaint is saved").isPresent();
         assertThat(storedComplaint.get().getComplaintText()).as("complaint text got correctly saved").isEqualTo(examExerciseComplaint.getComplaintText());
         assertThat(storedComplaint.get().isAccepted()).as("accepted flag of complaint is not set").isNull();
@@ -729,7 +729,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
         request.post(url, examExerciseComplaint, HttpStatus.CREATED);
 
-        Optional<Complaint> storedComplaint = complaintRepo.findByResult_Id(textSubmission.getLatestResult().getId());
+        Optional<Complaint> storedComplaint = complaintRepo.findByResultId(textSubmission.getLatestResult().getId());
         request.get("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, List.class);
         database.changeUser("tutor1");
         request.get("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, List.class);
