@@ -98,7 +98,7 @@ describe('Exam management', () => {
                         examStartEnd.startExam();
                         cy.contains('Exam Overview').should('exist');
                         cy.contains('Text exercise 1').should('be.visible').click();
-                        cy.get('#text-editor-tab').type(
+                        artemis.pageobjects.textEditor.typeSubmission(
                             'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                         );
                         cy.intercept('PUT', `/api/exercises/${textExercise.id}/text-submissions`).as('savedSubmission');
