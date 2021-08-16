@@ -485,7 +485,7 @@ public class ExamService {
             numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId()));
 
             log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
-            if (!(exercise instanceof QuizExercise || exercise.getAssessmentType() == AssessmentType.AUTOMATIC)) {
+            if (!(exercise instanceof QuizExercise || AssessmentType.AUTOMATIC == exercise.getAssessmentType())) {
                 numberOfParticipationsForAssessmentGeneratedByExercise.add(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exercise.getId()));
             }
         }));
@@ -751,5 +751,17 @@ public class ExamService {
                 log.error("An error occurred when trying to combine template commits for exam " + exam.getId() + ".", e);
             }
         }));
+    }
+
+    /**
+     * Schedules all modeling exercises
+     * This is executed when exam is updated or individual working times are updated
+     *
+     * @param exam - the exam whose modeling exercises will be scheduled
+     */
+    public void scheduleModelingExercises(Exam exam) {
+        // for all modeling exercises in the exam, send their ids for scheduling
+        exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(exercise -> exercise instanceof ModelingExercise).map(Exercise::getId)
+                .forEach(instanceMessageSendService::sendModelingExerciseSchedule);
     }
 }

@@ -42,11 +42,11 @@ jobs:
     steps:
     # Install Java 16
     - name: Setup Node.js
-      uses: actions/setup-node@v2.2.0
+      uses: actions/setup-node@v2.4.0
       with:
         node-version: '${{ env.node }}'
     - name: Setup Java
-      uses: actions/setup-java@v2.1.0
+      uses: actions/setup-java@v2.2.0
       with:
         distribution: 'zulu'
         java-version: '${{ env.java }}'

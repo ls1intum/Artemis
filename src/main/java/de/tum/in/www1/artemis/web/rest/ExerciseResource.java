@@ -149,9 +149,9 @@ public class ExerciseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
-        if (exercise instanceof ProgrammingExercise) {
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
             // Programming exercises with only automatic assessment should *NOT* be available on the assessment dashboard!
-            if (exercise.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
+            if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC && !programmingExercise.getAllowComplaintsForAutomaticAssessments()) {
                 return badRequest();
             }
             exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);

@@ -146,19 +146,6 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreatePostWithWrongCourseIdReaction_badRequest() throws Exception {
-        Course dummyCourse = database.createCourse();
-        Post postToReactOn = existingPostsWithAnswers.get(0);
-        Reaction reactionToSaveOnPost = createReactionOnPost(postToReactOn);
-
-        Reaction createdReaction = request.postWithResponseBody("/api/courses/" + dummyCourse.getId() + "/postings/reactions", reactionToSaveOnPost, Reaction.class,
-                HttpStatus.BAD_REQUEST);
-        assertThat(createdReaction).isNull();
-        assertThat(postToReactOn.getReactions().size()).isEqualTo(postRepository.findById(postToReactOn.getId()).get().getReactions().size());
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
     public void testCreateExistingReaction_badRequest() throws Exception {
         // student 1 is the author of the answer post and reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);

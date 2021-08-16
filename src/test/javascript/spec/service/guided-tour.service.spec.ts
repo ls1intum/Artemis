@@ -2,14 +2,13 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Router } from '@angular/router';
+import { NavigationEnd, NavigationStart, Router, RouterState } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { CookieService } from 'ngx-cookie-service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisTestModule } from '../test.module';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
@@ -36,10 +35,28 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockCookieService } from '../helpers/mocks/service/mock-cookie.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { JhiTranslateDirective } from 'ng-jhipster';
+import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
+import { User } from 'app/core/user/user.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
+
+class MockRouterWithEvents {
+    public url = 'courses';
+
+    public events = new Observable((observer) => {
+        observer.next(new NavigationStart(0, 'courses'));
+        observer.next(new NavigationEnd(1, 'courses', 'courses'));
+        observer.complete();
+    });
+
+    public routerState = {} as RouterState;
+}
 
 describe('GuidedTourService', () => {
     const tour: GuidedTour = {
@@ -61,7 +78,7 @@ describe('GuidedTourService', () => {
                 contentTranslateKey: '',
                 userInteractionEvent: UserInteractionEvent.CLICK,
             }),
-            new TextTourStep({ headlineTranslateKey: '', contentTranslateKey: '', orientation: Orientation.TOPLEFT }),
+            new TextTourStep({ headlineTranslateKey: '', contentTranslateKey: '', orientation: Orientation.TOPLEFT, pageUrl: 'courses' }),
         ],
     };
 
@@ -94,16 +111,14 @@ describe('GuidedTourService', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule],
+                imports: [ArtemisTestModule, HttpClientTestingModule],
                 providers: [
-                    { provide: DeviceDetectorService },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
+                    MockProvider(DeviceDetectorService),
                     MockProvider(TranslateService),
                 ],
-            })
-                .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
-                .compileComponents();
+            }).compileComponents();
 
             service = TestBed.inject(GuidedTourService);
             httpMock = TestBed.inject(HttpTestingController);
@@ -149,7 +164,6 @@ describe('GuidedTourService', () => {
             TestBed.configureTestingModule({
                 imports: [
                     ArtemisTestModule,
-                    ArtemisSharedModule,
                     RouterTestingModule.withRoutes([
                         {
                             path: 'courses',
@@ -157,17 +171,16 @@ describe('GuidedTourService', () => {
                         },
                     ]),
                 ],
-                declarations: [NavbarComponent, GuidedTourComponent],
+                declarations: [NavbarComponent, GuidedTourComponent, MockPipe(ArtemisTranslatePipe), MockDirective(JhiTranslateDirective), MockPipe(SafeResourceUrlPipe)],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: CookieService, useClass: MockCookieService },
                     { provide: AccountService, useClass: MockAccountService },
-                    { provide: DeviceDetectorService },
+                    MockProvider(DeviceDetectorService),
                     { provide: TranslateService, useClass: MockTranslateService },
                 ],
             })
-                .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
                 .overrideTemplate(NavbarComponent, '<div class="random-selector"></div>')
                 .compileComponents()
                 .then(() => {
@@ -439,7 +452,6 @@ describe('GuidedTourService', () => {
                 }),
             ));
         });
-        describe('init', () => {});
         describe('getGuidedTourAvailabilityStream', () => {});
         describe('checkModelingComponent', () => {});
         describe('updateModelingResult', () => {});
@@ -526,6 +538,16 @@ describe('GuidedTourService', () => {
                 guidedTourService.nextStep();
                 expect(currentDotSubjectSpy.calls.count()).to.equal(1);
             });
+            it('nextStep and backStep should return to initial step', fakeAsync(() => {
+                guidedTourService.currentTour = tour;
+                const initialStep = guidedTourService.currentTourStepIndex;
+                guidedTourService.nextStep();
+                tick();
+                guidedTourService.backStep();
+                tick();
+                expect(currentDotSubjectSpy.calls.count()).to.equal(2);
+                expect(guidedTourService.currentTourStepIndex).to.equal(initialStep);
+            }));
         });
         describe('finishGuidedTour', () => {
             it('should just return if currentTour is not defined', () => {
@@ -709,5 +731,72 @@ describe('GuidedTourService', () => {
                 expect(enableNextStepSpy.calls.count()).to.equal(1);
             }));
         });
+    });
+
+    describe('GuidedTourService init', () => {
+        let guidedTourComponent: GuidedTourComponent;
+        let guidedTourComponentFixture: ComponentFixture<GuidedTourComponent>;
+        let accountService: AccountService;
+        let profileService: ProfileService;
+        let guidedTourService: GuidedTourService;
+
+        beforeEach(() => {
+            TestBed.configureTestingModule({
+                imports: [
+                    ArtemisTestModule,
+                    RouterTestingModule.withRoutes([
+                        {
+                            path: 'courses',
+                            component: NavbarComponent,
+                        },
+                    ]),
+                ],
+                declarations: [NavbarComponent, GuidedTourComponent, MockPipe(ArtemisTranslatePipe), MockDirective(JhiTranslateDirective), MockPipe(SafeResourceUrlPipe)],
+                providers: [
+                    { provide: LocalStorageService, useClass: MockSyncStorage },
+                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    { provide: CookieService, useClass: MockCookieService },
+                    { provide: AccountService, useClass: MockAccountService },
+                    MockProvider(DeviceDetectorService),
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: Router, useClass: MockRouterWithEvents },
+                ],
+            })
+                .overrideTemplate(NavbarComponent, '<div class="random-selector"></div>')
+                .compileComponents()
+                .then(() => {
+                    guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
+                    guidedTourComponent = guidedTourComponentFixture.componentInstance;
+
+                    TestBed.createComponent(NavbarComponent);
+
+                    guidedTourService = TestBed.inject(GuidedTourService);
+                    accountService = TestBed.inject(AccountService);
+                    profileService = TestBed.inject(ProfileService);
+                });
+        });
+
+        it('should initialize', fakeAsync(() => {
+            const tourSettings = [{ guidedTourKey: 'test', guidedTourStep: 0 } as GuidedTourSetting];
+            const authStateStub = sinon.stub(accountService, 'getAuthenticationState').returns(of({ guidedTourSettings: tourSettings } as User));
+            const tourMapping = { courseShortName: 'test-course' } as GuidedTourMapping;
+            const profileInfoStub = sinon.stub(profileService, 'getProfileInfo').returns(of({ guidedTourMapping: tourMapping } as ProfileInfo));
+
+            // Fake mapping and settings to enable the tour. Should be overwritten by the return value of the profile service
+            guidedTourService.guidedTourMapping = { courseShortName: 'test', tours: { tour_user_interaction: '' } } as GuidedTourMapping;
+            guidedTourService.guidedTourSettings = [{ guidedTourKey: 'test-2', guidedTourStep: 0 } as GuidedTourSetting];
+            guidedTourService.enableTourForCourseOverview([{ id: 1, shortName: 'test' } as Course], tourWithUserInteraction, true);
+            guidedTourService.currentTour = tourWithUserInteraction;
+            tick(500);
+            guidedTourService.currentTourStepIndex = 0;
+
+            // guidedTourService.init() is called via the component initialization
+            guidedTourComponentFixture.detectChanges();
+
+            expect(authStateStub).to.have.been.calledOnce;
+            expect(guidedTourService.guidedTourSettings).to.deep.equal(tourSettings);
+            expect(profileInfoStub).to.have.been.calledOnce;
+            expect(guidedTourService.guidedTourMapping).to.equal(tourMapping);
+        }));
     });
 });

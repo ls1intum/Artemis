@@ -41,6 +41,7 @@ export class ProgrammingExercise extends Exercise {
     public problemStatement?: string;
     public sequentialTestRuns?: boolean;
     public showTestNamesToStudents?: boolean;
+    public allowComplaintsForAutomaticAssessments?: boolean;
     public checkoutSolutionRepository?: boolean;
     public auxiliaryRepositories?: AuxiliaryRepository[];
 
@@ -73,5 +74,6 @@ export class ProgrammingExercise extends Exercise {
         this.checkoutSolutionRepository = false; // default value
         this.projectType = ProjectType.ECLIPSE; // default value
         this.showTestNamesToStudents = false; // default value
+        this.allowComplaintsForAutomaticAssessments = false; // default value
     }
 }
