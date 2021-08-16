@@ -41,7 +41,7 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
     @Query(value = """
             SELECT cluster_stats.*, text_cluster.disabled FROM
             (
-            SELECT text_block.cluster_id AS clusterId, count(DISTINCT text_block.id) AS clusterSize, SUM(if(feedback.type = 'AUTOMATIC', 1, 0)) AS numberOfAutomaticFeedbacks
+            SELECT text_block.cluster_id AS clusterId, count(DISTINCT text_block.id) AS clusterSize, SUM(case when feedback.type = 'AUTOMATIC' then 1 else 0 end) AS numberOfAutomaticFeedbacks
             FROM text_block
             LEFT JOIN submission ON text_block.submission_id = submission.id
             LEFT JOIN result ON result.submission_id = submission.id
@@ -50,7 +50,7 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
             WHERE participation.exercise_id = ?1
             GROUP BY clusterId HAVING clusterId > 0
             ) AS cluster_stats
-            LEFT JOIN text_cluster ON text_cluster.id = cluster_stats.clusterId;
+            LEFT JOIN text_cluster ON text_cluster.id = cluster_stats.clusterId
             """, nativeQuery = true)
     List<TextClusterStats> getClusterStatistics(@Param("exerciseId") Long exerciseId);
 

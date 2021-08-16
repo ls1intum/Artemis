@@ -2757,7 +2757,7 @@ public class DatabaseUtilService {
             block.computeId();
         });
         submission.setBlocks(blocks);
-        textBlockRepo.saveAll(blocks);
+        // textBlockRepo.saveAllAndFlush(blocks);
         return textSubmissionRepo.save(submission);
     }
 
@@ -3679,6 +3679,23 @@ public class DatabaseUtilService {
         user.setLogin(login);
         user.setId(1L);
         user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
+        userRepo.save(user);
+        return course;
+    }
+
+    public Course createCourseWithInstructorAndTextExercise(String login) {
+        Course course = this.createCourse();
+        TextExercise textExercise = createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        StudentParticipation participation = ModelFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
+        studentParticipationRepo.save(participation);
+        // TextSubmission textSubmission = ModelFactory.generateTextSubmission("some text", Language.ENGLISH, true);
+        // textSubmission.setParticipation(participation);
+        // textSubmissionRepo.saveAndFlush(textSubmission);
+        course.addExercises(textExercise);
+        User user = new User();
+        user.setLogin(login);
+        user.setId(1L);
+        user.setGroups(Set.of(course.getInstructorGroupName()));
         userRepo.save(user);
         return course;
     }
