@@ -2,10 +2,16 @@
     "artemisApp": {
         "consistencyCheck": {
             "button": "Check consistency",
-            "title": "Consistency checks",
-            "text": "Checks on programming exercises are being performed and occurring consistency errors will be displayed below.<br><small>This will require some time to complete for courses with many programming exercises</small>",
+            "title": "Consistency check",
+            "text": "The check on programming exercises is being performed. Found inconsistencies will be displayed below.<br><small>For courses with many programming exercises this will take some time.</small>",
             "error": {
-                "type": "Error Type"
+                "type": "Error Type",
+                "TEMPLATE_REPO_MISSING": "Missing template repository",
+                "SOLUTION_REPO_MISSING": "Missing solution repository",
+                "TEST_REPO_MISSING": "Missing test repository",
+                "TEMPLATE_BUILD_PLAN_MISSING": "Missing template build plan",
+                "SOLUTION_BUILD_PLAN_MISSING": "Missing solution build plan",
+                "IS_LOCAL_SIMULATION": "Is a local simulation"
             },
             "noErrors": "No errors found"
         }

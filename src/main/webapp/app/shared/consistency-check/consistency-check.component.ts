@@ -8,7 +8,6 @@ import { getCourseId } from 'app/entities/exercise.model';
 @Component({
     selector: 'jhi-consistency-check',
     templateUrl: './consistency-check.component.html',
-    styles: [],
 })
 export class ConsistencyCheckComponent implements OnInit {
     @Input() id: number;
@@ -48,7 +47,7 @@ export class ConsistencyCheckComponent implements OnInit {
     }
 
     isLoadingResults() {
-        return this.errors === undefined;
+        return this.errors == undefined;
     }
 
     closeModal() {
@@ -57,6 +56,6 @@ export class ConsistencyCheckComponent implements OnInit {
 }
 
 export enum CheckType {
-    PROGRAMMING_EXERCISE,
-    COURSE,
+    PROGRAMMING_EXERCISE = 'PROGRAMMING_EXERCISE',
+    COURSE = 'COURSE',
 }

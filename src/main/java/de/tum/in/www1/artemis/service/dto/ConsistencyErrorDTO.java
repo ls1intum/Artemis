@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.dto;
 
+import java.util.Objects;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 /**
@@ -39,13 +41,28 @@ public class ConsistencyErrorDTO {
         SOLUTION_BUILD_PLAN_MISSING("SOLUTION_BUILD_PLAN_MISSING");
 
         ErrorType(final String value) {
-            // This constructor is intentionally empty.
+            // This constructor is intentionally empty to avoid Codacy issues
         }
 
         @Override
         public String toString() {
             return name();
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        ConsistencyErrorDTO that = (ConsistencyErrorDTO) o;
+        return Objects.equals(getProgrammingExercise(), that.getProgrammingExercise()) && getType() == that.getType();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getProgrammingExercise(), getType());
     }
 
     @Override

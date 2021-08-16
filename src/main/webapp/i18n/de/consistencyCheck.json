@@ -1,11 +1,17 @@
 {
     "artemisApp": {
         "consistencyCheck": {
-            "button": "Konsistenz Check",
-            "title": "Konsistenz Checks",
-            "text": "Überprüfungen der Programmierübungen werden durchgeführt und im Fall von auftretende Konsistenzfehler, werden diese unten angezeigt.<br><small>Dies wird bei Kursen mit vielen Programmierübungen einige Zeit in Anspruch nehmen</small>",
+            "button": "Konsistenz Prüfung",
+            "title": "Konsistenz Prüfung",
+            "text": "Die Überprüfung der Programmieraufgaben wird durchgeführt. Gefundene Inkonsistenzen werden nachfolgend angezeigt.<br><small>Bei Kursen mit vielen Programmierübungen wird dies einige Zeit in Anspruch nehmen.</small>",
             "error": {
-                "type": "Fehler Typ"
+                "type": "Fehler Typ",
+                "TEMPLATE_REPO_MISSING": "Fehlende Vorlagen-Repository",
+                "SOLUTION_REPO_MISSING": "Fehlende Lösung-Repository",
+                "TEST_REPO_MISSING": "Fehlende Test-Repository",
+                "TEMPLATE_BUILD_PLAN_MISSING": "Fehlendes Vorlagen-Build-Pläne",
+                "SOLUTION_BUILD_PLAN_MISSING": "Fehlendes Lösung-Build-Pläne",
+                "IS_LOCAL_SIMULATION": "Ist eine lokale Simulation"
             },
             "noErrors": "Keine Inkonsistenzen gefunden"
         }

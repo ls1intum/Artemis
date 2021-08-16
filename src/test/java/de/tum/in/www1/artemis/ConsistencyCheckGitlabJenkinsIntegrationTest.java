@@ -24,6 +24,7 @@ public class ConsistencyCheckGitlabJenkinsIntegrationTest extends AbstractSpring
     public void tearDown() throws Exception {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
+        database.resetDatabase();
     }
 
     /**

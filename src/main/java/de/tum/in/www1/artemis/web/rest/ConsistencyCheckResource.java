@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ConsistencyCheckService;
 import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
 
@@ -18,16 +22,29 @@ import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
  * REST controller for consistency checks
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 @PreAuthorize("hasRole('INSTRUCTOR')")
 public class ConsistencyCheckResource {
 
     private final Logger log = LoggerFactory.getLogger(ConsistencyCheckResource.class);
 
+    private final AuthorizationCheckService authCheckService;
+
     private final ConsistencyCheckService consistencyCheckService;
 
-    public ConsistencyCheckResource(ConsistencyCheckService consistencyCheckService) {
+    private final ExerciseRepository exerciseRepository;
+
+    private final CourseRepository courseRepository;
+
+    private final UserRepository userRepository;
+
+    public ConsistencyCheckResource(AuthorizationCheckService authCheckService, ConsistencyCheckService consistencyCheckService, ExerciseRepository exerciseRepository,
+            CourseRepository courseRepository, UserRepository userRepository) {
+        this.authCheckService = authCheckService;
         this.consistencyCheckService = consistencyCheckService;
+        this.exerciseRepository = exerciseRepository;
+        this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -36,12 +53,17 @@ public class ConsistencyCheckResource {
      * @return List containing the resulting errors, if any.
      */
     @GetMapping("/consistency-check/exercise/{programmingExerciseId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ConsistencyErrorDTO>> checkConsistencyOfProgrammingExercise(@PathVariable long programmingExerciseId) {
         log.debug("REST request to check consistencies of programming exercise [{}]", programmingExerciseId);
-        List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfProgrammingExercise(programmingExerciseId);
+        if (authCheckService.isAtLeastInstructorForExercise(exerciseRepository.findByIdElseThrow(programmingExerciseId))) {
+            List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfProgrammingExercise(programmingExerciseId);
 
-        return ResponseEntity.ok(result);
+            return ResponseEntity.ok(result);
+        }
+        else {
+            return ResponseEntity.status(401).body(null);
+        }
+
     }
 
     /**
@@ -50,11 +72,15 @@ public class ConsistencyCheckResource {
      * @return List containing the resulting errors, if any.
      */
     @GetMapping("/consistency-check/course/{courseId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ConsistencyErrorDTO>> checkConsistencyOfCourse(@PathVariable long courseId) {
         log.debug("REST request to check consistencies of course [{}]", courseId);
-        List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfCourse(courseId);
+        if (authCheckService.isAtLeastInstructorInCourse(courseRepository.findByIdElseThrow(courseId), userRepository.getUserWithGroupsAndAuthorities())) {
+            List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfCourse(courseId);
 
-        return ResponseEntity.ok(result);
+            return ResponseEntity.ok(result);
+        }
+        else {
+            return ResponseEntity.status(401).body(null);
+        }
     }
 }

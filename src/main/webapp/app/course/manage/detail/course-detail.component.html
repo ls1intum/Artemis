@@ -61,10 +61,10 @@
                 <fa-icon [icon]="'chart-bar'"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
             </a>
-            <a *ngIf="course.isAtLeastInstructor" (click)="checkConsistencies(course.id!)" class="tab-item btn btn-success btn-md ms-1">
+            <button *ngIf="course.isAtLeastInstructor" (click)="checkConsistencies(course.id!)" class="tab-item btn btn-success btn-md ms-1">
                 <fa-icon [icon]="'check-double'"></fa-icon>
                 <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
-            </a>
+            </button>
             <div class="ms-auto">
                 <a
                     *ngIf="course.postsEnabled && course.isAtLeastTutor"

@@ -24,6 +24,7 @@ public class ConsistencyCheckBitbucketBambooIntegrationTest extends AbstractSpri
     public void tearDown() throws Exception {
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
+        database.resetDatabase();
     }
 
     /**
