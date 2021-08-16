@@ -1,12 +1,12 @@
 jib {
     from {
-        image = "adoptopenjdk:11-jre-hotspot"
+        image = "openjdk:16-jdk-alpine"
     }
     to {
         image = "gateway:latest"
     }
     container {
-        entrypoint = ["bash", "-c", "/entrypoint.sh"]
+        entrypoint = ["/bin/sh", "-c", "/entrypoint.sh"]
         ports = ["8089"]
         environment = [
             SPRING_OUTPUT_ANSI_ENABLED: "ALWAYS",
