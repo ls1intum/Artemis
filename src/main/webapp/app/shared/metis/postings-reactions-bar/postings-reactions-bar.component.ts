@@ -4,16 +4,26 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/entities/metis/reaction.model';
 
+/*
+Event triggered by the emoji mart component, including EmojiData
+ */
 interface ReactionEvent {
     $event: Event;
     emoji?: EmojiData;
 }
 
+/*
+Calculated per emojiId on a post, counts the amount of users reacted with a certain emoji;
+hasReacted indicates if the currently logged in user is among those counted users, used for highlighting
+ */
 interface ReactionCount {
     count: number;
     hasReacted: boolean;
 }
 
+/*
+DataStructure used for displaying emoji reactions with counts on postings, Maps the ReactionCount to each emojiId
+ */
 interface ReactionCountMap {
     [emojiId: string]: ReactionCount;
 }
@@ -115,13 +125,13 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      * @param reactions array of reactions associated to the current posting
      */
     buildEmojiIdCountMap(reactions: Reaction[]): ReactionCountMap {
-        return reactions.reduce((a: ReactionCountMap, b: Reaction) => {
-            const hasReacted = b.user?.id === this.metisService.getUser().id;
+        return reactions.reduce((countMap: ReactionCountMap, reaction: Reaction) => {
+            const hasReacted = reaction.user?.id === this.metisService.getUser().id;
             const reactionCount = {
-                count: a[b.emojiId!] ? a[b.emojiId!].count + 1 : 1,
-                hasReacted: a[b.emojiId!] ? a[b.emojiId!].hasReacted || hasReacted : hasReacted,
+                count: countMap[reaction.emojiId!] ? countMap[reaction.emojiId!].count + 1 : 1,
+                hasReacted: countMap[reaction.emojiId!] ? countMap[reaction.emojiId!].hasReacted || hasReacted : hasReacted,
             };
-            return { ...a, [b.emojiId!]: reactionCount };
+            return { ...countMap, [reaction.emojiId!]: reactionCount };
         }, {});
     }
 
