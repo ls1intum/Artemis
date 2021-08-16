@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -48,7 +49,7 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
 
     private TextExercise textExercise;
 
-    private ArrayList<String> textBlockIds;
+    private List<String> textBlockIds;
 
     private String path;
 
