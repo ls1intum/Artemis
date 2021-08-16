@@ -26,7 +26,8 @@ export class ExamNavigationBar {
 
     /**
      * Clicks the navigation item at the specified index.
-     * @param index the navigation item index. If the exam has x exercises: index = 0 -> navigation overview, 1 -> left arrow, 2 -> first exercise, x + 1 -> last exercise, x + 2 -> right arrow
+     * @param index the navigation item index. If the exam has x exercises:
+     *              index = 0 -> navigation overview, 1 -> left arrow, 2 -> first exercise, x + 1 -> last exercise, x + 2 -> right arrow
      */
     private clickNavigationItemAtIndex(index: number) {
         this.getNavigationItems().eq(index).click();
