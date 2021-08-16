@@ -173,6 +173,12 @@
                 </a>
                 <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
                     <li>
+                        <!--<h6 class="dropdown-header" jhiTranslate="global.menu.language">Language</h6>-->
+                        <!--<h6 class="dropdown-header">Settings</h6>-->
+                        <h5 id="settings" class="dropdown-header clickable">Settings</h5>
+                    </li>
+                    <div class="dropdown-divider"></div>
+                    <li>
                         <h6 class="dropdown-header" jhiTranslate="global.menu.language">Language</h6>
                     </li>
                     <div *ngIf="languages && languages.length > 1">

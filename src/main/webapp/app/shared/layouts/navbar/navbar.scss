@@ -11,6 +11,16 @@ a:not(.btn):hover {
     text-decoration: none !important;
 }
 
+#settings {
+    color: #353d47; //navigation bar grey
+    font-size: medium;
+
+    &:hover {
+        color: #3e8acc; //blue
+        font-weight: bold;
+    }
+}
+
 .jh-navbar {
     background-color: #353d47;
     padding: 0.2em 1em;
