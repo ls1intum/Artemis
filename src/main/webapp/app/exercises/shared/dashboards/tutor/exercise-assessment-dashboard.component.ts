@@ -647,8 +647,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * This complaint has to be a true complaint or else issues can arise.
      * @param submission
      */
-    getSubmissionToViewFromComplaintSubmission(submission: Submission) {
-        const submissionToView = this.submissionsWithComplaints.filter((dto) => dto.submission.id === submission.id).pop()?.submission;
+    getSubmissionToViewFromComplaintSubmission(submission: Submission): Submission | undefined {
+        const submissionToView = this.submissionsWithComplaints.find((dto) => dto.submission.id === submission.id)?.submission;
         if (submissionToView) {
             if (!submissionToView.results) {
                 submissionToView.results = [];
