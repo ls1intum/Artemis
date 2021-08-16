@@ -122,7 +122,7 @@ describe('Exam management', () => {
                 courseManagementRequests.registerStudentForExam(course, exam, student);
                 courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.createTextExercise( 'Text exercise 1', null, exerciseGroup).then(() => {
+                    courseManagementRequests.createTextExercise('Text exercise 1', null, exerciseGroup).then(() => {
                         courseManagementRequests.generateMissingIndividualExams(course, exam);
                         courseManagementRequests.prepareExerciseStartForExam(course, exam);
                         cy.login(student, `/courses/${course.id}/exams`);
