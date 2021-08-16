@@ -43,13 +43,13 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     showReactionSelector = false;
     currentUserIsAtLeastTutor: boolean;
 
-     /**
+    /**
      * currently predefined fixed set of emojis that should be used within a course,
      * they will be listed on first page of the emoji-mart selector
      */
     selectedCourseEmojis: string[];
 
-     /**
+    /**
      * map that lists associated reaction (by emojiId) for the current posting together with its count
      * and a flag that indicates if the current user has used this reaction
      */
