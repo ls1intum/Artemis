@@ -13,4 +13,4 @@ jhipster:
 eureka:
   client:
     service-url:
-      defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
+      defaultZone: http://admin:${jhipster.registry.password}@jhipster-registry:8761/eureka/
