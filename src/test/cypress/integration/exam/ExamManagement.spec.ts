@@ -1,4 +1,3 @@
-import { GROUP_SYNCHRONIZATION } from './../../support/constants';
 import { POST } from '../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
@@ -33,6 +32,7 @@ describe('Exam management', () => {
             const exam = new CypressExamBuilder(course).title(examTitle).build();
             courseManagementRequests.createExam(exam);
         });
+        cy.waitForGroupSynchronization();
     });
 
     beforeEach(() => {
@@ -40,7 +40,6 @@ describe('Exam management', () => {
     });
 
     it('Adds an exercise group with a programming exercise', () => {
-        cy.wait(GROUP_SYNCHRONIZATION);
         cy.visit('/');
         navigationBar.openCourseManagement();
         courseManagement.openExamsOfCourse(courseName, courseShortName);
