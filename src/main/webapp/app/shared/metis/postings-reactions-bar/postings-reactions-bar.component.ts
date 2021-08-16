@@ -90,7 +90,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
 
     /**
      * updates the reaction based when a displayed emoji reaction is clicked,
-     * i.e. when agree on an existing reaction (+1) or removing own reaction (-1)
+     * i.e. when agree on an existing reaction (+1) or removing own reactions (-1)
      */
     updateReaction(emojiId: string): void {
         if (emojiId != undefined) {
