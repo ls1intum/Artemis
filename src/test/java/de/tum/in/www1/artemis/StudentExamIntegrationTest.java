@@ -91,9 +91,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     private ExerciseRepository exerciseRepository;
 
     @Autowired
-    private ExerciseGroupRepository exerciseGroupRepository;
-
-    @Autowired
     private ObjectMapper objectMapper;
 
     private List<User> users;
@@ -1147,6 +1144,22 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         }
     }
 
+    private void getStudentExamExerciseIdsAuxiliaryCreateExercises(int numberOfExercisesToCreate, Long[] expectedExerciseIds, Course courseToBeAddedTo, StudentExam studentExam) {
+        List<Exercise> exercises = new ArrayList<>();
+        for (int i = 0; i < numberOfExercisesToCreate; i++) {
+            getStudentExamExerciseIdsAuxiliaryCreateSingleExercise(i, exercises, expectedExerciseIds, courseToBeAddedTo);
+        }
+        studentExam.setExercises(exercises);
+        studentExamRepository.save(studentExam);
+    }
+
+    private void getStudentExamExerciseIdsAuxiliaryCreateSingleExercise(int currentExerciseNumber, List<Exercise> exercises, Long[] expectedExerciseIds, Course courseToBeAddedTo) {
+        TextExercise exercise = database.createIndividualTextExercise(courseToBeAddedTo, null, null, null);
+        expectedExerciseIds[currentExerciseNumber] = exercise.getId();
+        exercise = exerciseRepository.save(exercise);
+        exercises.add(exercise);
+    }
+
     @Test
     @WithMockUser(username = "student1", roles = "STUDENT")
     public void testGetStudentExamExerciseIds() throws Exception {
@@ -1155,25 +1168,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         int numberOfExercises = 3;
         Long[] expectedExerciseIds = new Long[numberOfExercises];
 
-        TextExercise textExerciseA = database.createIndividualTextExercise(course1, null, null, null);
-        TextExercise textExerciseB = database.createIndividualTextExercise(course1, null, null, null);
-        TextExercise textExerciseC = database.createIndividualTextExercise(course1, null, null, null);
-        expectedExerciseIds[0] = textExerciseA.getId();
-        expectedExerciseIds[1] = textExerciseB.getId();
-        expectedExerciseIds[2] = textExerciseC.getId();
-
-        textExerciseA = exerciseRepository.save(textExerciseA);
-        textExerciseB = exerciseRepository.save(textExerciseB);
-        textExerciseC = exerciseRepository.save(textExerciseC);
-
-        List<Exercise> exercises = new ArrayList<>();
-        exercises.add(textExerciseA);
-        exercises.add(textExerciseB);
-        exercises.add(textExerciseC);
-
-        studentExam1.setExercises(exercises);
-
-        studentExam1 = studentExamRepository.save(studentExam1);
+        getStudentExamExerciseIdsAuxiliaryCreateExercises(numberOfExercises, expectedExerciseIds, course1, studentExam1);
 
         exam1.addStudentExam(studentExam1);
         exam1 = examRepository.save(exam1);
