@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
+
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +23,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.service.TutorParticipationService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -38,7 +41,14 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
     @Autowired
     private ExampleSubmissionService exampleSubmissionService;
 
+    @Autowired
+    private TutorParticipationService tutorParticipationService;
+
     private ModelingExercise modelingExercise;
+
+    private TextExercise textExercise;
+
+    private ArrayList<String> textBlockIds;
 
     private String path;
 
@@ -50,10 +60,18 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
             if (exercise instanceof ModelingExercise) {
                 modelingExercise = (ModelingExercise) exercise;
             }
+            if (exercise instanceof TextExercise) {
+                textExercise = (TextExercise) exercise;
+            }
         }
-        modelingExercise.setTitle("UML Class Diagram");
-        exerciseRepo.save(modelingExercise);
-        path = "/api/exercises/" + modelingExercise.getId() + "/assess-example-submission";
+
+        for (Exercise exercise : new Exercise[] { textExercise, modelingExercise }) {
+            exercise.setTitle("exercise name");
+            exerciseRepo.save(exercise);
+            path = "/api/exercises/" + exercise.getId() + "/assess-example-submission";
+        }
+
+        textBlockIds = new ArrayList<>();
     }
 
     @AfterEach
@@ -65,7 +83,7 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testTutorParticipateInModelingExerciseWithExampleSubmission(boolean usedForTutorial) throws Exception {
-        ExampleSubmission exampleSubmission = prepareExampleSubmission(usedForTutorial);
+        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(usedForTutorial);
         var tutorParticipation = request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.OK);
         assertThat(tutorParticipation.getTrainedExampleSubmissions()).as("Tutor participation has example submission").hasSize(1);
         assertThat(tutorParticipation.getTutor().getLogin()).as("Tutor participation belongs to correct tutor").isEqualTo("tutor1");
@@ -75,9 +93,26 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
+    public void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnneccessaryFeedbackBadRequest() throws Exception {
+        ExampleSubmission exampleSubmission = prepareTextExampleSubmission(true);
+
+        // Tutor reviewed the instructions.
+        var tutor = database.getUserByLogin("tutor1");
+        var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+        tutorParticipationService.createNewParticipation(textExercise, tutor);
+        exampleSubmission.addTutorParticipations(tutorParticipation);
+        exampleSubmissionService.save(exampleSubmission);
+
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createManualTextFeedback(1D, textBlockIds.get(0)));
+        var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
+        request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testTutorParticipateInModelingExerciseWithExampleSubmissionTooHigh() throws Exception {
-        ExampleSubmission exampleSubmission = prepareExampleSubmission(true);
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createNegativeFeedback(FeedbackType.MANUAL));
+        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL));
         var path = "/api/exercises/" + modelingExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
@@ -85,14 +120,44 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testTutorParticipateInModelingExerciseWithExampleSubmissionTooLow() throws Exception {
-        ExampleSubmission exampleSubmission = prepareExampleSubmission(true);
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL));
+        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createNegativeFeedback(FeedbackType.MANUAL));
         var path = "/api/exercises/" + modelingExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
     @NotNull
-    private ExampleSubmission prepareExampleSubmission(boolean usedForTutorial) throws Exception {
+    private ExampleSubmission prepareTextExampleSubmission(boolean usedForTutorial) throws Exception {
+        var exampleSubmissionText = "This is first sentence:This is second sentence.";
+        ExampleSubmission exampleSubmission = database.generateExampleSubmission(exampleSubmissionText, textExercise, false, usedForTutorial);
+        TextSubmission textSubmission = (TextSubmission) exampleSubmission.getSubmission();
+
+        for (var sentence : exampleSubmissionText.split(":")) {
+            var block = new TextBlock();
+            var startIndex = exampleSubmissionText.indexOf(sentence);
+
+            var textBlock = new TextBlock().text(sentence).startIndex(startIndex).endIndex(startIndex + sentence.length()).submission(textSubmission).manual();
+            textBlock.computeId();
+            textSubmission.addBlock(block);
+
+            // Store the id in textBlockIds for later access.
+            textBlockIds.add(textBlock.getId());
+        }
+
+        exampleSubmissionService.save(exampleSubmission);
+
+        if (usedForTutorial) {
+            var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission());
+            result.setExampleResult(true);
+            resultRepository.save(result);
+        }
+
+        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/tutor-participations", null, TutorParticipation.class, HttpStatus.CREATED);
+        return exampleSubmission;
+    }
+
+    @NotNull
+    private ExampleSubmission prepareModelingExampleSubmission(boolean usedForTutorial) throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         ExampleSubmission exampleSubmission = database.generateExampleSubmission(validModel, modelingExercise, false, usedForTutorial);
         exampleSubmissionService.save(exampleSubmission);

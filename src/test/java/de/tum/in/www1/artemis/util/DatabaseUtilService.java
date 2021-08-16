@@ -2948,6 +2948,7 @@ public class DatabaseUtilService {
         }
         else {
             submission = ModelFactory.generateTextSubmission(modelOrText, Language.ENGLISH, false);
+            saveSubmissionToRepo(submission);
         }
         submission.setExampleSubmission(flagAsExampleSubmission);
         return ModelFactory.generateExampleSubmission(submission, exercise, usedForTutorial);

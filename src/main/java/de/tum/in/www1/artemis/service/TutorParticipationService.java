@@ -30,7 +30,7 @@ public class TutorParticipationService {
     class FeedbackCorrectionError {
 
         /**
-         * Possible feedback validation states.
+         * Possible feedback validation error types.
          */
         enum Type {
             INCORRECT_SCORE, UNNECESSARY_FEEDBACK, MISSING_GRADING_INSTRUCTION, INCORRECT_GRADING_INSTRUCTION,
@@ -154,7 +154,6 @@ public class TutorParticipationService {
     private boolean isValidTutorialExampleSubmission(List<Feedback> tutorFeedbacks, List<Feedback> instructorFeedbacks) {
         boolean equalFeedbackCount = instructorFeedbacks.size() == tutorFeedbacks.size();
         boolean allTutorFeedbacksAreCorrect = tutorFeedbacks.stream().map(tutorFeedback -> validateTutorFeedback(tutorFeedback, instructorFeedbacks)).allMatch(Optional::isEmpty);
-
         return equalFeedbackCount && allTutorFeedbacksAreCorrect;
     }
 
