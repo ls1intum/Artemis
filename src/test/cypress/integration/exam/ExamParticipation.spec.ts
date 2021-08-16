@@ -1,4 +1,4 @@
-import { GET } from './../../support/constants';
+import { GET, GROUP_SYNCHRONIZATION } from './../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
@@ -39,6 +39,7 @@ describe('Exam participation', () => {
         cy.login(users.getAdmin());
         courseRequests.createCourse(courseName, courseShortName).then((response) => {
             course = response.body;
+            cy.wait(GROUP_SYNCHRONIZATION);
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
