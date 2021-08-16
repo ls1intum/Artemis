@@ -21,6 +21,8 @@ import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
+import de.tum.in.www1.artemis.repository.GradingInstructionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionService;
@@ -44,6 +46,12 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     private TutorParticipationService tutorParticipationService;
+
+    @Autowired
+    private GradingInstructionRepository gradingInstructionRepository;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     private ModelingExercise modelingExercise;
 
@@ -104,7 +112,7 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
         exampleSubmission.addTutorParticipations(tutorParticipation);
         exampleSubmissionService.save(exampleSubmission);
 
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createManualTextFeedback(1D, textBlockIds.get(0)));
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createManualTextFeedback(1D, textBlockIds.get(1)));
         var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
@@ -150,6 +158,15 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
         if (usedForTutorial) {
             var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission());
             result.setExampleResult(true);
+
+            var feedback = ModelFactory.createManualTextFeedback(1D, textBlockIds.get(0));
+            var gradingCriterion = ModelFactory.generateGradingCriterion("criterion");
+            gradingCriterionRepository.save(gradingCriterion);
+
+            var instructions = ModelFactory.generateGradingInstructions(gradingCriterion, 1, 1);
+            gradingInstructionRepository.saveAll(instructions);
+            instructions.stream().forEach(feedback::setGradingInstruction);
+            result.addFeedback(feedback);
             resultRepository.save(result);
         }
 
