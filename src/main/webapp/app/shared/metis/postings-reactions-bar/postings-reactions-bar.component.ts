@@ -49,9 +49,9 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      */
     selectedCourseEmojis: string[];
 
-    /*
-    map that lists associated reaction (by emojiId) for the current posting together with its count
-    and a flag that indicates if the current user has used this reaction
+     /**
+     * map that lists associated reaction (by emojiId) for the current posting together with its count
+     * and a flag that indicates if the current user has used this reaction
      */
     reactionCountMap: ReactionCountMap = {};
 
