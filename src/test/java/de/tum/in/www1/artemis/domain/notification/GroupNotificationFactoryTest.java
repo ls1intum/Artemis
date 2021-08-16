@@ -76,11 +76,10 @@ public class GroupNotificationFactoryTest {
     private static List<String> archiveErrors = new ArrayList();
 
     /**
-     * sets up all needed mocks and their wanted behavior once for all test cases
+     * sets up all needed mocks and their wanted behavior once for all test cases.
      */
     @BeforeAll
     public static void setUp() {
-
         groupNotificationFactory = mock(GroupNotificationFactory.class, CALLS_REAL_METHODS);
 
         course = mock(Course.class);
@@ -112,6 +111,14 @@ public class GroupNotificationFactoryTest {
         when(answerPost.getPost()).thenReturn(post);
     }
 
+    /**
+     * Shared collection of assertions that check if the created notification is correct
+     * @param createdNotification is the notification that should be checked for correctness.
+     * @param expectedTitle is the expected title that the notification should have.
+     * @param expectedText is the expected text that the notification should have.
+     * @param expectedTarget is the expected target that the notification should have.
+     * @param expectedPriority is the expected priority that the notification should have.
+     */
     private void checkCreatedNotification(GroupNotification createdNotification, String expectedTitle, String expectedText, String expectedTarget,
             NotificationPriority expectedPriority) {
         assertThat(createdNotification.getTitle()).isEqualTo(expectedTitle);
@@ -121,14 +128,27 @@ public class GroupNotificationFactoryTest {
         assertThat(createdNotification.getAuthor()).isEqualTo(user);
     }
 
+    /**
+     * Shortcut method to call the checks for the created notification that has a manually set notification text.
+     */
     private void checkCreatedNotificationWithNotificationText() {
         checkCreatedNotification(createdNotification, expectedTitle, notificationText, expectedTarget, expectedPriority);
     }
 
+    /**
+     * Shortcut method to call the checks for the created notification that has no manually set notification text but instead a different expected text.
+     */
     private void checkCreatedNotificationWithoutNotificationText() {
         checkCreatedNotification(createdNotification, expectedTitle, expectedText, expectedTarget, expectedPriority);
     }
 
+    /**
+     * Auxiliary method to create the most common expected target with specific properties.
+     * @param message is the message that should be included in the notification's target.
+     * @param entity is the entity that should be pointed at in the notification's target.
+     * @param relevantIdForCurrentTestCase is the id of a relevant object that should be part of the notification's target.
+     * @return is the final notification target as a String.
+     */
     private String createDefaultExpectedTarget(String message, String entity, Long relevantIdForCurrentTestCase) {
         return "{\"message\":\"" + message + "\",\"id\":" + relevantIdForCurrentTestCase + ",\"entity\":\"" + entity + "\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
     }
@@ -138,7 +158,7 @@ public class GroupNotificationFactoryTest {
     }
 
     /**
-     *  Calls the real createNotification method of the groupNotificationFactory and tests if the result is correct.
+     * Calls the real createNotification method of the groupNotificationFactory and tests if the result is correct.
      * Two notifications are created for those cases that might use a manually set notification text
      * @param base is the first input parameter used in the respective factory method to create the group notification.
      */
@@ -178,9 +198,11 @@ public class GroupNotificationFactoryTest {
 
     // Based on Attachment
 
+    /**
+     * Tests the functionality of the group notification factory that deals with notifications that originate from attachments.
+     */
     @Test
     public void createNotificationBasedOnAttachment() {
-
         notificationType = NotificationType.ATTACHMENT_CHANGE;
         expectedTitle = "Attachment updated";
         expectedText = "Attachment \"" + attachment.getName() + "\" updated.";
@@ -192,9 +214,12 @@ public class GroupNotificationFactoryTest {
 
     // Based on Exercise
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of EXERCISE_CREATED.
+     * I.e. notifications that originate from a (newly) created exercise.
+     */
     @Test
     public void createNotificationBasedOnExercise_withNotificationType_ExerciseCreated() {
-
         notificationType = NotificationType.EXERCISE_CREATED;
         expectedTitle = "Exercise created";
         expectedText = "A new exercise \"" + exercise.getTitle() + "\" got created.";
@@ -204,9 +229,12 @@ public class GroupNotificationFactoryTest {
         createAndCheckNotification(Base.EXERCISE);
     }
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of EXERCISE_PRACTICE.
+     * I.e. notifications that originate from (quiz)exercises that were (just) opened for practice.
+     */
     @Test
     public void createNotificationBasedOnExercise_withNotificationType_ExercisePractice() {
-
         notificationType = NotificationType.EXERCISE_PRACTICE;
         expectedTitle = "Exercise open for practice";
         expectedText = "Exercise \"" + exercise.getTitle() + "\" is now open for practice.";
@@ -216,9 +244,12 @@ public class GroupNotificationFactoryTest {
         createAndCheckNotification(Base.EXERCISE);
     }
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of QUIZ_EXERCISE_STARTED.
+     * I.e. notifications that originate from (just) started quiz exercises.
+     */
     @Test
     public void createNotificationBasedOnExercise_withNotificationType_QuizExerciseStarted() {
-
         notificationType = NotificationType.QUIZ_EXERCISE_STARTED;
         expectedTitle = "Quiz started";
         expectedText = "Quiz \"" + exercise.getTitle() + "\" just started.";
@@ -228,9 +259,12 @@ public class GroupNotificationFactoryTest {
         createAndCheckNotification(Base.EXERCISE);
     }
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of EXERCISE_UPDATED and are part of an exam.
+     * I.e. notifications that originate from an updated exam exercise.
+     */
     @Test
     public void createNotificationBasedOnExercise_withNotificationType_ExerciseUpdated_ExamExercise() {
-
         notificationType = NotificationType.EXERCISE_UPDATED;
 
         when(exercise.isExamExercise()).thenReturn(true);
@@ -255,9 +289,12 @@ public class GroupNotificationFactoryTest {
         when(exercise.isExamExercise()).thenReturn(false);
     }
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of EXERCISE_UPDATED and are course exercises.
+     * I.e. notifications that originate from an updated course exercise (not part of an exam).
+     */
     @Test
     public void createNotificationBasedOnExercise_withNotificationType_ExerciseUpdated_CourseExercise() {
-
         notificationType = NotificationType.EXERCISE_UPDATED;
 
         expectedTitle = "Exercise updated";
@@ -270,9 +307,12 @@ public class GroupNotificationFactoryTest {
 
     // Based on Post
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of NEW_POST_FOR_EXERCISE.
+     * I.e. notifications that originate from a new post concerning an exercise.
+     */
     @Test
     public void createNotificationBasedOnPost_withNotificationType_NewPostForExercise() {
-
         notificationType = NotificationType.NEW_POST_FOR_EXERCISE;
 
         expectedTitle = "New Post";
@@ -283,9 +323,12 @@ public class GroupNotificationFactoryTest {
         createAndCheckNotification(Base.POST);
     }
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of NEW_POST_FOR_LECTURE.
+     * I.e. notifications that originate from a new post concerning a lecture.
+     */
     @Test
     public void createNotificationBasedOnPost_withNotificationType_NewPostForLecture() {
-
         notificationType = NotificationType.NEW_POST_FOR_LECTURE;
 
         expectedTitle = "New Post";
@@ -298,9 +341,12 @@ public class GroupNotificationFactoryTest {
 
     // Based on AnswerPost
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of NEW_ANSWER_POST_FOR_EXERCISE.
+     * I.e. notifications that originate from a new answer post concerning an exercise.
+     */
     @Test
     public void createNotificationBasedOnAnswerPost_withNotificationType_NewAnswerPostForExercise() {
-
         notificationType = NotificationType.NEW_ANSWER_POST_FOR_EXERCISE;
 
         expectedTitle = "New Reply";
@@ -311,9 +357,12 @@ public class GroupNotificationFactoryTest {
         createAndCheckNotification(Base.ANSWER_POST);
     }
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of NEW_ANSWER_POST_FOR_LECTURE.
+     * I.e. notifications that originate from a new answer post concerning a lecture.
+     */
     @Test
     public void createNotificationBasedOnAnswerPost_withNotificationType_NewAnswerPostForLecture() {
-
         notificationType = NotificationType.NEW_ANSWER_POST_FOR_LECTURE;
 
         expectedTitle = "New Reply";
@@ -326,9 +375,12 @@ public class GroupNotificationFactoryTest {
 
     // Based on Course
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of COURSE_ARCHIVE_STARTED.
+     * I.e. notifications that are created when the process of archiving a course has been started.
+     */
     @Test
     public void createNotificationBasedOnCourse_withNotificationType_CourseArchiveStarted() {
-
         notificationType = NotificationType.COURSE_ARCHIVE_STARTED;
 
         expectedTitle = "Course archival started";
@@ -339,9 +391,12 @@ public class GroupNotificationFactoryTest {
         createAndCheckNotification(Base.COURSE);
     }
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of COURSE_ARCHIVE_FINISHED.
+     * I.e. notifications that are created when the process of archiving a course has finished.
+     */
     @Test
     public void createNotificationBasedOnCourse_withNotificationType_CourseArchiveFinished() {
-
         notificationType = NotificationType.COURSE_ARCHIVE_FINISHED;
 
         expectedTitle = "Course archival finished";
@@ -352,9 +407,12 @@ public class GroupNotificationFactoryTest {
         createAndCheckNotification(Base.COURSE);
     }
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of COURSE_ARCHIVE_FAILED.
+     * I.e. notifications that are created when the process of archiving a course has failed.
+     */
     @Test
     public void createNotificationBasedOnCourse_withNotificationType_CourseArchiveFailed() {
-
         notificationType = NotificationType.COURSE_ARCHIVE_FAILED;
 
         expectedTitle = "Course archival failed";
@@ -367,9 +425,12 @@ public class GroupNotificationFactoryTest {
 
     // Based on Exam
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of EXAM_ARCHIVE_STARTED.
+     * I.e. notifications that are created when the process of archiving an exam has been started.
+     */
     @Test
     public void createNotificationBasedOnExam_withNotificationType_ExamArchiveStarted() {
-
         notificationType = NotificationType.EXAM_ARCHIVE_STARTED;
 
         expectedTitle = "Exam archival started";
@@ -380,9 +441,12 @@ public class GroupNotificationFactoryTest {
         createAndCheckNotification(Base.EXAM);
     }
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of EXAM_ARCHIVE_FINISHED.
+     * I.e. notifications that are created when the process of archiving an exam has finished.
+     */
     @Test
     public void createNotificationBasedOnExam_withNotificationType_ExamArchiveFinished() {
-
         notificationType = NotificationType.EXAM_ARCHIVE_FINISHED;
 
         expectedTitle = "Exam archival finished";
@@ -393,9 +457,12 @@ public class GroupNotificationFactoryTest {
         createAndCheckNotification(Base.EXAM);
     }
 
+    /**
+     * Tests the functionality that deals with notifications that have the notification type of EXAM_ARCHIVE_FAILED.
+     * I.e. notifications that are created when the process of archiving an exam has failed.
+     */
     @Test
     public void createNotificationBasedOnExam_withNotificationType_ExamArchiveFailed() {
-
         notificationType = NotificationType.EXAM_ARCHIVE_FAILED;
 
         expectedTitle = "Exam archival failed";

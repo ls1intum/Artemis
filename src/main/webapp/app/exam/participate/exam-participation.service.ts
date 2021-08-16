@@ -73,11 +73,7 @@ export class ExamParticipationService {
      */
     public loadStudentExamExerciseIds(courseId: number, examId: number): Observable<number[]> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/exercise-ids';
-        return this.httpClient.get<number[]>(url).pipe(
-            map((exerciseIds: number[]) => {
-                return exerciseIds;
-            }),
-        );
+        return this.httpClient.get<number[]>(url);
     }
 
     /**

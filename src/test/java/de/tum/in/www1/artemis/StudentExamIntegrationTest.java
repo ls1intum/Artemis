@@ -1163,7 +1163,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "student1", roles = "STUDENT")
     public void testGetStudentExamExerciseIds() throws Exception {
-
         // preparation
         int numberOfExercises = 3;
         Long[] expectedExerciseIds = new Long[numberOfExercises];

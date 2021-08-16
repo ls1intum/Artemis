@@ -304,12 +304,12 @@ public class StudentExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/student-exams/exercise-ids : Find the exercise ids for the current userexam.
+     * GET /courses/{courseId}/exams/{examId}/student-exams/exercise-ids : Find the exercise ids for the current user exam.
      * Currently this is used for exam notification problem statement updates as an auxiliary method.
      *
      * @param courseId  the course to which the student exam belongs to
      * @param examId    the exam to which the student exam belongs to
-     * @return the ResponseEntity with status 200 (OK) and with the found exercise ids as body
+     * @return the ResponseEntity of type Long[] corresponding to an array of the found exercise ids
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/exercise-ids")
     @PreAuthorize("hasRole('USER')")
@@ -327,7 +327,7 @@ public class StudentExamResource {
 
         Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, user, studentExam.isTestRun());
         if (courseAndExamAccessFailure.isPresent()) {
-            return null;
+            return forbidden();
         }
 
         Long[] exerciseIds = studentExamService.extractStudentExamExerciseIds(studentExam);

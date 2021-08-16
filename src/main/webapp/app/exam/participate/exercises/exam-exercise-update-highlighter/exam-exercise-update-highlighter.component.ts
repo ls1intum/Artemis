@@ -28,6 +28,10 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit {
         });
     }
 
+    /**
+     * Switches the view between the new(updated) problem statement without the difference
+     * with the view showing the difference between the new and old problem statement and vice versa.
+     */
     toggleHighlightedProblemStatement(): void {
         if (this.showHighlightedDifferences) {
             this.exercise.problemStatement = this.updatedProblemStatement;
@@ -38,6 +42,12 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit {
         this.problemStatementUpdateEvent.emit(this.exercise.problemStatement);
     }
 
+    /**
+     * Updates the problem statement of the provided exercises based on its id.
+     * Also calls the method to highlight the differences between the old and new problem statement.
+     * @param exerciseId is the id of the exercise which problem statement should be updated.
+     * @param updatedProblemStatement is the new problem statement that should replace the old one.
+     */
     updateExerciseProblemStatementById(exerciseId: number, updatedProblemStatement: string) {
         if (updatedProblemStatement != undefined && exerciseId === this.exercise.id) {
             this.updatedProblemStatement = updatedProblemStatement;
@@ -46,6 +56,9 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit {
         this.problemStatementUpdateEvent.emit(this.exercise.problemStatement);
     }
 
+    /**
+     * Computes the difference between the old and new (updated) problem statement and displays this difference.
+     */
     highlightProblemStatementDifferences() {
         if (!this.updatedProblemStatement) {
             return;

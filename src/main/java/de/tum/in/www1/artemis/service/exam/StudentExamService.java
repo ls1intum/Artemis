@@ -536,13 +536,6 @@ public class StudentExamService {
      * @return Long[] of the extracted exercise ids
      */
     public Long[] extractStudentExamExerciseIds(StudentExam studentExam) {
-        Exercise[] exercises = studentExam.getExercises().toArray(new Exercise[0]);
-        int numberOfExercises = exercises.length;
-        Long[] exerciseIds = new Long[numberOfExercises];
-
-        for (int i = 0; i < numberOfExercises; i++) {
-            exerciseIds[i] = exercises[i].getId();
-        }
-        return exerciseIds;
+        return studentExam.getExercises().stream().map(Exercise::getId).toArray(Long[]::new);
     }
 }
