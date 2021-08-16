@@ -1,13 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { TranslateModule } from '@ngx-translate/core';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import * as chai from 'chai';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
@@ -15,6 +13,7 @@ import { ParticipantScoreDTO } from 'app/shared/participant-scores/participant-s
 import { By } from '@angular/platform-browser';
 import { ParticipantScoresTableComponent } from 'app/shared/participant-scores/participant-scores-table/participant-scores-table.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -25,8 +24,8 @@ describe('ParticipantScoresTable', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisDataTableModule, NgxDatatableModule, NgbTooltipModule, TranslateModule.forRoot()],
-            declarations: [ParticipantScoresTableComponent, MockPipe(ArtemisTranslatePipe), MockDirective(JhiTranslateDirective)],
+            imports: [ArtemisTestModule, NgxDatatableModule],
+            declarations: [ParticipantScoresTableComponent, MockPipe(ArtemisTranslatePipe), MockDirective(JhiTranslateDirective), DataTableComponent, MockDirective(NgbTypeahead)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 {

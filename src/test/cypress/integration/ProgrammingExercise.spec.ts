@@ -1,19 +1,17 @@
+import { GROUP_SYNCHRONIZATION } from './../support/constants';
 import { artemis } from '../support/ArtemisTesting';
-import { CourseManagementPage } from '../support/pageobjects/CourseManagementPage';
-import { NavigationBar } from '../support/pageobjects/NavigationBar';
 import { generateUUID } from '../support/utils';
 
-/**
- * Admin account.
- */
+//  Admin account
 const admin = artemis.users.getAdmin();
 
 // Requests
 const artemisRequests = artemis.requests;
 
 // PageObjects
-let courseManagementPage: CourseManagementPage;
-let navigationBar: NavigationBar;
+const courseManagementPage = artemis.pageobjects.courseManagement;
+const navigationBar = artemis.pageobjects.navigationBar;
+const programmingCreation = artemis.pageobjects.programmingExerciseCreation;
 
 // Common primitives
 let uid: string;
@@ -24,9 +22,6 @@ let programmingExerciseShortName: string;
 const packageName = 'de.test';
 
 // Selectors
-const fieldTitle = '#field_title';
-const shortName = '#field_shortName';
-const saveEntity = '#save-entity';
 const datepickerButtons = '.owl-dt-container-control-button';
 
 describe('Programming Exercise Management', () => {
@@ -44,14 +39,11 @@ describe('Programming Exercise Management', () => {
                 expect(body).property('id').to.be.a('number');
                 course = body;
                 // Wait for group synchronization
-                cy.wait(65000);
+                cy.wait(GROUP_SYNCHRONIZATION);
             });
     });
 
     beforeEach(() => {
-        courseManagementPage = new CourseManagementPage();
-        navigationBar = new NavigationBar();
-        registerQueries();
         uid = generateUUID();
         programmingExerciseName = 'Cypress programming exercise ' + uid;
         programmingExerciseShortName = 'cypress' + uid;
@@ -67,19 +59,22 @@ describe('Programming Exercise Management', () => {
             cy.get('#jh-create-entity').click();
             cy.url().should('include', '/programming-exercises/new');
             cy.log('Filling out programming exercise info...');
-            cy.get(fieldTitle).type(programmingExerciseName);
-            cy.get(shortName).type(programmingExerciseShortName);
-            cy.get('#field_packageName').type(packageName);
+            programmingCreation.setTitle(programmingExerciseName);
+            programmingCreation.setShortName(programmingExerciseShortName);
+            programmingCreation.setPackageName(packageName);
+
+            // Set release and due dates via owl date picker
             cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').should('be.visible').click();
             cy.get(datepickerButtons).wait(500).eq(1).should('be.visible').click();
             cy.get('.test-schedule-date.ng-pristine > :nth-child(1) > .btn').click();
             cy.get('.owl-dt-control-arrow-button').eq(1).click();
             cy.get('.owl-dt-day-3').eq(2).click();
             cy.get(datepickerButtons).eq(1).should('be.visible').click();
-            cy.get('#field_points').type('100');
-            cy.get('#field_allowOnlineEditor').check();
-            cy.get(saveEntity).click();
-            cy.wait('@createProgrammingExerciseQuery')
+
+            programmingCreation.setPoints(100);
+            programmingCreation.checkAllowOnlineEditor();
+            programmingCreation
+                .generate()
                 .its('response.body')
                 .then((body) => {
                     expect(body).property('id').to.be.a('number');
@@ -112,6 +107,7 @@ describe('Programming Exercise Management', () => {
                 .each(($el) => {
                     cy.wrap($el).check();
                 });
+            cy.intercept('DELETE', '/api/programming-exercises/*').as('deleteProgrammingExerciseQuery');
             cy.get('[type="text"], [name="confirmExerciseName"]').type(programmingExerciseName).type('{enter}');
             cy.wait('@deleteProgrammingExerciseQuery');
             cy.contains('No Programming Exercises').should('be.visible');
@@ -124,11 +120,3 @@ describe('Programming Exercise Management', () => {
         }
     });
 });
-
-/**
- * Sets all the necessary cypress request hooks.
- */
-function registerQueries() {
-    cy.intercept('DELETE', '/api/programming-exercises/*').as('deleteProgrammingExerciseQuery');
-    cy.intercept('POST', '/api/programming-exercises/setup').as('createProgrammingExerciseQuery');
-}

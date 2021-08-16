@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.YearMonth;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 
@@ -146,7 +146,8 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
             parameters.add("periodIndex", "" + periodIndex);
             parameters.add("graphType", "" + graph);
             Integer[] result = request.get("/api/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
-            assertThat(result.length).isEqualTo(YearMonth.of(now.getYear(), now.minusMonths(1 - periodIndex).plusDays(1).getMonth()).lengthOfMonth());
+            var length = (int) ChronoUnit.DAYS.between(now.minusMonths(1), now);
+            assertThat(result.length).isEqualTo(length);
         }
     }
 

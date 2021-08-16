@@ -156,7 +156,7 @@
                                     </ng-template>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <select [ngModel]="value" class="p-1 form-control" (change)="updateEditedField(row, EditableField.VISIBILITY)(getEventValue($event))">
+                                    <select [ngModel]="value" class="p-1 form-select" (change)="updateEditedField(row, EditableField.VISIBILITY)(getEventValue($event))">
                                         <option *ngFor="let s of testCaseVisibilityList" [value]="s.value">
                                             {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | artemisTranslate }}
                                         </option>
@@ -264,7 +264,7 @@
                                     <select
                                         [id]="row.id + '-state'"
                                         [ngModel]="value"
-                                        class="p-1 form-control"
+                                        class="p-1 form-select"
                                         (change)="updateEditedCategoryField(row, EditableField.STATE)(getEventValue($event))"
                                     >
                                         <option *ngFor="let s of categoryStateList" [value]="s.value">{{ s.name }}</option>
