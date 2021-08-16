@@ -43,11 +43,15 @@ public class GroupNotificationFactoryTest {
     @Mock
     private static Exam exam;
 
+    private static Long examId = 27L;
+
     @Mock
     private static Attachment attachment;
 
     @Mock
     private static Exercise exercise;
+
+    private static Long exerciseId = 42L;
 
     @Mock
     private static Post post;
@@ -84,10 +88,11 @@ public class GroupNotificationFactoryTest {
         when(lecture.getCourse()).thenReturn(course);
 
         exam = mock(Exam.class);
-        when(exam.getId()).thenReturn(42L);
+        when(exam.getId()).thenReturn(examId);
         when(exam.getCourse()).thenReturn(course);
 
         exercise = mock(Exercise.class);
+        when(exercise.getId()).thenReturn(exerciseId);
         when(exercise.getTitle()).thenReturn("exercise title");
         when(exercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
         when(exercise.getExamViaExerciseGroupOrCourseMember()).thenReturn(exam);
@@ -189,7 +194,7 @@ public class GroupNotificationFactoryTest {
         notificationType = NotificationType.EXERCISE_CREATED;
         expectedTitle = "Exercise created";
         expectedText = "A new exercise \"" + exercise.getTitle() + "\" got created.";
-        expectedTarget = createDefaultExpectedTarget("exerciseCreated", "exercises", exercise.getId());
+        expectedTarget = createDefaultExpectedTarget("exerciseCreated", "exercises", exerciseId);
         expectedPriority = NotificationPriority.MEDIUM;
 
         createAndCheckNotification(Base.EXERCISE);
@@ -201,7 +206,7 @@ public class GroupNotificationFactoryTest {
         notificationType = NotificationType.EXERCISE_PRACTICE;
         expectedTitle = "Exercise open for practice";
         expectedText = "Exercise \"" + exercise.getTitle() + "\" is now open for practice.";
-        expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exercise.getId());
+        expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exerciseId);
         expectedPriority = NotificationPriority.MEDIUM;
 
         createAndCheckNotification(Base.EXERCISE);
@@ -213,7 +218,7 @@ public class GroupNotificationFactoryTest {
         notificationType = NotificationType.QUIZ_EXERCISE_STARTED;
         expectedTitle = "Quiz started";
         expectedText = "Quiz \"" + exercise.getTitle() + "\" just started.";
-        expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exercise.getId());
+        expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exerciseId);
         expectedPriority = NotificationPriority.MEDIUM;
 
         createAndCheckNotification(Base.EXERCISE);
@@ -229,8 +234,8 @@ public class GroupNotificationFactoryTest {
         expectedTitle = Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
         expectedPriority = NotificationPriority.HIGH;
         expectedText = "Exam Exercise \"" + exercise.getTitle() + "\" updated.";
-        expectedTarget = "{\"problemStatement\":\"" + exercise.getProblemStatement() + "\",\"exercise\":" + exercise.getId() + ",\"exam\":" + exam.getId()
-                + ",\"entity\":\"exams\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
+        expectedTarget = "{\"problemStatement\":\"" + exercise.getProblemStatement() + "\",\"exercise\":" + exerciseId + ",\"exam\":" + examId + ",\"entity\":\"exams\",\"course\":"
+                + courseId + ",\"mainPage\":\"courses\"}";
 
         // EXERCISE_UPDATED's implementation differs from the other types therefore the testing has to be adjusted (more explicit)
 
@@ -254,7 +259,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = "Exercise updated";
         expectedText = "Exercise \"" + exercise.getTitle() + "\" updated.";
         expectedPriority = NotificationPriority.MEDIUM;
-        expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exercise.getId());
+        expectedTarget = createDefaultExpectedTarget("exerciseUpdated", "exercises", exerciseId);
 
         createAndCheckNotification(Base.EXERCISE);
     }
@@ -269,7 +274,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = "New Post";
         expectedText = "Exercise \"" + exercise.getTitle() + "\" got a new post.";
         expectedPriority = NotificationPriority.MEDIUM;
-        expectedTarget = createDefaultExpectedTarget("newPost", "exercises", exercise.getId());
+        expectedTarget = createDefaultExpectedTarget("newPost", "exercises", exerciseId);
 
         createAndCheckNotification(Base.POST);
     }
@@ -297,7 +302,7 @@ public class GroupNotificationFactoryTest {
         expectedTitle = "New Reply";
         expectedText = "Exercise \"" + exercise.getTitle() + "\" got a new reply.";
         expectedPriority = NotificationPriority.MEDIUM;
-        expectedTarget = createDefaultExpectedTarget("newAnswerPost", "exercises", exercise.getId());
+        expectedTarget = createDefaultExpectedTarget("newAnswerPost", "exercises", exerciseId);
 
         createAndCheckNotification(Base.ANSWER_POST);
     }
