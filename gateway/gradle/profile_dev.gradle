@@ -1,0 +1,56 @@
+dependencies {
+    developmentOnly "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
+}
+
+def profiles = "dev"
+if (project.hasProperty("no-liquibase")) {
+    profiles += ",no-liquibase"
+}
+if (project.hasProperty("tls")) {
+    profiles += ",tls"
+}
+
+springBoot {
+    buildInfo {
+        properties {
+            time = null
+        }
+    }
+}
+
+bootRun {
+    args = []
+}
+
+task webapp(type: NpmTask) {
+    inputs.files("package-lock.json")
+    inputs.files("build.gradle")
+    inputs.files("angular.json")
+    inputs.dir("webpack/")
+    inputs.dir("src/main/webapp/")
+
+    outputs.dir("build/resources/main/static/")
+
+    dependsOn npmInstall
+
+    args = ["run", "webapp:build"]
+    environment = [APP_VERSION: project.version]
+}
+
+processResources {
+    inputs.property('version', version)
+    inputs.property('springProfiles', profiles)
+    filesMatching("**/application.yml") {
+        filter {
+            it.replace("#project.version#", version)
+        }
+    }
+    filesMatching("**/bootstrap.yml") {
+        filter {
+            it.replace("#spring.profiles.active#", profiles)
+        }
+    }
+}
+
+processResources.dependsOn webapp
+bootJar.dependsOn processResources
