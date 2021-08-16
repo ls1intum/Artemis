@@ -5,7 +5,7 @@ import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/entities/metis/reaction.model';
 
 /*
-Event triggered by the emoji mart component, including EmojiData
+event triggered by the emoji mart component, including EmojiData
  */
 interface ReactionEvent {
     $event: Event;
@@ -13,8 +13,8 @@ interface ReactionEvent {
 }
 
 /*
-Calculated per emojiId on a post, counts the amount of users reacted with a certain emoji;
-hasReacted indicates if the currently logged in user is among those counted users, used for highlighting
+represents the amount of users that reacted
+hasReacted indicates if the currently logged in user is among those counted users
  */
 interface ReactionCount {
     count: number;
@@ -22,7 +22,7 @@ interface ReactionCount {
 }
 
 /*
-DataStructure used for displaying emoji reactions with counts on postings, Maps the ReactionCount to each emojiId
+data structure used for displaying emoji reactions with counts on postings
  */
 interface ReactionCountMap {
     [emojiId: string]: ReactionCount;
@@ -30,8 +30,8 @@ interface ReactionCountMap {
 
 @Directive()
 export abstract class PostingsReactionsBarDirective<T extends Posting> implements OnInit, OnChanges {
-    /**
-     * Icons (as svg paths) to be used as category preview image in emoji mart selector
+    /*
+     * icons (as svg paths) to be used as category preview image in emoji mart selector
      */
     categoriesIcons: { [key: string]: string } = {
         // category 'recent' (would show recently used emojis) is overwritten by a preselected set of emojis for that course,
@@ -44,13 +44,13 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     currentUserIsAtLeastTutor: boolean;
 
     /*
-    Currently predefined fixed set of emojis that should be used within a course,
+    currently predefined fixed set of emojis that should be used within a course,
     they will be listed on first page of the emoji-mart selector
      */
     selectedCourseEmojis: string[];
 
     /*
-    A map that lists associated reaction (by emojiId) for the current posting together with its count
+    map that lists associated reaction (by emojiId) for the current posting together with its count
     and a flag that indicates if the current user has used this reaction
      */
     reactionCountMap: ReactionCountMap = {};
