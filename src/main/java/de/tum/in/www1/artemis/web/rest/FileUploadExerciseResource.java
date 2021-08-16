@@ -158,7 +158,7 @@ public class FileUploadExerciseResource {
             @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
 
-        if (!fileUploadExercise.getId().equals(exerciseId)) {
+        if (fileUploadExercise.getId() == null || !fileUploadExercise.getId().equals(exerciseId)) {
             return badRequest("FileUploadExerciseID", "400", "exerciseId in path doesn't match the exerciseId in the Body!");
         }
 
@@ -197,8 +197,7 @@ public class FileUploadExerciseResource {
     public ResponseEntity<List<FileUploadExercise>> getFileUploadExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<FileUploadExercise> exercises = fileUploadExerciseRepository.findByCourseId(courseId);
         for (Exercise exercise : exercises) {
             // not required in the returned json body
@@ -296,7 +295,7 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * POST file-upload-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing fileUploadExercise.
+     * PUT file-upload-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing fileUploadExercise.
      *
      * @param exerciseId                                   of the exercise
      * @param fileUploadExercise                           the fileUploadExercise to re-evaluate and update
