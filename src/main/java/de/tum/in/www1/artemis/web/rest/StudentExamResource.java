@@ -330,13 +330,7 @@ public class StudentExamResource {
             return null;
         }
 
-        Exercise[] exercises = studentExam.getExercises().toArray(new Exercise[0]);
-        int numberOfExercises = exercises.length;
-        Long[] exerciseIds = new Long[numberOfExercises];
-
-        for (int i = 0; i < numberOfExercises; i++) {
-            exerciseIds[i] = exercises[i].getId();
-        }
+        Long[] exerciseIds = studentExamService.extractStudentExamExerciseIds(studentExam);
 
         log.info("getStudentExamExerciseIds done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
         return ResponseEntity.ok(exerciseIds);
