@@ -174,8 +174,8 @@ Then fill in the repository name with ``artemis``. The use the ``Create`` button
 
 Configure Docker ID (username)
 ------------------------------
-The username in DockerHub is called Docker ID. You need to seet your Docker ID in the ``artemis-deployment.yml`` resource so that Kubernetes knows where to pull the image from.
-Open the ``src/main/kubernetes/artemis-k8s/artemis-deployment.yml`` file and edit
+The username in DockerHub is called Docker ID. You need to set your Docker ID in the ``artemis-deployment.yml`` resource so that Kubernetes knows where to pull the image from.
+Open the ``src/main/kubernetes/artemis/deployment/artemis-deployment.yml`` file and edit
 
    ::
 
@@ -199,15 +199,30 @@ i.e. it will look like this:
 
 Configure Artemis resources
 ---------------------------
-In order to run Artemis, you need to configure the Artemis resources with the configuration you are going to use it with i.e. Jira, Bitbucket, Bamboo or Jenkins, Gitlab.
-Make sure you have configured the ``src/main/resources/config/application-prod.yml`` or ``src/main/resources/config/application-artemis.yml`` file with the proper configuration. 
 
-Since the deployment is done on a Kubernetes cluster, localhost connections to Jira, Bamboo, Bitbucket or Gitlab, Jenkins will not work. 
-For this reason you should set the connection to existing servers or to local Kubernetes deployments.
+In order to run Artemis, you need to configure the Artemis' User Management, Version Control and Continuous Integration. You can either run it with Jira, Bitbucket, Bamboo or Jenkins, Gitlab.
+Make sure to configure the the ``src/main/resources/config/application-artemis.yml`` file with the proper configuration for User Management, Version Control and Continuous Integration.
+If you want to configure Artemis with ``Bitbucket, Jira, Bamboo`` continue with ``Configure Bitbucket, Jira, Bamboo`` or if you don'twant to configure programming exercise continue with ``Configure Local User Mangement`` in order to setup local user management.
 
-For more information check out the following documentations: 
-`Bitbucket, Jira, Bamboo <https://docs.artemis.ase.in.tum.de/dev/setup/bamboo-bitbucket-jira/>`__ or
-`Gitlab, Jenkins <https://docs.artemis.ase.in.tum.de/dev/setup/jenkins-gitlab/>`__
+Configure Bitbucket, Jira, Bamboo
+#################################
+
+If you run Artemis with Bitbucket, Jira, Bamboo you have to deploy them on Kubernetes. Since Artemis will be deployed on a cluster, local connections to Jira, Bitbucket, Bamboo will not work. 
+Therefore you have to deploy them on Kubernetes or to set connection to existing staging or production deployments, if any. The latter can be done only if you have admin access to them.
+In order to deploy Bitbucket, Jira, Bamboo on Kubernetes use the following documentation: `Bitbucket, Jira, Bamboo <https://docs.artemis.ase.in.tum.de/dev/setup/bamboo-bitbucket-jira/>`__.
+Once you are done continue with the next step ``Build Artemis``
+
+Configure Local User Mangement
+##############################
+
+If you want to run with local user management and no programming exercises setup follow the steps: 
+
+1. Go to the ``src/main/resources/config/application-artemis.yml`` file, and set use-external in the user-management section to false.
+
+2. Remove the jira profile from the ``SPRING_PROFILES_ACTIVE`` field in the ConfigMap found at ``src/main/kubernetes/artemis/configmap/artemis-configmap.yml``
+
+Now you can continue with the next step ``Build Artemis``
+
 
 Build Artemis
 -------------
