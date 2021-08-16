@@ -89,8 +89,7 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Retrieves a new submission if necessary and then delegates to the
-     * {@link programmingSubmissionService} to download the submission
+     * Retrieves a new submission if necessary and then delegates to sendSubmissionToOrion
      *
      * @param submission submission to send to Orion or 'new' if a new one should be loaded
      * @param correctionRound correction round

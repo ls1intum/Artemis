@@ -84,6 +84,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     filesTreeViewItem: TreeviewItem[];
     compressFolders = true;
 
+    collapsed = false;
+
     @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
     @ViewChild('creatingInput', { static: false }) creatingInput: ElementRef;
 
@@ -375,6 +377,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @param event
      */
     toggleEditorCollapse(event: any) {
+        this.collapsed = !this.collapsed;
         this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable });
     }
 
