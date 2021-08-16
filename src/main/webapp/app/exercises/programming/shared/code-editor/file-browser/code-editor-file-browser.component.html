@@ -1,10 +1,18 @@
-<div id="cardFiles" class="card file-browser resizable-filebrowser guided-tour-file-browser">
+<div id="cardFiles" class="card file-browser resizable-filebrowser guided-tour-file-browser" [ngStyle]="collapsed ? { height: '250px' } : { height: '100%' }">
     <div class="card-header d-flex justify-content-center bg-primary text-white" (click)="toggleEditorCollapse($event)">
-        <h3 class="card-title">
-            <fa-icon [icon]="'folder-open'"></fa-icon>
-            <span class="ms-2" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser">File Browser</span>
+        <h3 class="card-title justify-content-center">
+            <span *ngIf="!collapsed">
+                <fa-icon [icon]="'folder-open'"></fa-icon>
+                <span class="ms-2" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser">File Browser</span>
+            </span>
+            <span class="collapsed-file-browser" *ngIf="collapsed">
+                <fa-icon class="top-icon" [icon]="'chevron-right'"></fa-icon>
+                <span class="header" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser">File Browser</span>
+                <fa-icon [icon]="'folder-open'" class="fa-rotate-270" id="panel-symbol"></fa-icon>
+                <fa-icon class="bottom-icon" [icon]="'chevron-right'"></fa-icon>
+            </span>
         </h3>
-        <fa-icon class="ms-auto" [icon]="'chevron-left'"></fa-icon>
+        <fa-icon class="ms-auto clickable" [icon]="'chevron-left'"></fa-icon>
     </div>
 
     <!-- Root actions -->
@@ -58,7 +66,7 @@
             <span jhiTranslate="artemisApp.editor.loadingFiles">Loading file</span>
         </div>
     </div>
-    <jhi-code-editor-status #status [editorState]="editorState" [commitState]="commitState"></jhi-code-editor-status>
+    <jhi-code-editor-status *ngIf="!collapsed" #status [editorState]="editorState" [commitState]="commitState"></jhi-code-editor-status>
 </div>
 
 <!--Treeview Item Template-->
