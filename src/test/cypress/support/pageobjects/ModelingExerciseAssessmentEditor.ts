@@ -2,7 +2,6 @@
  * A class which encapsulates UI selectors and actions for the Modeling Exercise Assessment editor
  */
 export class ModelingExerciseAssessmentEditor {
-
     openAssessmentForComponent(componentNumber: number) {
         cy.get('.apollon-row').getSettled(`.sc-furvIG >> :nth-child(${componentNumber})`).children().eq(0).dblclick('top', { force: true });
     }

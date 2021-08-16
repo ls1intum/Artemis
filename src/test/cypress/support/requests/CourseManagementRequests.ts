@@ -59,17 +59,31 @@ export class CourseManagementRequests {
      * @param packageName the package name of the programming exercise
      * @param releaseDate when the programming exercise should be available (default is now)
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
+     * @param group the exercise group object if the exercise is in an exam
+     * @param buildAndTestDate the date for automated building and testing after exam completion
      * @returns <Chainable> request response
      */
-    createProgrammingExercise(course: any, title: string, programmingShortName: string, packageName: string, releaseDate = new Date(), dueDate = new Date(Date.now() + oneDay)) {
-        const programmingTemplate = programmingExerciseTemplate;
+    createProgrammingExercise(
+        title: string,
+        programmingShortName: string,
+        packageName: string,
+        course?: any,
+        group?: any,
+        buildAndTestDate?: day.Dayjs,
+        releaseDate = new Date(),
+        dueDate = new Date(Date.now() + oneDay),
+    ) {
+        const programmingTemplate = this.getCourseOrExamExercise(programmingExerciseTemplate, course, group);
         programmingTemplate.title = title;
         programmingTemplate.shortName = programmingShortName;
         programmingTemplate.packageName = packageName;
-        programmingTemplate.releaseDate = releaseDate.toISOString();
-        programmingTemplate.dueDate = dueDate.toISOString();
-        programmingTemplate.course = course;
-
+        if (course) {
+            programmingTemplate.releaseDate = releaseDate.toISOString();
+            programmingTemplate.dueDate = dueDate.toISOString();
+        } else {
+            programmingTemplate.allowComplaintsForAutomaticAssessments = true;
+            programmingTemplate.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestDate;
+        }
         return cy.request({
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
             method: 'POST',
@@ -91,7 +105,7 @@ export class CourseManagementRequests {
      * Adds the specified user to the tutor group in the course
      * */
     addTutorToCourse(course: any, user: CypressCredentials) {
-        return cy.request({method: POST, url: COURSE_BASE + course.id + '/tutors/' + user.username});
+        return cy.request({ method: POST, url: COURSE_BASE + course.id + '/tutors/' + user.username });
     }
 
     /**
@@ -131,13 +145,13 @@ export class CourseManagementRequests {
     }
 
     /**
-     * add text exercise to exercise group in exam
+     * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
      * */
-    addTextExerciseToExam(group: any, title: string) {
-        const examTextExercise = this.getCourseOrExamExercise(textExerciseTemplate, null, group);
-        examTextExercise.title = title;
-        return cy.request({ method: POST, url: BASE_API + 'text-exercises', body: examTextExercise });
+    createTextExercise(title: string, course?: any, group?: any) {
+        const textExercise = this.getCourseOrExamExercise(textExerciseTemplate, course, group);
+        textExercise.title = title;
+        return cy.request({ method: POST, url: BASE_API + 'text-exercises', body: textExercise });
     }
 
     /**
@@ -156,7 +170,7 @@ export class CourseManagementRequests {
         return cy.request({ method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
     }
 
-    createModelingExercise(modelingExercise: any, course?: any,  group?: any) {
+    createModelingExercise(modelingExercise: any, course?: any, group?: any) {
         const newModelingExercise = this.getCourseOrExamExercise(modelingExercise, course, group);
         return cy.request({
             url: '/api/modeling-exercises',

@@ -1,5 +1,5 @@
-import { GROUP_SYNCHRONIZATION } from './../support/constants';
-import { CypressCredentials } from './../support/users';
+import { GROUP_SYNCHRONIZATION } from '../support/constants';
+import { CypressCredentials } from '../support/users';
 import { generateUUID } from '../support/utils';
 import allSuccessful from '../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import partiallySuccessful from '../fixtures/programming_exercise_submissions/partially_successful/submission.json';
@@ -71,7 +71,7 @@ function setupCourseAndProgrammingExercise() {
         //  We sleep to allow bamboo/bitbucket to synchronize the group rights, because the programming exercise creation fails otherwise
         cy.log('Created course. Sleeping before adding a programming exercise...');
         cy.wait(GROUP_SYNCHRONIZATION);
-        artemisRequests.courseManagement.createProgrammingExercise(course, programmingExerciseName, programmingExerciseShortName, packageName);
+        artemisRequests.courseManagement.createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, course);
     });
 }
 
