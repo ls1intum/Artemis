@@ -22,6 +22,7 @@ const uid = generateUUID();
 const courseName = 'Cypress course' + uid;
 const courseShortName = 'cypress' + uid;
 const examTitle = 'exam' + uid;
+const textExerciseTitle = 'Text exercise 1';
 
 describe('Exam management', () => {
     let course: any;
@@ -41,7 +42,7 @@ describe('Exam management', () => {
                 exam = examResponse.body;
                 examManagementRequests.registerStudent(course, exam, student);
                 examManagementRequests.addExerciseGroup(course, exam, 'group 1', true).then((groupResponse) => {
-                    examManagementRequests.addTextExercise(groupResponse.body, 'Text exercise 1');
+                    examManagementRequests.addTextExercise(groupResponse.body, textExerciseTitle);
                 });
                 examManagementRequests.generateMissingIndividualExams(course, exam);
                 examManagementRequests.prepareExerciseStart(course, exam);
@@ -73,6 +74,8 @@ describe('Exam management', () => {
         examStartEnd.enterFirstnameLastname();
         examStartEnd.finishExam().its('response.statusCode').should('eq', 200);
         cy.get('.alert').contains('Your exam was submitted successfully.');
+        cy.contains(textExerciseTitle).should('be.visible');
+        cy.contains(submissionText).should('be.visible');
     });
 
     after(() => {
