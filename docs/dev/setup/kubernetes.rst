@@ -202,7 +202,7 @@ Configure Artemis resources
 
 In order to run Artemis, you need to configure the Artemis' User Management, Version Control and Continuous Integration. You can either run it with Jira, Bitbucket, Bamboo or Jenkins, Gitlab.
 Make sure to configure the the ``src/main/resources/config/application-artemis.yml`` file with the proper configuration for User Management, Version Control and Continuous Integration.
-If you want to configure Artemis with ``Bitbucket, Jira, Bamboo`` continue with ``Configure Bitbucket, Jira, Bamboo`` or if you don'twant to configure programming exercise continue with ``Configure Local User Mangement`` in order to setup local user management.
+If you want to configure Artemis with ``Bitbucket, Jira, Bamboo`` continue with ``Configure Bitbucket, Jira, Bamboo`` or if you want to configure Artemis with local user management and no programming exercise continue with ``Configure Local User Mangement``.
 
 Configure Bitbucket, Jira, Bamboo
 #################################
