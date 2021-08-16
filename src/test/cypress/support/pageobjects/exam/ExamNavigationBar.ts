@@ -3,11 +3,23 @@
  */
 export class ExamNavigationBar {
     /**
-     * Clicks the navigation item at the specified index.
-     * @param index the navigation item index. If the exam has x exercises: index = 0 -> left navigation arrow, 1 -> first exercise, x -> last exercise, x + 1 -> right arrow
+     * Opens the exercise at the specified index.
+     * @param index 0-based index
      */
-    clickNavigationItemAtIndex(index: number) {
-        this.getNavigationBarRoot().find('.navigation-item').eq(index);
+    openExerciseAtIndex(index: number) {
+        this.clickNavigationItemAtIndex(index + 2);
+    }
+
+    handInEarly() {
+        cy.get('.btn-danger').click();
+    }
+
+    /**
+     * Clicks the navigation item at the specified index.
+     * @param index the navigation item index. If the exam has x exercises: index = 0 -> navigation overview, 1 -> left arrow, 2 -> first exercise, x + 1 -> last exercise, x + 2 -> right arrow
+     */
+    private clickNavigationItemAtIndex(index: number) {
+        this.getNavigationBarRoot().find('.navigation-item').eq(index).click();
     }
 
     private getNavigationBarRoot() {

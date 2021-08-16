@@ -3,7 +3,7 @@
  */
 export class CoursesPage {
     openCourse(courseName: string) {
-        cy.contains(courseName).parents('.card-header').click();
+        cy.get('jhi-overview-course-card').contains(courseName).parents('.card-header').click();
         cy.url().should('include', '/exercises');
     }
 }
