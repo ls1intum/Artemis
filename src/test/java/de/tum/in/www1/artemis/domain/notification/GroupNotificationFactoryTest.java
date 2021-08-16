@@ -75,6 +75,9 @@ public class GroupNotificationFactoryTest {
 
     private static List<String> archiveErrors = new ArrayList();
 
+    /**
+     * sets up all needed mocks and their wanted behavior once for all test cases
+     */
     @BeforeAll
     public static void setUp() {
 
@@ -126,15 +129,16 @@ public class GroupNotificationFactoryTest {
         checkCreatedNotification(createdNotification, expectedTitle, expectedText, expectedTarget, expectedPriority);
     }
 
-    private String createDefaultExpectedTarget(String message, String entity, Long id) {
-        return "{\"message\":\"" + message + "\",\"id\":" + id + ",\"entity\":\"" + entity + "\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
+    private String createDefaultExpectedTarget(String message, String entity, Long relevantIdForCurrentTestCase) {
+        return "{\"message\":\"" + message + "\",\"id\":" + relevantIdForCurrentTestCase + ",\"entity\":\"" + entity + "\",\"course\":" + courseId + ",\"mainPage\":\"courses\"}";
     }
 
     private enum Base {
         ATTACHMENT, EXERCISE, POST, ANSWER_POST, COURSE, EXAM
     }
 
-    /** Calls the real createNotification method of the groupNotificationFactory and tests if the result is correct.
+    /**
+     *  Calls the real createNotification method of the groupNotificationFactory and tests if the result is correct.
      * Two notifications are created for those cases that might use a manually set notification text
      * @param base is the first input parameter used in the respective factory method to create the group notification.
      */
