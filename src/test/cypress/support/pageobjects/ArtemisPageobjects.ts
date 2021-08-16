@@ -1,3 +1,4 @@
+import { ExamNavigationBar } from './exam/ExamNavigationBar';
 import { CourseOverviewPage } from './course/CourseOverviewPage';
 import { CoursesPage } from './course/CoursesPage';
 import { ProgrammingExerciseCreationPage } from './ProgrammingExerciseCreationPage';
@@ -22,9 +23,10 @@ export class ArtemisPageobjects {
     onlineEditor = new OnlineEditorPage();
     examCreation = new ExamCreationPage();
     examManagement = new ExamManagementPage();
+    examStartEnd = new ExamStartEndPage();
+    examNavigationBar = new ExamNavigationBar();
     programmingExerciseCreation = new ProgrammingExerciseCreationPage();
     createModelingExercise = new CreateModelingExercisePage();
     modelingExerciseExampleSubmission = new ModelingExerciseExampleSubmissionPage();
     modelingEditor = new ModelingEditor();
-    examStartEnd = new ExamStartEndPage();
 }
