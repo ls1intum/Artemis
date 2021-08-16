@@ -6,7 +6,7 @@ import examTemplate from '../../fixtures/requests/exam_template.json';
 import day from 'dayjs';
 
 export const COURSE_BASE = BASE_API + 'courses/';
-const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
+export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
 const oneDay = 24 * 60 * 60 * 1000;
 
 /**
