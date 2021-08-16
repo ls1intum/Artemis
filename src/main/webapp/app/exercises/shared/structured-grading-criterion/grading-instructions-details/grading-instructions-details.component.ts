@@ -20,7 +20,7 @@ import { cloneDeep } from 'lodash';
 })
 export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
     /** Ace Editor configuration constants **/
-    markdownEditorText? = '';
+    markdownEditorText = '';
     @ViewChildren('markdownEditors')
     private markdownEditors: QueryList<MarkdownEditorComponent>;
     @ViewChild('markdownEditor', { static: false })
