@@ -17,4 +17,20 @@ export class CourseOverviewPage {
         this.getExerciseCardRootElement(exerciseName).find('[buttonicon="folder-open"]').click();
         cy.wait('@initialQuery').wait(2000);
     }
+
+    openExamsTab() {
+        this.getTabBar().find('[jhitranslate="artemisApp.courseOverview.menu.exams"]').click();
+    }
+
+    openExam(examTitle: string) {
+        this.getExamsRootElement().contains(examTitle).click();
+    }
+
+    private getTabBar() {
+        return cy.get('.tab-bar-course-overview');
+    }
+
+    private getExamsRootElement() {
+        return cy.get('jhi-course-exams');
+    }
 }
