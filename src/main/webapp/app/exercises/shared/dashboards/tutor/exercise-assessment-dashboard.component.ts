@@ -650,10 +650,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     getSubmissionToViewFromComplaintSubmission(submission: Submission): Submission | undefined {
         const submissionToView = this.submissionsWithComplaints.find((dto) => dto.submission.id === submission.id)?.submission;
         if (submissionToView) {
-            if (!submissionToView.results) {
+            if (submissionToView.results) {
+                submissionToView.results = submissionToView.results.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC);
+            } else {
                 submissionToView.results = [];
             }
-            submissionToView.results = submissionToView.results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC);
             return submissionToView;
         }
     }
