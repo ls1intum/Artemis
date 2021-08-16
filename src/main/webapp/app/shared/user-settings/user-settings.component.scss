@@ -1,4 +1,5 @@
 #user-settings-page {
+    /*
     position: fixed;
     top: 0;
     right: 0;
@@ -10,4 +11,21 @@
     background: white;
     margin: 125px;
     box-shadow: 0 0 4px 0 rgba(136, 136, 136, 1);
+     */
+}
+
+#user-header {
+    font-size: x-large;
+    font-weight: 600;
+}
+
+#login {
+    color: gray;
+    font-size: medium;
+    font-weight: normal;
+}
+
+fa-icon {
+    padding-top: 7px;
+    padding-right: 10px;
 }

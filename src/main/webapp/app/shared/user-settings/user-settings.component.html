@@ -1,1 +1,45 @@
-<div id="user-settings-page"></div>
+<!--
+<div id="user-settings-page">
+    <div id="user-header" >
+        <fa-icon id='user-icon' [icon]="'user'" [fixedWidth]="true"></fa-icon>
+        <span *ngIf="currAccount">
+            <span *ngIf="currAccount.firstName && currAccount.lastName; else justName">
+                {{ currAccount.firstName}}
+                {{ currAccount.lastName}}
+            </span>
+            <ng-template #justName *ngIf="currAccount.name">
+                {{ currAccount.name}}
+            </ng-template>
+            <br>
+            <span>
+                {{ currAccount.login }}
+            </span>
+        </span>
+    </div>
+</div>
+-->
+
+<div id="user-settings-page">
+    <div id="user-header" class="d-flex flex-items-center mb-2 mb-md-0">
+        <fa-icon size="2x" id="user-icon" [icon]="'user'" [fixedWidth]="true"></fa-icon>
+        <div class="flex-auto">
+            <span *ngIf="currAccount">
+                <span *ngIf="currAccount.firstName && currAccount.lastName; else justName">
+                    {{ currAccount.firstName }}
+                    {{ currAccount.lastName }}
+                </span>
+                <ng-template #justName *ngIf="currAccount.name">
+                    {{ currAccount.name }}
+                </ng-template>
+                <br />
+                <span id="login" class="d-flex flex-items-center flex-wrap">
+                    {{ currAccount.login }}
+                </span>
+            </span>
+        </div>
+    </div>
+
+    <div id="user-information">
+        <span> User Information</span>
+    </div>
+</div>
