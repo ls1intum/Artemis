@@ -50,21 +50,21 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     showReactionSelector = false;
     currentUserIsAtLeastTutor: boolean;
 
-    /*
-    currently predefined fixed set of emojis that should be used within a course,
-    they will be listed on first page of the emoji-mart selector
+    /**
+     * currently predefined fixed set of emojis that should be used within a course,
+     * they will be listed on first page of the emoji-mart selector
      */
     selectedCourseEmojis: string[];
 
-    /*
-    map that lists associated reaction (by emojiId) for the current posting together with its count
-    and a flag that indicates if the current user has used this reaction
+    /**
+     * map that lists associated reaction (by emojiId) for the current posting together with its count
+     * and a flag that indicates if the current user has used this reaction
      */
     reactionCountMap: ReactionCountMap = {};
 
-    /*
-     emojis that have a predefined meaning, i.e. pin and archive emoji,
-     should not appear in the emoji-mart selector
+    /**
+     * emojis that have a predefined meaning, i.e. pin and archive emoji,
+     * should not appear in the emoji-mart selector
      */
     emojisToShowFilter: (emoji: string | EmojiData) => boolean = (emoji) => {
         if (typeof emoji === 'string') {
@@ -73,6 +73,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
             return emoji.unified !== PIN_EMOJI_UNICODE && emoji.unified !== ARCHIVE_EMOJI_UNICODE;
         }
     };
+
     constructor(protected metisService: MetisService) {
         this.selectedCourseEmojis = ['smile', 'joy', 'sunglasses', 'tada', 'rocket', 'heavy_plus_sign', 'thumbsup', 'memo', 'coffee', 'recycle'];
     }
@@ -108,7 +109,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
 
     /**
      * updates the reaction based when a displayed emoji reaction is clicked,
-     * i.e. when agree on an existing reaction (+1) or removing own reaction (-1)
+     * i.e. when agree on an existing reaction (+1) or removing own reactions (-1)
      */
     updateReaction(emojiId: string): void {
         if (emojiId != undefined) {
