@@ -20,10 +20,8 @@ let course: any;
 
 // Common primitives
 const uid = generateUUID();
-const courseName = 'Cypress course' + uid;
-const courseShortName = 'cypress' + uid;
 const programmingExerciseName = 'Cypress programming exercise ' + uid;
-const programmingExerciseShortName = courseShortName;
+const programmingExerciseShortName = 'cypress' + uid;
 const exercisePath = '/exercises';
 const packageName = 'de.test';
 
@@ -36,17 +34,17 @@ describe('Programming exercise participations', () => {
     });
 
     it('Makes a partially successful submission', function () {
-        startParticipationInProgrammingExercise(users.getStudentOne());
+        startParticipationInProgrammingExercise(users.getStudentOne(), course.title);
         makePartiallySuccessfulSubmission();
     });
 
     it('Makes a successful submission', function () {
-        startParticipationInProgrammingExercise(users.getStudentTwo());
+        startParticipationInProgrammingExercise(users.getStudentTwo(), course.title);
         makeSuccessfulSubmission();
     });
 
     it('Makes a failing submission', function () {
-        startParticipationInProgrammingExercise(users.getStudentThree());
+        startParticipationInProgrammingExercise(users.getStudentThree(), course.title);
         makeFailingSubmission();
     });
 
@@ -63,7 +61,7 @@ describe('Programming exercise participations', () => {
  */
 function setupCourseAndProgrammingExercise() {
     cy.login(users.getAdmin(), '/');
-    artemisRequests.courseManagement.createCourse(courseName, courseShortName).then((response) => {
+    artemisRequests.courseManagement.createCourse().then((response) => {
         course = response.body;
         artemisRequests.courseManagement.addStudentToCourse(course.id, users.getStudentOne().username);
         artemisRequests.courseManagement.addStudentToCourse(course.id, users.getStudentTwo().username);
@@ -140,7 +138,7 @@ function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmissio
 /**
  * Starts the participation in the test programming exercise.
  */
-function startParticipationInProgrammingExercise(credentials: CypressCredentials) {
+function startParticipationInProgrammingExercise(credentials: CypressCredentials, courseName: string) {
     cy.login(credentials, '/');
     cy.url().should('include', '/courses');
     cy.log('Participating in the programming exercise as a student...');

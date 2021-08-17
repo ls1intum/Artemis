@@ -14,9 +14,6 @@ const navigationBar = artemis.pageobjects.navigationBar;
 const programmingCreation = artemis.pageobjects.programmingExerciseCreation;
 
 // Common primitives
-let uid: string;
-let courseName: string;
-let courseShortName: string;
 let programmingExerciseName: string;
 let programmingExerciseShortName: string;
 const packageName = 'de.test';
@@ -28,12 +25,9 @@ describe('Programming Exercise Management', () => {
     let course: any;
 
     before(() => {
-        uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
         cy.login(admin);
         artemisRequests.courseManagement
-            .createCourse(courseName, courseShortName)
+            .createCourse()
             .its('body')
             .then((body) => {
                 expect(body).property('id').to.be.a('number');
@@ -44,7 +38,7 @@ describe('Programming Exercise Management', () => {
     });
 
     beforeEach(() => {
-        uid = generateUUID();
+        const uid = generateUUID();
         programmingExerciseName = 'Cypress programming exercise ' + uid;
         programmingExerciseShortName = 'cypress' + uid;
     });
@@ -55,7 +49,7 @@ describe('Programming Exercise Management', () => {
         it('Creates a new programming exercise', function () {
             cy.login(admin, '/');
             navigationBar.openCourseManagement();
-            courseManagementPage.openExercisesOfCourse(courseName, courseShortName);
+            courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
             cy.get('#jh-create-entity').click();
             cy.url().should('include', '/programming-exercises/new');
             cy.log('Filling out programming exercise info...');
@@ -99,7 +93,7 @@ describe('Programming Exercise Management', () => {
         it('Deletes an existing programming exercise', function () {
             cy.login(admin, '/');
             navigationBar.openCourseManagement();
-            courseManagementPage.openExercisesOfCourse(courseName, courseShortName);
+            courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
             cy.get('[deletequestion="artemisApp.programmingExercise.delete.question"]').click();
             // Check all checkboxes to get rid of the git repositories and build plans
             cy.get('.modal-body')

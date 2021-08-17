@@ -18,8 +18,6 @@ const programmingCreation = artemis.pageobjects.programmingExerciseCreation;
 
 // Common primitives
 const uid = generateUUID();
-const courseName = 'Cypress course' + uid;
-const courseShortName = 'cypress' + uid;
 const examTitle = 'exam' + uid;
 
 describe('Exam management', () => {
@@ -27,7 +25,7 @@ describe('Exam management', () => {
 
     before(() => {
         cy.login(users.getAdmin());
-        courseManagementRequests.createCourse(courseName, courseShortName).then((response) => {
+        courseManagementRequests.createCourse().then((response) => {
             course = response.body;
             courseManagementRequests.addStudentToCourse(course.id, users.getStudentOne().username);
             const exam = new CypressExamBuilder(course).title(examTitle).build();
@@ -43,7 +41,7 @@ describe('Exam management', () => {
         cy.wait(GROUP_SYNCHRONIZATION);
         cy.visit('/');
         navigationBar.openCourseManagement();
-        courseManagement.openExamsOfCourse(courseName, courseShortName);
+        courseManagement.openExamsOfCourse(course.title, course.shortName);
         examManagement.getExamRow(examTitle).openExerciseGroups();
         cy.contains('Number of exercise groups: 0').should('be.visible');
         // Create a new exercise group

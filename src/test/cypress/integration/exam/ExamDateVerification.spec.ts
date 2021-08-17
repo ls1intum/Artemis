@@ -9,18 +9,13 @@ const courseManagementRequests = artemis.requests.courseManagement;
 // page objects
 const examStartEnd = artemis.pageobjects.examStartEnd;
 
-// Common primitives
-const uid = generateUUID();
-const courseName = 'Cypress course' + uid;
-const courseShortName = 'cypress' + uid;
-
 describe('Exam management', () => {
     let course: any;
     let examTitle: string;
 
     before(() => {
         cy.login(artemis.users.getAdmin());
-        courseManagementRequests.createCourse(courseName, courseShortName).then((response) => {
+        courseManagementRequests.createCourse().then((response) => {
             course = response.body;
             courseManagementRequests.addStudentToCourse(course.id, artemis.users.getStudentOne().username);
         });
