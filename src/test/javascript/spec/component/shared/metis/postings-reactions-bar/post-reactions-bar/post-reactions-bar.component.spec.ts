@@ -60,6 +60,8 @@ describe('PostReactionsBarComponent', () => {
                 post = new Post();
                 post.id = 1;
                 post.author = user;
+                post.pinned = false;
+                post.archived = false;
                 reactionToDelete = new Reaction();
                 reactionToDelete.id = 1;
                 reactionToDelete.emojiId = 'smile';
@@ -79,8 +81,8 @@ describe('PostReactionsBarComponent', () => {
         component.ngOnInit();
         expect(component.currentUserIsAtLeastTutor).to.deep.equal(false);
         fixture.detectChanges();
-        const reactions = getElement(debugElement, 'ngx-emoji');
-        expect(reactions).to.exist;
+        const reaction = getElement(debugElement, 'ngx-emoji');
+        expect(reaction).to.exist;
         expect(component.reactionCountMap).to.be.deep.equal({
             smile: {
                 count: 1,
@@ -104,6 +106,9 @@ describe('PostReactionsBarComponent', () => {
                 hasReacted: true,
             },
         });
+        // set correct tooltips for tutor and post that is not pinned and not archived
+        expect(component.archiveTooltip).to.be.deep.equal('artemisApp.metis.archivePostTutorTooltip');
+        expect(component.pinTooltip).to.be.deep.equal('artemisApp.metis.pinPostTutorTooltip');
     });
 
     it('should invoke metis service method with correctly built reaction to create it', () => {
@@ -126,5 +131,63 @@ describe('PostReactionsBarComponent', () => {
         component.addOrRemoveReaction(reactionToDelete.emojiId!);
         expect(metisServiceDeleteReactionSpy).to.have.been.calledWith(reactionToDelete);
         expect(component.showReactionSelector).to.be.equal(false);
+    });
+
+    it('should invoke metis service method when pin icon is toggled', () => {
+        accountServiceAuthorityStub.returns(true);
+        component.ngOnInit();
+        fixture.detectChanges();
+        const metisServicePinPostSpy = sinon.spy(metisService, 'updatePostPinState');
+        const pinEmoji = getElement(debugElement, '.pin');
+        pinEmoji.click();
+        expect(metisServicePinPostSpy).to.have.been.calledWith(component.posting, true);
+        component.posting.pinned = true;
+        component.ngOnChanges();
+        // set correct tooltips for tutor and post that is pinned and not archived
+        expect(component.pinTooltip).to.be.deep.equal('artemisApp.metis.removePinPostTutorTooltip');
+        expect(component.archiveTooltip).to.be.deep.equal('artemisApp.metis.archivePostTutorTooltip');
+    });
+
+    it('should invoke metis service method when archive icon is toggled', () => {
+        accountServiceAuthorityStub.returns(true);
+        component.ngOnInit();
+        fixture.detectChanges();
+        const metisServiceArchivePostSpy = sinon.spy(metisService, 'updatePostArchiveState');
+        const archiveEmoji = getElement(debugElement, '.archive');
+        archiveEmoji.click();
+        expect(metisServiceArchivePostSpy).to.have.been.calledWith(component.posting, true);
+        component.posting.archived = true;
+        component.ngOnChanges();
+        // set correct tooltips for tutor and post that is archived and not pinned
+        expect(component.pinTooltip).to.be.deep.equal('artemisApp.metis.pinPostTutorTooltip');
+        expect(component.archiveTooltip).to.be.deep.equal('artemisApp.metis.removeArchivePostTutorTooltip');
+    });
+
+    it('should show non-clickable pin emoji with correct tooltip for student when post is pinned', () => {
+        accountServiceAuthorityStub.returns(false);
+        component.posting.pinned = true;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const metisServicePinPostSpy = sinon.spy(metisService, 'updatePostPinState');
+        const pinEmoji = getElement(debugElement, '.pin.reaction-button--not-hoverable');
+        expect(pinEmoji).to.exist;
+        pinEmoji.click();
+        expect(metisServicePinPostSpy).to.not.have.been.called;
+        // set correct tooltips for student and post that is pinned
+        expect(component.pinTooltip).to.be.deep.equal('artemisApp.metis.pinnedPostTooltip');
+    });
+
+    it('should show non-clickable archive emoji with correct tooltip for student when post is archived', () => {
+        accountServiceAuthorityStub.returns(false);
+        component.posting.archived = true;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const metisServiceArchivePostSpy = sinon.spy(metisService, 'updatePostArchiveState');
+        const archiveEmoji = getElement(debugElement, '.archive.reaction-button--not-hoverable');
+        expect(archiveEmoji).to.exist;
+        archiveEmoji.click();
+        expect(metisServiceArchivePostSpy).to.not.have.been.called;
+        // set correct tooltips for student and post that is archived
+        expect(component.archiveTooltip).to.be.deep.equal('artemisApp.metis.archivedPostTooltip');
     });
 });

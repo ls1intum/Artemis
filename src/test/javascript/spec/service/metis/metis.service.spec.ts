@@ -81,6 +81,8 @@ describe('Metis Service', () => {
         post1.tags = ['tag1', 'tag2'];
         post1.author = user1;
         post1.creationDate = moment();
+        post1.pinned = false;
+        post1.archived = false;
 
         post2 = new Post();
         post2.id = 2;
@@ -159,6 +161,30 @@ describe('Metis Service', () => {
             const postServiceSpy = spy(postService, 'update');
             const updatedPostSub = metisService.updatePost(post1).subscribe((updatedPost) => {
                 expect(updatedPost).to.be.deep.equal(post1);
+            });
+            expect(postServiceSpy).to.have.been.called;
+            tick();
+            expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
+            updatedPostSub.unsubscribe();
+        }));
+
+        it('should pin a post', fakeAsync(() => {
+            const postServiceSpy = spy(postService, 'updatePinState');
+            const newPinState = true;
+            const updatedPostSub = metisService.updatePostPinState(post1, newPinState).subscribe((updatedPost) => {
+                expect(updatedPost).to.be.deep.equal({ id: post1.id, pinned: newPinState });
+            });
+            expect(postServiceSpy).to.have.been.called;
+            tick();
+            expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
+            updatedPostSub.unsubscribe();
+        }));
+
+        it('should archive a post', fakeAsync(() => {
+            const postServiceSpy = spy(postService, 'updateArchiveState');
+            const newArchiveState = true;
+            const updatedPostSub = metisService.updatePostArchiveState(post1, newArchiveState).subscribe((updatedPost) => {
+                expect(updatedPost).to.be.deep.equal({ id: post1.id, archived: newArchiveState });
             });
             expect(postServiceSpy).to.have.been.called;
             tick();
