@@ -100,9 +100,13 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
         assertThat(tutorParticipation.getStatus()).as("Tutor participation has correct status").isEqualTo(TutorParticipationStatus.TRAINED);
     }
 
+    /**
+     * Tests the tutor training with example submission.
+     * In case tutor has provided a feedback which was not provided by the instructor, response is BAD_REQUEST.
+     */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnneccessaryFeedbackBadRequest() throws Exception {
+    public void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnnecessaryFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareTextExampleSubmission(true);
 
         // Tutor reviewed the instructions.
