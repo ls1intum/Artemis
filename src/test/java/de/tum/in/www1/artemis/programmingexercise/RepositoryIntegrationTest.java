@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.util.RequestUtilService.parameters;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -592,6 +593,56 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(receivedLogs).isNotNull();
         assertThat(receivedLogs).hasSize(3);
         assertThat(receivedLogs).isEqualTo(buildLogEntries);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testBuildLogsFromDatabaseForSpecificResults() throws Exception {
+        // FIRST SUBMISSION
+        var submission1 = new ProgrammingSubmission();
+        submission1.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
+        submission1.setSubmitted(true);
+        submission1.setCommitHash("A");
+        submission1.setType(SubmissionType.MANUAL);
+        submission1.setBuildFailed(true);
+
+        var submission1_logs = new ArrayList<BuildLogEntry>();
+        submission1_logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 1 - Log 1"));
+        submission1_logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 1 - Log 2"));
+
+        submission1.setBuildLogEntries(submission1_logs);
+        database.addProgrammingSubmission(programmingExercise, submission1, "student1");
+        var result1 = database.addResultToSubmission(submission1, AssessmentType.AUTOMATIC).getFirstResult();
+
+        // SECOND SUBMISSION
+        var submission2 = new ProgrammingSubmission();
+        submission2.setSubmissionDate(ZonedDateTime.now().minusMinutes(2));
+        submission2.setSubmitted(true);
+        submission2.setCommitHash("B");
+        submission2.setType(SubmissionType.MANUAL);
+        submission2.setBuildFailed(true);
+
+        var submission2_logs = new ArrayList<BuildLogEntry>();
+        submission2_logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 2 - Log 1"));
+        submission2_logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 2 - Log 2"));
+
+        submission2.setBuildLogEntries(submission2_logs);
+        database.addProgrammingSubmission(programmingExercise, submission2, "student1");
+        var result2 = database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC).getFirstResult();
+
+        // Specify to use result1
+        var receivedLogs1 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
+                parameters(Map.of("resultId", result1.getId())));
+        assertThat(receivedLogs1).isEqualTo(submission1_logs);
+
+        // Specify to use result2
+        var receivedLogs2 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
+                parameters(Map.of("resultId", result2.getId())));
+        assertThat(receivedLogs2).isEqualTo(submission2_logs);
+
+        // Without parameters, the latest submission must be used
+        var receivedLogsLatest = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
+        assertThat(receivedLogsLatest).isEqualTo(submission2_logs);
     }
 
     @Test
