@@ -64,22 +64,6 @@ public class PostResource {
     }
 
     /**
-     * PUT /courses/{courseId}/posts/{postId}/votes : Vote on an existing post
-     *
-     * @param courseId   id of the course the post belongs to
-     * @param postId     id of the post to vote on
-     * @param voteChange value by which votes are increased / decreased
-     * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
-     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
-     */
-    @PutMapping("courses/{courseId}/posts/{postId}/votes")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Post> updatePostVotes(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Integer voteChange) {
-        Post postWithUpdatedVotes = postService.updatePostVotes(courseId, postId, voteChange);
-        return ResponseEntity.ok().body(postWithUpdatedVotes);
-    }
-
-    /**
      * GET /courses/{courseId}/exercises/{exerciseId}/posts : Get all posts for an exercise by its id
      *
      * @param courseId   id of the course the post belongs to

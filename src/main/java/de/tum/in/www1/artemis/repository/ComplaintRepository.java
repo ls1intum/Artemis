@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Complaint entity.
@@ -23,7 +24,11 @@ import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
 @Repository
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
-    Optional<Complaint> findByResult_Id(Long resultId);
+    Optional<Complaint> findByResultId(Long resultId);
+
+    default Complaint findByResultIdElseThrow(Long resultId) {
+        return findById(resultId).orElseThrow(() -> new EntityNotFoundException("Complaint by ResultId", resultId));
+    }
 
     @Query("SELECT c FROM Complaint c LEFT JOIN FETCH c.result r LEFT JOIN FETCH r.assessor WHERE c.id = :#{#complaintId}")
     Optional<Complaint> findByIdWithEagerAssessor(@Param("complaintId") Long complaintId);
