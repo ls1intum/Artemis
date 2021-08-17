@@ -32,7 +32,7 @@ public class ModelAssessmentKnowledgeService {
     /**
      * delete only when no exercises use the knowledge
      *
-     * @return void
+     * @param knowledgeId
      */
     public void deleteKnowledge(Long knowledgeId) {
         Set<ModelingExercise> exerciseSet = modelingExerciseRepository.findAllByKnowledgeId(knowledgeId);
@@ -45,7 +45,7 @@ public class ModelAssessmentKnowledgeService {
     /**
      * Create new knowledge if exercise is created from scratch
      *
-     * @return The new created ModelAssessmentKnowledge
+     * @return ModelAssessmentKnowledge
      */
     public ModelAssessmentKnowledge createNewKnowledge() {
         ModelAssessmentKnowledge knowledge = new ModelAssessmentKnowledge();

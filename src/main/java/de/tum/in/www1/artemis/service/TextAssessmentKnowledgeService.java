@@ -31,8 +31,7 @@ public class TextAssessmentKnowledgeService {
 
     /**
      * delete only when no exercises use the knowledge
-     *
-     * @return void
+     * @param knowledgeId
      */
     public void deleteKnowledge(Long knowledgeId) {
         Set<TextExercise> exerciseSet = textExerciseRepository.findAllByKnowledgeId(knowledgeId);
@@ -45,7 +44,7 @@ public class TextAssessmentKnowledgeService {
     /**
      * Create new knowledge if exercise is created from scratch
      *
-     * @return The new created TextAssessmentKnowledge
+     * @return TextAssessmentKnowledge
      */
     public TextAssessmentKnowledge createNewKnowledge() {
         TextAssessmentKnowledge knowledge = new TextAssessmentKnowledge();
