@@ -73,7 +73,7 @@ export class CourseManagementRequests {
         releaseDate = new Date(),
         dueDate = new Date(Date.now() + oneDay),
     ) {
-        const programmingTemplate = this.getCourseOrExamExercise(programmingExerciseTemplate, course, group);
+        const programmingTemplate = CourseManagementRequests.getCourseOrExamExercise(programmingExerciseTemplate, course, group);
         programmingTemplate.title = title;
         programmingTemplate.shortName = programmingShortName;
         programmingTemplate.packageName = packageName;
@@ -149,7 +149,7 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      * */
     createTextExercise(title: string, course?: any, group?: any) {
-        const textExercise = this.getCourseOrExamExercise(textExerciseTemplate, course, group);
+        const textExercise = CourseManagementRequests.getCourseOrExamExercise(textExerciseTemplate, course, group);
         textExercise.title = title;
         return cy.request({ method: POST, url: BASE_API + 'text-exercises', body: textExercise });
     }
@@ -171,7 +171,7 @@ export class CourseManagementRequests {
     }
 
     createModelingExercise(modelingExercise: any, course?: any, group?: any) {
-        const newModelingExercise = this.getCourseOrExamExercise(modelingExercise, course, group);
+        const newModelingExercise = CourseManagementRequests.getCourseOrExamExercise(modelingExercise, course, group);
         return cy.request({
             url: '/api/modeling-exercises',
             method: 'POST',
@@ -190,20 +190,14 @@ export class CourseManagementRequests {
      * Because the only difference between course exercises and exam exercises is the "course" or "exerciseGroup" field
      * This function takes an exercise template and adds one of the fields to it
      * @param exercise the exercise template
-     * @param course the course response object
-     * @param group the exercise group of the exam the exercise will be added to
+     * @param body the exercise group or course the exercise will be added to
+     * @param isExamExercise true if the exercise will be added to an exam false if added to course
      * */
-    private getCourseOrExamExercise(exercise: object, course?: any, group?: any) {
-        const newExercise: any = {};
-        Object.keys(exercise).forEach((key) => {
-            newExercise[key] = exercise[key];
-        });
-        if (course) {
-            newExercise['course'] = course;
-        } else {
-            newExercise['exerciseGroup'] = group;
-        }
-        return newExercise;
+    private static getCourseOrExamExercise (exercise: object, body: any, isExamExercise: boolean) {
+        const exerciseCopy: any = { ...exercise };
+        const fieldName = isExamExercise ? 'exerciseGroup' : 'course';
+        exerciseCopy[fieldName] = body;
+        return exerciseCopy;
     }
 }
 
