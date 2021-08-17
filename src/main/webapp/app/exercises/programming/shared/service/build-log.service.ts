@@ -13,7 +13,7 @@ export class BuildLogService implements IBuildLogService {
     private restResourceUrlBase = `${SERVER_API_URL}/api`;
     private assignmentResourceUrl = `${this.restResourceUrlBase}/repository`;
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient) { }
 
     /**
      * Retrieves the build logs for a given participation and optionally, a given result.
@@ -21,9 +21,9 @@ export class BuildLogService implements IBuildLogService {
      * @param resultId The identifier of an optional result to specify which submission to use
      */
     getBuildLogs(participationId: number, resultId?: number): Observable<BuildLogEntry[]> {
-        const params = new HttpParams();
+        let params = new HttpParams();
         if (resultId) {
-            params.set('resultId', resultId);
+            params = params.set('resultId', resultId);
         }
         return this.http.get<BuildLogEntry[]>(`${this.assignmentResourceUrl}/${participationId}/buildlogs`, { params });
     }
