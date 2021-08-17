@@ -13,9 +13,12 @@ import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { PostComponent } from 'app/shared/metis/post/post.component';
+import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -64,8 +67,14 @@ describe('PostingsThreadComponent', () => {
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: MetisService, useClass: MockMetisService },
             ],
-            declarations: [PostingsThreadComponent, MockPipe(ArtemisTranslatePipe)],
-            schemas: [NO_ERRORS_SCHEMA],
+            declarations: [
+                PostingsThreadComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(PostComponent),
+                MockComponent(AnswerPostComponent),
+                MockComponent(FaIconComponent),
+                MockComponent(AnswerPostCreateEditModalComponent),
+            ],
         })
             .compileComponents()
             .then(() => {

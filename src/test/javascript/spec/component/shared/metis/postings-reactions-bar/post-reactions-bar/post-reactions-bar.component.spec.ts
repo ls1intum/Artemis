@@ -7,7 +7,7 @@ import { Post } from 'app/entities/metis/post.model';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
 import { PostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { OverlayModule } from '@angular/cdk/overlay';
@@ -18,7 +18,9 @@ import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../../../../helpers/mocks/service/mock-reaction.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
-import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { EmojiModule, EmojiComponent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -45,8 +47,7 @@ describe('PostReactionsBarComponent', () => {
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
-            declarations: [PostReactionsBarComponent, MockPipe(ArtemisTranslatePipe)],
-            schemas: [CUSTOM_ELEMENTS_SCHEMA],
+            declarations: [PostReactionsBarComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(NgbTooltip), MockComponent(EmojiComponent)],
         })
             .compileComponents()
             .then(() => {

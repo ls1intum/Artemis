@@ -3,12 +3,12 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
-import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Post } from 'app/entities/metis/post.model';
 import { User } from 'app/core/user/user.model';
 import { PostHeaderComponent } from 'app/shared/metis/postings-header/post-header/post-header.component';
@@ -16,7 +16,12 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { getElement } from '../../../../../helpers/utils/general.utils';
 import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
+import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -53,10 +58,19 @@ describe('PostHeaderComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
+            imports: [FormsModule, ReactiveFormsModule],
             providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
-            declarations: [PostHeaderComponent, PostCreateEditModalComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
-            schemas: [NO_ERRORS_SCHEMA],
+            declarations: [
+                PostHeaderComponent,
+                MockComponent(PostCreateEditModalComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockDirective(NgbTooltip),
+                MockComponent(PostingsMarkdownEditorComponent),
+                MockComponent(PostingsButtonComponent),
+                MockComponent(FaIconComponent),
+                MockComponent(ConfirmIconComponent),
+            ],
         })
             .compileComponents()
             .then(() => {
