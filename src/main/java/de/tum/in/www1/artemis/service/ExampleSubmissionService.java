@@ -90,9 +90,6 @@ public class ExampleSubmissionService {
             newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(submission));
         }
         else if (exercise instanceof TextExercise) {
-            // feedback ler yuklenmiyor bu sekilde yaa
-            TextSubmission textSubmission = (TextSubmission) submission;
-            textSubmission.setBlocks(null);
             newExampleSubmission.setSubmission(textExerciseImportService.copySubmission(submission));
         }
 

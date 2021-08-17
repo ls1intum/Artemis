@@ -61,7 +61,7 @@ export class ExampleSubmissionService {
 
     import(submission: Submission, exerciseId: number): Observable<EntityResponseType> {
         const copy = Object.assign({}, submission);
-        // avoid circular structure
+        // avoid infinite recursion for JSON, example submission does not need participation
         copy.participation = undefined;
         copy.results?.forEach(result => {
             result.submission = undefined;
