@@ -457,7 +457,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         var result = ModelFactory.generateResult(true, 70D);
         result.participation(participation).setCompletionDate(ZonedDateTime.now().minusHours(2));
         resultRepository.save(result);
-        var actualParticipation = request.get("/api/participations/" + participation.getId() + "/withLatestResult", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipation.class);
 
         assertThat(actualParticipation).isNotNull();
         assertThat(actualParticipation.getResults().size()).isEqualTo(1);
@@ -469,7 +469,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void getParticipationBuildArtifact() throws Exception {
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         doReturn(new ResponseEntity<>(null, HttpStatus.OK)).when(continuousIntegrationService).retrieveLatestArtifact(participation);
-        request.getNullable("/api/participations/" + participation.getId() + "/buildArtifact", HttpStatus.OK, Object.class);
+        request.getNullable("/api/participations/" + participation.getId() + "/build-artifact", HttpStatus.OK, Object.class);
         verify(continuousIntegrationService).retrieveLatestArtifact(participation);
     }
 

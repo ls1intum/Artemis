@@ -105,7 +105,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     @NotNull
     default Team findOneByExerciseIdAndUserIdElseThrow(Long exerciseId, Long userId) {
         return findOneByExerciseIdAndUserId(exerciseId, userId)
-                .orElseThrow(() -> new EntityNotFoundException("Couldn't an active team for exercise " + exerciseId + " with user " + userId + "!"));
+                .orElseThrow(() -> new EntityNotFoundException("Couldn't find an active team for exercise " + exerciseId + " with user " + userId + "!"));
     }
 
     /**

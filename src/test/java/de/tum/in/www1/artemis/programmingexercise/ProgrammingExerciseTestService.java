@@ -647,7 +647,7 @@ public class ProgrammingExerciseTestService {
             participant = setupTeam(user);
         }
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
-        final var path = ParticipationResource.Endpoints.ROOT + '/' + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{exerciseId}", String.valueOf(exercise.getId()));
+        final var path = ROOT + '/' + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{exerciseId}", String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
@@ -1188,7 +1188,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.resetMockProvider();
         mockDelegate.mockRetrieveArtifacts(participation);
 
-        var artifact = request.get(PARTICIPATION_BASE_URL + participation.getId() + "/buildArtifact", HttpStatus.OK, byte[].class);
+        var artifact = request.get(PARTICIPATION_BASE_URL + participation.getId() + "/build-artifact", HttpStatus.OK, byte[].class);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(artifact).as("No build artifact available for this plan").isEmpty();

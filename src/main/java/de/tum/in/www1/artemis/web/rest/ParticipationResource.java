@@ -340,17 +340,17 @@ public class ParticipationResource {
             resultCount += participation.getResults().size();
         }
         long end = System.currentTimeMillis();
-        log.info("Found {} particpations with {} results in {}ms", participations.size(), resultCount, end - start);
+        log.info("Found {} participations with {} results in {}ms", participations.size(), resultCount, end - start);
         return ResponseEntity.ok().body(participations);
     }
 
     /**
-     * GET participations/:participationId : get the participation for the given "participationId" including its latest result.
+     * GET participations/:participationId/with-latest-result : get the participation for the given "participationId" including its latest result.
      *
      * @param participationId the participationId of the participation to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
-    @GetMapping("participations/{participationId}/withLatestResult")
+    @GetMapping("participations/{participationId}/with-latest-result")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentParticipation> getParticipationWithLatestResult(@PathVariable Long participationId) {
         log.debug("REST request to get Participation : {}", participationId);
@@ -382,12 +382,12 @@ public class ParticipationResource {
     }
 
     /**
-     * GET participations/{participationId}/buildArtifact : Retrieves the latest build artifact of a given programming exercise participation
+     * GET participations/{participationId}/build-artifact : Retrieves the latest build artifact of a given programming exercise participation
      *
      * @param participationId The participationId of the participation
      * @return The latest build artifact (JAR/WAR) for the participation
      */
-    @GetMapping("participations/{participationId}/buildArtifact")
+    @GetMapping("participations/{participationId}/build-artifact")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getParticipationBuildArtifact(@PathVariable Long participationId) {
         log.debug("REST request to get Participation build artifact: {}", participationId);
@@ -606,8 +606,5 @@ public class ParticipationResource {
         public static final String ROOT = "/api";
 
         public static final String START_PARTICIPATION = "exercises/{exerciseId}/participations";
-
-        private Endpoints() {
-        }
     }
 }
