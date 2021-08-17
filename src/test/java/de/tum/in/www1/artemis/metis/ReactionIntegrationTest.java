@@ -64,7 +64,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         // get all answerPosts
         existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).collect(Collectors.toList());
 
-        courseId = existingPostsWithAnswers.get(0).getCourse().getId();
+        courseId = existingPostsWithAnswers.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
     }
 
     @AfterEach
