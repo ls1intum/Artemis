@@ -1,13 +1,13 @@
 <div *ngIf="!exercise.gradingInstructionFeedbackUsed">
     <jhi-markdown-editor
         #markdownEditor
-        style="height: 350px"
         class="markdown-editor"
         [markdown]="questionEditorText"
         [showPreviewButton]="true"
         [domainCommands]="domainCommands"
         (markdownChange)="prepareForSave()"
         (textWithDomainCommandsFound)="domainCommandsFound($event)"
+        [enableResize]="true"
     >
         <!-- Preview -->
         <ng-container #preview>
