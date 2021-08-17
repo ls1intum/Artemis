@@ -41,7 +41,7 @@ public class ConsistencyErrorDTO {
         SOLUTION_BUILD_PLAN_MISSING("SOLUTION_BUILD_PLAN_MISSING");
 
         ErrorType(final String value) {
-            // This constructor is intentionally empty to avoid Codacy issues
+            // This empty constructor is added to avoid Codacy issues
         }
 
         @Override
