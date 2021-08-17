@@ -31,7 +31,7 @@ describe('TextblockFeedbackEditorComponent', () => {
 
     const textBlock = { id: 'f6773c4b3c2d057fd3ac11f02df31c0a3e75f800' } as TextBlock;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), TranslateTestingModule],
             declarations: [

@@ -264,34 +264,30 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             (error: HttpErrorResponse) => {
                 const errorType = error.headers.get('x-artemisapp-error');
 
-                switch (errorType) {
-                    case 'error.invalid_assessment':
-                        // Mark all tutor created feedback as correct.
-                        this.textBlockRefs
-                            .map((ref) => ref.feedback)
-                            .filter((feedback) => feedback != undefined)
-                            .forEach((feedback) => {
-                                feedback!.correctionStatus = 'CORRECT';
-                            });
-
-                        const correctionErrors: FeedbackCorrectionError[] = JSON.parse(error['error']['title'])['errors'];
-                        const msg =
-                            correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
-                        this.jhiAlertService.error(msg);
-
-                        // Mark all wrongly made feedbacks accordingly.
-                        correctionErrors.forEach((res) => {
-                            const textBlockRef = this.textBlockRefs.find((ref) => ref.feedback?.reference === res.reference);
-                            if (textBlockRef == undefined || textBlockRef.feedback == undefined) {
-                                return;
-                            }
-                            textBlockRef.feedback!.correctionStatus = res.type;
+                if (errorType === 'error.invalid_assessment') {
+                    // Mark all tutor created feedback as correct.
+                    this.textBlockRefs
+                        .map((ref) => ref.feedback)
+                        .filter((feedback) => feedback != undefined)
+                        .forEach((feedback) => {
+                            feedback!.correctionStatus = 'CORRECT';
                         });
 
-                        break;
-                    default:
-                        onError(this.jhiAlertService, error);
-                        break;
+                    const correctionErrors: FeedbackCorrectionError[] = JSON.parse(error['error']['title'])['errors'];
+                    const msg =
+                        correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
+                    this.jhiAlertService.error(msg);
+
+                    // Mark all wrongly made feedbacks accordingly.
+                    correctionErrors.forEach((res) => {
+                        const textBlockRef = this.textBlockRefs.find((ref) => ref.feedback?.reference === res.reference);
+                        if (textBlockRef == undefined || textBlockRef.feedback == undefined) {
+                            return;
+                        }
+                        textBlockRef.feedback!.correctionStatus = res.type;
+                    });
+                } else {
+                    onError(this.jhiAlertService, error);
                 }
             },
         );

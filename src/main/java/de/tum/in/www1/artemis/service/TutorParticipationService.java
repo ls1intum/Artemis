@@ -121,9 +121,9 @@ public class TutorParticipationService {
      * - If instructor feedback has a grading instruction associated with it, so must the tutor feedback
      * - The feedback should have the same creditCount(score)
      */
-    private Optional<FeedbackCorrectionError.Type> validateTutorFeedback(Feedback tutorFeedback, List<Feedback> instructorFeedbacks) {
-        Optional<Feedback> maybeMatchingInstructorFeedback = instructorFeedbacks.stream()
-                .filter(instructorFeedback -> Objects.equals(tutorFeedback.getReference(), instructorFeedback.getReference())).findFirst();
+    private Optional<FeedbackCorrectionError.Type> validateTutorFeedback(Feedback tutorFeedback, List<Feedback> instructorFeedback) {
+        Optional<Feedback> maybeMatchingInstructorFeedback = instructorFeedback.stream().filter(feedback -> Objects.equals(tutorFeedback.getReference(), feedback.getReference()))
+                .findFirst();
 
         // In case there is no instructor feedback that is referencing the same element (text/model), then tutor's feedback is unnecessary.
         if (maybeMatchingInstructorFeedback.isEmpty()) {
@@ -151,14 +151,14 @@ public class TutorParticipationService {
         return Optional.empty();
     }
 
-    private boolean isValidTutorialExampleSubmission(List<Feedback> tutorFeedbacks, List<Feedback> instructorFeedbacks) {
-        boolean equalFeedbackCount = instructorFeedbacks.size() == tutorFeedbacks.size();
-        boolean allTutorFeedbacksAreCorrect = tutorFeedbacks.stream().map(tutorFeedback -> validateTutorFeedback(tutorFeedback, instructorFeedbacks)).allMatch(Optional::isEmpty);
-        return equalFeedbackCount && allTutorFeedbacksAreCorrect;
+    private boolean isValidTutorialExampleSubmission(List<Feedback> tutorFeedback, List<Feedback> instructorFeedback) {
+        boolean equalFeedbackCount = instructorFeedback.size() == tutorFeedback.size();
+        boolean allTutorFeedbackAreCorrect = tutorFeedback.stream().map(feedback -> validateTutorFeedback(feedback, instructorFeedback)).allMatch(Optional::isEmpty);
+        return equalFeedbackCount && allTutorFeedbackAreCorrect;
     }
 
     /**
-     * Validates the tutor example submission. If invalid, throw bad request exception with information which feedbacks are incorrect.
+     * Validates the tutor example submission. If invalid, throw bad request exception with information which feedback are incorrect.
      */
     private void validateTutorialExampleSubmission(ExampleSubmission tutorExampleSubmission) {
         boolean isTextSubmission = tutorExampleSubmission.getSubmission() instanceof TextSubmission;
@@ -167,17 +167,17 @@ public class TutorParticipationService {
             return;
         }
 
-        var tutorFeedbacks = tutorExampleSubmission.getSubmission().getLatestResult().getFeedbacks();
-        var instructorFeedbacks = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
+        var tutorFeedback = tutorExampleSubmission.getSubmission().getLatestResult().getFeedbacks();
+        var instructorFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
 
-        if (isValidTutorialExampleSubmission(tutorFeedbacks, instructorFeedbacks)) {
+        if (isValidTutorialExampleSubmission(tutorFeedback, instructorFeedback)) {
             return;
         }
 
-        // If invalid, get all incorrect feedbacks and send an array of the corresponding `FeedbackCorrectionError`s to the client.
+        // If invalid, get all incorrect feedback and send an array of the corresponding `FeedbackCorrectionError`s to the client.
         // Pack this information into bad request exception.
-        var wrongFeedbacks = tutorFeedbacks.stream().flatMap(tutorFeedback -> {
-            var validationError = validateTutorFeedback(tutorFeedback, instructorFeedbacks);
+        var wrongFeedback = tutorFeedback.stream().flatMap(feedback -> {
+            var validationError = validateTutorFeedback(feedback, instructorFeedback);
             if (validationError.isEmpty()) {
                 return Stream.empty();
             }
@@ -185,14 +185,14 @@ public class TutorParticipationService {
             var objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
             try {
                 // Build JSON string for the corresponding `FeedbackCorrectionError` object.
-                var feedbackCorrectionErrorJSON = objectWriter.writeValueAsString(new FeedbackCorrectionError(tutorFeedback.getReference(), validationError.get()));
+                var feedbackCorrectionErrorJSON = objectWriter.writeValueAsString(new FeedbackCorrectionError(feedback.getReference(), validationError.get()));
                 return Stream.of(feedbackCorrectionErrorJSON);
             }
             catch (JsonProcessingException e) {
                 return Stream.empty();
             }
         }).collect(Collectors.joining(","));
-        throw new BadRequestAlertException("{\"errors\": [" + wrongFeedbacks + "]}", ENTITY_NAME, "invalid_assessment");
+        throw new BadRequestAlertException("{\"errors\": [" + wrongFeedback + "]}", ENTITY_NAME, "invalid_assessment");
     }
 
     private void validateTutorialExampleSubmissionUsingTotalScore(ExampleSubmission tutorExampleSubmission) {
@@ -309,7 +309,7 @@ public class TutorParticipationService {
         }
     }
 
-    private float calculateTotalScore(List<Feedback> feedbacks) {
-        return (float) feedbacks.stream().mapToDouble(Feedback::getCredits).sum();
+    private float calculateTotalScore(List<Feedback> feedback) {
+        return (float) feedback.stream().mapToDouble(Feedback::getCredits).sum();
     }
 }
