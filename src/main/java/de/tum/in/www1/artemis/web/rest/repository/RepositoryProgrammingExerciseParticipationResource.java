@@ -351,6 +351,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             programmingSubmission = programmingSubmissionRepository.findByResultIdElseThrow(resultId.get());
             if (!Objects.equals(participation.getId(), programmingSubmission.getParticipation().getId())) {
                 // The result of the given ID must belong to the participation
+                log.warn("Participation ID {} tried to access the build logs of another participation's submission with ID {}.", participation.getId(),
+                        programmingSubmission.getId());
                 return forbidden();
             }
         }
