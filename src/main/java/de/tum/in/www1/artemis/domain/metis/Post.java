@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.domain.Lecture;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Post extends Posting {
 
-    // To be used with introduction of Metis
     @Size(max = 200)
     @Column(name = "title")
     private String title;
@@ -43,14 +42,12 @@ public class Post extends Posting {
     @Column(name = "votes", columnDefinition = "integer default 0")
     private Integer votes = 0;
 
-    // To be used with introduction of Metis
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Reaction> reactions = new HashSet<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<AnswerPost> answers = new HashSet<>();
 
-    // To be used with introduction of Metis
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "post_tag", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "text")
@@ -151,7 +148,6 @@ public class Post extends Posting {
         this.lecture = lecture;
     }
 
-    @Override
     public Course getCourse() {
         return course;
     }
