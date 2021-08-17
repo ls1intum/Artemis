@@ -43,19 +43,9 @@
     </changeSet>
     <!--Database migration-->
     <changeSet id="20210711080808-3" author="argertboja">
-        <!-- SQL Query to update all text blocks with their respective feedback id -->
-        <sql>
-            UPDATE text_block b
-            INNER JOIN result r ON r.submission_id = b.submission_id
-            INNER JOIN feedback f ON (r.id = f.result_id and f.reference like b.id)
-            SET feedback_id = f.id
-            WHERE feedback_id is null;
-        </sql>
         <!-- SQL Query to insert new knowledge for all text exercises and connect them to the exercise -->
         <sql>
             START TRANSACTION ;
-            ALTER TABLE text_assessment_knowledge AUTO_INCREMENT=1;
-            TRUNCATE table text_exercise_details;
 
             INSERT INTO text_assessment_knowledge
             SELECT e.id FROM exercise e LEFT JOIN text_exercise_details ted ON e.id = ted.id
@@ -69,8 +59,6 @@
         <!-- SQL Query to insert new knowledge for all modeling exercises and connect them to the exercise -->
         <sql>
             START TRANSACTION ;
-            ALTER TABLE model_assessment_knowledge AUTO_INCREMENT=1;
-            TRUNCATE table model_exercise_details;
 
             INSERT INTO model_assessment_knowledge
             SELECT e.id FROM exercise e LEFT JOIN model_exercise_details med ON e.id = med.id
