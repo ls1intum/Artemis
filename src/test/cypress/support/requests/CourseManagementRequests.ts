@@ -10,6 +10,7 @@ import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 
 const COURSE_BASE = BASE_API + 'courses/';
 const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
+const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises/';
 const oneDay = 24 * 60 * 60 * 1000;
 
 /**
@@ -37,7 +38,7 @@ export class CourseManagementRequests {
         course.shortName = courseShortName;
         return cy.request({
             url: BASE_API + 'courses',
-            method: 'POST',
+            method: POST,
             body: course,
         });
     }
@@ -72,7 +73,7 @@ export class CourseManagementRequests {
 
         return cy.request({
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
-            method: 'POST',
+            method: POST,
             body: programmingTemplate,
         });
     }
@@ -151,16 +152,16 @@ export class CourseManagementRequests {
 
     createModelingExercise(modelingExercise: string) {
         return cy.request({
-            url: '/api/modeling-exercises',
-            method: 'POST',
+            url: MODELING_EXERCISE_BASE,
+            method: POST,
             body: modelingExercise,
         });
     }
 
     deleteModelingExercise(exerciseID: number) {
         return cy.request({
-            url: `/api/modeling-exercises/${exerciseID}`,
-            method: 'DELETE',
+            url: MODELING_EXERCISE_BASE + exerciseID,
+            method: DELETE,
         });
     }
 }
