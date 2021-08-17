@@ -1,3 +1,25 @@
+<div id="user-settings-page">
+    <div id="user-header" class="d-flex flex-items-center mb-2 mb-md-0">
+        <fa-icon size="2x" id="user-icon" [icon]="'user'" [fixedWidth]="true"></fa-icon>
+        <div class="flex-auto">
+            <span *ngIf="currAccount">
+                <span *ngIf="currAccount.name">
+                    {{ currAccount.name }}
+                </span>
+                <br />
+                <span id="login" class="d-flex flex-items-center flex-wrap">
+                    {{ currAccount.login }}
+                </span>
+            </span>
+        </div>
+    </div>
+</div>
+<nav>
+    <a routerLink="account" routerLinkActive="active">Account Information</a>
+    <br />
+    <a routerLink="notifications" routerLinkActive="active">Notification Settings</a>
+</nav>
+<router-outlet></router-outlet>
 <!--
 <div id="user-settings-page">
     <div id="user-header" >
@@ -19,6 +41,7 @@
 </div>
 -->
 
+<!--
 <div id="user-settings-page">
     <div id="user-header" class="d-flex flex-items-center mb-2 mb-md-0">
         <fa-icon size="2x" id="user-icon" [icon]="'user'" [fixedWidth]="true"></fa-icon>
@@ -43,3 +66,4 @@
         <span> User Information</span>
     </div>
 </div>
+-->

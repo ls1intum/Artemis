@@ -1,0 +1,10 @@
+<dl id="account-information" *ngIf="currAccount">
+    <dt>Full Name</dt>
+    <dd>{{ currAccount.name }}</dd>
+    <dt>Login</dt>
+    <dd>{{ currAccount.login }}</dd>
+    <dt>Email</dt>
+    <dd>{{ currAccount.email }}</dd>
+    <dt>Joined Artemis on</dt>
+    <dd>{{ currAccount.createdDate | artemisDate }}</dd>
+</dl>

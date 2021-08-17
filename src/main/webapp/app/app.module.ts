@@ -30,6 +30,8 @@ import { NotificationOptionsComponent } from 'app/shared/notification/notificati
 import { RouterModule } from '@angular/router';
 import { UserSettingsComponent } from 'app/shared/user-settings/user-settings.component';
 import { userSettingsState } from 'app/shared/user-settings/user-settings.route';
+import { AccountInformationComponent } from 'app/shared/user-settings/account-information/account-information.component';
+import { NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
 
 // NOTE: this module should only include the most important modules for normal users, all course management, admin and account functionality should be lazy loaded if possible
 @NgModule({
@@ -64,6 +66,8 @@ import { userSettingsState } from 'app/shared/user-settings/user-settings.route'
         NotificationOptionsComponent,
         SystemNotificationComponent,
         LoadingNotificationComponent,
+        AccountInformationComponent,
+        NotificationSettingsComponent,
     ],
     bootstrap: [JhiMainComponent],
 })
