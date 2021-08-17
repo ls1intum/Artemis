@@ -15,9 +15,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -28,6 +26,8 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
+import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
+import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 
 public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -93,6 +93,14 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExerciseForExam_validExercise_created() throws Exception {
         programmingExerciseTestService.createProgrammingExerciseForExam_validExercise_created();
+    }
+
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration dates) throws Exception {
+        programmingExerciseTestService.createProgrammingExerciseForExam_invalidExercise_dates(dates);
     }
 
     private static Stream<Arguments> generateArgumentsForImportExercise() {
