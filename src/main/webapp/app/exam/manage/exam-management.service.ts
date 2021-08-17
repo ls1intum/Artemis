@@ -46,7 +46,7 @@ export class ExamManagementService {
     update(courseId: number, exam: Exam): Observable<EntityResponseType> {
         const copy = ExamManagementService.convertDateFromClient(exam);
         return this.http
-            .put<Exam>(`${this.resourceUrl}/${courseId}/exams`, copy, { observe: 'response' })
+            .put<Exam>(`${this.resourceUrl}/${courseId}/exams/${exam.id}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
     }
 
@@ -126,7 +126,7 @@ export class ExamManagementService {
      */
     findAllCurrentAndUpcomingExams(): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Exam[]>(`${this.resourceUrl}/upcoming-exams`, { observe: 'response' })
+            .get<Exam[]>(`api/exams/upcoming`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
     }
 
@@ -370,7 +370,7 @@ export class ExamManagementService {
     }
 
     findAllLockedSubmissionsOfExam(courseId: number, examId: number) {
-        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/lockedSubmissions`, { observe: 'response' }).pipe(
+        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/locked-submissions`, { observe: 'response' }).pipe(
             filter((res) => !!res.body),
             tap((res) =>
                 res.body!.forEach((submission: Submission) => {
@@ -406,6 +406,6 @@ export class ExamManagementService {
      * @param examId The id of the exam to archive
      */
     archiveExam(courseId: number, examId: number): Observable<HttpResponse<any>> {
-        return this.http.put(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
+        return this.http.post(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
     }
 }

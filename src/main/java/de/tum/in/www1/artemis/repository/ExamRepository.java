@@ -77,6 +77,16 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("select distinct exam from Exam exam left join fetch exam.studentExams studentExams left join fetch exam.exerciseGroups exerciseGroups left join fetch exerciseGroups.exercises where (exam.id = :#{#examId})")
     Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
 
+    @NotNull
+    default Exam findOneWithEagerExercisesGroupsAndStudentExamsElseThrow(Long examId) {
+        Exam exam = findOneWithEagerExercisesGroupsAndStudentExams(examId);
+        if (exam == null) {
+            throw new EntityNotFoundException("Exam", examId);
+        }
+        else
+            return exam;
+    }
+
     /**
      * Checks if the user is registered for the exam.
      *
@@ -105,6 +115,17 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             WHERE e.id = :examId
             """)
     String getExamTitle(@Param("examId") Long examId);
+
+    @NotNull
+    default String getExamTitleByIdElseThrow(Long examId) {
+        String title = getExamTitle(examId);
+        if (title == null) {
+            throw new EntityNotFoundException("No Exam with Id " + examId + "found!");
+        }
+        else {
+            return title;
+        }
+    }
 
     @NotNull
     default Exam findByIdElseThrow(long examId) throws EntityNotFoundException {
