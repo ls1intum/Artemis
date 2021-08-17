@@ -23,7 +23,7 @@ describe('AnswerPostComponent', () => {
         tutorApproved: false,
     } as AnswerPost;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [],
             declarations: [AnswerPostComponent, MockPipe(HtmlForMarkdownPipe)],

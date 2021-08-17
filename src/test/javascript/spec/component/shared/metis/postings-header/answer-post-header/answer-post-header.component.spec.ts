@@ -44,7 +44,7 @@ describe('AnswerPostHeaderComponent', () => {
         content: 'Answer Post Content',
     } as AnswerPost;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [],
             providers: [
