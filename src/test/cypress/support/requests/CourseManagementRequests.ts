@@ -28,11 +28,11 @@ export class CourseManagementRequests {
 
     /**
      * Creates a course with the specified title and short name.
-     * @param courseName the title of the course
-     * @param courseShortName the short name
+     * @param courseName the title of the course (will generate default name if not provided)
+     * @param courseShortName the short name (will generate default name if not provided)
      * @returns <Chainable> request response
      */
-    createCourse(courseName: string, courseShortName: string) {
+    createCourse(courseName: string = 'Cypress course' + generateUUID(), courseShortName: string = 'cypress' + generateUUID()) {
         const course = courseTemplate;
         course.title = courseName;
         course.shortName = courseShortName;
