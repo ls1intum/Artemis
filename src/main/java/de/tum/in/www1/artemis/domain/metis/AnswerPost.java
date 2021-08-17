@@ -11,8 +11,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
-import de.tum.in.www1.artemis.domain.Course;
-
 /**
  * An AnswerPost.
  */
@@ -62,14 +60,6 @@ public class AnswerPost extends Posting {
 
     public void setPost(Post post) {
         this.post = post;
-    }
-
-    @Override
-    public Course getCourse() {
-        if (post == null) {
-            return null;
-        }
-        return post.getCourse();
     }
 
     @Override

@@ -15,7 +15,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 
@@ -75,8 +74,6 @@ public abstract class Posting extends DomainObject {
     public void setContent(String content) {
         this.content = content;
     }
-
-    public abstract Course getCourse();
 
     public abstract Set<Reaction> getReactions();
 
