@@ -9,7 +9,7 @@ import { Moment } from 'moment';
 import * as sinon from 'sinon';
 import { SinonStub, spy, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { User } from 'app/core/user/user.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -50,7 +50,7 @@ describe('AnswerPostHeaderComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [FormsModule, ReactiveFormsModule],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             providers: [
                 FormBuilder,
                 { provide: MetisService, useClass: MockMetisService },

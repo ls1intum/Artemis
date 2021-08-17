@@ -8,7 +8,7 @@ import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { Post } from 'app/entities/metis/post.model';
 import { User } from 'app/core/user/user.model';
 import { PostHeaderComponent } from 'app/shared/metis/postings-header/post-header/post-header.component';
@@ -58,7 +58,7 @@ describe('PostHeaderComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [FormsModule, ReactiveFormsModule],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 PostHeaderComponent,
