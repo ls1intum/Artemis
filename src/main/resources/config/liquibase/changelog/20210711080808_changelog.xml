@@ -41,9 +41,9 @@
         </addColumn>
         <addForeignKeyConstraint baseColumnNames="knowledge_id" baseTableName="model_element" constraintName="fk_model_element_knowledge_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="model_assessment_knowledge"/>
     </changeSet>
-    <!--Database migration, update all text blocks with their respective feedback id-->
-    <!--
-    <changeSet id="20210815080808-1" author="argertboja">
+    <!--Database migration-->
+    <changeSet id="20210711080808-3" author="argertboja">
+        <!-- SQL Query to update all text blocks with their respective feedback id -->
         <sql>
             UPDATE text_block b
             INNER JOIN result r ON r.submission_id = b.submission_id
@@ -51,6 +51,35 @@
             SET feedback_id = f.id
             WHERE feedback_id is null;
         </sql>
+        <!-- SQL Query to insert new knowledge for all text exercises and connect them to the exercise -->
+        <sql>
+            START TRANSACTION ;
+            ALTER TABLE text_assessment_knowledge AUTO_INCREMENT=1;
+            TRUNCATE table text_exercise_details;
+
+            INSERT INTO text_assessment_knowledge
+            SELECT e.id FROM exercise e LEFT JOIN text_exercise_details ted ON e.id = ted.id
+            WHERE ted.id IS NULL AND e.discriminator = 'T';
+
+            INSERT INTO text_exercise_details
+            SELECT e.id, tak.id FROM exercise e LEFT JOIN text_assessment_knowledge tak ON e.id = tak.id
+            WHERE e.discriminator = 'T' AND tak.id IS NOT NULL ;
+            COMMIT ;
+        </sql>
+        <!-- SQL Query to insert new knowledge for all modeling exercises and connect them to the exercise -->
+        <sql>
+            START TRANSACTION ;
+            ALTER TABLE model_assessment_knowledge AUTO_INCREMENT=1;
+            TRUNCATE table model_exercise_details;
+
+            INSERT INTO model_assessment_knowledge
+            SELECT e.id FROM exercise e LEFT JOIN model_exercise_details med ON e.id = med.id
+            WHERE med.id IS NULL AND e.discriminator = 'M';
+
+            INSERT INTO model_exercise_details
+            SELECT e.id, mak.id FROM exercise e LEFT JOIN model_assessment_knowledge mak ON e.id = mak.id
+            WHERE e.discriminator = 'M' AND mak.id IS NOT NULL ;
+            COMMIT ;
+        </sql>
     </changeSet>
-    -->
 </databaseChangeLog>
