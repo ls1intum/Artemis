@@ -109,7 +109,7 @@ export class ResultDetailComponent implements OnInit {
                         this.result.participation &&
                         (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)
                     ) {
-                        return this.fetchAndSetBuildLogs(this.result.participation.id!);
+                        return this.fetchAndSetBuildLogs(this.result.participation.id!, this.result.id);
                     }
                     return of(null);
                 }),
@@ -220,9 +220,10 @@ export class ResultDetailComponent implements OnInit {
     /**
      * Fetches build logs for a participation
      * @param participationId The active participation
+     * @param resultId The current result
      */
-    private fetchAndSetBuildLogs = (participationId: number) => {
-        return this.buildLogService.getBuildLogs(participationId).pipe(
+    private fetchAndSetBuildLogs = (participationId: number, resultId?: number) => {
+        return this.buildLogService.getBuildLogs(participationId, resultId).pipe(
             tap((repoResult: BuildLogEntry[]) => {
                 this.buildLogs = BuildLogEntryArray.fromBuildLogs(repoResult);
             }),
