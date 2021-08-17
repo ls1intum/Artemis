@@ -86,7 +86,7 @@ export class ComplaintService implements IComplaintService {
      * @param resultId
      */
     findByResultId(resultId: number): Observable<EntityResponseType> {
-        return this.http.get<Complaint>(`${this.resourceUrl}/result/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.get<Complaint>(`${this.resourceUrl}/results/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     /**
