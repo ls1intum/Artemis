@@ -26,7 +26,7 @@ describe('Build Log Service', () => {
 
     describe('Service methods', () => {
         it('should return a specific results build logs', fakeAsync(() => {
-            const logEntry: BuildLogEntry = { time: 'some time', log: 'compilation error', type: BuildLogType.ERROR }
+            const logEntry: BuildLogEntry = { time: 'some time', log: 'compilation error', type: BuildLogType.ERROR };
 
             service.getBuildLogs(42, 123).subscribe((returnedLogEntry) => expect(returnedLogEntry).toEqual(logEntry));
 

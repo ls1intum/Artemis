@@ -13,7 +13,7 @@ export class BuildLogService implements IBuildLogService {
     private restResourceUrlBase = `${SERVER_API_URL}/api`;
     private assignmentResourceUrl = `${this.restResourceUrlBase}/repository`;
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient) {}
 
     /**
      * Retrieves the build logs for a given participation and optionally, a given result.
