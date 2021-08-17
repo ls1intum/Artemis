@@ -29,7 +29,11 @@ public class TextAssessmentKnowledgeService {
         this.textExerciseRepository = textExerciseRepository;
     }
 
-    // delete only when no exercises use the knowledge
+    /**
+     * delete only when no exercises use the knowledge
+     *
+     * @return void
+     */
     public void deleteKnowledge(Long knowledgeId) {
         Set<TextExercise> exerciseSet = textExerciseRepository.findAllByKnowledgeId(knowledgeId);
         // If no other exercises use the same knowledge then remove knowledge
