@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.util.GitUtilService;
@@ -643,6 +644,15 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         // Without parameters, the latest submission must be used
         var receivedLogsLatest = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogsLatest).isEqualTo(submission2Logs);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testBuildLogsFromDatabaseForSpecificResults_otherParticipation() throws Exception {
+        var result = database.addProgrammingParticipationWithResultForExercise(programmingExercise, "tutor1");
+        database.addProgrammingSubmissionToResultAndParticipation(result, (StudentParticipation) result.getParticipation(), "xyz");
+
+        request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class, parameters(Map.of("resultId", result.getId())));
     }
 
     @Test
