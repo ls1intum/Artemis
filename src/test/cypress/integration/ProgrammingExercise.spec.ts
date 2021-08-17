@@ -93,7 +93,9 @@ describe('Programming Exercise Management', () => {
 
     describe('Programming exercise deletion', () => {
         beforeEach(() => {
-            artemisRequests.courseManagement.createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, course).its('status').should('eq', 201);
+            artemisRequests
+                .courseManagement
+                .createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, { course }).its('status').should('eq', 201);
         });
 
         it('Deletes an existing programming exercise', function () {

@@ -71,7 +71,7 @@ function setupCourseAndProgrammingExercise() {
         //  We sleep to allow bamboo/bitbucket to synchronize the group rights, because the programming exercise creation fails otherwise
         cy.log('Created course. Sleeping before adding a programming exercise...');
         cy.wait(GROUP_SYNCHRONIZATION);
-        artemisRequests.courseManagement.createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, course);
+        artemisRequests.courseManagement.createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, { course });
     });
 }
 

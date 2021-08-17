@@ -53,40 +53,36 @@ export class CourseManagementRequests {
 
     /**
      * Creates a course with the specified title and short name.
-     * @param course the response object from a previous call to createCourse
      * @param title the title of the programming exercise
      * @param programmingShortName the short name of the programming exercise
      * @param packageName the package name of the programming exercise
      * @param releaseDate when the programming exercise should be available (default is now)
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
-     * @param group the exercise group object if the exercise is in an exam
-     * @param buildAndTestDate the date for automated building and testing after exam completion
+     * @param body an object containing either the course or exercise group the exercise will be added to
      * @returns <Chainable> request response
      */
     createProgrammingExercise(
         title: string,
         programmingShortName: string,
         packageName: string,
-        course?: any,
-        group?: any,
-        buildAndTestDate?: day.Dayjs,
+        body: { course: any } | { exerciseGroup: any },
         releaseDate = new Date(),
         dueDate = new Date(Date.now() + oneDay),
     ) {
-        const programmingTemplate = CourseManagementRequests.getCourseOrExamExercise(programmingExerciseTemplate, course, group);
+        const isExamExercise = body.hasOwnProperty('exerciseGroup');
+        const programmingTemplate = CourseManagementRequests.getCourseOrExamExercise(programmingExerciseTemplate, body);
         programmingTemplate.title = title;
         programmingTemplate.shortName = programmingShortName;
         programmingTemplate.packageName = packageName;
-        if (course) {
+        if (isExamExercise) {
             programmingTemplate.releaseDate = releaseDate.toISOString();
             programmingTemplate.dueDate = dueDate.toISOString();
         } else {
             programmingTemplate.allowComplaintsForAutomaticAssessments = true;
-            programmingTemplate.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestDate;
         }
         return cy.request({
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
-            method: 'POST',
+            method: POST,
             body: programmingTemplate,
         });
     }
@@ -148,8 +144,8 @@ export class CourseManagementRequests {
      * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
      * */
-    createTextExercise(title: string, course?: any, group?: any) {
-        const textExercise = CourseManagementRequests.getCourseOrExamExercise(textExerciseTemplate, course, group);
+    createTextExercise(title: string, body: { course: any } | { exerciseGroup: any }) {
+        const textExercise = CourseManagementRequests.getCourseOrExamExercise(textExerciseTemplate, body);
         textExercise.title = title;
         return cy.request({ method: POST, url: BASE_API + 'text-exercises', body: textExercise });
     }
@@ -170,8 +166,8 @@ export class CourseManagementRequests {
         return cy.request({ method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
     }
 
-    createModelingExercise(modelingExercise: any, course?: any, group?: any) {
-        const newModelingExercise = CourseManagementRequests.getCourseOrExamExercise(modelingExercise, course, group);
+    createModelingExercise(modelingExercise: any, body: { course: any } | { exerciseGroup: any }) {
+        const newModelingExercise = CourseManagementRequests.getCourseOrExamExercise(modelingExercise, body);
         return cy.request({
             url: '/api/modeling-exercises',
             method: 'POST',
@@ -191,12 +187,12 @@ export class CourseManagementRequests {
      * This function takes an exercise template and adds one of the fields to it
      * @param exercise the exercise template
      * @param body the exercise group or course the exercise will be added to
-     * @param isExamExercise true if the exercise will be added to an exam false if added to course
      * */
-    private static getCourseOrExamExercise (exercise: object, body: any, isExamExercise: boolean) {
+    private static getCourseOrExamExercise (exercise: object, body: { course: any } | { exerciseGroup: any }) {
+        const isExamExercise = body.hasOwnProperty('exerciseGroup');
         const exerciseCopy: any = { ...exercise };
         const fieldName = isExamExercise ? 'exerciseGroup' : 'course';
-        exerciseCopy[fieldName] = body;
+        exerciseCopy[fieldName] = body[fieldName];
         return exerciseCopy;
     }
 }
