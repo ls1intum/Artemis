@@ -81,6 +81,9 @@ public class LectureResource {
         if (lecture.getId() != null) {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idexists");
         }
+        if (lecture.getCourse() == null) {
+            throw new BadRequestAlertException("lecture.course", "400", "The Lecture in the body should have a course object!");
+        }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Long courseId = lecture.getCourse().getId(); // use the courseId in path instead after refactoring, then check if id matches in body
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -91,19 +94,25 @@ public class LectureResource {
     }
 
     /**
-     * PUT lectures : Updates an existing lecture.
+     * PUT lectures/{lectureId} : Updates an existing lecture.
      *
      * @param lecture the lecture to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated lecture, or with status 400 (Bad Request) if the lecture is not valid, or with status 500 (Internal
      *         Server Error) if the lecture couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("lectures")// TODO: should be /courses/{courseId}/lectures
+    @PutMapping("lectures/{lectureId}")// TODO: should be /courses/{courseId}/lectures/{lectureId}
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) throws URISyntaxException {
+    public ResponseEntity<Lecture> updateLecture(@PathVariable Long lectureId, @RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to update Lecture : {}", lecture);
         if (lecture.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+        }
+        if (!lecture.getId().equals(lectureId)) {
+            throw new BadRequestAlertException("lectureId", ENTITY_NAME, "lectureId in body and path doent match!");
+        }
+        if (lecture.getCourse() == null) {
+            throw new BadRequestAlertException("lecture.course", "400", "The Lecture in the body should have a course object!");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Long courseId = lecture.getCourse().getId(); // use the courseId in path instead after refactoring, then check if id matches in body
