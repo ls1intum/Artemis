@@ -188,7 +188,7 @@ export class CourseManagementRequests {
      * @param exercise the exercise template
      * @param body the exercise group or course the exercise will be added to
      * */
-    private static getCourseOrExamExercise (exercise: object, body: { course: any } | { exerciseGroup: any }) {
+    private static getCourseOrExamExercise(exercise: object, body: { course: any } | { exerciseGroup: any }) {
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
         const exerciseCopy: any = { ...exercise };
         const fieldName = isExamExercise ? 'exerciseGroup' : 'course';
