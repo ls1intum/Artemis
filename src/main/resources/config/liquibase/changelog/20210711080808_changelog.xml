@@ -22,7 +22,7 @@
         <addForeignKeyConstraint baseColumnNames="knowledge_id" baseTableName="text_block" constraintName="fk_text_block_knowledge_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="text_assessment_knowledge"/>
     </changeSet>
     <changeSet id="20210711080808-2" author="argertboja">
-        <!--Text Exercises' required database changes-->
+        <!--Model Exercises' required database changes-->
         <createTable tableName="model_assessment_knowledge">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints primaryKey="true"/>
