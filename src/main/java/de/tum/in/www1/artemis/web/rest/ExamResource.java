@@ -242,7 +242,7 @@ public class ExamResource {
      * GET exams/{examId}/title : Returns the title of the exam with the given id
      *
      * @param examId the id of the exam
-     * @return the title of the exam wrapped in an ResponseEntity or 404 Not Found if no exam with that id exists
+     * @return the title of the exam wrapped in an ResponseEntity or 404 Not Found if  no exam with that id exists
      */
     @GetMapping("exams/{examId}/title") // TODO: this path should be consistent with the others, either all with course and courseId (preferred) or all without
     @PreAuthorize("hasRole('USER')")

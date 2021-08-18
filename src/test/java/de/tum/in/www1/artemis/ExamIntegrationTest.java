@@ -626,7 +626,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private void testAllPreAuthorize() throws Exception {
         Exam exam = ModelFactory.generateExam(course1);
         request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
-        request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), exam, HttpStatus.FORBIDDEN);
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN, Exam.class);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student1", null, HttpStatus.FORBIDDEN);
@@ -651,19 +651,19 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Test for conflict when course is null.
         Exam examB = ModelFactory.generateExam(course1);
         examB.setCourse(null);
-        request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.CONFLICT);
+        request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.BAD_REQUEST);
         // Test for conflict when course deviates from course specified in route.
         Exam examC = ModelFactory.generateExam(course1);
-        request.post("/api/courses/" + course2.getId() + "/exams", examC, HttpStatus.CONFLICT);
+        request.post("/api/courses/" + course2.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
         // Test invalid dates
         List<Exam> examsWithInvalidDate = createExamsWithInvalidDates(course1);
         for (var exam : examsWithInvalidDate) {
-            request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
+            request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
         }
         // Test for forbidden when user tries to create an exam with exercise groups.
         Exam examD = ModelFactory.generateExam(course1);
         examD.addExerciseGroup(ModelFactory.generateExerciseGroup(true, exam1));
-        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.BAD_REQUEST);
         // Test examAccessService.
         Exam examE = ModelFactory.generateExam(course1);
         request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CREATED);
@@ -696,7 +696,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Exam exam = ModelFactory.generateExam(course1);
         exam.setTitle("Over 9000!");
         long examCountBefore = examRepository.count();
-        Exam createdExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
+        Exam createdExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), exam, Exam.class, HttpStatus.CREATED);
         assertThat(exam.getEndDate()).isEqualTo(createdExam.getEndDate());
         assertThat(exam.getStartDate()).isEqualTo(createdExam.getStartDate());
         assertThat(exam.getVisibleDate()).isEqualTo(createdExam.getVisibleDate());
@@ -733,7 +733,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setVisibleDate(examWithProgrammingEx.getVisibleDate().plusSeconds(1));
         examWithProgrammingEx.setStartDate(examWithProgrammingEx.getStartDate().plusSeconds(1));
-        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams/" + examWithProgrammingEx.getId(), examWithProgrammingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
     }
 
@@ -743,7 +743,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var programmingEx = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setVisibleDate(examWithProgrammingEx.getVisibleDate().plusSeconds(1));
-        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams/" + examWithProgrammingEx.getId(), examWithProgrammingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
     }
 
@@ -753,7 +753,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var programmingEx = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setStartDate(examWithProgrammingEx.getStartDate().plusSeconds(1));
-        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams/" + examWithProgrammingEx.getId(), examWithProgrammingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
     }
 
@@ -763,7 +763,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var modelingExercise = database.addCourseExamExerciseGroupWithOneModelingExercise();
         var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
         examWithModelingEx.setEndDate(examWithModelingEx.getEndDate().plusSeconds(2));
-        request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
+        request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams/" + examWithModelingEx.getId(), examWithModelingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendModelingExerciseSchedule(modelingExercise.getId());
     }
 
@@ -775,7 +775,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         examWithModelingEx.setVisibleDate(now().plusHours(1));
         examWithModelingEx.setStartDate(now().plusHours(2));
         examWithModelingEx.setEndDate(now().plusHours(3));
-        request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
+        request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams/" + examWithModelingEx.getId(), examWithModelingEx, HttpStatus.OK);
 
         StudentExam studentExam = database.addStudentExam(examWithModelingEx);
         request.patch("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams/" + examWithModelingEx.getId() + "/student-exams/" + studentExam.getId() + "/working-time",
@@ -1039,8 +1039,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetExamForTestRunDashboard_conflict() throws Exception {
-        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.CONFLICT, Exam.class);
+    public void testGetExamForTestRunDashboard_badRequest() throws Exception {
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.BAD_REQUEST, Exam.class);
     }
 
     @Test
@@ -1181,19 +1181,19 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // Should fail with too many exercise groups
         orderedExerciseGroups.add(exerciseGroup1);
-        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
 
         // Should fail with too few exercise groups
         orderedExerciseGroups.remove(3);
         orderedExerciseGroups.remove(2);
-        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
 
         // Should fail with different exercise group
         orderedExerciseGroups = new ArrayList<>();
         orderedExerciseGroups.add(exerciseGroup2);
         orderedExerciseGroups.add(exerciseGroup3);
         orderedExerciseGroups.add(ModelFactory.generateExerciseGroup(true, exam));
-        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1323,8 +1323,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetExamForExamAssessmentDashboard_courseIdDoesNotMatch_conflict() throws Exception {
-        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-assessment-dashboard", HttpStatus.CONFLICT, Course.class);
+    public void testGetExamForExamAssessmentDashboard_courseIdDoesNotMatch_badRequest() throws Exception {
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-assessment-dashboard", HttpStatus.BAD_REQUEST, Course.class);
     }
 
     @Test
@@ -1629,7 +1629,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testCourseAndExamAccessForInstructors_notInstructorInCourse_forbidden() throws Exception {
         // Instructor6 is not instructor for the course
         // Update exam
-        request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), exam1, HttpStatus.FORBIDDEN);
         // Get exam
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN, Exam.class);
         // Add student to exam
@@ -1903,7 +1903,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(0L);
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
 
-        var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions.size()).isEqualTo(0);
 
         // register users. Instructors are ignored from scores as they are exclusive for test run exercises
@@ -2007,7 +2007,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         });
 
         database.changeUser("instructor1");
-        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions.size()).isEqualTo(75);
 
         // Finish assessment of all submissions
@@ -2032,7 +2032,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
 
-        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions.size()).isEqualTo(0);
         if (numberOfCorrectionRounds == 2) {
             lockAndAssessForSecondCorrection(exam, course, exercisesInExam, numberOfCorrectionRounds);
@@ -2094,7 +2094,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         });
 
         database.changeUser("instructor1");
-        var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions.size()).isEqualTo(75);
 
         // Finish assessment of all submissions
@@ -2119,7 +2119,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
 
-        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions.size()).isEqualTo(0);
 
     }

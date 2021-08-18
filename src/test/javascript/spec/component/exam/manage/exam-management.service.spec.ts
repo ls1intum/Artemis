@@ -70,7 +70,7 @@ describe('Exam Management Service Tests', () => {
         service.update(course.id!, mockExam).subscribe((res) => expect(res.body).to.eq(mockExam));
 
         // THEN
-        const req = httpMock.expectOne({ method: 'PUT', url: `${service.resourceUrl}/${course.id!}/exams` });
+        const req = httpMock.expectOne({ method: 'PUT', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}` });
         expect(req.request.body).to.include(mockCopyExam);
 
         // CLEANUP
@@ -192,7 +192,7 @@ describe('Exam Management Service Tests', () => {
         service.findAllCurrentAndUpcomingExams().subscribe((res) => expect(res.body).to.deep.equal([mockExamPopulated]));
 
         // THEN
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/upcoming-exams` });
+        const req = httpMock.expectOne({ method: 'GET', url: `api/exams/upcoming` });
         req.flush(mockExamResponse);
         tick();
     }));

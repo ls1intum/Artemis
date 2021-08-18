@@ -4,8 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -91,7 +89,6 @@ public class ExamAccessService {
      * @param courseId The id of the course
      * @throws AccessForbiddenException if user isn't instructor in course
      */
-    @NotNull
     public void checkCourseAccessForRoleElseThrow(Role role, Long courseId) throws AccessForbiddenException {
         Course course = courseRepository.findByIdElseThrow(courseId);
         switch (role) {
@@ -115,11 +112,27 @@ public class ExamAccessService {
         }
     }
 
+    /**
+     * Checks if the current user is allowed to manage exams of the given course, otherwise throws an AccessForbiddenException
+     *
+     * @param role the role to check the access for in the course
+     * @param courseId The id of the course
+     * @param examId the id of the exam
+     * @throws AccessForbiddenException if user isn't instructor in course
+     */
     public void checkCourseAndExamAccessForRoleElseThrow(Role role, Long courseId, Long examId) {
         Exam exam = examRepository.findByIdElseThrow(examId);
         checkCourseAndExamAccessForRoleElseThrow(role, courseId, exam);
     }
 
+    /**
+     * Checks if the current user is allowed to manage exams of the given course, otherwise throws an AccessForbiddenException
+     *
+     * @param role the role to check the access for in the course
+     * @param courseId The id of the course
+     * @param exam the exam itself
+     * @throws AccessForbiddenException if user isn't instructor in course
+     */
     public void checkCourseAndExamAccessForRoleElseThrow(Role role, Long courseId, Exam exam) {
         checkCourseAccessForRoleElseThrow(role, courseId);
         if (!exam.getCourse().getId().equals(courseId)) {
@@ -145,7 +158,6 @@ public class ExamAccessService {
             case STUDENT -> checkCourseAndExamAccessForRoleElseThrow(Role.STUDENT, courseId, examId);
             case ANONYMOUS -> checkCourseAndExamAccessForRoleElseThrow(Role.ANONYMOUS, courseId, examId);
         }
-        ;
         Exam exam = exerciseGroup.getExam();
         if (exam == null || !exam.getId().equals(examId) || !exam.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("exam", "400", "The exam in the path doesnt match the Exam to the ExerciseGroup in the body!");
