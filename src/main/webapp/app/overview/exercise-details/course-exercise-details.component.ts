@@ -432,6 +432,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         );
     }
 
+    buildPlanUrl(participation: StudentParticipation) {
+        return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
+    }
+
     projectKey(): string {
         return (this.exercise as ProgrammingExercise).projectKey!;
     }

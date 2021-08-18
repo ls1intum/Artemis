@@ -97,7 +97,7 @@
                 <a
                     class="btn btn-primary btn-sm me-1"
                     target="_blank"
-                    href="{{ exercise.studentParticipations![0].buildPlanUrl }}"
+                    href="{{ buildPlanUrl(exercise.studentParticipations![0]) }}"
                     *ngIf="publishBuildPlanUrl() && buildPlanActive()"
                 >
                     <fa-icon class="me-1" [icon]="'external-link-alt'" [fixedWidth]="true"></fa-icon>
