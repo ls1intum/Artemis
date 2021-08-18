@@ -40,6 +40,7 @@ describe('Metis Service', () => {
     let post1: Post;
     let post2: Post;
     let post3: Post;
+    let post4: Post;
     let user1: User;
     let user2: User;
     let answerPost: AnswerPost;
@@ -81,7 +82,7 @@ describe('Metis Service', () => {
         post1.tags = ['tag1', 'tag2'];
         post1.author = user1;
         post1.creationDate = moment();
-        post1.pinned = false;
+        post1.pinned = true;
         post1.archived = false;
 
         post2 = new Post();
@@ -91,6 +92,8 @@ describe('Metis Service', () => {
         post2.tags = ['tag1', 'tag2'];
         post2.author = user2;
         post2.creationDate = moment().subtract(1, 'day');
+        post2.pinned = false;
+        post2.archived = false;
 
         post3 = new Post();
         post3.id = 3;
@@ -101,8 +104,22 @@ describe('Metis Service', () => {
         post3.courseWideContext = CourseWideContext.RANDOM;
         post3.creationDate = moment().subtract(2, 'day');
         post3.reactions = [reactionWithVoteEmoji];
+        post3.pinned = false;
+        post3.archived = false;
 
-        const posts: Post[] = [post1, post2, post3];
+        post4 = new Post();
+        post4.id = 4;
+        post4.content = 'This is a test post';
+        post4.title = 'title';
+        post4.tags = ['tag1', 'tag2'];
+        post4.author = user2;
+        post4.courseWideContext = CourseWideContext.RANDOM;
+        post4.creationDate = moment().subtract(2, 'minute');
+        post4.reactions = [reactionWithVoteEmoji];
+        post4.pinned = false;
+        post4.archived = true;
+
+        const posts: Post[] = [post1, post2, post3, post4];
 
         answerPost = new AnswerPost();
         answerPost.id = 1;
@@ -288,9 +305,10 @@ describe('Metis Service', () => {
     });
 
     it('should sort posts', () => {
-        // first is the post with highest voteEmoji count, second is newest post, third is oldest post
-        const sortedPosts: Post[] = [post3, post2, post1];
-        expect(MetisService.sortPosts([post1, post2, post3])).to.be.deep.equal(sortedPosts);
+        // first is the pinned post, second the post with highest voteEmoji count, third is newest post that is not pinned and has no votes,
+        // fourth is the archived post (even if it has votes or is new)
+        const sortedPosts: Post[] = [post1, post3, post2, post4];
+        expect(MetisService.sortPosts([post1, post3, post2, post4])).to.be.deep.equal(sortedPosts);
     });
 
     it('should determine that metis user is at least tutor in course', () => {

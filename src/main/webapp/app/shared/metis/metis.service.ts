@@ -275,8 +275,8 @@ export class MetisService {
     /**
      * sorts posts by two criteria
      * 1. criterion: pin -> pinned posts come first
-     * 2. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
-     * 3. criterion: archive -> archived posts come last
+     * 2. criterion: archive -> archived posts come last
+     * 3. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
      * 4. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      * @return Post[] sorted array of posts
      */
@@ -290,17 +290,17 @@ export class MetisService {
             if (!postA.pinned && postB.pinned) {
                 return 1;
             }
-            if (postAVoteEmojiCount > postBVoteEmojiCount) {
-                return -1;
-            }
-            if (postAVoteEmojiCount < postBVoteEmojiCount) {
-                return 1;
-            }
             if (postA.archived && !postB.archived) {
                 return 1;
             }
             if (!postA.archived && postB.archived) {
                 return -1;
+            }
+            if (postAVoteEmojiCount > postBVoteEmojiCount) {
+                return -1;
+            }
+            if (postAVoteEmojiCount < postBVoteEmojiCount) {
+                return 1;
             }
             if (Number(postA.creationDate) > Number(postB.creationDate)) {
                 return 1;
