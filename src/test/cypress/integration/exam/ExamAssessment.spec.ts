@@ -3,6 +3,8 @@ import { artemis } from '../../support/ArtemisTesting';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_template.json';
 import dayjs from 'dayjs';
+import { ProgrammingExerciseSubmission } from '../../support/pageobjects/OnlineEditorPage';
+import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -11,6 +13,7 @@ const courseManagementRequests = artemis.requests.courseManagement;
 const examStartEnd = artemis.pageobjects.examStartEnd;
 const modelingEditor = artemis.pageobjects.modelingEditor;
 const modelingAssessment = artemis.pageobjects.modelingExerciseAssessmentEditor;
+const editorPage = artemis.pageobjects.onlineEditor;
 
 // Common primitives
 let uid = generateUUID();
@@ -18,6 +21,7 @@ const courseName = 'Cypress course' + uid;
 const courseShortName = 'cypress' + uid;
 const student = artemis.users.getStudentOne();
 const tutor = artemis.users.getTutor();
+const packageName = 'de.test';
 
 describe('Exam Assessment', () => {
     let course: any;
@@ -111,12 +115,13 @@ describe('Exam Assessment', () => {
     describe('Exam Programming Exercise Assessment', () => {
         let programmingExerciseName: string;
         let programmingExerciseShortName: string;
-        const packageName = 'de.test';
 
         before('Generate exercise names', () => {
             uid = generateUUID();
             programmingExerciseName = 'Cypress programming exercise ' + uid;
             programmingExerciseShortName = 'cypress' + uid;
+            // course synchronization
+            cy.wait(60000);
         });
 
         beforeEach('Create Exam', () => {
@@ -125,9 +130,9 @@ describe('Exam Assessment', () => {
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(3, 'hours'))
-                .endDate(dayjs().subtract(2, 'hours').add(2, 'minutes')) // //.add(15, 'seconds'))
-                .publishResultsDate(dayjs().subtract(2, 'hours').add(30, 'seconds'))
-                .gracePeriod(1)
+                .endDate(dayjs().subtract(2, 'hours').add(100, 'seconds'))
+                .publishResultsDate(dayjs().subtract(2, 'hours').add(50, 'seconds'))
+                .gracePeriod(0)
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
@@ -145,10 +150,8 @@ describe('Exam Assessment', () => {
 
         it.only('assess a programming exercise submission (MANUAL)', () => {
             cy.login(artemis.users.getAdmin());
-            // course synchronization
-            cy.wait(65000);
             courseManagementRequests
-                .createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, null, exerciseGroup, dayjs().add(3, 'hours'))
+                .createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, null, exerciseGroup)
                 .then((progRespone) => {
                     const programmingExercise = progRespone.body;
                     courseManagementRequests.generateMissingIndividualExams(course, exam);
@@ -156,8 +159,35 @@ describe('Exam Assessment', () => {
                     cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                     examStartEnd.startExam();
                     cy.contains(programmingExercise.title).should('be.visible').click();
-
+                    makeSubmissionAndVerifyResults(partiallySuccessful, () => {
+                        cy.get('.btn-danger').click();
+                        examStartEnd.finishExam();
+                        cy.get('.alert').should('be.visible');
+                        cy.login(tutor, '/course-management/' + course.id + '/exams');
+                        cy.contains('Assessment Dashboard', {timeout: 40000}).click();
+                        cy.get('[jhitranslate="entity.action.exerciseDashboard"]').should('be.visible').click();
+                        cy.contains('Start participating in the exercise').click();
+                        cy.contains('Start new assessment').click();
+                        cy.get('.btn').contains('Add new Feedback').click();
+                        cy.get('.col-lg-6 >>>> :nth-child(1) > :nth-child(2)').clear().type('2');
+                        cy.get('.col-lg-6 >>>> :nth-child(2) > :nth-child(2)').type('Good job');
+                        cy.contains('Submit').click();
+                        cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                        cy.get('.question-options').contains('6.6 of 10 points').should('be.visible');
+                    });
                 });
         });
     });
 });
+
+function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
+    // We create an empty file so that the file browser does not create an extra subfolder when all files are deleted
+    editorPage.createFileInRootPackage('placeholderFile');
+    // We delete all existing files, so we can create new files and don't have to delete their already existing content
+    editorPage.deleteFile('Client.java');
+    editorPage.deleteFile('BubbleSort.java');
+    editorPage.deleteFile('MergeSort.java');
+    editorPage.typeSubmission(submission, packageName);
+    editorPage.submit();
+    verifyOutput();
+}
