@@ -149,52 +149,19 @@ public class ComplaintResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
     }
 
-    @GetMapping("complaints/submissions/{submissionId}")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Complaint> getComplaintBySubmissionId(@PathVariable Long submissionId) {
-        log.debug("REST request to get latest Complaint associated to a result of submission : {}", submissionId);
-
-        Optional<Complaint> optionalComplaint = complaintRepository.findByResultSubmissionId(submissionId);
-        if (optionalComplaint.isEmpty()) {
-            return ok();
-        }
-        Complaint complaint = optionalComplaint.get();
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        StudentParticipation participation = (StudentParticipation) complaint.getResult().getParticipation();
-        var exercise = participation.getExercise();
-        var isOwner = authCheckService.isOwnerOfParticipation(participation, user);
-        var isAtLeastTA = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
-        if (!isOwner && !isAtLeastTA) {
-            return forbidden();
-        }
-        var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        var isTeamParticipation = participation.getParticipant() instanceof Team;
-        var isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner().getLogin()).orElse(null));
-
-        if (!isAtLeastInstructor) {
-            complaint.getResult().setAssessor(null);
-
-            if (!isTeamParticipation || !isTutorOfTeam) {
-                complaint.filterSensitiveInformation();
-            }
-        }
-        // hide participation + exercise + course which might include sensitive information
-        complaint.getResult().setParticipation(null);
-        return ResponseEntity.ok(complaint);
-    }
-
     /**
-     * Get complaints/result/{resultId} get a complaint associated with the result "id"
+     * Get complaints/result/{resultId} get a complaint associated with a result of the submission "id"
      *
-     * @param resultId the id of the result for which we want to find a linked complaint
+     * @param submissionId the id of the submission for whose results we want to find a linked complaint
      * @return the ResponseEntity with status 200 (OK) and either with the complaint as body or an empty body, if no complaint was found for the result
      */
-    @GetMapping("complaints/results/{resultId}")
+    @GetMapping("complaints/submissions/{submissionId}")
     @PreAuthorize("hasRole('USER')")
-    // TODO: the URL should rather be "participations/{participationId}/results/{resultId}/complaints"
-    public ResponseEntity<Complaint> getComplaintByResultId(@PathVariable Long resultId) {
-        log.debug("REST request to get Complaint associated to result : {}", resultId);
-        Optional<Complaint> optionalComplaint = complaintRepository.findByResultId(resultId);
+    // TODO: the URL should rather be "submissions/{submissionId}/complaints"
+    public ResponseEntity<Complaint> getComplaintBySubmissionId(@PathVariable Long submissionId) {
+        log.debug("REST request to get latest Complaint associated with a result of submission : {}", submissionId);
+
+        Optional<Complaint> optionalComplaint = complaintRepository.findByResultSubmissionId(submissionId);
         if (optionalComplaint.isEmpty()) {
             return ok();
         }
