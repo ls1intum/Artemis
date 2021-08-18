@@ -257,7 +257,7 @@
                             <fa-icon [icon]="'code-branch'" class="me-1"></fa-icon>
                             Repository
                         </a>
-                        <a *ngIf="buildPlanId(value)" target="_blank" href="{{ value.participation.buildPlanUrl }}" class="btn btn-primary btn-sm me-1">
+                        <a *ngIf="buildPlanId(value)" target="_blank" rel="noreferrer" href="{{ value.participation.buildPlanUrl }}" class="btn btn-primary btn-sm me-1">
                             <fa-icon class="me-1" [icon]="['far', 'file-code']"></fa-icon>
                             Build plan
                         </a>
