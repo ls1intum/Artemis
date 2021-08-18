@@ -82,9 +82,9 @@ public class ExampleSubmissionService {
     /**
      * Imports the student submission as an Example Submission
      * calls copySubmission of required service depending on type of exercise
-     * 
-     * @param submission the ID of the ExampleSubmission which should be deleted
-     * @param exercise the exercise to which the example submission belongs
+     *
+     * @param submission The original student submission to be copied
+     * @param exercise   The exercise to which the example submission belongs
      * @return the exampleSubmission entity
      */
     public ExampleSubmission importStudentSubmissionAsExampleSubmission(Submission submission, Exercise exercise) {
