@@ -1,19 +1,19 @@
-<h1 class="border-bottom border-3">Account Information</h1>
-<dl id="account-information" *ngIf="currAccount">
-    <div class="border-bottom">
+<h1 class="pb-1">Account Information</h1>
+<div class="list-group d-block">
+    <div class="list-group-item">
         <dt>Full Name</dt>
         <dd>{{ currAccount.name }}</dd>
     </div>
-    <div class="border-bottom">
+    <div class="list-group-item">
         <dt>Login</dt>
         <dd>{{ currAccount.login }}</dd>
     </div>
-    <div class="border-bottom">
+    <div class="list-group-item">
         <dt>Email</dt>
         <dd>{{ currAccount.email }}</dd>
     </div>
-    <div>
+    <div class="list-group-item">
         <dt>Joined Artemis on</dt>
         <dd>{{ currAccount.createdDate | artemisDate }}</dd>
     </div>
-</dl>
+</div>

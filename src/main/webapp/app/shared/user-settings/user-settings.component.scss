@@ -1,6 +1,7 @@
 #user-header {
     font-size: x-large;
     font-weight: 600;
+    color: #353d47;
 }
 
 #login {
@@ -19,11 +20,36 @@
     padding-top: 20px;
 }
 
+#account-information {
+    border-style: solid;
+    border-color: red;
+    border-radius: 25px;
+}
+
 dt {
-    padding-top: 20px;
-    padding-bottom: 3px;
+    //padding-top: 20px;
+    //padding-bottom: 3px;
     font-size: large;
     font-weight: 500;
+}
+
+h3 {
+    font-weight: bold;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.form-check {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+span {
+    color: gray;
+    font-size: smaller;
+    //padding: 5px 0;
+    //border-bottom: #dee2e6;
 }
 
 dd {

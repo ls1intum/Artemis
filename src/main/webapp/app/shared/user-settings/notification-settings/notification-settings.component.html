@@ -1,24 +1,60 @@
-<h1 class="border-bottom border-3">Notification Settings</h1>
-<dl id="notification settings" *ngIf="true">
-    <div class="border-bottom">
+<h1 class="pb-1">Notification Settings</h1>
+<div class="list-group d-block">
+    <div class="list-group-item">
         <h3>Exercise Notifications</h3>
         <dt>Exercise created / started</dt>
-        <dd>todo</dd>
+        <span>Get notified if a (new) exercise has been created / started</span>
+        <div class="form-check border-bottom">
+            <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault2" />
+            <label class="form-check-label" for="flexCheckDefault2">WebApp</label>
+        </div>
         <dt>Exercise open for Practice</dt>
-        <dd>todo</dd>
+        <span>Get notified if an exercise has been opened for practice</span>
+        <div class="form-check pb-2 border-bottom">
+            <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault3" />
+            <label class="form-check-label" for="flexCheckDefault3">WebApp</label>
+        </div>
         <dt>New Post for Exercise</dt>
-        <dd>todo</dd>
-        <dt>New Answer Post for Exercises</dt>
-        <dd>todo</dd>
+        <span>Get notified if a new post about an exercise has been created</span>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault4" />
+            <label class="form-check-label" for="flexCheckDefault4">WebApp</label>
+        </div>
+        <dt>New Answer Post for Exercise</dt>
+        <span>Get notified if a new answer post about an exercise has been created</span>
+        <div class="form-check border-0">
+            <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault5" />
+            <label class="form-check-label" for="flexCheckDefault5">WebApp</label>
+        </div>
     </div>
-    <div class="border-bottom">
+    <div class="list-group-item">
         <h3>Lecture Notifications</h3>
         <dt>Attachment Changes</dt>
-        <dd>todo</dd>
+        <span>Receive a notification when an attachment was changed</span>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault6" />
+            <label class="form-check-label" for="flexCheckDefault6">WebApp</label>
+        </div>
+        <dt>New Post for Lecture</dt>
+        <span>Get notified when a new post about an exercise has been created</span>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault7" />
+            <label class="form-check-label" for="flexCheckDefault7">WebApp</label>
+        </div>
+        <dt>New Answer Post for Lecture</dt>
+        <span>Get notified when a new answer post about an exercise has been created</span>
+        <div class="form-check border-0">
+            <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault8" />
+            <label class="form-check-label" for="flexCheckDefault8">WebApp</label>
+        </div>
     </div>
-    <div>
+    <div class="list-group-item">
         <h3>Instructor Exclusive Notifications</h3>
         <dt>Course & Exam Archiving Started</dt>
-        <dd>todo</dd>
+        <span>Receive a notification when the process of archiving a course or exam has been started</span>
+        <div class="form-check border-0">
+            <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault9" />
+            <label class="form-check-label" for="flexCheckDefault9">WebApp</label>
+        </div>
     </div>
-</dl>
+</div>
