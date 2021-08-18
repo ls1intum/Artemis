@@ -40,6 +40,7 @@ import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -185,6 +186,21 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                if (this.exercise?.studentParticipations && programmingExercise.projectKey) {
+                    for (let i = 0; i < this.exercise.studentParticipations.length; i++) {
+                        const studentParticipation = this.exercise.studentParticipations[i] as ProgrammingExerciseStudentParticipation;
+                        if (studentParticipation.buildPlanId) {
+                            studentParticipation.buildPlanUrl = createBuildPlanUrl(
+                                profileInfo.buildPlanURLTemplate,
+                                programmingExercise.projectKey,
+                                studentParticipation.buildPlanId,
+                            );
+                            this.exercise.studentParticipations[i] = studentParticipation;
+                        }
+                    }
+                }
+            });
         }
 
         // This is only needed in the local environment

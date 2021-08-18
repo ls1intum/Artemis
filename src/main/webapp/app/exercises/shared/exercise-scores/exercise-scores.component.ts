@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { forkJoin, of, Subscription, zip } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { DifferencePipe } from 'ngx-moment';
 import * as moment from 'moment';
@@ -8,7 +8,6 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { take } from 'rxjs/operators';
-import { of, zip, forkJoin } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -27,6 +26,7 @@ import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
+import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
 /**
  * Filter properties for a result
@@ -104,6 +104,21 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     .pipe(take(1))
                     .subscribe((results) => {
                         this.results = results[0].body || [];
+                        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+                            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                                for (let i = 0; i < this.results.length; i++) {
+                                    const studentParticipation = this.results[i].participation as ProgrammingExerciseStudentParticipation;
+                                    if ((this.exercise as ProgrammingExercise).projectKey && studentParticipation.buildPlanId) {
+                                        studentParticipation.buildPlanUrl = createBuildPlanUrl(
+                                            profileInfo.buildPlanURLTemplate,
+                                            (this.exercise as ProgrammingExercise).projectKey!,
+                                            studentParticipation.buildPlanId!,
+                                        );
+                                        this.results[i].participation = studentParticipation;
+                                    }
+                                }
+                            });
+                        }
                         this.isLoading = false;
                     });
                 this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
