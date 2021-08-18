@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis;
 
+import de.tum.in.www1.artemis.repository.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZoneId;
@@ -25,15 +26,14 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 
 public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Autowired
+    private SubmissionRepository submissionRepo;
 
     @Autowired
     private ResultRepository resultRepo;
@@ -230,16 +230,16 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "student1")
     public void getComplaintByResultIdNoComplaintExists() throws Exception {
-        request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.OK, Void.class);
+        request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.OK, Void.class);
     }
 
     @Test
     @WithMockUser(username = "student1")
     public void getComplaintByResultId_assessorHiddenForStudent() throws Exception {
-        complaintRepo.save(complaint);
+        submissionRepo.save(modelingSubmission);
         complaintRepo.save(complaint);
 
-        Complaint receivedComplaint = request.get("/api/complaints/results/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
+        Complaint receivedComplaint = request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.OK, Complaint.class);
 
         assertThat(receivedComplaint.getResult().getAssessor()).as("assessor is not set").isNull();
     }
@@ -250,7 +250,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
-        request.get("/api/complaints/results/" + complaint.getResult().getId(), HttpStatus.FORBIDDEN, Complaint.class);
+        request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.FORBIDDEN, Complaint.class);
     }
 
     @Test
@@ -258,7 +258,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     public void getComplaintByResultid_instructor_sensitiveDataHidden() throws Exception {
         complaintRepo.save(complaint);
 
-        final var received = request.get("/api/complaints/results/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
+        final var received = request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.OK, Complaint.class);
 
         assertThat(received.getResult().getParticipation()).as("Complaint should not contain participation").isNull();
     }
@@ -269,7 +269,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
-        final var received = request.get("/api/complaints/results/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
+        final var received = request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.OK, Complaint.class);
 
         assertThat(received.getResult().getAssessor()).as("Tutors should not see the assessor of a complaint").isNull();
         assertThat(received.getParticipant()).as("Tutors should not see the student of a complaint").isNull();

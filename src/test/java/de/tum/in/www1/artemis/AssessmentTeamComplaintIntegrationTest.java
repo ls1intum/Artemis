@@ -237,7 +237,7 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
         complaint.setParticipant(team);
         complaintRepo.save(complaint);
 
-        request.get("/api/complaints/results/" + complaint.getResult().getId(), HttpStatus.FORBIDDEN, Complaint.class);
+        request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.FORBIDDEN, Complaint.class);
     }
 
     @Test
