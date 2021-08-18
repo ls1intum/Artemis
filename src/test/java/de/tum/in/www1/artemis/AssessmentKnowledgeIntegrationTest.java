@@ -72,11 +72,11 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     public void testReuseTextAssessmentKnowledgeIfExerciseIsImported() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExerciseWithKnowledge();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
-        int exercise_count = textExerciseRepository.findAll().size();
+        int exerciseCount = textExerciseRepository.findAll().size();
         int textAssessmentKnowledgeCount = textAssesmentKnowledgeRepository.findAll().size();
         request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
         assertThat(textAssesmentKnowledgeRepository.findAll().size()).isEqualTo(textAssessmentKnowledgeCount);
-        assertThat(textExerciseRepository.findAll().size()).isEqualTo(exercise_count + 1);
+        assertThat(textExerciseRepository.findAll().size()).isEqualTo(exerciseCount + 1);
     }
 
     /**
@@ -91,10 +91,10 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
         final Course course = database.addCourseWithOneReleasedTextExerciseWithKnowledge();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
-        int exercise_count = textExerciseRepository.findAll().size();
+        int exerciseCount = textExerciseRepository.findAll().size();
         int textAssessmentKnowledgeCount = textAssesmentKnowledgeRepository.findAll().size();
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
-        assertThat(textExerciseRepository.findAll().size()).isEqualTo(exercise_count - 1);
+        assertThat(textExerciseRepository.findAll().size()).isEqualTo(exerciseCount - 1);
         assertThat(textAssesmentKnowledgeRepository.findAll().size()).isEqualTo(textAssessmentKnowledgeCount);
     }
 
@@ -147,11 +147,11 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     public void testReuseModelAssessmentKnowledgeIfExerciseIsImported() throws Exception {
         final Course course = database.addCourseWithOneReleasedModelExerciseWithKnowledge();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseId(course.getId()).get(0);
-        int exercise_count = modelingExerciseRepository.findAll().size();
+        int exerciseCount = modelingExerciseRepository.findAll().size();
         int modelAssessmentKnowledgeCount = modelAssesmentKnowledgeRepository.findAll().size();
         request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(modelAssesmentKnowledgeRepository.findAll().size()).isEqualTo(modelAssessmentKnowledgeCount);
-        assertThat(modelingExerciseRepository.findAll().size()).isEqualTo(exercise_count + 1);
+        assertThat(modelingExerciseRepository.findAll().size()).isEqualTo(exerciseCount + 1);
     }
 
     /**
@@ -166,10 +166,10 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
         final Course course = database.addCourseWithOneReleasedModelExerciseWithKnowledge();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseId(course.getId()).get(0);
         request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        int exercise_count = modelingExerciseRepository.findAll().size();
+        int exerciseCount = modelingExerciseRepository.findAll().size();
         int modelAssessmentKnowledgeCount = modelAssesmentKnowledgeRepository.findAll().size();
         request.delete("/api/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
-        assertThat(modelingExerciseRepository.findAll().size()).isEqualTo(exercise_count - 1);
+        assertThat(modelingExerciseRepository.findAll().size()).isEqualTo(exerciseCount - 1);
         assertThat(modelAssesmentKnowledgeRepository.findAll().size()).isEqualTo(modelAssessmentKnowledgeCount);
     }
 
