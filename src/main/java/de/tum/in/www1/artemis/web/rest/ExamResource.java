@@ -146,6 +146,7 @@ public class ExamResource {
      *
      * @param courseId      the course to which the exam belongs
      * @param updatedExam   the exam to update
+     * @param examId        the id of the exam to be updated
      * @return the ResponseEntity with status 200 (OK) and with body the updated exam
      */
     @PutMapping("courses/{courseId}/exams/{examId}")
@@ -249,7 +250,7 @@ public class ExamResource {
     public ResponseEntity<String> getExamTitle(@PathVariable Long examId) {
         log.debug("REST request to get exam title: {}", examId);
         Exam exam = examRepository.findByIdElseThrow(examId);
-        examAccessService.checkCourseAndExamAccessForRoleElseThrow(Role.STUDENT, exam.getCourse().getId(), examId);
+        examAccessService.checkCourseAndExamAccessForRoleElseThrow(Role.STUDENT, exam.getCourse().getId(), exam.getId());
         final var title = examRepository.getExamTitleByIdElseThrow(examId);
         return ResponseEntity.ok(title);
     }

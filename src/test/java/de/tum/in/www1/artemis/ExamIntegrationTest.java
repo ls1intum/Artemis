@@ -625,6 +625,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private void testAllPreAuthorize() throws Exception {
         Exam exam = ModelFactory.generateExam(course1);
+        exam.setId(1L);
         request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), exam, HttpStatus.FORBIDDEN);
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN, Exam.class);
@@ -667,7 +668,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Test examAccessService.
         Exam examE = ModelFactory.generateExam(course1);
         request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CREATED);
-        verify(examAccessService, times(1)).checkCourseAccessForRoleElseThrow(Role.INSTRUCTOR, course1.getId());
+        verify(examAccessService, times(9)).checkCourseAccessForRoleElseThrow(Role.INSTRUCTOR, course1.getId());
     }
 
     private List<Exam> createExamsWithInvalidDates(Course course) {
@@ -694,33 +695,35 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testUpdateExam_asInstructor() throws Exception {
         // Create instead of update if no id was set
         Exam exam = ModelFactory.generateExam(course1);
+        exam.setCourse(course1);
         exam.setTitle("Over 9000!");
         long examCountBefore = examRepository.count();
-        Exam createdExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), exam, Exam.class, HttpStatus.CREATED);
+        exam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
+        Exam createdExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), exam, Exam.class, HttpStatus.OK);
         assertThat(exam.getEndDate()).isEqualTo(createdExam.getEndDate());
         assertThat(exam.getStartDate()).isEqualTo(createdExam.getStartDate());
         assertThat(exam.getVisibleDate()).isEqualTo(createdExam.getVisibleDate());
         // Note: ZonedDateTime has problems with comparison due to time zone differences for values saved in the database and values not saved in the database
         assertThat(exam).usingRecursiveComparison().ignoringFields("id", "course", "endDate", "startDate", "visibleDate").isEqualTo(createdExam);
         assertThat(examCountBefore + 1).isEqualTo(examRepository.count());
-        // No course is set -> conflict
+        // No course is set -> badRequest
         exam = ModelFactory.generateExam(course1);
         exam.setId(1L);
         exam.setCourse(null);
-        request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), exam, HttpStatus.BAD_REQUEST);
         // Course id in the updated exam and in the REST resource url do not match -> conflict
         exam = ModelFactory.generateExam(course1);
         exam.setId(1L);
-        request.put("/api/courses/" + course2.getId() + "/exams", exam, HttpStatus.CONFLICT);
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam.getId(), exam, HttpStatus.BAD_REQUEST);
         // Dates in the updated exam are not valid -> conflict
         List<Exam> examsWithInvalidDate = createExamsWithInvalidDates(course1);
         for (var examWithInvDate : examsWithInvalidDate) {
             examWithInvDate.setId(1L);
-            request.put("/api/courses/" + course1.getId() + "/exams", examWithInvDate, HttpStatus.CONFLICT);
+            request.put("/api/courses/" + course1.getId() + "/exams/" + examWithInvDate.getId(), examWithInvDate, HttpStatus.BAD_REQUEST);
         }
         // Update the exam -> ok
         exam1.setTitle("Best exam ever");
-        var returnedExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
+        var returnedExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), exam1, Exam.class, HttpStatus.OK);
         assertEquals(exam1, returnedExam);
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(any());
     }
@@ -731,6 +734,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Add a programming exercise to the exam and change the dates in order to invoke a rescheduling
         var programmingEx = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
+        examWithProgrammingEx = request.postWithResponseBody("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, Exam.class,
+                HttpStatus.CREATED);
         examWithProgrammingEx.setVisibleDate(examWithProgrammingEx.getVisibleDate().plusSeconds(1));
         examWithProgrammingEx.setStartDate(examWithProgrammingEx.getStartDate().plusSeconds(1));
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams/" + examWithProgrammingEx.getId(), examWithProgrammingEx, HttpStatus.OK);
@@ -742,6 +747,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testUpdateExam_reschedule_visibleDateChanged() throws Exception {
         var programmingEx = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
+        examWithProgrammingEx = request.postWithResponseBody("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, Exam.class,
+                HttpStatus.CREATED);
         examWithProgrammingEx.setVisibleDate(examWithProgrammingEx.getVisibleDate().plusSeconds(1));
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams/" + examWithProgrammingEx.getId(), examWithProgrammingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
@@ -752,6 +759,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testUpdateExam_reschedule_startDateChanged() throws Exception {
         var programmingEx = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
+        examWithProgrammingEx = request.postWithResponseBody("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, Exam.class,
+                HttpStatus.CREATED);
         examWithProgrammingEx.setStartDate(examWithProgrammingEx.getStartDate().plusSeconds(1));
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams/" + examWithProgrammingEx.getId(), examWithProgrammingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
@@ -762,6 +771,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testUpdateExam_rescheduleModeling_endDateChanged() throws Exception {
         var modelingExercise = database.addCourseExamExerciseGroupWithOneModelingExercise();
         var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
+        examWithModelingEx = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examWithModelingEx, Exam.class, HttpStatus.CREATED);
         examWithModelingEx.setEndDate(examWithModelingEx.getEndDate().plusSeconds(2));
         request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams/" + examWithModelingEx.getId(), examWithModelingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendModelingExerciseSchedule(modelingExercise.getId());
@@ -772,6 +782,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testUpdateExam_rescheduleModeling_workingTimeChanged() throws Exception {
         var modelingExercise = database.addCourseExamExerciseGroupWithOneModelingExercise();
         var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
+        examWithModelingEx = request.postWithResponseBody("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, Exam.class, HttpStatus.CREATED);
         examWithModelingEx.setVisibleDate(now().plusHours(1));
         examWithModelingEx.setStartDate(now().plusHours(2));
         examWithModelingEx.setEndDate(now().plusHours(3));
@@ -1754,7 +1765,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var course = database.createCourseWithExamAndExercises();
         var exam = examRepository.findByCourseId(course.getId()).stream().findFirst().get();
 
-        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.OK);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.OK, null);
 
         final var examId = exam.getId();
         await().until(() -> examRepository.findById(examId).get().getExamArchivePath() != null);

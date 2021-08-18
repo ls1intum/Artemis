@@ -83,8 +83,9 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
         if (exam == null) {
             throw new EntityNotFoundException("Exam", examId);
         }
-        else
+        else {
             return exam;
+        }
     }
 
     /**
