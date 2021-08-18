@@ -82,7 +82,7 @@ describe('Modeling Exercise Spec', () => {
 
         it('Creates Example Submission', () => {
             cy.visit(`/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
-            cy.contains('Create Example Submission').click();
+            cy.get('[jhitranslate="artemisApp.modelingExercise.createExampleSubmission"]').click();
             modelingEditor.addComponentToModel(1);
             modelingEditor.addComponentToModel(2);
             modelingEditor.addComponentToModel(3);
