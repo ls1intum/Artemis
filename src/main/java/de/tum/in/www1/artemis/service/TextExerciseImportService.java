@@ -166,12 +166,12 @@ public class TextExerciseImportService extends ExerciseImportService {
             }
         );
 
-        // each feedback in result, update the reference with new text block id
+        // for each feedback in result, update the reference with new text block id
         for(Feedback feedback: feedbackList) {
             feedback.setReference(textBlockIdPair.get(feedback.getReference()));
         }
 
-        // first save the feedback (that is not yet in the database) to prevent null index exception
+        // save the feedback (that is not yet in the database) to prevent null index exception
         List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(feedbackList);
         result.updateAllFeedbackItems(savedFeedback, false);
         resultRepository.save(result);
