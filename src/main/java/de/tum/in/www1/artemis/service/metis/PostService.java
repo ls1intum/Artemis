@@ -97,8 +97,12 @@ public class PostService extends PostingService {
         existingPost.setContent(post.getContent());
         existingPost.setVisibleForStudents(post.isVisibleForStudents());
         existingPost.setTags(post.getTags());
-        existingPost.setArchived(post.isArchived());
-        existingPost.setPinned(post.isPinned());
+
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            existingPost.setArchived(post.isArchived());
+            existingPost.setPinned(post.isPinned());
+        }
+
         Post updatedPost = postRepository.save(existingPost);
 
         if (updatedPost.getExercise() != null) {
@@ -120,29 +124,17 @@ public class PostService extends PostingService {
      * @return updated post that was persisted
      */
     public Post updatePinState(Long courseId, Long postId, Boolean pinState) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(postId);
-        preCheckPostValidity(post);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
         // update pin state
         post.setPinned(pinState);
-        // ensure that pin state is consistent with archive state -> either one of them can be true
+        // ensure that pin state is compatible with archive state -> either one of them can be true
         if (post.isArchived() && post.isPinned()) {
             // if after archive state update both, archived and pinned, would be true the archive flag is flipped
             post.setArchived(false);
         }
-        Post updatedPost = postRepository.save(post);
 
-        if (updatedPost.getExercise() != null) {
-            // protect sample solution, grading instructions, etc.
-            updatedPost.getExercise().filterSensitiveInformation();
-        }
-
-        return updatedPost;
+        return updatePost(courseId, post);
     }
 
     /**
@@ -156,29 +148,17 @@ public class PostService extends PostingService {
      * @return updated post that was persisted
      */
     public Post updateArchiveState(Long courseId, Long postId, Boolean archiveState) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(postId);
-        preCheckPostValidity(post);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
-        // update pin state
+        // update archive state
         post.setArchived(archiveState);
-        // ensure that pin state is consistent with archive state -> either one of them can be true
+        // ensure that pin state is compatible with archive state -> either one of them can be true
         if (post.isPinned() && post.isArchived()) {
             // if after archive state update both, archived and pinned, would be true, the pin flag is flipped
             post.setPinned(false);
         }
-        Post updatedPost = postRepository.save(post);
 
-        if (updatedPost.getExercise() != null) {
-            // protect sample solution, grading instructions, etc.
-            updatedPost.getExercise().filterSensitiveInformation();
-        }
-
-        return updatedPost;
+        return updatePost(courseId, post);
     }
 
     /**
