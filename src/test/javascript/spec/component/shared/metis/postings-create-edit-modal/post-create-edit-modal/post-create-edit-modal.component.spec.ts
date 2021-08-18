@@ -6,13 +6,15 @@ import { MockMetisService } from '../../../../../helpers/mocks/service/mock-meti
 import * as sinon from 'sinon';
 import { spy } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { User } from 'app/core/user/user.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
 import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-tag-selector.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -25,9 +27,16 @@ describe('PostCreateEditModalComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [FormsModule, ReactiveFormsModule],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
-            declarations: [PostCreateEditModalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(PostingsMarkdownEditorComponent), MockComponent(PostingsButtonComponent)],
+            declarations: [
+                PostCreateEditModalComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(PostingsMarkdownEditorComponent),
+                MockComponent(PostingsButtonComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(PostTagSelectorComponent),
+            ],
         })
             .compileComponents()
             .then(() => {

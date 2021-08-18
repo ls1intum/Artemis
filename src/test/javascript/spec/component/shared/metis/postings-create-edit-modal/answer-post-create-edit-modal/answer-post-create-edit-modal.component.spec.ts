@@ -6,7 +6,7 @@ import { MockMetisService } from '../../../../../helpers/mocks/service/mock-meti
 import * as sinon from 'sinon';
 import { spy } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { User } from 'app/core/user/user.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
@@ -29,7 +29,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [FormsModule, ReactiveFormsModule],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 AnswerPostCreateEditModalComponent,
