@@ -70,8 +70,8 @@ export class ComplaintInteractionsComponent implements OnInit {
             }
         }
         if (this.participation.submissions && this.participation.submissions.length > 0) {
-            if (this.result && this.result.completionDate) {
-                this.complaintService.findByResultId(this.result.id!).subscribe((res) => {
+            if (this.result && this.result.completionDate && this.result.submission) {
+                this.complaintService.findBySubmissionId(this.result.submission.id!).subscribe((res) => {
                     if (res.body) {
                         if (res.body.complaintType == undefined || res.body.complaintType === ComplaintType.COMPLAINT) {
                             this.hasComplaint = true;

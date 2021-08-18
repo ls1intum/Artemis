@@ -149,6 +149,40 @@ public class ComplaintResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
     }
 
+    @GetMapping("complaints/submissions/{submissionId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Complaint> getComplaintBySubmissionId(@PathVariable Long submissionId) {
+        log.debug("REST request to get latest Complaint associated to a result of submission : {}", submissionId);
+
+        Optional<Complaint> optionalComplaint = complaintRepository.findByResultSubmissionId(submissionId);
+        if (optionalComplaint.isEmpty()) {
+            return ok();
+        }
+        Complaint complaint = optionalComplaint.get();
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        StudentParticipation participation = (StudentParticipation) complaint.getResult().getParticipation();
+        var exercise = participation.getExercise();
+        var isOwner = authCheckService.isOwnerOfParticipation(participation, user);
+        var isAtLeastTA = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
+        if (!isOwner && !isAtLeastTA) {
+            return forbidden();
+        }
+        var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        var isTeamParticipation = participation.getParticipant() instanceof Team;
+        var isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner().getLogin()).orElse(null));
+
+        if (!isAtLeastInstructor) {
+            complaint.getResult().setAssessor(null);
+
+            if (!isTeamParticipation || !isTutorOfTeam) {
+                complaint.filterSensitiveInformation();
+            }
+        }
+        // hide participation + exercise + course which might include sensitive information
+        complaint.getResult().setParticipation(null);
+        return ResponseEntity.ok(complaint);
+    }
+
     /**
      * Get complaints/result/{resultId} get a complaint associated with the result "id"
      *

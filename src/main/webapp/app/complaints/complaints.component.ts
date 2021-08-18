@@ -19,7 +19,7 @@ import { onError } from 'app/shared/util/global.utils';
 })
 export class ComplaintsComponent implements OnInit {
     @Input() exercise: Exercise;
-    @Input() resultId: number;
+    @Input() submissionId: number;
     @Input() examId?: number;
     @Input() allowedComplaints: number; // the number of complaints that a student can still submit in the course
     @Input() maxComplaintsPerCourse: number;
@@ -39,7 +39,7 @@ export class ComplaintsComponent implements OnInit {
 
     ngOnInit(): void {
         this.complaintService
-            .findByResultId(this.resultId)
+            .findBySubmissionId(this.submissionId)
             .pipe(filter((res) => !!res.body))
             .subscribe(
                 (res) => {
@@ -61,34 +61,35 @@ export class ComplaintsComponent implements OnInit {
     }
 
     createComplaint(): void {
-        this.loaded = false;
-        const complaint = new Complaint();
-        complaint.complaintText = this.complaintText;
-        complaint.result = new Result();
-        complaint.result.id = this.resultId;
-        complaint.complaintType = this.complaintType;
-
-        this.complaintService.create(complaint, this.examId).subscribe(
-            (res) => {
-                this.submittedDate = res.body!.submittedTime!;
-                this.alreadySubmitted = true;
-                if (complaint.complaintType === ComplaintType.COMPLAINT) {
-                    // we do not track the number of complaints for exams
-                    if (!this.examId) {
-                        this.allowedComplaints--;
-                    }
-                }
-                this.loaded = true;
-                this.submit.emit();
-            },
-            (err: HttpErrorResponse) => {
-                this.loaded = true;
-                if (err && err.error && err.error.errorKey === 'toomanycomplaints') {
-                    this.jhiAlertService.error('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintsPerCourse });
-                } else {
-                    onError(this.jhiAlertService, err);
-                }
-            },
-        );
+        // TODO fix
+        // this.loaded = false;
+        // const complaint = new Complaint();
+        // complaint.complaintText = this.complaintText;
+        // complaint.result = new Result();
+        // complaint.result.id = this.resultId;
+        // complaint.complaintType = this.complaintType;
+        //
+        // this.complaintService.create(complaint, this.examId).subscribe(
+        //     (res) => {
+        //         this.submittedDate = res.body!.submittedTime!;
+        //         this.alreadySubmitted = true;
+        //         if (complaint.complaintType === ComplaintType.COMPLAINT) {
+        //             // we do not track the number of complaints for exams
+        //             if (!this.examId) {
+        //                 this.allowedComplaints--;
+        //             }
+        //         }
+        //         this.loaded = true;
+        //         this.submit.emit();
+        //     },
+        //     (err: HttpErrorResponse) => {
+        //         this.loaded = true;
+        //         if (err && err.error && err.error.errorKey === 'toomanycomplaints') {
+        //             this.jhiAlertService.error('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintsPerCourse });
+        //         } else {
+        //             onError(this.jhiAlertService, err);
+        //         }
+        //     },
+        // );
     }
 }
