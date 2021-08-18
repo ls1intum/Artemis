@@ -33,6 +33,7 @@ import { RouterModule } from '@angular/router';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
+import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
@@ -63,6 +64,7 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
         ExerciseStatisticsComponent,
         DoughnutChartComponent,
         ExerciseDetailStatisticsComponent,
+        ConsistencyCheckComponent,
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -97,6 +99,7 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
         ExerciseStatisticsComponent,
         DoughnutChartComponent,
         ExerciseDetailStatisticsComponent,
+        ConsistencyCheckComponent,
     ],
     providers: [ArtemisDatePipe, TranslatePipe],
 })

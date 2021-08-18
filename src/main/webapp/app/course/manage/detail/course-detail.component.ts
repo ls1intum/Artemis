@@ -12,6 +12,9 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/shared/util/global.utils';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { CheckType, ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -51,6 +54,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private router: Router,
         private jhiAlertService: JhiAlertService,
+        private translateService: TranslateService,
+        private modalService: NgbModal,
     ) {}
 
     /**
@@ -119,5 +124,15 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
         this.router.navigate(['/course-management']);
+    }
+
+    /**
+     * Opens modal and executes a consistency check for the given course
+     * @param courseId id of the course to check
+     */
+    checkConsistencies(courseId: number) {
+        const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.id = courseId;
+        modalRef.componentInstance.checkType = CheckType.COURSE;
     }
 }
