@@ -1,69 +1,28 @@
-<div id="user-settings-page">
-    <div id="user-header" class="d-flex flex-items-center mb-2 mb-md-0">
-        <fa-icon size="2x" id="user-icon" [icon]="'user'" [fixedWidth]="true"></fa-icon>
-        <div class="flex-auto">
-            <span *ngIf="currAccount">
-                <span *ngIf="currAccount.name">
-                    {{ currAccount.name }}
-                </span>
-                <br />
-                <span id="login" class="d-flex flex-items-center flex-wrap">
-                    {{ currAccount.login }}
-                </span>
-            </span>
-        </div>
+<!-- profile header -->
+<div class="d-flex mb-3">
+    <fa-icon id="avatar" size="3x" [icon]="'user'"></fa-icon>
+    <div *ngIf="currAccount">
+        <span *ngIf="currAccount.name" id="user-header">{{ currAccount.name }}</span>
+        <br />
+        <span id="login">{{ currAccount.login }}</span>
     </div>
 </div>
-<nav>
-    <a routerLink="account" routerLinkActive="active">Account Information</a>
-    <br />
-    <a routerLink="notifications" routerLinkActive="active">Notification Settings</a>
-</nav>
-<router-outlet></router-outlet>
-<!--
-<div id="user-settings-page">
-    <div id="user-header" >
-        <fa-icon id='user-icon' [icon]="'user'" [fixedWidth]="true"></fa-icon>
-        <span *ngIf="currAccount">
-            <span *ngIf="currAccount.firstName && currAccount.lastName; else justName">
-                {{ currAccount.firstName}}
-                {{ currAccount.lastName}}
-            </span>
-            <ng-template #justName *ngIf="currAccount.name">
-                {{ currAccount.name}}
-            </ng-template>
-            <br>
-            <span>
-                {{ currAccount.login }}
-            </span>
-        </span>
-    </div>
-</div>
--->
 
-<!--
-<div id="user-settings-page">
-    <div id="user-header" class="d-flex flex-items-center mb-2 mb-md-0">
-        <fa-icon size="2x" id="user-icon" [icon]="'user'" [fixedWidth]="true"></fa-icon>
-        <div class="flex-auto">
-            <span *ngIf="currAccount">
-                <span *ngIf="currAccount.firstName && currAccount.lastName; else justName">
-                    {{ currAccount.firstName }}
-                    {{ currAccount.lastName }}
-                </span>
-                <ng-template #justName *ngIf="currAccount.name">
-                    {{ currAccount.name }}
-                </ng-template>
-                <br />
-                <span id="login" class="d-flex flex-items-center flex-wrap">
-                    {{ currAccount.login }}
-                </span>
-            </span>
-        </div>
-    </div>
-
-    <div id="user-information">
-        <span> User Information</span>
-    </div>
+<div class="d-flex">
+    <!-- links to the different settings -->
+    <!--
+    <section id="navigation-bar" class="item btn-group-vertical bg-red-500 me-4 d-block">
+        <a class="btn btn-outline-primary active" routerLink="account" routerLinkActive="active">Account Information</a>
+        <a class="btn btn-outline-primary" routerLink="notifications" routerLinkActive="active">Notification Settings</a>
+    </section>
+    -->
+    <section id="navigation-bar" class="list-group me-4 d-block">
+        <span class="list-group-item disabled fw-bold">User Settings</span>
+        <a class="list-group-item btn btn-outline-primary active" routerLink="account" routerLinkActive="active">Account Information</a>
+        <a class="list-group-item btn btn-outline-primary" routerLink="notifications" routerLinkActive="active">Notification Settings</a>
+    </section>
+    <!-- the currently opened settings -->
+    <section id="current-settings" class="item">
+        <router-outlet></router-outlet>
+    </section>
 </div>
--->

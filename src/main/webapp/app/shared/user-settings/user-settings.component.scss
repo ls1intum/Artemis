@@ -1,19 +1,3 @@
-#user-settings-page {
-    /*
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 1000;
-    overflow: auto;
-    padding: 20px;
-    background: white;
-    margin: 125px;
-    box-shadow: 0 0 4px 0 rgba(136, 136, 136, 1);
-     */
-}
-
 #user-header {
     font-size: x-large;
     font-weight: 600;
@@ -25,17 +9,40 @@
     font-weight: normal;
 }
 
-fa-icon {
-    padding-top: 7px;
-    padding-right: 10px;
+#avatar {
+    padding-top: 8px;
+    padding-right: 15px;
+}
+
+.section {
+    border-bottom: #dee2e6; //gray
+    padding-top: 20px;
 }
 
 dt {
-    color: red;
+    padding-top: 20px;
+    padding-bottom: 3px;
     font-size: large;
+    font-weight: 500;
 }
 
 dd {
-    color: orange;
-    font-size: medium;
+    font-size: larger;
+}
+
+#navigation-bar {
+    flex: 10%;
+
+    .btn {
+        font-size: medium;
+        text-align: left;
+    }
+}
+
+#current-settings {
+    flex: 60%;
+}
+
+.container {
+    display: flex;
 }
