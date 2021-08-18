@@ -11,7 +11,6 @@ import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 const COURSE_BASE = BASE_API + 'courses/';
 const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
 const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises/';
-const oneDay = 24 * 60 * 60 * 1000;
 
 /**
  * A class which encapsulates all cypress requests related to course management.
@@ -62,13 +61,13 @@ export class CourseManagementRequests {
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
      * @returns <Chainable> request response
      */
-    createProgrammingExercise(course: any, title: string, programmingShortName: string, packageName: string, releaseDate = new Date(), dueDate = new Date(Date.now() + oneDay)) {
+    createProgrammingExercise(course: any, title: string, programmingShortName: string, packageName: string, releaseDate = day(), dueDate = day().add(1, 'days')) {
         const programmingTemplate = programmingExerciseTemplate;
         programmingTemplate.title = title;
         programmingTemplate.shortName = programmingShortName;
         programmingTemplate.packageName = packageName;
-        programmingTemplate.releaseDate = releaseDate.toISOString();
-        programmingTemplate.dueDate = dueDate.toISOString();
+        programmingTemplate.releaseDate = dayjsToString(releaseDate);
+        programmingTemplate.dueDate = dayjsToString(dueDate);
         programmingTemplate.course = course;
 
         return cy.request({
