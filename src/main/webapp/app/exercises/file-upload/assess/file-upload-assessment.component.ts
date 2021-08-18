@@ -343,11 +343,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     getComplaint(): void {
-        const resultWithComplaint = getFirstResultWithComplaint(this.submission);
-        if (!resultWithComplaint) {
-            return;
-        }
-        this.complaintService.findByResultId(resultWithComplaint.id!).subscribe(
+        this.complaintService.findBySubmissionId(this.submission.id!).subscribe(
             (res) => {
                 if (!res.body) {
                     return;

@@ -15,7 +15,6 @@ export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
 
 export interface IComplaintService {
     create: (complaint: Complaint, examId: number) => Observable<EntityResponseType>;
-    findByResultId: (resultId: number) => Observable<EntityResponseType>;
     findBySubmissionId: (participationId: number) => Observable<EntityResponseType>;
     getNumberOfAllowedComplaintsInCourse: (courseId: number) => Observable<number>;
 }
@@ -80,14 +79,6 @@ export class ComplaintService implements IComplaintService {
                 .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
         }
         return this.http.post<Complaint>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
-    }
-
-    /**
-     * Find complaint by Result id.
-     * @param resultId
-     */
-    findByResultId(resultId: number): Observable<EntityResponseType> {
-        return this.http.get<Complaint>(`${this.resourceUrl}/results/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
