@@ -189,11 +189,7 @@ export class CourseManagementRequests {
      * @param body the exercise group or course the exercise will be added to
      * */
     private static getCourseOrExamExercise(exercise: object, body: { course: any } | { exerciseGroup: any }) {
-        const isExamExercise = body.hasOwnProperty('exerciseGroup');
-        const exerciseCopy: any = { ...exercise };
-        const fieldName = isExamExercise ? 'exerciseGroup' : 'course';
-        exerciseCopy[fieldName] = body[fieldName];
-        return exerciseCopy;
+        return Object.assign({}, exercise, body);
     }
 }
 
