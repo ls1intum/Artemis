@@ -124,7 +124,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                     this.isLoading = false;
                 });
                 if (this.exercise.type === ExerciseType.PROGRAMMING) {
-
                     this.programmingSubmissionService
                         .getSubmissionStateOfExercise(this.exercise.id!)
                         .pipe(
@@ -205,8 +204,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         }
         participation.presentationScore = 1;
         this.participationService.update(this.exercise.id!, participation).subscribe(
-            () => {
-            },
+            () => {},
             () => {
                 this.jhiAlertService.error('artemisApp.participation.addPresentation.error');
             },
@@ -219,8 +217,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         }
         participation.presentationScore = 0;
         this.participationService.update(this.exercise.id!, participation).subscribe(
-            () => {
-            },
+            () => {},
             () => {
                 this.jhiAlertService.error('artemisApp.participation.removePresentation.error');
             },

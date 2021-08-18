@@ -3,7 +3,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
@@ -12,7 +11,7 @@ import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/progr
     templateUrl: './programming-exercise-group-cell.component.html',
     styles: [':host{display: contents}'],
 })
-export class ProgrammingExerciseGroupCellComponent implements OnInit{
+export class ProgrammingExerciseGroupCellComponent implements OnInit {
     participationType = ProgrammingExerciseParticipationType;
 
     programmingExercise: ProgrammingExercise;

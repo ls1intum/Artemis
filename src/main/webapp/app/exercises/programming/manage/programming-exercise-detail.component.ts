@@ -22,7 +22,6 @@ import * as moment from 'moment';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Submission } from 'app/entities/submission.model';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
 @Component({

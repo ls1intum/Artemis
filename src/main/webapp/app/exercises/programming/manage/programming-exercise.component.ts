@@ -1,7 +1,6 @@
 import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-import { take, tap } from 'rxjs/operators';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -21,7 +20,6 @@ import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 

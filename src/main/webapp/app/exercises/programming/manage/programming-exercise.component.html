@@ -148,21 +148,29 @@
                     <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">
                         <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
                         <span *ngIf="programmingExercise.templateParticipation?.buildPlanId">
-                            <a *ngIf="
+                            <a
+                                *ngIf="
                                     !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.templateParticipation!.repositoryUrl!) &&
-                                    programmingExercise.templateParticipation!.buildPlanUrl;
-                                    else noVersionControlAndContinuousIntegrationAvailableTemplate"
-                               target="_blank"
-                               href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a>
+                                        programmingExercise.templateParticipation!.buildPlanUrl;
+                                    else noVersionControlAndContinuousIntegrationAvailableTemplate
+                                "
+                                target="_blank"
+                                href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}"
+                                >Template</a
+                            >
                         </span>
                         <ng-template #noVersionControlAndContinuousIntegrationAvailableTemplate>Template</ng-template> <br />
                         <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId">
-                            <a *ngIf="
+                            <a
+                                *ngIf="
                                     !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.solutionParticipation!.repositoryUrl!) &&
-                                    programmingExercise.solutionParticipation!.buildPlanUrl;
-                                    else noVersionControlAndContinuousIntegrationAvailableSolution"
-                               target="_blank"
-                               href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a>
+                                        programmingExercise.solutionParticipation!.buildPlanUrl;
+                                    else noVersionControlAndContinuousIntegrationAvailableSolution
+                                "
+                                target="_blank"
+                                href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}"
+                                >Solution</a
+                            >
                         </span>
                         <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template><br />
                     </td>
