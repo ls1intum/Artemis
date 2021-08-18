@@ -54,7 +54,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testCreateTextAssessmentKnowledgeIfExerciseIsCreatedFromScratch() throws Exception {
-        final Course course = database.addCourseWithOneReleasedTextExerciseWithKnowledge();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         int count = textAssesmentKnowledgeRepository.findAll().size();
         textExercise.setId(null);
@@ -70,7 +70,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testReuseTextAssessmentKnowledgeIfExerciseIsImported() throws Exception {
-        final Course course = database.addCourseWithOneReleasedTextExerciseWithKnowledge();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         int exerciseCount = textExerciseRepository.findAll().size();
         int textAssessmentKnowledgeCount = textAssesmentKnowledgeRepository.findAll().size();
@@ -88,7 +88,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testKeepKnowledgeWhenExerciseIsDeletedIfOtherExercisesUseIt() throws Exception {
-        final Course course = database.addCourseWithOneReleasedTextExerciseWithKnowledge();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
         int exerciseCount = textExerciseRepository.findAll().size();
@@ -107,7 +107,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteKnowledgeWhenExerciseIsDeletedIfNoOtherExercisesUseIt() throws Exception {
-        final Course course = database.addCourseWithOneReleasedTextExerciseWithKnowledge();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         TextExercise importedExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
         int exerciseCount = textExerciseRepository.findAll().size();
