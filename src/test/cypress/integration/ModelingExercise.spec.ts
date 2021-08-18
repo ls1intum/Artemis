@@ -86,7 +86,7 @@ describe('Modeling Exercise Spec', () => {
             modelingEditor.addComponentToModel(1);
             modelingEditor.addComponentToModel(2);
             modelingEditor.addComponentToModel(3);
-            cy.contains('Create new Example Submission').click();
+            cy.get('[jhitranslate="artemisApp.modelingExercise.createNewExampleSubmission"]').click();
             cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
             cy.contains('Show Assessment').click();
             modelingExerciseExampleSubmission.openAssessmentForComponent(1);
