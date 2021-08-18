@@ -80,7 +80,7 @@ public class ExampleSubmissionService {
     }
 
     /**
-     * Imports the student submission as an Example Submission
+     * Creates new example submission by copying the student submission with its assessments
      * calls copySubmission of required service depending on type of exercise
      *
      * @param submission The original student submission to be copied
