@@ -21,7 +21,6 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess/text-submission-a
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import {
-    getFirstResultWithComplaint,
     getLatestSubmissionResult,
     getSubmissionResultByCorrectionRound,
     getSubmissionResultById,
