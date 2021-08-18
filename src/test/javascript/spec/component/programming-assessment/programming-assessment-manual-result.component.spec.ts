@@ -231,7 +231,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 lockAndGetProgrammingSubmissionParticipationStub = stub(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation').returns(
                     of(submission).pipe(delay(100)),
                 );
-                findByResultIdStub = stub(complaintService, 'findByResultId').returns(of({ body: complaint } as HttpResponse<Complaint>));
+                findByResultIdStub = stub(complaintService, 'findBySubmissionId').returns(of({ body: complaint } as HttpResponse<Complaint>));
                 getIdentityStub = stub(accountService, 'identity').returns(new Promise((promise) => promise(user)));
                 getProgrammingSubmissionForExerciseWithoutAssessmentStub = stub(
                     programmingSubmissionService,
