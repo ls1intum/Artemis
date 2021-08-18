@@ -171,8 +171,6 @@ public class ExamResource {
         // Make sure that the original references are preserved.
         Exam originalExam = examRepository.findByIdElseThrow(updatedExam.getId());
 
-        examAccessService.checkCourseAccessForRoleElseThrow(Role.INSTRUCTOR, courseId);
-
         // NOTE: Make sure that all references are preserved here
         updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
         updatedExam.setStudentExams(originalExam.getStudentExams());

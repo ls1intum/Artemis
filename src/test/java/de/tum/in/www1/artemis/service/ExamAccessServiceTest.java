@@ -270,15 +270,17 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Course course = database.addEmptyCourse();
         course.setStudentGroupName("another");
         courseRepository.save(course);
-        ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course.getId(), exam1.getId());
-        assertThat(result).isEqualTo(forbidden());
+        Assertions.assertThrows(AccessForbiddenException.class, () -> {
+            examAccessService.checkAndGetCourseAndExamAccessForConduction(course.getId(), exam1.getId());
+        });
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCheckAndGetCourseAndExamAccessForConduction_examExists() {
-        ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), 123155L);
-        assertThat(result).isEqualTo(notFound());
+        Assertions.assertThrows(EntityNotFoundException.class, () -> {
+            examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), 123155L);
+        });
     }
 
     @Test
@@ -287,7 +289,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         studentExam2.setUser(database.getUserByLogin("student1"));
         studentExamRepository.save(studentExam2);
         ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam2.getId());
-        assertThat(result).isEqualTo(conflict());
+        assertThat(result).isEqualTo(badRequest("courseId", "400", "courseId doesn't match the id of the exam with examId " + exam2.getId() + "!"));
     }
 
     @Test
@@ -306,6 +308,6 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         exam.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
         examRepository.save(exam);
         ResponseEntity<StudentExam> result = examAccessService.checkAndGetCourseAndExamAccessForConduction(course1.getId(), exam.getId());
-        assertThat(result).isEqualTo(forbidden());
+        assertThat(result).isEqualTo(badRequest("exam.visibleDate", "400", "Can't access the exam before it is visible!"));
     }
 }

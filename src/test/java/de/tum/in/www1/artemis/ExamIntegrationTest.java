@@ -699,7 +699,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam.setTitle("Over 9000!");
         long examCountBefore = examRepository.count();
         exam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
-        Exam createdExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), exam, Exam.class, HttpStatus.OK);
+        Exam createdExam = request.putWithResponseBody("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), exam, Exam.class, HttpStatus.OK);
         assertThat(exam.getEndDate()).isEqualTo(createdExam.getEndDate());
         assertThat(exam.getStartDate()).isEqualTo(createdExam.getStartDate());
         assertThat(exam.getVisibleDate()).isEqualTo(createdExam.getVisibleDate());
@@ -734,8 +734,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Add a programming exercise to the exam and change the dates in order to invoke a rescheduling
         var programmingEx = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
-        examWithProgrammingEx = request.postWithResponseBody("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, Exam.class,
-                HttpStatus.CREATED);
         examWithProgrammingEx.setVisibleDate(examWithProgrammingEx.getVisibleDate().plusSeconds(1));
         examWithProgrammingEx.setStartDate(examWithProgrammingEx.getStartDate().plusSeconds(1));
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams/" + examWithProgrammingEx.getId(), examWithProgrammingEx, HttpStatus.OK);
@@ -747,8 +745,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testUpdateExam_reschedule_visibleDateChanged() throws Exception {
         var programmingEx = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
-        examWithProgrammingEx = request.postWithResponseBody("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, Exam.class,
-                HttpStatus.CREATED);
         examWithProgrammingEx.setVisibleDate(examWithProgrammingEx.getVisibleDate().plusSeconds(1));
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams/" + examWithProgrammingEx.getId(), examWithProgrammingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
@@ -759,8 +755,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testUpdateExam_reschedule_startDateChanged() throws Exception {
         var programmingEx = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
-        examWithProgrammingEx = request.postWithResponseBody("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, Exam.class,
-                HttpStatus.CREATED);
         examWithProgrammingEx.setStartDate(examWithProgrammingEx.getStartDate().plusSeconds(1));
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams/" + examWithProgrammingEx.getId(), examWithProgrammingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
@@ -771,7 +765,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testUpdateExam_rescheduleModeling_endDateChanged() throws Exception {
         var modelingExercise = database.addCourseExamExerciseGroupWithOneModelingExercise();
         var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
-        examWithModelingEx = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examWithModelingEx, Exam.class, HttpStatus.CREATED);
         examWithModelingEx.setEndDate(examWithModelingEx.getEndDate().plusSeconds(2));
         request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams/" + examWithModelingEx.getId(), examWithModelingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendModelingExerciseSchedule(modelingExercise.getId());
@@ -782,7 +775,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testUpdateExam_rescheduleModeling_workingTimeChanged() throws Exception {
         var modelingExercise = database.addCourseExamExerciseGroupWithOneModelingExercise();
         var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
-        examWithModelingEx = request.postWithResponseBody("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, Exam.class, HttpStatus.CREATED);
         examWithModelingEx.setVisibleDate(now().plusHours(1));
         examWithModelingEx.setStartDate(now().plusHours(2));
         examWithModelingEx.setEndDate(now().plusHours(3));
@@ -2148,7 +2140,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetExamTitleAsInstuctor() throws Exception {
+    public void testGetExamTitleAsInstructor() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExamTitle();
     }
