@@ -105,40 +105,6 @@ public class PostService extends PostingService {
     }
 
     /**
-     * Checks course, user and post validity,
-     * updates the votes, persists the post,
-     * and ensures that sensitive information is filtered out
-     *
-     * @param courseId   id of the course the post belongs to
-     * @param postId     id of the post to vote on
-     * @param voteChange value by which votes are increased / decreased
-     * @return updated post that was persisted
-     */
-    public Post updatePostVotes(Long courseId, Long postId, Integer voteChange) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        preCheckUserAndCourse(user, courseId);
-        Post post = postRepository.findByIdElseThrow(postId);
-        preCheckPostValidity(post);
-        if (voteChange < -2 || voteChange > 2) {
-            throw new BadRequestAlertException("VoteChange can only be changed +1 or -1", METIS_POST_ENTITY_NAME, "400", true);
-        }
-
-        // update votes
-        Integer newVotes = post.getVotes() + voteChange;
-        post.setVotes(newVotes);
-        Post updatedPost = postRepository.save(post);
-
-        if (updatedPost.getExercise() != null) {
-            // protect sample solution, grading instructions, etc.
-            updatedPost.getExercise().filterSensitiveInformation();
-        }
-
-        return updatedPost;
-    }
-
-    /**
      * Add reaction to a post and persist the post
      *
      * @param post     post that is reacted on
