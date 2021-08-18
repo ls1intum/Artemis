@@ -64,6 +64,18 @@ public class ConsistencyCheckGitlabJenkinsIntegrationTest extends AbstractSpring
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void checkConsistencyOfProgrammingExercise_forbidden() throws Exception {
+        consistencyCheckServiceTest.checkConsistencyOfProgrammingExercise_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void checkConsistencyOfCourse_forbidden() throws Exception {
+        consistencyCheckServiceTest.checkConsistencyOfCourse_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void checkConsistencyOfCourse() throws Exception {
         consistencyCheckServiceTest.checkConsistencyOfCourse();
     }

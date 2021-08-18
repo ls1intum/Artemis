@@ -11,8 +11,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ConsistencyCheckService;
 import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
@@ -51,15 +54,10 @@ public class ConsistencyCheckResource {
     @GetMapping("consistency-check/exercise/{programmingExerciseId}")
     public ResponseEntity<List<ConsistencyErrorDTO>> checkConsistencyOfProgrammingExercise(@PathVariable long programmingExerciseId) {
         log.debug("REST request to check consistencies of programming exercise [{}]", programmingExerciseId);
-        if (authCheckService.isAtLeastInstructorForExercise(exerciseRepository.findByIdElseThrow(programmingExerciseId))) {
-            List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfProgrammingExercise(programmingExerciseId);
-
-            return ResponseEntity.ok(result);
-        }
-        else {
-            return ResponseEntity.status(401).body(null);
-        }
-
+        final Exercise exercise = exerciseRepository.findByIdElseThrow(programmingExerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfProgrammingExercise(programmingExerciseId);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -70,13 +68,9 @@ public class ConsistencyCheckResource {
     @GetMapping("consistency-check/course/{courseId}")
     public ResponseEntity<List<ConsistencyErrorDTO>> checkConsistencyOfCourse(@PathVariable long courseId) {
         log.debug("REST request to check consistencies of course [{}]", courseId);
-        if (authCheckService.isAtLeastInstructorInCourse(courseRepository.findByIdElseThrow(courseId), null)) {
-            List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfCourse(courseId);
-
-            return ResponseEntity.ok(result);
-        }
-        else {
-            return ResponseEntity.status(401).body(null);
-        }
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfCourse(courseId);
+        return ResponseEntity.ok(result);
     }
 }

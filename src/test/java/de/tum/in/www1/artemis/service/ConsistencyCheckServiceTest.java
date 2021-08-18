@@ -160,6 +160,35 @@ public class ConsistencyCheckServiceTest {
     }
 
     /**
+     * Test consistencyCheck REST Endpoint with unauthorized user
+     *
+     * @throws Exception if an error occurs
+     */
+    public void checkConsistencyOfProgrammingExercise_forbidden() throws Exception {
+        // remove user from course group to simulate an unauthorized situation
+        User notAuthorizedUser = userRepository.getUser();
+        notAuthorizedUser.setGroups(new HashSet<>());
+        userRepository.save(notAuthorizedUser);
+
+        var exercise = (ProgrammingExercise) course.getExercises().iterator().next();
+        request.get("/api/consistency-check/exercise/" + exercise.getId(), HttpStatus.FORBIDDEN, ConsistencyErrorDTO.class);
+    }
+
+    /**
+     * Test consistencyCheck REST Endpoint with unauthorized user
+     *
+     * @throws Exception if an error occurs
+     */
+    public void checkConsistencyOfCourse_forbidden() throws Exception {
+        // remove user from course group to simulate an unauthorized situation
+        User notAuthorizedUser = userRepository.getUser();
+        notAuthorizedUser.setGroups(new HashSet<>());
+        userRepository.save(notAuthorizedUser);
+
+        request.get("/api/consistency-check/course/" + course.getId(), HttpStatus.FORBIDDEN, ConsistencyErrorDTO.class);
+    }
+
+    /**
      * Test consistencyCheck feature with a course
      * containing errors
      * @throws Exception if an error occurs
