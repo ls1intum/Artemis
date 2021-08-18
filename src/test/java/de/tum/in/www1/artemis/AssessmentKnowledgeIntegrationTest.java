@@ -46,7 +46,11 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
         database.resetDatabase();
     }
 
-    // TextAssessmentKnowledge Integration tests
+    /**
+     * Tests that a new TextAssessmentKnowledge is created when we create an exercise from scratch
+     *
+     * @throws Exception might be thrown from Network Call to Artemis API
+     */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testCreateTextAssessmentKnowledgeIfExerciseIsCreatedFromScratch() throws Exception {
@@ -58,6 +62,11 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
         assertThat(count + 1).isEqualTo(textAssesmentKnowledgeRepository.findAll().size());
     }
 
+    /**
+     * Tests that TextAssessmentKnowledge is reused when we import an exercise
+     *
+     * @throws Exception might be thrown from Network Call to Artemis API
+     */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testReuseTextAssessmentKnowledgeIfExerciseIsImported() throws Exception {
@@ -70,6 +79,12 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
         assertThat(textExerciseRepository.findAll().size()).isEqualTo(exercise_count + 1);
     }
 
+    /**
+     * Tests that TextAssessmentKnowledge is maintained on the DB even after deleting
+     * the parent exercise if there are other exercises using it
+     *
+     * @throws Exception might be thrown from Network Call to Artemis API
+     */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testKeepKnowledgeWhenExerciseIsDeletedIfOtherExercisesUseIt() throws Exception {
@@ -83,6 +98,12 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
         assertThat(textAssesmentKnowledgeRepository.findAll().size()).isEqualTo(textAssessmentKnowledgeCount);
     }
 
+    /**
+     * Tests that a TextAssessmentKnowledge is deleted when we delete an exercise and
+     * no other exercises use it
+     *
+     * @throws Exception might be thrown from Network Call to Artemis API
+     */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteKnowledgeWhenExerciseIsDeletedIfNoOtherExercisesUseIt() throws Exception {
@@ -101,7 +122,11 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
         assertThat(textAssesmentKnowledgeRepository.findAll().size()).isEqualTo(textAssessmentKnowledgeCount - 1);
     }
 
-    // ModelAssessmentKnowledge Integration Tests
+    /**
+     * Tests that a new ModelAssessmentKnowledge is created when we create an exercise from scratch
+     *
+     * @throws Exception might be thrown from Network Call to Artemis API
+     */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testCreateModelAssessmentKnowledgeIfExerciseIsCreatedFromScratch() throws Exception {
@@ -112,6 +137,11 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
         assertThat(modelAssesmentKnowledgeRepository.findAll().size()).isEqualTo(count + 1);
     }
 
+    /**
+     * Tests that ModelAssessmentKnowledge is reused when we import an exercise
+     *
+     * @throws Exception might be thrown from Network Call to Artemis API
+     */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testReuseModelAssessmentKnowledgeIfExerciseIsImported() throws Exception {
@@ -124,6 +154,12 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
         assertThat(modelingExerciseRepository.findAll().size()).isEqualTo(exercise_count + 1);
     }
 
+    /**
+     * Tests that ModelAssessmentKnowledge is maintained on the DB even after deleting
+     * the parent exercise if there are other exercises using it
+     *
+     * @throws Exception might be thrown from Network Call to Artemis API
+     */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testKeepModelAssessmentKnowledgeWhenExerciseIsDeletedIfOtherExercisesUseIt() throws Exception {
@@ -137,6 +173,12 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
         assertThat(modelAssesmentKnowledgeRepository.findAll().size()).isEqualTo(modelAssessmentKnowledgeCount);
     }
 
+    /**
+     * Tests that a ModelAssessmentKnowledge is deleted when we delete an exercise and
+     * no other exercises use it
+     *
+     * @throws Exception might be thrown from Network Call to Artemis API
+     */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteModelAssessmentKnowledgeWhenExerciseIsDeletedIfNoOtherExercisesUseIt() throws Exception {
