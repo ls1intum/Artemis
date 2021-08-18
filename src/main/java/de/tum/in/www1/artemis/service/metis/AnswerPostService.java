@@ -102,7 +102,7 @@ public class AnswerPostService extends PostingService {
         // update: allow overwriting of values only for depicted fields
         existingAnswerPost.setContent(answerPost.getContent());
         // tutor approval can only be toggled by a tutor
-        if (this.authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
+        if (this.authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             existingAnswerPost.setTutorApproved(answerPost.isTutorApproved());
         }
         AnswerPost updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
