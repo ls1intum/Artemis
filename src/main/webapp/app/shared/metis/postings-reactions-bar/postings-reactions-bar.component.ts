@@ -62,6 +62,10 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      */
     reactionCountMap: ReactionCountMap = {};
 
+    constructor(protected metisService: MetisService) {
+        this.selectedCourseEmojis = ['smile', 'joy', 'sunglasses', 'tada', 'rocket', 'heavy_plus_sign', 'thumbsup', 'memo', 'coffee', 'recycle'];
+    }
+
     /**
      * emojis that have a predefined meaning, i.e. pin and archive emoji,
      * should not appear in the emoji-mart selector
@@ -73,10 +77,6 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
             return emoji.unified !== PIN_EMOJI_UNICODE && emoji.unified !== ARCHIVE_EMOJI_UNICODE;
         }
     };
-
-    constructor(protected metisService: MetisService) {
-        this.selectedCourseEmojis = ['smile', 'joy', 'sunglasses', 'tada', 'rocket', 'heavy_plus_sign', 'thumbsup', 'memo', 'coffee', 'recycle'];
-    }
 
     /**
      * on initialization: updates the current posting and its reactions,
@@ -145,9 +145,6 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      */
     buildEmojiIdCountMap(reactions: Reaction[]): ReactionCountMap {
         return reactions.reduce((countMap: ReactionCountMap, reaction: Reaction) => {
-            if (reaction.emojiId === this.pinEmojiId || reaction.emojiId === this.archiveEmojiId) {
-                return countMap;
-            }
             const hasReacted = reaction.user?.id === this.metisService.getUser().id;
             const reactionCount = {
                 count: countMap[reaction.emojiId!] ? countMap[reaction.emojiId!].count + 1 : 1,
@@ -162,7 +159,9 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      */
     updatePostingWithReactions(): void {
         if (this.posting.reactions && this.posting.reactions.length > 0) {
-            this.reactionCountMap = this.buildEmojiIdCountMap(this.posting.reactions!);
+            // filter out emoji for pin and archive as they should not be listed in the reactionCountMap
+            const filteredReactions = this.posting.reactions.filter((reaction: Reaction) => reaction.emojiId !== this.pinEmojiId || reaction.emojiId !== this.archiveEmojiId);
+            this.reactionCountMap = this.buildEmojiIdCountMap(filteredReactions);
         } else {
             this.reactionCountMap = {};
         }
