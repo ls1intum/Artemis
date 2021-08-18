@@ -1,12 +1,16 @@
 
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.security.Role;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,11 +48,14 @@ public class ExampleSubmissionResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final ExerciseRepository exerciseRepository;
+
     public ExampleSubmissionResource(ExampleSubmissionService exampleSubmissionService, ExampleSubmissionRepository exampleSubmissionRepository,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository) {
         this.exampleSubmissionService = exampleSubmissionService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.authCheckService = authCheckService;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -148,21 +155,26 @@ public class ExampleSubmissionResource {
     }
 
     /**
-     * POST /exercises/{exerciseId}/example-submissions : Create a new exampleSubmission.
+     * POST exercises/{exerciseId}/example-submissions/import : Import exampleSubmission.
      *
-     * @param exerciseId        the id of the corresponding exercise for which to init a participation
-     * @param submission the submission to be imported as an example submmission
+     * @param exerciseId        the id of the corresponding exercise
+     * @param submission        the submission to be imported as an example submission
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("/exercises/{exerciseId}/example-submissions/import")
+    @PostMapping("exercises/{exerciseId}/example-submissions/import")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId, @RequestBody Submission submission) {
         log.debug("REST request to save ExampleSubmission : {}", submission);
-        // if (exampleSubmission.getId() != null) {
-        // throw new BadRequestAlertException("A new exampleSubmission cannot already have an ID", ENTITY_NAME, "idexists");
-        // }
+        if (submission.getId() == null) {
+            log.debug("Submission id must be set for an import");
+            return badRequest();
+        }
 
-        ExampleSubmission exampleSubmission = exampleSubmissionService.importStudentSubmissionAsExampleSubmission(submission, exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+        ExampleSubmission exampleSubmission = exampleSubmissionService.importStudentSubmissionAsExampleSubmission(submission, exercise);
 
         return ResponseEntity.ok(exampleSubmission);
     }

@@ -79,10 +79,14 @@ public class ExampleSubmissionService {
         }
     }
 
-    // doc ekle
-    public ExampleSubmission importStudentSubmissionAsExampleSubmission(Submission submission, long exerciseId) {
-
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+    /**
+     * Imports the student submission as an Example Submission
+     * calls copySubmission of required service depending on type of exercise
+     * @param submission the ID of the ExampleSubmission which should be deleted
+     * @param exercise the exercise to which the example submission belongs
+     * @return the exampleSubmission entity
+     */
+    public ExampleSubmission importStudentSubmissionAsExampleSubmission(Submission submission, Exercise exercise) {
         ExampleSubmission newExampleSubmission = new ExampleSubmission();
         newExampleSubmission.setExercise(exercise);
 
