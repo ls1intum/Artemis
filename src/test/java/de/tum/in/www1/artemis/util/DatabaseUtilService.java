@@ -2757,7 +2757,7 @@ public class DatabaseUtilService {
             block.computeId();
         });
         submission.setBlocks(blocks);
-        // textBlockRepo.saveAllAndFlush(blocks);
+        textBlockRepo.saveAllAndFlush(blocks);
         return textSubmissionRepo.save(submission);
     }
 

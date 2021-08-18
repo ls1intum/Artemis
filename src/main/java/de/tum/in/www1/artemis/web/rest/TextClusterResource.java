@@ -37,6 +37,9 @@ public class TextClusterResource {
     @GetMapping("/text-exercises/{exerciseId}/cluster-statistics")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<TextClusterRepository.TextClusterStats>> getClusterStats(@PathVariable Long exerciseId) {
+        // var clusterStats111 = textClusterRepository.getClusterStatistics2(exerciseId);
+        // log.debug("REST request to get clusterStats-11111->: {}", clusterStats111);
+
         var clusterStats = textClusterRepository.getClusterStatistics(exerciseId);
         log.debug("REST request to get clusterStats-: {}", clusterStats);
         return ResponseEntity.ok().body(clusterStats);
