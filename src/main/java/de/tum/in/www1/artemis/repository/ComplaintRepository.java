@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
     @Query("SELECT c FROM Complaint c LEFT JOIN c.result r LEFT JOIN r.submission s WHERE s.id = :#{#submissionId}")
-    Optional<Complaint> findByResultSubmissionId(Long submissionId);
+    Optional<Complaint> findByResultSubmissionId(@Param("submissionId") Long submissionId);
 
     Optional<Complaint> findByResultId(Long resultId);
 
