@@ -150,7 +150,7 @@ public class ComplaintResource {
     }
 
     /**
-     * Get complaints/result/{resultId} get a complaint associated with a result of the submission "id"
+     * Get complaints/submissions/{submissionId} get a complaint associated with a result of the submission "id"
      *
      * @param submissionId the id of the submission for whose results we want to find a linked complaint
      * @return the ResponseEntity with status 200 (OK) and either with the complaint as body or an empty body, if no complaint was found for the result
