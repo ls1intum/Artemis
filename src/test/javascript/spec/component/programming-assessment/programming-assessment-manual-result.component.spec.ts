@@ -101,7 +101,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let repositoryFileService: CodeEditorRepositoryFileService;
 
     let updateAfterComplaintStub: SinonStub;
-    let findByResultIdStub: SinonStub;
+    let findBySubmissionIdStub: SinonStub;
     let getIdentityStub: SinonStub;
     let getProgrammingSubmissionForExerciseWithoutAssessmentStub: SinonStub;
     let lockAndGetProgrammingSubmissionParticipationStub: SinonStub;
@@ -231,7 +231,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 lockAndGetProgrammingSubmissionParticipationStub = stub(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation').returns(
                     of(submission).pipe(delay(100)),
                 );
-                findByResultIdStub = stub(complaintService, 'findBySubmissionId').returns(of({ body: complaint } as HttpResponse<Complaint>));
+                findBySubmissionIdStub = stub(complaintService, 'findBySubmissionId').returns(of({ body: complaint } as HttpResponse<Complaint>));
                 getIdentityStub = stub(accountService, 'identity').returns(new Promise((promise) => promise(user)));
                 getProgrammingSubmissionForExerciseWithoutAssessmentStub = stub(
                     programmingSubmissionService,
@@ -245,7 +245,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     afterEach(fakeAsync(() => {
         updateAfterComplaintStub.restore();
-        findByResultIdStub.restore();
+        findBySubmissionIdStub.restore();
         lockAndGetProgrammingSubmissionParticipationStub.restore();
         getProgrammingSubmissionForExerciseWithoutAssessmentStub.restore();
     }));
@@ -261,7 +261,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         expect(getIdentityStub.calledOnce).to.be.true;
         expect(lockAndGetProgrammingSubmissionParticipationStub.calledOnce).to.be.true;
-        expect(findByResultIdStub.calledOnce).to.be.true;
+        expect(findBySubmissionIdStub.calledOnce).to.be.true;
         expect(comp.isAssessor).to.be.true;
         expect(comp.complaint).to.exist;
         fixture.detectChanges();
@@ -286,14 +286,14 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
     }));
 
-    it('should not show complaint when result does not have it', fakeAsync(() => {
-        result.hasComplaint = false;
+    it('should not show complaint when participation contains no complaint', fakeAsync(() => {
+        findBySubmissionIdStub.returns(of({ body: undefined }));
         comp.ngOnInit();
         tick(100);
 
         expect(getIdentityStub.calledOnce).to.be.true;
         expect(lockAndGetProgrammingSubmissionParticipationStub.calledOnce).to.be.true;
-        expect(findByResultIdStub.notCalled).to.be.true;
+        expect(findBySubmissionIdStub.calledOnce).to.be.true;
         expect(comp.complaint).to.not.exist;
         fixture.detectChanges();
 

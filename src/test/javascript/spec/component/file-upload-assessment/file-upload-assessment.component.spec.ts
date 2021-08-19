@@ -584,6 +584,7 @@ describe('FileUploadAssessmentComponent', () => {
         });
 
         it('should get empty Complaint', () => {
+            comp.submission = submissionWithResultsAndComplaint;
             comp.result = createResult(comp.submission);
             stub(complaintService, 'findBySubmissionId').returns(of({} as EntityResponseType));
             expect(comp.complaint).to.be.undefined;
