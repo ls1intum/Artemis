@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subscription, tap } from 'rxjs';
-
+//used only in the client
 export interface SettingsCategory {
     name: string;
     groups: OptionGroup[];
@@ -18,6 +18,18 @@ export interface Option {
     name: string;
     description: string;
     webapp: boolean;
+}
+
+//used for communication between client and server
+export interface UserOption {
+    id: number;
+    category: string;
+    group: string;
+    name: string;
+    description: string;
+    webapp: boolean;
+    email: boolean;
+    user: User;
 }
 
 @Component({

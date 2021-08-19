@@ -21,8 +21,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationOption;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
+import de.tum.in.www1.artemis.domain.notification.UserOption;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -95,11 +95,12 @@ public class NotificationResource {
     }
 
     @GetMapping("/notifications/fetch-options")
-    public ResponseEntity<List<NotificationOption>> getNotificationOptionsForCurrentUser(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<UserOption>> getNotificationOptionsForCurrentUser(@ApiParam Pageable pageable) {
         log.info("!!!IAMSAY: [NotificationResource] getNotificationOptionsForCurrentUser");
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.info("!!!IAMSAY: [NotificationResource] : currentUser = " + currentUser);
-        final Page<NotificationOption> page = notificationRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId(), pageable);
+        // final Page<NotificationOption> page = notificationRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId(), pageable);
+        final Page<UserOption> page = notificationRepository.findAllUserOptionsForRecipientWithId(currentUser.getId(), pageable);
         log.info("!!!IAMSAY: [NotificationResource] : page = " + page);
         log.info("!!!IAMSAY: [NotificationResource] : page.content = " + page.getContent());
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);

@@ -16,6 +16,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { NotificationOption } from 'app/shared/notification/notification-options/notification-options.component';
+import { UserOption } from 'app/shared/user-settings/user-settings.component';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -49,6 +50,11 @@ export class NotificationService {
     queryNotificationOptions(req?: any): Observable<HttpResponse<NotificationOption[]>> {
         const options = createRequestOption(req);
         return this.http.get<NotificationOption[]>(this.resourceUrl + '/fetch-options', { params: options, observe: 'response' });
+    }
+
+    queryUserOptions(req?: any): Observable<HttpResponse<UserOption[]>> {
+        const options = createRequestOption(req);
+        return this.http.get<UserOption[]>(this.resourceUrl + '/fetch-options', { params: options, observe: 'response' });
     }
 
     saveNotificationOptions(options: NotificationOption[]): Observable<HttpResponse<NotificationOption[]>> {
