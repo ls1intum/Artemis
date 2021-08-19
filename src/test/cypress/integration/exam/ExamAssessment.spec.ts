@@ -5,6 +5,7 @@ import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_t
 import dayjs from 'dayjs';
 import { ProgrammingExerciseSubmission } from '../../support/pageobjects/OnlineEditorPage';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
+import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
 
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -49,15 +50,14 @@ describe('Exam Assessment', () => {
     });
 
     describe('Exam exercise Assessment', () => {
-
         beforeEach('Create Exam', () => {
             cy.login(artemis.users.getAdmin());
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(3, 'hours'))
-                .endDate(dayjs().subtract(2, 'hours').add(20, 'seconds')) // //.add(15, 'seconds'))
-                .publishResultsDate(dayjs().subtract(2, 'hours').add(30, 'seconds'))
+                .endDate(dayjs().add(20, 'seconds')) // //.add(15, 'seconds'))
+                .publishResultsDate(dayjs().add(30, 'seconds'))
                 .gracePeriod(1)
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
@@ -93,10 +93,10 @@ describe('Exam Assessment', () => {
                 examStartEnd.finishExam();
                 //
                 cy.login(tutor, '/course-management/' + course.id + '/exams');
-                cy.contains('Assessment Dashboard').click();
+                cy.contains('Assessment Dashboard', {timeout: 60000}).click();
                 cy.get('.btn').contains('Exercise Dashboard').should('be.visible').click();
                 cy.contains('I have read and understood the instructions').click();
-                cy.get('.btn').contains('Start new assessment').should('be.visible').click();
+                cy.contains('Start new assessment').should('be.visible').click();
                 cy.contains('You have the lock for this assessment').should('be.visible');
                 modelingAssessment.addNewFeedback(2, 'Noice');
                 modelingAssessment.openAssessmentForComponent(1);
@@ -106,9 +106,37 @@ describe('Exam Assessment', () => {
                 modelingAssessment.openAssessmentForComponent(3);
                 modelingAssessment.assessComponent(-1, 'Wrong');
                 cy.contains('Submit').click();
+                cy.on('window:confirm', () => true);
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                 cy.get('.question-options').contains('2 of 10 points').should('be.visible');
             });
+        });
+
+        it('assess a textexercise submission', () => {
+                courseManagementRequests.createTextExercise('Cypress Text Exercise', null, exerciseGroup).then(() => {
+                    courseManagementRequests.generateMissingIndividualExams(course, exam);
+                    courseManagementRequests.prepareExerciseStartForExam(course, exam);
+                    cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                    examStartEnd.startExam();
+                    cy.contains('Cypress Text Exercise').click();
+                    cy.get('#text-editor-tab').type(textSubmission.text);
+                    cy.contains('Save').click();
+                    cy.contains('Hand in early').click();
+                    examStartEnd.finishExam();
+                    cy.login(tutor, '/course-management/' + course.id + '/exams');
+                    cy.contains('Assessment Dashboard', {timeout: 60000}).click();
+                    cy.get('.btn').contains('Exercise Dashboard').should('be.visible').click();
+                    cy.contains('I have read and understood the instructions').click();
+                    cy.contains('Start new assessment').should('be.visible').click();
+                    cy.contains('You have the lock for this assessment').should('be.visible');
+                    cy.get('.btn').contains('Add new Feedback').click();
+                    cy.get('.col-lg-6 >>>> :nth-child(1) > :nth-child(2)').clear().type('7');
+                    cy.get('.col-lg-6 >>>> :nth-child(2) > :nth-child(2)').type('Good job');
+                    cy.contains('Submit').click();
+                    cy.on('window:confirm', () => true);
+                    cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                    cy.get('.question-options').contains('7 of 10 points').should('be.visible');
+                });
         });
     });
 
@@ -130,8 +158,8 @@ describe('Exam Assessment', () => {
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(3, 'hours'))
-                .endDate(dayjs().subtract(2, 'hours').add(100, 'seconds'))
-                .publishResultsDate(dayjs().subtract(2, 'hours').add(50, 'seconds'))
+                .endDate(dayjs().add(140, 'seconds'))
+                .publishResultsDate(dayjs().add(141, 'seconds'))
                 .gracePeriod(0)
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
@@ -148,7 +176,7 @@ describe('Exam Assessment', () => {
             courseManagementRequests.deleteExam(course, exam);
         });
 
-        it.only('assess a programming exercise submission (MANUAL)', () => {
+        it('assess a programming exercise submission (MANUAL)', () => {
             cy.login(artemis.users.getAdmin());
             courseManagementRequests
                 .createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, null, exerciseGroup)
@@ -164,7 +192,7 @@ describe('Exam Assessment', () => {
                         examStartEnd.finishExam();
                         cy.get('.alert').should('be.visible');
                         cy.login(tutor, '/course-management/' + course.id + '/exams');
-                        cy.contains('Assessment Dashboard', {timeout: 40000}).click();
+                        cy.contains('Assessment Dashboard', {timeout: 80000}).click();
                         cy.get('[jhitranslate="entity.action.exerciseDashboard"]').should('be.visible').click();
                         cy.contains('Start participating in the exercise').click();
                         cy.contains('Start new assessment').click();
@@ -172,6 +200,7 @@ describe('Exam Assessment', () => {
                         cy.get('.col-lg-6 >>>> :nth-child(1) > :nth-child(2)').clear().type('2');
                         cy.get('.col-lg-6 >>>> :nth-child(2) > :nth-child(2)').type('Good job');
                         cy.contains('Submit').click();
+                        cy.on('window:confirm', () => true);
                         cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                         cy.get('.question-options').contains('6.6 of 10 points').should('be.visible');
                     });
