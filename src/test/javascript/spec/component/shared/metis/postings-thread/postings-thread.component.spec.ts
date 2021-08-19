@@ -4,9 +4,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsThreadComponent } from 'app/shared/metis/postings-thread/postings-thread.component';
-import { PostService } from 'app/shared/metis/post/post.service';
+import { PostService } from 'app/shared/metis/post.service';
 import { MockPostService } from '../../../../helpers/mocks/service/mock-post.service';
-import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
+import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { MockAnswerPostService } from '../../../../helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import * as moment from 'moment';
@@ -56,7 +56,7 @@ describe('PostingsThreadComponent', () => {
         answers: unsortedAnswerArray,
     } as Post;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [],
             providers: [

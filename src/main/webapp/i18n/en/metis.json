@@ -18,6 +18,9 @@
             "approveAnswer": "Approve",
             "approvedAnswer": "Approved",
             "today": "Today",
+            "chooseReaction": "Choose a reaction...",
+            "searchEmoji": "Search emoji",
+            "courseEmojiSelectionCategory": "Selected emojis for this course",
             "discussion": {
                 "header": "Discussion",
                 "show": "Show discussion",

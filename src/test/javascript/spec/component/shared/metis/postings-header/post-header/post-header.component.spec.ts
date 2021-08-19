@@ -29,7 +29,7 @@ describe('PostHeaderComponent', () => {
     let metisServiceUserIsAtLeastTutorStub: SinonStub;
     let metisServiceDeletePostStub: SinonStub;
 
-    const user = { id: 1, name: 'usersame', login: 'login' } as User;
+    const user = { id: 1, name: 'username', login: 'login' } as User;
 
     const post = {
         id: 1,
@@ -51,7 +51,7 @@ describe('PostHeaderComponent', () => {
 
     const answerPosts: AnswerPost[] = [answerPost1, answerPost2];
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [],
             providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
