@@ -53,15 +53,4 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
             LEFT JOIN text_cluster ON text_cluster.id = cluster_stats.clusterId
             """, nativeQuery = true)
     List<TextClusterStats> getClusterStatistics(@Param("exerciseId") Long exerciseId);
-
-    // @Query(value = """
-    // SELECT *
-    // FROM text_block
-    // LEFT JOIN submission ON text_block.submission_id = submission.id
-    // LEFT JOIN result ON result.submission_id = submission.id
-    // LEFT JOIN feedback ON ( feedback.result_id = result.id and feedback.reference = text_block.id )
-    // LEFT JOIN participation ON participation.id = submission.participation_id;
-    // """, nativeQuery = true)
-    // List getClusterStatistics2(@Param("exerciseId") Long exerciseId);
-
 }

@@ -2755,7 +2755,7 @@ public class DatabaseUtilService {
             block.computeId();
         });
         submission.setBlocks(blocks);
-        textBlockRepo.saveAllAndFlush(blocks);
+        textBlockRepo.saveAll(blocks);
         return textSubmissionRepo.save(submission);
     }
 
@@ -3686,9 +3686,6 @@ public class DatabaseUtilService {
         TextExercise textExercise = createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         StudentParticipation participation = ModelFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
         studentParticipationRepo.save(participation);
-        // TextSubmission textSubmission = ModelFactory.generateTextSubmission("some text", Language.ENGLISH, true);
-        // textSubmission.setParticipation(participation);
-        // textSubmissionRepo.saveAndFlush(textSubmission);
         course.addExercises(textExercise);
         User user = new User();
         user.setLogin(login);
