@@ -377,7 +377,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * For other exercise types it returns a rated result.
      */
     getLatestRatedResult() {
-        if ((!this.studentParticipation?.submissions && this.studentParticipation!.submissions![0]) || !this.hasResults) {
+        if (!this.studentParticipation?.submissions || !this.studentParticipation!.submissions![0] || !this.hasResults) {
             return;
         }
         this.complaintService.findBySubmissionId(this.studentParticipation!.submissions![0].id!).subscribe(
