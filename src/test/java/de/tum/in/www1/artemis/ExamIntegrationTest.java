@@ -2162,11 +2162,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private void testGetExamTitle() throws Exception {
         Course course = database.createCourse();
         Exam exam = ModelFactory.generateExam(course);
-        exam.setTitle("Test Exam");
         exam = examRepository.save(exam);
         course.addExam(exam);
         courseRepo.save(course);
-
         final var title = request.get("/api/exams/" + exam.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(exam.getTitle());
     }
