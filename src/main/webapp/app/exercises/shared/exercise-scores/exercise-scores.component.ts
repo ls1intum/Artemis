@@ -27,6 +27,7 @@ import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { setBuildPlanUrlForProgrammingParticipation } from 'app/exercises/shared/participation/participation.utils';
 
 /**
  * Filter properties for a result
@@ -107,15 +108,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                         if (this.exercise.type === ExerciseType.PROGRAMMING) {
                             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                                 for (let i = 0; i < this.results.length; i++) {
-                                    const studentParticipation = this.results[i].participation as ProgrammingExerciseStudentParticipation;
-                                    if ((this.exercise as ProgrammingExercise).projectKey && studentParticipation.buildPlanId) {
-                                        studentParticipation.buildPlanUrl = createBuildPlanUrl(
-                                            profileInfo.buildPlanURLTemplate,
-                                            (this.exercise as ProgrammingExercise).projectKey!,
-                                            studentParticipation.buildPlanId!,
-                                        );
-                                        this.results[i].participation = studentParticipation;
-                                    }
+                                    this.results[i].participation = setBuildPlanUrlForProgrammingParticipation(
+                                        profileInfo,
+                                        this.results[i].participation as ProgrammingExerciseStudentParticipation,
+                                        (this.exercise as ProgrammingExercise).projectKey,
+                                    );
                                 }
                             });
                         }

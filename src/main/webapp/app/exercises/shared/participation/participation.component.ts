@@ -22,6 +22,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { setBuildPlanUrlForProgrammingParticipation } from 'app/exercises/shared/participation/participation.utils';
 
 enum FilterProp {
     ALL = 'all',
@@ -108,15 +109,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                         if (programmingExercise.projectKey) {
                             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                                 for (let i = 0; i < this.participations.length; i++) {
-                                    const programmingParticipation = this.participations[i] as ProgrammingExerciseStudentParticipation;
-                                    if (programmingParticipation.buildPlanId) {
-                                        programmingParticipation.buildPlanUrl = createBuildPlanUrl(
-                                            profileInfo.buildPlanURLTemplate,
-                                            programmingExercise.projectKey!,
-                                            programmingParticipation.buildPlanId,
-                                        );
-                                        this.participations[i] = programmingParticipation;
-                                    }
+                                    this.participations[i] = setBuildPlanUrlForProgrammingParticipation(
+                                        profileInfo,
+                                        this.participations[i] as ProgrammingExerciseStudentParticipation,
+                                        (this.exercise as ProgrammingExercise).projectKey,
+                                    );
                                 }
                             });
                         }

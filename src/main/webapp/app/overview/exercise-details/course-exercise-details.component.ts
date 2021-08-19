@@ -41,6 +41,7 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { setBuildPlanUrlForProgrammingParticipation } from 'app/exercises/shared/participation/participation.utils';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -189,15 +190,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 if (this.exercise?.studentParticipations && programmingExercise.projectKey) {
                     for (let i = 0; i < this.exercise.studentParticipations.length; i++) {
-                        const studentParticipation = this.exercise.studentParticipations[i] as ProgrammingExerciseStudentParticipation;
-                        if (studentParticipation.buildPlanId) {
-                            studentParticipation.buildPlanUrl = createBuildPlanUrl(
-                                profileInfo.buildPlanURLTemplate,
-                                programmingExercise.projectKey,
-                                studentParticipation.buildPlanId,
-                            );
-                            this.exercise.studentParticipations[i] = studentParticipation;
-                        }
+                        this.exercise.studentParticipations[i] = setBuildPlanUrlForProgrammingParticipation(
+                            profileInfo,
+                            this.exercise.studentParticipations[i] as ProgrammingExerciseStudentParticipation,
+                            (this.exercise as ProgrammingExercise).projectKey,
+                        );
                     }
                 }
             });
