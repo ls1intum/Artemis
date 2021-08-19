@@ -36,7 +36,7 @@ public class UserOption extends DomainObject {
     private boolean email = false;
 
     @ManyToOne
-    @JoinColumn(name = "user")
+    @JoinColumn(name = "user_id")
     private User user;
 
     // getter & setter
@@ -90,11 +90,11 @@ public class UserOption extends DomainObject {
         this.email = email;
     }
 
-    public User getUser() {
+    public User getUser_id() {
         return user;
     }
 
-    public void setUser(User user) {
+    public void setUser_id(User user) {
         this.user = user;
     }
 
