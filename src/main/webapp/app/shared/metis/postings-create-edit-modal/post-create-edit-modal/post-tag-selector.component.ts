@@ -1,12 +1,13 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
     selector: 'jhi-post-tag-selector',
     templateUrl: './post-tag-selector.component.html',
+    styleUrls: ['./post-tag-selector.component.scss'],
 })
-export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy {
+export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, AfterContentChecked {
     @Input() postTags?: string[];
     @Output() postTagsChange = new EventEmitter<string[]>();
     existingPostTags: string[];
@@ -14,10 +15,10 @@ export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy {
 
     private tagsSubscription: Subscription;
 
-    constructor(private metisService: MetisService) {}
+    constructor(private metisService: MetisService, private cdref: ChangeDetectorRef) {}
 
     /**
-     * on initialization: subscribes to exsting post tags used in this course (will be shown in dropdown of tag selector),
+     * on initialization: subscribes to existing post tags used in this course (will be shown in dropdown of tag selector),
      * copies the input post tags to tags, so that they are shown in the selector
      */
     ngOnInit(): void {
@@ -25,6 +26,10 @@ export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy {
             this.existingPostTags = tags;
         });
         this.tags = this.postTags ? this.postTags : [];
+    }
+
+    ngAfterContentChecked() {
+        this.cdref.detectChanges();
     }
 
     /**

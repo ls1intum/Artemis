@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, forwardRef } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import { Command } from 'app/shared/markdown-editor/commands/command';
 import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
 import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
@@ -20,13 +20,15 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
         },
     ],
 })
-export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAccessor {
+export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked {
     @Input() content?: string;
     @Input() maxContentLength: number;
+    @Output() valueChange = new EventEmitter();
     defaultCommands: Command[];
-    propagateChange: any = () => {};
 
-    constructor() {}
+    constructor(private cdref: ChangeDetectorRef) {}
+
+    _onChange = (val: string) => {};
 
     /**
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
@@ -43,6 +45,17 @@ export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAcce
         ];
     }
 
+    ngAfterContentChecked() {
+        this.cdref.detectChanges();
+    }
+
+    /**
+     * Emits the value change from component.
+     */
+    valueChanged() {
+        this.valueChange.emit();
+    }
+
     /**
      * writes the current value of a form group and propagates the change
      * @param value
@@ -50,7 +63,6 @@ export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAcce
     writeValue(value: any): void {
         if (value !== undefined) {
             this.content = value;
-            this.propagateChange(this.content);
         }
     }
 
@@ -59,11 +71,21 @@ export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAcce
      * @param fn
      */
     registerOnChange(fn: any): void {
-        this.propagateChange = fn;
+        this._onChange = fn;
     }
 
     /**
      * defines a behavior when from group input is touched (required)
      */
     registerOnTouched(): void {}
+
+    /**
+     *
+     * @param newValue
+     */
+    updateField(newValue: string) {
+        this.content = newValue;
+        this._onChange(this.content);
+        this.valueChanged();
+    }
 }

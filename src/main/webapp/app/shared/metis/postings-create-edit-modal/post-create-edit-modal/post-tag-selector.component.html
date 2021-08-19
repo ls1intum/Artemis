@@ -8,7 +8,15 @@
     theme="bootstrap"
     [placeholder]="'artemisApp.metis.post.tagPlaceholder' | artemisTranslate"
     [secondaryPlaceholder]="'artemisApp.metis.post.tagSecondaryPlaceholder' | artemisTranslate"
+    [animationDuration]="{ enter: '0ms', leave: '0ms' }"
 >
-    <tag-input-dropdown [focusFirstElement]="true" [showDropdownIfEmpty]="true" [minimumTextLength]="0" [zIndex]="10000" [autocompleteItems]="existingPostTags">
+    <tag-input-dropdown
+        [focusFirstElement]="true"
+        [showDropdownIfEmpty]="true"
+        [minimumTextLength]="0"
+        [zIndex]="10000"
+        [autocompleteItems]="existingPostTags"
+        [appendToBody]="false"
+    >
     </tag-input-dropdown>
 </tag-input>
