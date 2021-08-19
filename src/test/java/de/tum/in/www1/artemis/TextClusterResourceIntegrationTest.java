@@ -90,12 +90,11 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     /**
-    * Tests adding multiple different combinations of events
+    * Checks the response data from retrieving cluster statistics is returned properly
     */
-
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetClusterStats_forAllValuesSet() throws Exception {
+    public void testGetClusterStats_forAllValuesSet() {
         ResponseEntity<List<TextClusterRepository.TextClusterStats>> responseEntity = textClusterResource.getClusterStats(exercise.getId());
         List<TextClusterRepository.TextClusterStats> stats = responseEntity.getBody();
         assertThat(stats).isNotNull();
@@ -111,9 +110,12 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
+    /**
+     * Test getting cluster statistics with pre-enabled clusters
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetClusterStats_withEnabledCluster() throws Exception {
+    public void testGetClusterStats_withEnabledCluster() {
         TextCluster cluster = textClusterRepository.findAll().get(0);
         cluster.setDisabled(false);
         textClusterRepository.save(cluster);
@@ -129,9 +131,12 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
+    /**
+     * Test getting cluster statistics with at least one textblock having an automatic feedback
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetClusterStats_withAddedAutoFeedback() throws Exception {
+    public void testGetClusterStats_withAddedAutoFeedback() {
         Result result = resultRepository.findAll().get(0);
         TextBlock textBlock = textBlockRepository.findAll().get(0);
         Feedback feedback = new Feedback().type(FeedbackType.AUTOMATIC).detailText("feedback").result(result).reference(textBlock.getId());
@@ -147,14 +152,18 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
+    /**
+     * Test toggleClusterDisabledPredicate combined with getting cluster statistics
+     * The value is toggled from first false and then to true
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void toggleClusterDisabledPredicate_withDisabledAndEnabledCluster() throws Exception {
+    public void testToggleClusterDisabledPredicate_withDisabledAndEnabledCluster() {
         TextCluster cluster = textClusterRepository.findAll().get(0);
         ResponseEntity<Void> toggleResponseFalse = textClusterResource.toggleClusterDisabledPredicate(cluster.getId(), false);
         assertThat(toggleResponseFalse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        // set to false
+        // set predicate to false
         ResponseEntity<List<TextClusterRepository.TextClusterStats>> responseEntityFalse = textClusterResource.getClusterStats(exercise.getId());
         List<TextClusterRepository.TextClusterStats> statisticsBodyFalse = responseEntityFalse.getBody();
 
@@ -164,7 +173,7 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
         Boolean disabled = textClusterStatisticFalse.getDisabled();
         assertThat(disabled).isEqualTo(false);
 
-        // set to true
+        // set predicate to true
         ResponseEntity<Void> toggleResponseTrue = textClusterResource.toggleClusterDisabledPredicate(cluster.getId(), true);
         assertThat(toggleResponseTrue.getStatusCode()).isEqualTo(HttpStatus.OK);
 
