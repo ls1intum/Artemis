@@ -25,22 +25,22 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class TutorParticipationService {
 
     /**
+     * Possible feedback validation error types.
+     */
+    enum FeedbackCorrectionErrorType {
+        INCORRECT_SCORE, UNNECESSARY_FEEDBACK, MISSING_GRADING_INSTRUCTION, INCORRECT_GRADING_INSTRUCTION,
+    }
+
+    /**
      * Wraps the information of tutor feedback validation (during tutor training).
      */
     class FeedbackCorrectionError {
 
-        /**
-         * Possible feedback validation error types.
-         */
-        enum Type {
-            INCORRECT_SCORE, UNNECESSARY_FEEDBACK, MISSING_GRADING_INSTRUCTION, INCORRECT_GRADING_INSTRUCTION,
-        }
-
         public String reference;
 
-        public Type type;
+        public FeedbackCorrectionErrorType type;
 
-        public FeedbackCorrectionError(String reference, Type type) {
+        public FeedbackCorrectionError(String reference, FeedbackCorrectionErrorType type) {
             this.reference = reference;
             this.type = type;
         }
@@ -115,37 +115,41 @@ public class TutorParticipationService {
     }
 
     /**
-     * Validates tutor feedback. Returns empty if correct, error type otherwise.
+     * Validates tutor feedback.
      * Validation rules:
      * - There should exist a corresponding instructor feedback that references the same object
      * - If instructor feedback has a grading instruction associated with it, so must the tutor feedback
      * - The feedback should have the same creditCount(score)
+     *
+     * @return error type if feedback is invalid, `Optional.empty()` otherwise.
      */
-    private Optional<FeedbackCorrectionError.Type> validateTutorFeedback(Feedback tutorFeedback, List<Feedback> instructorFeedback) {
+    private Optional<FeedbackCorrectionErrorType> checkTutorFeedbackForErrors(Feedback tutorFeedback, List<Feedback> instructorFeedback) {
         Optional<Feedback> maybeMatchingInstructorFeedback = instructorFeedback.stream().filter(feedback -> Objects.equals(tutorFeedback.getReference(), feedback.getReference()))
                 .findFirst();
 
-        // In case there is no instructor feedback that is referencing the same element (text/model), then tutor's feedback is unnecessary.
+        // In case there is no instructor feedback that is referencing the same element (text/model), return unnecessary feedback.
         if (maybeMatchingInstructorFeedback.isEmpty()) {
-            return Optional.of(FeedbackCorrectionError.Type.UNNECESSARY_FEEDBACK);
+            return Optional.of(FeedbackCorrectionErrorType.UNNECESSARY_FEEDBACK);
         }
 
         var matchingInstructorFeedback = maybeMatchingInstructorFeedback.get();
 
         if (matchingInstructorFeedback.getGradingInstruction() != null) {
-            // If instructor used grading instruction while creating the feedback but the tutor didn't use it return missing grading instruction.
+            // If instructor used grading instruction while creating the feedback but the tutor didn't use it, return missing grading instruction.
             if (tutorFeedback.getGradingInstruction() == null) {
-                return Optional.of(FeedbackCorrectionError.Type.MISSING_GRADING_INSTRUCTION);
+                return Optional.of(FeedbackCorrectionErrorType.MISSING_GRADING_INSTRUCTION);
             }
 
+            // If instructor used different grading instruction, return incorrect grading instruction.
             if (!Objects.equals(matchingInstructorFeedback.getGradingInstruction().getId(), tutorFeedback.getGradingInstruction().getId())) {
-                return Optional.of(FeedbackCorrectionError.Type.INCORRECT_GRADING_INSTRUCTION);
+                return Optional.of(FeedbackCorrectionErrorType.INCORRECT_GRADING_INSTRUCTION);
             }
         }
 
+        // If instructor feedback score is different from tutor one, return incorrect score.
         boolean equalCredits = Double.compare(matchingInstructorFeedback.getCredits(), tutorFeedback.getCredits()) == 0;
         if (!equalCredits) {
-            return Optional.of(FeedbackCorrectionError.Type.INCORRECT_SCORE);
+            return Optional.of(FeedbackCorrectionErrorType.INCORRECT_SCORE);
         }
 
         return Optional.empty();
@@ -153,7 +157,7 @@ public class TutorParticipationService {
 
     private boolean isValidTutorialExampleSubmission(List<Feedback> tutorFeedback, List<Feedback> instructorFeedback) {
         boolean equalFeedbackCount = instructorFeedback.size() == tutorFeedback.size();
-        boolean allTutorFeedbackAreCorrect = tutorFeedback.stream().map(feedback -> validateTutorFeedback(feedback, instructorFeedback)).allMatch(Optional::isEmpty);
+        boolean allTutorFeedbackAreCorrect = tutorFeedback.stream().map(feedback -> checkTutorFeedbackForErrors(feedback, instructorFeedback)).allMatch(Optional::isEmpty);
         return equalFeedbackCount && allTutorFeedbackAreCorrect;
     }
 
@@ -177,7 +181,7 @@ public class TutorParticipationService {
         // If invalid, get all incorrect feedback and send an array of the corresponding `FeedbackCorrectionError`s to the client.
         // Pack this information into bad request exception.
         var wrongFeedback = tutorFeedback.stream().flatMap(feedback -> {
-            var validationError = validateTutorFeedback(feedback, instructorFeedback);
+            var validationError = checkTutorFeedbackForErrors(feedback, instructorFeedback);
             if (validationError.isEmpty()) {
                 return Stream.empty();
             }

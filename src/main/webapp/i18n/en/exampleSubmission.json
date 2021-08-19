@@ -13,8 +13,8 @@
                 "INCORRECT_GRADING_INSTRUCTION": "Incorrect assessment instruction ❌"
             },
             "submissionValidation": {
-                "missing": "Not enough feedbacks provided. Number of feedbacks should be the same as of the instructors",
-                "wrong": "Wrong assessment. Please carefully review the grading criteria and the submission again, and submit your improved assessment."
+                "missing": "Not enough feedback provided. The instructor provided more feedback.",
+                "wrong": "Incorrect assessment. Please carefully review the grading criteria and the submission again, and submit your improved assessment."
             },
             "assessScore": {
                 "success": "Congratulations! This is a good assessment!",

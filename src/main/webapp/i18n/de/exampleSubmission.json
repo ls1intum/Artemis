@@ -13,7 +13,7 @@
                 "INCORRECT_GRADING_INSTRUCTION": "Falsche Bewertungsanweisung ❌"
             },
             "submissionValidation": {
-                "missing": "Nicht genügend Feedbacks. Die Anzahl der Feedbacks sollte die gleiche sein wie die der Instruktoren",
+                "missing": "Zu wenig Feedback gegeben. In der Musterbewertung wurde an mehr Stellen Feedback gegeben.",
                 "wrong": "Falsche Beurteilung. Bitte überprüfe die Bewertungskriterien und die Abgabe noch einmal sorgfältig und reiche deine verbesserte Bewertung ein."
             },
             "assessScore": {
