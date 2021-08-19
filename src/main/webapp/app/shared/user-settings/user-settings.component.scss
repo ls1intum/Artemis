@@ -16,7 +16,7 @@
 }
 
 .section {
-    border-bottom: #dee2e6; //gray
+    //border-bottom: #dee2e6; //gray
     padding-top: 20px;
 }
 
@@ -27,8 +27,6 @@
 }
 
 dt {
-    //padding-top: 20px;
-    //padding-bottom: 3px;
     font-size: large;
     font-weight: 500;
 }
@@ -42,14 +40,12 @@ h3 {
 .form-check {
     padding-top: 5px;
     padding-bottom: 5px;
-    border-bottom: 1px solid #dee2e6;
+    //border-bottom: 1px solid #dee2e6;
 }
 
 span {
     color: gray;
     font-size: smaller;
-    //padding: 5px 0;
-    //border-bottom: #dee2e6;
 }
 
 dd {
@@ -57,18 +53,8 @@ dd {
 }
 
 #navigation-bar {
-    flex: 10%;
-
     .btn {
         font-size: medium;
         text-align: left;
     }
-}
-
-#current-settings {
-    flex: 60%;
-}
-
-.container {
-    display: flex;
 }

@@ -1,4 +1,9 @@
 <h1>Notification Settings</h1>
+<button *ngIf="optionsChanged" id="apply-changes-button" (click)="saveOptions()">
+    <fa-icon [icon]="'save'"></fa-icon>
+    {{ 'artemisApp.notification.options.saveChanges' | artemisTranslate }}
+</button>
+<!--
 <div class="list-group d-block">
     <div class="list-group-item">
         <h3>Exercise Notifications</h3>
@@ -55,6 +60,20 @@
         <div class="form-check border-0">
             <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault9" />
             <label class="form-check-label" for="flexCheckDefault9">WebApp</label>
+        </div>
+    </div>
+</div>
+-->
+<div class="list-group d-block">
+    <div class="list-group-item" *ngFor="let optionGroup of notificationSettings.groups">
+        <h3>{{ optionGroup.name }}</h3>
+        <div *ngFor="let option of optionGroup.options">
+            <dt>{{ option.name }}</dt>
+            <span>{{ option.description }}</span>
+            <div class="form-check border-bottom">
+                <input type="checkbox" class="form-check-input" [checked]="option.webapp" id="{{ option.name }}" value="{{ option.webapp }}" (click)="toggleOption($event)" />
+                <label class="form-check-label" for="{{ option.name }}">WebApp</label>
+            </div>
         </div>
     </div>
 </div>

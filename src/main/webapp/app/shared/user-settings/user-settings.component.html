@@ -1,41 +1,28 @@
-<!-- profile header -->
-<!--<div class="d-flex mb-3">-->
-<!--
-<div class="d-flex">
-    <fa-icon id="avatar" size="3x" [icon]="'user'"></fa-icon>
-    <div *ngIf="currAccount">
-        <span *ngIf="currAccount.name" id="user-header">{{ currAccount.name }}</span>
-        <br />
-        <span id="login">{{ currAccount.login }}</span>
-    </div>
-</div>
--->
-<div class="d-flex">
-    <!-- links to the different settings -->
-    <!--
-    <section id="navigation-bar" class="item btn-group-vertical bg-red-500 me-4 d-block">
-        <a class="btn btn-outline-primary active" routerLink="account" routerLinkActive="active">Account Information</a>
-        <a class="btn btn-outline-primary" routerLink="notifications" routerLinkActive="active">Notification Settings</a>
-    </section>
-    -->
-    <!--<section id="navigation-bar" class="list-group me-4 d-block pt-5">-->
-    <div>
-        <div class="d-flex">
-            <fa-icon id="avatar" size="3x" [icon]="'user'"></fa-icon>
-            <div *ngIf="currAccount">
-                <span *ngIf="currAccount.name" id="user-header">{{ currAccount.name }}</span>
-                <br />
-                <span id="login">{{ currAccount.login }}</span>
+<div class="container">
+    <div class="row">
+        <!--<div class="col-md-3 col-12">-->
+        <div class="col-md-3 col-sm-11 col-11">
+            <!-- profile header -->
+            <div class="d-flex">
+                <fa-icon id="avatar" size="3x" [icon]="'user'"></fa-icon>
+                <div *ngIf="currAccount">
+                    <span *ngIf="currAccount.name" id="user-header">{{ currAccount.name }}</span>
+                    <br />
+                    <span id="login">{{ currAccount.login }}</span>
+                </div>
             </div>
+            <!-- links to the different settings -->
+            <section id="navigation-bar" class="list-group d-block pt-2">
+                <span class="list-group-item disabled fw-bold">User Settings</span>
+                <a class="list-group-item btn btn-outline-primary" routerLink="account" routerLinkActive="active">Account Information</a>
+                <a class="list-group-item btn btn-outline-primary" routerLink="notifications" routerLinkActive="active">Notification Settings</a>
+            </section>
         </div>
-        <section id="navigation-bar" class="list-group me-4 d-block pt-2">
-            <span class="list-group-item disabled fw-bold">User Settings</span>
-            <a class="list-group-item btn btn-outline-primary" routerLink="account" routerLinkActive="active">Account Information</a>
-            <a class="list-group-item btn btn-outline-primary" routerLink="notifications" routerLinkActive="active">Notification Settings</a>
-        </section>
+        <!-- the currently opened settings -->
+        <div class="col-md-8 col-sm-11 col-11">
+            <section id="current-settings" class="pt-3">
+                <router-outlet></router-outlet>
+            </section>
+        </div>
     </div>
-    <!-- the currently opened settings -->
-    <section id="current-settings" class="item pt-3">
-        <router-outlet></router-outlet>
-    </section>
 </div>
