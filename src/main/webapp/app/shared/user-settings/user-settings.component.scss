@@ -58,3 +58,20 @@ dd {
         text-align: left;
     }
 }
+
+#apply-changes-button {
+    /*
+    &:focus {
+        outline: none;
+        box-shadow: none;
+    }
+     */
+    //position: absolute;
+    //right: 125px;
+    width: 250px;
+    height: 40px; //50px;
+    font-size: 20px;
+    border: 0;
+    // color: white;
+    // background: #2f6fb2; /* TUM blue */
+}
