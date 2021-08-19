@@ -228,6 +228,9 @@
             "categoriesTooltip": "You can define up to two categories per exercise (Enter category and press ENTER). You are free in defining them, though it might be best to use them consistently. They will be visible to students",
             "timeline": {
                 "assessmentType": "Assessment Type",
+                "manualAssessment": "Manual Assessment",
+                "automaticAssessment": "Automatic Assessment",
+                "complaintsAllowed": "Complaints Allowed",
                 "automaticTests": "Automatic Tests",
                 "afterDueDate": "Run Tests after Due Date",
                 "timelineLabel": "Timeline of the entire programming exercise",

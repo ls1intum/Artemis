@@ -74,6 +74,7 @@ export abstract class Exercise implements BaseEntity {
     public maxPoints?: number;
     public bonusPoints?: number;
     public assessmentType?: AssessmentType;
+    public allowComplaintsForAutomaticAssessments?: boolean;
     public difficulty?: DifficultyLevel;
     public mode?: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
     public includedInOverallScore?: IncludedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY; // default value
