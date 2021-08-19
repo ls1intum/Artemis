@@ -260,37 +260,42 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             return;
         }
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId).subscribe(
-            () => this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success'),
+            () => {
+                this.markAllFeedbackToCorrect();
+                this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success');
+            },
             (error: HttpErrorResponse) => {
                 const errorType = error.headers.get('x-artemisapp-error');
 
                 if (errorType === 'error.invalid_assessment') {
-                    // Mark all tutor created feedback as correct.
-                    this.textBlockRefs
-                        .map((ref) => ref.feedback)
-                        .filter((feedback) => feedback != undefined)
-                        .forEach((feedback) => {
-                            feedback!.correctionStatus = 'CORRECT';
-                        });
+                    this.markAllFeedbackToCorrect();
 
+                    // Mark all wrongly made feedbacks accordingly.
                     const correctionErrors: FeedbackCorrectionError[] = JSON.parse(error['error']['title'])['errors'];
+                    correctionErrors.forEach((res) => {
+                        const textBlockRef = this.textBlockRefs.find((ref) => ref.feedback?.reference === res.reference);
+                        if (textBlockRef != undefined && textBlockRef.feedback != undefined) {
+                            textBlockRef.feedback.correctionStatus = res.type;
+                        }
+                    });
+
                     const msg =
                         correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
                     this.jhiAlertService.error(msg);
-
-                    // Mark all wrongly made feedbacks accordingly.
-                    correctionErrors.forEach((res) => {
-                        const textBlockRef = this.textBlockRefs.find((ref) => ref.feedback?.reference === res.reference);
-                        if (textBlockRef == undefined || textBlockRef.feedback == undefined) {
-                            return;
-                        }
-                        textBlockRef.feedback!.correctionStatus = res.type;
-                    });
                 } else {
                     onError(this.jhiAlertService, error);
                 }
             },
         );
+    }
+
+    private markAllFeedbackToCorrect() {
+        this.textBlockRefs
+            .map((ref) => ref.feedback)
+            .filter((feedback) => feedback != undefined)
+            .forEach((feedback) => {
+                feedback!.correctionStatus = 'CORRECT';
+            });
     }
 
     private exampleSubmissionForNetwork() {
