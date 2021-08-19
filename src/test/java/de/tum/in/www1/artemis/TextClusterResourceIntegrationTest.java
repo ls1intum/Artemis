@@ -14,18 +14,18 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.TextClusterResource;
-import net.sourceforge.plantuml.Log;
 
 public class TextClusterResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    private UserRepository userRepository;
+    private FeedbackRepository feedbackRepository;
 
     @Autowired
     private TextSubmissionRepository textSubmissionRepository;
@@ -57,11 +57,10 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
     public void initTestCase() throws Error {
         Course course = database.createCourseWithInstructorAndTextExercise("instructor1");
 
-        exercise = (TextExercise) course.getExercises().iterator().next();
+        exercise = course.getExercises().iterator().next();
         StudentParticipation studentParticipation = studentParticipationRepository.findAll().get(0);
 
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
-        // textSubmission.setId(1L);
         textSubmissionRepository.save(textSubmission);
 
         database.addResultToSubmission(textSubmission, AssessmentType.AUTOMATIC);
@@ -82,16 +81,7 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
         textSubmission.setParticipation(studentParticipation);
         textSubmissionRepository.save(textSubmission);
         textClusterRepository.saveAll(clusters);
-
-        List<TextCluster> cl = textClusterRepository.findAll();
-        List<Result> rs = resultRepository.findAll();
-        List<TextSubmission> sb = textSubmissionRepository.findAll();
-        // assertThat(sb).isEqualTo(0);
-        Log.debug("SSSS" + sb);
         textBlockRepository.saveAll(textBlocks);
-        List<TextBlock> tbb = textBlockRepository.findAll();
-
-        System.out.println("test");
     }
 
     @AfterEach
@@ -105,10 +95,11 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testAddMultipleCompleteAssessmentEvents2() throws Exception {
+    public void testGetClusterStats_forAllValuesSet() throws Exception {
         ResponseEntity<List<TextClusterRepository.TextClusterStats>> responseEntity = textClusterResource.getClusterStats(exercise.getId());
         List<TextClusterRepository.TextClusterStats> stats = responseEntity.getBody();
         assertThat(stats).isNotNull();
+
         TextClusterRepository.TextClusterStats stat = stats.get(0);
         Long clusterSize = stat.getClusterSize();
         Long automaticFeedbacksNum = stat.getNumberOfAutomaticFeedbacks();
@@ -118,29 +109,73 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
         assertThat(automaticFeedbacksNum).isEqualTo(0);
         assertThat(disabled).isEqualTo(true);
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testAddMultipleCompleteAssessmentEvents() throws Exception {
+    public void testGetClusterStats_withEnabledCluster() throws Exception {
         TextCluster cluster = textClusterRepository.findAll().get(0);
         cluster.setDisabled(false);
         textClusterRepository.save(cluster);
+
         ResponseEntity<List<TextClusterRepository.TextClusterStats>> responseEntity = textClusterResource.getClusterStats(exercise.getId());
         List<TextClusterRepository.TextClusterStats> stats = responseEntity.getBody();
 
         assertThat(stats).isNotNull();
         TextClusterRepository.TextClusterStats stat = stats.get(0);
-        Long clusterSize = stat.getClusterSize();
-        Long automaticFeedbacksNum = stat.getNumberOfAutomaticFeedbacks();
         Boolean disabled = stat.getDisabled();
 
-        assertThat(clusterSize).isEqualTo(3);
-        assertThat(automaticFeedbacksNum).isEqualTo(0);
         assertThat(disabled).isEqualTo(false);
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        database.resetDatabase();
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetClusterStats_withAddedAutoFeedback() throws Exception {
+        Result result = resultRepository.findAll().get(0);
+        TextBlock textBlock = textBlockRepository.findAll().get(0);
+        Feedback feedback = new Feedback().type(FeedbackType.AUTOMATIC).detailText("feedback").result(result).reference(textBlock.getId());
+        feedbackRepository.save(feedback);
+        ResponseEntity<List<TextClusterRepository.TextClusterStats>> responseEntity = textClusterResource.getClusterStats(exercise.getId());
+        List<TextClusterRepository.TextClusterStats> stats = responseEntity.getBody();
+
+        assertThat(stats).isNotNull();
+        TextClusterRepository.TextClusterStats stat = stats.get(0);
+        Long automaticFeedbacksNum = stat.getNumberOfAutomaticFeedbacks();
+
+        assertThat(automaticFeedbacksNum).isEqualTo(1);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void toggleClusterDisabledPredicate_withDisabledAndEnabledCluster() throws Exception {
+        TextCluster cluster = textClusterRepository.findAll().get(0);
+        ResponseEntity<Void> toggleResponseFalse = textClusterResource.toggleClusterDisabledPredicate(cluster.getId(), false);
+        assertThat(toggleResponseFalse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // set to false
+        ResponseEntity<List<TextClusterRepository.TextClusterStats>> responseEntityFalse = textClusterResource.getClusterStats(exercise.getId());
+        List<TextClusterRepository.TextClusterStats> statisticsBodyFalse = responseEntityFalse.getBody();
+
+        assertThat(responseEntityFalse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(statisticsBodyFalse).isNotNull();
+        TextClusterRepository.TextClusterStats textClusterStatisticFalse = statisticsBodyFalse.get(0);
+        Boolean disabled = textClusterStatisticFalse.getDisabled();
+        assertThat(disabled).isEqualTo(false);
+
+        // set to true
+        ResponseEntity<Void> toggleResponseTrue = textClusterResource.toggleClusterDisabledPredicate(cluster.getId(), true);
+        assertThat(toggleResponseTrue.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<List<TextClusterRepository.TextClusterStats>> responseEntityTrue = textClusterResource.getClusterStats(exercise.getId());
+        List<TextClusterRepository.TextClusterStats> statisticsBodyTrue = responseEntityTrue.getBody();
+
+        assertThat(responseEntityTrue.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(statisticsBodyTrue).isNotNull();
+        TextClusterRepository.TextClusterStats textClusterStatsTrue = statisticsBodyTrue.get(0);
+
+        Boolean disabledTrue = textClusterStatsTrue.getDisabled();
+        assertThat(disabledTrue).isEqualTo(true);
+    }
 }
