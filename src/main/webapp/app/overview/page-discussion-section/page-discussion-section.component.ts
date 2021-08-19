@@ -9,12 +9,12 @@ import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 
 @Component({
-    selector: 'jhi-discussion',
-    templateUrl: './discussion.component.html',
-    styleUrls: ['./discussion.scss'],
+    selector: 'jhi-page-discussion-section',
+    templateUrl: './page-discussion-section.component.html',
+    styleUrls: ['./page-discussion-section.scss'],
     providers: [MetisService],
 })
-export class DiscussionComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
+export class PageDiscussionSectionComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
     @Input() exercise?: Exercise;
     @Input() lecture?: Lecture;
     course: Course;
