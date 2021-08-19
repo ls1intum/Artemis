@@ -28,14 +28,14 @@
                 <span id="login">{{ currAccount.login }}</span>
             </div>
         </div>
-        <section id="navigation-bar" class="list-group me-4 d-block pt-3">
+        <section id="navigation-bar" class="list-group me-4 d-block pt-2">
             <span class="list-group-item disabled fw-bold">User Settings</span>
             <a class="list-group-item btn btn-outline-primary" routerLink="account" routerLinkActive="active">Account Information</a>
             <a class="list-group-item btn btn-outline-primary" routerLink="notifications" routerLinkActive="active">Notification Settings</a>
         </section>
     </div>
     <!-- the currently opened settings -->
-    <section id="current-settings" class="item pt-4">
+    <section id="current-settings" class="item pt-3">
         <router-outlet></router-outlet>
     </section>
 </div>
