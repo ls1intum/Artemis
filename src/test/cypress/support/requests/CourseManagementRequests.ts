@@ -70,7 +70,7 @@ export class CourseManagementRequests {
         dueDate = new Date(Date.now() + oneDay),
     ) {
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
-        const programmingTemplate = CourseManagementRequests.getCourseOrExamExercise(programmingExerciseTemplate, body);
+        const programmingTemplate: any = CourseManagementRequests.getCourseOrExamExercise(programmingExerciseTemplate, body);
         programmingTemplate.title = title;
         programmingTemplate.shortName = programmingShortName;
         programmingTemplate.packageName = packageName;
@@ -99,7 +99,7 @@ export class CourseManagementRequests {
 
     /**
      * Adds the specified user to the tutor group in the course
-     * */
+     */
     addTutorToCourse(course: any, user: CypressCredentials) {
         return cy.request({ method: POST, url: COURSE_BASE + course.id + '/tutors/' + user.username });
     }
@@ -116,7 +116,7 @@ export class CourseManagementRequests {
     /**
      * Deletes the exam with the given parameters
      * @returns <Chainable> request response
-     * */
+     */
     deleteExam(course: any, exam: any) {
         return cy.request({ method: DELETE, url: COURSE_BASE + course.id + '/exams/' + exam.id });
     }
@@ -132,7 +132,7 @@ export class CourseManagementRequests {
     /**
      * add exercise group to exam
      * @returns <Chainable> request response
-     * */
+     */
     addExerciseGroupForExam(course: any, exam: any, title: string, mandatory: boolean) {
         exerciseGroup.exam = exam;
         exerciseGroup.title = title;
@@ -143,9 +143,9 @@ export class CourseManagementRequests {
     /**
      * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
-     * */
+     */
     createTextExercise(title: string, body: { course: any } | { exerciseGroup: any }) {
-        const textExercise = CourseManagementRequests.getCourseOrExamExercise(textExerciseTemplate, body);
+        const textExercise: any = CourseManagementRequests.getCourseOrExamExercise(textExerciseTemplate, body);
         textExercise.title = title;
         return cy.request({ method: POST, url: BASE_API + 'text-exercises', body: textExercise });
     }
@@ -187,7 +187,7 @@ export class CourseManagementRequests {
      * This function takes an exercise template and adds one of the fields to it
      * @param exercise the exercise template
      * @param body the exercise group or course the exercise will be added to
-     * */
+     */
     private static getCourseOrExamExercise(exercise: object, body: { course: any } | { exerciseGroup: any }) {
         return Object.assign({}, exercise, body);
     }
