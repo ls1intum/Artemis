@@ -156,13 +156,9 @@ public class ExamResource {
         if (updatedExam.getId() != examId) {
             return badRequest("examId", "400", "ExamId in path and in Body don't match!");
         }
-
-        if (updatedExam.getCourse() == null || updatedExam.getMaxPoints() <= 0 || !updatedExam.getCourse().getId().equals(courseId)) {
-            return badRequest();
-        }
-
-        if (updatedExam.getVisibleDate() == null || updatedExam.getStartDate() == null || updatedExam.getEndDate() == null
-                || !updatedExam.getVisibleDate().isBefore(updatedExam.getStartDate()) || !updatedExam.getStartDate().isBefore(updatedExam.getEndDate())) {
+        if (updatedExam.getCourse() == null || updatedExam.getMaxPoints() <= 0 || !updatedExam.getCourse().getId().equals(courseId) || updatedExam.getVisibleDate() == null
+                || updatedExam.getStartDate() == null || updatedExam.getEndDate() == null || !updatedExam.getVisibleDate().isBefore(updatedExam.getStartDate())
+                || !updatedExam.getStartDate().isBefore(updatedExam.getEndDate())) {
             return badRequest();
         }
 
@@ -248,7 +244,7 @@ public class ExamResource {
     public ResponseEntity<String> getExamTitle(@PathVariable Long examId) {
         log.debug("REST request to get exam title: {}", examId);
         Exam exam = examRepository.findByIdElseThrow(examId);
-        examAccessService.checkCourseAndExamAccessForRoleElseThrow(Role.STUDENT, exam.getCourse().getId(), examId);
+        examAccessService.checkCourseAndExamAccessForRoleElseThrow(Role.STUDENT, exam.getCourse().getId(), exam.getId());
         final var title = examRepository.getExamTitleByIdElseThrow(examId);
         return ResponseEntity.ok(title);
     }

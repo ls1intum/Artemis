@@ -2163,6 +2163,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Course course = database.createCourse();
         Exam exam = ModelFactory.generateExam(course);
         exam = examRepository.save(exam);
+        exam.setTitle("Test Exam");
         course.addExam(exam);
         courseRepo.save(course);
         final var title = request.get("/api/exams/" + exam.getId() + "/title", HttpStatus.OK, String.class);
