@@ -459,8 +459,8 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    // It should fail for all ProgrammingExercises except Haskell
-    @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL" }, mode = EnumSource.Mode.EXCLUDE)
+    // It should fail for all ProgrammingExercises except Haskell and ocaml
+    @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL", "OCAML" }, mode = EnumSource.Mode.EXCLUDE)
     public void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExerciseIntegrationServiceTest.createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(programmingLanguage);
     }
