@@ -17,8 +17,8 @@ public class UserOption extends DomainObject {
     @Column(name = "id")
     private long id;
 
-    @Column(name = "option_id", nullable = false)
-    private String option_id;
+    @Column(name = "option", nullable = false)
+    private String option;
 
     @Column(name = "webapp", columnDefinition = "boolean default true", nullable = false)
     private boolean webapp = true;
@@ -38,12 +38,12 @@ public class UserOption extends DomainObject {
         this.id = id;
     }
 
-    public String getOption_id() {
-        return option_id;
+    public String getOption() {
+        return option;
     }
 
-    public void setOption_id(String option_id) {
-        this.option_id = option_id;
+    public void setOption(String option) {
+        this.option = option;
     }
 
     public boolean isWebapp() {
@@ -72,7 +72,7 @@ public class UserOption extends DomainObject {
 
     @Override
     public String toString() {
-        return "UserOption{" + "id=" + id + ", option_id='" + option_id + '\'' + ", webapp=" + webapp + ", email=" + email + ", user=" + user + '}';
+        return "UserOption{" + "id=" + id + ", option='" + option + '\'' + ", webapp=" + webapp + ", email=" + email + ", user=" + user + '}';
     }
 
     /*

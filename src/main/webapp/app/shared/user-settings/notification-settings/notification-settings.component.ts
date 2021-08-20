@@ -19,6 +19,7 @@ export class NotificationSettingsComponent implements OnInit {
     constructor(private notificationService: NotificationService) {}
 
     ngOnInit(): void {
+        debugger;
         this.notificationSettings = defaultNotificationSettings;
         this.notificationOptionCores = new Array<OptionCore>();
         this.loadNotificationOptions();
@@ -27,12 +28,16 @@ export class NotificationSettingsComponent implements OnInit {
     saveOptions() {
         //TODO refresh notifications in notification-sidebar (else outdated, ngOnitnit only called once, i.e. only calls loadnotifications once)
 
-        let newOptionCores = this.notificationOptionCores.filter((optionCore) => optionCore.id === -1);
+        debugger;
+
+        //let newOptionCores = this.notificationOptionCores.filter((optionCore) => optionCore.id === -1);
+        let newOptionCores = this.notificationOptionCores.filter((optionCore) => optionCore.changed);
         this.notificationService.saveNewUserOptions(newOptionCores).subscribe(
             (res: HttpResponse<OptionCore[]>) => this.saveUserOptionsSuccess(res.body!, res.headers),
             (res: HttpErrorResponse) => (this.error = res.message),
         );
 
+        /*
         //only save those that got changed
         let changedUserOptions = this.notificationOptionCores.filter((option) => option.id != -1 && option.changed);
         /*
@@ -60,13 +65,14 @@ export class NotificationSettingsComponent implements OnInit {
         this.optionsChanged = true;
         const optionId = event.currentTarget.id; //TODO
         //let foundOption = this.notificationOptions.find((option) => option.type === notificationType);
-        let foundOption = this.notificationOptionCores.find((core) => core.optionId === optionId);
+        let foundOption = this.notificationOptionCores.find((core) => core.option === optionId);
         if (!foundOption) return;
         foundOption!.webapp = !foundOption!.webapp;
         foundOption.changed = true;
     }
 
     private loadNotificationOptions(): void {
+        debugger;
         this.notificationService
             .queryUserOptions({
                 page: this.page, //kp ob nötig
@@ -94,7 +100,11 @@ export class NotificationSettingsComponent implements OnInit {
             //const saturatedUserOptions = this.saturateDefaultUserOptionsWithGroupAndCategoryInformation(group.options, categoryName, groupName);
             //optionCoreAccumulator = optionCoreAccumulator.concat(saturatedUserOptions);
             group.options.forEach((option: Option) => {
-                optionCoreAccumulator.push(option.optionCore);
+                let optionCore: OptionCore = option.optionCore;
+                if (optionCore.id == undefined) {
+                    optionCore.id = -1; // is used to mark cores which have never been saved to the database
+                }
+                optionCoreAccumulator.push(optionCore);
             });
             //let tmpOptionCores : OptionCore[] = group.options.map((option : Option) => { option.optionCore; })
         });
@@ -103,7 +113,7 @@ export class NotificationSettingsComponent implements OnInit {
 
     private updateSettings(newOptionCores: OptionCore[]): void {
         //update the user option cores
-
+        debugger;
         //Gehe durch alle defaults (lokal/client bereits geladenen) cores durch und falls es ein passendes neues gibt updaten.
         /* vll unnötig, da ich einfach zuerst die settings austauschen kann und dann nochmal extracten
         for(let i = 0; i < this.notificationOptionCores.length; i++) {
@@ -122,7 +132,7 @@ export class NotificationSettingsComponent implements OnInit {
                 //this.notificationSettings.groups[i].options.find(option => option.optionCore.optionId === )
                 //this.notificationSettings.groups[i].options
                 const currentOptionCore = this.notificationSettings.groups[i].options[j].optionCore;
-                const matchingOptionCore = newOptionCores.find((newCore) => newCore.optionId === currentOptionCore.optionId);
+                const matchingOptionCore = newOptionCores.find((newCore) => newCore.option === currentOptionCore.option);
                 if (matchingOptionCore != undefined) {
                     this.notificationSettings.groups[i].options[j].optionCore = matchingOptionCore;
                 }

@@ -18,6 +18,14 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { NotificationOption } from 'app/shared/notification/notification-options/notification-options.component';
 import { OptionCore } from 'app/shared/user-settings/user-settings.component';
 
+export interface UserOption {
+    id?: number;
+    option: string;
+    webapp: boolean;
+    email: boolean;
+    user_id?: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
     public resourceUrl = SERVER_API_URL + 'api/notifications';
@@ -61,8 +69,20 @@ export class NotificationService {
         return this.http.get<OptionCore[]>(this.userSettingsResourceUrl + '/fetch-options', { params: optionCores, observe: 'response' });
     }
 
+    /*
     saveNotificationOptions(options: NotificationOption[]): Observable<HttpResponse<NotificationOption[]>> {
         return this.http.post<NotificationOption[]>(this.resourceUrl + '/save-options', options, { observe: 'response' });
+    }
+     */
+    saveNotificationOptions(options: NotificationOption[]): void {
+        const dummy: UserOption = {
+            id: -1,
+            option: 'Kent Test',
+            webapp: true,
+            email: false,
+        };
+
+        this.http.post<UserOption[]>(this.resourceUrl + '/save-options', [dummy], { observe: 'response' });
     }
 
     //saveUserOptions(options: UserOption[], notYetCustomized: Boolean): Observable<HttpResponse<UserOption[]>> {
@@ -80,12 +100,27 @@ export class NotificationService {
     }
 
     //saveNewUserOptions(options: UserOption[]): Observable<HttpResponse<UserOption[]>> {
+
     saveNewUserOptions(optionCores: OptionCore[]): Observable<HttpResponse<OptionCore[]>> {
         //return this.http.post<UserOption[]>(this.resourceUrl + '/save-options', options, { observe: 'response' });
         // (new) user has so far only used the default values -> create new Table for user
 
         //return this.http.post<UserOption[]>(this.userSettingsResourceUrl + '/save-new-options', optionCores, { observe: 'response' });
-        return this.http.post<OptionCore[]>(this.userSettingsResourceUrl + '/save-new-options', optionCores, { observe: 'response' });
+
+        //optionCores[0].test = "hallo kent";
+        /*
+        const dummy = {
+            //changed : true,
+            id : -1,
+            option : 'hello test',
+            webapp : false,
+            email: false,
+        }
+ */
+
+        debugger;
+        //return this.http.post<OptionCore[]>(this.userSettingsResourceUrl + '/save-new-options', optionCores, { observe: 'response' });
+        return this.http.post<OptionCore[]>(this.userSettingsResourceUrl + '/save-new-options', [optionCores[0]], { observe: 'response' });
     }
 
     /**

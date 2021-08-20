@@ -12,7 +12,7 @@ export const defaultNotificationSettings: SettingsCategory = {
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionId: 'notification.exercise-notification.exercise-created-or-started',
+                        option: 'notification.exercise-notification.exercise-created-or-started',
                     },
                 },
                 {
@@ -21,7 +21,7 @@ export const defaultNotificationSettings: SettingsCategory = {
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionId: 'notification.exercise-notification.exercise-open-for-practice',
+                        option: 'notification.exercise-notification.exercise-open-for-practice',
                     },
                 },
                 {
@@ -30,7 +30,7 @@ export const defaultNotificationSettings: SettingsCategory = {
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionId: 'notification.exercise-notification.new-post-exercises',
+                        option: 'notification.exercise-notification.new-post-exercises',
                     },
                 },
                 {
@@ -39,7 +39,7 @@ export const defaultNotificationSettings: SettingsCategory = {
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionId: 'notification.exercise-notification.new-answer-post-exercises',
+                        option: 'notification.exercise-notification.new-answer-post-exercises',
                     },
                 },
             ],
@@ -53,7 +53,7 @@ export const defaultNotificationSettings: SettingsCategory = {
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionId: 'notification.lecture-notification.attachment-changes',
+                        option: 'notification.lecture-notification.attachment-changes',
                     },
                 },
                 {
@@ -62,7 +62,7 @@ export const defaultNotificationSettings: SettingsCategory = {
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionId: 'notification.lecture-notification.new-post-for-lecture',
+                        option: 'notification.lecture-notification.new-post-for-lecture',
                     },
                 },
                 {
@@ -71,7 +71,7 @@ export const defaultNotificationSettings: SettingsCategory = {
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionId: 'notification.lecture-notification.new-answer-post-for-lecture',
+                        option: 'notification.lecture-notification.new-answer-post-for-lecture',
                     },
                 },
             ],
@@ -85,7 +85,7 @@ export const defaultNotificationSettings: SettingsCategory = {
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionId: 'notification.instructor-exclusive-notification.course-and-exam-archiving-started',
+                        option: 'notification.instructor-exclusive-notification.course-and-exam-archiving-started',
                     },
                 },
             ],
