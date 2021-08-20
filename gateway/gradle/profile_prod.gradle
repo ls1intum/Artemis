@@ -20,12 +20,19 @@ bootRun {
 }
 
 task webpack_test(type: YarnTask, dependsOn: 'yarn') {
-    args = ["run", "webpack:test"]
+    args = ["--cwd", "../", "run", "webpack:test"]
 }
 
 task webpack(type: YarnTask, dependsOn: 'yarn') {
-    args = ["run", "webpack:prod"]
+    args = [ "--cwd", "../", "run", "webpack:prod"]
     environment = [APP_VERSION: project.version]
+}
+
+task copyClientLoc(type: Copy) {
+    from "../build/resources/main/"
+    into "build/resources/main/"
+    exclude "config"
+    fileMode = 0644
 }
 
 processResources {
@@ -44,5 +51,6 @@ processResources {
 }
 
 test.dependsOn webpack_test
-processResources.dependsOn webpack
+tasks.copyClientLoc.dependsOn webpack
+processResources.dependsOn tasks.copyClientLoc
 bootJar.dependsOn processResources

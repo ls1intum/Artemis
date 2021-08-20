@@ -24,17 +24,23 @@ bootRun {
 
 task webpack(type: YarnTask, dependsOn: 'yarn') {
     inputs.dir("../src/main/webapp/")
-    inputs.files("yarn.lock")
-    inputs.files("build.gradle")
+    inputs.files("../yarn.lock")
+    inputs.files("../build.gradle")
 
     def webpackDevFiles = fileTree("../webpack//")
     webpackDevFiles.exclude("../webpack.prod.js")
     inputs.files(webpackDevFiles)
+    outputs.dir("../build/resources/main/static/")
 
-    outputs.dir("build/resources/main/static/")
-
-    args = ["run", "webpack:build"]
+    args = [ "--cwd", "../", "run", "webpack:build"]
     environment = [APP_VERSION: project.version]
+}
+
+task copyClientLoc(type: Copy) {
+    from "../build/resources/main/"
+    into "build/resources/main/"
+    exclude "config"
+    fileMode = 0644
 }
 
 processResources {
@@ -52,5 +58,6 @@ processResources {
     }
 }
 
-processResources.dependsOn webpack
+tasks.copyClientLoc.dependsOn webpack
+processResources.dependsOn tasks.copyClientLoc
 bootJar.dependsOn processResources
