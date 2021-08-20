@@ -33,7 +33,7 @@ public class UserOption extends DomainObject {
     private boolean email = false;
 
     @ManyToOne
-    @JoinColumn(name = "user")
+    // @JoinColumn(name = "user")
     private User user;
 
     // getter & setter
@@ -89,6 +89,11 @@ public class UserOption extends DomainObject {
 
     public User getUser() {
         return user;
+    }
+
+    public UserOption user(User user) {
+        this.user = user;
+        return this;
     }
 
     public void setUser(User user) {
