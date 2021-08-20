@@ -30,7 +30,7 @@ describe('AnswerPostFooterComponent', () => {
         tutorApproved: false,
     } as AnswerPost;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [],
             providers: [{ provide: MetisService, useClass: MockMetisService }],
