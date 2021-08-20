@@ -765,9 +765,7 @@ describe('GuidedTourService', () => {
                 .compileComponents()
                 .then(() => {
                     guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
-
                     TestBed.createComponent(NavbarComponent);
-
                     guidedTourService = TestBed.inject(GuidedTourService);
                     accountService = TestBed.inject(AccountService);
                     profileService = TestBed.inject(ProfileService);

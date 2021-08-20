@@ -14,13 +14,13 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisTestModule } from '../../test.module';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
-import { OrionModule } from 'app/shared/orion/orion.module';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OrionState } from 'app/shared/orion/orion';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
+import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -39,8 +39,13 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OrionModule],
-            declarations: [OrionExerciseAssessmentDashboardComponent, MockComponent(ExerciseAssessmentDashboardComponent), MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule],
+            declarations: [
+                OrionExerciseAssessmentDashboardComponent,
+                MockComponent(ExerciseAssessmentDashboardComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(OrionButtonComponent),
+            ],
             providers: [
                 MockProvider(OrionConnectorService),
                 MockProvider(OrionAssessmentService),

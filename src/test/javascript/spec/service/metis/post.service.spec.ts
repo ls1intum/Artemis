@@ -6,7 +6,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { PostService } from 'app/shared/metis/post/post.service';
+import { PostService } from 'app/shared/metis/post.service';
 
 const expect = chai.expect;
 
@@ -91,19 +91,6 @@ describe('Post Service', () => {
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
-            tick();
-        }));
-
-        it('should update the votes of a Post', fakeAsync(() => {
-            const returnedFromService = { ...elemDefault, votes: 42 };
-
-            const expected = { ...returnedFromService };
-            service
-                .updateVotes(1, expected.id!, 0)
-                .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
-            const req = httpMock.expectOne({ method: 'PUT' });
-            req.flush(returnedFromService);
             tick();
         }));
 
