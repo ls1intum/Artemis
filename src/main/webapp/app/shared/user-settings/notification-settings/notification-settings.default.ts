@@ -1,4 +1,4 @@
-import { SettingsCategory, UserOption } from 'app/shared/user-settings/user-settings.component';
+import { SettingsCategory } from 'app/shared/user-settings/user-settings.component';
 
 export const defaultNotificationSettings: SettingsCategory = {
     name: 'Notification Settings',
@@ -9,22 +9,38 @@ export const defaultNotificationSettings: SettingsCategory = {
                 {
                     name: 'Exercise created / started',
                     description: 'Get notified if a (new) exercise has been created / started',
-                    webapp: true,
+                    optionCore: {
+                        webapp: true,
+                        email: false,
+                        optionId: 'notification.exercise-notification.exercise-created-or-started',
+                    },
                 },
                 {
                     name: 'Exercise open for Practice',
                     description: 'Get notified if an exercise has been opened for practice',
-                    webapp: true,
+                    optionCore: {
+                        webapp: true,
+                        email: false,
+                        optionId: 'notification.exercise-notification.exercise-open-for-practice',
+                    },
                 },
                 {
                     name: 'New Post for Exercises',
                     description: 'Get notified if a new post about an exercise has been created',
-                    webapp: true,
+                    optionCore: {
+                        webapp: true,
+                        email: false,
+                        optionId: 'notification.exercise-notification.new-post-exercises',
+                    },
                 },
                 {
                     name: 'New Answer Post for Exercises',
                     description: 'Get notified if a new answer post about an exercise has been created',
-                    webapp: true,
+                    optionCore: {
+                        webapp: true,
+                        email: false,
+                        optionId: 'notification.exercise-notification.new-answer-post-exercises',
+                    },
                 },
             ],
         },
@@ -34,17 +50,29 @@ export const defaultNotificationSettings: SettingsCategory = {
                 {
                     name: 'Attachment Changes',
                     description: 'Receive a notification when an attachment was changed',
-                    webapp: true,
+                    optionCore: {
+                        webapp: true,
+                        email: false,
+                        optionId: 'notification.lecture-notification.attachment-changes',
+                    },
                 },
                 {
                     name: 'New Post for Lecture',
                     description: 'Get notified when a new post about an exercise has been created',
-                    webapp: true,
+                    optionCore: {
+                        webapp: true,
+                        email: false,
+                        optionId: 'notification.lecture-notification.new-post-for-lecture',
+                    },
                 },
                 {
                     name: 'New Answer Post for Lecture',
                     description: 'Get notified when a new answer post about an exercise has been created',
-                    webapp: true,
+                    optionCore: {
+                        webapp: true,
+                        email: false,
+                        optionId: 'notification.lecture-notification.new-answer-post-for-lecture',
+                    },
                 },
             ],
         },
@@ -54,7 +82,11 @@ export const defaultNotificationSettings: SettingsCategory = {
                 {
                     name: 'Course & Exam Archiving Started',
                     description: 'Receive a notification when the process of archiving a course or exam has been started',
-                    webapp: true,
+                    optionCore: {
+                        webapp: true,
+                        email: false,
+                        optionId: 'notification.instructor-exclusive-notification.course-and-exam-archiving-started',
+                    },
                 },
             ],
         },

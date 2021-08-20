@@ -11,10 +11,23 @@ export interface SettingsCategory {
 export interface OptionGroup {
     name: string;
     // todo securityLevel : STUDENT (new enum), maybe add this to settings category and option as well
-    //options: Option[];
-    options: UserOption[];
+    options: Option[];
 }
 
+export interface Option {
+    name: string;
+    description: string;
+    optionCore: OptionCore;
+}
+
+export interface OptionCore {
+    id?: number;
+    optionId: string;
+    webapp: boolean;
+    email?: boolean;
+    changed?: boolean;
+}
+/*
 export interface UserOption {
     id?: number;
     changed?: boolean;
@@ -26,6 +39,7 @@ export interface UserOption {
     email?: boolean;
     user?: User;
 }
+ */
 /*
 export interface Option {
     name: string;

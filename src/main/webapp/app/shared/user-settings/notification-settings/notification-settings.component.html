@@ -12,8 +12,15 @@
             <dt>{{ option.name }}</dt>
             <span>{{ option.description }}</span>
             <div class="form-check border-bottom">
-                <input type="checkbox" class="form-check-input" [checked]="option.webapp" id="{{ option.name }}" value="{{ option.webapp }}" (click)="toggleOption($event)" />
-                <label class="form-check-label" for="{{ option.name }}">WebApp</label>
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    [checked]="option.optionCore.webapp"
+                    id="{{ option.optionCore.optionId }}"
+                    value="{{ option.optionCore.webapp }}"
+                    (click)="toggleOption($event)"
+                />
+                <label class="form-check-label" for="{{ option.optionCore.optionId }}">WebApp</label>
             </div>
         </div>
     </div>
