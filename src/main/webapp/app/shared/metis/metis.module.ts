@@ -24,6 +24,7 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { PostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @NgModule({
     imports: [
@@ -39,6 +40,7 @@ import { AnswerPostReactionsBarComponent } from 'app/shared/metis/postings-react
         EmojiModule,
         OverlayModule,
         CommonModule,
+        FontAwesomeModule,
     ],
     declarations: [
         PostingsThreadComponent,

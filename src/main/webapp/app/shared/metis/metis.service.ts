@@ -20,6 +20,11 @@ interface PostFilter {
     courseWideContext?: CourseWideContext;
 }
 
+export enum PageType {
+    OVERVIEW,
+    PAGE_SECTION,
+}
+
 export const VOTE_EMOJI_ID = 'heavy_plus_sign';
 
 @Injectable()
@@ -30,6 +35,7 @@ export class MetisService {
     private currentPostFilter?: PostFilter;
     private user: User;
     private course: Course;
+    private pageType: PageType;
 
     constructor(private postService: PostService, private answerPostService: AnswerPostService, private reactionService: ReactionService, private accountService: AccountService) {
         this.accountService.identity().then((user: User) => {
@@ -43,6 +49,10 @@ export class MetisService {
 
     get tags(): Observable<string[]> {
         return this.tags$.asObservable();
+    }
+
+    getPageType(): PageType {
+        return this.pageType;
     }
 
     getUser(): User {
@@ -92,6 +102,7 @@ export class MetisService {
                 .pipe(map((res: HttpResponse<Post[]>) => MetisService.sortPosts(res.body!)))
                 .subscribe((posts: Post[]) => {
                     this.posts$.next(posts);
+                    this.pageType = PageType.PAGE_SECTION;
                 });
         } else if (postFilter?.exercise) {
             this.postService
@@ -99,6 +110,7 @@ export class MetisService {
                 .pipe(map((res: HttpResponse<Post[]>) => MetisService.sortPosts(res.body!)))
                 .subscribe((posts: Post[]) => {
                     this.posts$.next(posts);
+                    this.pageType = PageType.PAGE_SECTION;
                 });
         } else {
             this.postService
@@ -114,6 +126,7 @@ export class MetisService {
                 )
                 .subscribe((posts: Post[]) => {
                     this.posts$.next(posts);
+                    this.pageType = PageType.OVERVIEW;
                 });
         }
     }

@@ -54,11 +54,11 @@ public class Post extends Posting {
     private Set<String> tags = new HashSet<>();
 
     @ManyToOne
-    @JsonIncludeProperties({ "id" })
+    @JsonIncludeProperties({ "id", "title" })
     private Exercise exercise;
 
     @ManyToOne
-    @JsonIncludeProperties({ "id" })
+    @JsonIncludeProperties({ "id", "title" })
     private Lecture lecture;
 
     @ManyToOne
