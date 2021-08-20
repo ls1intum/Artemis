@@ -13,14 +13,18 @@ const TITLE_MAX_LENGTH = 200;
     templateUrl: './post-create-edit-modal.component.html',
 })
 export class PostCreateEditModalComponent extends PostingsCreateEditModalDirective<Post> {
+    tags: string[];
+
     constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {
         super(metisService, modalService, formBuilder);
+        this.tags = this.posting?.tags ?? [];
     }
 
     /**
      * resets the post title and post content
      */
     resetFormGroup(): void {
+        this.tags = this.posting.tags ?? [];
         this.formGroup = this.formBuilder.group({
             title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH)]],
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength)]],
