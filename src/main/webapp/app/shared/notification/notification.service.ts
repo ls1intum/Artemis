@@ -21,6 +21,7 @@ import { UserOption } from 'app/shared/user-settings/user-settings.component';
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
     public resourceUrl = SERVER_API_URL + 'api/notifications';
+    public userSettingsResourceUrl = SERVER_API_URL + 'api/user-settings';
     subscribedTopics: string[] = [];
     notificationObserver: ReplaySubject<Notification>;
     cachedNotifications: Observable<HttpResponse<Notification[]>>;
@@ -54,11 +55,30 @@ export class NotificationService {
 
     queryUserOptions(req?: any): Observable<HttpResponse<UserOption[]>> {
         const options = createRequestOption(req);
-        return this.http.get<UserOption[]>(this.resourceUrl + '/fetch-options', { params: options, observe: 'response' });
+        //return this.http.get<UserOption[]>(this.resourceUrl + '/fetch-options', { params: options, observe: 'response' });
+        return this.http.get<UserOption[]>(this.userSettingsResourceUrl + '/fetch-options', { params: options, observe: 'response' });
     }
 
     saveNotificationOptions(options: NotificationOption[]): Observable<HttpResponse<NotificationOption[]>> {
         return this.http.post<NotificationOption[]>(this.resourceUrl + '/save-options', options, { observe: 'response' });
+    }
+
+    saveUserOptions(options: UserOption[], notYetCustomized: Boolean): Observable<HttpResponse<UserOption[]>> {
+        //return this.http.post<UserOption[]>(this.resourceUrl + '/save-options', options, { observe: 'response' });
+        // (new) user has so far only used the default values -> create new Table for user
+        if (notYetCustomized) {
+            return this.http.put<UserOption[]>(this.userSettingsResourceUrl + '/save-options', options, { observe: 'response' });
+        } // user already has a table with custom settings
+        else {
+            return this.http.post<UserOption[]>(this.userSettingsResourceUrl + '/save-options', options, { observe: 'response' });
+        }
+    }
+
+    saveNewUserOptions(options: UserOption[]): Observable<HttpResponse<UserOption[]>> {
+        //return this.http.post<UserOption[]>(this.resourceUrl + '/save-options', options, { observe: 'response' });
+        // (new) user has so far only used the default values -> create new Table for user
+
+        return this.http.post<UserOption[]>(this.userSettingsResourceUrl + '/save-new-options', options, { observe: 'response' });
     }
 
     /**

@@ -11,9 +11,22 @@ export interface SettingsCategory {
 export interface OptionGroup {
     name: string;
     // todo securityLevel : STUDENT (new enum), maybe add this to settings category and option as well
-    options: Option[];
+    //options: Option[];
+    options: UserOption[];
 }
 
+export interface UserOption {
+    id?: number;
+    changed?: boolean;
+    category?: string;
+    group?: string;
+    name: string;
+    description: string;
+    webapp: boolean;
+    email?: boolean;
+    user?: User;
+}
+/*
 export interface Option {
     name: string;
     description: string;
@@ -31,6 +44,7 @@ export interface UserOption {
     email: boolean;
     user: User;
 }
+ */
 
 @Component({
     selector: 'jhi-user-settings',

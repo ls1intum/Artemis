@@ -1,11 +1,8 @@
-package de.tum.in.www1.artemis.domain.notification;
+package de.tum.in.www1.artemis.domain;
 
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.User;
 
 /**
  * Individual User Options that make the User Settings
@@ -36,7 +33,7 @@ public class UserOption extends DomainObject {
     private boolean email = false;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user")
     private User user;
 
     // getter & setter
@@ -46,9 +43,9 @@ public class UserOption extends DomainObject {
         return id;
     }
 
-    public void setId(long id) {
-        this.id = id;
-    }
+    /*
+     * public void setId(long id) { this.id = id; }
+     */
 
     public String getCategory() {
         return category;
@@ -90,11 +87,11 @@ public class UserOption extends DomainObject {
         this.email = email;
     }
 
-    public User getUser_id() {
+    public User getUser() {
         return user;
     }
 
-    public void setUser_id(User user) {
+    public void setUser(User user) {
         this.user = user;
     }
 

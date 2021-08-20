@@ -9,9 +9,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.UserOption;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationOption;
-import de.tum.in.www1.artemis.domain.notification.UserOption;
 
 /**
  * Spring Data repository for the Notification entity.
@@ -42,7 +42,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
      */
     @Query("""
             SELECT userOption FROM UserOption userOption
-            WHERE userOption.user = :#{#userId}
+            WHERE userOption.user.id = :#{#userId}
             """)
     Page<UserOption> findAllUserOptionsForRecipientWithId(@Param("userId") long userId, Pageable pageable);
     /*

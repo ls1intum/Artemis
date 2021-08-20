@@ -5,7 +5,7 @@
         {{ 'artemisApp.notification.options.saveChanges' | artemisTranslate }}
     </button>
 </div>
-<div class="list-group d-block">
+<div class="list-group d-block" *ngIf="notificationSettings">
     <div class="list-group-item" *ngFor="let optionGroup of notificationSettings.groups">
         <h3>{{ optionGroup.name }}</h3>
         <div *ngFor="let option of optionGroup.options">

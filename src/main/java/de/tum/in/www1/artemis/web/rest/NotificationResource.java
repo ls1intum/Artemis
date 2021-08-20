@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -22,7 +20,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
-import de.tum.in.www1.artemis.domain.notification.UserOption;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -93,25 +90,30 @@ public class NotificationResource {
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
-
-    @GetMapping("/notifications/fetch-options")
-    public ResponseEntity<List<UserOption>> getNotificationOptionsForCurrentUser(@ApiParam Pageable pageable) {
-        log.info("!!!IAMSAY: [NotificationResource] getNotificationOptionsForCurrentUser");
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        log.info("!!!IAMSAY: [NotificationResource] : currentUser = " + currentUser);
-        // final Page<NotificationOption> page = notificationRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId(), pageable);
-        final Page<UserOption> page = notificationRepository.findAllUserOptionsForRecipientWithId(currentUser.getId(), pageable);
-        log.info("!!!IAMSAY: [NotificationResource] : page = " + page);
-        log.info("!!!IAMSAY: [NotificationResource] : page.content = " + page.getContent());
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-    }
     /*
+     * @GetMapping("/notifications/fetch-options") public ResponseEntity<List<UserOption>> getNotificationOptionsForCurrentUser(@ApiParam Pageable pageable) {
+     * log.info("!!!IAMSAY: [NotificationResource] getNotificationOptionsForCurrentUser"); User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+     * log.info("!!!IAMSAY: [NotificationResource] : currentUser = " + currentUser); // final Page<NotificationOption> page =
+     * notificationRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId(), pageable); final Page<UserOption> page =
+     * notificationRepository.findAllUserOptionsForRecipientWithId(currentUser.getId(), pageable); log.info("!!!IAMSAY: [NotificationResource] : page = " + page);
+     * log.info("!!!IAMSAY: [NotificationResource] : page.content = " + page.getContent()); HttpHeaders headers =
+     * PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page); return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+     * } /*
      * @PostMapping("/save-options") public ResponseEntity<NotificationOption[]> saveNotificationOptionsForCurrentUser(@RequestBody NotificationOption[] options) { // return
      * badRequest(); if (options == null) { return conflict(); } User currentUser = userRepository.getUserWithGroupsAndAuthorities(); Long currentUserId = currentUser.getId(); for
      * (NotificationOption option : options) { if (option.getUser_id().getId() != currentUserId) { // TODO try to rework User_id to actually be only the id return conflict(); } }
      * // TODO maybe more checks // NotificationOption[] savedOptions = notificationRepository.saveAllNotificationOptionsForRecipientWithId(currentUserId, options);
      * notificationRepository.saveAllNotificationOptionsForRecipientWithId(currentUserId, options); return ok(); }
+     */
+
+    /*
+     * @PostMapping("/save-options") public ResponseEntity<UserOption[]> saveUserOptionsForCurrentUser(@RequestBody UserOption[] options) { // return badRequest(); if (options ==
+     * null) { return conflict(); } User currentUser = userRepository.getUserWithGroupsAndAuthorities(); Long currentUserId = currentUser.getId(); for (UserOption option : options)
+     * { if (option.getUser_id().getId() != currentUserId) { // TODO try to rework User_id to actually be only the id return conflict(); } } return forbidden(); } // TODO maybe
+     * more checks // NotificationOption[] savedOptions = notificationRepository.saveAllNotificationOptionsForRecipientWithId(currentUserId, options); //UserOption[] result =
+     * notificationRepository.saveAllUserOptionsForRecipientWithId(currentUserId, options); // UserOption[] result = //notificationRepository.saveAll(options); //return ok();
+     * //return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, notification.getId().toString())).body(result); return
+     * ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "test")).body(result); } }
      */
 
     /**

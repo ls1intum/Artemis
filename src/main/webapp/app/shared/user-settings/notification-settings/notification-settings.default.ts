@@ -1,4 +1,4 @@
-import { SettingsCategory } from 'app/shared/user-settings/user-settings.component';
+import { SettingsCategory, UserOption } from 'app/shared/user-settings/user-settings.component';
 
 export const defaultNotificationSettings: SettingsCategory = {
     name: 'Notification Settings',
