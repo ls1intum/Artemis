@@ -95,7 +95,7 @@ describe('Modeling Exercise Spec', () => {
             modelingExerciseExampleSubmission.assessComponent(2, 'Good');
             modelingExerciseExampleSubmission.openAssessmentForComponent(3);
             modelingExerciseExampleSubmission.assessComponent(0, 'Unnecessary');
-            modelingExerciseExampleSubmission.saveExampleAssessment();
+            cy.contains('Save Example Assessment').click();
         });
 
         it('Edit Existing Modeling Exercise', () => {

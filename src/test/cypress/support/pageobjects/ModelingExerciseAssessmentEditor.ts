@@ -18,8 +18,4 @@ export class ModelingExerciseAssessmentEditor {
             cy.get('.col-lg-6 >>>> :nth-child(2) > :nth-child(2)').type(feedback);
         }
     }
-
-    saveExampleAssessment() {
-        cy.contains('Save Example Assessment').click();
-    }
 }
