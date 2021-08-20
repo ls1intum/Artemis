@@ -22,18 +22,18 @@ bootRun {
     args = []
 }
 
-task webapp(type: NpmTask) {
-    inputs.files("package-lock.json")
+task webpack(type: YarnTask, dependsOn: 'yarn') {
+    inputs.dir("../src/main/webapp/")
+    inputs.files("yarn.lock")
     inputs.files("build.gradle")
-    inputs.files("angular.json")
-    inputs.dir("webpack/")
-    inputs.dir("src/main/webapp/")
+
+    def webpackDevFiles = fileTree("../webpack//")
+    webpackDevFiles.exclude("../webpack.prod.js")
+    inputs.files(webpackDevFiles)
 
     outputs.dir("build/resources/main/static/")
 
-    dependsOn npmInstall
-
-    args = ["run", "webapp:build"]
+    args = ["run", "webpack:build"]
     environment = [APP_VERSION: project.version]
 }
 
@@ -52,5 +52,5 @@ processResources {
     }
 }
 
-processResources.dependsOn webapp
+processResources.dependsOn webpack
 bootJar.dependsOn processResources

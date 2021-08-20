@@ -1,10 +1,17 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "emitDecoratorMetadata": true,
-    "outDir": "build/out-tsc/spec",
-    "types": ["jest", "node"]
+    "types": ["jest", "node"],
+    "allowJs": true,
+    "outDir": "build/www/app",
+    "baseUrl": "./",
+    "paths": {
+      "@angular/*": ["./node_modules/@angular/*"],
+      "app/*": ["./src/main/webapp/app/*"]
+    }
   },
-  "files": ["src/main/webapp/polyfills.ts"],
-  "include": ["src/main/webapp/**/*.spec.ts", "src/main/webapp/**/*.d.ts"]
+  "files": ["./src/test/javascript/spec/entry.ts"],
+  "include": ["./src/test/javascript", "./src/main/webapp/app"],
+  "exclude": [
+    "./node_modules", "../node_modules"]
 }

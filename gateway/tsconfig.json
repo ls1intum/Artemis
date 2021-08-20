@@ -1,25 +1,47 @@
 {
   "compilerOptions": {
-    "baseUrl": "src/main/webapp/",
-    "outDir": "./build/resources/main/static/",
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "sourceMap": true,
-    "declaration": false,
-    "downlevelIteration": true,
-    "experimentalDecorators": true,
-    "moduleResolution": "node",
-    "importHelpers": true,
+    "allowJs": false,
     "target": "es2017",
     "module": "es2020",
-    "lib": ["es2018", "dom"]
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "emitDecoratorMetadata": true,
+    "downlevelIteration": true,
+    "declaration": false,
+    "experimentalDecorators": true,
+    "removeComments": true,
+    "strict": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "strictNullChecks": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports":true,
+    "outDir": "build/resources/main/static/app",
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["es2018", "dom"],
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "baseUrl": "./",
+    "paths": {
+      "app/*": ["./src/main/webapp/app/*"]
+    },
+    "importHelpers": true
   },
   "angularCompilerOptions": {
-    "strictInjectionParameters": true,
-    "strictInputAccessModifiers": true,
+    "genDir": "build/resources/main/aot",
+    "skipMetadataEmit" : true,
+    "fullTemplateTypeCheck": true,
     "strictTemplates": true,
     "preserveWhitespaces": true
-  }
+  },
+  "include": [
+    "./src/main/webapp/app"
+  ],
+  "exclude": [
+    "./node_modules"
+  ]
 }

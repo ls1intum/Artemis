@@ -278,7 +278,7 @@ if (project.hasProperty("nodeInstall")) {
     Boolean downloadNode = !os.isMacOsX() || arch.isAmd64()
     node {
         version = "14.17.1"
-        npmVersion = "7.18.1"
+        yarnVersion = "${yarn_version}"
         download = downloadNode
     }
 }

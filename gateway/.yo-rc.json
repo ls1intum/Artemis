@@ -40,7 +40,7 @@
     "packageFolder": "de/tum/in/www1/artemis",
     "jwtSecretKey": "YzczNTU1YjgzYTcxYTQ2MWQyMWRiOWQ4NmI4MWQxZTM1MzhiMWE1YmM0OGY2ODkzNzI3YzhmNGQ5NmYwYzllOGEwMzBjYjEwODE3NjU1ZDVhYzAzOGI1ZmEwMTc2ZTQzMjg1MjVhYWViM2M0YjZkZjQ1Yzg5NmUwMTNjNDUyNjc=",
     "devServerPort": 4200,
-    "clientPackageManager": "npm",
+    "clientPackageManager": "yarn",
     "clientThemeVariant": "",
     "languages": ["en", "de"],
     "cypressCoverage": true

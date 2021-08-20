@@ -177,7 +177,7 @@ info:
 
 jhipster:
   clientApp:
-    name: 'gatewayApp'
+    name: 'artemisApp'
   # By default CORS is disabled. Uncomment to enable.
   # cors:
   #   allowed-origins: "http://localhost:8100,http://localhost:9000"
