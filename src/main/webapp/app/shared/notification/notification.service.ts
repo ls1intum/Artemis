@@ -61,66 +61,14 @@ export class NotificationService {
         return this.http.get<NotificationOption[]>(this.resourceUrl + '/fetch-options', { params: options, observe: 'response' });
     }
 
-    //queryUserOptions(req?: any): Observable<HttpResponse<UserOption[]>> {
     queryUserOptions(req?: any): Observable<HttpResponse<OptionCore[]>> {
         const optionCores = createRequestOption(req);
-        //return this.http.get<UserOption[]>(this.resourceUrl + '/fetch-options', { params: options, observe: 'response' });
-        //return this.http.get<UserOption[]>(this.userSettingsResourceUrl + '/fetch-options', { params: optionCores, observe: 'response' });
         return this.http.get<OptionCore[]>(this.userSettingsResourceUrl + '/fetch-options', { params: optionCores, observe: 'response' });
     }
 
-    /*
-    saveNotificationOptions(options: NotificationOption[]): Observable<HttpResponse<NotificationOption[]>> {
-        return this.http.post<NotificationOption[]>(this.resourceUrl + '/save-options', options, { observe: 'response' });
-    }
-     */
-    saveNotificationOptions(options: NotificationOption[]): void {
-        const dummy: UserOption = {
-            id: -1,
-            option: 'Kent Test',
-            webapp: true,
-            email: false,
-        };
-
-        this.http.post<UserOption[]>(this.resourceUrl + '/save-options', [dummy], { observe: 'response' });
-    }
-
-    //saveUserOptions(options: UserOption[], notYetCustomized: Boolean): Observable<HttpResponse<UserOption[]>> {
-    saveUserOptions(optionCores: OptionCore[], notYetCustomized: Boolean): Observable<HttpResponse<OptionCore[]>> {
-        //return this.http.post<UserOption[]>(this.resourceUrl + '/save-options', options, { observe: 'response' });
-        // (new) user has so far only used the default values -> create new Table for user
-        if (notYetCustomized) {
-            //return this.http.put<UserOption[]>(this.userSettingsResourceUrl + '/save-options', options, { observe: 'response' });
-            return this.http.put<OptionCore[]>(this.userSettingsResourceUrl + '/save-options', optionCores, { observe: 'response' });
-        } // user already has a table with custom settings
-        else {
-            //return this.http.post<UserOption[]>(this.userSettingsResourceUrl + '/save-options', options, { observe: 'response' });
-            return this.http.post<OptionCore[]>(this.userSettingsResourceUrl + '/save-options', optionCores, { observe: 'response' });
-        }
-    }
-
-    //saveNewUserOptions(options: UserOption[]): Observable<HttpResponse<UserOption[]>> {
-
     saveNewUserOptions(optionCores: OptionCore[]): Observable<HttpResponse<OptionCore[]>> {
-        //return this.http.post<UserOption[]>(this.resourceUrl + '/save-options', options, { observe: 'response' });
-        // (new) user has so far only used the default values -> create new Table for user
-
-        //return this.http.post<UserOption[]>(this.userSettingsResourceUrl + '/save-new-options', optionCores, { observe: 'response' });
-
-        //optionCores[0].test = "hallo kent";
-        /*
-        const dummy = {
-            //changed : true,
-            id : -1,
-            option : 'hello test',
-            webapp : false,
-            email: false,
-        }
- */
-
-        debugger;
-        //return this.http.post<OptionCore[]>(this.userSettingsResourceUrl + '/save-new-options', optionCores, { observe: 'response' });
-        return this.http.post<OptionCore[]>(this.userSettingsResourceUrl + '/save-new-options', [optionCores[0]], { observe: 'response' });
+        return this.http.post<OptionCore[]>(this.userSettingsResourceUrl + '/save-new-options', optionCores, { observe: 'response' });
+        //return this.http.post<OptionCore[]>(this.userSettingsResourceUrl + '/save-new-options', [optionCores[0]], { observe: 'response' });
     }
 
     /**

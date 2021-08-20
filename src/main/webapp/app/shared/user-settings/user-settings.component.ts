@@ -22,7 +22,7 @@ export interface Option {
 
 export interface OptionCore {
     id?: number;
-    option: string;
+    optionSpecifier: string;
     webapp: boolean;
     email?: boolean;
     changed?: boolean;

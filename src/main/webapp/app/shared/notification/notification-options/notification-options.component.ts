@@ -75,7 +75,6 @@ export class NotificationOptionsComponent implements OnInit {
     }
 
     private loadNotificationOptionsSuccess(notificationOptions: NotificationOption[], headers: HttpHeaders): void {
-        debugger;
         for (let notificationOption in notificationOptions) {
             this.notificationOptions.push(notificationOptions[notificationOption]);
         }

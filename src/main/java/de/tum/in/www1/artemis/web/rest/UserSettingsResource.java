@@ -65,15 +65,6 @@ public class UserSettingsResource {
      * notificationRepository.saveAllNotificationOptionsForRecipientWithId(currentUserId, options); return ok(); }
      */
 
-    // @PostMapping("/save-options") public ResponseEntity<UserOption[]> saveUserOptionsForCurrentUser(@RequestBody UserOption[] options) {
-    /*
-     * @PutMapping("/user-settings/save-options") public ResponseEntity<UserOption[]> saveUserOptionsForCurrentUser(@RequestBody UserOption[] options) { User currentUser =
-     * userRepository.getUserWithGroupsAndAuthorities(); Long currentUserId = currentUser.getId(); for( UserOption option : options) { option.setUser_id(currentUser); }
-     * List<UserOption> result = userOptionRepository.saveAll(Arrays.stream(options).toList()); //return
-     * ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "test")).body(result); UserOption[] result2 = result.toArray(new
-     * UserOption[result.size()]); return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "test")).body(result2); }
-     */
-
     @PostMapping("/user-settings/save-options")
     public ResponseEntity<UserOption[]> saveUserOptionsForCurrentUser(@RequestBody UserOption[] options) {
         // return badRequest();
