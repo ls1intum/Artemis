@@ -17,7 +17,7 @@ public interface UserOptionRepository extends JpaRepository<UserOption, Long> {
 
     /*
      * @Query(""" SELECT userOption FROM UserOption userOption WHERE userOption.user = :#{#userId} AND userOption.category = "Notification Settings" """) Page<UserOption>
-     * findAllUserOptionsForRecipientWithId(@Param("userId") long userId, Pageable pageable);
+     * findAllUserOptionsForRecipientWithId(@Param("userId") long userIdhi< pageable);
      */
     @Query("""
             SELECT userOption FROM UserOption userOption

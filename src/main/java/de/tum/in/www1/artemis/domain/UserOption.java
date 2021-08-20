@@ -17,14 +17,17 @@ public class UserOption extends DomainObject {
     @Column(name = "id")
     private long id;
 
-    @Column(name = "category")
-    private String category;
+    @Column(name = "settings_category")
+    private String settingsCategory;
 
-    @Column(name = "group")
-    private String group;
+    @Column(name = "option_group")
+    private String optionGroup;
 
-    @Column(name = "description")
-    private String description;
+    @Column(name = "option_name")
+    private String optionName;
+
+    @Column(name = "option_description")
+    private String optionDescription;
 
     @Column(name = "webapp", columnDefinition = "boolean default true")
     private boolean webapp = true;
@@ -33,42 +36,54 @@ public class UserOption extends DomainObject {
     private boolean email = false;
 
     @ManyToOne
-    // @JoinColumn(name = "user")
     private User user;
 
-    // getter & setter
+    public User getUser() {
+        return user;
+    }
 
-    @Override
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public String getOptionName() {
+        return optionName;
+    }
+
+    public void setOptionName(String optionName) {
+        this.optionName = optionName;
+    }
+
     public Long getId() {
         return id;
     }
 
-    /*
-     * public void setId(long id) { this.id = id; }
-     */
-
-    public String getCategory() {
-        return category;
+    public void setOptionId(long id) {
+        this.id = id;
     }
 
-    public void setCategory(String category) {
-        this.category = category;
+    public String getSettingsCategory() {
+        return settingsCategory;
     }
 
-    public String getGroup() {
-        return group;
+    public void setSettingsCategory(String settingsCategory) {
+        this.settingsCategory = settingsCategory;
     }
 
-    public void setGroup(String group) {
-        this.group = group;
+    public String getOptionGroup() {
+        return optionGroup;
     }
 
-    public String getDescription() {
-        return description;
+    public void setOptionGroup(String optionGroup) {
+        this.optionGroup = optionGroup;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public String getOptionDescription() {
+        return optionDescription;
+    }
+
+    public void setOptionDescription(String optionDescription) {
+        this.optionDescription = optionDescription;
     }
 
     public boolean isWebapp() {
@@ -87,22 +102,9 @@ public class UserOption extends DomainObject {
         this.email = email;
     }
 
-    public User getUser() {
-        return user;
-    }
-
-    public UserOption user(User user) {
-        this.user = user;
-        return this;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
     @Override
     public String toString() {
-        return "UserOption{" + "id=" + id + ", category='" + category + '\'' + ", group='" + group + '\'' + ", description='" + description + '\'' + ", webapp=" + webapp
-                + ", email=" + email + ", user=" + user + '}';
+        return "UserOption{" + "id=" + id + ", settingsCategory='" + settingsCategory + '\'' + ", optionGroup='" + optionGroup + '\'' + ", optionName='" + optionName + '\''
+                + ", optionDescription='" + optionDescription + '\'' + ", webapp=" + webapp + ", email=" + email + ", user=" + user + '}';
     }
 }

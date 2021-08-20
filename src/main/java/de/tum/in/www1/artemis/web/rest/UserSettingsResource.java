@@ -109,25 +109,23 @@ public class UserSettingsResource {
 
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         Long currentUserId = currentUser.getId();
-        /*
-         * for(UserOption option : options) { option.setUser_id(currentUser); userOptionRepository.save(option); //resultList.add(userOptionRepository.saveNewOption(option)); }
-         */
-        UserOption dummy = new UserOption();
-        dummy.setId(27L);
-        dummy.setCategory("Notifications");
-        dummy.setGroup("Exercise Notifications");
-        dummy.setDescription("Please start working.");
-        dummy.setWebapp(true);
-        dummy.setEmail(false);
-        dummy.setUser(currentUser);
 
-        UserOption dummy2 = new UserOption();
+        for (UserOption option : options) {
+            option.setUser(currentUser);
+        }
+        ; // resultList.add(userOptionRepository.saveNewOption(option)); }
+
+        /*
+         * UserOption dummy = new UserOption(); dummy.setId(27L); dummy.setSettingsCategory("Notifications"); dummy.setOptionGroup("Exercise Notifications");
+         * dummy.setOptionName("my Option Name"); dummy.setOptionDescription("Please start working."); dummy.setWebapp(true); dummy.setEmail(false); dummy.setUser(currentUser);
+         * UserOption dummy2 = new UserOption();
+         */
         /*
          * dummy.setId(27L); dummy.setCategory("Notifications"); dummy.setGroup("Exercise Notifications"); dummy.setDescription("Please start working."); dummy.setWebapp(true);
          * dummy.setEmail(false); dummy.setUser(currentUser);
          */
 
-        userOptionRepository.save(dummy2);
+        // userOptionRepository.save(dummy);
 
         List<UserOption> result = userOptionRepository.saveAll(Arrays.stream(options).toList());
         // return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "test")).body(result);
