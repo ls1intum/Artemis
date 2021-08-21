@@ -7,6 +7,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 //import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { User } from 'app/core/user/user.model';
 import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import set = Reflect.set;
 //import {defaultNotificationSettings} from "app/shared/user-settings/notification-settings/notification-settings.component";
 
 /**
@@ -76,25 +77,27 @@ export class UserSettingsService {
         return this.http.get<OptionCore[]>(this.resourceUrl + '/fetch-options', {
             params: optionCores, //maybe useless TODO
             observe: 'response',
-        });
-        //        }
-        //    }
+        }); //  }}
+    }
+
+    private loadDefaultSettingsAsFoundation(category: string): UserSettings {
+        switch (category) {
+            case 'Notifications': {
+                return defaultNotificationSettings;
+            }
+            default: {
+                //TODO ERROR
+                //with enums there was no such problem ...
+                return defaultNotificationSettings;
+            }
+        }
     }
 
     public loadUserOptionCoresSuccess(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: string): UserSettings {
         let settingsResult: UserSettings;
         // load default settings as foundation
-        switch (category) {
-            case 'Notifications': {
-                settingsResult = defaultNotificationSettings;
-                break;
-            }
-            default: {
-                //TODO ERROR
-                //with enums there was no such problem ...
-                settingsResult = defaultNotificationSettings;
-            }
-        }
+        settingsResult = this.loadDefaultSettingsAsFoundation(category);
+
         // if user already customized settings -> update loaded default settings with received data
         if (!(receivedOptionCoresFromServer == undefined || receivedOptionCoresFromServer.length === 0)) {
             this.updateSettings(receivedOptionCoresFromServer, settingsResult);
@@ -130,7 +133,16 @@ export class UserSettingsService {
         }
     }
 
-    saveUserOptions(optionCores: OptionCore[]): Observable<HttpResponse<OptionCore[]>> {
-        return this.http.post<OptionCore[]>(this.resourceUrl + '/save-new-options', optionCores, { observe: 'response' });
+    public saveUserOptions(optionCores: OptionCore[], category: string): Observable<HttpResponse<OptionCore[]>> {
+        //only save cores which were changed
+        let changedOptionCores = optionCores.filter((optionCore) => optionCore.changed);
+        return this.http.post<OptionCore[]>(this.resourceUrl + '/save-new-options', changedOptionCores, { observe: 'response' });
+    }
+
+    public saveUserOptionsSuccess(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: string): UserSettings {
+        let settingsResult: UserSettings;
+        settingsResult = this.loadDefaultSettingsAsFoundation(category);
+        this.updateSettings(receivedOptionCoresFromServer, settingsResult);
+        return settingsResult;
     }
 }
