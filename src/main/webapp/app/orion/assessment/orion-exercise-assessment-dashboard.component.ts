@@ -46,7 +46,7 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
         this.orionConnectorService.state().subscribe((state) => {
             if (this.orionState?.cloning && !state.cloning && this.activeSubmissionId !== undefined) {
                 // If the client sends a cloning = false the download was cancelled, unlock the pending submission
-                this.manualAssessmentService.cancelAssessment(this.activeSubmissionId);
+                this.manualAssessmentService.cancelAssessment(this.activeSubmissionId).subscribe();
             }
             this.orionState = { ...state };
         });
