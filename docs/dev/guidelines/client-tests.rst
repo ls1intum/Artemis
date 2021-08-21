@@ -1,16 +1,16 @@
-******
+************
 Client Tests
-******
+************
 
-**If you are new to client testing, it is highly recommended that you work through the testing part of the angular tutorial:** https://angular.io/guide/testing
+**If you are new to client testing, it is highly recommended that you work through the** `testing part <https://angular.io/guide/testing>`_ **of the angular tutorial.**
 
-We use Jest (https://jestjs.io/) as our client testing framework.
+We use `Jest <https://jestjs.io>`_ as our client testing framework.
 
 There are different tools available to support client testing. A common combination you can see in our codebase is:
 
-- Sinon (https://sinonjs.org/) for creating test spies, stubs and mocks
-- Chai (https://www.chaijs.com/) with Sinon Chai (https://github.com/domenic/sinon-chai) for assertions.
-- NgMocks (https://www.npmjs.com/package/ng-mocks) for mocking the dependencies of an angular component.
+- `Sinon <https://sinonjs.org/>`_ for creating test spies, stubs and mocks
+- `Chai <https://www.chaijs.com/>`_ with `Sinon Chai <https://github.com/domenic/sinon-chai>`_ for assertions.
+- `NgMocks <https://www.npmjs.com/package/ng-mocks/>`_ for mocking the dependencies of an angular component.
 
 The most basic test looks similar to this:
 
@@ -62,7 +62,7 @@ The most basic test looks similar to this:
 Some guidelines:
 
 1. A component should be tested in isolation without any dependencies if possible. Do not simply import the whole production module. Only import real dependencies if it is essential for the test
-   that the real dependency is used. Instead mock pipes, directives and components that the component under test depends upon. A very useful technique is writing stubs for child components: https://angular.io/guide/testing-components-scenarios#stubbing-unneeded-components.
+   that the real dependency is used. Instead, use mock pipes, mock directives and mock components that the component under test depends upon. A very useful technique is writing `stubs for child components <https://angular.io/guide/testing-components-scenarios#stubbing-unneeded-components>`_.
    This has the benefit of being able to test the interaction with the child components.
 
 Example of a bad test practice:
@@ -167,11 +167,11 @@ Here are the improvements for the test above:
   + MockComponent(ResultComponent)
   + MockComponent(FaIconComponent)
 
-More examples on test speed improvement can be found in the following PR: https://github.com/ls1intum/Artemis/pull/3879/files
+More examples on test speed improvement can be found in the `following PR <https://github.com/ls1intum/Artemis/pull/3879/files>`_.
 
-Services should be mocked if they simply return some data from the server. However, if the service has some form of logic included (for exampling converting dates to moments),
-and this logic is important for the component, do not mock the service methods, but mock the http requests and responses from the api. This allows us to test the interaction
-of the component with the service and in addition test that the service logic works correctly. A good explanation can be found in the official angular documentation: https://angular.io/guide/http#testing-http-requests
+   *  Services should be mocked if they simply return some data from the server. However, if the service has some form of logic included (for example converting dates to moments),
+      and this logic is important for the component, do not mock the service methods, but mock the HTTP requests and responses from the API. This allows us to test the interaction
+      of the component with the service and in addition test that the service logic works correctly. A good explanation can be found in the `official angular documentation <https://angular.io/guide/http#testing-http-requests>`_.
 
     .. code:: ts
 
@@ -189,6 +189,7 @@ of the component with the service and in addition test that the service logic wo
           afterEach(() => {
               ...
               httpMock.verify();
+              sinon.restore();
           });
 
           it('should make get request', fakeAsync( () => {
@@ -203,26 +204,21 @@ of the component with the service and in addition test that the service logic wo
           }));
         });
 
-
-
-
-
-
-2. Do not overuse ``NO_ERRORS_SCHEMA`` (https://angular.io/guide/testing-components-scenarios#no_errors_schema).
+2. Do not overuse ``NO_ERRORS_SCHEMA`` (`link <https://angular.io/guide/testing-components-scenarios#no_errors_schema>`_).
    This tells angular to ignore the attributes and unrecognized elements, prefer to use component stubs as mentioned above.
 
-3. When using sinon, use sandboxes (https://sinonjs.org/releases/latest/sandbox/).
-   Sandboxes remove the need to keep track of every fake created, which greatly simplifies cleanup and improves readability.
-   Since ``sinon@5.0.0``, the sinon object is a default sandbox. Unless you have a very advanced setup or need a special configuration, you probably want to only use that one.
+3. Sinon uses sandboxes, which remove the need of keeping track of every fake created, which greatly simplifies cleanup and improves readability.
+   Since ``sinon@5.0.0``, the sinon object is a default `sandbox <https://sinonjs.org/releases/latest/sandbox/>`_, meaning one doesn't need to do any setup work.
+   Unless you have a very advanced setup or need a special configuration, you probably want to only use that one.
+   In ``afterEach`` block one should add ``sinon.restore()``, which restores all fakes created through sandbox.
 
-4. Make sure to have at least 80% test coverage. Running ``yarn test --coverage`` to create a coverage report. You can also simply run the tests in IntelliJ IDEA with coverage activated.
+4. Make sure to have at least 80% line test coverage. Running ``yarn test --coverage`` to create a coverage report. You can also simply run the tests in IntelliJ IDEA with coverage activated.
 
 5. It is preferable to test a component through the interaction of the user with the template. This decouples the test from the concrete implementation used in the component.
    For example if you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click and then assert that the data has been loaded and that the expected
    template changes have occurred.
 
-6. Do not remove the template during tests. The template is a crucial part of a component and should not be removed during test. Do not do this:
-
+6. Do not remove the template during tests by making use of ``overrideTemplate()``. The template cis a crucial part of a component and should not be removed during test. Do not do this:
 
  .. code:: ts
 
