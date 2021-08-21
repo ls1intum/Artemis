@@ -11,8 +11,6 @@
 </div>
 <div class="list-group d-block" *ngIf="userSettings">
     <div class="list-group-item" *ngFor="let optionGroup of userSettings.groups">
-        <!-- {{ 'artemisApp.userSettings.accountInformationPage.fullName' | artemisTranslate }}-->
-        <!--<h3>{{ optionGroup.name}}</h3>-->
         <h3>
             <!--GroupName-->
             {{ 'artemisApp.userSettings.optionGroupNames.' + (optionGroup.name | camelCase) | artemisTranslate }}

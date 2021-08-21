@@ -14,20 +14,32 @@
                 "joinedArtemis": "Joined Artemis on"
             },
             "categories": {
-                "notificationSettings": "Benachrichtigungseinstellungen"
+                "notificationSettings": "Notification Settings"
             },
             "optionGroupNames": {
-                "exerciseNotifications": "Aufgabenbenachrichtigungen",
-                "lectureNotifications": "Vorlesungsbenachrichtigungen",
-                "instructorExclusiveNotifications": "Exklusive Benachrichtigungen für Lehrende"
+                "exerciseNotifications": "Exercise Notifications",
+                "lectureNotifications": "Lecture Notifications",
+                "instructorExclusiveNotifications": "Instructor Exclusive Notifications"
             },
             "optionNames": {
-                "exerciseCreatedOrStarted": "(Neue) Aufgabe erstellt oder gestartet",
-                "exerciseOpenForPractice": "Aufgabe zum Üben freigegeben"
+                "exerciseCreatedOrStarted": "Exercise created or started",
+                "exerciseOpenForPractice": "Exercise open for Practice",
+                "newPostForExercises": "New Post for Exercises",
+                "newAnswerPostForExercises": "New Answer Post for Exercises",
+                "attachmentChanges": "Attachment Changes",
+                "newPostForLecture": "New Post for Lecture",
+                "newAnswerPostForLecture": "New Answer Post for Lecture",
+                "courseOrExamArchivingStarted": "Course & Exam Archiving Started"
             },
             "optionDescriptions": {
-                "getNotifiedIfANewExerciseHasBeenCreatedOrStarted": "Erhalte eine Mitteilung falls eine (neue) Aufgabe erstellt oder gestartet wurde",
-                "getNotifiedIfAnExerciseHasBeenOpenedForPractice": "Erhalte eine Mitteilung falls eine Aufgabe zum Üben freigeschalten wurde (bsp. Quiz)"
+                "getNotifiedIfANewExerciseHasBeenCreatedOrStarted": "Get notified when a (new) exercise has been created or started",
+                "getNotifiedIfAnExerciseHasBeenOpenedForPractice": "Get notified when an exercise has been opened for practice (e.g. Quiz)",
+                "getNotifiedIfANewPostAboutAnExerciseHasBeenCreated": "Get notified when a new post about an exercise has been created",
+                "getNotifiedIfANewAnswerPostAboutAnExerciseHasBeenCreated": "Get notified when a new answer post about an exercise has been created",
+                "receiveANotificationWhenAnAttachmentWasChanged": "Receive a notification when an attachment was changed",
+                "getNotifiedWhenANewPostAboutAnExerciseHasBeenCreated": "Get notified when a new post about an exercise has been created",
+                "getNotifiedWhenANewAnswerPostAboutAnExerciseHasBeenCreated": "Get notified when a new answer post about an exercise has been created",
+                "receiveANotificationWhenTheProcessOfArchivingACourseOrExamHasBeenStarted": "Receive a notification when the process of archiving a course or exam has been started"
             }
         }
     }

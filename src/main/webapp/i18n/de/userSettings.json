@@ -14,20 +14,32 @@
                 "joinedArtemis": "Artemis beigetreten am"
             },
             "categories": {
-                "notificationSettings": "Notification Settings"
+                "notificationSettings": "Benachrichtigungseinstellungen"
             },
             "optionGroupNames": {
-                "exerciseNotifications": "Exercise Notifications",
-                "lectureNotifications": "Lecture Notifications",
-                "instructorExclusiveNotifications": "Instructor Exclusive Notifications"
+                "exerciseNotifications": "Aufgabenbenachrichtigungen",
+                "lectureNotifications": "Vorlesungsbenachrichtigungen",
+                "instructorExclusiveNotifications": "Exklusive Benachrichtigungen für Lehrende"
             },
             "optionNames": {
-                "exerciseCreatedOrStarted": "Exercise created or started",
-                "exerciseOpenForPractice": "Exercise open for Practice"
+                "exerciseCreatedOrStarted": "(Neue) Aufgabe erstellt oder gestartet",
+                "exerciseOpenForPractice": "Aufgabe zum Üben freigegeben",
+                "newPostForExercises": "Neue Beiträge für Aufgaben",
+                "newAnswerPostForExercises": "Neue Antworten für Aufgaben",
+                "attachmentChanges": "Änderungen von Anhängen",
+                "newPostForLecture": "Neue Beiträge für Vorlesungen",
+                "newAnswerPostForLecture": "Neue Antworten für Vorlesungen",
+                "courseOrExamArchivingStarted": "Kurs oder Klausur Archivierungsstart"
             },
             "optionDescriptions": {
-                "getNotifiedIfANewExerciseHasBeenCreatedOrStarted": "Get notified if a (new) exercise has been created or started",
-                "getNotifiedIfAnExerciseHasBeenOpenedForPractice": "Get notified if an exercise has been opened for practice (e.g. Quiz)"
+                "getNotifiedIfANewExerciseHasBeenCreatedOrStarted": "Erhalte eine Mitteilung wenn eine (neue) Aufgabe erstellt oder gestartet wurde",
+                "getNotifiedIfAnExerciseHasBeenOpenedForPractice": "Erhalte eine Mitteilung wenn eine Aufgabe zum Üben freigeschalten wurde (bsp. Quiz)",
+                "getNotifiedIfANewPostAboutAnExerciseHasBeenCreated": "Erhalte eine Mitteilung wenn ein neuer Beitrag zu einer Aufgabe erstellt wurde",
+                "getNotifiedIfANewAnswerPostAboutAnExerciseHasBeenCreated": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher Aufgaben betrifft, erstellt wurde",
+                "receiveANotificationWhenAnAttachmentWasChanged": "Erhalte eine Mitteilung wenn ein Anhang aktualisiert wurde",
+                "getNotifiedWhenANewPostAboutAnExerciseHasBeenCreated": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher Vorlesungen betrifft, erstellt wurde",
+                "getNotifiedWhenANewAnswerPostAboutAnExerciseHasBeenCreated": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher Vorlesungen betrifft, erstellt wurde",
+                "receiveANotificationWhenTheProcessOfArchivingACourseOrExamHasBeenStarted": "Erhalte eine Mitteilung wenn das Archivieren eines Kurses oder einer Klausur angefangen hat"
             }
         }
     }

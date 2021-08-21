@@ -80,7 +80,7 @@ export const defaultNotificationSettings: UserSettings = {
             name: 'Instructor Exclusive Notifications',
             options: [
                 {
-                    name: 'Course & Exam Archiving Started',
+                    name: 'Course or Exam Archiving Started',
                     description: 'Receive a notification when the process of archiving a course or exam has been started',
                     optionCore: {
                         webapp: true,
