@@ -68,37 +68,33 @@ export class UserSettingsService {
 
     constructor(private accountService: AccountService, private http: HttpClient) {}
 
-    //public queryUserOptions(category: UserSettingsCategory): Observable<HttpResponse<OptionCore[]>> {
     public queryUserOptions(category: string): Observable<HttpResponse<OptionCore[]>> {
         const optionCores = createRequestOption(); //maybe useless TODO
+
         //    switch (category) {
-        //case UserSettingsCategory.NOTIFICATIONS: {
         //        case 'Notifications' : {
         return this.http.get<OptionCore[]>(this.resourceUrl + '/fetch-options', {
             params: optionCores, //maybe useless TODO
             observe: 'response',
         });
-        //        }}
+        //        }
+        //    }
     }
 
-    //    public loadUserOptionCoresSuccess(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: UserSettingsCategory): UserSettings {
     public loadUserOptionCoresSuccess(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: string): UserSettings {
         let settingsResult: UserSettings;
-
         // load default settings as foundation
-        /*
         switch (category) {
-            case UserSettingsCategory.NOTIFICATIONS: {
+            case 'Notifications': {
+                settingsResult = defaultNotificationSettings;
+                break;
+            }
+            default: {
+                //TODO ERROR
+                //with enums there was no such problem ...
                 settingsResult = defaultNotificationSettings;
             }
         }
-         */
-
-        //   switch (category) {
-        //   case 'Notifications' : {
-        settingsResult = defaultNotificationSettings;
-        //    }}
-
         // if user already customized settings -> update loaded default settings with received data
         if (!(receivedOptionCoresFromServer == undefined || receivedOptionCoresFromServer.length === 0)) {
             this.updateSettings(receivedOptionCoresFromServer, settingsResult);
@@ -121,7 +117,7 @@ export class UserSettingsService {
         return optionCoreAccumulator;
     }
 
-    private updateSettings(newOptionCores: OptionCore[], settingsToUpdate: UserSettings): void {
+    public updateSettings(newOptionCores: OptionCore[], settingsToUpdate: UserSettings): void {
         //use the updated cores to update the entire settings category, needed for ids
         for (let i = 0; i < settingsToUpdate.groups.length; i++) {
             for (let j = 0; j < settingsToUpdate.groups[i].options.length; j++) {
@@ -137,6 +133,4 @@ export class UserSettingsService {
     saveUserOptions(optionCores: OptionCore[]): Observable<HttpResponse<OptionCore[]>> {
         return this.http.post<OptionCore[]>(this.resourceUrl + '/save-new-options', optionCores, { observe: 'response' });
     }
-
-    // default UserSettings (sadly I could not figure out how to store them in separate files)
 }

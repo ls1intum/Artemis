@@ -23,6 +23,10 @@ export class NotificationSettingsComponent implements OnInit {
     constructor(private notificationService: NotificationService, private userSettingsService: UserSettingsService, private changeDetector: ChangeDetectorRef) {}
 
     ngOnInit(): void {
+        this.loadSetting();
+    }
+
+    private loadSetting(): void {
         this.userSettingsService.queryUserOptions(this.userSettingsCategory).subscribe((res: HttpResponse<OptionCore[]>) => {
             //this.notificationSettings = this.userSettingsService.loadUserOptionCoresSuccess(res.body!, res.headers, this.userSettingsCategory);
             this.notificationSettings = this.userSettingsService.loadUserOptionCoresSuccess(res.body!, res.headers, this.userSettingsCategory);
@@ -41,7 +45,8 @@ export class NotificationSettingsComponent implements OnInit {
         );
     }
     private saveUserOptionsSuccess(receivedOptionCores: OptionCore[], headers: HttpHeaders): void {
-        this.updateSettings(receivedOptionCores);
+        //    this.updateSettings(receivedOptionCores);
+        this.userSettingsService.updateSettings(receivedOptionCores, this.notificationSettings);
     }
 
     toggleOption(event: any) {
@@ -52,43 +57,5 @@ export class NotificationSettingsComponent implements OnInit {
         if (!foundOption) return;
         foundOption!.webapp = !foundOption!.webapp;
         foundOption.changed = true;
-    }
-
-    private extractOptionCoresFromSettingsCategory(settings: UserSettings): OptionCore[] {
-        let optionCoreAccumulator: OptionCore[] = [];
-        settings.groups.forEach((group: OptionGroup) => {
-            group.options.forEach((option) => {
-                let optionCore: OptionCore = option.optionCore;
-                if (optionCore.id == undefined) {
-                    optionCore.id = -1; // is used to mark cores which have never been saved to the database
-                }
-                optionCoreAccumulator.push(optionCore);
-            });
-        });
-        return optionCoreAccumulator;
-    }
-    private updateSettings(newOptionCores: OptionCore[]): void {
-        //use the updated cores to update the entire settings category, needed for ids
-        for (let i = 0; i < this.notificationSettings.groups.length; i++) {
-            for (let j = 0; j < this.notificationSettings.groups[i].options.length; j++) {
-                const currentOptionCore = this.notificationSettings.groups[i].options[j].optionCore;
-                const matchingOptionCore = newOptionCores.find((newCore) => newCore.optionSpecifier === currentOptionCore.optionSpecifier);
-                if (matchingOptionCore != undefined) {
-                    this.notificationSettings.groups[i].options[j].optionCore = matchingOptionCore;
-                }
-            }
-        }
-        this.notificationOptionCores = this.extractOptionCoresFromSettingsCategory(this.notificationSettings);
-    }
-    private loadNotificationOptionCoresSuccess(receivedNotificationOptionCores: OptionCore[], headers: HttpHeaders): void {
-        this.notificationSettings = defaultNotificationSettings;
-        // if no option cores were loaded -> user has not yet changed options -> use default notification settings
-        if (receivedNotificationOptionCores == undefined || receivedNotificationOptionCores.length === 0) {
-            this.notificationOptionCores = this.extractOptionCoresFromSettingsCategory(defaultNotificationSettings);
-            debugger;
-            return;
-        }
-        // else user already customized the settings
-        this.updateSettings(receivedNotificationOptionCores);
     }
 }
