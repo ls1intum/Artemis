@@ -40,7 +40,6 @@ The most basic test looks similar to this:
                 providers: [
                     MockProvider(SomeServiceUsedInComponent),
                 ],
-                schemas: [],
             })
                 .compileComponents()
                 .then(() => {
@@ -192,7 +191,7 @@ More examples on test speed improvement can be found in the `following PR <https
               sinon.restore();
           });
 
-          it('should make get request', fakeAsync( () => {
+          it('should make get request', fakeAsync(() => {
               const returnedFromApi = {some: 'data'};
 
               component.callServiceMethod()
@@ -204,7 +203,7 @@ More examples on test speed improvement can be found in the `following PR <https
           }));
         });
 
-2. Do not overuse ``NO_ERRORS_SCHEMA`` (`link <https://angular.io/guide/testing-components-scenarios#no_errors_schema>`_).
+2. Do not use ``NO_ERRORS_SCHEMA`` (`link <https://angular.io/guide/testing-components-scenarios#no_errors_schema>`_).
    This tells angular to ignore the attributes and unrecognized elements, prefer to use component stubs as mentioned above.
 
 3. Sinon uses sandboxes, which remove the need of keeping track of every fake created, which greatly simplifies cleanup and improves readability.
@@ -218,7 +217,24 @@ More examples on test speed improvement can be found in the `following PR <https
    For example if you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click and then assert that the data has been loaded and that the expected
    template changes have occurred.
 
-6. Do not remove the template during tests by making use of ``overrideTemplate()``. The template cis a crucial part of a component and should not be removed during test. Do not do this:
+Here is an example of a test for `exercise-update-warning component <https://github.com/ls1intum/Artemis/blob/master/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L38-L49>`_
+
+ .. code:: ts
+
+    it('should trigger saveExerciseWithoutReevaluation once', () => {
+        const emitSpy = sinon.spy(comp.confirmed, 'emit');
+        const saveExerciseWithoutReevaluation = sinon.spy(comp, 'saveExerciseWithoutReevaluation');
+
+        const button = fixture.debugElement.nativeElement.querySelector('#save-button');
+        button.click();
+
+        fixture.detectChanges();
+
+        expect(saveExerciseWithoutReevaluation).to.have.been.calledOnce;
+        expect(emitSpy).to.have.been.called;
+    });
+
+6. Do not remove the template during tests by making use of ``overrideTemplate()``. The template is a crucial part of a component and should not be removed during test. Do not do this:
 
  .. code:: ts
 
@@ -241,7 +257,6 @@ More examples on test speed improvement can be found in the `following PR <https
                 ],
                 providers: [
                 ],
-                schemas: [],
             })
                 .overrideTemplate(SomeComponent, '') // DO NOT DO THIS
                 .compileComponents()
