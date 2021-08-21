@@ -48,7 +48,7 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
                 // If the client sends a cloning = false the download was cancelled, unlock the pending submission
                 this.manualAssessmentService.cancelAssessment(this.activeSubmissionId);
             }
-            this.orionState = state;
+            this.orionState = { ...state };
         });
     }
 
