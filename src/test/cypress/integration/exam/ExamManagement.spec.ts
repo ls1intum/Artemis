@@ -32,7 +32,10 @@ describe('Exam management', () => {
             const exam = new CypressExamBuilder(course).title(examTitle).build();
             courseManagementRequests.createExam(exam);
         });
-        cy.waitForGroupSynchronization();
+        const runsOnBamboo: boolean = Cypress.env('isBamboo');
+        if (runsOnBamboo) {
+            cy.waitForGroupSynchronization();
+        }
     });
 
     beforeEach(() => {

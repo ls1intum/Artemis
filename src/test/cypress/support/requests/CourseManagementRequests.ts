@@ -57,20 +57,11 @@ export class CourseManagementRequests {
      * @param title the title of the programming exercise
      * @param programmingShortName the short name of the programming exercise
      * @param packageName the package name of the programming exercise
-     * @param skipGroupSynchronization Some tests already waited for group synchronization. In this case the check should be skipped
      * @param releaseDate when the programming exercise should be available (default is now)
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
      * @returns <Chainable> request response
      */
-    createProgrammingExercise(
-        course: any,
-        title: string,
-        programmingShortName: string,
-        packageName: string,
-        skipGroupSynchronization = false,
-        releaseDate = new Date(),
-        dueDate = new Date(Date.now() + oneDay),
-    ) {
+    createProgrammingExercise(course: any, title: string, programmingShortName: string, packageName: string, releaseDate = new Date(), dueDate = new Date(Date.now() + oneDay)) {
         const programmingTemplate = programmingExerciseTemplate;
         programmingTemplate.title = title;
         programmingTemplate.shortName = programmingShortName;
@@ -79,7 +70,8 @@ export class CourseManagementRequests {
         programmingTemplate.dueDate = dueDate.toISOString();
         programmingTemplate.course = course;
 
-        if (!skipGroupSynchronization) {
+        const runsOnBamboo: boolean = Cypress.env('isBamboo');
+        if (runsOnBamboo) {
             cy.waitForGroupSynchronization();
         }
 
