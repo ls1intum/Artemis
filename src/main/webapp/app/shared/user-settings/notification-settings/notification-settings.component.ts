@@ -24,7 +24,7 @@ export class NotificationSettingsComponent implements OnInit {
     }
 
     private loadSetting(): void {
-        this.userSettingsService.queryUserOptions(this.userSettingsCategory).subscribe((res: HttpResponse<OptionCore[]>) => {
+        this.userSettingsService.loadUserOptions(this.userSettingsCategory).subscribe((res: HttpResponse<OptionCore[]>) => {
             this.notificationSettings = this.userSettingsService.loadUserOptionCoresSuccess(res.body!, res.headers, this.userSettingsCategory);
             this.notificationOptionCores = this.userSettingsService.extractOptionCoresFromSettings(this.notificationSettings);
             this.changeDetector.detectChanges();

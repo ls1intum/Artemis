@@ -4,18 +4,7 @@ import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { createRequestOption } from 'app/shared/util/request-util';
-//import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
-import { User } from 'app/core/user/user.model';
 import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
-import set = Reflect.set;
-//import {defaultNotificationSettings} from "app/shared/user-settings/notification-settings/notification-settings.component";
-
-/**
- * UserSettingsCategory are used for differentiation and support re-usability of service functionality
- */
-export enum UserSettingsCategory {
-    NOTIFICATIONS,
-}
 
 /**
  * UserSettings represent one entire displayable settings page with detailed information like descriptions, etc.
@@ -23,7 +12,6 @@ export enum UserSettingsCategory {
  * Loot at any x-settings.default.ts file for an example of the full UserSettings hierarchy
  */
 export interface UserSettings {
-    //category: UserSettingsCategory;
     category: string;
     groups: OptionGroup[];
 }
@@ -52,6 +40,7 @@ export interface Option {
 
 /**
  * OptionCores are used for client server communication and option (de)selection
+ * Correspond to UserOptions (Server)
  */
 export interface OptionCore {
     id?: number;
@@ -69,9 +58,15 @@ export class UserSettingsService {
 
     constructor(private accountService: AccountService, private http: HttpClient) {}
 
-    public queryUserOptions(category: string): Observable<HttpResponse<OptionCore[]>> {
-        const optionCores = createRequestOption(); //maybe useless TODO
+    // load methods
 
+    /**
+     * GET call to the server to receive the stored option cores of the current user
+     * @param categpry limits the server call to only search for options based on the provided category
+     * @return the saved user options (cores) which were found in the database (might be 0 if user has never saved settings before) or error
+     */
+    public loadUserOptions(category: string): Observable<HttpResponse<OptionCore[]>> {
+        const optionCores = createRequestOption(); //maybe useless TODO
         //    switch (category) {
         //        case 'Notifications' : {
         return this.http.get<OptionCore[]>(this.resourceUrl + '/fetch-options', {
@@ -80,19 +75,13 @@ export class UserSettingsService {
         }); //  }}
     }
 
-    private loadDefaultSettingsAsFoundation(category: string): UserSettings {
-        switch (category) {
-            case 'Notifications': {
-                return defaultNotificationSettings;
-            }
-            default: {
-                //TODO ERROR
-                //with enums there was no such problem ...
-                return defaultNotificationSettings;
-            }
-        }
-    }
-
+    /**
+     * Is called after a successful server call to load user options
+     * The fetched option cores are used to update the given settings
+     * @param receivedOptionCoresFromServer were loaded from the server to update provided settings
+     * @param category decided what default settings to use as the base
+     * @return updated UserSettings based on loaded option cores
+     */
     public loadUserOptionCoresSuccess(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: string): UserSettings {
         let settingsResult: UserSettings;
         // load default settings as foundation
@@ -106,6 +95,41 @@ export class UserSettingsService {
         return settingsResult;
     }
 
+    // save methods
+
+    /**
+     * Saves only the changed options (cores) to the database.
+     * @param optionCores all options of the given UserSettings which will be filtered
+     * @param categpry limits the server call to only search for options based on the provided category
+     * @return the saved user options (cores) which were found in the database (for validation) or error
+     */
+    public saveUserOptions(optionCores: OptionCore[], category: string): Observable<HttpResponse<OptionCore[]>> {
+        //only save cores which were changed
+        let changedOptionCores = optionCores.filter((optionCore) => optionCore.changed);
+        return this.http.post<OptionCore[]>(this.resourceUrl + '/save-new-options', changedOptionCores, { observe: 'response' });
+    }
+
+    /**
+     * Is called after a successful server call to save changed user options
+     * The fetched option cores are used to update the given settings (for validation)
+     * @param receivedOptionCoresFromServer were loaded from the server to update provided settings
+     * @param category decided what default settings to use as the base
+     * @return updated UserSettings based on loaded option cores
+     */
+    public saveUserOptionsSuccess(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: string): UserSettings {
+        let settingsResult: UserSettings;
+        settingsResult = this.loadDefaultSettingsAsFoundation(category);
+        this.updateSettings(receivedOptionCoresFromServer, settingsResult);
+        return settingsResult;
+    }
+
+    // auxiliary methods
+
+    /**
+     * Extracts the individual option (cores) out of the UserSetting hierarchy.
+     * @param settings which option cores should be extracted
+     * @return OptionCore array based on the provided UserSettings
+     */
     public extractOptionCoresFromSettings(settings: UserSettings): OptionCore[] {
         let optionCoreAccumulator: OptionCore[] = [];
         settings.groups.forEach((group: OptionGroup) => {
@@ -120,6 +144,11 @@ export class UserSettingsService {
         return optionCoreAccumulator;
     }
 
+    /**
+     * Updates the provided settings based on the new option cores
+     * @param newOptionCores received from the server
+     * @param settingsToUpdate will be updated by replacing matching options with new option cores
+     */
     public updateSettings(newOptionCores: OptionCore[], settingsToUpdate: UserSettings): void {
         //use the updated cores to update the entire settings category, needed for ids
         for (let i = 0; i < settingsToUpdate.groups.length; i++) {
@@ -133,16 +162,21 @@ export class UserSettingsService {
         }
     }
 
-    public saveUserOptions(optionCores: OptionCore[], category: string): Observable<HttpResponse<OptionCore[]>> {
-        //only save cores which were changed
-        let changedOptionCores = optionCores.filter((optionCore) => optionCore.changed);
-        return this.http.post<OptionCore[]>(this.resourceUrl + '/save-new-options', changedOptionCores, { observe: 'response' });
-    }
-
-    public saveUserOptionsSuccess(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: string): UserSettings {
-        let settingsResult: UserSettings;
-        settingsResult = this.loadDefaultSettingsAsFoundation(category);
-        this.updateSettings(receivedOptionCoresFromServer, settingsResult);
-        return settingsResult;
+    /**
+     * Provides the foundation with all options for further modification.
+     * @param category defines what default settings to return
+     * @return the default settings based on the provided category
+     */
+    private loadDefaultSettingsAsFoundation(category: string): UserSettings {
+        switch (category) {
+            case 'Notifications': {
+                return defaultNotificationSettings;
+            }
+            default: {
+                //TODO ERROR
+                //with enums there was no such problem ...
+                return defaultNotificationSettings;
+            }
+        }
     }
 }
