@@ -21,6 +21,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
+import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -49,6 +50,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
             providers: [
                 MockProvider(OrionConnectorService),
                 MockProvider(OrionAssessmentService),
+                MockProvider(ProgrammingAssessmentManualResultService),
                 MockProvider(ExerciseService),
                 MockProvider(JhiAlertService),
                 MockProvider(TranslateService),
@@ -79,7 +81,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
 
         comp.downloadSubmissionInOrion(programmingSubmission, 2);
 
-        expect(downloadSubmissionSpy).to.have.been.calledOnceWithExactly(comp.exerciseId, programmingSubmission, 2);
+        expect(downloadSubmissionSpy).to.have.been.calledOnceWith(comp.exerciseId, programmingSubmission, 2);
     });
     it('ngOnInit should subscribe correctly', fakeAsync(() => {
         const orionState = { opened: 40, building: false, cloning: false } as OrionState;
@@ -125,5 +127,32 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         expect(getForTutorsStub).to.have.been.calledOnceWithExactly(10);
         expect(orionStateStub).to.have.been.calledOnceWithExactly();
         expect(errorSpy).to.have.been.calledOnceWithExactly('error.http.400');
+    }));
+    it('should cancel lock correctly', fakeAsync(() => {
+        const orionState = { opened: 40, building: false, cloning: true } as OrionState;
+        const stateObservable = new BehaviorSubject(orionState);
+        const orionStateStub = stub(orionConnectorService, 'state');
+        orionStateStub.returns(stateObservable);
+
+        const cancelStub = stub(TestBed.inject(ProgrammingAssessmentManualResultService), 'cancelAssessment');
+
+        const response = of(new HttpResponse({ body: programmingExercise, status: 200 }));
+        const getForTutorsStub = stub(TestBed.inject(ExerciseService), 'getForTutors');
+        getForTutorsStub.returns(response);
+
+        comp.ngOnInit();
+        tick();
+
+        expect(comp.exerciseId).to.be.equals(10);
+        expect(comp.exercise).to.be.deep.equals(programmingExercise);
+        expect(comp.orionState).to.be.deep.equals(orionState);
+
+        // @ts-ignore
+        comp.setActiveSubmissionId(24);
+
+        stateObservable.next({ ...orionState, cloning: false});
+        tick();
+
+        expect(cancelStub).to.have.been.calledOnceWithExactly(24);
     }));
 });

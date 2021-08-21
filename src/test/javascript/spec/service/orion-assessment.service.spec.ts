@@ -54,7 +54,7 @@ describe('OrionAssessmentService', () => {
 
         getSubmission.returns(of(programmingSubmission));
 
-        orionAssessmentService.downloadSubmissionInOrion(16, 'new', 0);
+        orionAssessmentService.downloadSubmissionInOrion(16, 'new', 0, (id: number) => expect(id).to.be.equals(11));
 
         expect(getSubmission).to.have.been.calledOnceWithExactly(16, true, 0);
         expect(sendSubmissionToOrion).to.have.been.calledOnceWithExactly(16, programmingSubmission.id, 0);
@@ -62,7 +62,7 @@ describe('OrionAssessmentService', () => {
     it('downloadSubmissionInOrion with number should call send', () => {
         const sendSubmissionToOrion = stub(orionAssessmentService, 'sendSubmissionToOrion');
 
-        orionAssessmentService.downloadSubmissionInOrion(16, programmingSubmission, 0);
+        orionAssessmentService.downloadSubmissionInOrion(16, programmingSubmission, 0, (id: number) => expect(id).to.be.equals(11));
 
         expect(sendSubmissionToOrion).to.have.been.calledOnceWithExactly(16, programmingSubmission.id, 0);
     });
