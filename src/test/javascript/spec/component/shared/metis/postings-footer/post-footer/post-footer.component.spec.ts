@@ -21,7 +21,7 @@ describe('PostFooterComponent', () => {
         tags: initialTags,
     } as Post;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [],
             providers: [],

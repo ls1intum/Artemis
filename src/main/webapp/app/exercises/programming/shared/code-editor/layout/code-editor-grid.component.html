@@ -10,7 +10,10 @@
             <div class="editor-sidebar-left collapsable">
                 <ng-content select="[editorSidebarLeft]"></ng-content>
                 <!-- Required for resizing; don't remove empty span -->
-                <fa-icon [icon]="'grip-lines-vertical'" class="rg-sidebar-left text-lightgrey"><span></span></fa-icon>
+                <fa-icon *ngIf="!fileBrowserIsCollapsed" [icon]="'grip-lines-vertical'" id="draggableIconForFileBrowser" class="rg-sidebar-left text-lightgrey">
+                    <span></span>
+                </fa-icon>
+                <span *ngIf="fileBrowserIsCollapsed" class="separator"></span>
             </div>
 
             <!-- Editor -->
@@ -20,7 +23,10 @@
 
             <!-- Instructions -->
             <div class="editor-sidebar-right collapsable">
-                <fa-icon [icon]="'grip-lines-vertical'" class="rg-sidebar-right text-lightgrey"><span></span></fa-icon>
+                <fa-icon *ngIf="!rightPanelIsCollapsed" [icon]="'grip-lines-vertical'" id="draggableIconForInstructions" class="rg-sidebar-right text-lightgrey">
+                    <span></span>
+                </fa-icon>
+                <span *ngIf="rightPanelIsCollapsed" class="separator"></span>
                 <ng-content select="[editorSidebarRight]"></ng-content>
             </div>
         </div>
@@ -28,10 +34,12 @@
         <!-- Required for resizing; don't remove empty span -->
         <fa-icon [icon]="'grip-lines'" class="rg-main-bottom text-lightgrey"><span></span></fa-icon>
     </div>
+
+    <!-- Build Output -->
     <div class="editor-bottom collapsable">
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable"></ng-content>
         <!-- Required for resizing; don't remove empty span -->
-        <fa-icon [icon]="'grip-lines'" class="rg-bottom-bottom text-lightgrey"><span></span></fa-icon>
+        <fa-icon *ngIf="!buildOutputIsCollapsed" [icon]="'grip-lines'" id="draggableIconForBuildOutput" class="rg-bottom-bottom text-lightgrey"><span></span></fa-icon>
     </div>
     <div *ngIf="isTutorAssessment">
         <ng-content select="[editorBottom]"></ng-content>
