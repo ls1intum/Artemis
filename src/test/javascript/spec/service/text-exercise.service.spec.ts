@@ -1,9 +1,8 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { getTestBed, TestBed, fakeAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
 import { Course } from 'app/entities/course.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -102,20 +101,19 @@ describe('TextExercise Service', () => {
             expect(requestResult.status).to.equal(200);
         });
 
-        it('should retrieve TextExercise cluster statistics', () => {
-            const textExercise = Object.assign({ id: 1 }, elemDefault);
+        it('should retrieve TextExercise cluster statistics', fakeAsync(() => {
             service.getClusterStats(1).subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush({ status: 200 });
             expect(requestResult.status).to.equal(200);
-        });
+        }));
 
-        it('should set TextExercise cluster disabled predicate', () => {
+        it('should set TextExercise cluster disabled predicate', fakeAsync(() => {
             service.setClusterDisabledPredicate(1, true).subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush({ status: 200 });
             expect(requestResult.status).to.equal(200);
-        });
+        }));
     });
 
     afterEach(() => {

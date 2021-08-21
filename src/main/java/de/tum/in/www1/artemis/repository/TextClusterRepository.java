@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+
+import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,7 +15,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.TextCluster;
+import de.tum.in.www1.artemis.domain.TextClusterStatistics;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the TextCluster entity.
@@ -24,19 +29,16 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
     @EntityGraph(type = LOAD, attributePaths = { "blocks", "blocks.submission", "blocks.submission.results" })
     List<TextCluster> findAllByExercise(TextExercise exercise);
 
+    @EntityGraph(type = LOAD, attributePaths = { "exercise" })
+    Optional<TextCluster> findWithEagerExerciseById(Long clusterId);
+
+    @NotNull
+    default TextCluster findWithEagerExerciseByIdElseThrow(Long clusterId) {
+        return findWithEagerExerciseById(clusterId).orElseThrow(() -> new EntityNotFoundException("TextCluster", clusterId));
+    }
+
     @Query("SELECT distinct cluster FROM TextCluster cluster LEFT JOIN FETCH cluster.blocks b LEFT JOIN FETCH b.submission blocksub LEFT JOIN FETCH blocksub.results WHERE cluster.id IN :#{#clusterIds}")
     List<TextCluster> findAllByIdsWithEagerTextBlocks(@Param("clusterIds") Set<Long> clusterIds);
-
-    interface TextClusterStats {
-
-        Long getClusterId();
-
-        Long getClusterSize();
-
-        Long getNumberOfAutomaticFeedbacks();
-
-        Boolean getDisabled();
-    }
 
     @Query(value = """
             SELECT cluster_stats.*, text_cluster.disabled FROM
@@ -52,5 +54,5 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
             ) AS cluster_stats
             LEFT JOIN text_cluster ON text_cluster.id = cluster_stats.clusterId
             """, nativeQuery = true)
-    List<TextClusterStats> getClusterStatistics(@Param("exerciseId") Long exerciseId);
+    List<TextClusterStatistics> getClusterStatistics(@Param("exerciseId") Long exerciseId);
 }

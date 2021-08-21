@@ -3687,11 +3687,12 @@ public class DatabaseUtilService {
         StudentParticipation participation = ModelFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
         studentParticipationRepo.save(participation);
         course.addExercises(textExercise);
-        User user = new User();
-        user.setLogin(login);
-        user.setId(1L);
-        user.setGroups(Set.of(course.getInstructorGroupName()));
-        userRepo.save(user);
+        addUsers(0, 0, 0, 1);
+        // User user = new User();
+        // user.setLogin(login);
+        // user.setId(1L);
+        // user.setGroups(Set.of(course.getInstructorGroupName()));
+        // userRepo.save(user);
         return course;
     }
 

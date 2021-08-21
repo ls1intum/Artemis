@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -94,20 +93,20 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetClusterStats_forAllValuesSet() {
-        ResponseEntity<List<TextClusterRepository.TextClusterStats>> responseEntity = textClusterResource.getClusterStats(exercise.getId());
-        List<TextClusterRepository.TextClusterStats> stats = responseEntity.getBody();
-        assertThat(stats).isNotNull();
+    public void testGetClusterStats_forAllValuesSet() throws Exception {
+        List<TextClusterStatistics> textClusterStatistics = request.getList("/api/text-exercises/" + exercise.getId() + "/cluster-statistics", HttpStatus.OK,
+                TextClusterStatistics.class);
 
-        TextClusterRepository.TextClusterStats stat = stats.get(0);
-        Long clusterSize = stat.getClusterSize();
-        Long automaticFeedbacksNum = stat.getNumberOfAutomaticFeedbacks();
-        Boolean disabled = stat.getDisabled();
+        assertThat(textClusterStatistics).isNotNull();
+
+        TextClusterStatistics firstElement = textClusterStatistics.get(0);
+        Long clusterSize = firstElement.getClusterSize();
+        Long automaticFeedbacksNum = firstElement.getNumberOfAutomaticFeedbacks();
+        boolean disabled = firstElement.getDisabled();
 
         assertThat(clusterSize).isEqualTo(3);
         assertThat(automaticFeedbacksNum).isEqualTo(0);
         assertThat(disabled).isEqualTo(true);
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     /**
@@ -115,20 +114,18 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetClusterStats_withEnabledCluster() {
+    public void testGetClusterStats_withEnabledCluster() throws Exception {
         TextCluster cluster = textClusterRepository.findAll().get(0);
         cluster.setDisabled(false);
         textClusterRepository.save(cluster);
 
-        ResponseEntity<List<TextClusterRepository.TextClusterStats>> responseEntity = textClusterResource.getClusterStats(exercise.getId());
-        List<TextClusterRepository.TextClusterStats> stats = responseEntity.getBody();
+        List<TextClusterStatistics> textClusterStatistics = request.getList("/api/text-exercises/" + exercise.getId() + "/cluster-statistics", HttpStatus.OK,
+                TextClusterStatistics.class);
 
-        assertThat(stats).isNotNull();
-        TextClusterRepository.TextClusterStats stat = stats.get(0);
-        Boolean disabled = stat.getDisabled();
+        TextClusterStatistics stat = textClusterStatistics.get(0);
+        boolean disabled = stat.getDisabled();
 
         assertThat(disabled).isEqualTo(false);
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     /**
@@ -136,20 +133,19 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetClusterStats_withAddedAutoFeedback() {
+    public void testGetClusterStats_withAddedAutoFeedback() throws Exception {
         Result result = resultRepository.findAll().get(0);
         TextBlock textBlock = textBlockRepository.findAll().get(0);
         Feedback feedback = new Feedback().type(FeedbackType.AUTOMATIC).detailText("feedback").result(result).reference(textBlock.getId());
         feedbackRepository.save(feedback);
-        ResponseEntity<List<TextClusterRepository.TextClusterStats>> responseEntity = textClusterResource.getClusterStats(exercise.getId());
-        List<TextClusterRepository.TextClusterStats> stats = responseEntity.getBody();
 
-        assertThat(stats).isNotNull();
-        TextClusterRepository.TextClusterStats stat = stats.get(0);
+        List<TextClusterStatistics> textClusterStatistics = request.getList("/api/text-exercises/" + exercise.getId() + "/cluster-statistics", HttpStatus.OK,
+                TextClusterStatistics.class);
+
+        TextClusterStatistics stat = textClusterStatistics.get(0);
         Long automaticFeedbacksNum = stat.getNumberOfAutomaticFeedbacks();
 
         assertThat(automaticFeedbacksNum).isEqualTo(1);
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     /**
@@ -158,33 +154,33 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testToggleClusterDisabledPredicate_withDisabledAndEnabledCluster() {
+    public void testToggleClusterDisabledPredicate_withDisabledAndEnabledCluster() throws Exception {
         TextCluster cluster = textClusterRepository.findAll().get(0);
-        ResponseEntity<Void> toggleResponseFalse = textClusterResource.toggleClusterDisabledPredicate(cluster.getId(), false);
-        assertThat(toggleResponseFalse.getStatusCode()).isEqualTo(HttpStatus.OK);
-
         // set predicate to false
-        ResponseEntity<List<TextClusterRepository.TextClusterStats>> responseEntityFalse = textClusterResource.getClusterStats(exercise.getId());
-        List<TextClusterRepository.TextClusterStats> statisticsBodyFalse = responseEntityFalse.getBody();
+        request.put("/text-clusters/" + cluster.getId() + "?disabled=false", Void.class, HttpStatus.OK);
 
-        assertThat(responseEntityFalse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(statisticsBodyFalse).isNotNull();
-        TextClusterRepository.TextClusterStats textClusterStatisticFalse = statisticsBodyFalse.get(0);
-        Boolean disabled = textClusterStatisticFalse.getDisabled();
-        assertThat(disabled).isEqualTo(false);
+        // ResponseEntity<Void> toggleResponseFalse = textClusterResource.toggleClusterDisabledPredicate(cluster.getId(), false);
+        // assertThat(toggleResponseFalse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // fetch statistics
+        List<TextClusterStatistics> textClusterStatisticsFalse = request.getList("/api/text-exercises/" + exercise.getId() + "/cluster-statistics", HttpStatus.OK,
+                TextClusterStatistics.class);
+
+        assertThat(textClusterStatisticsFalse).isNotNull();
+        TextClusterStatistics textClusterStatisticFalse = textClusterStatisticsFalse.get(0);
+        assertThat(textClusterStatisticFalse.getDisabled()).isEqualTo(false);
 
         // set predicate to true
-        ResponseEntity<Void> toggleResponseTrue = textClusterResource.toggleClusterDisabledPredicate(cluster.getId(), true);
-        assertThat(toggleResponseTrue.getStatusCode()).isEqualTo(HttpStatus.OK);
+        request.put("/text-clusters/" + cluster.getId() + "?disabled=true", Void.class, HttpStatus.OK);
+        // ResponseEntity<Void> toggleResponseTrue = textClusterResource.toggleClusterDisabledPredicate(cluster.getId(), true);
+        // assertThat(toggleResponseTrue.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        ResponseEntity<List<TextClusterRepository.TextClusterStats>> responseEntityTrue = textClusterResource.getClusterStats(exercise.getId());
-        List<TextClusterRepository.TextClusterStats> statisticsBodyTrue = responseEntityTrue.getBody();
+        // fetch statistics
+        List<TextClusterStatistics> textClusterStatisticsTrue = request.getList("/api/text-exercises/" + exercise.getId() + "/cluster-statistics", HttpStatus.OK,
+                TextClusterStatistics.class);
 
-        assertThat(responseEntityTrue.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(statisticsBodyTrue).isNotNull();
-        TextClusterRepository.TextClusterStats textClusterStatsTrue = statisticsBodyTrue.get(0);
-
-        Boolean disabledTrue = textClusterStatsTrue.getDisabled();
-        assertThat(disabledTrue).isEqualTo(true);
+        assertThat(textClusterStatisticsTrue).isNotNull();
+        TextClusterStatistics textClusterStatsTrue = textClusterStatisticsTrue.get(0);
+        assertThat(textClusterStatsTrue.getDisabled()).isEqualTo(true);
     }
 }

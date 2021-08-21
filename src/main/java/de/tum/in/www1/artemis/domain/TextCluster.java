@@ -41,7 +41,7 @@ public class TextCluster extends DomainObject {
 
     @Column(name = "disabled")
     @JsonIgnore
-    private Boolean disabled;
+    private boolean disabled;
 
     public double[] getProbabilities() {
         return castFromBinary(probabilities);
@@ -174,7 +174,7 @@ public class TextCluster extends DomainObject {
         return (int) blocks.stream().filter(textBlock -> !textBlock.isAssessable()).count();
     }
 
-    public Boolean getDisabled() {
+    public boolean isDisabled() {
         return disabled;
     }
 

@@ -33,7 +33,7 @@
             "clusterStatistics": {
                 "title": "Cluster Statistik",
                 "clusterId": "Cluster ID",
-                "reusedFeedbackRatio": "Cluster Wiederverwendete Rückkopplungsquote",
+                "reusedFeedbackRatio": "Quote wiederverwendeter Feedbacks im Cluster",
                 "reusedFeedbackRatioTooltip": "Anzahl der wiederverwendeten automatischen Rückmeldungen / Clustergröße",
                 "action": "Aktion",
                 "disable": "Deaktivieren",

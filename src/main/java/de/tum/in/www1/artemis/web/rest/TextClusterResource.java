@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,8 +10,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextCluster;
+import de.tum.in.www1.artemis.domain.TextClusterStatistics;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 /**
  * REST controller for managing TextClusterResource.
@@ -23,8 +30,18 @@ public class TextClusterResource {
 
     private final TextClusterRepository textClusterRepository;
 
-    public TextClusterResource(TextClusterRepository textClusterRepository) {
+    private final UserRepository userRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final AuthorizationCheckService authCheckService;
+
+    public TextClusterResource(TextClusterRepository textClusterRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
+            AuthorizationCheckService authCheckService) {
         this.textClusterRepository = textClusterRepository;
+        this.userRepository = userRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -36,8 +53,13 @@ public class TextClusterResource {
      */
     @GetMapping("/text-exercises/{exerciseId}/cluster-statistics")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<TextClusterRepository.TextClusterStats>> getClusterStats(@PathVariable Long exerciseId) {
-        var clusterStats = textClusterRepository.getClusterStatistics(exerciseId);
+    public ResponseEntity<List<TextClusterStatistics>> getClusterStats(@PathVariable Long exerciseId) {
+        // Check if Instructor has permission to access the exercise with given exerciseId
+        if (currentUserHasNoAccessToExercise(exerciseId)) {
+            return forbidden();
+        }
+
+        List<TextClusterStatistics> clusterStats = textClusterRepository.getClusterStatistics(exerciseId);
         log.debug("REST request to get clusterStats-: {}", clusterStats);
         return ResponseEntity.ok().body(clusterStats);
     }
@@ -54,15 +76,26 @@ public class TextClusterResource {
     @PutMapping("/text-clusters/{clusterId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> toggleClusterDisabledPredicate(@PathVariable Long clusterId, @RequestParam boolean disabled) {
+        // Check if Instructor has permission to access the exercise that the cluster with id clusterId belongs to.
+        TextCluster cluster = textClusterRepository.findWithEagerExerciseByIdElseThrow(clusterId);
+        if (currentUserHasNoAccessToExercise(cluster.getExercise().getId())) {
+            return forbidden();
+        }
+
         log.info("REST request to disable Cluster : {}", clusterId);
-        final Optional<TextCluster> cluster = textClusterRepository.findById(clusterId);
-        if (cluster.isPresent()) {
-            cluster.get().setDisabled(disabled);
-            textClusterRepository.save(cluster.get());
-        }
-        else {
-            return ResponseEntity.notFound().build();
-        }
+        cluster.setDisabled(disabled);
+        textClusterRepository.save(cluster);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Checks if current user has access to the exercise with given exercise id
+     * @param exerciseId the id of the exercise to check the predicate
+     * @return true if user has access, false otherwise
+     */
+    private boolean currentUserHasNoAccessToExercise(Long exerciseId) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        return !authCheckService.isAtLeastInstructorForExercise(exercise, user);
     }
 }
