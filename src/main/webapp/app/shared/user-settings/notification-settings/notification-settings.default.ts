@@ -1,7 +1,7 @@
-import { UserSettings, UserSettingsCategory } from 'app/shared/user-settings/user-settings.service';
+import { UserSettings } from 'app/shared/user-settings/user-settings.service';
 
 export const defaultNotificationSettings: UserSettings = {
-    category: UserSettingsCategory.NOTIFICATIONS,
+    category: 'Notifications',
     groups: [
         {
             name: 'Exercise Notifications',

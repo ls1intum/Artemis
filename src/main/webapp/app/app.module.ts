@@ -26,15 +26,7 @@ import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
-import { RouterModule } from '@angular/router';
-import { userSettingsState } from 'app/shared/user-settings/user-settings.route';
-/*
-import { RouterModule } from '@angular/router';
-import { UserSettingsComponent } from 'app/shared/user-settings/user-settings.component';
-import { userSettingsState } from 'app/shared/user-settings/user-settings.route';
-import { AccountInformationComponent } from 'app/shared/user-settings/account-information/account-information.component';
-import { NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
- */
+import { UserSettingsModule } from 'app/shared/user-settings/user-settings.module';
 
 // NOTE: this module should only include the most important modules for normal users, all course management, admin and account functionality should be lazy loaded if possible
 @NgModule({
@@ -53,7 +45,7 @@ import { NotificationSettingsComponent } from 'app/shared/user-settings/notifica
         ArtemisSystemNotificationModule,
         ArtemisComplaintsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
-        RouterModule.forChild(userSettingsState),
+        UserSettingsModule,
     ],
     declarations: [
         JhiMainComponent,
@@ -67,11 +59,6 @@ import { NotificationSettingsComponent } from 'app/shared/user-settings/notifica
         NotificationSidebarComponent,
         SystemNotificationComponent,
         LoadingNotificationComponent,
-        /*
-        UserSettingsComponent,
-        AccountInformationComponent,
-        NotificationSettingsComponent,
-         */
     ],
     bootstrap: [JhiMainComponent],
 })

@@ -1,9 +1,9 @@
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { OptionCore, OptionGroup, UserSettings, UserSettingsCategory, UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { Notification } from 'app/entities/notification.model';
+import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 
 @Component({
     selector: 'jhi-notification-settings',
@@ -11,7 +11,8 @@ import { Notification } from 'app/entities/notification.model';
     styleUrls: ['../user-settings.component.scss'],
 })
 export class NotificationSettingsComponent implements OnInit {
-    userSettingsCategory: UserSettingsCategory = UserSettingsCategory.NOTIFICATIONS;
+    //userSettingsCategory: UserSettingsCategory = UserSettingsCategory.NOTIFICATIONS;
+    userSettingsCategory = 'Notifications';
 
     notificationSettings: UserSettings;
     optionsChanged: boolean = false;
@@ -23,6 +24,7 @@ export class NotificationSettingsComponent implements OnInit {
 
     ngOnInit(): void {
         this.userSettingsService.queryUserOptions(this.userSettingsCategory).subscribe((res: HttpResponse<OptionCore[]>) => {
+            //this.notificationSettings = this.userSettingsService.loadUserOptionCoresSuccess(res.body!, res.headers, this.userSettingsCategory);
             this.notificationSettings = this.userSettingsService.loadUserOptionCoresSuccess(res.body!, res.headers, this.userSettingsCategory);
             this.notificationOptionCores = this.userSettingsService.extractOptionCoresFromSettings(this.notificationSettings);
             this.changeDetector.detectChanges();
@@ -83,6 +85,7 @@ export class NotificationSettingsComponent implements OnInit {
         // if no option cores were loaded -> user has not yet changed options -> use default notification settings
         if (receivedNotificationOptionCores == undefined || receivedNotificationOptionCores.length === 0) {
             this.notificationOptionCores = this.extractOptionCoresFromSettingsCategory(defaultNotificationSettings);
+            debugger;
             return;
         }
         // else user already customized the settings
