@@ -1,19 +1,19 @@
 <h1>Account Information</h1>
-<div class="list-group d-block" *ngIf="currAccount">
-    <div class="list-group-item" *ngIf="currAccount.name">
+<div class="list-group d-block" *ngIf="currentUser">
+    <div class="list-group-item" *ngIf="currentUser.name">
         <dt>Full Name</dt>
-        <dd>{{ currAccount.name }}</dd>
+        <dd>{{ currentUser.name }}</dd>
     </div>
-    <div class="list-group-item" *ngIf="currAccount.login">
+    <div class="list-group-item" *ngIf="currentUser.login">
         <dt>Login</dt>
-        <dd>{{ currAccount.login }}</dd>
+        <dd>{{ currentUser.login }}</dd>
     </div>
-    <div class="list-group-item" *ngIf="currAccount.email">
+    <div class="list-group-item" *ngIf="currentUser.email">
         <dt>Email</dt>
-        <dd>{{ currAccount.email }}</dd>
+        <dd>{{ currentUser.email }}</dd>
     </div>
-    <div class="list-group-item" *ngIf="currAccount.createdDate">
+    <div class="list-group-item" *ngIf="currentUser.createdDate">
         <dt>Joined Artemis on</dt>
-        <dd>{{ currAccount.createdDate | artemisDate }}</dd>
+        <dd>{{ currentUser.createdDate | artemisDate }}</dd>
     </div>
 </div>

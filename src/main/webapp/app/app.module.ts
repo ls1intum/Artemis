@@ -26,7 +26,6 @@ import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
-import { NotificationOptionsComponent } from 'app/shared/notification/notification-options/notification-options.component';
 import { RouterModule } from '@angular/router';
 import { UserSettingsComponent } from 'app/shared/user-settings/user-settings.component';
 import { userSettingsState } from 'app/shared/user-settings/user-settings.route';
@@ -63,7 +62,6 @@ import { NotificationSettingsComponent } from 'app/shared/user-settings/notifica
         FooterComponent,
         NotificationPopupComponent,
         NotificationSidebarComponent,
-        NotificationOptionsComponent,
         SystemNotificationComponent,
         LoadingNotificationComponent,
         AccountInformationComponent,

@@ -15,9 +15,8 @@ import { Notification } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { NotificationOption } from 'app/shared/notification/notification-options/notification-options.component';
-import { OptionCore } from 'app/shared/user-settings/user-settings.component';
 
+/*
 export interface UserOption {
     id?: number;
     option: string;
@@ -25,6 +24,7 @@ export interface UserOption {
     email: boolean;
     user_id?: number;
 }
+ */
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -56,20 +56,12 @@ export class NotificationService {
             .pipe(map((res: HttpResponse<Notification[]>) => this.convertDateArrayFromServer(res)));
     }
 
-    queryNotificationOptions(req?: any): Observable<HttpResponse<NotificationOption[]>> {
-        const options = createRequestOption(req);
-        return this.http.get<NotificationOption[]>(this.resourceUrl + '/fetch-options', { params: options, observe: 'response' });
-    }
-
-    queryUserOptions(req?: any): Observable<HttpResponse<OptionCore[]>> {
-        const optionCores = createRequestOption(req);
-        return this.http.get<OptionCore[]>(this.userSettingsResourceUrl + '/fetch-options', { params: optionCores, observe: 'response' });
-    }
-
+    /*
     saveNewUserOptions(optionCores: OptionCore[]): Observable<HttpResponse<OptionCore[]>> {
         return this.http.post<OptionCore[]>(this.userSettingsResourceUrl + '/save-new-options', optionCores, { observe: 'response' });
         //return this.http.post<OptionCore[]>(this.userSettingsResourceUrl + '/save-new-options', [optionCores[0]], { observe: 'response' });
     }
+     */
 
     /**
      * Delete notification by id.

@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { Option, OptionCore, OptionGroup, SettingsCategory } from 'app/shared/user-settings/user-settings.component';
+import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 
 @Component({
     selector: 'jhi-notification-settings',
@@ -16,7 +17,7 @@ export class NotificationSettingsComponent implements OnInit {
     error?: string;
     notificationOptionCores: Array<OptionCore>;
 
-    constructor(private notificationService: NotificationService) {}
+    constructor(private notificationService: NotificationService, private userSettingsService: UserSettingsService) {}
 
     ngOnInit(): void {
         //this.notificationSettings = defaultNotificationSettings;
@@ -28,7 +29,8 @@ export class NotificationSettingsComponent implements OnInit {
         //TODO refresh notifications in notification-sidebar (else outdated, ngOnitnit only called once, i.e. only calls loadnotifications once)
 
         let newOptionCores = this.notificationOptionCores.filter((optionCore) => optionCore.changed);
-        this.notificationService.saveNewUserOptions(newOptionCores).subscribe(
+        //this.notificationService.saveNewUserOptions(newOptionCores).subscribe(
+        this.userSettingsService.saveUserOptions(newOptionCores).subscribe(
             (res: HttpResponse<OptionCore[]>) => this.saveUserOptionsSuccess(res.body!, res.headers),
             (res: HttpErrorResponse) => (this.error = res.message),
         );
@@ -49,7 +51,8 @@ export class NotificationSettingsComponent implements OnInit {
     }
 
     private loadNotificationOptions(): void {
-        this.notificationService
+        // this.notificationService
+        this.userSettingsService
             .queryUserOptions({
                 page: this.page, //kp ob nötig
             })

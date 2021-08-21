@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subscription, tap } from 'rxjs';
@@ -8,8 +8,8 @@ import { Subscription, tap } from 'rxjs';
     templateUrl: './account-information.component.html',
     styleUrls: ['../user-settings.component.scss'],
 })
-export class AccountInformationComponent implements OnInit {
-    currAccount?: User;
+export class AccountInformationComponent {
+    currentUser?: User;
 
     private authStateSubscription: Subscription;
 
@@ -18,7 +18,7 @@ export class AccountInformationComponent implements OnInit {
     ngOnInit() {
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
-            .pipe(tap((user: User) => (this.currAccount = user)))
+            .pipe(tap((user: User) => (this.currentUser = user)))
             .subscribe();
     }
 }

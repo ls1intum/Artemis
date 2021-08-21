@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subscription, tap } from 'rxjs';
+import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 //used only in the client
 export interface SettingsCategory {
     name: string;
@@ -27,55 +28,23 @@ export interface OptionCore {
     email?: boolean;
     changed?: boolean;
 }
-/*
-export interface UserOption {
-    id?: number;
-    changed?: boolean;
-    category?: string;
-    group?: string;
-    name: string;
-    description: string;
-    webapp: boolean;
-    email?: boolean;
-    user?: User;
-}
- */
-/*
-export interface Option {
-    name: string;
-    description: string;
-    webapp: boolean;
-}
-
-//used for communication between client and server
-export interface UserOption {
-    id: number;
-    category: string;
-    group: string;
-    name: string;
-    description: string;
-    webapp: boolean;
-    email: boolean;
-    user: User;
-}
- */
 
 @Component({
     selector: 'jhi-user-settings',
     templateUrl: 'user-settings.component.html',
     styleUrls: ['user-settings.component.scss'],
 })
-export class UserSettingsComponent implements OnInit {
-    currAccount?: User;
+export class UserSettingsComponent {
+    currentUser?: User;
 
     private authStateSubscription: Subscription;
 
-    constructor(private accountService: AccountService) {}
+    constructor(private accountService: AccountService, private userSettingsService: UserSettingsService) {}
 
     ngOnInit() {
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
-            .pipe(tap((user: User) => (this.currAccount = user)))
+            .pipe(tap((user: User) => (this.currentUser = user)))
             .subscribe();
     }
 }
