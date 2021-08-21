@@ -22,16 +22,6 @@ export class NotificationSettingsComponent implements OnInit {
     constructor(private notificationService: NotificationService, private userSettingsService: UserSettingsService, private changeDetector: ChangeDetectorRef) {}
 
     ngOnInit(): void {
-        //this.loadNotificationOptions();
-        //this.userSettingsService.loadUserOptions(this.userSettingsCategory, this.notificationOptionCores, this.notificationSettings);
-        /*
-        this.userSettingsService.loadUserSettings(this.userSettingsCategory)
-            .subscribe((loadedSettings : UserSettings) => {
-                this.notificationSettings = loadedSettings;
-                this.notificationOptionCores = this.userSettingsService.extractOptionCoresFromSettings(loadedSettings);
-            }
-        );
-         */
         this.userSettingsService.queryUserOptions(this.userSettingsCategory).subscribe((res: HttpResponse<OptionCore[]>) => {
             this.notificationSettings = this.userSettingsService.loadUserOptionCoresSuccess(res.body!, res.headers, this.userSettingsCategory);
             this.notificationOptionCores = this.userSettingsService.extractOptionCoresFromSettings(this.notificationSettings);
@@ -42,19 +32,18 @@ export class NotificationSettingsComponent implements OnInit {
 
     saveOptions() {
         //TODO refresh notifications in notification-sidebar (else outdated, ngOnitnit only called once, i.e. only calls loadnotifications once)
-
         let newOptionCores = this.notificationOptionCores.filter((optionCore) => optionCore.changed);
         this.userSettingsService.saveUserOptions(newOptionCores).subscribe(
             (res: HttpResponse<OptionCore[]>) => this.saveUserOptionsSuccess(res.body!, res.headers),
             (res: HttpErrorResponse) => (this.error = res.message),
         );
     }
-
     private saveUserOptionsSuccess(receivedOptionCores: OptionCore[], headers: HttpHeaders): void {
         this.updateSettings(receivedOptionCores);
     }
 
     toggleOption(event: any) {
+        debugger;
         this.optionsChanged = true;
         const optionId = event.currentTarget.id; //TODO
         let foundOption = this.notificationOptionCores.find((core) => core.optionSpecifier === optionId);
@@ -76,7 +65,6 @@ export class NotificationSettingsComponent implements OnInit {
         });
         return optionCoreAccumulator;
     }
-
     private updateSettings(newOptionCores: OptionCore[]): void {
         //use the updated cores to update the entire settings category, needed for ids
         for (let i = 0; i < this.notificationSettings.groups.length; i++) {
@@ -90,7 +78,6 @@ export class NotificationSettingsComponent implements OnInit {
         }
         this.notificationOptionCores = this.extractOptionCoresFromSettingsCategory(this.notificationSettings);
     }
-
     private loadNotificationOptionCoresSuccess(receivedNotificationOptionCores: OptionCore[], headers: HttpHeaders): void {
         this.notificationSettings = defaultNotificationSettings;
         // if no option cores were loaded -> user has not yet changed options -> use default notification settings

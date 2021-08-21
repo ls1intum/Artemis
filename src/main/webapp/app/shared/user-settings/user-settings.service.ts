@@ -65,32 +65,7 @@ export class UserSettingsService {
 
     constructor(private accountService: AccountService, private http: HttpClient) {}
 
-    /*
-    public loadUserOptions(category: UserSettingsCategory, optionCoresToLoad: OptionCore[], settingsToLoad: UserSettings): void {
-            this.queryUserOptions(category).subscribe(
-                (res: HttpResponse<OptionCore[]>) => this.loadUserOptionCoresSuccess(res.body!, res.headers,category, optionCoresToLoad, settingsToLoad),
-                (res: HttpErrorResponse) => (this.error = res.message),
-            );
-    }
-     */
-    /*
-    public loadUserSettings(category: UserSettingsCategory): Observable<UserSettings> {
-        return this.queryUserOptions(category).subscribe((res: HttpResponse<OptionCore[]>) => {
-             this.loadUserOptionCoresSuccess(res.body!, res.headers, category)
-        });
-        //(res: HttpErrorResponse) => this.error = res.message TODO
-    }
-    /*
-    public loadUserOptions(category: UserSettingsCategory, optionCoresToLoad: OptionCore[], settingsToLoad: UserSettings): void {
-        this.queryUserOptions(category).subscribe((res: HttpResponse<OptionCore[]>) => {
-            return this.loadUserOptionCoresSuccess(res.body!, res.headers, category, optionCoresToLoad, settingsToLoad)
-        });
-        //(res: HttpErrorResponse) => this.error = res.message TODO
-    }
-     */
-
     public queryUserOptions(category: UserSettingsCategory): Observable<HttpResponse<OptionCore[]>> {
-        debugger;
         const optionCores = createRequestOption(); //maybe useless TODO
         switch (category) {
             case UserSettingsCategory.NOTIFICATIONS: {
@@ -101,33 +76,8 @@ export class UserSettingsService {
             }
         }
     }
-    /*
-    private loadUserOptionCoresSuccess(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: UserSettingsCategory, optionCoresToLoad: OptionCore[], settingsToLoad: UserSettings): void {
-        debugger;
-        let loadedOptionCores : OptionCore [];
-        let loadedSettings : UserSettings;
 
-        // load default settings as foundation
-        switch(category) {
-            case UserSettingsCategory.NOTIFICATIONS: {
-                loadedSettings = defaultNotificationSettings;
-            }
-        }
-
-        // if user already customized settings -> update loaded default settings with received data
-        if (!(receivedOptionCoresFromServer == undefined || receivedOptionCoresFromServer.length === 0)) {
-            this.updateSettings(receivedOptionCoresFromServer, loadedSettings);
-        }
-        //else continue using default settings
-
-        loadedOptionCores = this.extractOptionCoresFromSettings(loadedSettings);
-
-        optionCoresToLoad = loadedOptionCores;
-        settingsToLoad = loadedSettings;
-    }
- */
     public loadUserOptionCoresSuccess(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: UserSettingsCategory): UserSettings {
-        debugger;
         let settingsResult: UserSettings;
 
         // load default settings as foundation
