@@ -9,26 +9,24 @@ services:
       - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
       - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
-      - SPRING_R2DBC_URL=r2dbc:mysql://gateway-mysql:3306/gateway?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
-      - SPRING_LIQUIBASE_URL=jdbc:mysql://gateway-mysql:3306/gateway?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
       - JHIPSTER_SLEEP=30 # gives time for other services to boot before the application
       - KAFKA_BOOTSTRAPSERVERS=kafka:9092
     # If you want to expose these ports outside your dev PC,
     # remove the "127.0.0.1:" prefix
     ports:
       - 127.0.0.1:8089:8089
-  gateway-mysql:
-    image: mysql:8.0.25
-    # volumes:
-    #   - ~/volumes/jhipster/gateway/mysql/:/var/lib/mysql/
-    environment:
-      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-      - MYSQL_DATABASE=gateway
-    # If you want to expose these ports outside your dev PC,
-    # remove the "127.0.0.1:" prefix
-    ports:
-      - 127.0.0.1:3306:3306
-    command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --explicit_defaults_for_timestamp
+#  gateway-mysql:
+#    image: mysql:8.0.25
+#    # volumes:
+#    #   - ~/volumes/jhipster/gateway/mysql/:/var/lib/mysql/
+#    environment:
+#      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+#      - MYSQL_DATABASE=gateway
+#    # If you want to expose these ports outside your dev PC,
+#    # remove the "127.0.0.1:" prefix
+#    ports:
+#      - 127.0.0.1:3306:3306
+#    command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --explicit_defaults_for_timestamp
   kafka:
     image: confluentinc/cp-kafka:5.5.4
     # If you want to expose these ports outside your dev PC,

@@ -54,7 +54,7 @@ management:
       base-path: /management
       exposure:
         include:
-          ['configprops', 'env', 'gateway', 'health', 'info', 'jhimetrics', 'logfile', 'loggers', 'prometheus', 'threaddump', 'liquibase']
+          ['configprops', 'env', 'gateway', 'health', 'info', 'jhimetrics', 'logfile', 'loggers', 'prometheus', 'threaddump']
   endpoint:
     health:
       show-details: when_authorized
@@ -71,7 +71,7 @@ management:
       liveness:
         include: livenessState
       readiness:
-        include: readinessState,datasource
+        include: readinessState
     mail:
       enabled: false # When using the MailService, configure an SMTP server and set this to true
   metrics:
@@ -177,7 +177,7 @@ info:
 
 jhipster:
   clientApp:
-    name: 'artemisApp'
+    name: 'gatewayApp'
   # By default CORS is disabled. Uncomment to enable.
   # cors:
   #   allowed-origins: "http://localhost:8100,http://localhost:9000"

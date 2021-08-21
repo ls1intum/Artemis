@@ -51,17 +51,10 @@ spring:
       label: main # toggle to switch to a different version of the configuration as stored in git
       # it can be set to any label, branch or commit of the configuration source Git repository
   # Replace by 'prod, faker' to add the faker context and have sample data loaded in production
-  liquibase:
-    contexts: prod
-    url: jdbc:mysql://localhost:3306/gateway?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
   mail:
     host: localhost
     port: 25
     username:
-    password:
-  r2dbc:
-    url: r2dbc:mysql://localhost:3306/gateway?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
-    username: root
     password:
   thymeleaf:
     cache: true

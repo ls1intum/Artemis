@@ -39,12 +39,11 @@
     <logger name="com.sun" level="WARN"/>
     <logger name="com.zaxxer" level="WARN"/>
     <logger name="io.netty" level="WARN"/>
-    <logger name="io.r2dbc" level="WARN"/>
     <logger name="org.apache" level="WARN"/>
     <logger name="org.apache.kafka" level="INFO"/>
     <logger name="org.apache.catalina.startup.DigesterFactory" level="OFF"/>
     <logger name="org.bson" level="WARN"/>
-    <logger name="org.hibernate.validator" level="WARN"/>
+<!--    <logger name="org.hibernate.validator" level="WARN"/>-->
     <logger name="org.springframework" level="WARN"/>
     <logger name="org.springframework.web" level="WARN"/>
     <logger name="org.springframework.security" level="WARN"/>
@@ -55,8 +54,6 @@
     <logger name="reactor" level="WARN"/>
     <logger name="springfox" level="WARN"/>
     <logger name="sun.rmi" level="WARN"/>
-    <logger name="liquibase" level="WARN"/>
-    <logger name="LiquibaseSchemaResolver" level="INFO"/>
     <logger name="springfox.documentation.schema.property" level="ERROR"/>
     <logger name="sun.net.www" level="INFO"/>
     <logger name="sun.rmi.transport" level="WARN"/>

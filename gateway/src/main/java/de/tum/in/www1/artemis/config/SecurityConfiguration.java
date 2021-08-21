@@ -15,7 +15,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
+//import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -32,19 +32,19 @@ public class SecurityConfiguration {
 
     private final JHipsterProperties jHipsterProperties;
 
-    private final ReactiveUserDetailsService userDetailsService;
+//    private final ReactiveUserDetailsService userDetailsService;
 
     private final TokenProvider tokenProvider;
 
     private final SecurityProblemSupport problemSupport;
 
     public SecurityConfiguration(
-        ReactiveUserDetailsService userDetailsService,
+//        ReactiveUserDetailsService userDetailsService,
         TokenProvider tokenProvider,
         JHipsterProperties jHipsterProperties,
         SecurityProblemSupport problemSupport
     ) {
-        this.userDetailsService = userDetailsService;
+//        this.userDetailsService = userDetailsService;
         this.tokenProvider = tokenProvider;
         this.jHipsterProperties = jHipsterProperties;
         this.problemSupport = problemSupport;
@@ -54,15 +54,7 @@ public class SecurityConfiguration {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-    @Bean
-    public ReactiveAuthenticationManager reactiveAuthenticationManager() {
-        UserDetailsRepositoryReactiveAuthenticationManager authenticationManager = new UserDetailsRepositoryReactiveAuthenticationManager(
-            userDetailsService
-        );
-        authenticationManager.setPasswordEncoder(passwordEncoder());
-        return authenticationManager;
-    }
+git statu
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
@@ -76,7 +68,7 @@ public class SecurityConfiguration {
                 .disable()
             .addFilterAt(new SpaWebFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
             .addFilterAt(new JWTFilter(tokenProvider), SecurityWebFiltersOrder.HTTP_BASIC)
-            .authenticationManager(reactiveAuthenticationManager())
+//            .authenticationManager(reactiveAuthenticationManager())
             .exceptionHandling()
                 .accessDeniedHandler(problemSupport)
                 .authenticationEntryPoint(problemSupport)

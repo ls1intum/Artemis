@@ -28,7 +28,7 @@ task webpack(type: YarnTask, dependsOn: 'yarn') {
     environment = [APP_VERSION: project.version]
 }
 
-task copyClientLoc(type: Copy) {
+task copyClientBuildFiles(type: Copy) {
     from "../build/resources/main/"
     into "build/resources/main/"
     exclude "config"
@@ -51,6 +51,6 @@ processResources {
 }
 
 test.dependsOn webpack_test
-tasks.copyClientLoc.dependsOn webpack
-processResources.dependsOn tasks.copyClientLoc
+tasks.copyClientBuildFiles.dependsOn webpack
+processResources.dependsOn tasks.copyClientBuildFiles
 bootJar.dependsOn processResources

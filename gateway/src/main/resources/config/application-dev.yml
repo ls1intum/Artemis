@@ -45,21 +45,13 @@ spring:
       profile: dev
       label: main # toggle to switch to a different version of the configuration as stored in git
       # it can be set to any label, branch or commit of the configuration source Git repository
-  liquibase:
-    # Remove 'faker' if you do not want the sample data to be loaded automatically
-    contexts: dev, faker
-    url: jdbc:mysql://localhost:3306/gateway?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
-  mail:
+ mail:
     host: localhost
     port: 25
     username:
     password:
   messages:
     cache-duration: PT1S # 1 second, see the ISO 8601 standard
-  r2dbc:
-    url: r2dbc:mysql://localhost:3306/gateway?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
-    username: root
-    password:
   thymeleaf:
     cache: false
   sleuth:

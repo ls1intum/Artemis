@@ -35,19 +35,12 @@ spring:
   jackson:
     serialization:
       write-durations-as-timestamps: false
-  liquibase:
-    contexts: test
-    url: jdbc:h2:mem:gateway;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
   mail:
     host: localhost
   main:
     allow-bean-definition-overriding: true
   messages:
     basename: i18n/messages
-  r2dbc:
-    url: r2dbc:h2:mem:///gateway;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    username: r2dbc
-    password:
   task:
     execution:
       thread-name-prefix: gateway-task-

@@ -1,4 +1,4 @@
-{
+
   "baseUrl": "http://localhost:8089/",
   "testFiles": "**/*.audits.ts",
   "supportFile": "src/test/javascript/cypress/support/index.ts",
