@@ -6,10 +6,11 @@ import { UserSettingsService } from 'app/shared/user-settings/user-settings.serv
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterModule } from '@angular/router';
 import { userSettingsState } from 'app/shared/user-settings/user-settings.route';
+import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-settings-prototype/user-settings-prototype.component';
 
 @NgModule({
     imports: [RouterModule.forChild(userSettingsState), ArtemisSharedModule],
-    declarations: [UserSettingsComponent, AccountInformationComponent, NotificationSettingsComponent],
+    declarations: [UserSettingsComponent, UserSettingsPrototypeComponent, AccountInformationComponent, NotificationSettingsComponent],
     exports: [],
     providers: [UserSettingsService],
 })

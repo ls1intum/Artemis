@@ -1,12 +1,13 @@
-<!-- <div class="d-flex justify-content-between">
-    <h1>Notification Settings</h1>
+<div class="d-flex justify-content-between">
+    <!--<h1>Notification Settings</h1>-->
+    <h1>{{userSettingsCategory}}</h1>
     <button type="button" class="btn btn-primary" *ngIf="optionsChanged" id="apply-changes-button" (click)="saveOptions()">
         <fa-icon [icon]="'save'"></fa-icon>
         {{ 'artemisApp.notification.options.saveChanges' | artemisTranslate }}
     </button>
 </div>
-<div class="list-group d-block" *ngIf="notificationSettings">
-    <div class="list-group-item" *ngFor="let optionGroup of notificationSettings.groups">
+<div class="list-group d-block" *ngIf="userSettings">
+    <div class="list-group-item" *ngFor="let optionGroup of userSettings.groups">
         <h3>{{ optionGroup.name }}</h3>
         <div *ngFor="let option of optionGroup.options">
             <dt>{{ option.name }}</dt>
@@ -25,4 +26,3 @@
         </div>
     </div>
 </div>
--->
