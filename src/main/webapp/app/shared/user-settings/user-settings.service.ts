@@ -138,6 +138,8 @@ export class UserSettingsService {
                 if (optionCore.id == undefined) {
                     optionCore.id = -1; // is used to mark cores which have never been saved to the database
                 }
+                //sets changed flag to false after update
+                optionCore.changed = false;
                 optionCoreAccumulator.push(optionCore);
             });
         });

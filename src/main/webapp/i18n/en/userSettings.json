@@ -1,0 +1,9 @@
+{
+    "artemisApp": {
+        "userSettings": {
+            "settings": "Settings",
+            "saveChanges": "Save Changes",
+            "saveSettingsSuccessAlert": "Your Settings have been successfully saved."
+        }
+    }
+}

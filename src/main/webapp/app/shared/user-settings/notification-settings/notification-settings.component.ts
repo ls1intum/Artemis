@@ -3,6 +3,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-settings-prototype/user-settings-prototype.component';
 import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-notification-settings',
@@ -12,8 +13,8 @@ import { defaultNotificationSettings } from 'app/shared/user-settings/notificati
 export class NotificationSettingsComponent extends UserSettingsPrototypeComponent implements OnInit {
     userSettingsCategory = defaultNotificationSettings.category;
 
-    constructor(notificationService: NotificationService, userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef) {
-        super(notificationService, userSettingsService, changeDetector);
+    constructor(notificationService: NotificationService, userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: JhiAlertService) {
+        super(notificationService, userSettingsService, alertService, changeDetector);
     }
 
     ngOnInit(): void {

@@ -1,9 +1,9 @@
+<div *ngIf="showAlert" class="alert alert-primary" role="alert">A simple primary alert—check it out!</div>
 <div class="d-flex justify-content-between">
-    <!--<h1>Notification Settings</h1>-->
     <h1>{{ userSettingsCategory }}</h1>
     <button type="button" class="btn btn-primary" *ngIf="optionsChanged" id="apply-changes-button" (click)="saveOptions()">
         <fa-icon [icon]="'save'"></fa-icon>
-        {{ 'artemisApp.notification.options.saveChanges' | artemisTranslate }}
+        {{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}
     </button>
 </div>
 <div class="list-group d-block" *ngIf="userSettings">

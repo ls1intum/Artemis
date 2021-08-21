@@ -1,0 +1,9 @@
+{
+    "artemisApp": {
+        "userSettings": {
+            "header": "Benachrichtigungseinstellungen",
+            "saveChanges": "Änderungen speichern",
+            "saveSettingsSuccessAlert": "Die Einstellungen wurden erfolgreich gespeichert."
+        }
+    }
+}

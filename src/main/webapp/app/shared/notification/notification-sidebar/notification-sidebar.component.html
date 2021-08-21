@@ -7,7 +7,7 @@
     </button>
 </li>
 
-<div class="notification-overlay" (click)="closeOverlay()" [ngClass]="showSidebar || showOptions ? 'show' : 'hide'"></div>
+<div class="notification-overlay" (click)="toggleSidebar()" [ngClass]="showSidebar ? 'show' : 'hide'"></div>
 
 <div class="notification-sidebar" [ngClass]="showSidebar ? 'show' : 'hide'">
     <div class="d-flex flex-column">

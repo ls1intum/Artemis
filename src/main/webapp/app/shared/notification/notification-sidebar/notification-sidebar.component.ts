@@ -16,7 +16,6 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 })
 export class NotificationSidebarComponent implements OnInit {
     showSidebar = false;
-    showOptions = false;
     loading = false;
     notifications: Notification[] = [];
     sortedNotifications: Notification[] = [];
@@ -38,7 +37,6 @@ export class NotificationSidebarComponent implements OnInit {
                 if (user.lastNotificationRead) {
                     this.lastNotificationRead = user.lastNotificationRead;
                 }
-                //this.loadNotificationOptions(); TODO only explicitly call in notification-settings component if it is open, the server has to filter the notifications already on its own
                 this.loadNotifications();
                 this.subscribeToNotificationUpdates();
             }
@@ -50,24 +48,6 @@ export class NotificationSidebarComponent implements OnInit {
      */
     toggleSidebar(): void {
         this.showSidebar = !this.showSidebar;
-    }
-
-    openOptions(): void {
-        this.toggleSidebar();
-        this.showOptions = true;
-    }
-
-    optionsClosed(isClosed: boolean): void {
-        //TODO isClosed inputparamenter vll entfernen
-        this.showOptions = false;
-    }
-
-    closeOverlay(): void {
-        if (this.showOptions) {
-            this.optionsClosed(true);
-        } else if (this.showSidebar) {
-            this.toggleSidebar();
-        }
     }
 
     /**
