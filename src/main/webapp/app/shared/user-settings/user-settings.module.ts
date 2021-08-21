@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { UserSettingsComponent } from 'app/shared/user-settings/user-settings.component';
+import { UserSettingsContainerComponent } from 'app/shared/user-settings/user-settings-container/user-settings-container.component';
 import { AccountInformationComponent } from 'app/shared/user-settings/account-information/account-information.component';
 import { NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
@@ -10,7 +10,7 @@ import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-se
 
 @NgModule({
     imports: [RouterModule.forChild(userSettingsState), ArtemisSharedModule],
-    declarations: [UserSettingsComponent, UserSettingsPrototypeComponent, AccountInformationComponent, NotificationSettingsComponent],
+    declarations: [UserSettingsContainerComponent, UserSettingsPrototypeComponent, AccountInformationComponent, NotificationSettingsComponent],
     exports: [],
     providers: [UserSettingsService],
 })

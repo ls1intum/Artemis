@@ -5,14 +5,14 @@ import { Subscription, tap } from 'rxjs';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 
 /**
- * UserSettingsComponent serves as the common ground for different settings
+ * UserSettingsContainerComponent serves as the common ground for different settings
  */
 @Component({
     selector: 'jhi-user-settings',
-    templateUrl: 'user-settings.component.html',
-    styleUrls: ['user-settings.component.scss'],
+    templateUrl: 'user-settings-container.component.html',
+    styleUrls: ['user-settings-container.component.scss'],
 })
-export class UserSettingsComponent {
+export class UserSettingsContainerComponent {
     currentUser?: User;
 
     private authStateSubscription: Subscription;

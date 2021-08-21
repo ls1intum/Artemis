@@ -5,7 +5,7 @@ import { OptionCore, UserSettings, UserSettingsService } from 'app/shared/user-s
 
 @Component({
     templateUrl: 'user-settings-prototype.component.ts.html',
-    styleUrls: ['../user-settings.component.scss'],
+    styleUrls: ['../user-settings-container/user-settings-container.component.scss'],
 })
 /*abstract*/
 export class UserSettingsPrototypeComponent implements OnInit {

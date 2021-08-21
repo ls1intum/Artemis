@@ -1,12 +1,12 @@
 import { Routes } from '@angular/router';
-import { UserSettingsComponent } from 'app/shared/user-settings/user-settings.component';
+import { UserSettingsContainerComponent } from 'app/shared/user-settings/user-settings-container/user-settings-container.component';
 import { AccountInformationComponent } from 'app/shared/user-settings/account-information/account-information.component';
 import { NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
 
 export const userSettingsState: Routes = [
     {
         path: 'user-settings',
-        component: UserSettingsComponent,
+        component: UserSettingsContainerComponent,
         children: [
             {
                 // redirects to account information when user-settings are opened
