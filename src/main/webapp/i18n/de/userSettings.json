@@ -12,6 +12,22 @@
                 "login": "Login",
                 "email": "Email",
                 "joinedArtemis": "Artemis beigetreten am"
+            },
+            "categories": {
+                "notificationSettings": "Notification Settings"
+            },
+            "optionGroupNames": {
+                "exerciseNotifications": "Exercise Notifications",
+                "lectureNotifications": "Lecture Notifications",
+                "instructorExclusiveNotifications": "Instructor Exclusive Notifications"
+            },
+            "optionNames": {
+                "exerciseCreatedOrStarted": "Exercise created or started",
+                "exerciseOpenForPractice": "Exercise open for Practice"
+            },
+            "optionDescriptions": {
+                "getNotifiedIfANewExerciseHasBeenCreatedOrStarted": "Get notified if a (new) exercise has been created or started",
+                "getNotifiedIfAnExerciseHasBeenOpenedForPractice": "Get notified if an exercise has been opened for practice (e.g. Quiz)"
             }
         }
     }

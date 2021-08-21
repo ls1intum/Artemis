@@ -12,6 +12,22 @@
                 "login": "Login",
                 "email": "Email",
                 "joinedArtemis": "Joined Artemis on"
+            },
+            "categories": {
+                "notificationSettings": "Benachrichtigungseinstellungen"
+            },
+            "optionGroupNames": {
+                "exerciseNotifications": "Aufgabenbenachrichtigungen",
+                "lectureNotifications": "Vorlesungsbenachrichtigungen",
+                "instructorExclusiveNotifications": "Exklusive Benachrichtigungen für Lehrende"
+            },
+            "optionNames": {
+                "exerciseCreatedOrStarted": "(Neue) Aufgabe erstellt oder gestartet",
+                "exerciseOpenForPractice": "Aufgabe zum Üben freigegeben"
+            },
+            "optionDescriptions": {
+                "getNotifiedIfANewExerciseHasBeenCreatedOrStarted": "Erhalte eine Mitteilung falls eine (neue) Aufgabe erstellt oder gestartet wurde",
+                "getNotifiedIfAnExerciseHasBeenOpenedForPractice": "Erhalte eine Mitteilung falls eine Aufgabe zum Üben freigeschalten wurde (bsp. Quiz)"
             }
         }
     }

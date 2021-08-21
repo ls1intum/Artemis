@@ -7,8 +7,8 @@ export const defaultNotificationSettings: UserSettings = {
             name: 'Exercise Notifications',
             options: [
                 {
-                    name: 'Exercise created / started',
-                    description: 'Get notified if a (new) exercise has been created / started',
+                    name: 'Exercise created or started',
+                    description: 'Get notified if a (new) exercise has been created or started',
                     optionCore: {
                         webapp: true,
                         email: false,

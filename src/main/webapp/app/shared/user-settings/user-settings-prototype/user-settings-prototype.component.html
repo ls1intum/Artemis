@@ -1,6 +1,9 @@
 <div *ngIf="showAlert" class="alert alert-primary" role="alert">A simple primary alert—check it out!</div>
 <div class="d-flex justify-content-between">
-    <h1>{{ userSettingsCategory }}</h1>
+    <h1>
+        <!--UserSettingsCategory-->
+        {{ 'artemisApp.userSettings.categories.' + (userSettingsCategory | camelCase) | artemisTranslate }}
+    </h1>
     <button type="button" class="btn btn-primary" *ngIf="optionsChanged" id="apply-changes-button" (click)="saveOptions()">
         <fa-icon [icon]="'save'"></fa-icon>
         {{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}
@@ -8,10 +11,22 @@
 </div>
 <div class="list-group d-block" *ngIf="userSettings">
     <div class="list-group-item" *ngFor="let optionGroup of userSettings.groups">
-        <h3>{{ optionGroup.name }}</h3>
+        <!-- {{ 'artemisApp.userSettings.accountInformationPage.fullName' | artemisTranslate }}-->
+        <!--<h3>{{ optionGroup.name}}</h3>-->
+        <h3>
+            <!--GroupName-->
+            {{ 'artemisApp.userSettings.optionGroupNames.' + (optionGroup.name | camelCase) | artemisTranslate }}
+        </h3>
+        <!--{{ 'artemisApp.course.pastExercises' | artemisTranslate: { amount: pastExercises.length, total: pastExerciseCount } }}-->
         <div *ngFor="let option of optionGroup.options">
-            <dt>{{ option.name }}</dt>
-            <span>{{ option.description }}</span>
+            <dt>
+                <!--OptionName-->
+                {{ 'artemisApp.userSettings.optionNames.' + (option.name | camelCase) | artemisTranslate }}
+            </dt>
+            <span>
+                <!--OptionDescription-->
+                {{ 'artemisApp.userSettings.optionDescriptions.' + (option.description | camelCase) | artemisTranslate }}
+            </span>
             <div class="form-check border-bottom">
                 <input
                     type="checkbox"

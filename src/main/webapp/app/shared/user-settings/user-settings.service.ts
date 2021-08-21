@@ -171,7 +171,7 @@ export class UserSettingsService {
      */
     private loadDefaultSettingsAsFoundation(category: string): UserSettings {
         switch (category) {
-            case 'Notification Settings': {
+            case 'notificationSettings': {
                 return defaultNotificationSettings;
             }
             default: {
