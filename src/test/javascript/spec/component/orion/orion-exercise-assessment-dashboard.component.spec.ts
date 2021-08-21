@@ -8,7 +8,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
@@ -135,6 +135,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         orionStateStub.returns(stateObservable);
 
         const cancelStub = stub(TestBed.inject(ProgrammingAssessmentManualResultService), 'cancelAssessment');
+        cancelStub.returns(new Observable());
 
         const response = of(new HttpResponse({ body: programmingExercise, status: 200 }));
         const getForTutorsStub = stub(TestBed.inject(ExerciseService), 'getForTutors');
@@ -150,7 +151,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         // @ts-ignore
         comp.setActiveSubmissionId(24);
 
-        stateObservable.next({ ...orionState, cloning: false});
+        stateObservable.next({ ...orionState, cloning: false });
         tick();
 
         expect(cancelStub).to.have.been.calledOnceWithExactly(24);
