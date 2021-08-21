@@ -1,3 +1,8 @@
+#avatar {
+    padding-top: 8px;
+    padding-right: 15px;
+}
+
 #user-header {
     font-size: x-large;
     font-weight: 600;
@@ -10,46 +15,10 @@
     font-weight: normal;
 }
 
-#avatar {
-    padding-top: 8px;
-    padding-right: 15px;
-}
-
-.section {
-    //border-bottom: #dee2e6; //gray
-    padding-top: 20px;
-}
-
 #account-information {
     border-style: solid;
     border-color: red;
     border-radius: 25px;
-}
-
-dt {
-    font-size: large;
-    font-weight: 500;
-}
-
-h3 {
-    font-weight: bold;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-
-.form-check {
-    padding-top: 5px;
-    padding-bottom: 5px;
-    //border-bottom: 1px solid #dee2e6;
-}
-
-span {
-    color: gray;
-    font-size: smaller;
-}
-
-dd {
-    font-size: larger;
 }
 
 #navigation-bar {
@@ -59,19 +28,6 @@ dd {
     }
 }
 
-#apply-changes-button {
-    /*
-    &:focus {
-        outline: none;
-        box-shadow: none;
-    }
-     */
-    //position: absolute;
-    //right: 125px;
-    width: 250px;
-    height: 40px; //50px;
-    font-size: 20px;
-    border: 0;
-    // color: white;
-    // background: #2f6fb2; /* TUM blue */
+.section {
+    padding-top: 20px;
 }

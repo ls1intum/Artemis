@@ -6,8 +6,8 @@ import { defaultNotificationSettings } from 'app/shared/user-settings/notificati
 
 @Component({
     selector: 'jhi-notification-settings',
-    templateUrl: '../user-settings-prototype/user-settings-prototype.component.ts.html',
-    styleUrls: ['../user-settings-container/user-settings-container.component.scss'],
+    templateUrl: '../user-settings-prototype/user-settings-prototype.component.html',
+    styleUrls: ['../user-settings-prototype/user-settings-prototype.component.scss'],
 })
 export class NotificationSettingsComponent extends UserSettingsPrototypeComponent implements OnInit {
     userSettingsCategory = defaultNotificationSettings.category;

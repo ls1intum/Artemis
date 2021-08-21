@@ -4,8 +4,8 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { OptionCore, UserSettings, UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 
 @Component({
-    templateUrl: 'user-settings-prototype.component.ts.html',
-    styleUrls: ['../user-settings-container/user-settings-container.component.scss'],
+    templateUrl: 'user-settings-prototype.component.html',
+    styleUrls: ['user-settings-prototype.component.scss'],
 })
 /*abstract*/
 export class UserSettingsPrototypeComponent implements OnInit {
