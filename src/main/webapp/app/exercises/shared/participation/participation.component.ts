@@ -21,7 +21,6 @@ import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { setBuildPlanUrlForProgrammingParticipation } from 'app/exercises/shared/participation/participation.utils';
 
 enum FilterProp {

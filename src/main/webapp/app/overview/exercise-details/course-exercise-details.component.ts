@@ -40,7 +40,6 @@ import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { setBuildPlanUrlForProgrammingParticipation } from 'app/exercises/shared/participation/participation.utils';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;

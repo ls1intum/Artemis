@@ -26,7 +26,6 @@ import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
-import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { setBuildPlanUrlForProgrammingParticipation } from 'app/exercises/shared/participation/participation.utils';
 
 /**
