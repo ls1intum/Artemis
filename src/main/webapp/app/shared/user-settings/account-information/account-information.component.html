@@ -1,19 +1,34 @@
-<h1>Account Information</h1>
+<h1>
+    <!--Account Information-->
+    {{ 'artemisApp.userSettings.accountInformation' | artemisTranslate }}
+</h1>
 <div class="list-group d-block" *ngIf="currentUser">
     <div class="list-group-item" *ngIf="currentUser.name">
-        <dt>Full Name</dt>
+        <dt>
+            <!--Full Name-->
+            {{ 'artemisApp.userSettings.accountInformationPage.fullName' | artemisTranslate }}
+        </dt>
         <dd>{{ currentUser.name }}</dd>
     </div>
     <div class="list-group-item" *ngIf="currentUser.login">
-        <dt>Login</dt>
+        <dt>
+            <!--Login-->
+            {{ 'artemisApp.userSettings.accountInformationPage.login' | artemisTranslate }}
+        </dt>
         <dd>{{ currentUser.login }}</dd>
     </div>
     <div class="list-group-item" *ngIf="currentUser.email">
-        <dt>Email</dt>
+        <dt>
+            <!--Email-->
+            {{ 'artemisApp.userSettings.accountInformationPage.email' | artemisTranslate }}
+        </dt>
         <dd>{{ currentUser.email }}</dd>
     </div>
     <div class="list-group-item" *ngIf="currentUser.createdDate">
-        <dt>Joined Artemis on</dt>
+        <dt>
+            <!--Joined Artemis on-->
+            {{ 'artemisApp.userSettings.accountInformationPage.joinedArtemis' | artemisTranslate }}
+        </dt>
         <dd>{{ currentUser.createdDate | artemisDate }}</dd>
     </div>
 </div>

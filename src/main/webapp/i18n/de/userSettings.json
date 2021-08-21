@@ -1,9 +1,18 @@
 {
     "artemisApp": {
         "userSettings": {
-            "header": "Benachrichtigungseinstellungen",
+            "settings": "Benachrichtigungseinstellungen",
             "saveChanges": "Änderungen speichern",
-            "saveSettingsSuccessAlert": "Die Einstellungen wurden erfolgreich gespeichert."
+            "saveSettingsSuccessAlert": "Die Einstellungen wurden erfolgreich gespeichert.",
+            "userSettings": "Benutzereinstellungen",
+            "accountInformation": "Account Informationen",
+            "notificationSettings": "Benachrichtigungen",
+            "accountInformationPage": {
+                "fullName": "Vollständiger Name",
+                "login": "Login",
+                "email": "Email",
+                "joinedArtemis": "Artemis beigetreten am"
+            }
         }
     }
 }

@@ -3,7 +3,16 @@
         "userSettings": {
             "settings": "Settings",
             "saveChanges": "Save Changes",
-            "saveSettingsSuccessAlert": "Your Settings have been successfully saved."
+            "saveSettingsSuccessAlert": "Your Settings have been successfully saved.",
+            "userSettings": "User Settings",
+            "accountInformation": "Account Information",
+            "notificationSettings": "Notifications",
+            "accountInformationPage": {
+                "fullName": "Full Name",
+                "login": "Login",
+                "email": "Email",
+                "joinedArtemis": "Joined Artemis on"
+            }
         }
     }
 }

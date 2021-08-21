@@ -12,9 +12,18 @@
             </div>
             <!-- links to the different settings -->
             <section id="navigation-bar" class="list-group d-block pt-2">
-                <span class="list-group-item disabled fw-bold">User Settings</span>
-                <a class="list-group-item btn btn-outline-primary" routerLink="account" routerLinkActive="active">Account Information</a>
-                <a class="list-group-item btn btn-outline-primary" routerLink="notifications" routerLinkActive="active">Notification Settings</a>
+                <span class="list-group-item disabled fw-bold">
+                    <!--User Settings-->
+                    {{ 'artemisApp.userSettings.userSettings' | artemisTranslate }}
+                </span>
+                <a class="list-group-item btn btn-outline-primary" routerLink="account" routerLinkActive="active">
+                    <!--Account Information-->
+                    {{ 'artemisApp.userSettings.accountInformation' | artemisTranslate }}
+                </a>
+                <a class="list-group-item btn btn-outline-primary" routerLink="notifications" routerLinkActive="active">
+                    <!--Notification Settings-->
+                    {{ 'artemisApp.userSettings.notificationSettings' | artemisTranslate }}
+                </a>
             </section>
         </div>
         <!-- the currently opened settings -->
