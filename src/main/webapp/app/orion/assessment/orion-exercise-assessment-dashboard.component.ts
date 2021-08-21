@@ -9,6 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { onError } from 'app/shared/util/global.utils';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
+import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 
 @Component({
     selector: 'jhi-orion-exercise-assessment-dashboard',
@@ -23,10 +24,13 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
 
     exerciseId: number;
     exercise: Exercise;
+    // Stores which submission has been lastly opened
+    activeSubmissionId: number | undefined = undefined;
 
     constructor(
         private route: ActivatedRoute,
         private exerciseService: ExerciseService,
+        private manualAssessmentService: ProgrammingAssessmentManualResultService,
         private orionAssessmentService: OrionAssessmentService,
         private orionConnectorService: OrionConnectorService,
         private jhiAlertService: JhiAlertService,
@@ -40,6 +44,10 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
         );
 
         this.orionConnectorService.state().subscribe((state) => {
+            if (this.orionState.cloning && !state.cloning && this.activeSubmissionId) {
+                // If the client sends a cloning = false the download was cancelled, unlock the pending submission
+                this.manualAssessmentService.cancelAssessment(this.activeSubmissionId);
+            }
             this.orionState = state;
         });
     }
@@ -55,6 +63,10 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
      * Delegates to the {@link OrionAssessmentService} to load a new submission
      */
     downloadSubmissionInOrion(submission: Submission | 'new', correctionRound = 0) {
-        this.orionAssessmentService.downloadSubmissionInOrion(this.exerciseId, submission, correctionRound);
+        this.orionAssessmentService.downloadSubmissionInOrion(this.exerciseId, submission, correctionRound, this.setActiveSubmissionId.bind(this));
+    }
+
+    private setActiveSubmissionId(submissionId: number) {
+        this.activeSubmissionId = submissionId;
     }
 }

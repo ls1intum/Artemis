@@ -21,13 +21,27 @@ export class OrionAssessmentService {
      * @param exerciseId if of the exercise the submission belongs to
      * @param submission submission to send to Orion or 'new' if a new one should be loaded
      * @param correctionRound correction round
+     * @param notifySubmissionId optional callback to inform the caller of the resulting submission id
      */
-    downloadSubmissionInOrion(exerciseId: number, submission: Submission | 'new', correctionRound = 0) {
+    downloadSubmissionInOrion(
+        exerciseId: number,
+        submission: Submission | 'new',
+        correctionRound = 0,
+        notifySubmissionId: ((submissionId: number) => void) | undefined = undefined,
+    ) {
         if (submission === 'new') {
             this.programmingSubmissionService
                 .getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, correctionRound)
-                .subscribe((newSubmission) => this.sendSubmissionToOrion(exerciseId, newSubmission.id!, correctionRound));
+                .subscribe((newSubmission) => {
+                    if (notifySubmissionId) {
+                        notifySubmissionId(newSubmission.id!);
+                    }
+                    this.sendSubmissionToOrion(exerciseId, newSubmission.id!, correctionRound);
+                });
         } else {
+            if (notifySubmissionId) {
+                notifySubmissionId(submission.id!);
+            }
             this.sendSubmissionToOrion(exerciseId, submission.id!, correctionRound);
         }
     }
