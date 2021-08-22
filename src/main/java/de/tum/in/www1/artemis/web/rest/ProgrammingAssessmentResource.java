@@ -137,7 +137,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         var programmingExercise = (ProgrammingExercise) participation.getExercise();
         checkAuthorization(programmingExercise, user);
 
-        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(programmingExercise, user);
+        final boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(programmingExercise, user);
         if (!assessmentService.isAllowedToCreateOrOverrideResult(existingManualResult, programmingExercise, participation, user, isAtLeastInstructor)) {
             log.debug("The user {} is not allowed to override the assessment for the participation {} for User {}", user.getLogin(), participation.getId(), user.getLogin());
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
@@ -146,28 +146,27 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         if (!programmingExercise.areManualResultsAllowed()) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "Creating manual results is disabled for this exercise!");
         }
-
         if (Boolean.FALSE.equals(newManualResult.isRated())) {
             throw new BadRequestAlertException("Result is not rated", ENTITY_NAME, "resultNotRated");
         }
         if (newManualResult.getResultString() == null) {
             throw new BadRequestAlertException("Result string is required.", ENTITY_NAME, "resultStringNull");
         }
-        else if (newManualResult.getResultString().length() > 255) {
+        if (newManualResult.getResultString().length() > 255) {
             throw new BadRequestAlertException("Result string is too long.", ENTITY_NAME, "resultStringNull");
         }
-        else if (newManualResult.getScore() == null) {
+        if (newManualResult.getScore() == null) {
             throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
         }
-        else if (newManualResult.getScore() < 100 && newManualResult.isSuccessful()) {
+        if (newManualResult.getScore() < 100 && newManualResult.isSuccessful()) {
             throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         }
         // All not automatically generated result must have a detail text
-        else if (!newManualResult.getFeedbacks().isEmpty()
+        if (!newManualResult.getFeedbacks().isEmpty()
                 && newManualResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getType() == FeedbackType.MANUAL_UNREFERENCED && feedback.getDetailText() == null)) {
             throw new BadRequestAlertException("In case tutor feedback is present, a feedback detail text is mandatory.", ENTITY_NAME, "feedbackDetailTextNull");
         }
-        else if (!newManualResult.getFeedbacks().isEmpty() && newManualResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getCredits() == null)) {
+        if (!newManualResult.getFeedbacks().isEmpty() && newManualResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getCredits() == null)) {
             throw new BadRequestAlertException("In case feedback is present, a feedback must contain points.", ENTITY_NAME, "feedbackCreditsNull");
         }
 
