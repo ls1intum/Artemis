@@ -181,7 +181,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         if (submission.getParticipation() == null) {
             newManualResult.setParticipation(submission.getParticipation());
         }
-        var savedResult = resultRepository.save(newManualResult);
+        Result savedResult = resultRepository.save(newManualResult);
         savedResult.setSubmission(submission);
 
         if (submit) {
