@@ -1,7 +1,7 @@
 import * as chai from 'chai';
-import { of } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import * as sinon from 'sinon';
-import { spy, stub } from 'sinon';
+import { SinonStub, spy, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 import { ArtemisTestModule } from '../test.module';
@@ -10,8 +10,10 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { ProgrammingAssessmentRepoExportService } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { MockProvider } from 'ng-mocks';
 import { JhiAlertService } from 'ng-jhipster';
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
+import { OrionState } from 'app/shared/orion/orion';
+import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -22,7 +24,11 @@ describe('OrionAssessmentService', () => {
     let orionConnectorService: OrionConnectorService;
     let programmingAssessmentExportService: ProgrammingAssessmentRepoExportService;
 
+    let stateStub: SinonStub;
+    let stateObservable: BehaviorSubject<any>;
+
     const programmingSubmission = { id: 11, participation: { id: 1 } } as any;
+    const orionState = { opened: 40, building: false, cloning: true } as OrionState;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -32,14 +38,18 @@ describe('OrionAssessmentService', () => {
                 MockProvider(OrionConnectorService),
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(ProgrammingAssessmentRepoExportService),
+                MockProvider(ProgrammingAssessmentManualResultService),
                 MockProvider(JhiAlertService),
             ],
         })
             .compileComponents()
             .then(() => {
+                orionConnectorService = TestBed.inject(OrionConnectorService);
+                stateStub = stub(orionConnectorService, 'state');
+                stateObservable = new BehaviorSubject(orionState);
+                stateStub.returns(stateObservable);
                 orionAssessmentService = TestBed.inject(OrionAssessmentService);
                 programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
-                orionConnectorService = TestBed.inject(OrionConnectorService);
                 programmingAssessmentExportService = TestBed.inject(ProgrammingAssessmentRepoExportService);
             });
     });
@@ -54,7 +64,7 @@ describe('OrionAssessmentService', () => {
 
         getSubmission.returns(of(programmingSubmission));
 
-        orionAssessmentService.downloadSubmissionInOrion(16, 'new', 0, (id: number) => expect(id).to.be.equals(11));
+        orionAssessmentService.downloadSubmissionInOrion(16, 'new', 0);
 
         expect(getSubmission).to.have.been.calledOnceWithExactly(16, true, 0);
         expect(sendSubmissionToOrion).to.have.been.calledOnceWithExactly(16, programmingSubmission.id, 0);
@@ -62,7 +72,7 @@ describe('OrionAssessmentService', () => {
     it('downloadSubmissionInOrion with number should call send', () => {
         const sendSubmissionToOrion = stub(orionAssessmentService, 'sendSubmissionToOrion');
 
-        orionAssessmentService.downloadSubmissionInOrion(16, programmingSubmission, 0, (id: number) => expect(id).to.be.equals(11));
+        orionAssessmentService.downloadSubmissionInOrion(16, programmingSubmission, 0);
 
         expect(sendSubmissionToOrion).to.have.been.calledOnceWithExactly(16, programmingSubmission.id, 0);
     });
@@ -127,4 +137,18 @@ describe('OrionAssessmentService', () => {
         expect(exportSubmissionStub).to.have.been.calledOnceWith(16, [1]);
         expect(readerStub).to.have.been.calledOnce;
     }
+    it('should cancel lock correctly', fakeAsync(() => {
+        const cancelStub = stub(TestBed.inject(ProgrammingAssessmentManualResultService), 'cancelAssessment');
+        cancelStub.returns(new Observable());
+
+        tick();
+
+        expect(orionAssessmentService.orionState).to.be.deep.equals(orionState);
+        orionAssessmentService.activeSubmissionId = 24;
+
+        stateObservable.next({ ...orionState, cloning: false });
+        tick();
+
+        expect(cancelStub).to.have.been.calledOnceWithExactly(24);
+    }));
 });

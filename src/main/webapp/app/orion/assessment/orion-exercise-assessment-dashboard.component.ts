@@ -24,13 +24,10 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
 
     exerciseId: number;
     exercise: Exercise;
-    // Stores which submission has been lastly opened
-    activeSubmissionId: number | undefined = undefined;
 
     constructor(
         private route: ActivatedRoute,
         private exerciseService: ExerciseService,
-        private manualAssessmentService: ProgrammingAssessmentManualResultService,
         private orionAssessmentService: OrionAssessmentService,
         private orionConnectorService: OrionConnectorService,
         private jhiAlertService: JhiAlertService,
@@ -43,13 +40,7 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
             (error) => onError(this.jhiAlertService, error),
         );
 
-        this.orionConnectorService.state().subscribe((state) => {
-            if (this.orionState?.cloning && !state.cloning && this.activeSubmissionId !== undefined) {
-                // If the client sends a cloning = false the download was cancelled, unlock the pending submission
-                this.manualAssessmentService.cancelAssessment(this.activeSubmissionId).subscribe();
-            }
-            this.orionState = { ...state };
-        });
+        this.orionConnectorService.state().subscribe((state) => this.orionState = state);
     }
 
     /**
@@ -63,10 +54,6 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
      * Delegates to the {@link OrionAssessmentService} to load a new submission
      */
     downloadSubmissionInOrion(submission: Submission | 'new', correctionRound = 0) {
-        this.orionAssessmentService.downloadSubmissionInOrion(this.exerciseId, submission, correctionRound, this.setActiveSubmissionId.bind(this));
-    }
-
-    private setActiveSubmissionId(submissionId: number) {
-        this.activeSubmissionId = submissionId;
+        this.orionAssessmentService.downloadSubmissionInOrion(this.exerciseId, submission, correctionRound);
     }
 }

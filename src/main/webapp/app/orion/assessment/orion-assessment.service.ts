@@ -4,15 +4,30 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { Submission } from 'app/entities/submission.model';
+import { OrionState } from 'app/shared/orion/orion';
+import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 
 @Injectable({ providedIn: 'root' })
 export class OrionAssessmentService {
+    orionState: OrionState;
+    // Stores which submission has been lastly opened
+    activeSubmissionId: number | undefined = undefined;
+
     constructor(
         private orionConnectorService: OrionConnectorService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private repositoryExportService: ProgrammingAssessmentRepoExportService,
+        private manualAssessmentService: ProgrammingAssessmentManualResultService,
         private jhiAlertService: JhiAlertService,
-    ) {}
+    ) {
+        this.orionConnectorService.state().subscribe((state) => {
+            if (this.orionState?.cloning && !state.cloning && this.activeSubmissionId !== undefined) {
+                // If the client sends a cloning = false the download was cancelled, unlock the pending submission
+                this.manualAssessmentService.cancelAssessment(this.activeSubmissionId).subscribe();
+            }
+            this.orionState = { ...state };
+        });
+    }
 
     /**
      * Retrieves a new submission if necessary and then delegates to sendSubmissionToOrion
@@ -21,21 +36,18 @@ export class OrionAssessmentService {
      * @param exerciseId if of the exercise the submission belongs to
      * @param submission submission to send to Orion or 'new' if a new one should be loaded
      * @param correctionRound correction round
-     * @param notifySubmissionId optional callback to inform the caller of the resulting submission id (only called with parameter 'new')
      */
     downloadSubmissionInOrion(
         exerciseId: number,
         submission: Submission | 'new',
         correctionRound = 0,
-        notifySubmissionId: ((submissionId: number) => void) | undefined = undefined,
     ) {
         if (submission === 'new') {
             this.programmingSubmissionService
                 .getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, correctionRound)
                 .subscribe((newSubmission) => {
-                    if (notifySubmissionId) {
-                        notifySubmissionId(newSubmission.id!);
-                    }
+                    // Store id of the submission pending to download
+                    this.activeSubmissionId = newSubmission.id!;
                     this.sendSubmissionToOrion(exerciseId, newSubmission.id!, correctionRound);
                 });
         } else {
