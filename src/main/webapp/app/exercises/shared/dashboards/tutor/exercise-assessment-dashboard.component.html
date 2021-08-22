@@ -292,10 +292,11 @@
                         <table
                             class="table table-striped exercise-table"
                             *ngIf="
-                                (unassessedSubmissionByCorrectionRound &&
+                                ((unassessedSubmissionByCorrectionRound &&
                                     unassessedSubmissionByCorrectionRound!.get(correctionRound) &&
                                     unassessedSubmissionByCorrectionRound!.get(correctionRound)!.id! > 0) ||
-                                    (submissionsByCorrectionRound.get(correctionRound) && submissionsByCorrectionRound.get(correctionRound)!.length > 0);
+                                    (submissionsByCorrectionRound.get(correctionRound) && submissionsByCorrectionRound.get(correctionRound)!.length > 0)) &&
+                                    !exercise.allowComplaintsForAutomaticAssessments;
                                 else noSubmissions
                             "
                         >
