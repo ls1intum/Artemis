@@ -90,6 +90,8 @@ public class ExampleSubmissionService {
     public ExampleSubmission importStudentSubmissionAsExampleSubmission(Submission submission, Exercise exercise) {
         ExampleSubmission newExampleSubmission = new ExampleSubmission();
         newExampleSubmission.setExercise(exercise);
+        // example submission does not need participation
+        submission.setParticipation(null);
 
         if (exercise instanceof ModelingExercise) {
             newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(submission));
