@@ -4,6 +4,7 @@ import { UserSettingsService } from 'app/shared/user-settings/user-settings.serv
 import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-settings-prototype/user-settings-prototype.component';
 import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { JhiAlertService } from 'ng-jhipster';
+import { reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 
 @Component({
     selector: 'jhi-notification-settings',
@@ -11,13 +12,13 @@ import { JhiAlertService } from 'ng-jhipster';
     styleUrls: ['../user-settings-prototype/user-settings-prototype.component.scss'],
 })
 export class NotificationSettingsComponent extends UserSettingsPrototypeComponent implements OnInit {
-    userSettingsCategory = defaultNotificationSettings.category;
-
     constructor(notificationService: NotificationService, userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: JhiAlertService) {
         super(notificationService, userSettingsService, alertService, changeDetector);
     }
 
     ngOnInit(): void {
         super.ngOnInit();
+        this.userSettingsCategory = defaultNotificationSettings.category;
+        this.changeEventMessage = reloadNotificationSideBarMessage;
     }
 }

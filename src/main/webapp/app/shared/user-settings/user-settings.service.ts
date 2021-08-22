@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { createRequestOption } from 'app/shared/util/request-util';
@@ -202,4 +202,15 @@ export class UserSettingsService {
             }
         }
     }
+
+    /**
+     * Reloads the notifications displayed in the notification side bar
+     */
+    public sendApplyChangesEvent(message: String): void {
+        debugger;
+        this.applyNewChangesSource.next(message);
+    }
+
+    private applyNewChangesSource = new Subject<String>();
+    userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
 }

@@ -11,6 +11,7 @@ import { JhiAlertService } from 'ng-jhipster';
 /*abstract*/
 export class UserSettingsPrototypeComponent implements OnInit {
     userSettingsCategory: string;
+    changeEventMessage: string;
     userSettings: UserSettings;
     optionCores: Array<OptionCore> = new Array<OptionCore>();
 
@@ -22,10 +23,10 @@ export class UserSettingsPrototypeComponent implements OnInit {
     error?: string;
 
     constructor(
-        private notificationService: NotificationService,
-        private userSettingsService: UserSettingsService,
-        private alertService: JhiAlertService,
-        private changeDetector: ChangeDetectorRef,
+        protected notificationService: NotificationService,
+        protected userSettingsService: UserSettingsService,
+        protected alertService: JhiAlertService,
+        protected changeDetector: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
@@ -62,15 +63,22 @@ export class UserSettingsPrototypeComponent implements OnInit {
         );
     }
 
-    private finishUpdate(): void {
+    protected finishUpdate(): void {
         this.optionCores = this.userSettingsService.extractOptionCoresFromSettings(this.userSettings);
         this.changeDetector.detectChanges();
     }
 
-    private finishSaving() {
+    protected finishSaving() {
+        debugger;
+        this.createApplyChangesEvent();
         this.optionsChanged = false;
         //this.alertService.addAlert({ type: 'success', msg: 'studentExam.submitSuccessful', timeout: 20000 }, []); //TODO
         //this.showAlert = true;
         this.alertService.success('artemisApp.userSettings.saveSettingsSuccessAlert'); // TODO not working ...
+    }
+
+    protected createApplyChangesEvent(): void {
+        debugger;
+        this.userSettingsService.sendApplyChangesEvent(this.changeEventMessage);
     }
 }
