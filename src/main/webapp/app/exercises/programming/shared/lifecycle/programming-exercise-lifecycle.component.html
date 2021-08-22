@@ -59,32 +59,24 @@
                             {{ 'artemisApp.programmingExercise.timeline.automaticAssessment' | artemisTranslate }}
                         </div>
                     </ng-container>
-                    <ng-container *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && readOnly">
-                        <div class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle btn-lifecycle--disabled">
+                    <ng-container *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC">
+                        <div
+                            class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle calendar-event-toggle"
+                            [class.btn-lifecycle--disabled]="readOnly"
+                            (click)="!readOnly && toggleAssessmentType()"
+                        >
                             <fa-icon class="icon-static" [icon]="'user-check'" size="lg"></fa-icon>
                         </div>
                         <div>
                             {{ 'artemisApp.programmingExercise.timeline.manualAssessment' | artemisTranslate }}
                         </div>
                     </ng-container>
-                    <ng-container *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !readOnly">
-                        <div (click)="toggleAssessmentType()" class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle calendar-event-toggle">
-                            <fa-icon class="icon-static" [icon]="'user-check'" size="lg"></fa-icon>
-                        </div>
-                        <div>
-                            {{ 'artemisApp.programmingExercise.timeline.manualAssessment' | artemisTranslate }}
-                        </div>
-                    </ng-container>
-                    <ng-container *ngIf="exercise.assessmentType === assessmentType.AUTOMATIC && exercise.allowComplaintsForAutomaticAssessments && readOnly">
-                        <div class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle btn-lifecycle--disabled">
-                            <fa-icon class="icon-static" [icon]="'user-cog'" size="lg"></fa-icon>
-                        </div>
-                        <div>
-                            {{ 'artemisApp.programmingExercise.timeline.complaintsAllowed' | artemisTranslate }}
-                        </div>
-                    </ng-container>
-                    <ng-container *ngIf="exercise.assessmentType === assessmentType.AUTOMATIC && exercise.allowComplaintsForAutomaticAssessments && !readOnly">
-                        <div (click)="toggleAssessmentType()" class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle calendar-event-toggle">
+                    <ng-container *ngIf="exercise.assessmentType === assessmentType.AUTOMATIC && exercise.allowComplaintsForAutomaticAssessments">
+                        <div
+                            class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle calendar-event-toggle"
+                            [class.btn-lifecycle--disabled]="readOnly"
+                            (click)="!readOnly && toggleAssessmentType()"
+                        >
                             <fa-icon class="icon-static" [icon]="'user-cog'" size="lg"></fa-icon>
                         </div>
                         <div>
