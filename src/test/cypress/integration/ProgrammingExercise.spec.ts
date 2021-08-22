@@ -16,7 +16,6 @@ const programmingCreation = artemis.pageobjects.programmingExerciseCreation;
 // Common primitives
 let programmingExerciseName: string;
 let programmingExerciseShortName: string;
-const packageName = 'de.test';
 
 // Selectors
 const datepickerButtons = '.owl-dt-container-control-button';
@@ -55,7 +54,7 @@ describe('Programming Exercise Management', () => {
             cy.log('Filling out programming exercise info...');
             programmingCreation.setTitle(programmingExerciseName);
             programmingCreation.setShortName(programmingExerciseShortName);
-            programmingCreation.setPackageName(packageName);
+            programmingCreation.setPackageName('de.test');
 
             // Set release and due dates via owl date picker
             cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').should('be.visible').click();
@@ -87,7 +86,7 @@ describe('Programming Exercise Management', () => {
 
     describe('Programming exercise deletion', () => {
         beforeEach(() => {
-            artemisRequests.courseManagement.createProgrammingExercise(course, programmingExerciseName, programmingExerciseShortName, packageName).its('status').should('eq', 201);
+            artemisRequests.courseManagement.createProgrammingExercise(course, programmingExerciseName, programmingExerciseShortName).its('status').should('eq', 201);
         });
 
         it('Deletes an existing programming exercise', function () {

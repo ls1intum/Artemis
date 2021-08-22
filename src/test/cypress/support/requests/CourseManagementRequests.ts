@@ -61,7 +61,14 @@ export class CourseManagementRequests {
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
      * @returns <Chainable> request response
      */
-    createProgrammingExercise(course: any, title: string, programmingShortName: string, packageName: string, releaseDate = day(), dueDate = day().add(1, 'days')) {
+    createProgrammingExercise(
+        course: any,
+        title = 'Cypress programming exercise ' + generateUUID(),
+        programmingShortName = 'cypress' + generateUUID(),
+        packageName = 'de.test',
+        releaseDate = day(),
+        dueDate = day().add(1, 'days'),
+    ) {
         const programmingTemplate = programmingExerciseTemplate;
         programmingTemplate.title = title;
         programmingTemplate.shortName = programmingShortName;
