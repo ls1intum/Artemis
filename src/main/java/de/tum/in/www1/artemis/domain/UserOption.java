@@ -2,14 +2,17 @@ package de.tum.in.www1.artemis.domain;
 
 import javax.persistence.*;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Individual User Options that make the User Settings
  */
 @Entity
-@Table(name = "user_option")
-// @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@Table(name = "user_option", uniqueConstraints = { @UniqueConstraint(columnNames = { "user_id", "option_specifier" }) })
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class UserOption extends DomainObject {
 
