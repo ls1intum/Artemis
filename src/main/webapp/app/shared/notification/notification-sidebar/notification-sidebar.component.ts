@@ -180,10 +180,6 @@ export class NotificationSidebarComponent implements OnInit {
             this.notificationOptions = this.userSettingsService.loadUserOptionCoresSuccessAsOptionCores(res.body!, res.headers, this.userSettingsCategory);
             //(res: HttpErrorResponse) => (this.error = res.message) TODO
 
-            //fill deactivated notification types map based on received notificationOptions
-            //this.fillDeactivatedNotificationTypesMapBasedOnOptions();
-
-            //load notifications and apply filters based on settings
             this.loadNotifications();
         });
     }

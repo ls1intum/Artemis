@@ -33,13 +33,16 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             SELECT notification FROM Notification notification LEFT JOIN notification.course LEFT JOIN notification.recipient
             WHERE notification.notificationDate IS NOT NULL
                 AND (type(notification) = GroupNotification
+                   AND (notification.originalNotificationType NOT IN :#{#deactivatedTypes}
+                       OR notification.originalNotificationType IS NULL)
+                   AND ((notification.course.instructorGroupName IN :#{#currentGroups} AND notification.type = 'INSTRUCTOR')
+                       OR (notification.course.teachingAssistantGroupName IN :#{#currentGroups} AND notification.type = 'TA')
+                       OR (notification.course.editorGroupName IN :#{#currentGroups} AND notification.type = 'EDITOR')
+                       OR (notification.course.studentGroupName IN :#{#currentGroups} AND notification.type = 'STUDENT')))
+                OR (type(notification) = SingleUserNotification
+                    AND notification.recipient.login = :#{#login}
                     AND (notification.originalNotificationType NOT IN :#{#deactivatedTypes}
-                        OR notification.originalNotificationType IS NULL)
-                    AND ((notification.course.instructorGroupName IN :#{#currentGroups} AND notification.type = 'INSTRUCTOR')
-                        OR (notification.course.teachingAssistantGroupName IN :#{#currentGroups} AND notification.type = 'TA')
-                        OR (notification.course.editorGroupName IN :#{#currentGroups} AND notification.type = 'EDITOR')
-                        OR (notification.course.studentGroupName IN :#{#currentGroups} AND notification.type = 'STUDENT')))
-                OR type(notification) = SingleUserNotification and notification.recipient.login = :#{#login}
+                        OR notification.originalNotificationType IS NULL))
             """)
     Page<Notification> findAllNotificationsFilteredBySettingsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
             @Param("deactivatedTypes") Set<NotificationType> deactivatedTypes, Pageable pageable);

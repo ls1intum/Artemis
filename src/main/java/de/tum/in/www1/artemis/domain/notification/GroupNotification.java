@@ -71,10 +71,6 @@ public class GroupNotification extends Notification {
 
     public GroupNotification() {
     }
-    /*
-     * public GroupNotification(Course course, String title, String notificationText, User user, GroupNotificationType type) { this.setCourse(course); this.setType(type);
-     * this.setNotificationDate(ZonedDateTime.now()); this.setTitle(title); this.setText(notificationText); this.setAuthor(user); }
-     */
 
     public GroupNotification(Course course, String title, String notificationText, User user, GroupNotificationType type, NotificationType originalNotificationType) {
         this.setCourse(course);
@@ -189,15 +185,6 @@ public class GroupNotification extends Notification {
     public String getTopic() {
         return "/topic/course/" + getCourse().getId() + "/" + getType();
     }
-
-    // maybe
-    // public String getTopic() {
-    // return "/topic/course/" + getCourse().getId() + "/" + getType() + "/" + getOriginalNotificationType();
-    // }
-
-    /*
-     * @Override public String toString() { return "GroupNotification{" + "id=" + getId() + ", type='" + getType() + "'" + "}"; }
-     */
 
     @Override
     public String toString() {

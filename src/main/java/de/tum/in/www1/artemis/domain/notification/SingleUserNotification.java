@@ -2,14 +2,13 @@ package de.tum.in.www1.artemis.domain.notification;
 
 import java.time.ZonedDateTime;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 
 /**
@@ -19,6 +18,10 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 @DiscriminatorValue(value = "U")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class SingleUserNotification extends Notification {
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "original_notification_type", columnDefinition = "enum default UNSPECIFIED")
+    private NotificationType originalNotificationType = NotificationType.UNSPECIFIED;
 
     @ManyToOne
     private User recipient;
@@ -35,15 +38,29 @@ public class SingleUserNotification extends Notification {
         return "/topic/user/" + getRecipient().getId() + "/notifications";
     }
 
+    public void setOriginalNotificationType(NotificationType originalNotificationType) {
+        this.originalNotificationType = originalNotificationType;
+    }
+
+    public NotificationType getOriginalNotificationType() {
+        return this.originalNotificationType;
+    }
+
+    public SingleUserNotification originalNotificationType(NotificationType originalNotificationType) {
+        this.originalNotificationType = originalNotificationType;
+        return this;
+    }
+
     public SingleUserNotification() {
     }
 
-    public SingleUserNotification(User recipient, User author, String title, String text) {
+    public SingleUserNotification(User recipient, User author, String title, String text, NotificationType originalNotificationType) {
         this.setRecipient(recipient);
         this.setAuthor(author);
         this.setNotificationDate(ZonedDateTime.now());
         this.setTitle(title);
         this.setText(text);
+        this.setOriginalNotificationType(originalNotificationType);
     }
 
     /**
@@ -80,6 +97,6 @@ public class SingleUserNotification extends Notification {
 
     @Override
     public String toString() {
-        return "SingleUserNotification{" + "id=" + getId() + "}";
+        return "SingleUserNotification{" + "id=" + getId() + ", originalNotificationType='" + getOriginalNotificationType() + "}";
     }
 }
