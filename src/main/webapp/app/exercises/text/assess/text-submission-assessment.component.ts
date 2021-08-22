@@ -468,6 +468,5 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
         }
-
     }
 }
