@@ -110,7 +110,7 @@ describe('TextExercise Service', () => {
 
         it('should set TextExercise cluster disabled predicate', fakeAsync(() => {
             service.setClusterDisabledPredicate(1, true).subscribe((resp) => (requestResult = resp));
-            const req = httpMock.expectOne({ method: 'PUT' });
+            const req = httpMock.expectOne({ method: 'PATCH' });
             req.flush({ status: 200 });
             expect(requestResult.status).to.equal(200);
         }));

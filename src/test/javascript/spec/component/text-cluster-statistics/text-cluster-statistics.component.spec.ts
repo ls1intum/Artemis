@@ -48,7 +48,7 @@ describe('TextClusterStatisticsComponent', () => {
 
     it('should call setClusterDisabledPredicate', () => {
         component.setClusterDisabledPredicate(1, true);
-        httpMock.expectOne({ url: `api/text-clusters/1?disabled=true`, method: 'PUT' });
+        httpMock.expectOne({ url: `api/text-clusters/1?disabled=true`, method: 'PATCH' });
     });
 
     it('should show a not found message in case the cluster statistics is empty', () => {
