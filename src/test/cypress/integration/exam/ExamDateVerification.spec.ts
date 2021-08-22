@@ -54,7 +54,7 @@ describe('Exam management', () => {
                 .build();
             courseManagementRequests.createExam(examContent).then((response) => {
                 exam = response.body;
-                courseManagementRequests.registerStudentForExam(course, exam, artemis.users.getStudentOne());
+                courseManagementRequests.registerStudentForExam(exam, artemis.users.getStudentOne());
                 cy.login(artemis.users.getStudentOne(), `/courses/${course.id}`);
                 cy.url().should('contain', `${course.id}`);
                 cy.contains('Exams').click();
@@ -76,13 +76,13 @@ describe('Exam management', () => {
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                courseManagementRequests.registerStudentForExam(course, exam, student);
-                courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
+                courseManagementRequests.registerStudentForExam(exam, student);
+                courseManagementRequests.addExerciseGroupForExam(exam, 'group 1', true).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
                     courseManagementRequests.addTextExerciseToExam(exerciseGroup, 'Text exercise 1').then((exerciseResponse) => {
                         textExercise = exerciseResponse.body;
-                        courseManagementRequests.generateMissingIndividualExams(course, exam);
-                        courseManagementRequests.prepareExerciseStartForExam(course, exam);
+                        courseManagementRequests.generateMissingIndividualExams(exam);
+                        courseManagementRequests.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
                         cy.contains(exam.title).click();
                         cy.url().should('contain', `/exams/${exam.id}`);
@@ -114,12 +114,12 @@ describe('Exam management', () => {
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                courseManagementRequests.registerStudentForExam(course, exam, student);
-                courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
+                courseManagementRequests.registerStudentForExam(exam, student);
+                courseManagementRequests.addExerciseGroupForExam(exam, 'group 1', true).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
                     courseManagementRequests.addTextExerciseToExam(exerciseGroup, 'Text exercise 1').then(() => {
-                        courseManagementRequests.generateMissingIndividualExams(course, exam);
-                        courseManagementRequests.prepareExerciseStartForExam(course, exam);
+                        courseManagementRequests.generateMissingIndividualExams(exam);
+                        courseManagementRequests.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
                         cy.contains(exam.title).click();
                         cy.contains('Welcome to ' + exam.title).should('be.visible');
@@ -143,7 +143,7 @@ describe('Exam management', () => {
 
         afterEach(() => {
             cy.login(artemis.users.getAdmin());
-            courseManagementRequests.deleteExam(course, exam);
+            courseManagementRequests.deleteExam(exam);
         });
     });
 

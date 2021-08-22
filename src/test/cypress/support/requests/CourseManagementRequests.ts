@@ -107,27 +107,27 @@ export class CourseManagementRequests {
      * Deletes the exam with the given parameters
      * @returns <Chainable> request response
      * */
-    deleteExam(course: any, exam: any) {
-        return cy.request({ method: DELETE, url: COURSE_BASE + course.id + '/exams/' + exam.id });
+    deleteExam(exam: any) {
+        return cy.request({ method: DELETE, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id });
     }
 
     /**
      * register the student for the exam
      * @returns <Chainable> request response
      */
-    registerStudentForExam(course: any, exam: any, student: CypressCredentials) {
-        return cy.request({ method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/students/' + student.username });
+    registerStudentForExam(exam: any, student: CypressCredentials) {
+        return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/students/' + student.username });
     }
 
     /**
      * add exercise group to exam
      * @returns <Chainable> request response
      * */
-    addExerciseGroupForExam(course: any, exam: any, title: string, mandatory: boolean) {
+    addExerciseGroupForExam(exam: any, title = 'group' + generateUUID(), mandatory = true) {
         exerciseGroup.exam = exam;
         exerciseGroup.title = title;
         exerciseGroup.isMandatory = mandatory;
-        return cy.request({ method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/exerciseGroups', body: exerciseGroup });
+        return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/exerciseGroups', body: exerciseGroup });
     }
 
     /**
@@ -144,16 +144,16 @@ export class CourseManagementRequests {
      * generate all missing individual exams
      * @returns <Chainable> request response
      */
-    generateMissingIndividualExams(course: any, exam: any) {
-        return cy.request({ method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/generate-missing-student-exams' });
+    generateMissingIndividualExams(exam: any) {
+        return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/generate-missing-student-exams' });
     }
 
     /**
      * Prepares individual exercises for exam start
      * @returns <Chainable> request response
      */
-    prepareExerciseStartForExam(course: any, exam: any) {
-        return cy.request({ method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
+    prepareExerciseStartForExam(exam: any) {
+        return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
     }
 
     createModelingExercise(modelingExercise: string) {
