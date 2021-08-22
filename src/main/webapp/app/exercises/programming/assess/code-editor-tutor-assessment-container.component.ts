@@ -106,7 +106,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // listener, will get notified upon loading of feedback
     @Output() onFeedbackLoaded = new EventEmitter();
     // function override, if set will be executed instead of going to the next submission page
-    @Input() overrideNextSubmission?: (submissionId: number) => {} = undefined;
+    @Input() overrideNextSubmission?: () => {} = undefined;
 
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
@@ -336,17 +336,17 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
+        // if override set, only execute override
+        if (this.overrideNextSubmission) {
+            this.overrideNextSubmission();
+            return;
+        }
+
         this.loadingParticipation = true;
         this.submission = undefined;
         this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe(
             (response: ProgrammingSubmission) => {
                 this.loadingParticipation = false;
-
-                // if override set, skip navigation
-                if (this.overrideNextSubmission) {
-                    this.overrideNextSubmission(response.id!);
-                    return;
-                }
 
                 // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.onSameUrlNavigation = 'reload';
