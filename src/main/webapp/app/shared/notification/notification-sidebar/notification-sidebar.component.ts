@@ -8,6 +8,8 @@ import { GroupNotification } from 'app/entities/group-notification.model';
 import { Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
+import { OptionCore, UserSettingsService } from 'app/shared/user-settings/user-settings.service';
+import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 
 @Component({
     selector: 'jhi-notification-sidebar',
@@ -26,7 +28,17 @@ export class NotificationSidebarComponent implements OnInit {
     notificationsPerPage = 25;
     error?: string;
 
-    constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
+    notificationOptions: OptionCore[] = [];
+    userSettingsCategory = defaultNotificationSettings.category;
+
+    //deactivatedNotificationTypes : Map<NotificationType, boolean> = new Map<NotificationType, boolean>();
+
+    constructor(
+        private notificationService: NotificationService,
+        private userService: UserService,
+        private accountService: AccountService,
+        private userSettingsService: UserSettingsService,
+    ) {}
 
     /**
      * Load notifications when user is authenticated on component initialization.
@@ -37,7 +49,7 @@ export class NotificationSidebarComponent implements OnInit {
                 if (user.lastNotificationRead) {
                     this.lastNotificationRead = user.lastNotificationRead;
                 }
-                this.loadNotifications();
+                this.loadNotificationsWithAppliedSettings();
                 this.subscribeToNotificationUpdates();
             }
         });
@@ -106,6 +118,9 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     private loadNotificationsSuccess(notifications: Notification[], headers: HttpHeaders): void {
+        //filter loaded notifications based on current notification settings
+        notifications = this.filterNotificationsBasedOnNotificationSettings(notifications);
+
         this.totalNotifications = Number(headers.get('X-Total-Count')!);
         this.addNotifications(notifications);
         this.page += 1;
@@ -151,4 +166,67 @@ export class NotificationSidebarComponent implements OnInit {
             this.recentNotificationCount = this.notifications.length;
         }
     }
+
+    private loadNotificationSettings(): void {
+        this.userSettingsService.loadUserOptions(this.userSettingsCategory).subscribe((res: HttpResponse<OptionCore[]>) => {
+            this.notificationOptions = this.userSettingsService.loadUserOptionCoresSuccessAsOptionCores(res.body!, res.headers, this.userSettingsCategory);
+            //(res: HttpErrorResponse) => (this.error = res.message) TODO
+        });
+    }
+
+    private loadNotificationsWithAppliedSettings(): void {
+        //load notification settings
+        this.userSettingsService.loadUserOptions(this.userSettingsCategory).subscribe((res: HttpResponse<OptionCore[]>) => {
+            this.notificationOptions = this.userSettingsService.loadUserOptionCoresSuccessAsOptionCores(res.body!, res.headers, this.userSettingsCategory);
+            //(res: HttpErrorResponse) => (this.error = res.message) TODO
+
+            //fill deactivated notification types map based on received notificationOptions
+            //this.fillDeactivatedNotificationTypesMapBasedOnOptions();
+
+            //load notifications and apply filters based on settings
+            this.loadNotifications();
+        });
+    }
+
+    /*
+    this.fillDeactivatedNotificationTypesMapBasedOnOptions() : void {
+        let correspondingNotificationTypes : NotificationType[] = [];
+        for(int i = 0; i < this.notificationOptions.length; i++) {
+            //e.g. this.notificationOptions[i].optionSpecifier = 'notification.instructor-exclusive-notification.course-and-exam-archiving-started';
+            // -> corresponding NotificationTypes = [COURSE_ARCHIVE_STARTED, EXAM_ARCHIVE_STARTED]
+            // -> find these types in deactivatedNotificationTypes (Map)
+            // if not present yet in map -> add entry to map if this.notificationOptions[i].webapp == false
+            // else find entry in map and check if it is still false, if no longer, set to true (should be easier then removing the entry) -> filter only those with false set
+
+           correspondingNotificationTypes = findCorrespondingNotificationTypesForGivenNotificationOption(this.notificationOptions[i].optionSpecifier);
+           ... (look at written algorithm above)
+        }
+    }
+     */
+
+    private filterNotificationsBasedOnNotificationSettings(unfilteredNotifications: Notification[]): Notification[] {
+        debugger;
+        return unfilteredNotifications.filter(this.notificationSettingsFilter);
+    }
+
+    private notificationSettingsFilter(notification: Notification): boolean {
+        //check what notificatioType this notification has and if it is set to false in map
+        // if it is set to false -> return false
+        // if it is set to true or not present in map (i.e. unchangable notification-"option" not shown to the user)
+
+        return true; //todo remove dummy
+    }
+    /*
+    private findCorrespondingNotificationTypesForGivenNotificationOption(notificationOption : OptionCore) : NotificationType[] {
+        switch (notificationOption.optionSpecifier) {
+            case 'notification.exercise-notification.exercise-created-or-started': {
+                return [NotificationType.EXERCISE_CREATED];
+            }
+            ...
+            case 'notification.instructor-exclusive-notification.course-and-exam-archiving-started' : {
+                return [NotificationType.EXAM_ARCHIVE_STARTED, NotificationType.COURSE_ARCHIVE_STARTED];
+            }
+        }
+    }
+     */
 }

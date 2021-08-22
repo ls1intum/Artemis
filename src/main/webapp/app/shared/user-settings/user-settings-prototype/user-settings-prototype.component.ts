@@ -34,7 +34,7 @@ export class UserSettingsPrototypeComponent implements OnInit {
 
     loadSetting(): void {
         this.userSettingsService.loadUserOptions(this.userSettingsCategory).subscribe((res: HttpResponse<OptionCore[]>) => {
-            this.userSettings = this.userSettingsService.loadUserOptionCoresSuccess(res.body!, res.headers, this.userSettingsCategory);
+            this.userSettings = this.userSettingsService.loadUserOptionCoresSuccessAsSettings(res.body!, res.headers, this.userSettingsCategory);
             this.finishUpdate();
             //(res: HttpErrorResponse) => (this.error = res.message) TODO
         });

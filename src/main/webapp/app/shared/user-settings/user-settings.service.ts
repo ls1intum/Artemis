@@ -82,7 +82,7 @@ export class UserSettingsService {
      * @param category decided what default settings to use as the base
      * @return updated UserSettings based on loaded option cores
      */
-    public loadUserOptionCoresSuccess(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: string): UserSettings {
+    public loadUserOptionCoresSuccessAsSettings(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: string): UserSettings {
         let settingsResult: UserSettings;
         // load default settings as foundation
         settingsResult = this.loadDefaultSettingsAsFoundation(category);
@@ -93,6 +93,27 @@ export class UserSettingsService {
         }
         //else continue using default settings
         return settingsResult;
+    }
+
+    /**
+     * Is called after a successful server call to load user options
+     * The fetched option cores are used to create updated settings
+     * Afterwards these settings are used to extract every (also non changed) option cores
+     * @param receivedOptionCoresFromServer were loaded from the server to update provided settings
+     * @param category decided what default settings to use as the base
+     * @return all option cores based on the updated settings
+     */
+    public loadUserOptionCoresSuccessAsOptionCores(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: string): OptionCore[] {
+        let settingsResult: UserSettings;
+        // load default settings as foundation
+        settingsResult = this.loadDefaultSettingsAsFoundation(category);
+
+        // if user already customized settings -> update loaded default settings with received data
+        if (!(receivedOptionCoresFromServer == undefined || receivedOptionCoresFromServer.length === 0)) {
+            this.updateSettings(receivedOptionCoresFromServer, settingsResult);
+        }
+        //else continue using default settings and return only option cores (e.g. used for filtering)
+        return this.extractOptionCoresFromSettings(settingsResult);
     }
 
     // save methods
