@@ -127,7 +127,7 @@ export class UserSettingsService {
     public saveUserOptions(optionCores: OptionCore[], category: string): Observable<HttpResponse<OptionCore[]>> {
         //only save cores which were changed
         let changedOptionCores = optionCores.filter((optionCore) => optionCore.changed);
-        return this.http.post<OptionCore[]>(this.resourceUrl + '/save-new-options', changedOptionCores, { observe: 'response' });
+        return this.http.post<OptionCore[]>(this.resourceUrl + '/save-options', changedOptionCores, { observe: 'response' });
     }
 
     /**
