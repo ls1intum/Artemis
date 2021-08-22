@@ -1,5 +1,5 @@
 import { CourseWideContext, Post } from 'app/entities/metis/post.model';
-import { PostService } from 'app/shared/metis/post/post.service';
+import { PostService } from 'app/shared/metis/post.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { BehaviorSubject, map, Observable, tap } from 'rxjs';
@@ -9,14 +9,18 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Injectable } from '@angular/core';
-import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
+import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Reaction } from 'app/entities/metis/reaction.model';
+import { ReactionService } from 'app/shared/metis/reaction.service';
 
 interface PostFilter {
     exercise?: Exercise;
     lecture?: Lecture;
     courseWideContext?: CourseWideContext;
 }
+
+export const VOTE_EMOJI_ID = 'heavy_plus_sign';
 
 @Injectable()
 export class MetisService {
@@ -27,7 +31,7 @@ export class MetisService {
     private user: User;
     private course: Course;
 
-    constructor(private postService: PostService, private answerPostService: AnswerPostService, private accountService: AccountService) {
+    constructor(private postService: PostService, private answerPostService: AnswerPostService, private reactionService: ReactionService, private accountService: AccountService) {
         this.accountService.identity().then((user: User) => {
             this.user = user!;
         });
@@ -173,19 +177,8 @@ export class MetisService {
     }
 
     /**
-     * updates post votes by invoking the post service
-     * @param post that is voted on
-     * @param voteChange vote change
-     */
-    updatePostVotes(post: Post, voteChange: number): void {
-        this.postService.updateVotes(this.courseId, post.id!, voteChange).subscribe(() => {
-            this.getPostsForFilter(this.currentPostFilter);
-        });
-    }
-
-    /**
      * deletes a post by invoking the post service
-     * fetches the post for the currently set filter on response and updates course tags
+     * fetches the posts for the currently set filter on response and updates course tags
      * @param post post to delete
      */
     deletePost(post: Post): void {
@@ -197,13 +190,41 @@ export class MetisService {
 
     /**
      * deletes an answer post by invoking the post service
-     * fetches the post for the currently set filter on response
+     * fetches the posts for the currently set filter on response
      * @param answerPost answer post to delete
      */
     deleteAnswerPost(answerPost: AnswerPost): void {
         this.answerPostService.delete(this.courseId, answerPost).subscribe(() => {
             this.getPostsForFilter(this.currentPostFilter);
         });
+    }
+
+    /**
+     * creates a new reaction
+     * fetches the posts for the currently set filter on response
+     * @param reaction reaction to create
+     */
+    createReaction(reaction: Reaction): Observable<Reaction> {
+        return this.reactionService.create(this.courseId, reaction).pipe(
+            tap(() => {
+                this.getPostsForFilter(this.currentPostFilter);
+            }),
+            map((res: HttpResponse<Post>) => res.body!),
+        );
+    }
+
+    /**
+     * deletes an existing reaction
+     * fetches the posts for the currently set filter on response
+     * @param reaction reaction to create
+     */
+    deleteReaction(reaction: Reaction): Observable<void> {
+        return this.reactionService.delete(this.courseId, reaction).pipe(
+            tap(() => {
+                this.getPostsForFilter(this.currentPostFilter);
+            }),
+            map((res: HttpResponse<void>) => res.body!),
+        );
     }
 
     /**
@@ -225,11 +246,27 @@ export class MetisService {
 
     /**
      * sorts posts by two criteria
-     * 1. criterion: votes -> highest number comes first
+     * 1. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
      * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      * @return Post[] sorted array of posts
      */
-    private static sortPosts(posts: Post[]): Post[] {
-        return posts.sort((postA, postB) => postB.votes! - postA.votes! || postA.creationDate!.valueOf() - postB.creationDate!.valueOf());
+    static sortPosts(posts: Post[]): Post[] {
+        return posts.sort(function (postA, postB) {
+            const postAVoteEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
+            const postBVoteEmojiCount = postB.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
+            if (postAVoteEmojiCount > postBVoteEmojiCount) {
+                return -1;
+            }
+            if (postAVoteEmojiCount < postBVoteEmojiCount) {
+                return 1;
+            }
+            if (Number(postA.creationDate) > Number(postB.creationDate)) {
+                return 1;
+            }
+            if (Number(postA.creationDate) < Number(postB.creationDate)) {
+                return -1;
+            }
+            return 0;
+        });
     }
 }

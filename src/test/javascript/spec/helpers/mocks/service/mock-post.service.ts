@@ -11,10 +11,6 @@ export class MockPostService {
         return of({ body: post }) as Observable<HttpResponse<Post>>;
     }
 
-    updateVotes(courseId: number, postId: number, voteChange: number): Observable<HttpResponse<Post>> {
-        return of({ body: {} }) as Observable<HttpResponse<Post>>;
-    }
-
     delete(post: Post): Observable<HttpResponse<Post>> {
         return of({ body: {} }) as Observable<HttpResponse<Post>>;
     }
