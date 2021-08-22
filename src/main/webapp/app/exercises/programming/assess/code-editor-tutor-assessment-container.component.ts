@@ -576,11 +576,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         feedbacks.forEach((feedback) => {
             // Check for feedback from automatic tests and store them separately
-            if (!feedback.credits) {
-                // some feedbacks (e.g. not passed automatic tests) do not have credits --> NaN when summing
-                return;
-            }
-
             if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isStaticCodeAnalysisFeedback(feedback)) {
                 scoreAutomaticTests += feedback.credits!;
             } else {
