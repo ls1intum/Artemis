@@ -10,6 +10,7 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 
 /**
  * A GroupNotification.
@@ -23,6 +24,10 @@ public class GroupNotification extends Notification {
     @Column(name = "jhi_type")
     private GroupNotificationType type;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "original_notification_type", columnDefinition = "enum default LEGACY")
+    private NotificationType originalNotificationType = NotificationType.LEGACY;
+
     @ManyToOne
     @JsonIgnoreProperties("groupNotifications")
     private Course course;
@@ -35,6 +40,19 @@ public class GroupNotification extends Notification {
 
     public GroupNotification type(GroupNotificationType type) {
         this.type = type;
+        return this;
+    }
+
+    public void setOriginalNotificationType(NotificationType originalNotificationType) {
+        this.originalNotificationType = originalNotificationType;
+    }
+
+    public NotificationType getOriginalNotificationType() {
+        return this.originalNotificationType;
+    }
+
+    public GroupNotification originalNotificationType(NotificationType originalNotificationType) {
+        this.originalNotificationType = originalNotificationType;
         return this;
     }
 
@@ -53,10 +71,15 @@ public class GroupNotification extends Notification {
 
     public GroupNotification() {
     }
+    /*
+     * public GroupNotification(Course course, String title, String notificationText, User user, GroupNotificationType type) { this.setCourse(course); this.setType(type);
+     * this.setNotificationDate(ZonedDateTime.now()); this.setTitle(title); this.setText(notificationText); this.setAuthor(user); }
+     */
 
-    public GroupNotification(Course course, String title, String notificationText, User user, GroupNotificationType type) {
+    public GroupNotification(Course course, String title, String notificationText, User user, GroupNotificationType type, NotificationType originalNotificationType) {
         this.setCourse(course);
         this.setType(type);
+        this.setOriginalNotificationType(originalNotificationType);
         this.setNotificationDate(ZonedDateTime.now());
         this.setTitle(title);
         this.setText(notificationText);
@@ -167,8 +190,17 @@ public class GroupNotification extends Notification {
         return "/topic/course/" + getCourse().getId() + "/" + getType();
     }
 
+    // maybe
+    // public String getTopic() {
+    // return "/topic/course/" + getCourse().getId() + "/" + getType() + "/" + getOriginalNotificationType();
+    // }
+
+    /*
+     * @Override public String toString() { return "GroupNotification{" + "id=" + getId() + ", type='" + getType() + "'" + "}"; }
+     */
+
     @Override
     public String toString() {
-        return "GroupNotification{" + "id=" + getId() + ", type='" + getType() + "'" + "}";
+        return "GroupNotification{" + "id=" + getId() + ", type='" + getType() + ", originalNotificationType='" + getOriginalNotificationType() + "'" + "}";
     }
 }

@@ -45,7 +45,7 @@ public class GroupNotificationFactory {
             lecture = attachment.getLecture();
         }
         Course course = lecture.getCourse();
-        GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
+        GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType, notificationType);
 
         notification.setTarget(notification.getAttachmentUpdated(lecture));
 
@@ -98,7 +98,7 @@ public class GroupNotificationFactory {
             text = notificationText;
         }
 
-        GroupNotification notification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), title, text, author, groupNotificationType);
+        GroupNotification notification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), title, text, author, groupNotificationType, notificationType);
 
         // Exercises for exams
         if (exercise.isExamExercise()) {
@@ -148,7 +148,7 @@ public class GroupNotificationFactory {
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
-        GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
+        GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType, notificationType);
 
         if (notificationType == NotificationType.NEW_POST_FOR_EXERCISE) {
             notification.setTarget(notification.getExercisePostTarget(post.getExercise()));
@@ -188,7 +188,7 @@ public class GroupNotificationFactory {
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
-        GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
+        GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType, notificationType);
 
         if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE) {
             notification.setTarget(notification.getExerciseAnswerPostTarget(answerPost.getPost().getExercise()));
@@ -233,7 +233,7 @@ public class GroupNotificationFactory {
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
-        GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
+        GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType, notificationType);
         notification.setTarget(notification.getCourseTarget(course, "courseArchiveUpdated"));
         return notification;
     }
@@ -271,7 +271,7 @@ public class GroupNotificationFactory {
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
-        GroupNotification notification = new GroupNotification(exam.getCourse(), title, text, author, groupNotificationType);
+        GroupNotification notification = new GroupNotification(exam.getCourse(), title, text, author, groupNotificationType, notificationType);
         notification.setTarget(notification.getCourseTarget(exam.getCourse(), "examArchiveUpdated"));
         return notification;
     }
