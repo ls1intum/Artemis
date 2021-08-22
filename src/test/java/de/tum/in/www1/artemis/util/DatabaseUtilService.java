@@ -3688,11 +3688,6 @@ public class DatabaseUtilService {
         studentParticipationRepo.save(participation);
         course.addExercises(textExercise);
         addUsers(0, 0, 0, 1);
-        // User user = new User();
-        // user.setLogin(login);
-        // user.setId(1L);
-        // user.setGroups(Set.of(course.getInstructorGroupName()));
-        // userRepo.save(user);
         return course;
     }
 

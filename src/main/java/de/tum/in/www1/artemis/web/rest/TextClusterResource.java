@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,12 +13,12 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextCluster;
-import de.tum.in.www1.artemis.domain.TextClusterStatistics;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO;
 
 /**
  * REST controller for managing TextClusterResource.
@@ -53,19 +54,26 @@ public class TextClusterResource {
      */
     @GetMapping("/text-exercises/{exerciseId}/cluster-statistics")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<TextClusterStatistics>> getClusterStats(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<TextClusterStatisticsDTO>> getClusterStats(@PathVariable Long exerciseId) {
         // Check if Instructor has permission to access the exercise with given exerciseId
         if (currentUserHasNoAccessToExercise(exerciseId)) {
             return forbidden();
         }
 
-        List<TextClusterStatistics> clusterStats = textClusterRepository.getClusterStatistics(exerciseId);
+        // Get cluster statistics without the disabled state
+        List<TextClusterStatisticsDTO> clusterStats = textClusterRepository.getClusterStatistics1(exerciseId);
+
+        // Fetch cluster with id and disabled state
+        Map<Long, Boolean> clusterIdAndDisabled = textClusterRepository.getTextClusterWithIdAndDisabled();
+
+        // set cluster statistics disabled state
+        clusterStats.forEach(s -> s.setDisabled(clusterIdAndDisabled.get(s.getClusterId())));
         log.debug("REST request to get clusterStats-: {}", clusterStats);
         return ResponseEntity.ok().body(clusterStats);
     }
 
     /**
-     * Put /text-clusters/{clusterId}
+     * Patch /text-clusters/{clusterId}
      * <p>
      * Sets a text cluster's disabled boolean value
      *
@@ -73,7 +81,7 @@ public class TextClusterResource {
      * @param disabled The predicate value defining the disabled state of the cluster
      * @return The status whether the boolean value was set successfully or the setting failed.
      */
-    @PutMapping("/text-clusters/{clusterId}")
+    @PatchMapping("/text-clusters/{clusterId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> toggleClusterDisabledPredicate(@PathVariable Long clusterId, @RequestParam boolean disabled) {
         // Check if Instructor has permission to access the exercise that the cluster with id clusterId belongs to.

@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.web.rest.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * This is a dto for providing statistics for the exam instructor dashboard
+ * This is a dto for providing statistics for the text cluster statistics dashboard
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextClusterStatisticsDTO {
@@ -16,11 +16,14 @@ public class TextClusterStatisticsDTO {
 
     private boolean disabled;
 
-    public TextClusterStatisticsDTO(Long clusterId, Long clusterSize, Long numberOfAutomaticFeedbacks, boolean disabled) {
+    public TextClusterStatisticsDTO(Long clusterId, Long clusterSize, Long numberOfAutomaticFeedbacks) {
         this.clusterId = clusterId;
         this.clusterSize = clusterSize;
         this.numberOfAutomaticFeedbacks = numberOfAutomaticFeedbacks;
-        this.disabled = disabled;
+    }
+
+    public TextClusterStatisticsDTO() {
+        // needed for Jackson
     }
 
     public Long getClusterId() {
@@ -47,7 +50,7 @@ public class TextClusterStatisticsDTO {
         this.numberOfAutomaticFeedbacks = numberOfAutomaticFeedbacks;
     }
 
-    public boolean getDisabled() {
+    public boolean isDisabled() {
         return disabled;
     }
 

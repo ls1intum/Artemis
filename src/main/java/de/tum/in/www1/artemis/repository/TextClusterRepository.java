@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.repository;
 
+import static java.util.stream.Collectors.toMap;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -15,8 +17,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.TextCluster;
-import de.tum.in.www1.artemis.domain.TextClusterStatistics;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -41,18 +43,32 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
     List<TextCluster> findAllByIdsWithEagerTextBlocks(@Param("clusterIds") Set<Long> clusterIds);
 
     @Query(value = """
-            SELECT cluster_stats.*, text_cluster.disabled FROM
-            (
-            SELECT text_block.cluster_id AS clusterId, count(DISTINCT text_block.id) AS clusterSize, SUM(case when feedback.type = 'AUTOMATIC' then 1 else 0 end) AS numberOfAutomaticFeedbacks
-            FROM text_block
-            LEFT JOIN submission ON text_block.submission_id = submission.id
-            LEFT JOIN result ON result.submission_id = submission.id
-            LEFT JOIN feedback ON ( feedback.result_id = result.id and feedback.reference = text_block.id )
-            LEFT JOIN participation ON participation.id = submission.participation_id
-            WHERE participation.exercise_id = ?1
-            GROUP BY clusterId HAVING clusterId > 0
-            ) AS cluster_stats
-            LEFT JOIN text_cluster ON text_cluster.id = cluster_stats.clusterId
-            """, nativeQuery = true)
-    List<TextClusterStatistics> getClusterStatistics(@Param("exerciseId") Long exerciseId);
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO(
+                textblock.cluster.id,
+                count(DISTINCT textblock.id),
+                SUM(case when feedback.type = 'AUTOMATIC' then 1 else 0 end)
+            )
+            FROM TextBlock textblock
+            LEFT JOIN Submission submission ON textblock.submission.id = submission.id
+            LEFT JOIN Result result ON result.submission.id = submission.id
+            LEFT JOIN Feedback feedback ON ( feedback.result.id = result.id and feedback.reference = textblock.id )
+            LEFT JOIN Participation participation ON participation.id = submission.participation.id
+            WHERE participation.exercise.id = :#{#exerciseId}
+            GROUP BY textblock.cluster.id HAVING textblock.cluster.id > 0
+            """)
+    List<TextClusterStatisticsDTO> getClusterStatistics1(@Param("exerciseId") Long exerciseId);
+
+    interface TextClusterIdAndDisabled {
+
+        Long getClusterId();
+
+        boolean getDisabled();
+    }
+
+    @Query("SELECT cluster.id as clusterId, cluster.disabled as disabled FROM TextCluster cluster")
+    List<TextClusterIdAndDisabled> findAllWithIdAndDisabled();
+
+    default Map<Long, Boolean> getTextClusterWithIdAndDisabled() {
+        return findAllWithIdAndDisabled().stream().collect(toMap(TextClusterIdAndDisabled::getClusterId, TextClusterIdAndDisabled::getDisabled));
+    }
 }
