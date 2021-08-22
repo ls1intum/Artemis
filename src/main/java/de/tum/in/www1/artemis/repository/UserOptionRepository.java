@@ -15,28 +15,16 @@ import de.tum.in.www1.artemis.domain.UserOption;
 @Repository
 public interface UserOptionRepository extends JpaRepository<UserOption, Long> {
 
-    /*
-     * @Query(""" SELECT userOption FROM UserOption userOption WHERE userOption.user = :#{#userId} AND userOption.category = "Notification Settings" """) Page<UserOption>
-     * findAllUserOptionsForRecipientWithId(@Param("userId") long userIdhi< pageable);
-     */
     @Query("""
             SELECT userOption FROM UserOption userOption
             WHERE userOption.user.id = :#{#userId}
             """)
     Page<UserOption> findAllUserOptionsForRecipientWithId(@Param("userId") long userId, Pageable pageable);
-    /*
-     * @Query(""" """) void saveAllNotificationOptionsForRecipientWithId(@Param("userId") long userId, @Param("options") NotificationOption[] options);
-     */
 
-    /*
-     * @Query(""" INSERT INTO notification_option(CATEGORY, GROUP, DESCRIPTION, WEBAPP, EMAIL, USER_ID) VALUES (#{#category}, #{#group}, #{#description}, #{#webapp}, #{#email},
-     * #{#userId}); """) //Page<UserOption> saveNewOption( void saveNewOption(
-     * @Param("category") String categroy,
-     * @Param("group") String group,
-     * @Param("description") String description,
-     * @Param("webapp") boolean webapp,
-     * @Param("email") boolean email,
-     * @Param("userId") long userId, Pageable pageable );
-     */
+    @Query("""
+            SELECT userOption FROM UserOption userOption
+            WHERE userOption.user.id = :#{#userId}
+            """)
+    UserOption[] findAllUserOptionsForRecipientWithId(@Param("userId") long userId);
 
 }

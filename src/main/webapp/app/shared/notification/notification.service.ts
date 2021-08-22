@@ -51,9 +51,12 @@ export class NotificationService {
      */
     query(req?: any): Observable<HttpResponse<Notification[]>> {
         const options = createRequestOption(req);
-        return this.http
-            .get<Notification[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .pipe(map((res: HttpResponse<Notification[]>) => this.convertDateArrayFromServer(res)));
+        return (
+            this.http
+                //.get<Notification[]>(this.resourceUrl, { params: options, observe: 'response' })
+                .get<Notification[]>(this.resourceUrl + '/filtered-by-settings', { params: options, observe: 'response' })
+                .pipe(map((res: HttpResponse<Notification[]>) => this.convertDateArrayFromServer(res)))
+        );
     }
 
     /*

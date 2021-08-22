@@ -25,8 +25,8 @@ public class GroupNotification extends Notification {
     private GroupNotificationType type;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "original_notification_type", columnDefinition = "enum default LEGACY")
-    private NotificationType originalNotificationType = NotificationType.LEGACY;
+    @Column(name = "original_notification_type", columnDefinition = "enum default UNSPECIFIED")
+    private NotificationType originalNotificationType = NotificationType.UNSPECIFIED;
 
     @ManyToOne
     @JsonIgnoreProperties("groupNotifications")

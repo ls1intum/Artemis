@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,12 +19,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.UserOption;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.UserOptionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.UserSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -53,12 +57,15 @@ public class NotificationResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final UserSettingsService userSettingsService;
+
     public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, UserOptionRepository userOptionRepository,
-            AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService, UserSettingsService userSettingsService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.userOptionRepository = userOptionRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.userSettingsService = userSettingsService;
     }
 
     /**
@@ -106,9 +113,10 @@ public class NotificationResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        // userOptionRepository.findAllUserOptionsForRecipientWithId()
-
-        final Page<Notification> page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), pageable);
+        UserOption[] userOptions = userOptionRepository.findAllUserOptionsForRecipientWithId(currentUser.getId());
+        Set<NotificationType> deactivatedTypes = userSettingsService.findDeactivatedNotificationTypes(userOptions);
+        final Page<Notification> page = notificationRepository.findAllNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(),
+                deactivatedTypes, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

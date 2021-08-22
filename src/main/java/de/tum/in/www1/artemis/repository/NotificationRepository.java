@@ -9,9 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.UserOption;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationOption;
 
 /**
  * Spring Data repository for the Notification entity.
@@ -31,21 +30,17 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Page<Notification> findAllNotificationsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login, Pageable pageable);
 
     @Query("""
-            SELECT notificationOption FROM NotificationOption notificationOption
-            WHERE notificationOption.user.id = :#{#userId}
+            SELECT notification FROM Notification notification LEFT JOIN notification.course LEFT JOIN notification.recipient
+            WHERE notification.notificationDate IS NOT NULL
+                AND (type(notification) = GroupNotification
+                    AND (notification.originalNotificationType NOT IN :#{#deactivatedTypes}
+                        OR notification.originalNotificationType IS NULL)
+                    AND ((notification.course.instructorGroupName IN :#{#currentGroups} AND notification.type = 'INSTRUCTOR')
+                        OR (notification.course.teachingAssistantGroupName IN :#{#currentGroups} AND notification.type = 'TA')
+                        OR (notification.course.editorGroupName IN :#{#currentGroups} AND notification.type = 'EDITOR')
+                        OR (notification.course.studentGroupName IN :#{#currentGroups} AND notification.type = 'STUDENT')))
+                OR type(notification) = SingleUserNotification and notification.recipient.login = :#{#login}
             """)
-    Page<NotificationOption> findAllNotificationOptionsForRecipientWithId(@Param("userId") long userId, Pageable pageable);
-
-    /*
-     * @Query(""" SELECT userOption FROM UserOption userOption WHERE userOption.user = :#{#userId} AND userOption.category = "Notification Settings" """) Page<UserOption>
-     * findAllUserOptionsForRecipientWithId(@Param("userId") long userId, Pageable pageable);
-     */
-    @Query("""
-            SELECT userOption FROM UserOption userOption
-            WHERE userOption.user.id = :#{#userId}
-            """)
-    Page<UserOption> findAllUserOptionsForRecipientWithId(@Param("userId") long userId, Pageable pageable);
-    /*
-     * @Query(""" """) void saveAllNotificationOptionsForRecipientWithId(@Param("userId") long userId, @Param("options") NotificationOption[] options);
-     */
+    Page<Notification> findAllNotificationsFilteredBySettingsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
+            @Param("deactivatedTypes") Set<NotificationType> deactivatedTypes, Pageable pageable);
 }

@@ -46,7 +46,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
 
     private List<User> users;
 
-    private NotificationType notificationType = NotificationType.LEGACY;
+    private NotificationType notificationType = NotificationType.UNSPECIFIED;
 
     @BeforeEach
     public void initTestCase() {
