@@ -474,6 +474,10 @@ public class ProgrammingExerciseGradingService {
      */
     private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
             List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise, boolean hasDuplicateTestCases) {
+        result.getFeedbacks().forEach(feedback -> {
+            feedback.setCredits(0D);
+        });
+
         if (hasDuplicateTestCases || successfulTestCases.isEmpty()) {
             result.setScore(0D);
         }
