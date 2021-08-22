@@ -32,7 +32,6 @@ import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-asse
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { onError } from 'app/shared/util/global.utils';
 

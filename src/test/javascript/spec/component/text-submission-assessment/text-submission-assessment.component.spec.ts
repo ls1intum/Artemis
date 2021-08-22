@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/text-submission-assessment.component';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisTestModule } from '../../test.module';
@@ -39,12 +39,14 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
 import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
     let fixture: ComponentFixture<TextSubmissionAssessmentComponent>;
     let textAssessmentService: TextAssessmentService;
     let submissionService: SubmissionService;
+    let exampleSubmissionService: ExampleSubmissionService;
 
     const exercise = {
         id: 20,
@@ -160,6 +162,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         fixture = TestBed.createComponent(TextSubmissionAssessmentComponent);
         component = fixture.componentInstance;
         submissionService = TestBed.inject(SubmissionService);
+        exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
 
         fixture.detectChanges();
     });
@@ -285,4 +288,8 @@ describe('TextSubmissionAssessmentComponent', () => {
             [component.textBlockRefs[0].block!, textBlockRef.block!],
         );
     });
+    it('should import modeling submission as an example submission', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+    }));
 });

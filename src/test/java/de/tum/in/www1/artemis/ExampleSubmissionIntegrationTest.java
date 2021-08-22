@@ -243,4 +243,56 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         assertThat(exampleSubmissionRepo.findBySubmissionId(randomId)).isEmpty();
     }
 
+    private ExampleSubmission importExampleSubmission(HttpStatus expectedStatus, Submission submission, Long exerciseId) throws Exception {
+        return request.postWithResponseBody("/api/exercises/" + exerciseId + "/example-submissions/import", submission,
+            ExampleSubmission.class, expectedStatus);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importExampleSubmissionWithTextSubmission() throws Exception {
+
+        Submission submission = new TextSubmission();
+        // text ex icin basarili bi test
+        ExampleSubmission exampleSubmission = importExampleSubmission(HttpStatus.OK, submission, textExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importExampleSubmissionWithModelingSubmission() throws Exception {
+
+        Submission submission = new ModelingSubmission();
+        // modeling ex icin basarili bi test
+        ExampleSubmission exampleSubmission = importExampleSubmission(HttpStatus.OK, submission, modelingExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importExampleSubmissionWithStudentSubmission_badRequest() throws Exception {
+
+        Submission submission = new TextSubmission();
+        importExampleSubmission(HttpStatus.BAD_REQUEST, submission, null);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importExampleSubmissionWithStudentSubmission_wrongExerciseId() throws Exception {
+
+        Submission submission = new TextSubmission();
+        submission.setId(12345L);
+        Long randomId = 1233L;
+        importExampleSubmission(HttpStatus.NOT_FOUND, submission, randomId);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importExampleSubmissionWithStudentSubmission_isNotAtLeastInstructorInExercise_forbidden() throws Exception {
+
+        Submission submission = new TextSubmission();
+        submission.setId(12345L);
+        // ornek bul
+        importExampleSubmission(HttpStatus.FORBIDDEN, submission, textExercise.getId());
+    }
+
+
 }

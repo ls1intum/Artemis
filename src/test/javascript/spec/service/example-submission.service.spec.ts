@@ -1,4 +1,4 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { getTestBed, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
 import * as chai from 'chai';
@@ -75,7 +75,7 @@ describe('Example Submission Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should create an example submission', async () => {
+        it('should create an example submission', fakeAsync(() => {
             const exerciseId = 1;
             const returnedFromService = { ...elemDefault, id: 0 };
             const expected = { ...returnedFromService };
@@ -85,10 +85,11 @@ describe('Example Submission Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
+            tick();
             expect(expectedResult.body).to.deep.equal(expected);
-        });
+        }));
 
-        it('should update an example submission', async () => {
+        it('should update an example submission', fakeAsync(() => {
             const exerciseId = 1;
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
@@ -98,19 +99,21 @@ describe('Example Submission Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
+            tick();
             expect(expectedResult.body).to.deep.equal(expected);
-        });
+        }));
 
-        it('should delete an example submission', async () => {
+        it('should delete an example submission', fakeAsync(() => {
             const exampleSubmissionId = 1;
             service.delete(exampleSubmissionId).subscribe((resp) => (expectedResult = resp.ok));
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
+            tick();
             expect(expectedResult).to.be.true;
-        });
+        }));
 
-        it('should return an example submission', async () => {
+        it('should return an example submission', fakeAsync(() => {
             const exampleSubmissionId = 1;
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
@@ -120,7 +123,12 @@ describe('Example Submission Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
+            tick();
             expect(expectedResult.body).to.deep.equal(expected);
-        });
+        }));
+        it('should import an example submission', fakeAsync(() => {
+
+            tick();
+        }));
     });
 });

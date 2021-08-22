@@ -4,8 +4,7 @@ import { Observable } from 'rxjs';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { map } from 'rxjs/operators';
-import {Submission} from "app/entities/submission.model";
-import {Exercise} from "app/entities/exercise.model";
+import { Submission } from 'app/entities/submission.model';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
@@ -63,7 +62,7 @@ export class ExampleSubmissionService {
         const copy = Object.assign({}, submission);
         // avoid infinite recursion for JSON, example submission does not need participation
         copy.participation = undefined;
-        copy.results?.forEach(result => {
+        copy.results?.forEach((result) => {
             result.submission = undefined;
             result.participation = undefined;
         });
