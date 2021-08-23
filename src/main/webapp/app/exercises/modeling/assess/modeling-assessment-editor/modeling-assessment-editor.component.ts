@@ -535,6 +535,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
     }
 
+    /**
+     * Invokes exampleSubmissionService when importExampleSubmission is emitted in assessment-layout
+     */
     importStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.modelingExercise) {
             this.exampleSubmissionService.import(this.submission, this.modelingExercise.id!).subscribe(

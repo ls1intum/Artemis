@@ -58,6 +58,11 @@ export class ExampleSubmissionService {
         return this.http.delete<void>(`api/example-submissions/${exampleSubmissionId}`, { observe: 'response' });
     }
 
+    /**
+     * Imports an example submission
+     * @param submission the submission to be imported as an example submission
+     * @param exerciseId the id of the corresponding exercise
+     */
     import(submission: Submission, exerciseId: number): Observable<EntityResponseType> {
         const copy = Object.assign({}, submission);
         // avoid infinite recursion for JSON, example submission does not need participation

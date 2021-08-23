@@ -461,6 +461,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.saveBusy = this.submitBusy = false;
     }
 
+    /**
+     * Invokes exampleSubmissionService when importExampleSubmission is emitted in assessment-layout
+     */
     importStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.exercise) {
             this.exampleSubmissionService.import(this.submission, this.exercise.id!).subscribe(
