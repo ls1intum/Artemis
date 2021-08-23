@@ -1,3 +1,4 @@
+import { DELETE } from './../support/constants';
 import { generateUUID } from '../support/utils';
 import { artemis } from '../support/ArtemisTesting';
 import dayjs from 'dayjs';
@@ -14,6 +15,7 @@ const exampleSubmissions = artemis.pageobjects.textExercise.exampleSubmissions;
 const exampleSubmissionCreation = artemis.pageobjects.textExercise.exampleSubmissionCreation;
 const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagementPage = artemis.pageobjects.courseManagement;
+const courseManagementExercises = artemis.pageobjects.courseManagementExercises;
 
 // Container for a course dto
 let course: any;
@@ -75,7 +77,26 @@ describe('Text exercise management', () => {
 
         // Make sure text exercise is shown in exercises list
         cy.visit(`course-management/${course.id}/exercises`);
-        cy.contains(exerciseTitle).should('be.visible');
+        courseManagementExercises.getExerciseRowRootElement(exerciseTitle).should('be.visible');
+    });
+
+    describe('Text exercise deletion', () => {
+        const exerciseTitle = 'text exercise' + generateUUID();
+
+        beforeEach(() => {
+            artemis.requests.courseManagement.createTextExercise({ course }, exerciseTitle).its('status').should('eq', 201);
+        });
+
+        it('Deletes an existing programming exercise', function () {
+            cy.login(users.getAdmin(), '/');
+            navigationBar.openCourseManagement();
+            courseManagementPage.openExercisesOfCourse(courseName, courseShortName);
+            courseManagementExercises.clickDeleteExercise(exerciseTitle);
+            cy.intercept(DELETE, '/api/text-exercises/*').as('deleteTextExercise');
+            cy.get('[type="text"], [name="confirmExerciseName"]').type(exerciseTitle).type('{enter}');
+            cy.wait('@deleteTextExercise').its('response.statusCode').should('eq', 200);
+            cy.contains(exerciseTitle).should('not.exist');
+        });
     });
 
     after(() => {

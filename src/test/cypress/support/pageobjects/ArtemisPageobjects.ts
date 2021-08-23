@@ -1,3 +1,4 @@
+import { CourseManagementExercisesPage } from './CourseManagementExercisesPage';
 import { TextExerciseExampleSubmissionCreationPage } from './TextExerciseExampleSubmissionCreationPage';
 import { TextExerciseExampleSubmissionsPage } from './TextExerciseExampleSubmissionsPage';
 import { ProgrammingExerciseCreationPage } from './ProgrammingExerciseCreationPage';
@@ -17,6 +18,7 @@ import { TextExerciseCreationPage } from './TextExerciseCreationPage';
  */
 export class ArtemisPageobjects {
     courseManagement = new CourseManagementPage();
+    courseManagementExercises = new CourseManagementExercisesPage();
     navigationBar = new NavigationBar();
     onlineEditor = new OnlineEditorPage();
     examCreation = new ExamCreationPage();
