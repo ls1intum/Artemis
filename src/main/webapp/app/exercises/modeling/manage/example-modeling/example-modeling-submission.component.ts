@@ -10,7 +10,7 @@ import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor
 import { UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -379,20 +379,42 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
             () => {
+                this.markAllFeedbackToCorrect();
                 this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success');
             },
             (error: HttpErrorResponse) => {
                 const errorType = error.headers.get('x-artemisapp-error');
 
-                if (errorType === 'error.tooLow') {
-                    this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooLow');
-                } else if (errorType === 'error.tooHigh') {
-                    this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
+                if (errorType === 'error.invalid_assessment') {
+                    this.markAllFeedbackToCorrect();
+
+                    // Mark all wrongly made feedbacks accordingly.
+                    const correctionErrors: FeedbackCorrectionError[] = JSON.parse(error['error']['title'])['errors'];
+                    correctionErrors.forEach((res) => {
+                        const feedback = this.feedbacks.find((feedback) => feedback.reference === res.reference);
+                        if (feedback != undefined) {
+                            feedback.correctionStatus = res.type;
+                        }
+                    });
+
+                    this.assessmentEditor.resultFeedbacks = this.feedbacks;
+
+                    const msg =
+                        correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
+                    this.jhiAlertService.error(msg);
                 } else {
                     onError(this.jhiAlertService, error);
                 }
             },
         );
+    }
+
+    markAllFeedbackToCorrect() {
+        this.feedbacks.forEach((feedback) => {
+            feedback.correctionStatus = 'CORRECT';
+        });
+
+        this.assessmentEditor.resultFeedbacks = this.feedbacks;
     }
 
     readAndUnderstood() {
