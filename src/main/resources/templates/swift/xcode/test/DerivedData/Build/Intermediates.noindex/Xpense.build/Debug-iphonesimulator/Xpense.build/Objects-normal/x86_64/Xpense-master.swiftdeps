@@ -1,7 +1,0 @@
-version: "Apple Swift version 5.3.1 (swiftlang-1200.0.41 clang-1200.0.32.8)"
-options: "d37b232defb12a41b26d61da6d614f96"
-build_time: [1628527471, 308563000]
-inputs:
-  "/Users/g-e-k-k-k-o/Desktop/stephan-test-main@36bf930bae4/assignment/Xpense/Greeting.swift": [1628526982, 915845526]
-  "/Users/g-e-k-k-k-o/Desktop/stephan-test-main@36bf930bae4/assignment/Xpense/ContentView.swift": [1628520084, 0]
-  "/Users/g-e-k-k-k-o/Desktop/stephan-test-main@36bf930bae4/assignment/Xpense/XpenseApp.swift": [1628520084, 0]
