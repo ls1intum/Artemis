@@ -270,7 +270,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         database.addResultToSubmission(submission, AssessmentType.MANUAL);
 
         // add one feedback for the created text block
-        List<TextBlock> textBlocks = new ArrayList<TextBlock>(((TextSubmission) submission).getBlocks());
+        List<TextBlock> textBlocks = new ArrayList<>(((TextSubmission) submission).getBlocks());
         Feedback feedback = new Feedback();
         if (!textBlocks.isEmpty()) {
             feedback.setCredits(1.0);
@@ -280,7 +280,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         database.addFeedbackToResult(feedback, submission.getLatestResult());
 
         ExampleSubmission exampleSubmission = importExampleSubmission(HttpStatus.OK, submission, textExercise.getId());
-        List<TextBlock> copiedTextBlocks = new ArrayList<TextBlock>(((TextSubmission) exampleSubmission.getSubmission()).getBlocks());
+        List<TextBlock> copiedTextBlocks = new ArrayList<>(((TextSubmission) exampleSubmission.getSubmission()).getBlocks());
         assertThat(exampleSubmission.getId()).isNotNull();
         assertThat(((TextSubmission) exampleSubmission.getSubmission()).getText()).isEqualTo(((TextSubmission) submission).getText());
         assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks().size()).isEqualTo(1);
