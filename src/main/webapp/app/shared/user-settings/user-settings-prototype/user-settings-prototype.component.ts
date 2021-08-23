@@ -3,7 +3,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { OptionCore, UserSettings, UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { Subscription, tap } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 

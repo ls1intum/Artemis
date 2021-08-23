@@ -16,7 +16,6 @@
                 <!--GroupName-->
                 {{ 'artemisApp.userSettings.optionGroupNames.' + (optionGroup.name | camelCase) | artemisTranslate }}
             </h3>
-            <!--{{ 'artemisApp.course.pastExercises' | artemisTranslate: { amount: pastExercises.length, total: pastExerciseCount } }}-->
             <div *ngFor="let option of optionGroup.options">
                 <dt>
                     <!--OptionName-->
