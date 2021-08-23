@@ -1,16 +1,17 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { GroupNotification } from 'app/entities/group-notification.model';
-import { Notification } from 'app/entities/notification.model';
+import { Notification, OriginalNotificationType } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { OptionCore, UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { Subscription } from 'rxjs';
+import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 
 export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificationSideBar';
 
@@ -20,8 +21,11 @@ export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificati
     styleUrls: ['./notification-sidebar.scss'],
 })
 export class NotificationSidebarComponent implements OnInit {
+    // HTML template related
     showSidebar = false;
     loading = false;
+
+    // notification logic related
     notifications: Notification[] = [];
     sortedNotifications: Notification[] = [];
     recentNotificationCount = 0;
@@ -31,19 +35,17 @@ export class NotificationSidebarComponent implements OnInit {
     notificationsPerPage = 25;
     error?: string;
 
-    private resetNotifications() {
-        this.notifications = [];
-        this.sortedNotifications = [];
-        this.recentNotificationCount = 0;
-        this.totalNotifications = 0;
-        this.page = 0;
-    }
+    // notification settings related
+    notificationOptionCores: OptionCore[] = [];
+    originalNotificationTypesActivationMap: Map<OriginalNotificationType, boolean> = new Map<OriginalNotificationType, boolean>();
+    subscriptionToNotificationSettingsChanges: Subscription;
 
     constructor(
         private notificationService: NotificationService,
         private userService: UserService,
         private accountService: AccountService,
-        private notificationSettingsService: UserSettingsService,
+        private userSettingsService: UserSettingsService,
+        private notificationSettingsService: NotificationSettingsService,
     ) {}
 
     /**
@@ -55,19 +57,15 @@ export class NotificationSidebarComponent implements OnInit {
                 if (user.lastNotificationRead) {
                     this.lastNotificationRead = user.lastNotificationRead;
                 }
+                this.loadNotificationSetting();
+                this.listenForNotificationSettingsChanges();
                 this.loadNotifications();
                 this.subscribeToNotificationUpdates();
-                this.listenForNotificationSettingsChanges();
             }
         });
     }
 
-    /**
-     * Show the sidebar when it is not visible and hide the sidebar when it is visible.
-     */
-    toggleSidebar(): void {
-        this.showSidebar = !this.showSidebar;
-    }
+    // HTML template related methods
 
     /**
      * Will be executed when a notification was clicked. The notification sidebar will be closed and the actual interpretation
@@ -77,21 +75,6 @@ export class NotificationSidebarComponent implements OnInit {
     startNotification(notification: Notification): void {
         this.showSidebar = false;
         this.notificationService.interpretNotification(notification as GroupNotification);
-    }
-
-    /**
-     * Update the user's lastNotificationRead setting. As this method will be executed when the user opens the sidebar, the
-     * component's lastNotificationRead attribute will be updated only after two seconds so that the notification `new` badges
-     * won't disappear immediately.
-     */
-    updateLastNotificationRead(): void {
-        this.userService.updateLastNotificationRead().subscribe(() => {
-            const lastNotificationReadNow = moment();
-            setTimeout(() => {
-                this.lastNotificationRead = lastNotificationReadNow;
-                this.updateRecentNotificationCount();
-            }, 2000);
-        });
     }
 
     /**
@@ -106,6 +89,30 @@ export class NotificationSidebarComponent implements OnInit {
                 this.loadNotifications();
             }
         }
+    }
+
+    /**
+     * Show the sidebar when it is not visible and hide the sidebar when it is visible.
+     */
+    toggleSidebar(): void {
+        this.showSidebar = !this.showSidebar;
+    }
+
+    // notification logic related methods
+
+    /**
+     * Update the user's lastNotificationRead setting. As this method will be executed when the user opens the sidebar, the
+     * component's lastNotificationRead attribute will be updated only after two seconds so that the notification `new` badges
+     * won't disappear immediately.
+     */
+    updateLastNotificationRead(): void {
+        this.userService.updateLastNotificationRead().subscribe(() => {
+            const lastNotificationReadNow = moment();
+            setTimeout(() => {
+                this.lastNotificationRead = lastNotificationReadNow;
+                this.updateRecentNotificationCount();
+            }, 2000);
+        });
     }
 
     private loadNotifications(): void {
@@ -137,7 +144,9 @@ export class NotificationSidebarComponent implements OnInit {
             if (!this.notifications.some(({ id }) => id === notification.id)) {
                 this.totalNotifications += 1;
             }
-            this.addNotifications([notification]);
+            if (!this.notificationSettingsService.isNotificationBlockedBySettings(notification, this.originalNotificationTypesActivationMap)) {
+                this.addNotifications([notification]);
+            }
         });
     }
 
@@ -171,15 +180,46 @@ export class NotificationSidebarComponent implements OnInit {
         }
     }
 
-    private subscriptionToNotificationSettingsChanges: Subscription;
+    /**
+     * Clears all currently loaded notifications and settings, afterwards fetches updated once
+     * E.g. is used to update the view after the user changed the notification settings
+     */
+    private resetNotificationSidebars(): void {
+        // reset notification settings
+        this.notificationOptionCores = [];
+        this.originalNotificationTypesActivationMap = new Map<OriginalNotificationType, boolean>();
+        this.loadNotificationSetting();
 
+        //reset notifications
+        this.notifications = [];
+        this.sortedNotifications = [];
+        this.recentNotificationCount = 0;
+        this.totalNotifications = 0;
+        this.page = 0;
+        this.loadNotifications();
+    }
+
+    // notification settings related methods
+
+    /**
+     * Loads the notifications settings, i.e. the respective option cores
+     */
+    private loadNotificationSetting(): void {
+        this.userSettingsService.loadUserOptions(defaultNotificationSettings.category).subscribe((res: HttpResponse<OptionCore[]>) => {
+            this.notificationOptionCores = this.userSettingsService.loadUserOptionCoresSuccessAsOptionCores(res.body!, res.headers, defaultNotificationSettings.category);
+            this.originalNotificationTypesActivationMap = this.notificationSettingsService.updateOriginalNotificationTypeActivationMap(loadedNotificationOptions);
+            //(res: HttpErrorResponse) => (this.error = res.message) TODO
+        });
+    }
+
+    /**
+     * Subscribes and listens for changes related to notifications
+     * If a fitting event arrives resets the notification side bar to update the view
+     */
     private listenForNotificationSettingsChanges(): void {
-        debugger;
-        this.subscriptionToNotificationSettingsChanges = this.notificationSettingsService.userSettingsChangeEvent.subscribe((changeMessage) => {
-            debugger;
+        this.subscriptionToNotificationSettingsChanges = this.userSettingsService.userSettingsChangeEvent.subscribe((changeMessage) => {
             if (changeMessage === reloadNotificationSideBarMessage) {
-                this.resetNotifications();
-                this.loadNotifications();
+                this.resetNotificationSidebars();
             }
         });
     }

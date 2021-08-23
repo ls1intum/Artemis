@@ -51,7 +51,6 @@ export class UserSettingsPrototypeComponent implements OnInit {
     }
 
     saveOptions() {
-        debugger;
         //TODO refresh notifications in notification-sidebar (else outdated, ngOnitnit only called once, i.e. only calls loadnotifications once)
         this.userSettingsService.saveUserOptions(this.optionCores, this.userSettingsCategory).subscribe(
             (res: HttpResponse<OptionCore[]>) => {
@@ -69,7 +68,6 @@ export class UserSettingsPrototypeComponent implements OnInit {
     }
 
     protected finishSaving() {
-        debugger;
         this.createApplyChangesEvent();
         this.optionsChanged = false;
         //this.alertService.addAlert({ type: 'success', msg: 'studentExam.submitSuccessful', timeout: 20000 }, []); //TODO
@@ -78,7 +76,6 @@ export class UserSettingsPrototypeComponent implements OnInit {
     }
 
     protected createApplyChangesEvent(): void {
-        debugger;
         this.userSettingsService.sendApplyChangesEvent(this.changeEventMessage);
     }
 }

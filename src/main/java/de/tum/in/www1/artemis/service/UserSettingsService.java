@@ -34,7 +34,7 @@ public class UserSettingsService {
     }
 
     /**
-     * This is the place where the mapping between (notification) userOption and NotificationType happens
+     * This is the place where the mapping between (notification) userOption and NotificationType happens on the server side
      * Each notification based userOption can be based on multiple different NotificationTypes
      * @param userOption which corresponding NotificationTypes should be found
      * @return the corresponding NotificationType(s)

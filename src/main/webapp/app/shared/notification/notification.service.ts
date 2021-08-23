@@ -16,20 +16,9 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
-/*
-export interface UserOption {
-    id?: number;
-    option: string;
-    webapp: boolean;
-    email: boolean;
-    user_id?: number;
-}
- */
-
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
     public resourceUrl = SERVER_API_URL + 'api/notifications';
-    public userSettingsResourceUrl = SERVER_API_URL + 'api/user-settings';
     subscribedTopics: string[] = [];
     notificationObserver: ReplaySubject<Notification>;
     cachedNotifications: Observable<HttpResponse<Notification[]>>;
@@ -58,13 +47,6 @@ export class NotificationService {
                 .pipe(map((res: HttpResponse<Notification[]>) => this.convertDateArrayFromServer(res)))
         );
     }
-
-    /*
-    saveNewUserOptions(optionCores: OptionCore[]): Observable<HttpResponse<OptionCore[]>> {
-        return this.http.post<OptionCore[]>(this.userSettingsResourceUrl + '/save-new-options', optionCores, { observe: 'response' });
-        //return this.http.post<OptionCore[]>(this.userSettingsResourceUrl + '/save-new-options', [optionCores[0]], { observe: 'response' });
-    }
-     */
 
     /**
      * Delete notification by id.

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { createRequestOption } from 'app/shared/util/request-util';
@@ -55,6 +55,9 @@ export class UserSettingsService {
     public resourceUrl = SERVER_API_URL + 'api/user-settings';
 
     error?: string;
+
+    //private notificationOptionCores : OptionCore[] = [];
+    //private notificationOptionCores : OptionCore[];
 
     constructor(private accountService: AccountService, private http: HttpClient) {}
 
@@ -207,7 +210,6 @@ export class UserSettingsService {
      * Reloads the notifications displayed in the notification side bar
      */
     public sendApplyChangesEvent(message: String): void {
-        debugger;
         this.applyNewChangesSource.next(message);
     }
 

@@ -9,9 +9,35 @@ export enum NotificationType {
     SINGLE = 'single',
 }
 
+/**
+ * Corresponds to the NotificationType(.java) enum in the server
+ * Is needed to preserve the origin of the notification
+ */
+export enum OriginalNotificationType {
+    ATTACHMENT_CHANGE,
+    EXERCISE_CREATED,
+    EXERCISE_PRACTICE,
+    QUIZ_EXERCISE_STARTED,
+    EXERCISE_UPDATED,
+    NEW_ANSWER_POST_FOR_EXERCISE,
+    NEW_ANSWER_POST_FOR_LECTURE,
+    NEW_POST_FOR_EXERCISE,
+    NEW_POST_FOR_LECTURE,
+    COURSE_ARCHIVE_STARTED,
+    COURSE_ARCHIVE_FINISHED,
+    COURSE_ARCHIVE_FAILED,
+    DUPLICATE_TEST_CASE,
+    EXAM_ARCHIVE_STARTED,
+    EXAM_ARCHIVE_FINISHED,
+    EXAM_ARCHIVE_FAILED,
+    ILLEGAL_SUBMISSION,
+    UNSPECIFIED,
+}
+
 export class Notification implements BaseEntity {
     public id?: number;
     public notificationType?: NotificationType;
+    public originalNotificationType?: OriginalNotificationType;
     public title?: string;
     public text?: string;
     public notificationDate?: Moment;
