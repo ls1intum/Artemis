@@ -18,25 +18,23 @@ export class NotificationSettingsService {
             tmpOriginalNotificationTypes = this.findCorrespondingNotificationTypesForUserOption(notificationOptionCores[i]);
             tmpOriginalNotificationTypes.forEach((originalNotificationType) => {
                 updatedMap.set(originalNotificationType, notificationOptionCores[i].webapp);
+                //debugger;
+                //updatedMap.set(toString(originalNotificationType), notificationOptionCores[i].webapp);
             });
         }
         return updatedMap;
     }
 
     /**
-     * Checks if the notification (i.e. its OriginalNotificationType (only for Group/Single-User Notifications)) is disabled in the notification settings
-     * @param notification which should be checked if it is disabled in the notification settings of the current user
+     * Checks if the notification (i.e. its OriginalNotificationType (only for Group/Single-User Notifications)) is activated in the notification settings
+     * @param notification which should be checked if it is activated in the notification settings of the current user
      * @param originalNotificationTypeActivationMap hold the information of the saved notification settings and their status
-     * @return true if this OriginalNotificationType is disabled in the settings, else return false
+     * @return true if this OriginalNotificationType is activated in the settings, else return false
      */
-    public isNotificationBlockedBySettings(notification: Notification, originalNotificationTypeActivationMap: Map<OriginalNotificationType, boolean>): boolean {
+    public isNotificationAllowedBySettings(notification: Notification, originalNotificationTypeActivationMap: Map<OriginalNotificationType, boolean>): boolean {
         if (notification instanceof GroupNotification || notification.notificationType === NotificationType.GROUP || notification.notificationType === NotificationType.SINGLE) {
             if (notification.originalNotificationType) {
-                // if the type is in the map return the inverse boolean (false in map -> is deactivated? = true)
-                // else return false to allow every other type that is not mentioned in the map (untouched options + legacy null) to pass
-                if (!originalNotificationTypeActivationMap.get(notification.originalNotificationType) ?? false) {
-                    return true;
-                }
+                return originalNotificationTypeActivationMap.get(notification.originalNotificationType) ?? true;
             }
         }
         return false;
