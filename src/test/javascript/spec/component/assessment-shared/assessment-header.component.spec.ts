@@ -1,30 +1,42 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockPipe, MockDirective } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { JhiTranslateDirective } from 'ng-jhipster';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
     let fixture: ComponentFixture<AssessmentHeaderComponent>;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, RouterTestingModule],
-            declarations: [AssessmentHeaderComponent, MockComponent(AssessmentWarningComponent)],
+            imports: [ArtemisTestModule, RouterTestingModule],
+            declarations: [
+                AssessmentHeaderComponent,
+                MockComponent(AssessmentWarningComponent),
+                AlertComponent,
+                MockComponent(FaIconComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(NgbAlert),
+                MockDirective(NgbTooltip),
+                MockDirective(JhiTranslateDirective),
+            ],
             providers: [
                 {
                     provide: JhiAlertService,
@@ -37,7 +49,7 @@ describe('AssessmentHeaderComponent', () => {
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(AssessmentHeaderComponent);
@@ -169,7 +181,7 @@ describe('AssessmentHeaderComponent', () => {
         expect(component.submit.emit).toHaveBeenCalledTimes(1);
     });
 
-    it('should show next submission if assessor or instructur, result is present and no complaint', () => {
+    it('should show next submission if assessor or instructor, result is present and no complaint', () => {
         spyOn(component.nextSubmission, 'emit');
         component.isLoading = false;
         component.isAssessor = false;
