@@ -173,6 +173,10 @@ describe('TextSubmissionAssessmentComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        sinon.restore();
+    });
+
     it('should create', () => {
         expect(component).to.be.ok;
     });
