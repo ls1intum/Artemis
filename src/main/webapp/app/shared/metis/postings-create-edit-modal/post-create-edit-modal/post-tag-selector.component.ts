@@ -28,15 +28,19 @@ export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, A
         this.tags = this.postTags ? this.postTags : [];
     }
 
-    ngAfterContentChecked() {
-        this.cdref.detectChanges();
-    }
-
     /**
      * on changes: updates tags (selected in selector) and post tags (input)
      */
     ngOnChanges(): void {
         this.tags = this.postTags ? this.postTags : [];
+    }
+
+    /**
+     * this lifecycle hook is required to avoid causing "Expression has changed after it was checked"-error when dismissing all changes in the tag-selector
+     * on dismissing the edit-create-modal -> we do not want to store changes in the create-edit-modal that are not saved
+     */
+    ngAfterContentChecked() {
+        this.cdref.detectChanges();
     }
 
     /**
