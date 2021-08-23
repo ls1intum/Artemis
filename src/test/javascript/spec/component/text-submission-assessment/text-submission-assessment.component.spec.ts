@@ -130,7 +130,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             studentParticipation: participation,
         }),
     } as unknown as ActivatedRoute;
-    beforeEach(async () => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), RouterTestingModule],
             declarations: [
