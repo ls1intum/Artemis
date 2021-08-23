@@ -1,10 +1,12 @@
 import { UserSettings } from 'app/shared/user-settings/user-settings.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export const defaultNotificationSettings: UserSettings = {
     category: 'Notification Settings',
     groups: [
         {
             name: 'Exercise Notifications',
+            restrictionLevel: Authority.USER,
             options: [
                 {
                     name: 'Exercise created or started',
@@ -46,6 +48,7 @@ export const defaultNotificationSettings: UserSettings = {
         },
         {
             name: 'Lecture Notifications',
+            restrictionLevel: Authority.USER,
             options: [
                 {
                     name: 'Attachment Changes',
@@ -78,6 +81,7 @@ export const defaultNotificationSettings: UserSettings = {
         },
         {
             name: 'Instructor Exclusive Notifications',
+            restrictionLevel: Authority.INSTRUCTOR,
             options: [
                 {
                     name: 'Course or Exam Archiving Started',

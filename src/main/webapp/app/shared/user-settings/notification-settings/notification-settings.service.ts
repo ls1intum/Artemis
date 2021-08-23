@@ -34,10 +34,11 @@ export class NotificationSettingsService {
     public isNotificationAllowedBySettings(notification: Notification, originalNotificationTypeActivationMap: Map<OriginalNotificationType, boolean>): boolean {
         if (notification instanceof GroupNotification || notification.notificationType === NotificationType.GROUP || notification.notificationType === NotificationType.SINGLE) {
             if (notification.originalNotificationType) {
+                debugger;
                 return originalNotificationTypeActivationMap.get(notification.originalNotificationType) ?? true;
             }
         }
-        return false;
+        return true;
     }
 
     /**

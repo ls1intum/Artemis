@@ -1,10 +1,11 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, TemplateRef } from '@angular/core';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-settings-prototype/user-settings-prototype.component';
 import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { JhiAlertService } from 'ng-jhipster';
 import { reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-notification-settings',

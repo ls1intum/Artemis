@@ -5,6 +5,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 /**
  * UserSettings represent one entire displayable settings page with detailed information like descriptions, etc.
@@ -22,7 +23,7 @@ export interface UserSettings {
  */
 export interface OptionGroup {
     name: string;
-    // todo securityLevel : STUDENT (new enum), maybe add this to settings category and option as well
+    restrictionLevel: Authority;
     options: Option[];
 }
 

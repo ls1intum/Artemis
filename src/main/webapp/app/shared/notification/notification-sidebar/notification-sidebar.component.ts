@@ -140,6 +140,7 @@ export class NotificationSidebarComponent implements OnInit {
 
     private subscribeToNotificationUpdates(): void {
         this.notificationService.subscribeToNotificationUpdates().subscribe((notification: Notification) => {
+            debugger;
             if (this.notificationSettingsService.isNotificationAllowedBySettings(notification, this.originalNotificationTypesActivationMap)) {
                 // Increase total notifications count if the notification does not already exist.
                 if (!this.notifications.some(({ id }) => id === notification.id)) {

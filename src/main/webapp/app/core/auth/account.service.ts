@@ -234,6 +234,12 @@ export class AccountService implements IAccountService {
         );
     }
 
+    getHighestAuthorityOfUser(user: User): Authority {
+        debugger;
+        //return Authority.USER;
+        return Authority.INSTRUCTOR;
+    }
+
     /**
      * Checks whether current user is owner of the participation or whether he is part of the team
      *

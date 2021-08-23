@@ -3,6 +3,9 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { OptionCore, UserSettings, UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { JhiAlertService } from 'ng-jhipster';
+import { Subscription, tap } from 'rxjs';
+import { User } from 'app/core/user/user.model';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 /**
  * Is used as the "abstract" user-settings "parent" component with all the necessary basic logic for other "child" components to implement/inherit from.
@@ -29,6 +32,9 @@ export class UserSettingsPrototypeComponent implements OnInit {
     // HTML template related
     optionsChanged: boolean = false;
     showAlert: boolean = false;
+    authStateSubscription: Subscription;
+    currentUser: User;
+    highestAuthority: Authority;
 
     // userSettings logic related
     userSettingsCategory: string;
