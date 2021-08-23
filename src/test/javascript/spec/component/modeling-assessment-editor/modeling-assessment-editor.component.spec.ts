@@ -46,6 +46,7 @@ import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/model
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { ExampleSubmission } from 'app/entities/example-submission.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -472,8 +473,23 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(fake).to.have.been.calledOnce;
         }));
     });
-    it('should import modeling submission as an example submission', fakeAsync(() => {
-        component.ngOnInit();
-        tick();
-    }));
+    it('should invoke import example submission', () => {
+        const course = new Course();
+        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+        component.modelingExercise.id = 1;
+        component.submission = {
+            id: 2,
+            submitted: true,
+            type: 'MANUAL',
+            text: 'Test\n\nTest\n\nTest',
+        } as unknown as ModelingSubmission;
+
+        const fake = sinon.fake.returns(of({ body: new ExampleSubmission() }));
+        sinon.replace(exampleSubmissionService, 'import', fake);
+
+        component.importStudentSubmissionAsExampleSubmission();
+
+        expect(fake).to.have.calledOnce;
+        expect(fake).to.have.been.calledWith(component.submission, component.modelingExercise!.id);
+    });
 });
