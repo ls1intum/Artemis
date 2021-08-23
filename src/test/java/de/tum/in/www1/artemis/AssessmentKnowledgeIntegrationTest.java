@@ -155,7 +155,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     }
 
     /**
-     * Tests that ModelAssessmentKnowledge is maintained on the DB even after deleting
+     * Tests that ModelAssessmentKnowledge is not removed from the DB even after deleting
      * the parent exercise if there are other exercises using it
      *
      * @throws Exception might be thrown from Network Call to Artemis API
