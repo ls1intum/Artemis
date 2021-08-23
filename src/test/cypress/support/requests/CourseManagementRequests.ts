@@ -163,6 +163,13 @@ export class CourseManagementRequests {
             method: 'DELETE',
         });
     }
+
+    deleteQuizExercise(exerciseId: number) {
+        return cy.request({
+            url: `/api/quiz-exercises/${exerciseId}`,
+            method: DELETE
+        });
+    }
 }
 
 /**

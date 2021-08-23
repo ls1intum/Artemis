@@ -8,6 +8,7 @@ import { CreateModelingExercisePage } from './CreateModelingExercisePage';
 import { ModelingExerciseExampleSubmissionPage } from './ModelingExerciseExampleSubmissionPage';
 import { ModelingEditor } from './ModelingEditor';
 import { ExamStartEndPage } from './ExamStartEndPage';
+import { QuizExerciseCreationPage } from './QuizExerciseCreationPage';
 
 /**
  * A class which encapsulates all pageobjects, which can be used to automate the Artemis UI.
@@ -23,4 +24,5 @@ export class ArtemisPageobjects {
     modelingExerciseExampleSubmission = new ModelingExerciseExampleSubmissionPage();
     modelingEditor = new ModelingEditor();
     examStartEnd = new ExamStartEndPage();
+    quizExerciseCreation = new QuizExerciseCreationPage();
 }
