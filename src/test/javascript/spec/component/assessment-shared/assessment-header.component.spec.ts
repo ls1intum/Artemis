@@ -5,7 +5,6 @@ import * as moment from 'moment';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
