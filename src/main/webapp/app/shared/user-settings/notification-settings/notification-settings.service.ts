@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Notification, NotificationType, OriginalNotificationType } from 'app/entities/notification.model';
 import { OptionCore } from 'app/shared/user-settings/user-settings.service';
 import { GroupNotification } from 'app/entities/group-notification.model';
+import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationSettingsService {
@@ -10,7 +11,7 @@ export class NotificationSettingsService {
      * @param notificationOptionCores will be mapped to their respective OriginalNotificationTypes and create a new updated map
      * @return the updated map
      */
-    public updateOriginalNotificationTypeActivationMap(notificationOptionCores: OptionCore[]): Map<OriginalNotificationType, boolean> {
+    public updateOriginalNotificationTypeActivationMap(notificationOptionCores: NotificationOptionCore[]): Map<OriginalNotificationType, boolean> {
         const updatedMap: Map<OriginalNotificationType, boolean> = new Map<OriginalNotificationType, boolean>();
         let tmpOriginalNotificationTypes: OriginalNotificationType[];
 
@@ -18,8 +19,6 @@ export class NotificationSettingsService {
             tmpOriginalNotificationTypes = this.findCorrespondingNotificationTypesForUserOption(notificationOptionCores[i]);
             tmpOriginalNotificationTypes.forEach((originalNotificationType) => {
                 updatedMap.set(originalNotificationType, notificationOptionCores[i].webapp);
-                //debugger;
-                //updatedMap.set(toString(originalNotificationType), notificationOptionCores[i].webapp);
             });
         }
         return updatedMap;
@@ -34,7 +33,6 @@ export class NotificationSettingsService {
     public isNotificationAllowedBySettings(notification: Notification, originalNotificationTypeActivationMap: Map<OriginalNotificationType, boolean>): boolean {
         if (notification instanceof GroupNotification || notification.notificationType === NotificationType.GROUP || notification.notificationType === NotificationType.SINGLE) {
             if (notification.originalNotificationType) {
-                debugger;
                 return originalNotificationTypeActivationMap.get(notification.originalNotificationType) ?? true;
             }
         }
@@ -47,7 +45,7 @@ export class NotificationSettingsService {
      * @param userOption which corresponding NotificationTypes should be found
      * @return the corresponding NotificationType(s)
      */
-    private findCorrespondingNotificationTypesForUserOption(optionCore: OptionCore): OriginalNotificationType[] {
+    private findCorrespondingNotificationTypesForUserOption(optionCore: NotificationOptionCore): OriginalNotificationType[] {
         switch (optionCore.optionSpecifier) {
             case 'notification.exercise-notification.exercise-created-or-started': {
                 return [OriginalNotificationType.EXERCISE_CREATED];

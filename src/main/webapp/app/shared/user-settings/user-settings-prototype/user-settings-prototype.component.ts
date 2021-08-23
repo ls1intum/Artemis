@@ -3,9 +3,8 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { OptionCore, UserSettings, UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 
 /**
  * Is used as the "abstract" user-settings "parent" component with all the necessary basic logic for other "child" components to implement/inherit from.
@@ -32,15 +31,13 @@ export class UserSettingsPrototypeComponent implements OnInit {
     // HTML template related
     optionsChanged: boolean = false;
     showAlert: boolean = false;
-    authStateSubscription: Subscription;
     currentUser: User;
-    highestAuthority: Authority;
 
     // userSettings logic related
-    userSettingsCategory: string;
+    userSettingsCategory: UserSettingsCategory;
     changeEventMessage: string;
-    userSettings: UserSettings;
-    optionCores: Array<OptionCore> = new Array<OptionCore>();
+    userSettings: UserSettings<OptionCore>;
+    optionCores: Array<OptionCore>;
     page = 0;
     error?: string;
 
@@ -53,21 +50,6 @@ export class UserSettingsPrototypeComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadSetting();
-    }
-
-    // HTML template related methods
-
-    /**
-     * Catches the toggle event from an user click
-     * Toggles the respective option and mark at as changed (only changed option cores will be send to the server for saving)
-     */
-    toggleOption(event: any) {
-        this.optionsChanged = true;
-        const optionId = event.currentTarget.id;
-        let foundOptionCore = this.optionCores.find((core) => core.optionSpecifier === optionId);
-        if (!foundOptionCore) return;
-        foundOptionCore!.webapp = !foundOptionCore!.webapp;
-        foundOptionCore.changed = true;
     }
 
     // methods related to loading
@@ -130,4 +112,7 @@ export class UserSettingsPrototypeComponent implements OnInit {
         this.optionCores = this.userSettingsService.extractOptionCoresFromSettings(this.userSettings);
         this.changeDetector.detectChanges();
     }
+
+    //TODO remove
+    protected toggleOption(event: any) {}
 }

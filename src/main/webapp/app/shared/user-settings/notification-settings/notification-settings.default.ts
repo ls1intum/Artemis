@@ -1,8 +1,14 @@
-import { UserSettings } from 'app/shared/user-settings/user-settings.service';
+import { OptionCore, UserSettings } from 'app/shared/user-settings/user-settings.service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 
-export const defaultNotificationSettings: UserSettings = {
-    category: 'Notification Settings',
+export interface NotificationOptionCore extends OptionCore {
+    webapp: boolean;
+    email?: boolean;
+}
+
+export const defaultNotificationSettings: UserSettings<NotificationOptionCore> = {
+    category: UserSettingsCategory.NOTIFICATION_SETTINGS,
     groups: [
         {
             name: 'Exercise Notifications',

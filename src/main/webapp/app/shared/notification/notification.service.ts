@@ -142,7 +142,6 @@ export class NotificationService {
                 this.jhiWebsocketService.subscribe(quizExerciseTopic);
                 this.jhiWebsocketService.receive(quizExerciseTopic).subscribe((quizExercise: QuizExercise) => {
                     if (quizExercise.visibleToStudents && quizExercise.started && !quizExercise.isOpenForPractice) {
-                        debugger;
                         this.addNotificationToObserver(NotificationService.createNotificationFromStartedQuizExercise(quizExercise));
                     }
                 });
@@ -165,7 +164,6 @@ export class NotificationService {
     }
 
     private addNotificationToObserver(notification: Notification): void {
-        debugger;
         if (notification && notification.notificationDate) {
             notification.notificationDate = moment(notification.notificationDate);
             this.notificationObserver.next(notification);

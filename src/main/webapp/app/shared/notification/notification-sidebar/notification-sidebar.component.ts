@@ -9,9 +9,10 @@ import { Notification, OriginalNotificationType } from 'app/entities/notificatio
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { OptionCore, UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { defaultNotificationSettings, NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { Subscription } from 'rxjs';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
+import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 
 export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificationSideBar';
 
@@ -36,7 +37,7 @@ export class NotificationSidebarComponent implements OnInit {
     error?: string;
 
     // notification settings related
-    notificationOptionCores: OptionCore[] = [];
+    notificationOptionCores: NotificationOptionCore[] = [];
     originalNotificationTypesActivationMap: Map<OriginalNotificationType, boolean> = new Map<OriginalNotificationType, boolean>();
     subscriptionToNotificationSettingsChanges: Subscription;
 
@@ -140,7 +141,6 @@ export class NotificationSidebarComponent implements OnInit {
 
     private subscribeToNotificationUpdates(): void {
         this.notificationService.subscribeToNotificationUpdates().subscribe((notification: Notification) => {
-            debugger;
             if (this.notificationSettingsService.isNotificationAllowedBySettings(notification, this.originalNotificationTypesActivationMap)) {
                 // Increase total notifications count if the notification does not already exist.
                 if (!this.notifications.some(({ id }) => id === notification.id)) {
@@ -206,8 +206,12 @@ export class NotificationSidebarComponent implements OnInit {
      * Loads the notifications settings, i.e. the respective option cores
      */
     private loadNotificationSetting(): void {
-        this.userSettingsService.loadUserOptions(defaultNotificationSettings.category).subscribe((res: HttpResponse<OptionCore[]>) => {
-            this.notificationOptionCores = this.userSettingsService.loadUserOptionCoresSuccessAsOptionCores(res.body!, res.headers, defaultNotificationSettings.category);
+        this.userSettingsService.loadUserOptions(UserSettingsCategory.NOTIFICATION_SETTINGS).subscribe((res: HttpResponse<OptionCore[]>) => {
+            this.notificationOptionCores = this.userSettingsService.loadUserOptionCoresSuccessAsOptionCores(
+                res.body!,
+                res.headers,
+                UserSettingsCategory.NOTIFICATION_SETTINGS,
+            ) as NotificationOptionCore[];
             this.originalNotificationTypesActivationMap = this.notificationSettingsService.updateOriginalNotificationTypeActivationMap(this.notificationOptionCores);
             //(res: HttpErrorResponse) => (this.error = res.message) TODO
         });

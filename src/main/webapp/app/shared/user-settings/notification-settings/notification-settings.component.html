@@ -25,7 +25,17 @@
                     <!--OptionDescription-->
                     {{ 'artemisApp.userSettings.optionDescriptions.' + (option.description | camelCase) | artemisTranslate }}
                 </span>
-                <!--Put Settings specific core properties & functions here-->
+                <div class="form-check border-bottom">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        [checked]="option.optionCore.webapp"
+                        id="{{ option.optionCore.optionSpecifier }}"
+                        value="{{ option.optionCore.webapp }}"
+                        (click)="toggleOption($event)"
+                    />
+                    <label class="form-check-label" for="{{ option.optionCore.optionSpecifier }}">WebApp</label>
+                </div>
             </div>
         </div>
     </div>

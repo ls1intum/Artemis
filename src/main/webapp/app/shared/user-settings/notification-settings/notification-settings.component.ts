@@ -1,15 +1,15 @@
-import { ChangeDetectorRef, Component, OnInit, TemplateRef } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
+import { OptionCore, UserSettings, UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-settings-prototype/user-settings-prototype.component';
-import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { JhiAlertService } from 'ng-jhipster';
 import { reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
-import { AccountService } from 'app/core/auth/account.service';
+import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 
 @Component({
     selector: 'jhi-notification-settings',
-    templateUrl: '../user-settings-prototype/user-settings-prototype.component.html',
+    templateUrl: 'notification-settings.component.html',
     styleUrls: ['../user-settings-prototype/user-settings-prototype.component.scss'],
 })
 export class NotificationSettingsComponent extends UserSettingsPrototypeComponent implements OnInit {
@@ -17,9 +17,25 @@ export class NotificationSettingsComponent extends UserSettingsPrototypeComponen
         super(notificationService, userSettingsService, alertService, changeDetector);
     }
 
+    userSettings: UserSettings<NotificationOptionCore>;
+    optionCores: Array<NotificationOptionCore>;
+
     ngOnInit(): void {
-        super.ngOnInit();
-        this.userSettingsCategory = defaultNotificationSettings.category;
+        this.userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
         this.changeEventMessage = reloadNotificationSideBarMessage;
+        super.ngOnInit();
+    }
+
+    /**
+     * Catches the toggle event from an user click
+     * Toggles the respective option and mark at as changed (only changed option cores will be send to the server for saving)
+     */
+    toggleOption(event: any) {
+        this.optionsChanged = true;
+        const optionId = event.currentTarget.id;
+        let foundOptionCore = this.optionCores.find((core) => core.optionSpecifier === optionId);
+        if (!foundOptionCore) return;
+        foundOptionCore!.webapp = !foundOptionCore!.webapp;
+        foundOptionCore.changed = true;
     }
 }

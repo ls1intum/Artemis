@@ -2,29 +2,29 @@ import { Injectable } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Observable, Subject } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
-import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { createRequestOption } from 'app/shared/util/request-util';
-import { defaultNotificationSettings } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { defaultNotificationSettings, NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 
 /**
  * UserSettings represent one entire displayable settings page with detailed information like descriptions, etc.
  * Is used for displaying the settings page in html.
  * Loot at any x-settings.default.ts file for an example of the full UserSettings hierarchy
  */
-export interface UserSettings {
-    category: string;
-    groups: OptionGroup[];
+export abstract class UserSettings<OptionCore> {
+    category: UserSettingsCategory;
+    groups: OptionGroup<OptionCore>[];
 }
 
 /**
  * OptionGroup is a simple group of options that have something in common,
  * e.g. they control notifications related to exercises
  */
-export interface OptionGroup {
+export interface OptionGroup<OptionCore> {
     name: string;
     restrictionLevel: Authority;
-    options: Option[];
+    options: Option<OptionCore>[];
 }
 
 /**
@@ -33,7 +33,7 @@ export interface OptionGroup {
  * the constant properties of an option (name, description) are stored in x-settings.default.ts files
  * whereas the changeable properties (webapp, email : on/off) are encapsulated in an OptionCore
  */
-export interface Option {
+export interface Option<OptionCore> {
     name: string;
     description: string;
     optionCore: OptionCore;
@@ -43,17 +43,16 @@ export interface Option {
  * OptionCores are used for client server communication and option (de)selection
  * Correspond to UserOptions (Server)
  */
-export interface OptionCore {
+export abstract class OptionCore {
     id?: number;
     optionSpecifier: string;
-    webapp: boolean;
-    email?: boolean;
     changed?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
 export class UserSettingsService {
     public resourceUrl = SERVER_API_URL + 'api/user-settings';
+    public notificationSettingsresourceUrl = SERVER_API_URL + 'api/notification-settings';
     private applyNewChangesSource = new Subject<String>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
     error?: string;
@@ -64,17 +63,15 @@ export class UserSettingsService {
 
     /**
      * GET call to the server to receive the stored option cores of the current user
-     * @param categpry limits the server call to only search for options based on the provided category
+     * @param category limits the server call to only search for options based on the provided category
      * @return the saved user options (cores) which were found in the database (might be 0 if user has never saved settings before) or error
      */
-    public loadUserOptions(category: string): Observable<HttpResponse<OptionCore[]>> {
-        const optionCores = createRequestOption(); //maybe useless TODO
-        //    switch (category) {
-        //        case 'Notifications' : {
-        return this.http.get<OptionCore[]>(this.resourceUrl + '/fetch-options', {
-            params: optionCores, //maybe useless TODO
-            observe: 'response',
-        }); //  }}
+    public loadUserOptions(category: UserSettingsCategory): Observable<HttpResponse<OptionCore[]>> {
+        switch (category) {
+            case UserSettingsCategory.NOTIFICATION_SETTINGS: {
+                return this.http.get<NotificationOptionCore[]>(this.notificationSettingsresourceUrl + '/fetch-options', { observe: 'response' });
+            }
+        }
     }
 
     /**
@@ -84,8 +81,8 @@ export class UserSettingsService {
      * @param category decided what default settings to use as the base
      * @return updated UserSettings based on loaded option cores
      */
-    public loadUserOptionCoresSuccessAsSettings(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: string): UserSettings {
-        let settingsResult: UserSettings;
+    public loadUserOptionCoresSuccessAsSettings(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: UserSettingsCategory): UserSettings<OptionCore> {
+        let settingsResult: UserSettings<OptionCore>;
         // load default settings as foundation
         settingsResult = this.loadDefaultSettingsAsFoundation(category);
 
@@ -105,8 +102,8 @@ export class UserSettingsService {
      * @param category decided what default settings to use as the base
      * @return all option cores based on the updated settings
      */
-    public loadUserOptionCoresSuccessAsOptionCores(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: string): OptionCore[] {
-        let settingsResult: UserSettings;
+    public loadUserOptionCoresSuccessAsOptionCores(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: UserSettingsCategory): OptionCore[] {
+        let settingsResult: UserSettings<OptionCore>;
         // load default settings as foundation
         settingsResult = this.loadDefaultSettingsAsFoundation(category);
 
@@ -115,6 +112,7 @@ export class UserSettingsService {
             this.updateSettings(receivedOptionCoresFromServer, settingsResult);
         }
         //else continue using default settings and return only option cores (e.g. used for filtering)
+        //return this.extractOptionCoresFromSettings(settingsResult);
         return this.extractOptionCoresFromSettings(settingsResult);
     }
 
@@ -126,7 +124,7 @@ export class UserSettingsService {
      * @param categpry limits the server call to only search for options based on the provided category
      * @return the saved user options (cores) which were found in the database (for validation) or error
      */
-    public saveUserOptions(optionCores: OptionCore[], category: string): Observable<HttpResponse<OptionCore[]>> {
+    public saveUserOptions(optionCores: OptionCore[], category: UserSettingsCategory): Observable<HttpResponse<OptionCore[]>> {
         //only save cores which were changed
         let changedOptionCores = optionCores.filter((optionCore) => optionCore.changed);
         return this.http.post<OptionCore[]>(this.resourceUrl + '/save-options', changedOptionCores, { observe: 'response' });
@@ -139,8 +137,8 @@ export class UserSettingsService {
      * @param category decided what default settings to use as the base
      * @return updated UserSettings based on loaded option cores
      */
-    public saveUserOptionsSuccess(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: string): UserSettings {
-        let settingsResult: UserSettings;
+    public saveUserOptionsSuccess(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: UserSettingsCategory): UserSettings<OptionCore> {
+        let settingsResult: UserSettings<OptionCore>;
         settingsResult = this.loadDefaultSettingsAsFoundation(category);
         this.updateSettings(receivedOptionCoresFromServer, settingsResult);
         return settingsResult;
@@ -153,10 +151,10 @@ export class UserSettingsService {
      * @param settings which option cores should be extracted
      * @return OptionCore array based on the provided UserSettings
      */
-    public extractOptionCoresFromSettings(settings: UserSettings): OptionCore[] {
+    public extractOptionCoresFromSettings(settings: UserSettings<OptionCore>): OptionCore[] {
         let optionCoreAccumulator: OptionCore[] = [];
-        settings.groups.forEach((group: OptionGroup) => {
-            group.options.forEach((option: Option) => {
+        settings.groups.forEach((group: OptionGroup<OptionCore>) => {
+            group.options.forEach((option: Option<OptionCore>) => {
                 let optionCore: OptionCore = option.optionCore;
                 if (optionCore.id == undefined) {
                     optionCore.id = -1; // is used to mark cores which have never been saved to the database
@@ -174,8 +172,7 @@ export class UserSettingsService {
      * @param newOptionCores received from the server
      * @param settingsToUpdate will be updated by replacing matching options with new option cores
      */
-    public updateSettings(newOptionCores: OptionCore[], settingsToUpdate: UserSettings): void {
-        //use the updated cores to update the entire settings category, needed for ids
+    public updateSettings(newOptionCores: OptionCore[], settingsToUpdate: UserSettings<OptionCore>): void {
         for (let i = 0; i < settingsToUpdate.groups.length; i++) {
             for (let j = 0; j < settingsToUpdate.groups[i].options.length; j++) {
                 const currentOptionCore = settingsToUpdate.groups[i].options[j].optionCore;
@@ -192,14 +189,9 @@ export class UserSettingsService {
      * @param category defines what default settings to return
      * @return the default settings based on the provided category
      */
-    private loadDefaultSettingsAsFoundation(category: string): UserSettings {
+    private loadDefaultSettingsAsFoundation(category: UserSettingsCategory): UserSettings<OptionCore> {
         switch (category) {
-            case 'notificationSettings': {
-                return defaultNotificationSettings;
-            }
-            default: {
-                //TODO ERROR
-                //with enums there was no such problem ...
+            case UserSettingsCategory.NOTIFICATION_SETTINGS: {
                 return defaultNotificationSettings;
             }
         }
