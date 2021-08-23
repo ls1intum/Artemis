@@ -42,7 +42,7 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
     @Query("SELECT distinct cluster FROM TextCluster cluster LEFT JOIN FETCH cluster.blocks b LEFT JOIN FETCH b.submission blocksub LEFT JOIN FETCH blocksub.results WHERE cluster.id IN :#{#clusterIds}")
     List<TextCluster> findAllByIdsWithEagerTextBlocks(@Param("clusterIds") Set<Long> clusterIds);
 
-    @Query(value = """
+    @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO(
                 textblock.cluster.id,
                 count(DISTINCT textblock.id),

@@ -8,3 +8,4 @@
         </addColumn>
     </changeSet>
 </databaseChangeLog>
+    SELECT new de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO(
