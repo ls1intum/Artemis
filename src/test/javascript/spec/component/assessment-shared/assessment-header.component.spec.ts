@@ -14,8 +14,12 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockTranslateValuesDirective } from '../course/course-scores/course-scores.component.spec';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -23,8 +27,18 @@ describe('AssessmentHeaderComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, RouterTestingModule],
-            declarations: [AssessmentHeaderComponent, MockComponent(AssessmentWarningComponent)],
+            imports: [ArtemisTestModule, RouterTestingModule],
+            declarations: [
+                AssessmentHeaderComponent,
+                AssessmentWarningComponent,
+                AlertComponent,
+                NgbAlert,
+                NgbTooltip,
+                TranslateDirective,
+                ArtemisTranslatePipe,
+                MockTranslateValuesDirective,
+                MockComponent(FaIconComponent),
+            ],
             providers: [
                 {
                     provide: JhiAlertService,
