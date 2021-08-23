@@ -187,7 +187,7 @@ describe('AssessmentHeaderComponent', () => {
         component.isAssessor = false;
         component.hasComplaint = false;
         component.exercise = {
-            id: 1
+            id: 1,
         } as Exercise;
         fixture.detectChanges();
 
