@@ -165,12 +165,6 @@ public class TutorParticipationService {
      * Validates the tutor example submission. If invalid, throw bad request exception with information which feedback are incorrect.
      */
     private void validateTutorialExampleSubmission(ExampleSubmission tutorExampleSubmission) {
-        boolean isTextSubmission = tutorExampleSubmission.getSubmission() instanceof TextSubmission;
-        if (!isTextSubmission) {
-            validateTutorialExampleSubmissionUsingTotalScore(tutorExampleSubmission);
-            return;
-        }
-
         var tutorFeedback = tutorExampleSubmission.getSubmission().getLatestResult().getFeedbacks();
         var instructorFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
 
