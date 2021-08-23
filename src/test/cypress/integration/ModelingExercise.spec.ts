@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 // pageobjects
 const courseManagement = artemis.pageobjects.courseManagement;
 const createModelingExercise = artemis.pageobjects.createModelingExercise;
-const modelingExerciseExampleSubission = artemis.pageobjects.modelingExerciseExampleSubmission;
+const modelingExerciseExampleSubmission = artemis.pageobjects.modelingExerciseAssessmentEditor;
 const modelingEditor = artemis.pageobjects.modelingEditor;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
@@ -82,20 +82,20 @@ describe('Modeling Exercise Spec', () => {
 
         it('Creates Example Submission', () => {
             cy.visit(`/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
-            modelingExerciseExampleSubission.createExampleSubmission();
+            cy.get('[jhitranslate="artemisApp.modelingExercise.createExampleSubmission"]').click();
             modelingEditor.addComponentToModel(1);
             modelingEditor.addComponentToModel(2);
             modelingEditor.addComponentToModel(3);
-            modelingExerciseExampleSubission.createNewExampleSubmission();
+            cy.get('[jhitranslate="artemisApp.modelingExercise.createNewExampleSubmission"]').click();
             cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
-            modelingExerciseExampleSubission.switchToAssessmentView();
-            modelingExerciseExampleSubission.openAssessmentForComponent(1);
-            modelingExerciseExampleSubission.assessComponent(-1, 'False');
-            modelingExerciseExampleSubission.openAssessmentForComponent(2);
-            modelingExerciseExampleSubission.assessComponent(2, 'Good');
-            modelingExerciseExampleSubission.openAssessmentForComponent(3);
-            modelingExerciseExampleSubission.assessComponent(0, 'Unnecessary');
-            modelingExerciseExampleSubission.saveExampleAssessment();
+            cy.get('[jhitranslate="artemisApp.modelingExercise.showExampleAssessment"]').click();
+            modelingExerciseExampleSubmission.openAssessmentForComponent(1);
+            modelingExerciseExampleSubmission.assessComponent(-1, 'False');
+            modelingExerciseExampleSubmission.openAssessmentForComponent(2);
+            modelingExerciseExampleSubmission.assessComponent(2, 'Good');
+            modelingExerciseExampleSubmission.openAssessmentForComponent(3);
+            modelingExerciseExampleSubmission.assessComponent(0, 'Unnecessary');
+            cy.contains('Save Example Assessment').click();
         });
 
         it('Edit Existing Modeling Exercise', () => {
@@ -118,13 +118,13 @@ describe('Modeling Exercise Spec', () => {
 
     describe('Modeling Exercise Flow', () => {
         before('create Modeling Exercise with future release date', () => {
-            cy.fixture('requests/modeling-exercise.json').then((exercise) => {
+            cy.fixture('requests/modelingExercise_template.json').then((exercise) => {
                 exercise.title = 'Cypress Modeling Exercise ' + uid;
-                exercise.course = testCourse;
                 exercise.releaseDate = dayjs().add(1, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
                 exercise.dueDate = dayjs().add(2, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
                 exercise.assessmentDueDate = dayjs().add(3, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-                courseManagementRequests.createModelingExercise(exercise).then((resp) => {
+                exercise.sampleSolutionModel = null;
+                courseManagementRequests.createModelingExercise(exercise, { course: testCourse }).then((resp) => {
                     modelingExercise = resp.body;
                 });
             });
@@ -180,12 +180,12 @@ describe('Modeling Exercise Spec', () => {
             cy.get('jhi-unreferenced-feedback > .btn').click();
             cy.get('jhi-assessment-detail > .card > .card-body > :nth-child(1) > :nth-child(2)').clear().type('1');
             cy.get('jhi-assessment-detail > .card > .card-body > :nth-child(2) > :nth-child(2)').clear().type('thanks, i hate it');
-            modelingExerciseExampleSubission.openAssessmentForComponent(1);
-            modelingExerciseExampleSubission.assessComponent(-1, 'False');
-            modelingExerciseExampleSubission.openAssessmentForComponent(2);
-            modelingExerciseExampleSubission.assessComponent(2, 'Good');
-            modelingExerciseExampleSubission.openAssessmentForComponent(3);
-            modelingExerciseExampleSubission.assessComponent(0, 'Unnecessary');
+            modelingExerciseExampleSubmission.openAssessmentForComponent(1);
+            modelingExerciseExampleSubmission.assessComponent(-1, 'False');
+            modelingExerciseExampleSubmission.openAssessmentForComponent(2);
+            modelingExerciseExampleSubmission.assessComponent(2, 'Good');
+            modelingExerciseExampleSubmission.openAssessmentForComponent(3);
+            modelingExerciseExampleSubmission.assessComponent(0, 'Unnecessary');
             cy.get('.top-container > :nth-child(3) > :nth-child(4)').click();
             cy.get('.alerts').should('contain.text', 'Your assessment was submitted successfully!');
         });
@@ -199,7 +199,7 @@ describe('Modeling Exercise Spec', () => {
         it('Student can view the assessment and complain', () => {
             cy.intercept('POST', '/api/complaints').as('complaintCreated');
             cy.login(student, `/courses/${testCourse.id}/exercises/${modelingExercise.id}`);
-            cy.get('jhi-submission-result-status > .col-auto').should('contain.text', 'Score').and('contain.text', '2 of 100 points');
+            cy.get('jhi-submission-result-status > .col-auto').should('contain.text', 'Score').and('contain.text', '2 of 10 points');
             cy.get('jhi-exercise-details-student-actions.col > > :nth-child(2)').click();
             cy.url().should('contain', `/courses/${testCourse.id}/modeling-exercises/${modelingExercise.id}/participate/`);
             cy.get('.col-xl-8').should('contain.text', 'thanks, i hate it');

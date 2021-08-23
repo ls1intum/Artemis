@@ -5,15 +5,27 @@ export class ExamStartEndPage {
         artemis.users.getAccountInfo((account: any) => cy.get('#fullname').type((account.firstName ?? '') + ' ' + (account.lastName ?? '')));
     }
 
-    setConfirmCheckmark() {
-        cy.get('#confirmBox').click();
+    setConfirmCheckmark(timeout?: number) {
+        cy.get('#confirmBox', { timeout }).click();
     }
 
-    startExam() {
+    pressStart() {
         cy.contains('Start').click();
     }
 
-    finishExam() {
+    pressFinish() {
         cy.get('.btn').contains('Finish').click();
+    }
+
+    startExam() {
+        this.setConfirmCheckmark();
+        this.enterFirstnameLastname();
+        this.pressStart();
+    }
+
+    finishExam(timeout?: number) {
+        this.setConfirmCheckmark(timeout ? timeout : Cypress.config('defaultCommandTimeout'));
+        this.enterFirstnameLastname();
+        this.pressFinish();
     }
 }
