@@ -1,6 +1,6 @@
-import { DELETE } from './../support/constants';
-import { generateUUID } from '../support/utils';
-import { artemis } from '../support/ArtemisTesting';
+import { DELETE } from '../../support/constants';
+import { generateUUID } from '../../support/utils';
+import { artemis } from '../../support/ArtemisTesting';
 import dayjs from 'dayjs';
 
 // The user management object
@@ -84,7 +84,7 @@ describe('Text exercise management', () => {
         const exerciseTitle = 'text exercise' + generateUUID();
 
         beforeEach(() => {
-            artemis.requests.courseManagement.createTextExercise({ course }, exerciseTitle).its('status').should('eq', 201);
+            courseManagement.createTextExercise({ course }, exerciseTitle).its('status').should('eq', 201);
         });
 
         it('Deletes an existing programming exercise', function () {
