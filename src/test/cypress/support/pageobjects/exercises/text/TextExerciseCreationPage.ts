@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs';
-import { POST } from '../constants';
-import { dayjsToString } from '../utils';
+import { POST } from '../../../constants';
+import { dayjsToString } from '../../../utils';
 /**
  * A class which encapsulates UI selectors and actions for the text exercise creation page.
  */

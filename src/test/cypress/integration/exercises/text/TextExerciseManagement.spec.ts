@@ -1,6 +1,6 @@
-import { DELETE } from '../../support/constants';
-import { generateUUID } from '../../support/utils';
-import { artemis } from '../../support/ArtemisTesting';
+import { DELETE } from '../../../support/constants';
+import { generateUUID } from '../../../support/utils';
+import { artemis } from '../../../support/ArtemisTesting';
 import dayjs from 'dayjs';
 
 // The user management object
