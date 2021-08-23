@@ -186,6 +186,9 @@ describe('AssessmentHeaderComponent', () => {
         component.isLoading = false;
         component.isAssessor = false;
         component.hasComplaint = false;
+        component.exercise = {
+            id: 1
+        } as Exercise;
         fixture.detectChanges();
 
         let nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
