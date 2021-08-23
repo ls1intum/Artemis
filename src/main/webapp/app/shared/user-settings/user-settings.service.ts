@@ -53,11 +53,9 @@ export interface OptionCore {
 @Injectable({ providedIn: 'root' })
 export class UserSettingsService {
     public resourceUrl = SERVER_API_URL + 'api/user-settings';
-
+    private applyNewChangesSource = new Subject<String>();
+    userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
     error?: string;
-
-    //private notificationOptionCores : OptionCore[] = [];
-    //private notificationOptionCores : OptionCore[];
 
     constructor(private accountService: AccountService, private http: HttpClient) {}
 
@@ -207,12 +205,11 @@ export class UserSettingsService {
     }
 
     /**
-     * Reloads the notifications displayed in the notification side bar
+     * Sends messages to subscribed observers.
+     * If a fitting message is received, specific observers will react to the changed settings they are affected by.
+     * E.g. notification-settings component starts an event to reload the notifications displayed in the notification side bar
      */
     public sendApplyChangesEvent(message: String): void {
         this.applyNewChangesSource.next(message);
     }
-
-    private applyNewChangesSource = new Subject<String>();
-    userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
 }
