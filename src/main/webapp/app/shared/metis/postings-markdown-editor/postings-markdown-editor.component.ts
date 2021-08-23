@@ -28,8 +28,6 @@ export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAcce
 
     constructor(private cdref: ChangeDetectorRef) {}
 
-    _onChange = (val: string) => {};
-
     /**
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
      */
@@ -45,19 +43,26 @@ export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAcce
         ];
     }
 
+    /**
+     * this lifecycle hook is required to avoid causing "Expression has changed after it was checked"-error when dismissing all changes in the markdown editor
+     * on dismissing the edit-create-modal -> we do not want to store changes in the create-edit-modal that are not saved
+     */
     ngAfterContentChecked() {
         this.cdref.detectChanges();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _onChange = (val: string) => {};
+
     /**
-     * Emits the value change from component.
+     * emits the value change from component
      */
     valueChanged() {
         this.valueChange.emit();
     }
 
     /**
-     * writes the current value of a form group and propagates the change
+     * writes the current value of a form group into the `content` variable
      * @param value
      */
     writeValue(value: any): void {
@@ -80,7 +85,7 @@ export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAcce
     registerOnTouched(): void {}
 
     /**
-     *
+     * function that is called on changes in markdown editor component
      * @param newValue
      */
     updateField(newValue: string) {
