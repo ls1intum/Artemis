@@ -9,6 +9,7 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 import { round } from 'app/shared/util/utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { navigateToExamExercise } from 'app/utils/navigation.utils';
 
 const BAR_HEIGHT = 15;
 
@@ -189,16 +190,6 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
      * We navigate to the exercise scores page when the user clicks on a data point
      */
     navigateToExercise(exerciseId: number, exerciseType: ExerciseType) {
-        this.router.navigate([
-            'course-management',
-            this.courseId,
-            'exams',
-            this.examId,
-            'exercise-groups',
-            this.averageScores.exerciseGroupId,
-            `${exerciseType}-exercises`,
-            exerciseId,
-            'scores',
-        ]);
+        navigateToExamExercise(this.router, this.courseId, this.examId, this.averageScores.exerciseGroupId, exerciseType, exerciseId, 'scores');
     }
 }
