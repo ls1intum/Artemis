@@ -1,3 +1,5 @@
+import { TextExerciseExampleSubmissionCreationPage } from './TextExerciseExampleSubmissionCreationPage';
+import { TextExerciseExampleSubmissionsPage } from './TextExerciseExampleSubmissionsPage';
 import { ProgrammingExerciseCreationPage } from './ProgrammingExerciseCreationPage';
 import { ExamManagementPage } from './ExamManagementPage';
 import { ExamCreationPage } from './ExamCreationPage';
@@ -24,5 +26,9 @@ export class ArtemisPageobjects {
     modelingExerciseAssessmentEditor = new ModelingExerciseAssessmentEditor();
     modelingEditor = new ModelingEditor();
     examStartEnd = new ExamStartEndPage();
-    textExerciseCreation = new TextExerciseCreationPage();
+    textExercise = {
+        creation: new TextExerciseCreationPage(),
+        exampleSubmissions: new TextExerciseExampleSubmissionsPage(),
+        exampleSubmissionCreation: new TextExerciseExampleSubmissionCreationPage(),
+    };
 }

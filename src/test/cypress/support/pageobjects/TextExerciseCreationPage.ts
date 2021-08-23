@@ -56,7 +56,7 @@ export class TextExerciseCreationPage {
     }
 
     private typeDate(date: Dayjs, identifier: string) {
-        cy.get(`jhi-date-time-picker, [name="${identifier}"]`).find('input').clear().type(dayjsToString(date), { force: true });
+        cy.get(`[name="${identifier}"]`).find('input').clear().type(dayjsToString(date), { force: true });
     }
 
     private typeText(selector: string, text: string) {

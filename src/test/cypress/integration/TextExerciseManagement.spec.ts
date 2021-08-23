@@ -9,7 +9,9 @@ const users = artemis.users;
 const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
-const textCreation = artemis.pageobjects.textExerciseCreation;
+const textCreation = artemis.pageobjects.textExercise.creation;
+const exampleSubmissions = artemis.pageobjects.textExercise.exampleSubmissions;
+const exampleSubmissionCreation = artemis.pageobjects.textExercise.exampleSubmissionCreation;
 const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagementPage = artemis.pageobjects.courseManagement;
 
@@ -30,20 +32,50 @@ describe('Text exercise management', () => {
     });
 
     it('Creates a text exercise in the UI', () => {
+        cy.visit('/');
         navigationBar.openCourseManagement();
         courseManagementPage.openExercisesOfCourse(courseName, courseShortName);
         cy.get('[jhitranslate="artemisApp.textExercise.home.createLabel"]').click();
-        const exerciseTitle = 'text exercise';
+
+        // Fill out text exercise form
+        const exerciseTitle = 'text exercise' + generateUUID();
         textCreation.typeTitle(exerciseTitle);
         textCreation.setReleaseDate(dayjs());
         textCreation.setDueDate(dayjs().add(1, 'days'));
         textCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
         textCreation.typeMaxPoints(10);
         textCreation.checkAutomaticAssessmentSuggestions();
-        textCreation.typeProblemStatement('This is a problem statement');
-        textCreation.typeExampleSolution('E = mc^2');
-        textCreation.typeAssessmentInstructions('Albert Einstein');
-        textCreation.create().its('status').should('eq', 201);
+        const problemStatement = 'This is a problem statement';
+        const exampleSolution = 'E = mc^2';
+        const assessmentInstructions = 'Albert Einstein';
+        textCreation.typeProblemStatement(problemStatement);
+        textCreation.typeExampleSolution(exampleSolution);
+        textCreation.typeAssessmentInstructions(assessmentInstructions);
+        textCreation.create().its('response.statusCode').should('eq', 201);
+
+        // Create an example submission
+        exampleSubmissions.clickCreateExampleSubmission();
+        cy.contains(exerciseTitle).should('be.visible');
+        cy.contains(problemStatement).should('be.visible');
+        cy.contains(exampleSolution).should('be.visible');
+        cy.contains(assessmentInstructions).should('be.visible');
+        const submission = 'This is an\nexample\nsubmission';
+        exampleSubmissionCreation.typeExampleSubmission(submission);
+        exampleSubmissionCreation
+            .clickCreateNewExampleSubmission()
+            .its('response')
+            .should((response: any) => {
+                expect(response.statusCode).to.equal(201);
+                expect(response.body.submission.text).to.equal(submission);
+            });
+
+        // Make sure example submission is shown in the list
+        cy.contains('Example Submissions Board').click();
+        cy.contains('Example Submission 1').should('be.visible');
+
+        // Make sure text exercise is shown in exercises list
+        cy.visit(`course-management/${course.id}/exercises`);
+        cy.contains(exerciseTitle).should('be.visible');
     });
 
     after(() => {
