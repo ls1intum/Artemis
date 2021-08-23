@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { Post } from 'app/entities/metis/post.model';
@@ -30,7 +30,6 @@ describe('PostComponent', () => {
         return TestBed.configureTestingModule({
             imports: [],
             declarations: [PostComponent, MockPipe(HtmlForMarkdownPipe), MockComponent(PostHeaderComponent), MockComponent(PostFooterComponent)],
-            schemas: [NO_ERRORS_SCHEMA],
             providers: [],
         })
             .compileComponents()
