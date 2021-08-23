@@ -8,13 +8,13 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * Individual User Options that make the User Settings
+ * Individual Notification Option that make the Notification Settings
  */
 @Entity
-@Table(name = "user_option", uniqueConstraints = { @UniqueConstraint(columnNames = { "user_id", "option_specifier" }) })
+@Table(name = "notification_option", uniqueConstraints = { @UniqueConstraint(columnNames = { "user_id", "option_specifier" }) })
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class UserOption extends DomainObject {
+public class NotificationOption extends DomainObject {
 
     @Id
     @Column(name = "id")
@@ -75,6 +75,6 @@ public class UserOption extends DomainObject {
 
     @Override
     public String toString() {
-        return "UserOption{" + "id=" + id + ", optionSpecifier='" + optionSpecifier + '\'' + ", webapp=" + webapp + ", email=" + email + ", user=" + user + '}';
+        return "NotificationOption{" + "id=" + id + ", optionSpecifier='" + optionSpecifier + '\'' + ", webapp=" + webapp + ", email=" + email + ", user=" + user + '}';
     }
 }

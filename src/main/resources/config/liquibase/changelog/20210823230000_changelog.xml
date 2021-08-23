@@ -1,10 +1,9 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.8.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
-    <changeSet author="alexander.malyuk" id="20210822140000">
+    <changeSet author="alexander.malyuk" id="20210823230000">
 
-        <!-- Introduction of user option -->
-        <createTable tableName="user_option">
-            <!--  <column name="id" type="bigint" autoIncrement="${autoIncrement}"> -->
+        <!-- Introduction of notification option -->
+        <createTable tableName="notification_option">
             <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="user_optionPK"/>
             </column>
@@ -22,7 +21,7 @@
             </column>
         </createTable>
         <addForeignKeyConstraint
-            baseTableName="user_option"
+            baseTableName="notification_option"
             baseColumnNames="user_id"
             constraintName="fk_user_option_user_id"
             deferrable="false"
@@ -30,9 +29,9 @@
             referencedTableName="jhi_user"
         />
         <addUniqueConstraint
-            tableName="user_option"
+            tableName="notification_option"
             columnNames="user_id, option_specifier"
-            constraintName="UKuserOptionTableUserIdOptionSpecifier"
+            constraintName="UKNotificationOptionTableUserIdOptionSpecifier"
         />
 
         <!--Add new original type column to GroupNotifications table to have access to the original notification types-->

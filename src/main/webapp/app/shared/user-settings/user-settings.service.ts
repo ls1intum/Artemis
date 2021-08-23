@@ -51,8 +51,7 @@ export abstract class OptionCore {
 
 @Injectable({ providedIn: 'root' })
 export class UserSettingsService {
-    public resourceUrl = SERVER_API_URL + 'api/user-settings';
-    public notificationSettingsresourceUrl = SERVER_API_URL + 'api/notification-settings';
+    public notificationSettingsResourceUrl = SERVER_API_URL + 'api/notification-settings';
     private applyNewChangesSource = new Subject<String>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
     error?: string;
@@ -69,7 +68,7 @@ export class UserSettingsService {
     public loadUserOptions(category: UserSettingsCategory): Observable<HttpResponse<OptionCore[]>> {
         switch (category) {
             case UserSettingsCategory.NOTIFICATION_SETTINGS: {
-                return this.http.get<NotificationOptionCore[]>(this.notificationSettingsresourceUrl + '/fetch-options', { observe: 'response' });
+                return this.http.get<NotificationOptionCore[]>(this.notificationSettingsResourceUrl + '/fetch-options', { observe: 'response' });
             }
         }
     }
@@ -127,7 +126,7 @@ export class UserSettingsService {
     public saveUserOptions(optionCores: OptionCore[], category: UserSettingsCategory): Observable<HttpResponse<OptionCore[]>> {
         //only save cores which were changed
         let changedOptionCores = optionCores.filter((optionCore) => optionCore.changed);
-        return this.http.post<OptionCore[]>(this.resourceUrl + '/save-options', changedOptionCores, { observe: 'response' });
+        return this.http.post<OptionCore[]>(this.notificationSettingsResourceUrl + '/save-options', changedOptionCores, { observe: 'response' });
     }
 
     /**

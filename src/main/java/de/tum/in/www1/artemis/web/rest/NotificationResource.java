@@ -18,16 +18,16 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.in.www1.artemis.domain.NotificationOption;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.UserOption;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
+import de.tum.in.www1.artemis.repository.NotificationOptionRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
-import de.tum.in.www1.artemis.repository.UserOptionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.UserSettingsService;
+import de.tum.in.www1.artemis.service.NotificationSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -53,19 +53,19 @@ public class NotificationResource {
 
     private final UserRepository userRepository;
 
-    private final UserOptionRepository userOptionRepository;
+    private final NotificationOptionRepository notificationOptionRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserSettingsService userSettingsService;
+    private final NotificationSettingsService notificationSettingsService;
 
-    public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, UserOptionRepository userOptionRepository,
-            AuthorizationCheckService authorizationCheckService, UserSettingsService userSettingsService) {
+    public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, NotificationOptionRepository notificationOptionRepository,
+            AuthorizationCheckService authorizationCheckService, NotificationSettingsService notificationSettingsService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
-        this.userOptionRepository = userOptionRepository;
+        this.notificationOptionRepository = notificationOptionRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.userSettingsService = userSettingsService;
+        this.notificationSettingsService = notificationSettingsService;
     }
 
     /**
@@ -113,8 +113,8 @@ public class NotificationResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        UserOption[] userOptions = userOptionRepository.findAllUserOptionsForRecipientWithId(currentUser.getId());
-        Set<NotificationType> deactivatedTypes = userSettingsService.findDeactivatedNotificationTypes(userOptions);
+        NotificationOption[] notificationOptions = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
+        Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(notificationOptions);
         final Page<Notification> page = notificationRepository.findAllNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(),
                 deactivatedTypes, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);

@@ -4,14 +4,14 @@ import java.util.*;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.UserOption;
+import de.tum.in.www1.artemis.domain.NotificationOption;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 
 @Service
-public class UserSettingsService {
+public class NotificationSettingsService {
 
-    public Set<NotificationType> findDeactivatedNotificationTypes(UserOption[] userOptions) {
-        Map<NotificationType, Boolean> userOptionWitchActivationStatusMap = convertNotificationUserOptionsToNotificationTypesWithActivationStatus(userOptions);
+    public Set<NotificationType> findDeactivatedNotificationTypes(NotificationOption[] notificationOptions) {
+        Map<NotificationType, Boolean> userOptionWitchActivationStatusMap = convertNotificationUserOptionsToNotificationTypesWithActivationStatus(notificationOptions);
         Set<NotificationType> deactivatedNotificationTypes = new HashSet<>();
         userOptionWitchActivationStatusMap.forEach((notificationType, isActivated) -> {
             if (!isActivated) {
@@ -21,13 +21,13 @@ public class UserSettingsService {
         return deactivatedNotificationTypes;
     }
 
-    public Map<NotificationType, Boolean> convertNotificationUserOptionsToNotificationTypesWithActivationStatus(UserOption[] userOptions) {
-        Map<NotificationType, Boolean> resultingMap = new HashMap<NotificationType, Boolean>();
+    public Map<NotificationType, Boolean> convertNotificationUserOptionsToNotificationTypesWithActivationStatus(NotificationOption[] notificationOptions) {
+        Map<NotificationType, Boolean> resultingMap = new HashMap<>();
         NotificationType[] tmpNotificationTypes;
-        for (int i = 0; i < userOptions.length; i++) {
-            tmpNotificationTypes = this.findCorrespondingNotificationTypesForUserOption(userOptions[i]);
+        for (int i = 0; i < notificationOptions.length; i++) {
+            tmpNotificationTypes = this.findCorrespondingNotificationTypesForUserOption(notificationOptions[i]);
             for (NotificationType notificationType : tmpNotificationTypes) {
-                resultingMap.put(notificationType, userOptions[i].isWebapp());
+                resultingMap.put(notificationType, notificationOptions[i].isWebapp());
             }
         }
         return resultingMap;
@@ -36,11 +36,11 @@ public class UserSettingsService {
     /**
      * This is the place where the mapping between (notification) userOption and NotificationType happens on the server side
      * Each notification based userOption can be based on multiple different NotificationTypes
-     * @param userOption which corresponding NotificationTypes should be found
+     * @param notificationOption which corresponding NotificationTypes should be found
      * @return the corresponding NotificationType(s)
      */
-    public NotificationType[] findCorrespondingNotificationTypesForUserOption(UserOption userOption) {
-        switch (userOption.getOptionSpecifier()) {
+    public NotificationType[] findCorrespondingNotificationTypesForUserOption(NotificationOption notificationOption) {
+        switch (notificationOption.getOptionSpecifier()) {
             case "notification.exercise-notification.exercise-created-or-started": {
                 return new NotificationType[] { NotificationType.EXERCISE_CREATED };
             }
