@@ -43,7 +43,7 @@ jobs:
     timeout-minutes: 45
     steps:
     - name: Setup Java
-      uses: actions/setup-java@v2.2.0
+      uses: actions/setup-java@v2.3.0
       with:
         distribution: 'zulu'
         java-version: '${{ env.java }}'
@@ -76,7 +76,7 @@ jobs:
     timeout-minutes: 30
     steps:
     - name: Setup Java
-      uses: actions/setup-java@v2.2.0
+      uses: actions/setup-java@v2.3.0
       with:
         distribution: 'zulu'
         java-version: '${{ env.java }}'
