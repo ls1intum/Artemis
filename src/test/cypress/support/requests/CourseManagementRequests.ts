@@ -77,6 +77,11 @@ export class CourseManagementRequests {
         programmingTemplate.dueDate = dayjsToString(dueDate);
         programmingTemplate.course = course;
 
+        const runsOnBamboo: boolean = Cypress.env('isBamboo');
+        if (runsOnBamboo) {
+            cy.waitForGroupSynchronization();
+        }
+
         return cy.request({
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
             method: POST,
