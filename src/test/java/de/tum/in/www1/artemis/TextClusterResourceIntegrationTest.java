@@ -162,7 +162,7 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
 
         assertThat(textClusterStatisticsFalse).isNotNull();
         TextClusterStatisticsDTO textClusterStatisticFalse = textClusterStatisticsFalse.get(0);
-        assertThat(textClusterStatisticFalse.isDisabled()).isEqualTo(false);
+        assertThat(textClusterStatisticFalse.isDisabled()).isFalse();
 
         // set predicate to true
         request.patch("/api/text-clusters/" + cluster.getId() + "?disabled=true", "{}", HttpStatus.OK);
