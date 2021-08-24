@@ -10,7 +10,7 @@ import { Option, OptionCore, OptionGroup, UserSettings } from 'app/shared/user-s
 @Injectable({ providedIn: 'root' })
 export class UserSettingsService {
     public notificationSettingsResourceUrl = SERVER_API_URL + 'api/notification-settings';
-    private applyNewChangesSource = new Subject<String>();
+    private applyNewChangesSource = new Subject<string>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
     error?: string;
 
@@ -77,7 +77,7 @@ export class UserSettingsService {
     /**
      * Saves only the changed options (cores) to the database.
      * @param optionCores all options of the given UserSettings which will be filtered
-     * @param categpry limits the server call to only search for options based on the provided category
+     * @param category limits the server call to only search for options based on the provided category
      * @return the saved user options (cores) which were found in the database (for validation) or error
      */
     public saveUserOptions(optionCores: OptionCore[], category: UserSettingsCategory): Observable<HttpResponse<OptionCore[]>> {
@@ -162,7 +162,7 @@ export class UserSettingsService {
      * If a fitting message is received, specific observers will react to the changed settings they are affected by.
      * E.g. notification-settings component starts an event to reload the notifications displayed in the notification side bar
      */
-    public sendApplyChangesEvent(message: String): void {
+    public sendApplyChangesEvent(message: string): void {
         this.applyNewChangesSource.next(message);
     }
 }

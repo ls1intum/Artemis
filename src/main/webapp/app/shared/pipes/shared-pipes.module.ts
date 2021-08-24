@@ -11,7 +11,7 @@ import { SanitizeHtmlPipe } from 'app/shared/pipes/sanitize-html.pipe';
 import { ExerciseTypePipe } from 'app/shared/pipes/exercise-type.pipe';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TextToCamelCasePipe } from 'app/shared/pipes/text-to-camel-case.pipe';
+import { TextToLowerCamelCasePipe } from 'app/shared/pipes/text-to-lower-camel-case.pipe';
 
 @NgModule({
     declarations: [
@@ -26,7 +26,7 @@ import { TextToCamelCasePipe } from 'app/shared/pipes/text-to-camel-case.pipe';
         TruncatePipe,
         SanitizeHtmlPipe,
         AverageByPipe,
-        TextToCamelCasePipe,
+        TextToLowerCamelCasePipe,
     ],
     exports: [
         SafeHtmlPipe,
@@ -40,7 +40,7 @@ import { TextToCamelCasePipe } from 'app/shared/pipes/text-to-camel-case.pipe';
         SanitizeHtmlPipe,
         SafeResourceUrlPipe,
         AverageByPipe,
-        TextToCamelCasePipe,
+        TextToLowerCamelCasePipe,
     ],
     providers: [SafeResourceUrlPipe, ArtemisTranslatePipe],
 })
