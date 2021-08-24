@@ -113,7 +113,7 @@ public class NotificationResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        NotificationOption[] notificationOptions = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
+        Set<NotificationOption> notificationOptions = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
         Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(notificationOptions);
         final Page<Notification> page = notificationRepository.findAllNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(),
                 deactivatedTypes, pageable);

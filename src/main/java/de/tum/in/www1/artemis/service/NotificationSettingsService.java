@@ -16,7 +16,7 @@ public class NotificationSettingsService {
      * @param notificationOptions which should be mapped to their respective NotificationTypes and filtered by activation status
      * @return a set of NotificationTypes which are deactivated by the current user's notification settings
      */
-    public Set<NotificationType> findDeactivatedNotificationTypes(NotificationOption[] notificationOptions) {
+    public Set<NotificationType> findDeactivatedNotificationTypes(Set<NotificationOption> notificationOptions) {
         Map<NotificationType, Boolean> notificationOptionWitchActivationStatusMap = convertNotificationOptionsToNotificationTypesWithActivationStatus(notificationOptions);
         Set<NotificationType> deactivatedNotificationTypes = new HashSet<>();
         notificationOptionWitchActivationStatusMap.forEach((notificationType, isActivated) -> {
@@ -32,16 +32,26 @@ public class NotificationSettingsService {
      * @param notificationOptions which will be mapped to their respective NotificationTypes with respect to their activation status
      * @return a map with key of NotificationType and value Boolean indicating which types are (de)activated by the user's notification settings
      */
-    public Map<NotificationType, Boolean> convertNotificationOptionsToNotificationTypesWithActivationStatus(NotificationOption[] notificationOptions) {
+    public Map<NotificationType, Boolean> convertNotificationOptionsToNotificationTypesWithActivationStatus(Set<NotificationOption> notificationOptions) {
         Map<NotificationType, Boolean> resultingMap = new HashMap<>();
-        NotificationType[] tmpNotificationTypes;
-        for (int i = 0; i < notificationOptions.length; i++) {
-            tmpNotificationTypes = this.findCorrespondingNotificationTypesForNotificationOption(notificationOptions[i]);
-            for (NotificationType notificationType : tmpNotificationTypes) {
-                resultingMap.put(notificationType, notificationOptions[i].isWebapp());
-            }
-        }
+        notificationOptions.stream().map(notificationOption -> {
+            convertNotificationOptionToNotificationTypesWithActivationStatus(notificationOption, resultingMap);
+            return this;
+        });
         return resultingMap;
+    }
+
+    /**
+     * Updates the map of corresponding NotificationTypes and activation status based on the provided NotificationOption
+     * @param notificationOption which corresponding NotificationTypes will be put in the map
+     * @param map of NotifationType and activation status in the notification settings
+     */
+    private void convertNotificationOptionToNotificationTypesWithActivationStatus(NotificationOption notificationOption, Map<NotificationType, Boolean> map) {
+        NotificationType[] tmpNotificationTypes = this.findCorrespondingNotificationTypesForNotificationOption(notificationOption);
+        Arrays.stream(tmpNotificationTypes).map(notificationType -> {
+            map.put(notificationType, notificationOption.isWebapp());
+            return this;
+        });
     }
 
     /**
@@ -83,8 +93,8 @@ public class NotificationSettingsService {
     }
 
     /**
-     * Updates the notificationOptions by setting the the current user
-     * @param notificationOptions witch might be saved the very first time and have no user set yet
+     * Updates the notificationOptions by setting the current user
+     * @param notificationOptions which might be saved the very first time and have no user set yet
      * @param currentUser
      */
     public void setCurrentUser(NotificationOption[] notificationOptions, User currentUser) {

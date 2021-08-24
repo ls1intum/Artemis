@@ -2,15 +2,13 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.NotificationOption;
 import de.tum.in.www1.artemis.domain.User;
@@ -19,7 +17,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.NotificationSettingsService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.PaginationUtil;
 import io.swagger.annotations.ApiParam;
 
 /**
@@ -55,11 +52,11 @@ public class NotificationSettingsResource {
      * @return the list of found NotificationOptions
      */
     @GetMapping("/notification-settings/fetch-options")
-    public ResponseEntity<List<NotificationOption>> getNotificationOptionsForCurrentUser(@ApiParam Pageable pageable) {
+    public ResponseEntity<Set<NotificationOption>> getNotificationOptionsForCurrentUser(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        final Page<NotificationOption> page = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId(), pageable);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+        final Set<NotificationOption> notificationOptionSet = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
+        // HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(notificationOptionSet, HttpStatus.OK);
     }
 
     /**
