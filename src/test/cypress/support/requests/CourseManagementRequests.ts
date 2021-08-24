@@ -70,7 +70,7 @@ export class CourseManagementRequests {
         dueDate = new Date(Date.now() + oneDay),
     ) {
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
-        const programmingTemplate: any = CourseManagementRequests.getCourseOrExamExercise(programmingExerciseTemplate, body);
+        const programmingTemplate: any = this.getCourseOrExamExercise(programmingExerciseTemplate, body);
         programmingTemplate.title = title;
         programmingTemplate.shortName = programmingShortName;
         programmingTemplate.packageName = packageName;
@@ -151,7 +151,7 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     createTextExercise(title: string, body: { course: any } | { exerciseGroup: any }) {
-        const textExercise: any = CourseManagementRequests.getCourseOrExamExercise(textExerciseTemplate, body);
+        const textExercise: any = this.getCourseOrExamExercise(textExerciseTemplate, body);
         textExercise.title = title;
         return cy.request({ method: POST, url: BASE_API + 'text-exercises', body: textExercise });
     }
@@ -173,7 +173,7 @@ export class CourseManagementRequests {
     }
 
     createModelingExercise(modelingExercise: any, body: { course: any } | { exerciseGroup: any }) {
-        const newModelingExercise = CourseManagementRequests.getCourseOrExamExercise(modelingExercise, body);
+        const newModelingExercise = this.getCourseOrExamExercise(modelingExercise, body);
         return cy.request({
             url: '/api/modeling-exercises',
             method: 'POST',
@@ -194,7 +194,7 @@ export class CourseManagementRequests {
      * @param exercise the exercise template
      * @param body the exercise group or course the exercise will be added to
      */
-    private static getCourseOrExamExercise(exercise: object, body: { course: any } | { exerciseGroup: any }) {
+    private getCourseOrExamExercise(exercise: object, body: { course: any } | { exerciseGroup: any }) {
         return Object.assign({}, exercise, body);
     }
 }
