@@ -26,7 +26,6 @@ import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
-import { BuildPlanButtonDirective } from 'app/exercises/programming/shared/utils/build-plan-button.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { MockTranslateValuesDirective } from '../../course/course-scores/course-scores.component.spec';
 import { DifferencePipe } from 'ngx-moment';
@@ -104,7 +103,6 @@ describe('Exercise Scores Component', () => {
                 MockComponent(DataTableComponent),
                 MockComponent(ResultComponent),
                 MockDirective(MockHasAnyAuthorityDirective),
-                MockDirective(BuildPlanButtonDirective),
                 MockDirective(FeatureToggleLinkDirective),
                 MockDirective(MockTranslateValuesDirective),
                 MockPipe(ArtemisTranslatePipe),

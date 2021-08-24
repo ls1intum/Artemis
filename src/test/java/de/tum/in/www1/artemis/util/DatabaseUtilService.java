@@ -386,7 +386,11 @@ public class DatabaseUtilService {
     }
 
     public Course createCourse() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        return createCourse(null);
+    }
+
+    public Course createCourse(Long id) {
+        Course course = ModelFactory.generateCourse(id, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         return courseRepo.save(course);
     }
 
@@ -735,7 +739,6 @@ public class DatabaseUtilService {
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setLecture(lectureContext);
-            postToAdd.setCourse(lectureContext.getCourse());
             postRepository.save(postToAdd);
             posts.add(postToAdd);
         }
@@ -747,7 +750,6 @@ public class DatabaseUtilService {
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setExercise(exerciseContext);
-            postToAdd.setCourse(exerciseContext.getCourseViaExerciseGroupOrCourseMember());
             postRepository.save(postToAdd);
             posts.add(postToAdd);
         }
