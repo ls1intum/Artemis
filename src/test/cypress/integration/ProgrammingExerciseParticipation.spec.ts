@@ -65,7 +65,7 @@ function setupCourseAndProgrammingExercise() {
         artemisRequests.courseManagement.addStudentToCourse(course.id, users.getStudentOne().username);
         artemisRequests.courseManagement.addStudentToCourse(course.id, users.getStudentTwo().username);
         artemisRequests.courseManagement.addStudentToCourse(course.id, users.getStudentThree().username);
-        artemisRequests.courseManagement.createProgrammingExercise(course, programmingExerciseName, programmingExerciseShortName, packageName);
+        artemisRequests.courseManagement.createProgrammingExercise({ course }, programmingExerciseName, programmingExerciseShortName, packageName);
     });
 }
 

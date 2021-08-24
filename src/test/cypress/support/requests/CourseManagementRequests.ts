@@ -5,7 +5,7 @@ import { dayjsToString, generateUUID } from '../utils';
 import examTemplate from '../../fixtures/requests/exam_template.json';
 import day from 'dayjs';
 import { CypressCredentials } from '../users';
-import textExercise from '../../fixtures/requests/exam_textExercise_template.json';
+import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 
 const COURSE_BASE = BASE_API + 'courses/';
@@ -53,7 +53,7 @@ export class CourseManagementRequests {
 
     /**
      * Creates a course with the specified title and short name.
-     * @param course the response object from a previous call to createCourse
+     * @param body an object containing either the course or exercise group the exercise will be added to
      * @param title the title of the programming exercise
      * @param programmingShortName the short name of the programming exercise
      * @param packageName the package name of the programming exercise
@@ -62,20 +62,24 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     createProgrammingExercise(
-        course: any,
+        body: { course: any } | { exerciseGroup: any },
         title = 'Cypress programming exercise ' + generateUUID(),
         programmingShortName = 'cypress' + generateUUID(),
         packageName = 'de.test',
         releaseDate = day(),
         dueDate = day().add(1, 'days'),
     ) {
-        const programmingTemplate = programmingExerciseTemplate;
+        const isExamExercise = body.hasOwnProperty('exerciseGroup');
+        const programmingTemplate: any = this.getCourseOrExamExercise(programmingExerciseTemplate, body);
         programmingTemplate.title = title;
         programmingTemplate.shortName = programmingShortName;
         programmingTemplate.packageName = packageName;
-        programmingTemplate.releaseDate = dayjsToString(releaseDate);
-        programmingTemplate.dueDate = dayjsToString(dueDate);
-        programmingTemplate.course = course;
+        if (isExamExercise) {
+            programmingTemplate.releaseDate = releaseDate.toISOString();
+            programmingTemplate.dueDate = dueDate.toISOString();
+        } else {
+            programmingTemplate.allowComplaintsForAutomaticAssessments = true;
+        }
 
         const runsOnBamboo: boolean = Cypress.env('isBamboo');
         if (runsOnBamboo) {
@@ -97,6 +101,13 @@ export class CourseManagementRequests {
      */
     addStudentToCourse(courseId: number, studentName: string) {
         return cy.request({ url: COURSE_BASE + courseId + '/students/' + studentName, method: POST });
+    }
+
+    /**
+     * Adds the specified user to the tutor group in the course
+     */
+    addTutorToCourse(course: any, user: CypressCredentials) {
+        return cy.request({ method: POST, url: COURSE_BASE + course.id + '/tutors/' + user.username });
     }
 
     /**
@@ -136,10 +147,11 @@ export class CourseManagementRequests {
     }
 
     /**
-     * add text exercise to exercise group in exam
+     * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
      * */
-    addTextExerciseToExam(group: any, title = 'Text exercise ' + generateUUID) {
+    addTextExerciseToExam(group: any, title = 'Text exercise ' + generateUUID()) {
+        const textExercise: any = this.getCourseOrExamExercise(textExerciseTemplate, group);
         textExercise.exerciseGroup = group;
         textExercise.title = title;
         return cy.request({ method: POST, url: BASE_API + 'text-exercises', body: textExercise });
@@ -161,11 +173,12 @@ export class CourseManagementRequests {
         return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
     }
 
-    createModelingExercise(modelingExercise: string) {
+    createModelingExercise(modelingExercise: any, body: { course: any } | { exerciseGroup: any }) {
+        const newModelingExercise = this.getCourseOrExamExercise(modelingExercise, body);
         return cy.request({
             url: MODELING_EXERCISE_BASE,
             method: POST,
-            body: modelingExercise,
+            body: newModelingExercise,
         });
     }
 
@@ -175,13 +188,23 @@ export class CourseManagementRequests {
             method: DELETE,
         });
     }
+
+    /**
+     * Because the only difference between course exercises and exam exercises is the "course" or "exerciseGroup" field
+     * This function takes an exercise template and adds one of the fields to it
+     * @param exercise the exercise template
+     * @param body the exercise group or course the exercise will be added to
+     */
+    private getCourseOrExamExercise(exercise: object, body: { course: any } | { exerciseGroup: any }) {
+        return Object.assign({}, exercise, body);
+    }
 }
 
 /**
  * Helper class to construct exam objects for the {@link CourseManagementRequests.createExam} method.
  */
 export class CypressExamBuilder {
-    readonly template = examTemplate;
+    readonly template: any = examTemplate;
 
     /**
      * Initializes the exam builder.
@@ -266,6 +289,21 @@ export class CypressExamBuilder {
      */
     endDate(date: day.Dayjs) {
         this.template.endDate = dayjsToString(date);
+        return this;
+    }
+
+    publishResultsDate(date: day.Dayjs) {
+        this.template.publishResultsDate = dayjsToString(date);
+        return this;
+    }
+
+    examStudentReviewStart(date: day.Dayjs) {
+        this.template.examStudentReviewStart = dayjsToString(date);
+        return this;
+    }
+
+    examStudentReviewEnd(date: day.Dayjs) {
+        this.template.examStudentReviewEnd = dayjsToString(date);
         return this;
     }
 

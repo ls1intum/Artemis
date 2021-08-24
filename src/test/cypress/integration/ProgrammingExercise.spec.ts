@@ -41,13 +41,13 @@ describe('Programming Exercise Management', () => {
 
     describe('Programming exercise deletion', () => {
         beforeEach(() => {
-            artemisRequests.courseManagement.createProgrammingExercise(course, programmingExerciseName, programmingExerciseShortName, packageName).its('status').should('eq', 201);
+            artemisRequests.courseManagement.createProgrammingExercise({ course }, programmingExerciseName, programmingExerciseShortName).its('status').should('eq', 201);
         });
 
         it('Deletes an existing programming exercise', function () {
             cy.login(admin, '/');
             navigationBar.openCourseManagement();
-            courseManagementPage.openExercisesOfCourse(courseName, courseShortName);
+            courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
             cy.get('[deletequestion="artemisApp.programmingExercise.delete.question"]').click();
             // Check all checkboxes to get rid of the git repositories and build plans
             cy.get('.modal-body')
@@ -104,7 +104,7 @@ describe('Programming Exercise Management', () => {
         });
     });
 
-  after(() => {
+    after(() => {
         if (!!course) {
             artemisRequests.courseManagement.deleteCourse(course.id).its('status').should('eq', 200);
         }

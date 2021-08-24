@@ -79,7 +79,7 @@ describe('Exam management', () => {
                 courseManagementRequests.registerStudentForExam(exam, student);
                 courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.addTextExerciseToExam(exerciseGroup).then((exerciseResponse) => {
+                    courseManagementRequests.addTextExerciseToExam({ exerciseGroup }).then((exerciseResponse) => {
                         textExercise = exerciseResponse.body;
                         courseManagementRequests.generateMissingIndividualExams(exam);
                         courseManagementRequests.prepareExerciseStartForExam(exam);
@@ -89,7 +89,7 @@ describe('Exam management', () => {
                         cy.contains('Welcome to ' + exam.title).should('be.visible');
                         examStartEnd.setConfirmCheckmark();
                         examStartEnd.enterFirstnameLastname();
-                        examStartEnd.startExam();
+                        examStartEnd.pressStart();
                         cy.contains('Exam Overview').should('exist');
                         cy.contains(textExercise.title).should('be.visible').click();
                         cy.get('#text-editor-tab').type(
@@ -117,7 +117,7 @@ describe('Exam management', () => {
                 courseManagementRequests.registerStudentForExam(exam, student);
                 courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.addTextExerciseToExam(exerciseGroup).then((response) => {
+                    courseManagementRequests.addTextExerciseToExam({ exerciseGroup }).then((response) => {
                         const textExercise = response.body;
                         courseManagementRequests.generateMissingIndividualExams(exam);
                         courseManagementRequests.prepareExerciseStartForExam(exam);
@@ -135,7 +135,7 @@ describe('Exam management', () => {
                         cy.contains('This is the end of ' + exam.title, { timeout: 20000 });
                         examStartEnd.setConfirmCheckmark();
                         examStartEnd.enterFirstnameLastname();
-                        examStartEnd.finishExam();
+                        examStartEnd.pressFinish();
                         cy.get('.alert').contains('Your exam was submitted successfully.');
                     });
                 });
