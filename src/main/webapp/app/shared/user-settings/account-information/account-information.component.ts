@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subscription, tap } from 'rxjs';
@@ -8,7 +8,7 @@ import { Subscription, tap } from 'rxjs';
     templateUrl: './account-information.component.html',
     styleUrls: ['../user-settings-prototype/user-settings-prototype.component.scss'],
 })
-export class AccountInformationComponent {
+export class AccountInformationComponent implements OnInit {
     currentUser?: User;
 
     private authStateSubscription: Subscription;

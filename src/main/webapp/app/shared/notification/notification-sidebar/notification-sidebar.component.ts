@@ -149,12 +149,11 @@ export class NotificationSidebarComponent implements OnInit {
     private subscribeToNotificationUpdates(): void {
         this.notificationService.subscribeToNotificationUpdates().subscribe((notification: Notification) => {
             if (this.notificationSettingsService.isNotificationAllowedBySettings(notification, this.originalNotificationTypesActivationMap)) {
-              
                 // ignores live exam notifications because the sidebar is not visible during the exam mode
                 if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
-                  return;
+                    return;
                 }
-              
+
                 // Increase total notifications count if the notification does not already exist.
                 if (!this.notifications.some(({ id }) => id === notification.id)) {
                     this.totalNotifications += 1;
@@ -204,7 +203,7 @@ export class NotificationSidebarComponent implements OnInit {
         this.originalNotificationTypesActivationMap = new Map<OriginalNotificationType, boolean>();
         this.loadNotificationSetting();
 
-        //reset notifications
+        // reset notifications
         this.notifications = [];
         this.sortedNotifications = [];
         this.recentNotificationCount = 0;
@@ -226,7 +225,7 @@ export class NotificationSidebarComponent implements OnInit {
                 UserSettingsCategory.NOTIFICATION_SETTINGS,
             ) as NotificationOptionCore[];
             this.originalNotificationTypesActivationMap = this.notificationSettingsService.updateOriginalNotificationTypeActivationMap(this.notificationOptionCores);
-            //(res: HttpErrorResponse) => (this.error = res.message) TODO
+            // (res: HttpErrorResponse) => (this.error = res.message) TODO
         });
     }
 

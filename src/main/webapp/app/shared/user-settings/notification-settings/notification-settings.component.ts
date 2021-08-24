@@ -34,8 +34,10 @@ export class NotificationSettingsComponent extends UserSettingsPrototypeComponen
     toggleOption(event: any) {
         this.optionsChanged = true;
         const optionId = event.currentTarget.id;
-        let foundOptionCore = this.optionCores.find((core) => core.optionSpecifier === optionId);
-        if (!foundOptionCore) return;
+        const foundOptionCore = this.optionCores.find((core) => core.optionSpecifier === optionId);
+        if (!foundOptionCore) {
+            return;
+        }
         foundOptionCore!.webapp = !foundOptionCore!.webapp;
         foundOptionCore.changed = true;
     }

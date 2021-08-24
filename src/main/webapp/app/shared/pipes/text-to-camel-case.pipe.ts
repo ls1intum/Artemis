@@ -43,8 +43,8 @@ export class TextToCamelCasePipe implements PipeTransform {
         for (let i = 0; i < words.length; i++) {
             let currentWord = words[i].toLowerCase();
 
-            if (i != 0) {
-                //convert first letter to upper case
+            if (i !== 0) {
+                // convert first letter to upper case
                 currentWord = currentWord.substr(0, 1).toUpperCase() + currentWord.substr(1);
             }
             result += currentWord;

@@ -47,7 +47,7 @@ export class UserSettingsService {
         if (!(receivedOptionCoresFromServer == undefined || receivedOptionCoresFromServer.length === 0)) {
             this.updateSettings(receivedOptionCoresFromServer, settingsResult);
         }
-        //else continue using default settings
+        // else continue using default settings
         return settingsResult;
     }
 
@@ -68,8 +68,8 @@ export class UserSettingsService {
         if (!(receivedOptionCoresFromServer == undefined || receivedOptionCoresFromServer.length === 0)) {
             this.updateSettings(receivedOptionCoresFromServer, settingsResult);
         }
-        //else continue using default settings and return only option cores (e.g. used for filtering)
-        //return this.extractOptionCoresFromSettings(settingsResult);
+        // else continue using default settings and return only option cores (e.g. used for filtering)
+        // return this.extractOptionCoresFromSettings(settingsResult);
         return this.extractOptionCoresFromSettings(settingsResult);
     }
 
@@ -82,8 +82,8 @@ export class UserSettingsService {
      * @return the saved user options (cores) which were found in the database (for validation) or error
      */
     public saveUserOptions(optionCores: OptionCore[], category: UserSettingsCategory): Observable<HttpResponse<OptionCore[]>> {
-        //only save cores which were changed
-        let changedOptionCores = optionCores.filter((optionCore) => optionCore.changed);
+        // only save cores which were changed
+        const changedOptionCores = optionCores.filter((optionCore) => optionCore.changed);
         return this.http.post<OptionCore[]>(this.notificationSettingsResourceUrl + '/save-options', changedOptionCores, { observe: 'response' });
     }
 
@@ -109,14 +109,14 @@ export class UserSettingsService {
      * @return OptionCore array based on the provided UserSettings
      */
     public extractOptionCoresFromSettings(settings: UserSettings<OptionCore>): OptionCore[] {
-        let optionCoreAccumulator: OptionCore[] = [];
+        const optionCoreAccumulator: OptionCore[] = [];
         settings.groups.forEach((group: OptionGroup<OptionCore>) => {
             group.options.forEach((option: Option<OptionCore>) => {
-                let optionCore: OptionCore = option.optionCore;
+                const optionCore: OptionCore = option.optionCore;
                 if (optionCore.id == undefined) {
                     optionCore.id = -1; // is used to mark cores which have never been saved to the database
                 }
-                //sets changed flag to false after update
+                // sets changed flag to false after update
                 optionCore.changed = false;
                 optionCoreAccumulator.push(optionCore);
             });

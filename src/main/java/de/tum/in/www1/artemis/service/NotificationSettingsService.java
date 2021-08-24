@@ -34,24 +34,14 @@ public class NotificationSettingsService {
      */
     private Map<NotificationType, Boolean> convertNotificationOptionsToNotificationTypesWithActivationStatus(Set<NotificationOption> notificationOptions) {
         Map<NotificationType, Boolean> resultingMap = new HashMap<>();
-        notificationOptions.stream().map(notificationOption -> {
-            updateNotificationTypeActivationStatusMap(notificationOption, resultingMap);
-            return this;
-        });
+        NotificationType[] tmpNotificationTypes;
+        for (NotificationOption option : notificationOptions) {
+            tmpNotificationTypes = this.findCorrespondingNotificationTypesForNotificationOption(option);
+            for (NotificationType type : tmpNotificationTypes) {
+                resultingMap.put(type, option.isWebapp());
+            }
+        }
         return resultingMap;
-    }
-
-    /**
-     * Updates the map of corresponding NotificationTypes and activation status based on the provided NotificationOption
-     * @param notificationOption which corresponding NotificationTypes will be put in the map
-     * @param map of NotifationType and activation status in the notification settings
-     */
-    private void updateNotificationTypeActivationStatusMap(NotificationOption notificationOption, Map<NotificationType, Boolean> map) {
-        NotificationType[] tmpNotificationTypes = this.findCorrespondingNotificationTypesForNotificationOption(notificationOption);
-        Arrays.stream(tmpNotificationTypes).map(notificationType -> {
-            map.put(notificationType, notificationOption.isWebapp());
-            return this;
-        });
     }
 
     /**

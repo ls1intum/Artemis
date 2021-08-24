@@ -16,7 +16,7 @@ import { UserSettingsService } from 'app/shared/user-settings/user-settings.serv
 })
 export class UserSettingsPrototypeComponent implements OnInit {
     // HTML template related
-    optionsChanged: boolean = false;
+    optionsChanged = false;
     currentUser: User;
 
     // userSettings logic related
@@ -47,7 +47,7 @@ export class UserSettingsPrototypeComponent implements OnInit {
         this.userSettingsService.loadUserOptions(this.userSettingsCategory).subscribe((res: HttpResponse<OptionCore[]>) => {
             this.userSettings = this.userSettingsService.loadUserOptionCoresSuccessAsSettings(res.body!, res.headers, this.userSettingsCategory);
             this.finishUpdate();
-            //(res: HttpErrorResponse) => (this.error = res.message) TODO
+            // (res: HttpErrorResponse) => (this.error = res.message) TODO
         });
     }
 
@@ -64,7 +64,7 @@ export class UserSettingsPrototypeComponent implements OnInit {
                 this.finishUpdate();
                 this.finishSaving();
             },
-            //(res: HttpErrorResponse) => (this.error = res.message), TODO
+            // (res: HttpErrorResponse) => (this.error = res.message), TODO
         );
     }
 
@@ -76,7 +76,7 @@ export class UserSettingsPrototypeComponent implements OnInit {
     protected finishSaving() {
         this.createApplyChangesEvent();
         this.optionsChanged = false;
-        //this.alertService.addAlert({ type: 'success', msg: 'studentExam.submitSuccessful', timeout: 20000 }, []); //TODO
+        // this.alertService.addAlert({ type: 'success', msg: 'studentExam.submitSuccessful', timeout: 20000 }, []); //TODO
         this.alertService.success('artemisApp.userSettings.saveSettingsSuccessAlert'); // TODO not working ...
     }
 

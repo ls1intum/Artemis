@@ -18,7 +18,7 @@ Developer Guide/Readme for using and extending user settings
                These names correspond with other places where mapping and translation take place (TranslationFile : userSettings.json)
                (use the camelCase pipe before the artemisTranslate pipe for easy mappings)
 
-        3.a) Create a new child-settings.component.ts file :
+        3) Create a new child-settings.component.ts file :
                    Extend from this component and implement OnInit
                    Place the relevant Services for the parent(prototype) component in the constructor
                    Inside ngOnInit() call super.ngOnInit(), afterwards set the child specific userSettingsCategory(same as in default.ts) and changeEventMessage
