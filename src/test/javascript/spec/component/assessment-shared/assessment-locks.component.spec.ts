@@ -2,11 +2,15 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 describe('AssessmentLocksComponent', () => {
     let component: AssessmentLocksComponent;
@@ -14,8 +18,15 @@ describe('AssessmentLocksComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule],
-            declarations: [],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule],
+            declarations: [
+                AssessmentLocksComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockRouterLinkDirective,
+                MockHasAnyAuthorityDirective,
+                MockDirective(NgbTooltip),
+                MockPipe(ArtemisDatePipe),
+            ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
