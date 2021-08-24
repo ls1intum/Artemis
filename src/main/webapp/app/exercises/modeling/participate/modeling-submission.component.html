@@ -38,7 +38,9 @@
                         [diagramType]="modelingExercise.diagramType!"
                         [withExplanation]="true"
                         [(explanation)]="explanation"
+                        [resizeOptions]="resizeOptions"
                     ></jhi-modeling-editor>
+                    <fa-icon [icon]="'grip-lines'" class="rg-bottom text-lightgrey"><span></span></fa-icon>
                     <jhi-team-submission-sync
                         *ngIf="modelingExercise.teamMode"
                         [exerciseType]="modelingExercise.type!"

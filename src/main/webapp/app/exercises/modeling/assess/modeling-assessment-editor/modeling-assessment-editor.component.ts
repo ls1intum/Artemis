@@ -66,6 +66,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     resultId: number;
     loadingInitialSubmission = true;
     highlightDifferences = false;
+    resizeOptions = { verticalResize: true };
 
     private cancelConfirmationText: string;
 

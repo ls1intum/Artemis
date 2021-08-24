@@ -24,7 +24,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     @Input()
     readOnly = false;
     @Input()
-    resizeOptions: { initialWidth: string; maxWidth?: number };
+    resizeOptions: { initialWidth?: string; maxWidth?: number; verticalResize?: boolean };
     @Input()
     showHelpButton = true;
     @Input()
@@ -61,11 +61,11 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
             }
             interact('.resizable')
                 .resizable({
-                    edges: { left: false, right: '.draggable-right', bottom: false, top: false },
+                    edges: { left: false, right: this.resizeOptions.initialWidth && '.draggable-right', bottom: this.resizeOptions.verticalResize, top: false },
                     modifiers: [
                         interact.modifiers!.restrictSize({
-                            min: { width: 15, height: 0 },
-                            max: { width: this.resizeOptions.maxWidth ? this.resizeOptions.maxWidth : 2500, height: 2000 },
+                            min: { width: 15, height: 1000 },
+                            max: { width: this.resizeOptions.maxWidth ? this.resizeOptions.maxWidth : 2500, height: 20000 },
                         }),
                     ],
                     inertia: true,
@@ -78,7 +78,12 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
                 })
                 .on('resizemove', (event: any) => {
                     const target = event.target;
-                    target.style.width = event.rect.width + 'px';
+                    if (this.resizeOptions.initialWidth) {
+                        target.style.width = event.rect.width + 'px';
+                    }
+                    if (this.resizeOptions.verticalResize) {
+                        target.style.height = event.rect.height + 'px';
+                    }
                 });
         }
     }

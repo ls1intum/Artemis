@@ -6,9 +6,12 @@
     </div>
     <div class="apollon-row">
         <div #editorContainer class="apollon-container"></div>
-        <div *ngIf="resizeOptions" class="draggable-right">
+        <div *ngIf="resizeOptions && resizeOptions.initialWidth" class="draggable-right">
             <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
         </div>
+    </div>
+    <div *ngIf="resizeOptions && resizeOptions.verticalResize" class="draggable-bottom">
+        <fa-icon [icon]="'grip-lines'"></fa-icon>
     </div>
     <jhi-modeling-explanation-editor *ngIf="explanation" [explanation]="explanation" [readOnly]="true"></jhi-modeling-explanation-editor>
 </div>
