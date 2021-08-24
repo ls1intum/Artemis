@@ -59,7 +59,7 @@ describe('OrionAssessmentService', () => {
     });
 
     it('downloadSubmissionInOrion with new should call send', () => {
-        const sendSubmissionToOrion = spy(orionAssessmentService, 'sendSubmissionToOrion' as any);
+        const sendSubmissionToOrion = spy(orionAssessmentService, <any>'sendSubmissionToOrion');
         const getSubmission = stub(programmingSubmissionService, 'getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment');
 
         getSubmission.returns(of(programmingSubmission));
@@ -70,7 +70,7 @@ describe('OrionAssessmentService', () => {
         expect(sendSubmissionToOrion).to.have.been.calledOnceWithExactly(16, programmingSubmission.id, 0);
     });
     it('downloadSubmissionInOrion with number should call send', () => {
-        const sendSubmissionToOrion = stub(orionAssessmentService, 'sendSubmissionToOrion' as any);
+        const sendSubmissionToOrion = stub(orionAssessmentService, <any>'sendSubmissionToOrion');
 
         orionAssessmentService.downloadSubmissionInOrion(16, programmingSubmission, 0);
 
