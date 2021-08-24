@@ -17,12 +17,13 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.NotificationOptionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.NotificationSettingsService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.PaginationUtil;
 import io.swagger.annotations.ApiParam;
 
 /**
- * REST controller for managing NotificationSettings.
+ * REST controller for managing NotificationSettings (NotificationOptions).
  */
 @RestController
 @RequestMapping("/api")
@@ -37,11 +38,14 @@ public class NotificationSettingsResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final NotificationSettingsService notificationSettingsService;
+
     public NotificationSettingsResource(NotificationOptionRepository notificationOptionRepository, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService, NotificationSettingsService notificationSettingsService) {
         this.notificationOptionRepository = notificationOptionRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.notificationSettingsService = notificationSettingsService;
     }
 
     /**
@@ -66,9 +70,7 @@ public class NotificationSettingsResource {
     @PostMapping("/notification-settings/save-options")
     public ResponseEntity<NotificationOption[]> saveUserOptionsForCurrentUser(@RequestBody NotificationOption[] notificationOptions) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        for (NotificationOption notificationOption : notificationOptions) {
-            notificationOption.setUser(currentUser);
-        }
+        notificationSettingsService.setCurrentUser(notificationOptions, currentUser);
         List<NotificationOption> resultAsList = notificationOptionRepository.saveAll(Arrays.stream(notificationOptions).toList());
         NotificationOption[] resultAsArray = resultAsList.toArray(new NotificationOption[resultAsList.size()]);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "notificationoption", "test")).body(resultAsArray);

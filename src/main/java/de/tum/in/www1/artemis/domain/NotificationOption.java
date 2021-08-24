@@ -5,10 +5,13 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * Individual Notification Option that make the Notification Settings
+ * Individual Notification Option which combined make the Notification Settings
+ * The unique constraint is needed to avoid duplications.
+ * Each user can only set one specific option once.
  */
 @Entity
 @Table(name = "notification_option", uniqueConstraints = { @UniqueConstraint(columnNames = { "user_id", "option_specifier" }) })
@@ -29,7 +32,8 @@ public class NotificationOption extends DomainObject {
     @Column(name = "email", columnDefinition = "boolean default false", nullable = false)
     private boolean email = false;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("notificationOption")
     private User user;
 
     @Override

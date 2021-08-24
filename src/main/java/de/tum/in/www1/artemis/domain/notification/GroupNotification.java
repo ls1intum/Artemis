@@ -20,10 +20,17 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GroupNotification extends Notification {
 
+    /**
+     * Specifies the group : INSTRUCTOR, EDITOR, TA, STUDENT, ...
+     */
     @Enumerated(EnumType.STRING)
     @Column(name = "jhi_type")
     private GroupNotificationType type;
 
+    /**
+     * Specifies how this notification was created : ATTACHMENT_CHANGE, EXERCISE_CREATED, ...
+     * Otherwise this information is lost for the client-side
+     */
     @Enumerated(EnumType.STRING)
     @Column(name = "original_notification_type", columnDefinition = "enum default UNSPECIFIED")
     private NotificationType originalNotificationType = NotificationType.UNSPECIFIED;

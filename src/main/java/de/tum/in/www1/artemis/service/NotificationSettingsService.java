@@ -5,15 +5,21 @@ import java.util.*;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.NotificationOption;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 
 @Service
 public class NotificationSettingsService {
 
+    /**
+     * Finds the deactivated NotificationTypes based on the user's NotificationOptions
+     * @param notificationOptions which should be mapped to their respective NotificationTypes and filtered by activation status
+     * @return a set of NotificationTypes which are deactivated by the current user's notification settings
+     */
     public Set<NotificationType> findDeactivatedNotificationTypes(NotificationOption[] notificationOptions) {
-        Map<NotificationType, Boolean> userOptionWitchActivationStatusMap = convertNotificationUserOptionsToNotificationTypesWithActivationStatus(notificationOptions);
+        Map<NotificationType, Boolean> notificationOptionWitchActivationStatusMap = convertNotificationOptionsToNotificationTypesWithActivationStatus(notificationOptions);
         Set<NotificationType> deactivatedNotificationTypes = new HashSet<>();
-        userOptionWitchActivationStatusMap.forEach((notificationType, isActivated) -> {
+        notificationOptionWitchActivationStatusMap.forEach((notificationType, isActivated) -> {
             if (!isActivated) {
                 deactivatedNotificationTypes.add(notificationType);
             }
@@ -21,11 +27,16 @@ public class NotificationSettingsService {
         return deactivatedNotificationTypes;
     }
 
-    public Map<NotificationType, Boolean> convertNotificationUserOptionsToNotificationTypesWithActivationStatus(NotificationOption[] notificationOptions) {
+    /**
+     * Converts the provided NotificationOptions to a map of corresponding NotificationTypes and activation status.
+     * @param notificationOptions which will be mapped to their respective NotificationTypes with respect to their activation status
+     * @return a map with key of NotificationType and value Boolean indicating which types are (de)activated by the user's notification settings
+     */
+    public Map<NotificationType, Boolean> convertNotificationOptionsToNotificationTypesWithActivationStatus(NotificationOption[] notificationOptions) {
         Map<NotificationType, Boolean> resultingMap = new HashMap<>();
         NotificationType[] tmpNotificationTypes;
         for (int i = 0; i < notificationOptions.length; i++) {
-            tmpNotificationTypes = this.findCorrespondingNotificationTypesForUserOption(notificationOptions[i]);
+            tmpNotificationTypes = this.findCorrespondingNotificationTypesForNotificationOption(notificationOptions[i]);
             for (NotificationType notificationType : tmpNotificationTypes) {
                 resultingMap.put(notificationType, notificationOptions[i].isWebapp());
             }
@@ -34,12 +45,12 @@ public class NotificationSettingsService {
     }
 
     /**
-     * This is the place where the mapping between (notification) userOption and NotificationType happens on the server side
-     * Each notification based userOption can be based on multiple different NotificationTypes
+     * This is the place where the mapping between NotificationOptions and NotificationType happens on the server side
+     * Each NotificationOption can be based on multiple different NotificationTypes
      * @param notificationOption which corresponding NotificationTypes should be found
      * @return the corresponding NotificationType(s)
      */
-    public NotificationType[] findCorrespondingNotificationTypesForUserOption(NotificationOption notificationOption) {
+    public NotificationType[] findCorrespondingNotificationTypesForNotificationOption(NotificationOption notificationOption) {
         switch (notificationOption.getOptionSpecifier()) {
             case "notification.exercise-notification.exercise-created-or-started": {
                 return new NotificationType[] { NotificationType.EXERCISE_CREATED };
@@ -68,6 +79,17 @@ public class NotificationSettingsService {
             default: {
                 return new NotificationType[0];
             }
+        }
+    }
+
+    /**
+     * Updates the notificationOptions by setting the the current user
+     * @param notificationOptions witch might be saved the very first time and have no user set yet
+     * @param currentUser
+     */
+    public void setCurrentUser(NotificationOption[] notificationOptions, User currentUser) {
+        for (NotificationOption notificationOption : notificationOptions) {
+            notificationOption.setUser(currentUser);
         }
     }
 }
