@@ -74,7 +74,7 @@ export class CourseManagementRequests {
         programmingTemplate.title = title;
         programmingTemplate.shortName = programmingShortName;
         programmingTemplate.packageName = packageName;
-        if (isExamExercise) {
+        if (!isExamExercise) {
             programmingTemplate.releaseDate = releaseDate.toISOString();
             programmingTemplate.dueDate = dueDate.toISOString();
         } else {
