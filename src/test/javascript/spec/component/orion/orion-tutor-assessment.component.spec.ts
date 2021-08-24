@@ -77,10 +77,10 @@ describe('OrionTutorAssessmentComponent', () => {
         expect(errorSpy).to.have.been.calledOnceWithExactly('artemisApp.orion.assessment.submissionIdDontMatch');
     });
     it('openNextSubmission should call service', () => {
-        const sendSubmissionToOrionSpy = spy(TestBed.inject(OrionAssessmentService), 'sendSubmissionToOrion');
+        const downloadSubmissionInOrionSpy = spy(TestBed.inject(OrionAssessmentService), 'downloadSubmissionInOrion');
 
-        comp.openNextSubmission(2);
+        comp.openNextSubmission();
 
-        expect(sendSubmissionToOrionSpy).to.have.been.calledOnceWithExactly(15, 2, 1);
+        expect(downloadSubmissionInOrionSpy).to.have.been.calledOnceWithExactly(15, 'new', 1);
     });
 });
