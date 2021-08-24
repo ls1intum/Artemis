@@ -474,9 +474,6 @@ public class ProgrammingExerciseGradingService {
      */
     private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
             List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise, boolean hasDuplicateTestCases) {
-        result.getFeedbacks().forEach(feedback -> {
-            feedback.setCredits(0D);
-        });
 
         if (hasDuplicateTestCases || successfulTestCases.isEmpty()) {
             result.setScore(0D);
@@ -530,6 +527,12 @@ public class ProgrammingExerciseGradingService {
             double score = successfulTestPoints / programmingExercise.getMaxPoints() * 100.0;
             result.setScore(score);
         }
+
+        result.getFeedbacks().forEach(feedback -> {
+            if (feedback.getCredits() == null) {
+                feedback.setCredits(0D);
+            }
+        });
     }
 
     /**
