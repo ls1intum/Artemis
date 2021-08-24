@@ -173,6 +173,6 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
 
         assertThat(textClusterStatisticsTrue).isNotNull();
         TextClusterStatisticsDTO textClusterStatsTrue = textClusterStatisticsTrue.get(0);
-        assertThat(textClusterStatsTrue.isDisabled()).isEqualTo(true);
+        assertThat(textClusterStatsTrue.isDisabled()).isTrue();
     }
 }
