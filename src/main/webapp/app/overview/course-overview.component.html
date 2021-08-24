@@ -4,6 +4,7 @@
             <div class="row">
                 <div class="col general-info">
                     <h3>{{ course.title }}</h3>
+                    <p>Hallo</p>
                     <h4 class="d-none d-sm-inline">{{ course.description || ('artemisApp.courseOverview.noDescription' | artemisTranslate) }}</h4>
                     <h4 class="d-sm-none">{{ courseDescription || ('artemisApp.courseOverview.noDescription' | artemisTranslate) }}</h4>
                     <h6 class="d-sm-none" *ngIf="enableShowMore && !longTextShown" (click)="showLongDescription()">
@@ -38,6 +39,7 @@
             <div jhiOrionFilter [showInOrionWindow]="false" class="guided-tour tab-item statistics" routerLink="statistics" routerLinkActive="active">
                 <b jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</b>
             </div>
+            <p>Hallo</p>
             <button class="btn btn-primary btn-md ms-1" (click)="loadCourse(true)" [disabled]="refreshingCourse">
                 <fa-icon [icon]="'sync'" [spin]="refreshingCourse"></fa-icon>
                 <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>

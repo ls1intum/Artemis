@@ -43,13 +43,17 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
         private jhiWebsocketService: JhiWebsocketService,
         private serverDateService: ArtemisServerDateService,
         private jhiAlertService: JhiAlertService,
-    ) {}
+    ) {
+        console.log('constr', this.courseId);
+    }
 
     async ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
+            console.log('sub', this.courseId);
         });
 
+        console.log('oninit', this.courseId);
         this.course = this.courseCalculationService.getCourse(this.courseId);
         if (!this.course) {
             this.loadCourse();

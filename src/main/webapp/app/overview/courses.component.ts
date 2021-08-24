@@ -47,7 +47,9 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
         private examService: ExamManagementService,
         private router: Router,
         private serverDateService: ArtemisServerDateService,
-    ) {}
+    ) {
+        console.error('constr courses');
+    }
 
     async ngOnInit() {
         this.loadAndFilterCourses();

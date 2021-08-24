@@ -79,7 +79,9 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
         private guidedTourService: GuidedTourService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private localStorage: LocalStorageService,
-    ) {}
+    ) {
+        console.log('constr course-exercise');
+    }
 
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
