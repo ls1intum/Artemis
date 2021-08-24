@@ -40,7 +40,7 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
             (error) => onError(this.jhiAlertService, error),
         );
 
-        this.orionConnectorService.state().subscribe((state) => this.orionState = state);
+        this.orionConnectorService.state().subscribe((state) => (this.orionState = state));
     }
 
     /**

@@ -37,11 +37,7 @@ export class OrionAssessmentService {
      * @param submission submission to send to Orion or 'new' if a new one should be loaded
      * @param correctionRound correction round
      */
-    downloadSubmissionInOrion(
-        exerciseId: number,
-        submission: Submission | 'new',
-        correctionRound = 0,
-    ) {
+    downloadSubmissionInOrion(exerciseId: number, submission: Submission | 'new', correctionRound = 0) {
         if (submission === 'new') {
             this.programmingSubmissionService
                 .getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, correctionRound)
