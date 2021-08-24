@@ -55,7 +55,6 @@ public class NotificationSettingsResource {
     public ResponseEntity<Set<NotificationOption>> getNotificationOptionsForCurrentUser(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         final Set<NotificationOption> notificationOptionSet = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
-        // HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(notificationOptionSet, HttpStatus.OK);
     }
 

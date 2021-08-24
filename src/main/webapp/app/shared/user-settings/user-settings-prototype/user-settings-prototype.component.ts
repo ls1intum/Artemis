@@ -9,20 +9,6 @@ import { UserSettingsService } from 'app/shared/user-settings/user-settings.serv
 
 /**
  * Is used as the "abstract" user-settings "parent" component with all the necessary basic logic for other "child" components to implement/inherit from.
- *
- * E.g. how to create a new "child"-settings.component : (Look at notification-settings as a prime example for child-settings)
- * 1) Create a new folder for childSettings and put childSettings specific files into it
- * 2.a) Use this component's html and scss in child-settings to reuse the same UI (as in notification-settings)
- * 2.b) Create a new child-settings.default.ts file and create your options based on the user-settings hierarchy
- *      (the hierarchy is explained in user-settings.service.ts (look at the interfaces))
- *      (look at notification-settings.default.ts for an example)
- * 2.c) Be careful and precise with the naming of new optionSpecifiers. Use them to create a mapping/correspondence to the actual changes in system-logic/behavior
- *      These names correspond with other places where mapping and translation take place (TranslationFile : userSettings.json)
- * 3.a) Create a new child-settings.component.ts file :
- *          Extend from this component and implement OnInit
- *          Place the relevant Services for this parent component in the constructor
- *          Inside ngOnInit() call super.ngOnInit(), afterwards set the child specific userSettingsCategory(same as in default.ts) and changeEventMessage
- * 4) For further child specific logic e.g. add a new child-settings.service file, new custom template/scss, etc.
  */
 @Component({
     templateUrl: 'user-settings-prototype.component.html',

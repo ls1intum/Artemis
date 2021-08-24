@@ -220,7 +220,7 @@ export class NotificationSidebarComponent implements OnInit {
 
     /**
      * Subscribes and listens for changes related to notifications
-     * If a fitting event arrives resets the notification side bar to update the view
+     * When a fitting event arrives resets the notification side bar to update the view
      */
     private listenForNotificationSettingsChanges(): void {
         this.subscriptionToNotificationSettingsChanges = this.userSettingsService.userSettingsChangeEvent.subscribe((changeMessage) => {

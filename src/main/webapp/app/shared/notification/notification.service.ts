@@ -34,7 +34,7 @@ export class NotificationService {
     }
 
     /**
-     * Query all notifications. (With respect to the current user's notification settings)
+     * Query all notifications.
      * @param req request options
      * @return Observable<HttpResponse<Notification[]>>
      */
