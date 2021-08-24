@@ -34,7 +34,6 @@ describe('AnswerPostFooterComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
             providers: [{ provide: MetisService, useClass: MockMetisService }],
             declarations: [AnswerPostFooterComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(AnswerPostReactionsBarComponent)],
         })

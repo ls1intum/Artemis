@@ -27,9 +27,7 @@ describe('AnswerPostComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
             declarations: [AnswerPostComponent, MockPipe(HtmlForMarkdownPipe), MockComponent(AnswerPostHeaderComponent), MockComponent(AnswerPostFooterComponent)],
-            providers: [],
         })
             .compileComponents()
             .then(() => {

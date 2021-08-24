@@ -26,8 +26,6 @@ describe('PostFooterComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
-            providers: [],
             declarations: [PostFooterComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(PostReactionsBarComponent)],
         })
             .compileComponents()

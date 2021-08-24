@@ -7,9 +7,10 @@ import * as sinon from 'sinon';
 import { spy } from 'sinon';
 import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-tag-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/compiler';
+import { TagInputModule } from 'ngx-chips';
+import { FormsModule } from '@angular/forms';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -23,10 +24,9 @@ describe('PostTagSelectorComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
+            imports: [MockModule(TagInputModule), MockModule(FormsModule)],
             providers: [{ provide: MetisService, useClass: MockMetisService }],
             declarations: [PostTagSelectorComponent, MockPipe(ArtemisTranslatePipe)],
-            schemas: [CUSTOM_ELEMENTS_SCHEMA],
         })
             .compileComponents()
             .then(() => {
