@@ -1,11 +1,12 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { OptionCore, UserSettings, UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-settings-prototype/user-settings-prototype.component';
 import { JhiAlertService } from 'ng-jhipster';
 import { reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
+import { UserSettings } from 'app/shared/user-settings/user-settings.model';
 
 @Component({
     selector: 'jhi-notification-settings',
@@ -28,7 +29,7 @@ export class NotificationSettingsComponent extends UserSettingsPrototypeComponen
 
     /**
      * Catches the toggle event from an user click
-     * Toggles the respective option and mark at as changed (only changed option cores will be send to the server for saving)
+     * Toggles the respective option and mark it as changed (only changed option cores will be send to the server for saving)
      */
     toggleOption(event: any) {
         this.optionsChanged = true;

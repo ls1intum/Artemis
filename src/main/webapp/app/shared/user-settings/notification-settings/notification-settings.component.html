@@ -1,4 +1,3 @@
-<!--<div *ngIf="showAlert" class="alert alert-primary" role="alert">A simple primary alert—check it out!</div>-->
 <div class="d-flex justify-content-between">
     <h1>
         <!--UserSettingsCategory-->
@@ -25,6 +24,7 @@
                     <!--OptionDescription-->
                     {{ 'artemisApp.userSettings.optionDescriptions.' + (option.description | camelCase) | artemisTranslate }}
                 </span>
+                <!--OptionCore-->
                 <div class="form-check border-bottom">
                     <input
                         type="checkbox"

@@ -32,10 +32,10 @@ public class NotificationSettingsService {
      * @param notificationOptions which will be mapped to their respective NotificationTypes with respect to their activation status
      * @return a map with key of NotificationType and value Boolean indicating which types are (de)activated by the user's notification settings
      */
-    public Map<NotificationType, Boolean> convertNotificationOptionsToNotificationTypesWithActivationStatus(Set<NotificationOption> notificationOptions) {
+    private Map<NotificationType, Boolean> convertNotificationOptionsToNotificationTypesWithActivationStatus(Set<NotificationOption> notificationOptions) {
         Map<NotificationType, Boolean> resultingMap = new HashMap<>();
         notificationOptions.stream().map(notificationOption -> {
-            convertNotificationOptionToNotificationTypesWithActivationStatus(notificationOption, resultingMap);
+            updateNotificationTypeActivationStatusMap(notificationOption, resultingMap);
             return this;
         });
         return resultingMap;
@@ -46,7 +46,7 @@ public class NotificationSettingsService {
      * @param notificationOption which corresponding NotificationTypes will be put in the map
      * @param map of NotifationType and activation status in the notification settings
      */
-    private void convertNotificationOptionToNotificationTypesWithActivationStatus(NotificationOption notificationOption, Map<NotificationType, Boolean> map) {
+    private void updateNotificationTypeActivationStatusMap(NotificationOption notificationOption, Map<NotificationType, Boolean> map) {
         NotificationType[] tmpNotificationTypes = this.findCorrespondingNotificationTypesForNotificationOption(notificationOption);
         Arrays.stream(tmpNotificationTypes).map(notificationType -> {
             map.put(notificationType, notificationOption.isWebapp());
@@ -60,7 +60,7 @@ public class NotificationSettingsService {
      * @param notificationOption which corresponding NotificationTypes should be found
      * @return the corresponding NotificationType(s)
      */
-    public NotificationType[] findCorrespondingNotificationTypesForNotificationOption(NotificationOption notificationOption) {
+    private NotificationType[] findCorrespondingNotificationTypesForNotificationOption(NotificationOption notificationOption) {
         switch (notificationOption.getOptionSpecifier()) {
             case "notification.exercise-notification.exercise-created-or-started": {
                 return new NotificationType[] { NotificationType.EXERCISE_CREATED };

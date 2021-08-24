@@ -1,4 +1,11 @@
-<!--<div *ngIf="showAlert" class="alert alert-primary" role="alert">A simple primary alert—check it out!</div>-->
+<!--
+       Exemplary HTML template for UserSettings
+       Every settings page will be somewhat unique, especially its optionCore (different properties and methods)
+       This nested behavior could not be realized via polymorphism due to different types and strong bidirectional dependencies
+       Therefore just copy this template for new settings and modify it. The minimal adjustment needed for the template to work is to implement the
+       option core and properties and functionalities  under <! --OptionCore-- >
+       Look at notification-settings.component.html for a good example
+    -->
 <div class="d-flex justify-content-between">
     <h1>
         <!--UserSettingsCategory-->

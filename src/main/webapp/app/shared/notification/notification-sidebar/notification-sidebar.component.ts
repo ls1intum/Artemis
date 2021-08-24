@@ -8,11 +8,12 @@ import { GroupNotification } from 'app/entities/group-notification.model';
 import { Notification, OriginalNotificationType } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { OptionCore, UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { defaultNotificationSettings, NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
+import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { Subscription } from 'rxjs';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { OptionCore } from 'app/shared/user-settings/user-settings.model';
 
 export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificationSideBar';
 
@@ -120,7 +121,7 @@ export class NotificationSidebarComponent implements OnInit {
         if (!this.loading && (this.totalNotifications === 0 || this.notifications.length < this.totalNotifications)) {
             this.loading = true;
             this.notificationService
-                .query({
+                .queryFiltered({
                     page: this.page,
                     size: this.notificationsPerPage,
                     sort: ['notificationDate,desc'],

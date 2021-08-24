@@ -1,4 +1,4 @@
-import { Notification, NotificationType, OriginalNotificationType } from 'app/entities/notification.model';
+import { Notification, NotificationType } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 
 export const enum GroupNotificationType {

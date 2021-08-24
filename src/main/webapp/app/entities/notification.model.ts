@@ -11,7 +11,7 @@ export enum NotificationType {
 
 /**
  * Corresponds to the NotificationType(.java) enum in the server
- * Is needed to preserve the origin of the notification
+ * Is needed to preserve the origin of the notification (i.e. how it was created)
  */
 export enum OriginalNotificationType {
     ATTACHMENT_CHANGE = 'ATTACHMENT_CHANGE',

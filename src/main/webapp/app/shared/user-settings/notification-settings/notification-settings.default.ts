@@ -1,6 +1,6 @@
-import { OptionCore, UserSettings } from 'app/shared/user-settings/user-settings.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { OptionCore, UserSettings } from '../user-settings.model';
 
 export interface NotificationOptionCore extends OptionCore {
     webapp: boolean;

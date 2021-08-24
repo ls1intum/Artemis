@@ -33,9 +33,13 @@ export class TextToCamelCasePipe implements PipeTransform {
         return value.match(this.regex);
     }
 
+    /**
+     * converts the provided array of words (string) into one string in (lower) camel case
+     * @param words
+     * @private
+     */
     private toCamelCase(words: string[]): string {
         let result = '';
-
         for (let i = 0; i < words.length; i++) {
             let currentWord = words[i].toLowerCase();
 

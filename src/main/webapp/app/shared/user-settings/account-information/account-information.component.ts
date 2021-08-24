@@ -6,7 +6,6 @@ import { Subscription, tap } from 'rxjs';
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './account-information.component.html',
-    //styleUrls: ['../user-settings-container/user-settings-container.component.scss'],
     styleUrls: ['../user-settings-prototype/user-settings-prototype.component.scss'],
 })
 export class AccountInformationComponent {

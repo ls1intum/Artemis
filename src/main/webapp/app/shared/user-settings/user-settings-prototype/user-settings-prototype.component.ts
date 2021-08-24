@@ -1,10 +1,11 @@
 import { HttpResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { OptionCore, UserSettings, UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { User } from 'app/core/user/user.model';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { OptionCore, UserSettings } from 'app/shared/user-settings/user-settings.model';
+import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 
 /**
  * Is used as the "abstract" user-settings "parent" component with all the necessary basic logic for other "child" components to implement/inherit from.
@@ -30,7 +31,6 @@ import { UserSettingsCategory } from 'app/shared/constants/user-settings.constan
 export class UserSettingsPrototypeComponent implements OnInit {
     // HTML template related
     optionsChanged: boolean = false;
-    showAlert: boolean = false;
     currentUser: User;
 
     // userSettings logic related
@@ -91,7 +91,6 @@ export class UserSettingsPrototypeComponent implements OnInit {
         this.createApplyChangesEvent();
         this.optionsChanged = false;
         //this.alertService.addAlert({ type: 'success', msg: 'studentExam.submitSuccessful', timeout: 20000 }, []); //TODO
-        //this.showAlert = true;
         this.alertService.success('artemisApp.userSettings.saveSettingsSuccessAlert'); // TODO not working ...
     }
 
@@ -112,7 +111,4 @@ export class UserSettingsPrototypeComponent implements OnInit {
         this.optionCores = this.userSettingsService.extractOptionCoresFromSettings(this.userSettings);
         this.changeDetector.detectChanges();
     }
-
-    //TODO remove
-    protected toggleOption(event: any) {}
 }
