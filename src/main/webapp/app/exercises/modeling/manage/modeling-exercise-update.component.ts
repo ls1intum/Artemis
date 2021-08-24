@@ -25,7 +25,7 @@ import { ModelingEditorComponent } from '../shared/modeling-editor.component';
 @Component({
     selector: 'jhi-modeling-exercise-update',
     templateUrl: './modeling-exercise-update.component.html',
-    styleUrls: ['./modeling-exercise-update.scss'],
+    styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
 export class ModelingExerciseUpdateComponent implements OnInit {
     @ViewChild(ModelingEditorComponent, { static: false })
