@@ -40,6 +40,7 @@ import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -185,6 +186,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
+            if (this.exercise?.studentParticipations && programmingExercise.projectKey) {
+                this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                    setBuildPlanUrlForProgrammingParticipations(profileInfo, this.exercise?.studentParticipations!, (this.exercise as ProgrammingExercise).projectKey);
+                });
+            }
         }
 
         // This is only needed in the local environment
@@ -414,6 +420,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.exercise.studentParticipations.length > 0 &&
             this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE
         );
+    }
+
+    buildPlanUrl(participation: StudentParticipation) {
+        return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
     }
 
     projectKey(): string {
