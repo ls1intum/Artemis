@@ -32,7 +32,6 @@ export class TextExerciseUpdateComponent implements OnInit {
     @ViewChild('editForm') editForm: NgForm;
 
     examCourseId?: number;
-    checkedFlag: boolean;
     isExamMode: boolean;
     isImport = false;
     EditorMode = EditorMode;
@@ -47,7 +46,6 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
-    domainCommandsGradingInstructions = [new KatexCommand()];
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -75,8 +73,6 @@ export class TextExerciseUpdateComponent implements OnInit {
      * Initializes all relevant data for creating or editing text exercise
      */
     ngOnInit() {
-        this.checkedFlag = false; // default value of grading instructions toggle
-
         // This is used to scroll page to the top of the page, because the routing keeps the position for the
         // new page from previous page.
         window.scroll(0, 0);
@@ -196,12 +192,5 @@ export class TextExerciseUpdateComponent implements OnInit {
     private onSaveError(error: HttpErrorResponse) {
         onError(this.jhiAlertService, error);
         this.isSaving = false;
-    }
-
-    /**
-     * gets the flag of the structured grading instructions slide toggle
-     */
-    getCheckedFlag(event: boolean) {
-        this.checkedFlag = event;
     }
 }
