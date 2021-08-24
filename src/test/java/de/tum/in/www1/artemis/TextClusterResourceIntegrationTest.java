@@ -122,7 +122,7 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
         TextClusterStatisticsDTO stat = textClusterStatistics.get(0);
         boolean disabled = stat.isDisabled();
 
-        assertThat(disabled).isEqualTo(false);
+        assertThat(disabled).isFalse();
     }
 
     /**
