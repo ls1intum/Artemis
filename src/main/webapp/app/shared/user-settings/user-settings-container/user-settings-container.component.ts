@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subscription, tap } from 'rxjs';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 
 /**
  * UserSettingsContainerComponent serves as the common ground for different settings
@@ -12,7 +11,7 @@ import { UserSettingsService } from 'app/shared/user-settings/user-settings.serv
     templateUrl: 'user-settings-container.component.html',
     styleUrls: ['user-settings-container.component.scss'],
 })
-export class UserSettingsContainerComponent {
+export class UserSettingsContainerComponent implements OnInit {
     currentUser?: User;
 
     private authStateSubscription: Subscription;

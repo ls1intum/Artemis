@@ -69,7 +69,6 @@ export class UserSettingsService {
             this.updateSettings(receivedOptionCoresFromServer, settingsResult);
         }
         // else continue using default settings and return only option cores (e.g. used for filtering)
-        // return this.extractOptionCoresFromSettings(settingsResult);
         return this.extractOptionCoresFromSettings(settingsResult);
     }
 
@@ -84,7 +83,11 @@ export class UserSettingsService {
     public saveUserOptions(optionCores: OptionCore[], category: UserSettingsCategory): Observable<HttpResponse<OptionCore[]>> {
         // only save cores which were changed
         const changedOptionCores = optionCores.filter((optionCore) => optionCore.changed);
-        return this.http.post<OptionCore[]>(this.notificationSettingsResourceUrl + '/save-options', changedOptionCores, { observe: 'response' });
+        switch (category) {
+            case UserSettingsCategory.NOTIFICATION_SETTINGS: {
+                return this.http.post<OptionCore[]>(this.notificationSettingsResourceUrl + '/save-options', changedOptionCores, { observe: 'response' });
+            }
+        }
     }
 
     /**

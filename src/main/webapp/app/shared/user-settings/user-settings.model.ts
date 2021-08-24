@@ -7,19 +7,19 @@ import { Authority } from 'app/shared/constants/authority.constants';
  * The OptionCores are uses as generics to support different implementations
  * Look at a x-settings.default.ts file for an example of the full UserSettings hierarchy
  */
-export interface UserSettings<OptionCore> {
+export interface UserSettings<T> {
     category: UserSettingsCategory;
-    groups: OptionGroup<OptionCore>[];
+    groups: OptionGroup<T>[];
 }
 
 /**
  * OptionGroup is a simple group of options that have something in common,
  * e.g. they control notifications related to exercises
  */
-export interface OptionGroup<OptionCore> {
+export interface OptionGroup<T> {
     name: string;
     restrictionLevel: Authority;
-    options: Option<OptionCore>[];
+    options: Option<T>[];
 }
 
 /**
@@ -28,10 +28,10 @@ export interface OptionGroup<OptionCore> {
  * the constant properties of an option (name, description) are stored in x-settings.default.ts files
  * whereas the changeable properties (webapp, email : on/off) are encapsulated in an OptionCore
  */
-export interface Option<OptionCore> {
+export interface Option<T> {
     name: string;
     description: string;
-    optionCore: OptionCore;
+    optionCore: T; // concrete OptionCore Implementation
 }
 
 /**
