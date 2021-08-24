@@ -38,7 +38,7 @@
                 "action": "Aktion",
                 "disable": "Deaktivieren",
                 "enable": "Aktivieren",
-                "noClustersFound": "<b>Keine Textcluster für diese Übung gefunden</b>"
+                "noClustersFound": "<b>Keine Textcluster für diese Aufgabe gefunden</b>"
             }
         }
     }
