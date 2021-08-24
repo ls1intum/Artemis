@@ -103,7 +103,7 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
 
         assertThat(clusterSize).isEqualTo(3);
         assertThat(automaticFeedbacksNum).isEqualTo(0);
-        assertThat(disabled).isEqualTo(true);
+        assertThat(disabled).isTrue();
     }
 
     /**
