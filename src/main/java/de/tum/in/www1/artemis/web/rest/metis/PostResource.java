@@ -115,7 +115,7 @@ public class PostResource {
      * or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @GetMapping("courses/{courseId}/posts")
-    @PreAuthorize("hasRole('TA')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Post>> getAllPostsForCourse(@PathVariable Long courseId) {
         List<Post> coursePosts = postService.getAllCoursePosts(courseId);
         return new ResponseEntity<>(coursePosts, null, HttpStatus.OK);

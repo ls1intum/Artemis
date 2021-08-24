@@ -176,7 +176,7 @@ public class PostService extends PostingService {
 
         // checks
         Course course = preCheckUserAndCourse(user, courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         // retrieve posts
         List<Post> coursePosts = postRepository.findPostsForCourse(courseId);

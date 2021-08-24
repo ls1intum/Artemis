@@ -26,11 +26,15 @@ export class PostService extends PostingsService<Post> {
     create(courseId: number, post: Post): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(post);
         // as we need course information at server side, we need to make sure that the course id is set
+        // TODO: delete?
         if (post.lecture && post.lecture.course === undefined) {
             post.lecture.course = { id: courseId };
         }
         if (post.exercise && post.exercise.course === undefined) {
             post.exercise.course = { id: courseId };
+        }
+        if (post.course === undefined) {
+            post.course = { id: courseId };
         }
         return this.http.post<Post>(`${this.resourceUrl}${courseId}/posts`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
     }

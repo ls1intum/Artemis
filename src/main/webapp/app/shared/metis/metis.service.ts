@@ -1,8 +1,6 @@
-import { CourseWideContext, Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { Exercise } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
-import { BehaviorSubject, map, Observable, tap } from 'rxjs';
+import { BehaviorSubject, map, Observable, Subscription, tap } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -13,31 +11,24 @@ import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
-
-interface PostFilter {
-    exercise?: Exercise;
-    lecture?: Lecture;
-    courseWideContext?: CourseWideContext;
-}
-
-export enum PageType {
-    OVERVIEW,
-    PAGE_SECTION,
-}
-
-export const VOTE_EMOJI_ID = 'heavy_plus_sign';
+import { PageType, PostFilter, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 
 @Injectable()
 export class MetisService {
     private posts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([]);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
-    private courseId: number;
     private currentPostFilter?: PostFilter;
     private user: User;
+    private pageType: PageType = PageType.OVERVIEW;
     private course: Course;
-    private pageType: PageType;
+    private courseId: number;
 
-    constructor(private postService: PostService, private answerPostService: AnswerPostService, private reactionService: ReactionService, private accountService: AccountService) {
+    constructor(
+        protected postService: PostService,
+        protected answerPostService: AnswerPostService,
+        protected reactionService: ReactionService,
+        protected accountService: AccountService,
+    ) {
         this.accountService.identity().then((user: User) => {
             this.user = user!;
         });
@@ -55,6 +46,10 @@ export class MetisService {
         return this.pageType;
     }
 
+    setPageType(pageType: PageType) {
+        this.pageType = pageType;
+    }
+
     getUser(): User {
         return this.user;
     }
@@ -63,10 +58,16 @@ export class MetisService {
         return this.course;
     }
 
+    /**
+     * Set course property before using metis service.
+     * @param course
+     */
     setCourse(course: Course) {
-        this.course = course;
-        this.courseId = course.id!;
-        this.updateCoursePostTags();
+        if (this.courseId !== course.id || this.courseId === undefined) {
+            this.courseId = course.id!;
+            this.course = course;
+            this.updateCoursePostTags();
+        }
     }
 
     /**
@@ -102,7 +103,6 @@ export class MetisService {
                 .pipe(map((res: HttpResponse<Post[]>) => MetisService.sortPosts(res.body!)))
                 .subscribe((posts: Post[]) => {
                     this.posts$.next(posts);
-                    this.pageType = PageType.PAGE_SECTION;
                 });
         } else if (postFilter?.exercise) {
             this.postService
@@ -110,7 +110,6 @@ export class MetisService {
                 .pipe(map((res: HttpResponse<Post[]>) => MetisService.sortPosts(res.body!)))
                 .subscribe((posts: Post[]) => {
                     this.posts$.next(posts);
-                    this.pageType = PageType.PAGE_SECTION;
                 });
         } else {
             this.postService
@@ -126,7 +125,6 @@ export class MetisService {
                 )
                 .subscribe((posts: Post[]) => {
                     this.posts$.next(posts);
-                    this.pageType = PageType.OVERVIEW;
                 });
         }
     }

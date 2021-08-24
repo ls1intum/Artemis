@@ -1,9 +1,9 @@
 <div class="my-1 me-0 row justify-content-between align-items-center">
     <div class="col-auto row">
-        <div *ngIf="pageType === ePageType.OVERVIEW" class="col-auto context-information clickable pe-1">
+        <div *ngIf="pageType === ePageType.OVERVIEW" class="col-auto context-information clickable pe-2">
             <div (click)="navigateToContext($event)">{{ associatedContextName }}</div>
         </div>
-        <div class="col-auto ps-1">
+        <div class="col-auto">
             <span *ngFor="let tag of tags" class="align-items-center post-tag text-white badge px-1 me-1">
                 {{ tag }}
             </span>

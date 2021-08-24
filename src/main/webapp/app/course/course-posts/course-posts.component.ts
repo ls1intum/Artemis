@@ -6,7 +6,7 @@ import { Moment } from 'moment';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { VOTE_EMOJI_ID } from 'app/shared/metis/metis.service';
+import { VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 
 export type PostForOverview = {
     id: number;

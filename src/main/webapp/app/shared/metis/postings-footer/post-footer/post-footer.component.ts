@@ -1,8 +1,9 @@
 import { Component, OnChanges, OnInit } from '@angular/core';
 import { PostingsFooterDirective } from 'app/shared/metis/postings-footer/postings-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
-import { MetisService, PageType } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/shared/metis/metis.service';
 import { Router } from '@angular/router';
+import { PageType } from 'app/shared/metis/metis.util';
 
 @Component({
     selector: 'jhi-post-footer',

@@ -16,23 +16,7 @@
             </div>
         </div>
         <!-- body -->
-        <div class="card-body pt-2">
-            <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post"></jhi-postings-thread>
-            <!-- new post button -->
-            <div class="row mt-3">
-                <div class="col-12">
-                    <button class="btn btn-sm mt-1 btn-outline-secondary" (click)="createEditModal.open()">
-                        <fa-icon [icon]="'plus'"></fa-icon>
-                        <span class="d-none d-md-inline m-1">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
-                    </button>
-                    <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="onCreatePost()"></jhi-post-create-edit-modal>
-                </div>
-            </div>
-            <!-- no posts -->
-            <div class="row mt-2" *ngIf="!posts || posts.length === 0">
-                <div class="col-12">{{ 'artemisApp.metis.noPosts' | artemisTranslate }}</div>
-            </div>
-        </div>
+        <jhi-discussion-list *ngIf="course" [exercise]="exercise" [lecture]="lecture" [pageType]="pageType" [course]="course!"> </jhi-discussion-list>
     </div>
 </div>
 <!-- collapsed posts -->

@@ -1,10 +1,25 @@
-<ng-template #postingEditor let-d="dismiss">
+<ng-template #postingEditor let-d="dismiss" *ngIf="course">
     <form [formGroup]="formGroup" (ngSubmit)="confirm()">
         <div class="modal-header">
             <h4 class="modal-title">{{ modalTitle | artemisTranslate }}</h4>
             <button type="button" class="btn-close" aria-label="Close" (click)="d('Cross click')"></button>
         </div>
         <div class="modal-body">
+            <div *ngIf="pageType === ePageType.OVERVIEW || isAtLeastTutorInCourse" class="position-relative mb-3">
+                <label class="mb-1" jhiTranslate="artemisApp.metis.post.courseWideContext">Topic</label>
+                <jhi-help-icon placement="top auto" text="artemisApp.metis.post.courseWideContext"></jhi-help-icon>
+                <select formControlName="context" class="form-select" name="context">
+                    <optgroup label="Course Wide Context">
+                        <option *ngFor="let context of eCourseContext | keyvalue" [ngValue]="context">{{ context.value }}</option>
+                    </optgroup>
+                    <optgroup *ngIf="exercises !== undefined && exercises!.length > 0 && isAtLeastTutorInCourse" label="Course Exercises">
+                        <option *ngFor="let exercise of exercises" [ngValue]="exercise">{{ exercise.title }}</option>
+                    </optgroup>
+                    <optgroup *ngIf="lectures !== undefined && lectures!.length > 0 && isAtLeastTutorInCourse" label="Course Lectures">
+                        <option *ngFor="let lecture of lectures" [ngValue]="lecture">{{ lecture.title }}</option>
+                    </optgroup>
+                </select>
+            </div>
             <div class="position-relative mb-3">
                 <div>
                     <label class="mb-1" jhiTranslate="artemisApp.metis.post.title">Title</label>
@@ -16,7 +31,7 @@
             </div>
             <div class="position-relative mb-3">
                 <div>
-                    <label class="mb-1" jhiTranslate="artemisApp.metis.post.tags">Tags</label>
+                    <label jhiTranslate="artemisApp.metis.post.tags">Tags</label>
                     <jhi-help-icon placement="top auto" text="artemisApp.metis.post.tagsTooltip"></jhi-help-icon>
                 </div>
                 <div>

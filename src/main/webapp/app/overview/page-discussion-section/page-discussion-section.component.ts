@@ -1,59 +1,36 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
-import { Lecture } from 'app/entities/lecture.model';
-import { Post } from 'app/entities/metis/post.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { AfterViewInit, Component, Input, OnDestroy } from '@angular/core';
 import interact from 'interactjs';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { Subscription } from 'rxjs';
+import { Exercise } from 'app/entities/exercise.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { PageType } from 'app/shared/metis/metis.util';
 import { Course } from 'app/entities/course.model';
+import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 
 @Component({
     selector: 'jhi-page-discussion-section',
     templateUrl: './page-discussion-section.component.html',
     styleUrls: ['./page-discussion-section.scss'],
-    providers: [MetisService],
 })
-export class PageDiscussionSectionComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
+export class PageDiscussionSectionComponent implements AfterViewInit, OnDestroy {
     @Input() exercise?: Exercise;
     @Input() lecture?: Lecture;
-    course: Course;
-    courseId: number;
-    posts: Post[];
+    course?: Course;
     collapsed = false;
-    createdPost: Post;
+    readonly pageType = PageType.PAGE_SECTION;
 
-    private postsSubscription: Subscription;
+    private paramSubscription: Subscription;
 
-    constructor(private metisService: MetisService, private exerciseService: ExerciseService) {}
-
-    /**
-     * on initialization: resets course and posts
-     */
-    ngOnInit(): void {
-        this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
-            this.posts = posts;
+    constructor(private activatedRoute: ActivatedRoute, private courseCalculationService: CourseScoreCalculationService) {
+        this.paramSubscription = this.activatedRoute.params.subscribe((params) => {
+            const courseId = parseInt(params['courseId'], 10);
+            this.course = this.courseCalculationService.getCourse(courseId);
         });
-        this.resetCourseAndPosts();
     }
 
-    /**
-     * on changes: resets course and posts
-     */
-    ngOnChanges(): void {
-        this.resetCourseAndPosts();
-    }
-
-    /**
-     * @private sets the course that is associated with the exercise or lecture given as input, triggers method on metis service to fetch (an push back via subscription)
-     * exercise or lecture posts respectively, creates an empty default post
-     */
-    private resetCourseAndPosts(): void {
-        this.course = this.exercise ? this.exercise.course! : this.lecture!.course!;
-        this.courseId = this.course.id!;
-        this.metisService.setCourse(this.course);
-        this.metisService.getPostsForFilter({ exercise: this.exercise, lecture: this.lecture });
-        this.createdPost = this.createEmptyPost();
+    ngOnDestroy(): void {
+        this.paramSubscription?.unsubscribe();
     }
 
     /**
@@ -82,44 +59,5 @@ export class PageDiscussionSectionComponent implements OnInit, AfterViewInit, On
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';
             });
-    }
-
-    /**
-     * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
-     * @return Post created empty default post
-     */
-    createEmptyPost(): Post {
-        const post = new Post();
-        post.content = '';
-        post.visibleForStudents = true;
-        if (this.exercise) {
-            post.exercise = {
-                ...this.exerciseService.convertExerciseForServer(this.exercise),
-            };
-        } else {
-            post.lecture = {
-                id: this.lecture!.id,
-            };
-        }
-        return post;
-    }
-
-    /**
-     * defines a function that returns the post id as unique identifier,
-     * by this means, Angular determines which post in the collection of posts has to be reloaded/destroyed on changes
-     */
-    postsTrackByFn(index: number, post: Post): number {
-        return post.id!;
-    }
-
-    /**
-     * resets createdPost to a new default post after a post was successfully created
-     */
-    onCreatePost(): void {
-        this.createdPost = this.createEmptyPost();
-    }
-
-    ngOnDestroy(): void {
-        this.postsSubscription.unsubscribe();
     }
 }

@@ -11,7 +11,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { MockPostService } from '../../helpers/mocks/service/mock-post.service';
 import { MockAnswerPostService } from '../../helpers/mocks/service/mock-answer-post.service';
-import { MetisService, VOTE_EMOJI_ID } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/shared/metis/metis.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ArtemisTestModule } from '../../test.module';
 import { PostService } from 'app/shared/metis/post.service';
@@ -22,6 +22,7 @@ import { User } from 'app/core/user/user.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../helpers/mocks/service/mock-reaction.service';
 import { Reaction } from 'app/entities/metis/reaction.model';
+import { VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 
 chai.use(sinonChai);
 const expect = chai.expect;
