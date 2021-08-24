@@ -123,7 +123,7 @@ public class PostService extends PostingService {
      * @param pinState  new boolean value of the pinned flag for the given post
      * @return updated post that was persisted
      */
-    public Post updatePinState(Long courseId, Long postId, Boolean pinState) {
+    public Post updatePinState(Long courseId, Long postId, boolean pinState) {
         Post post = postRepository.findByIdElseThrow(postId);
 
         // update pin state
@@ -147,7 +147,7 @@ public class PostService extends PostingService {
      * @param archiveState  new boolean value of the archived flag for the given post
      * @return updated post that was persisted
      */
-    public Post updateArchiveState(Long courseId, Long postId, Boolean archiveState) {
+    public Post updateArchiveState(Long courseId, Long postId, boolean archiveState) {
         Post post = postRepository.findByIdElseThrow(postId);
 
         // update archive state

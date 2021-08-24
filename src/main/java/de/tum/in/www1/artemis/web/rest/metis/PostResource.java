@@ -74,7 +74,7 @@ public class PostResource {
      */
     @PutMapping("courses/{courseId}/posts/{postId}/pin")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Post> updatePinState(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Boolean pinState) {
+    public ResponseEntity<Post> updatePinState(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody boolean pinState) {
         Post postWithUpdatedPinState = postService.updatePinState(courseId, postId, pinState);
         return ResponseEntity.ok().body(postWithUpdatedPinState);
     }
@@ -90,7 +90,7 @@ public class PostResource {
      */
     @PutMapping("courses/{courseId}/posts/{postId}/archive")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Post> updateArchiveState(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Boolean archiveState) {
+    public ResponseEntity<Post> updateArchiveState(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody boolean archiveState) {
         Post postWithUpdatedArchiveState = postService.updateArchiveState(courseId, postId, archiveState);
         return ResponseEntity.ok().body(postWithUpdatedArchiveState);
     }

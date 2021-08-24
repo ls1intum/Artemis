@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
@@ -69,25 +70,27 @@ public class Post extends Posting {
     @Column(name = "course_wide_context")
     private CourseWideContext courseWideContext;
 
+    @NotNull
     @Column(name = "is_pinned")
-    private Boolean pinned;
+    private boolean pinned;
 
+    @NotNull
     @Column(name = "is_archived")
-    private Boolean archived;
+    private boolean archived;
 
-    public Boolean isPinned() {
+    public boolean isPinned() {
         return pinned;
     }
 
-    public void setPinned(Boolean pinned) {
+    public void setPinned(boolean pinned) {
         this.pinned = pinned;
     }
 
-    public Boolean isArchived() {
+    public boolean isArchived() {
         return archived;
     }
 
-    public void setArchived(Boolean archived) {
+    public void setArchived(boolean archived) {
         this.archived = archived;
     }
 
