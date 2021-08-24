@@ -7,6 +7,7 @@ import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
+import { ArtemisInfoPanelModule } from 'app/shared/info-panel/info-panel.module';
 import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
@@ -20,6 +21,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
+import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
 
 const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
 
@@ -34,6 +36,7 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
         AssessmentInstructionsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisSidePanelModule,
+        ArtemisInfoPanelModule,
         ArtemisTutorLeaderboardModule,
         ArtemisSharedComponentModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
@@ -43,7 +46,7 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
         ArtemisMarkdownModule,
         OrionModule,
     ],
-    declarations: [ExerciseAssessmentDashboardComponent, SecondCorrectionEnableButtonComponent, LanguageTableCellComponent],
+    declarations: [ExerciseAssessmentDashboardComponent, OrionExerciseAssessmentDashboardComponent, SecondCorrectionEnableButtonComponent, LanguageTableCellComponent],
     providers: [],
     exports: [SecondCorrectionEnableButtonComponent, LanguageTableCellComponent],
 })

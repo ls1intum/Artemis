@@ -5,7 +5,7 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 export class Reaction {
     public id?: number;
-    public author?: User;
+    public user?: User;
     public creationDate?: Moment;
     public emojiId?: string;
     public post?: Post;

@@ -9,7 +9,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
@@ -22,11 +21,13 @@ import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/co
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { OrionCourseExerciseDetailsComponent } from 'app/orion/participation/orion-course-exercise-details.component';
+import { isOrion } from 'app/shared/orion/orion';
 
 const routes: Routes = [
     {
         path: 'courses/:courseId/exercises/:exerciseId',
-        component: CourseExerciseDetailsComponent,
+        component: !isOrion ? CourseExerciseDetailsComponent : OrionCourseExerciseDetailsComponent,
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.exercise',
@@ -36,7 +37,7 @@ const routes: Routes = [
             {
                 path: '',
                 pathMatch: 'full',
-                loadChildren: () => import('app/overview/postings/postings.module').then((m) => m.ArtemisPostingsModule),
+                loadChildren: () => import('../discussion/discussion.module').then((m) => m.DiscussionModule),
             },
         ],
     },
@@ -58,14 +59,13 @@ const routes: Routes = [
         OrionModule,
         ArtemisComplaintsModule,
         FeatureToggleModule,
-        ProgrammingExerciseUtilsModule,
         ArtemisTeamModule,
         RatingModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
         RouterModule.forChild(routes),
         ArtemisMarkdownModule,
     ],
-    declarations: [CourseExerciseDetailsComponent],
-    exports: [CourseExerciseDetailsComponent],
+    declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
+    exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
 })
 export class CourseExerciseDetailsModule {}

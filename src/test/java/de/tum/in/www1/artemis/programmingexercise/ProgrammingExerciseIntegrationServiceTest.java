@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,6 +28,7 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.EmptyCommitException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.StoredConfig;
@@ -58,10 +60,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.GitUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
+import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
@@ -84,6 +83,9 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
     @Autowired
     private GitUtilService gitUtilService;
+
+    @Autowired
+    private DatabaseUtilService databaseUtilService;
 
     @Autowired
     private CourseRepository courseRepository;
@@ -257,6 +259,93 @@ public class ProgrammingExerciseIntegrationServiceTest {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, Boolean.class);
     }
 
+    public void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
+        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
+        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
+
+        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doThrow(EmptyCommitException.class).when(gitService).stageAllChanges(any());
+
+        // Create the eclipse .project file which will be modified.
+        Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
+        File projectFile = new File(projectFilePath.toString());
+        String projectFileContents = de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources("test-data/repository-export/sample.project");
+        FileUtils.writeStringToFile(projectFile, projectFileContents, StandardCharsets.UTF_8);
+
+        // Create the maven .pom file
+        Path pomPath = Path.of(repository1.getLocalPath().toString(), "pom.xml");
+        File pomFile = new File(pomPath.toString());
+        String pomContents = de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources("test-data/repository-export/pom.xml");
+        FileUtils.writeStringToFile(pomFile, pomContents, StandardCharsets.UTF_8);
+
+        var participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), "student1");
+        assertThat(participation).isPresent();
+
+        final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
+                String.join(",", List.of(participation.get().getId().toString())));
+        // all options false by default, only test if export works at all
+        var exportOptions = new RepositoryExportOptionsDTO();
+        exportOptions.setAddParticipantName(true);
+
+        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        assertThat(downloadedFile).exists();
+
+        // Make sure both repositories are present
+        String modifiedEclipseProjectFile = FileUtils.readFileToString(projectFile, StandardCharsets.UTF_8);
+        assertThat(modifiedEclipseProjectFile).contains("student1");
+
+        String modifiedPom = FileUtils.readFileToString(pomFile, StandardCharsets.UTF_8);
+        assertThat(modifiedPom).contains("student1");
+
+        Files.deleteIfExists(projectFilePath);
+        Files.deleteIfExists(pomPath);
+    }
+
+    public void textExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError() throws Exception {
+        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
+        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
+
+        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
+
+        // Create the eclipse .project file which will be modified.
+        Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
+        File projectFile = new File(projectFilePath.toString());
+        if (!projectFile.exists()) {
+            Files.createFile(projectFilePath);
+        }
+
+        // Create the maven .pom file
+        Path pomPath = Path.of(repository1.getLocalPath().toString(), "pom.xml");
+        File pomFile = new File(pomPath.toString());
+        if (!pomFile.exists()) {
+            Files.createFile(pomPath);
+        }
+
+        var participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), "student1");
+        assertThat(participation).isPresent();
+
+        final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
+                String.join(",", List.of(participation.get().getId().toString())));
+        // all options false by default, only test if export works at all
+        var exportOptions = new RepositoryExportOptionsDTO();
+        exportOptions.setAddParticipantName(true);
+
+        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        assertThat(downloadedFile).exists();
+
+        // Make sure both repositories are present
+        String modifiedEclipseProjectFile = FileUtils.readFileToString(projectFile, StandardCharsets.UTF_8);
+        assertThat(modifiedEclipseProjectFile).contains("");
+
+        String modifiedPom = FileUtils.readFileToString(pomFile, StandardCharsets.UTF_8);
+        assertThat(modifiedPom).contains("");
+
+        Files.deleteIfExists(projectFilePath);
+        Files.deleteIfExists(pomPath);
+    }
+
     public void textExportSubmissionsByParticipationIds() throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
@@ -336,16 +425,24 @@ public class ProgrammingExerciseIntegrationServiceTest {
         request.postWithResponseBodyFile(path, getOptions(), HttpStatus.FORBIDDEN);
     }
 
-    public void textExportSubmissionsByStudentLogins() throws Exception {
+    public void testExportSubmissionsByStudentLogins() throws Exception {
+        File downloadedFile = exportSubmissionsByStudentLogins(HttpStatus.OK);
+        assertThat(downloadedFile).exists();
+        // TODO: unzip the files and add some checks
+    }
+
+    public void testExportSubmissionsByStudentLogins_failToCreateZip() throws Exception {
+        exportSubmissionsByStudentLogins(HttpStatus.BAD_REQUEST);
+    }
+
+    private File exportSubmissionsByStudentLogins(HttpStatus expectedStatus) throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
         doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
         doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
         final var path = ROOT
                 + EXPORT_SUBMISSIONS_BY_PARTICIPANTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participantIdentifiers}", "student1,student2");
-        downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
-        assertThat(downloadedFile).exists();
-        // TODO: unzip the files and add some checks
+        return request.postWithResponseBodyFile(path, getOptions(), expectedStatus);
     }
 
     private RepositoryExportOptionsDTO getOptions() {
@@ -639,6 +736,27 @@ public class ProgrammingExerciseIntegrationServiceTest {
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, true);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), true);
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
+    }
+
+    /**
+     * This test checks that it is not allowed to change the courseId of an exercise
+     * in an update request. The request should fail with 'HttpStatus.CONFLICT'.
+     */
+    public void updateProgrammingExerciseShouldFailWithConflictWhenUpdatingCourseId() throws Exception {
+        // Create a programming exercise.
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        // Create a new course with different id.
+        Long oldCourseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        Long newCourseId = oldCourseId + 1;
+        Course newCourse = databaseUtilService.createCourse(newCourseId);
+
+        // Assign new course to the programming exercise.
+        ProgrammingExercise newProgrammingExercise = programmingExercise;
+        newProgrammingExercise.setCourse(newCourse);
+
+        // Programming exercise update with the new course should fail.
+        request.put(ROOT + PROGRAMMING_EXERCISES, newProgrammingExercise, HttpStatus.CONFLICT);
     }
 
     public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
@@ -1566,6 +1684,11 @@ public class ProgrammingExerciseIntegrationServiceTest {
     public void testExportAuxiliaryRepositoryForbidden() throws Exception {
         AuxiliaryRepository repository = addAuxiliaryRepositoryToExercise();
         request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.FORBIDDEN, File.class);
+    }
+
+    public void testExportAuxiliaryRepositoryBadRequest() throws Exception {
+        AuxiliaryRepository repository = addAuxiliaryRepositoryToExercise();
+        request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.BAD_REQUEST, File.class);
     }
 
     public void testExportAuxiliaryRepositoryExerciseNotFound() throws Exception {

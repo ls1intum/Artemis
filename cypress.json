@@ -7,5 +7,8 @@
     "supportFile": "src/test/cypress/support/index.ts",
     "baseUrl": "http://localhost:8080",
     "video": false,
-    "screenshotOnRunFailure": false
+    "screenshotOnRunFailure": false,
+    "viewportWidth": 1920,
+    "viewportHeight": 1080,
+    "defaultCommandTimeout": 20000
 }

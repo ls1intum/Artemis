@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,7 +12,6 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { JhiEventManager } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,6 +22,7 @@ import * as moment from 'moment';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Submission } from 'app/entities/submission.model';
+import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -65,6 +65,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private statisticsService: StatisticsService,
         private sortService: SortService,
+        private router: Router,
     ) {}
 
     ngOnInit() {
@@ -96,6 +97,26 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 }
                 this.loadingTemplateParticipationResults = false;
                 this.loadingSolutionParticipationResults = false;
+
+                this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                    if (profileInfo) {
+                        if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation && this.programmingExercise.templateParticipation.buildPlanId) {
+                            this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
+                                profileInfo.buildPlanURLTemplate,
+                                this.programmingExercise.projectKey,
+                                this.programmingExercise.templateParticipation.buildPlanId,
+                            );
+                        }
+                        if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation && this.programmingExercise.solutionParticipation.buildPlanId) {
+                            this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
+                                profileInfo.buildPlanURLTemplate,
+                                this.programmingExercise.projectKey,
+                                this.programmingExercise.solutionParticipation.buildPlanId,
+                            );
+                        }
+                        this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
+                    }
+                });
             });
 
             this.statisticsService.getExerciseStatistics(programmingExercise.id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
@@ -109,12 +130,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
                     `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/programming-exercises/${this.programmingExercise.id}/`;
                 this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
-            }
-        });
-
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
             }
         });
     }
@@ -206,6 +221,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     content: 'Deleted a programming exercise',
                 });
                 this.dialogErrorSource.next('');
+
+                if (!this.isExamExercise) {
+                    this.router.navigateByUrl(`/course-management/${this.courseId}/exercises`);
+                } else {
+                    this.router.navigateByUrl(`/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/exercise-groups`);
+                }
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

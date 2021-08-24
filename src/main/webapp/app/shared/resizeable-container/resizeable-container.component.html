@@ -20,14 +20,15 @@
             <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
         </div>
         <div class="card">
-            <div class="card-header text-white bg-primary" (click)="collapsed = !collapsed">
+            <div class="card-header text-white bg-primary">
                 <h3 class="card-title">
                     <div class="me-1">
                         <ng-content select="fa-icon[right-header]"></ng-content>
                     </div>
                     <ng-container *ngTemplateOutlet="rightHeaderSpan"></ng-container>
+                    <ng-container *ngTemplateOutlet="rightHeaderButton"></ng-container>
                 </h3>
-                <fa-icon id="right-header-icon" [icon]="'chevron-right'"></fa-icon>
+                <fa-icon id="right-header-icon" [icon]="'chevron-right'" (click)="collapsed = !collapsed"></fa-icon>
             </div>
             <div class="card-body">
                 <ng-content select="[right-body]"></ng-content>
@@ -48,5 +49,9 @@
 
 <ng-template #rightHeaderSpan>
     <ng-content select="span[right-header]"></ng-content>
+</ng-template>
+
+<ng-template #rightHeaderButton>
+    <ng-content select="button[right-header]"></ng-content>
 </ng-template>
 <!--endregion RIGHT SIDE-->
