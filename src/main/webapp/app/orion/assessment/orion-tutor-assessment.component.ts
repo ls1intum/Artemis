@@ -41,7 +41,7 @@ export class OrionTutorAssessmentComponent {
      * Delegates to the {@link OrionAssessmentService} to make Orion load a new submission.
      * Triggered on clicking the "next submission" button
      */
-    openNextSubmission() {
-        this.orionAssessmentService.downloadSubmissionInOrion(this.container.exerciseId, 'new', this.container.correctionRound);
+    openNextSubmission(submissionId: number) {
+        this.orionAssessmentService.sendSubmissionToOrionCancellable(this.container.exerciseId, submissionId, this.container.correctionRound);
     }
 }

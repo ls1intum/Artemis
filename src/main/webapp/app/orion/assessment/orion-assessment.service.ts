@@ -41,14 +41,18 @@ export class OrionAssessmentService {
         if (submission === 'new') {
             this.programmingSubmissionService
                 .getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, correctionRound)
-                .subscribe((newSubmission) => {
-                    // Store id of the submission pending to download
-                    this.activeSubmissionId = newSubmission.id!;
-                    this.sendSubmissionToOrion(exerciseId, newSubmission.id!, correctionRound);
-                });
+                .subscribe((newSubmission) => this.sendSubmissionToOrionCancellable(exerciseId, newSubmission.id!, correctionRound));
         } else {
             this.sendSubmissionToOrion(exerciseId, submission.id!, correctionRound);
         }
+    }
+
+    /**
+     * Calls sendSubmissionToOrion but logs the submission id before so the lock will be freed if the download is cancelled
+     */
+    sendSubmissionToOrionCancellable(exerciseId: number, submissionId: number, correctionRound = 0) {
+        this.activeSubmissionId = submissionId;
+        this.sendSubmissionToOrion(exerciseId, submissionId, correctionRound);
     }
 
     /**
