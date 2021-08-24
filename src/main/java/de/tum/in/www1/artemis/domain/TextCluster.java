@@ -178,7 +178,7 @@ public class TextCluster extends DomainObject {
         return disabled;
     }
 
-    public void setDisabled(Boolean disabled) {
+    public void setDisabled(boolean disabled) {
         this.disabled = disabled;
     }
     // endregion

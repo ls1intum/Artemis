@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +15,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO;
 
@@ -56,9 +55,9 @@ public class TextClusterResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<TextClusterStatisticsDTO>> getClusterStats(@PathVariable Long exerciseId) {
         // Check if Instructor has permission to access the exercise with given exerciseId
-        if (currentUserHasNoAccessToExercise(exerciseId)) {
-            return forbidden();
-        }
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
 
         // Get cluster statistics without the disabled state
         List<TextClusterStatisticsDTO> clusterStats = textClusterRepository.getClusterStatistics1(exerciseId);
@@ -68,7 +67,7 @@ public class TextClusterResource {
 
         // set cluster statistics disabled state
         clusterStats.forEach(s -> s.setDisabled(clusterIdAndDisabled.get(s.getClusterId())));
-        log.debug("REST request to get clusterStats-: {}", clusterStats);
+        log.debug("REST request to get clusterStats : {}", clusterStats);
         return ResponseEntity.ok().body(clusterStats);
     }
 
@@ -86,24 +85,12 @@ public class TextClusterResource {
     public ResponseEntity<Void> toggleClusterDisabledPredicate(@PathVariable Long clusterId, @RequestParam boolean disabled) {
         // Check if Instructor has permission to access the exercise that the cluster with id clusterId belongs to.
         TextCluster cluster = textClusterRepository.findWithEagerExerciseByIdElseThrow(clusterId);
-        if (currentUserHasNoAccessToExercise(cluster.getExercise().getId())) {
-            return forbidden();
-        }
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, cluster.getExercise(), user);
 
         log.info("REST request to disable Cluster : {}", clusterId);
         cluster.setDisabled(disabled);
         textClusterRepository.save(cluster);
         return ResponseEntity.ok().build();
-    }
-
-    /**
-     * Checks if current user has access to the exercise with given exercise id
-     * @param exerciseId the id of the exercise to check the predicate
-     * @return true if user has access, false otherwise
-     */
-    private boolean currentUserHasNoAccessToExercise(Long exerciseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        return !authCheckService.isAtLeastInstructorForExercise(exercise, user);
     }
 }
