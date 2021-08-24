@@ -205,9 +205,7 @@ public class BambooBuildPlanService {
 
                 // Final tasks:
                 final TestParserTask testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
-                final ScriptTask cleanupTask = new ScriptTask().description("cleanup").inlineBody("sudo rm -rf tests/\nsudo rm -rf assignment/\nsudo rm -rf test-reports/");
-                defaultJob.finalTasks(testParserTask, cleanupTask);
-                defaultStage.jobs(defaultJob);
+                defaultJob.finalTasks(testParserTask);
 
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
                     // Create artifacts and a final task for the execution of static code analysis
@@ -218,6 +216,13 @@ public class BambooBuildPlanService {
                     var scaTasks = readScriptTasksFromTemplate(programmingLanguage, "", false, true, null);
                     defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
                 }
+
+                // Do not remove target, so the report can be sent to Artemis
+                final ScriptTask cleanupTask;
+                cleanupTask = new ScriptTask().description("cleanup").inlineBody("sudo rm -rf tests/\nsudo rm -rf assignment/\nsudo rm -rf test-reports/");
+                defaultJob.finalTasks(cleanupTask);
+                defaultStage.jobs(defaultJob);
+
                 return defaultStage;
             }
             case HASKELL, OCAML -> {
