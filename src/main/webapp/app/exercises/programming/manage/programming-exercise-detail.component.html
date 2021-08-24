@@ -341,19 +341,19 @@
                 </div>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
                 <dd>
-                    <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId"
-                        ><a jhiBuildPlanLink [buildPlanId]="programmingExercise.templateParticipation.buildPlanId" [projectKey]="programmingExercise.projectKey!">{{
-                            programmingExercise.templateParticipation.buildPlanId
-                        }}</a></span
-                    >
+                    <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId">
+                        <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation.buildPlanUrl }}">
+                            {{ programmingExercise.templateParticipation.buildPlanId }}
+                        </a>
+                    </span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionBuildPlanId">Solution Build Plan Id</span></dt>
                 <dd>
-                    <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId"
-                        ><a jhiBuildPlanLink [buildPlanId]="programmingExercise.solutionParticipation.buildPlanId" [projectKey]="programmingExercise.projectKey!">{{
-                            programmingExercise.solutionParticipation.buildPlanId
-                        }}</a></span
-                    >
+                    <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId">
+                        <a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation.buildPlanUrl }}">
+                            {{ programmingExercise.solutionParticipation.buildPlanId }}
+                        </a>
+                    </span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Sequential Test Runs</span></dt>
                 <dd>

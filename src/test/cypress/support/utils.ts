@@ -1,6 +1,10 @@
+import utc from 'dayjs/plugin/utc';
 import { TIME_FORMAT } from './constants';
 import { v4 as uuidv4 } from 'uuid';
 import day from 'dayjs';
+
+// Add utc plugin to use the utc timezone
+day.extend(utc);
 
 /**
  * This file contains all of the global utility functions not directly related to cypress.
@@ -14,11 +18,11 @@ export function generateUUID() {
 }
 
 /**
- * Formats the dayjs object with the time format which the backend uses.
+ * Formats the dayjs object with the time format which the backend uses. Also makes sure that dayjs uses the utc timezone.
  * @param dayjs the dayjs object
- * @returns a formatted string representing the date
+ * @returns a formatted string representing the date with utc timezone
  */
 export function dayjsToString(dayjs: day.Dayjs) {
     // We need to add the Z at the end. Otherwise the backend can't parse it.
-    return dayjs.format(TIME_FORMAT) + 'Z';
+    return dayjs.utc().format(TIME_FORMAT) + 'Z';
 }
