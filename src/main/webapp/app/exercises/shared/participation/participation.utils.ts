@@ -2,13 +2,10 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
-export const setBuildPlanUrlForProgrammingParticipation = (
-    profileInfo: ProfileInfo,
-    participation: ProgrammingExerciseStudentParticipation,
-    projectKey?: string,
-): ProgrammingExerciseStudentParticipation => {
-    if (projectKey && participation.buildPlanId) {
-        participation.buildPlanUrl = createBuildPlanUrl(profileInfo.buildPlanURLTemplate, projectKey, participation.buildPlanId);
+export const setBuildPlanUrlForProgrammingParticipations = (profileInfo: ProfileInfo, participations: ProgrammingExerciseStudentParticipation[], projectKey?: string) => {
+    for (let i = 0; i < participations.length; i++) {
+        if (projectKey && participations[i].buildPlanId) {
+            participations[i].buildPlanUrl = createBuildPlanUrl(profileInfo.buildPlanURLTemplate, projectKey, participations[i].buildPlanId!);
+        }
     }
-    return participation;
 };

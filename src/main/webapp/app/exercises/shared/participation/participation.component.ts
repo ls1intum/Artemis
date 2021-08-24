@@ -21,7 +21,7 @@ import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { setBuildPlanUrlForProgrammingParticipation } from 'app/exercises/shared/participation/participation.utils';
+import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 
 enum FilterProp {
     ALL = 'all',
@@ -107,13 +107,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                         const programmingExercise = this.exercise as ProgrammingExercise;
                         if (programmingExercise.projectKey) {
                             this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                                for (let i = 0; i < this.participations.length; i++) {
-                                    this.participations[i] = setBuildPlanUrlForProgrammingParticipation(
-                                        profileInfo,
-                                        this.participations[i] as ProgrammingExerciseStudentParticipation,
-                                        (this.exercise as ProgrammingExercise).projectKey,
-                                    );
-                                }
+                                setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, (this.exercise as ProgrammingExercise).projectKey);
                             });
                         }
                     }

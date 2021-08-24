@@ -40,7 +40,7 @@ import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { setBuildPlanUrlForProgrammingParticipation } from 'app/exercises/shared/participation/participation.utils';
+import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -186,17 +186,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                if (this.exercise?.studentParticipations && programmingExercise.projectKey) {
-                    for (let i = 0; i < this.exercise.studentParticipations.length; i++) {
-                        this.exercise.studentParticipations[i] = setBuildPlanUrlForProgrammingParticipation(
-                            profileInfo,
-                            this.exercise.studentParticipations[i] as ProgrammingExerciseStudentParticipation,
-                            (this.exercise as ProgrammingExercise).projectKey,
-                        );
-                    }
-                }
-            });
+            if (this.exercise?.studentParticipations && programmingExercise.projectKey) {
+                this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                    setBuildPlanUrlForProgrammingParticipations(profileInfo, this.exercise?.studentParticipations!, (this.exercise as ProgrammingExercise).projectKey);
+                });
+            }
         }
 
         // This is only needed in the local environment

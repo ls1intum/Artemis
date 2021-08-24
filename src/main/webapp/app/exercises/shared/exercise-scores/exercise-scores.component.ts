@@ -26,7 +26,7 @@ import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
-import { setBuildPlanUrlForProgrammingParticipation } from 'app/exercises/shared/participation/participation.utils';
+import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 
 /**
  * Filter properties for a result
@@ -106,13 +106,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                         this.results = results[0].body || [];
                         if (this.exercise.type === ExerciseType.PROGRAMMING) {
                             this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                                for (let i = 0; i < this.results.length; i++) {
-                                    this.results[i].participation = setBuildPlanUrlForProgrammingParticipation(
-                                        profileInfo,
-                                        this.results[i].participation as ProgrammingExerciseStudentParticipation,
-                                        (this.exercise as ProgrammingExercise).projectKey,
-                                    );
-                                }
+                                setBuildPlanUrlForProgrammingParticipations(
+                                    profileInfo,
+                                    this.results.map<ProgrammingExerciseStudentParticipation>((result) => result.participation as ProgrammingExerciseStudentParticipation),
+                                    (this.exercise as ProgrammingExercise).projectKey,
+                                );
                             });
                         }
                         this.isLoading = false;
