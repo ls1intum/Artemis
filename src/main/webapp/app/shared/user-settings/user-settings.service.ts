@@ -41,13 +41,14 @@ export class UserSettingsService {
     public loadUserOptionCoresSuccessAsSettings(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: UserSettingsCategory): UserSettings<OptionCore> {
         let settingsResult: UserSettings<OptionCore>;
         // load default settings as foundation
-        settingsResult = this.loadDefaultSettingsAsFoundation(category);
+        settingsResult = UserSettingsService.loadDefaultSettingsAsFoundation(category);
 
         // if user already customized settings -> update loaded default settings with received data
         if (!(receivedOptionCoresFromServer == undefined || receivedOptionCoresFromServer.length === 0)) {
             this.updateSettings(receivedOptionCoresFromServer, settingsResult);
         }
         // else continue using default settings
+        debugger;
         return settingsResult;
     }
 
@@ -62,7 +63,7 @@ export class UserSettingsService {
     public loadUserOptionCoresSuccessAsOptionCores(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: UserSettingsCategory): OptionCore[] {
         let settingsResult: UserSettings<OptionCore>;
         // load default settings as foundation
-        settingsResult = this.loadDefaultSettingsAsFoundation(category);
+        settingsResult = UserSettingsService.loadDefaultSettingsAsFoundation(category);
 
         // if user already customized settings -> update loaded default settings with received data
         if (!(receivedOptionCoresFromServer == undefined || receivedOptionCoresFromServer.length === 0)) {
@@ -99,7 +100,7 @@ export class UserSettingsService {
      */
     public saveUserOptionsSuccess(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: UserSettingsCategory): UserSettings<OptionCore> {
         let settingsResult: UserSettings<OptionCore>;
-        settingsResult = this.loadDefaultSettingsAsFoundation(category);
+        settingsResult = UserSettingsService.loadDefaultSettingsAsFoundation(category);
         this.updateSettings(receivedOptionCoresFromServer, settingsResult);
         return settingsResult;
     }
@@ -149,7 +150,7 @@ export class UserSettingsService {
      * @param category defines what default settings to return
      * @return the default settings based on the provided category
      */
-    private loadDefaultSettingsAsFoundation(category: UserSettingsCategory): UserSettings<OptionCore> {
+    private static loadDefaultSettingsAsFoundation(category: UserSettingsCategory): UserSettings<OptionCore> {
         switch (category) {
             case UserSettingsCategory.NOTIFICATION_SETTINGS: {
                 return defaultNotificationSettings;

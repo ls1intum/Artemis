@@ -9,7 +9,7 @@
 <div class="d-flex justify-content-between">
     <h1>
         <!--UserSettingsCategory-->
-        {{ 'artemisApp.userSettings.categories.' + (userSettingsCategory | camelCase) | artemisTranslate }}
+        {{ 'artemisApp.userSettings.categories.' + (userSettingsCategory | lowerCamelCase) | artemisTranslate }}
     </h1>
     <button type="button" class="btn btn-primary" *ngIf="optionsChanged" id="apply-changes-button" (click)="saveOptions()">
         <fa-icon [icon]="'save'"></fa-icon>
@@ -21,16 +21,16 @@
         <div *jhiHasAnyAuthority="[optionGroup.restrictionLevel]" class="list-group-item">
             <h3>
                 <!--GroupName-->
-                {{ 'artemisApp.userSettings.optionGroupNames.' + (optionGroup.name | camelCase) | artemisTranslate }}
+                {{ 'artemisApp.userSettings.optionGroupNames.' + (optionGroup.name | lowerCamelCase) | artemisTranslate }}
             </h3>
             <div *ngFor="let option of optionGroup.options">
                 <dt>
                     <!--OptionName-->
-                    {{ 'artemisApp.userSettings.optionNames.' + (option.name | camelCase) | artemisTranslate }}
+                    {{ 'artemisApp.userSettings.optionNames.' + (option.name | lowerCamelCase) | artemisTranslate }}
                 </dt>
                 <span>
                     <!--OptionDescription-->
-                    {{ 'artemisApp.userSettings.optionDescriptions.' + (option.description | camelCase) | artemisTranslate }}
+                    {{ 'artemisApp.userSettings.optionDescriptions.' + (option.description | lowerCamelCase) | artemisTranslate }}
                 </span>
                 <!--Put Settings specific core properties & functions here-->
             </div>

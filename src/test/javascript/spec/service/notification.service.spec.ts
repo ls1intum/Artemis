@@ -27,7 +27,7 @@ import * as moment from 'moment';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('Logs Service', () => {
+describe('Notification Service', () => {
     let notificationService: NotificationService;
     let httpMock: HttpTestingController;
     let router: Router;
