@@ -77,7 +77,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         if (this.currentUserIsAtLeastTutor && this.displayPriority === DisplayPriority.PINNED) {
             return 'artemisApp.metis.removePinPostTutorTooltip';
         }
-        if (this.currentUserIsAtLeastTutor && this.displayPriority === DisplayPriority.NONE) {
+        if (this.currentUserIsAtLeastTutor && this.displayPriority !== DisplayPriority.PINNED) {
             return 'artemisApp.metis.pinPostTutorTooltip';
         }
         return 'artemisApp.metis.pinnedPostTooltip';
@@ -90,7 +90,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         if (this.currentUserIsAtLeastTutor && this.displayPriority === DisplayPriority.ARCHIVED) {
             return 'artemisApp.metis.removeArchivePostTutorTooltip';
         }
-        if (this.currentUserIsAtLeastTutor && this.displayPriority === DisplayPriority.NONE) {
+        if (this.currentUserIsAtLeastTutor && this.displayPriority !== DisplayPriority.ARCHIVED) {
             return 'artemisApp.metis.archivePostTutorTooltip';
         }
         return 'artemisApp.metis.archivedPostTooltip';

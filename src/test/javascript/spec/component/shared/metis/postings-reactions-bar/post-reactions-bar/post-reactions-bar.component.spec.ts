@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, getTestBed, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement } from '@angular/core';
-import { Post } from 'app/entities/metis/post.model';
+import { DisplayPriority, Post } from 'app/entities/metis/post.model';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -62,8 +62,7 @@ describe('PostReactionsBarComponent', () => {
                 post = new Post();
                 post.id = 1;
                 post.author = user;
-                post.pinned = false;
-                post.archived = false;
+                post.displayPriority = DisplayPriority.NONE;
                 reactionToDelete = new Reaction();
                 reactionToDelete.id = 1;
                 reactionToDelete.emojiId = 'smile';
@@ -139,11 +138,11 @@ describe('PostReactionsBarComponent', () => {
         accountServiceAuthorityStub.returns(true);
         component.ngOnInit();
         fixture.detectChanges();
-        const metisServicePinPostSpy = sinon.spy(metisService, 'updatePostPinState');
+        const metisServicePinPostSpy = sinon.spy(metisService, 'updatePostDisplayPriority');
         const pinEmoji = getElement(debugElement, '.pin');
         pinEmoji.click();
-        expect(metisServicePinPostSpy).to.have.been.calledWith(component.posting, true);
-        component.posting.pinned = true;
+        component.posting.displayPriority = DisplayPriority.PINNED;
+        expect(metisServicePinPostSpy).to.have.been.calledWith(component.posting);
         component.ngOnChanges();
         // set correct tooltips for tutor and post that is pinned and not archived
         expect(component.pinTooltip).to.be.deep.equal('artemisApp.metis.removePinPostTutorTooltip');
@@ -154,11 +153,11 @@ describe('PostReactionsBarComponent', () => {
         accountServiceAuthorityStub.returns(true);
         component.ngOnInit();
         fixture.detectChanges();
-        const metisServiceArchivePostSpy = sinon.spy(metisService, 'updatePostArchiveState');
+        const metisServiceArchivePostSpy = sinon.spy(metisService, 'updatePostDisplayPriority');
         const archiveEmoji = getElement(debugElement, '.archive');
         archiveEmoji.click();
-        expect(metisServiceArchivePostSpy).to.have.been.calledWith(component.posting, true);
-        component.posting.archived = true;
+        component.posting.displayPriority = DisplayPriority.ARCHIVED;
+        expect(metisServiceArchivePostSpy).to.have.been.calledWith(component.posting);
         component.ngOnChanges();
         // set correct tooltips for tutor and post that is archived and not pinned
         expect(component.pinTooltip).to.be.deep.equal('artemisApp.metis.pinPostTutorTooltip');
@@ -167,10 +166,10 @@ describe('PostReactionsBarComponent', () => {
 
     it('should show non-clickable pin emoji with correct tooltip for student when post is pinned', () => {
         accountServiceAuthorityStub.returns(false);
-        component.posting.pinned = true;
+        component.posting.displayPriority = DisplayPriority.PINNED;
         component.ngOnInit();
         fixture.detectChanges();
-        const metisServicePinPostSpy = sinon.spy(metisService, 'updatePostPinState');
+        const metisServicePinPostSpy = sinon.spy(metisService, 'updatePostDisplayPriority');
         const pinEmoji = getElement(debugElement, '.pin.reaction-button--not-hoverable');
         expect(pinEmoji).to.exist;
         pinEmoji.click();
@@ -181,10 +180,10 @@ describe('PostReactionsBarComponent', () => {
 
     it('should show non-clickable archive emoji with correct tooltip for student when post is archived', () => {
         accountServiceAuthorityStub.returns(false);
-        component.posting.archived = true;
+        component.posting.displayPriority = DisplayPriority.ARCHIVED;
         component.ngOnInit();
         fixture.detectChanges();
-        const metisServiceArchivePostSpy = sinon.spy(metisService, 'updatePostArchiveState');
+        const metisServiceArchivePostSpy = sinon.spy(metisService, 'updatePostDisplayPriority');
         const archiveEmoji = getElement(debugElement, '.archive.reaction-button--not-hoverable');
         expect(archiveEmoji).to.exist;
         archiveEmoji.click();
