@@ -94,7 +94,11 @@
     </div>
 
     <!-- Text showing whether the tutor feedback is correct or not (upon validation on the server) -->
-    <span *ngIf="feedback.correctionStatus != undefined"> {{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }} </span>
+    <div *ngIf="feedback.correctionStatus != undefined">
+        <span>{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }} </span>
+        <!-- :warning: emoji was rendered as a black-white glyph, hence the solution with the fa-icon -->
+        <fa-icon *ngIf="feedback.correctionStatus != 'CORRECT'" class="text-warning" [icon]="'exclamation-triangle'"></fa-icon>
+    </div>
 
     <ng-template #toggleMore let-modal>
         <div class="modal-header">

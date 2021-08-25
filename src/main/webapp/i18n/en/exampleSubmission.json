@@ -6,15 +6,15 @@
                 "editor": "Example Submission Editor"
             },
             "feedback": {
-                "CORRECT": "Correct assessment ✅",
-                "INCORRECT_SCORE": "Incorrect score ❌",
-                "UNNECESSARY_FEEDBACK": "Unneccessary feedback ❌",
-                "MISSING_GRADING_INSTRUCTION": "Missing assessment instruction ❌",
-                "INCORRECT_GRADING_INSTRUCTION": "Incorrect assessment instruction ❌"
+                "CORRECT": "Correct assessment 👍",
+                "INCORRECT_SCORE": "Incorrect score",
+                "UNNECESSARY_FEEDBACK": "Unneccessary feedback",
+                "MISSING_GRADING_INSTRUCTION": "Missing assessment instruction",
+                "INCORRECT_GRADING_INSTRUCTION": "Incorrect assessment instruction"
             },
             "submissionValidation": {
                 "missing": "Not enough feedback provided. The instructor provided more feedback.",
-                "wrong": "Incorrect assessment. Please carefully review the grading criteria and the submission again, and submit your improved assessment."
+                "wrong": "Incorrect assessment. There are {{mistakeCount}} mistake(s).\nPlease carefully review the grading criteria and submit your improved assessment."
             },
             "assessScore": {
                 "success": "Congratulations! This is a good assessment!",
