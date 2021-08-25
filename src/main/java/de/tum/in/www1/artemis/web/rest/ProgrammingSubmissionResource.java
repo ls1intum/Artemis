@@ -388,7 +388,7 @@ public class ProgrammingSubmissionResource {
             return forbidden("assessment", "assessmentSaveNotAllowed", "Creating manual results is disabled for this exercise!");
         }
 
-        var numberOfManualResults = programmingSubmission.getResults().stream().filter(Result::isManual).count();
+        long numberOfManualResults = programmingSubmission.getResults().stream().filter(Result::isManual).count();
 
         // this makes sure that new results are only created if it is really necessary.
         // At max 1 for course exercises and at max 2 results in exams with 2 correction rounds enabled.

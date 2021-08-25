@@ -228,6 +228,9 @@
             "categoriesTooltip": "Es können bis zu zwei Kategorien pro Aufgabe definiert werden, welche frei gewählt werden können (Kategorie eingeben und ENTER drücken). Allerdings wird empfohlen, die gewählten Bezeichnungen konsistent zu nutzen, da sie auch für Studierenden sichtbar sind",
             "timeline": {
                 "assessmentType": "Art der Bewertung",
+                "manualAssessment": "Manuelle Bewertung",
+                "automaticAssessment": "Automatische Bewertung",
+                "complaintsAllowed": "Beschwerden erlaubt",
                 "automaticTests": "Automatische Tests",
                 "afterDueDate": "Testlauf nach der Einreichungsfrist",
                 "timelineLabel": "Zeitleiste des gesamten Programmieraufgabenzyklus",
