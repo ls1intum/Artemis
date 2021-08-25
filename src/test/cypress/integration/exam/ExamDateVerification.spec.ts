@@ -88,9 +88,7 @@ describe('Exam management', () => {
                         cy.contains(exam.title).click();
                         cy.url().should('contain', `/exams/${exam.id}`);
                         cy.contains('Welcome to ' + exam.title).should('be.visible');
-                        examStartEnd.setConfirmCheckmark();
-                        examStartEnd.enterFirstnameLastname();
-                        examStartEnd.pressStart();
+                        examStartEnd.startExam();
                         cy.contains('Exam Overview').should('exist');
                         cy.contains(textExercise.title).should('be.visible').click();
                         cy.get('#text-editor-tab').type(
@@ -125,8 +123,6 @@ describe('Exam management', () => {
                         cy.login(student, `/courses/${course.id}/exams`);
                         cy.contains(exam.title).click();
                         cy.contains('Welcome to ' + exam.title).should('be.visible');
-                        examStartEnd.setConfirmCheckmark();
-                        examStartEnd.enterFirstnameLastname();
                         examStartEnd.startExam();
                         cy.contains(textExercise.title).should('be.visible').click();
                         cy.get('#text-editor-tab').type(
