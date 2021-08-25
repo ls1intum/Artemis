@@ -6,6 +6,8 @@
 // Needed for highlighting code in the markdown editor
 @import '~highlight.js/styles/vs.css';
 @import '~@swimlane/ngx-datatable/themes/bootstrap.css';
+// Needed for emojis in metis reactions
+@import '~@ctrl/ngx-emoji-mart/picker';
 
 /* ==============================================================
 Bootstrap tweaks
@@ -134,9 +136,21 @@ a.btn {
     text-align: left;
 }
 
+.form-control,
+.form-select,
+.form-check-input,
+.form-control:hover,
+.form-control:focus {
+    background-color: white;
+}
+
 .form-inline .form-control {
     display: inline-block;
     width: auto;
+}
+
+.form-check-input:checked {
+    background-color: $primary;
 }
 
 .btn-primary input,
@@ -736,10 +750,6 @@ Course Info Bar
     color: #ffffff;
     flex-direction: column;
     justify-content: center;
-
-    &--ide {
-        min-height: 100px;
-    }
 }
 
 /* ==========================================================================

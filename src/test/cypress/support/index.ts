@@ -22,3 +22,18 @@ import './utils';
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
+
+/**
+ * We register hooks on the console.error and console.warn methods and forward their content to the process console to allow better debugging with cypress:run.
+ */
+/*eslint-disable */
+Cypress.on('window:before:load', (win) => {
+    cy.stub(win.console, 'error').callsFake((msg) => {
+        cy.now('task', 'error', msg);
+    });
+
+    cy.stub(win.console, 'warn').callsFake((msg) => {
+        cy.now('task', 'warn', msg);
+    });
+});
+/*eslint-enable */

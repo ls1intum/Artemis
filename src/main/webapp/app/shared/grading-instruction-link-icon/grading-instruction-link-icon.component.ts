@@ -34,7 +34,7 @@ export class GradingInstructionLinkIconComponent implements OnInit {
      * @param {GradingInstruction} instruction - the instruction object which is associated with feedback
      */
     setTooltip(instruction: GradingInstruction) {
-        return this.artemisTranslatePipe.transform('artemisApp.exercise.gradingInstruction') + instruction.instructionDescription;
+        return this.artemisTranslatePipe.transform('artemisApp.exercise.assessmentInstruction') + instruction.instructionDescription;
     }
 
     /**

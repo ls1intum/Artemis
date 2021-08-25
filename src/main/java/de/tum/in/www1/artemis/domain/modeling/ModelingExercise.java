@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.modeling;
 
+import java.time.ZonedDateTime;
+
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,6 +29,9 @@ public class ModelingExercise extends Exercise {
     @Lob
     private String sampleSolutionExplanation;
 
+    @Transient
+    private ZonedDateTime clusterBuildDate;
+
     public DiagramType getDiagramType() {
         return diagramType;
     }
@@ -49,6 +54,14 @@ public class ModelingExercise extends Exercise {
 
     public void setSampleSolutionExplanation(String sampleSolutionExplanation) {
         this.sampleSolutionExplanation = sampleSolutionExplanation;
+    }
+
+    public ZonedDateTime getClusterBuildDate() {
+        return clusterBuildDate;
+    }
+
+    public void setClusterBuildDate(ZonedDateTime examEndDate) {
+        this.clusterBuildDate = examEndDate;
     }
 
     /**

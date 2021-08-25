@@ -1,6 +1,11 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+
 import java.io.IOException;
+import java.nio.file.Path;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,6 +62,18 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError() throws Exception {
+        programmingExerciseIntegrationServiceTest.textExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void textExportSubmissionsByParticipationIds() throws Exception {
         programmingExerciseIntegrationServiceTest.textExportSubmissionsByParticipationIds();
     }
@@ -82,7 +99,14 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void textExportSubmissionsByStudentLogins() throws Exception {
-        programmingExerciseIntegrationServiceTest.textExportSubmissionsByStudentLogins();
+        programmingExerciseIntegrationServiceTest.testExportSubmissionsByStudentLogins();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void textExportSubmissionsByStudentLogins_failToCreateZip() throws Exception {
+        doThrow(IOException.class).when(zipFileService).createZipFile(any(Path.class), any(), eq(false));
+        programmingExerciseIntegrationServiceTest.testExportSubmissionsByStudentLogins_failToCreateZip();
     }
 
     @Test
@@ -221,6 +245,12 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest() throws Exception {
         programmingExerciseIntegrationServiceTest.updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercise_updatingCourseId_conflict() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateProgrammingExerciseShouldFailWithConflictWhenUpdatingCourseId();
     }
 
     @Test
@@ -860,6 +890,12 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @WithMockUser(value = "student1", roles = "STUDENT")
     public void testExportAuxiliaryRepositoryForbidden() throws Exception {
         programmingExerciseIntegrationServiceTest.testExportAuxiliaryRepositoryForbidden();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testExportEmptyAuxiliaryRepository() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportAuxiliaryRepositoryBadRequest();
     }
 
     @Test

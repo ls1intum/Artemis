@@ -25,7 +25,7 @@ import { ModelingEditorComponent } from '../shared/modeling-editor.component';
 @Component({
     selector: 'jhi-modeling-exercise-update',
     templateUrl: './modeling-exercise-update.component.html',
-    styleUrls: ['./modeling-exercise-update.scss'],
+    styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
 export class ModelingExerciseUpdateComponent implements OnInit {
     @ViewChild(ModelingEditorComponent, { static: false })
@@ -36,7 +36,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
     UMLDiagramType = UMLDiagramType;
-    checkedFlag: boolean;
 
     modelingExercise: ModelingExercise;
     backupExercise: ModelingExercise;
@@ -48,7 +47,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
-    domainCommandsGradingInstructions = [new KatexCommand()];
     examCourseId?: number;
     isImport: boolean;
     isExamMode: boolean;
@@ -80,7 +78,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * Initializes all relevant data for creating or editing modeling exercise
      */
     ngOnInit(): void {
-        this.checkedFlag = false; // default value of grading instructions toggle
         // This is used to scroll page to the top of the page, because the routing keeps the position for the
         // new page from previous page.
 
@@ -128,7 +125,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                         this.modelingExercise.mode = ExerciseMode.INDIVIDUAL;
                         this.modelingExercise.teamAssignmentConfig = undefined;
                         this.modelingExercise.teamMode = false;
-                        this.modelingExercise.assessmentType = AssessmentType.MANUAL;
                     }
                     if (this.isImport) {
                         if (this.isExamMode) {
@@ -219,17 +215,10 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * gets the flag of the structured grading instructions slide toggle
-     */
-    getCheckedFlag(event: boolean) {
-        this.checkedFlag = event;
-    }
-
-    /**
      * When the diagram type changes, we need to check whether {@link AssessmentType.SEMI_AUTOMATIC} is available for the type. If not, we revert to {@link AssessmentType.MANUAL}
      */
     diagramTypeChanged() {
-        if (this.isExamMode || !this.semiAutomaticAssessmentAvailable) {
+        if (!this.semiAutomaticAssessmentAvailable) {
             this.modelingExercise.assessmentType = AssessmentType.MANUAL;
         }
     }

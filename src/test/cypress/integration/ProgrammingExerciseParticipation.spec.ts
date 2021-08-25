@@ -67,9 +67,6 @@ function setupCourseAndProgrammingExercise() {
         artemisRequests.courseManagement.addStudentToCourse(course.id, users.getStudentOne().username);
         artemisRequests.courseManagement.addStudentToCourse(course.id, users.getStudentTwo().username);
         artemisRequests.courseManagement.addStudentToCourse(course.id, users.getStudentThree().username);
-        //  We sleep to allow bamboo/bitbucket to synchronize the group rights, because the programming exercise creation fails otherwise
-        cy.log('Created course. Sleeping before adding a programming exercise...');
-        cy.wait(65000);
         artemisRequests.courseManagement.createProgrammingExercise(course, programmingExerciseName, programmingExerciseShortName, packageName);
     });
 }

@@ -6,6 +6,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -74,12 +75,14 @@ public class ModelingExerciseResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final ModelClusterRepository modelClusterRepository;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
             CompassService compassService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
             ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository,
-            InstanceMessageSendService instanceMessageSendService) {
+            InstanceMessageSendService instanceMessageSendService, ModelClusterRepository modelClusterRepository) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -95,6 +98,7 @@ public class ModelingExerciseResource {
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.modelClusterRepository = modelClusterRepository;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -171,6 +175,12 @@ public class ModelingExerciseResource {
         exerciseService.validateGeneralSettings(modelingExercise);
 
         ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
+
+        // Forbid changing the course the exercise belongs to.
+        if (!Objects.equals(modelingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+            return conflict("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
+        }
+
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
@@ -290,6 +300,23 @@ public class ModelingExerciseResource {
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
+    }
+
+    /**
+     * DELETE /modeling-exercises/:id/clusters : delete the clusters and elements of "id" modelingExercise.
+     *
+     * @param exerciseId the id of the modelingExercise to delete clusters and elements
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @GetMapping("/modeling-exercises/{exerciseId}/check-clusters")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Integer> checkClusters(@PathVariable Long exerciseId) {
+        log.info("REST request to check clusters of ModelingExercise : {}", exerciseId);
+        var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+        int clusterCount = modelClusterRepository.countByExerciseIdWithEagerElements(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.ADMIN, modelingExercise, user);
+        return ResponseEntity.ok().body(clusterCount);
     }
 
     /**

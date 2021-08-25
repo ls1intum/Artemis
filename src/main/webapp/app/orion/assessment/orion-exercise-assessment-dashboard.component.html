@@ -1,0 +1,45 @@
+<!-- If the exercise is not loaded or not programming, show regular component-->
+<jhi-exercise-assessment-dashboard *ngIf="!exercise || exercise.type !== ExerciseType.PROGRAMMING; else withOrionButtons"></jhi-exercise-assessment-dashboard>
+
+<!-- If the exercise is programming, but not opened in Orion, show Orion open button-->
+<ng-template #withOrionButtons>
+    <jhi-exercise-assessment-dashboard *ngIf="orionState.opened !== exerciseId || orionState.view !== ExerciseView.TUTOR; else withTable">
+        <ng-template #overrideAssessmentTable>
+            <jhi-ide-button
+                [buttonLoading]="orionState.cloning"
+                buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.startYourParticipation' | artemisTranslate }}"
+                (clickHandler)="openAssessmentInOrion()"
+            >
+            </jhi-ide-button>
+        </ng-template>
+    </jhi-exercise-assessment-dashboard>
+
+    <!-- If the exercise is opened, show download submission buttons -->
+    <ng-template #withTable>
+        <jhi-exercise-assessment-dashboard>
+            <ng-template #overrideOpenButton let-submission="submission" let-correctionRound="correctionRound">
+                <jhi-ide-button
+                    class="btn btn-sm"
+                    [buttonLoading]="orionState.cloning"
+                    buttonLabel="{{
+                        (submission && calculateSubmissionStatusIsDraft(submission, correctionRound)
+                            ? 'artemisApp.orionExerciseAssessmentDashboard.continueAssessment'
+                            : 'artemisApp.orionExerciseAssessmentDashboard.openAssessment'
+                        ) | artemisTranslate
+                    }}"
+                    (clickHandler)="downloadSubmissionInOrion(submission, correctionRound)"
+                >
+                </jhi-ide-button>
+            </ng-template>
+            <ng-template #overrideNewButton let-correctionRound="correctionRound">
+                <jhi-ide-button
+                    class="btn btn-sm"
+                    [buttonLoading]="orionState.cloning"
+                    buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.startAssessment' | artemisTranslate }}"
+                    (clickHandler)="downloadSubmissionInOrion('new', correctionRound)"
+                >
+                </jhi-ide-button>
+            </ng-template>
+        </jhi-exercise-assessment-dashboard>
+    </ng-template>
+</ng-template>
