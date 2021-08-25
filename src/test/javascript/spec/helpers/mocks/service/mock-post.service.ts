@@ -1,5 +1,5 @@
 import { Observable, of } from 'rxjs';
-import { Post } from 'app/entities/metis/post.model';
+import { DisplayPriority, Post } from 'app/entities/metis/post.model';
 import { HttpResponse } from '@angular/common/http';
 
 export class MockPostService {
@@ -9,6 +9,10 @@ export class MockPostService {
 
     update(courseId: number, post: Post): Observable<HttpResponse<Post>> {
         return of({ body: post }) as Observable<HttpResponse<Post>>;
+    }
+
+    updatePostDisplayPriority(courseId: number, postId: number, post: Post): Observable<HttpResponse<Post>> {
+        return of({ body: { id: postId, displayPriority: post.displayPriority } as Post }) as Observable<HttpResponse<Post>>;
     }
 
     delete(post: Post): Observable<HttpResponse<Post>> {

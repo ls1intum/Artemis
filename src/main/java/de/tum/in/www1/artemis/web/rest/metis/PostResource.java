@@ -64,6 +64,22 @@ public class PostResource {
     }
 
     /**
+     * PUT /courses/{courseId}/posts/{postId}/pin : Pin an existing post by setting the pinned flag to true (is used as criterion for sorting the posts)
+     *
+     * @param courseId                          id of the course the post belongs to
+     * @param postId                            id of the post change the displayPriority for
+     * @param postWithDisplayPriorityToUpdate   post with new enum value for displayPriority, i.e. either PINNED, ARCHIVED, NONE
+     * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
+     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     */
+    @PutMapping("courses/{courseId}/posts/{postId}/display-priority")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Post postWithDisplayPriorityToUpdate) {
+        Post postWithUpdatedDisplayPriority = postService.changeDisplayPriority(courseId, postId, postWithDisplayPriorityToUpdate);
+        return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
+    }
+
+    /**
      * GET /courses/{courseId}/exercises/{exerciseId}/posts : Get all posts for an exercise by its id
      *
      * @param courseId   id of the course the post belongs to
