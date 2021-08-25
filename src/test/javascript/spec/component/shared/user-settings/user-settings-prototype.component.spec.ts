@@ -1,7 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { SERVER_API_URL } from 'app/app.constants';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Subject } from 'rxjs';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import * as sinon from 'sinon';
@@ -15,16 +13,30 @@ import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-tran
 import { OptionCore, UserSettings } from 'app/shared/user-settings/user-settings.model';
 import { defaultNotificationSettings, NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { JhiAlertService } from 'ng-jhipster/service/alert.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-settings-prototype/user-settings-prototype.component';
+import { JhiAlertService } from 'ng-jhipster';
+import { MockProvider } from 'ng-mocks';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
+
+/**
+ * needed for testing the abstract UserSettingsPrototypeComponent
+ */
+class UserSettingsPrototypeComponentMock extends UserSettingsPrototypeComponent {
+    constructor(userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: JhiAlertService) {
+        super(userSettingsService, alertService, changeDetector);
+    }
+}
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('User Settings Prototype Component', () => {
     // general & common
-    let comp: UserSettingsPrototypeComponent;
+    let component: UserSettingsPrototypeComponentMock;
+    let fixture: ComponentFixture<UserSettingsPrototypeComponentMock>;
+
     let userSettingsService: UserSettingsService;
     let httpMock: HttpTestingController;
     let userSettingsCategory: UserSettingsCategory;
@@ -32,6 +44,8 @@ describe('User Settings Prototype Component', () => {
     let notificationService: NotificationService;
     let alertService: JhiAlertService;
     let changeDetector: ChangeDetectorRef;
+
+    const router = new MockRouter();
 
     // notification settings specific
     const notificationOptionCoreA: NotificationOptionCore = {
@@ -47,71 +61,24 @@ describe('User Settings Prototype Component', () => {
         email: false,
     };
 
-    function updateNotificationSettingsByProvidedNotificationOptionCores(settings: UserSettings<NotificationOptionCore>, providedOptionCores: NotificationOptionCore[]) {
-        providedOptionCores.forEach((providedOptionCore) => {
-            for (const group of settings.groups) {
-                for (const option of group.options) {
-                    if (option.optionCore.optionSpecifier === providedOptionCore.optionSpecifier) {
-                        option.optionCore.webapp = providedOptionCore.webapp;
-                        option.optionCore.email = providedOptionCore.email;
-                        break;
-                    }
-                }
-            }
-        });
-    }
-
-    function updateNotificationOptionCoresByProvidedNotificationOptionCores(originalOptionCores: NotificationOptionCore[], providedOptionCores: NotificationOptionCore[]) {
-        providedOptionCores.forEach((providedCore) => {
-            for (const originalCore of originalOptionCores) {
-                if (originalCore.optionSpecifier === providedCore.optionSpecifier) {
-                    originalCore.webapp = providedCore.webapp;
-                    originalCore.email = providedCore.email;
-                    break;
-                }
-            }
-        });
-    }
-
-    function checkIfProvidedNotificationCoresArePartOfExpectedCores(providedNotificationCores: NotificationOptionCore[], expectedNotificationCores: NotificationOptionCore[]) {
-        providedNotificationCores.forEach((providedCore) => {
-            for (const expectedNotificationCore of expectedNotificationCores) {
-                if (providedCore.optionSpecifier === expectedNotificationCore.optionSpecifier) {
-                    expect(providedCore.webapp).to.equal(expectedNotificationCore.webapp);
-                    expect(providedCore.email).to.equal(expectedNotificationCore.email);
-                    break;
-                }
-            }
-        });
-    }
-
-    function extractOptionCoresFromSettings(settings: UserSettings<OptionCore>): OptionCore[] {
-        const extractedOptionCores: OptionCore[] = [];
-        settings.groups.forEach((group) => {
-            group.options.forEach((option) => {
-                extractedOptionCores.push(option.optionCore);
-            });
-        });
-        return extractedOptionCores;
-    }
-
-    function compareSettings(expectedSettings: UserSettings<OptionCore>, resultSettings: UserSettings<OptionCore>) {
-        const expectedOptionCores = extractOptionCoresFromSettings(expectedSettings);
-        const resultOptionCores = extractOptionCoresFromSettings(resultSettings);
-        expect(expectedOptionCores).to.deep.equal(resultOptionCores);
-    }
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, TranslateTestingModule],
+            //declarations: [UserSettingsPrototypeComponent],
             providers: [
+                MockProvider(JhiAlertService),
+                //MockProvider(UserSettingsPrototypeComponentMock),
+                MockProvider(ChangeDetectorRef),
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: Router, useValue: router },
             ],
         })
             .compileComponents()
             .then(() => {
-                comp = TestBed.inject(UserSettingsPrototypeComponent);
+                fixture = TestBed.createComponent(UserSettingsPrototypeComponentMock);
+                component = fixture.componentInstance;
+                //component = TestBed.inject(UserSettingsPrototypeComponent);
                 userSettingsService = TestBed.inject(UserSettingsService);
                 httpMock = TestBed.inject(HttpTestingController);
                 notificationService = TestBed.inject(NotificationService);
@@ -132,51 +99,18 @@ describe('User Settings Prototype Component', () => {
 
         describe('test loadSettings', () => {
             it('should call userSettingsService to load OptionsCores', () => {
-                const expectedUserSettings: UserSettings<NotificationOptionCore> = defaultNotificationSettings;
-                updateNotificationSettingsByProvidedNotificationOptionCores(expectedUserSettings, notificationOptionCoresForTesting);
-                resultingUserSettings = userSettingsService.loadUserOptionCoresSuccessAsSettings(notificationOptionCoresForTesting, userSettingsCategory);
-                compareSettings(expectedUserSettings, resultingUserSettings);
-            });
+                /*
+                const loadUserOptionsSpy = sinon.spy(userSettingsService, 'loadUserOptions');
+                const loadUserOptionCoresSuccessAsSettingsSpy = sinon.spy(userSettingsService, 'loadUserOptionCoresSuccessAsSettings');
+                const extractOptionCoresFromSettings = sinon.spy(userSettingsService, 'extractOptionCoresFromSettings');
 
-            it('should correctly update and return option cores based on received option cores', () => {
-                const expectedNotificationOptionCores: NotificationOptionCore[] = userSettingsService.extractOptionCoresFromSettings(
-                    defaultNotificationSettings,
-                ) as NotificationOptionCore[];
-                updateNotificationOptionCoresByProvidedNotificationOptionCores(expectedNotificationOptionCores, notificationOptionCoresForTesting);
+                component.ngOnInit();
+                fixture.detectChanges();
 
-                let resultingOptionCores: NotificationOptionCore[];
-                resultingOptionCores = userSettingsService.loadUserOptionCoresSuccessAsOptionCores(
-                    notificationOptionCoresForTesting,
-                    userSettingsCategory,
-                ) as NotificationOptionCore[];
-
-                expect(resultingOptionCores.length).to.equal(expectedNotificationOptionCores.length);
-                checkIfProvidedNotificationCoresArePartOfExpectedCores(resultingOptionCores, expectedNotificationOptionCores);
-            });
-        });
-
-        describe('test saving methods', () => {
-            it('should call correct URL to save option cores', () => {
-                userSettingsService.saveUserOptions(notificationOptionCoresForTesting, userSettingsCategory).subscribe();
-                const req = httpMock.expectOne({ method: 'POST' });
-                const infoUrl = notificationSettingsResourceUrl + '/save-options';
-                expect(req.request.url).to.equal(infoUrl);
-            });
-
-            it('server response should contain inputted options', fakeAsync(() => {
-                userSettingsService.saveUserOptions(notificationOptionCoresForTesting, userSettingsCategory).subscribe((resp) => {
-                    checkIfProvidedNotificationCoresArePartOfExpectedCores(resp.body as NotificationOptionCore[], notificationOptionCoresForTesting);
-                });
-                const req = httpMock.expectOne({ method: 'POST' });
-                req.flush(notificationOptionCoresForTesting);
-                tick();
-            }));
-
-            it('should correctly update and return settings based on received option cores', () => {
-                const expectedUserSettings: UserSettings<NotificationOptionCore> = defaultNotificationSettings;
-                updateNotificationSettingsByProvidedNotificationOptionCores(expectedUserSettings, notificationOptionCoresForTesting);
-                resultingUserSettings = userSettingsService.saveUserOptionsSuccess(notificationOptionCoresForTesting, userSettingsCategory);
-                compareSettings(expectedUserSettings, resultingUserSettings);
+                expect(loadUserOptionsSpy).to.be.calledOnce;
+                expect(loadUserOptionCoresSuccessAsSettingsSpy).to.be.calledOnce;
+                expect(extractOptionCoresFromSettings).to.be.calledOnce;
+                 */
             });
         });
     });

@@ -15,7 +15,7 @@ import { UserSettings } from 'app/shared/user-settings/user-settings.model';
 })
 export class NotificationSettingsComponent extends UserSettingsPrototypeComponent implements OnInit {
     constructor(notificationService: NotificationService, userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: JhiAlertService) {
-        super(notificationService, userSettingsService, alertService, changeDetector);
+        super(userSettingsService, alertService, changeDetector);
     }
 
     userSettings: UserSettings<NotificationOptionCore>;

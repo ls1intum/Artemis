@@ -27,12 +27,7 @@ export abstract class UserSettingsPrototypeComponent implements OnInit {
     page = 0;
     error?: string;
 
-    protected constructor(
-        protected notificationService: NotificationService,
-        protected userSettingsService: UserSettingsService,
-        protected alertService: JhiAlertService,
-        protected changeDetector: ChangeDetectorRef,
-    ) {}
+    protected constructor(protected userSettingsService: UserSettingsService, protected alertService: JhiAlertService, protected changeDetector: ChangeDetectorRef) {}
 
     ngOnInit(): void {
         this.loadSetting();
