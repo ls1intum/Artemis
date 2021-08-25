@@ -41,22 +41,22 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         return reaction;
     }
 
-    /*
-    flips the value of the pinned property on a posting by invoking the metis service
+    /**
+     * flips the value of the pinned property on a posting by invoking the metis service
      */
     togglePin() {
         this.metisService.updatePostPinState(this.posting, !this.posting.pinned).subscribe(() => {});
     }
 
-    /*
-    flips the value of the archived property on a posting by invoking the metis service
+    /**
+     * flips the value of the archived property on a posting by invoking the metis service
      */
     toggleArchive() {
         this.metisService.updatePostArchiveState(this.posting, !this.posting.archived).subscribe(() => {});
     }
 
-    /*
-    provides the tooltip for the pin icon dependent on the user authority and the pin state of a posting
+    /**
+     * provides the tooltip for the pin icon dependent on the user authority and the pin state of a posting
      */
     getPinTooltip(): string {
         if (this.currentUserIsAtLeastTutor && this.posting.pinned) {
@@ -64,13 +64,12 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         }
         if (this.currentUserIsAtLeastTutor && !this.posting.pinned) {
             return 'artemisApp.metis.pinPostTutorTooltip';
-        } else {
-            return 'artemisApp.metis.pinnedPostTooltip';
         }
+        return 'artemisApp.metis.pinnedPostTooltip';
     }
 
-    /*
-    provides the tooltip for the archive icon dependent on the user authority and the archive state of a posting
+    /**
+     * provides the tooltip for the archive icon dependent on the user authority and the archive state of a posting
      */
     getArchiveTooltip(): string {
         if (this.currentUserIsAtLeastTutor && this.posting.archived) {
@@ -78,8 +77,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         }
         if (this.currentUserIsAtLeastTutor && !this.posting.archived) {
             return 'artemisApp.metis.archivePostTutorTooltip';
-        } else {
-            return 'artemisApp.metis.archivedPostTooltip';
         }
+        return 'artemisApp.metis.archivedPostTooltip';
     }
 }
