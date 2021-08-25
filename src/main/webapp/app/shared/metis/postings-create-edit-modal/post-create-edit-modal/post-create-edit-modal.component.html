@@ -1,4 +1,4 @@
-<ng-template #postingEditor let-d="dismiss" *ngIf="course">
+<ng-template #postingEditor let-d="dismiss">
     <form [formGroup]="formGroup" (ngSubmit)="confirm()">
         <div class="modal-header">
             <h4 class="modal-title">{{ modalTitle | artemisTranslate }}</h4>

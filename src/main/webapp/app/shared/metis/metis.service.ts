@@ -63,7 +63,7 @@ export class MetisService {
      * @param course
      */
     setCourse(course: Course) {
-        if (this.courseId !== course.id || this.courseId === undefined) {
+        if (this.courseId === undefined || this.courseId !== course.id) {
             this.courseId = course.id!;
             this.course = course;
             this.updateCoursePostTags();
