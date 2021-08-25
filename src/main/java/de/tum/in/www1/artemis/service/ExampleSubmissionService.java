@@ -5,9 +5,8 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.ExampleSubmission;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -22,10 +21,17 @@ public class ExampleSubmissionService {
 
     private final ExerciseRepository exerciseRepository;
 
-    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository) {
+    private final TextExerciseImportService textExerciseImportService;
+
+    private final ModelingExerciseImportService modelingExerciseImportService;
+
+    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository,
+            TextExerciseImportService textExerciseImportService, ModelingExerciseImportService modelingExerciseImportService) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.exerciseRepository = exerciseRepository;
+        this.modelingExerciseImportService = modelingExerciseImportService;
+        this.textExerciseImportService = textExerciseImportService;
     }
 
     /**
@@ -71,5 +77,28 @@ public class ExampleSubmissionService {
             // due to Cascade.Remove this will also remove the submission and the result in case they exist
             exampleSubmissionRepository.delete(exampleSubmission);
         }
+    }
+
+    /**
+     * Creates new example submission by copying the student submission with its assessments
+     * calls copySubmission of required service depending on type of exercise
+     *
+     * @param submission The original student submission to be copied
+     * @param exercise   The exercise to which the example submission belongs
+     * @return the exampleSubmission entity
+     */
+    public ExampleSubmission importStudentSubmissionAsExampleSubmission(Submission submission, Exercise exercise) {
+        ExampleSubmission newExampleSubmission = new ExampleSubmission();
+        newExampleSubmission.setExercise(exercise);
+        // example submission does not need participation
+        submission.setParticipation(null);
+
+        if (exercise instanceof ModelingExercise) {
+            newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(submission));
+        }
+        if (exercise instanceof TextExercise) {
+            newExampleSubmission.setSubmission(textExerciseImportService.copySubmission(submission));
+        }
+        return exampleSubmissionRepository.save(newExampleSubmission);
     }
 }

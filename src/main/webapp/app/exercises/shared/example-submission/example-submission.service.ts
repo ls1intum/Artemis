@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { map } from 'rxjs/operators';
+import { Submission } from 'app/entities/submission.model';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
@@ -55,6 +56,26 @@ export class ExampleSubmissionService {
      */
     delete(exampleSubmissionId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`api/example-submissions/${exampleSubmissionId}`, { observe: 'response' });
+    }
+
+    /**
+     * Imports an example submission
+     * @param submission the submission to be imported as an example submission
+     * @param exerciseId the id of the corresponding exercise
+     */
+    import(submission: Submission, exerciseId: number): Observable<EntityResponseType> {
+        const copy = Object.assign({}, submission);
+        // avoid infinite recursion for JSON, example submission does not need participation
+        copy.participation = undefined;
+        copy.results?.forEach((result) => {
+            result.submission = undefined;
+            result.participation = undefined;
+        });
+        return this.http
+            .post<ExampleSubmission>(`api/exercises/${exerciseId}/example-submissions/import`, copy, {
+                observe: 'response',
+            })
+            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

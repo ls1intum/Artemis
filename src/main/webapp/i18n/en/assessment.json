@@ -28,7 +28,8 @@
             "button": {
                 "overrideAssessment": "Override Assessment",
                 "nextSubmission": "Assess Next Submission",
-                "resolveConflict": "Resolve Conflicts"
+                "resolveConflict": "Resolve Conflicts",
+                "importExampleSubmission": "Import as Example Submission"
             },
             "detail": {
                 "feedback": "Feedback",
