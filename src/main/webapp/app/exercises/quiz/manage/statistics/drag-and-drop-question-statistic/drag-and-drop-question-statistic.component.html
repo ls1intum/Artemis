@@ -35,8 +35,8 @@
                     </div>
                     <p>&nbsp;</p>
                     <div class="drag-and-drop-quizStatistic-picture col-md-8 offset-md-2">
-                        <jhi-secured-image #backgroundImage *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath"></jhi-secured-image>
-                        <div #clickLayer class="click-layer">
+                        <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath"></jhi-secured-image>
+                        <div class="click-layer">
                             <div *ngIf="!showSolution">
                                 <div
                                     class="drop-location"
