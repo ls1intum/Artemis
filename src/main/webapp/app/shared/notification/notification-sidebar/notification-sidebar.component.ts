@@ -221,7 +221,6 @@ export class NotificationSidebarComponent implements OnInit {
         this.userSettingsService.loadUserOptions(UserSettingsCategory.NOTIFICATION_SETTINGS).subscribe((res: HttpResponse<OptionCore[]>) => {
             this.notificationOptionCores = this.userSettingsService.loadUserOptionCoresSuccessAsOptionCores(
                 res.body!,
-                res.headers,
                 UserSettingsCategory.NOTIFICATION_SETTINGS,
             ) as NotificationOptionCore[];
             this.originalNotificationTypesActivationMap = this.notificationSettingsService.updateOriginalNotificationTypeActivationMap(this.notificationOptionCores);

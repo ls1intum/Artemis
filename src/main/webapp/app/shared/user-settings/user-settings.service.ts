@@ -60,7 +60,7 @@ export class UserSettingsService {
      * @param category decided what default settings to use as the base
      * @return all option cores based on the updated settings
      */
-    public loadUserOptionCoresSuccessAsOptionCores(receivedOptionCoresFromServer: OptionCore[], headers: HttpHeaders, category: UserSettingsCategory): OptionCore[] {
+    public loadUserOptionCoresSuccessAsOptionCores(receivedOptionCoresFromServer: OptionCore[], category: UserSettingsCategory): OptionCore[] {
         let settingsResult: UserSettings<OptionCore>;
         // load default settings as foundation
         settingsResult = UserSettingsService.loadDefaultSettingsAsFoundation(category);
