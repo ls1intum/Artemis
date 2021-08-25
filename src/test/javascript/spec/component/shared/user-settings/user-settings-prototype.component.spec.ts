@@ -1,63 +1,183 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NotificationService } from 'app/shared/notification/notification.service';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { ArtemisTestModule } from '../../../test.module';
-import { MockProvider } from 'ng-mocks/cjs/lib/mock-provider/mock-provider';
-import { TextToLowerCamelCasePipe } from 'app/shared/pipes/text-to-lower-camel-case.pipe';
-import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { SERVER_API_URL } from 'app/app.constants';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { Subject } from 'rxjs';
+import { AccountService } from 'app/core/auth/account.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import * as sinon from 'sinon';
-import { MockPipe } from 'ng-mocks/cjs/lib/mock-pipe/mock-pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import * as sinonChai from 'sinon-chai';
+import * as chai from 'chai';
+import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
+import { OptionSpecifier, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
+import { OptionCore, UserSettings } from 'app/shared/user-settings/user-settings.model';
+import { defaultNotificationSettings, NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { JhiAlertService } from 'ng-jhipster/service/alert.service';
+import { ChangeDetectorRef } from '@angular/core';
 import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-settings-prototype/user-settings-prototype.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('UserSettingsPrototypeComponent', () => {
+describe('User Settings Prototype Component', () => {
+    // general & common
     let comp: UserSettingsPrototypeComponent;
-    let fixture: ComponentFixture<UserSettingsPrototypeComponent>;
-
     let userSettingsService: UserSettingsService;
+    let httpMock: HttpTestingController;
+    let userSettingsCategory: UserSettingsCategory;
+    let resultingUserSettings: UserSettings<OptionCore>;
+    let notificationService: NotificationService;
+    let alertService: JhiAlertService;
+    let changeDetector: ChangeDetectorRef;
 
-    const imports = [ArtemisTestModule, TranslateTestingModule];
-    const declarations = [UserSettingsPrototypeComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe), MockPipe(TextToLowerCamelCasePipe)];
-    const providers = [
-        MockProvider(TextToLowerCamelCasePipe),
-        { provide: LocalStorageService, useClass: MockSyncStorage },
-        { provide: SessionStorageService, useClass: MockSyncStorage },
-    ];
+    // notification settings specific
+    const notificationOptionCoreA: NotificationOptionCore = {
+        id: 1,
+        optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
+        webapp: false,
+        email: false,
+    };
+    const notificationOptionCoreB: NotificationOptionCore = {
+        id: 2,
+        optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES,
+        webapp: false,
+        email: false,
+    };
+
+    function updateNotificationSettingsByProvidedNotificationOptionCores(settings: UserSettings<NotificationOptionCore>, providedOptionCores: NotificationOptionCore[]) {
+        providedOptionCores.forEach((providedOptionCore) => {
+            for (const group of settings.groups) {
+                for (const option of group.options) {
+                    if (option.optionCore.optionSpecifier === providedOptionCore.optionSpecifier) {
+                        option.optionCore.webapp = providedOptionCore.webapp;
+                        option.optionCore.email = providedOptionCore.email;
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    function updateNotificationOptionCoresByProvidedNotificationOptionCores(originalOptionCores: NotificationOptionCore[], providedOptionCores: NotificationOptionCore[]) {
+        providedOptionCores.forEach((providedCore) => {
+            for (const originalCore of originalOptionCores) {
+                if (originalCore.optionSpecifier === providedCore.optionSpecifier) {
+                    originalCore.webapp = providedCore.webapp;
+                    originalCore.email = providedCore.email;
+                    break;
+                }
+            }
+        });
+    }
+
+    function checkIfProvidedNotificationCoresArePartOfExpectedCores(providedNotificationCores: NotificationOptionCore[], expectedNotificationCores: NotificationOptionCore[]) {
+        providedNotificationCores.forEach((providedCore) => {
+            for (const expectedNotificationCore of expectedNotificationCores) {
+                if (providedCore.optionSpecifier === expectedNotificationCore.optionSpecifier) {
+                    expect(providedCore.webapp).to.equal(expectedNotificationCore.webapp);
+                    expect(providedCore.email).to.equal(expectedNotificationCore.email);
+                    break;
+                }
+            }
+        });
+    }
+
+    function extractOptionCoresFromSettings(settings: UserSettings<OptionCore>): OptionCore[] {
+        const extractedOptionCores: OptionCore[] = [];
+        settings.groups.forEach((group) => {
+            group.options.forEach((option) => {
+                extractedOptionCores.push(option.optionCore);
+            });
+        });
+        return extractedOptionCores;
+    }
+
+    function compareSettings(expectedSettings: UserSettings<OptionCore>, resultSettings: UserSettings<OptionCore>) {
+        const expectedOptionCores = extractOptionCoresFromSettings(expectedSettings);
+        const resultOptionCores = extractOptionCoresFromSettings(resultSettings);
+        expect(expectedOptionCores).to.deep.equal(resultOptionCores);
+    }
 
     beforeEach(() => {
-        // TestBed.configureTestingModule({
-        return TestBed.configureTestingModule({
-            imports,
-            declarations,
-            providers,
+        TestBed.configureTestingModule({
+            imports: [HttpClientTestingModule, TranslateTestingModule],
+            providers: [
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(UserSettingsPrototypeComponent);
-                comp = fixture.componentInstance;
-                //comp.userSettingsCategory =
-
-                //vll doch eher
-                //const notificationService = TestBed.inject(NotificationService);
-                //stub(notificationService, 'methodName'.returns();
+                comp = TestBed.inject(UserSettingsPrototypeComponent);
                 userSettingsService = TestBed.inject(UserSettingsService);
+                httpMock = TestBed.inject(HttpTestingController);
+                notificationService = TestBed.inject(NotificationService);
+                alertService = TestBed.inject(JhiAlertService);
+                changeDetector = TestBed.inject(ChangeDetectorRef);
             });
     });
 
     afterEach(() => {
+        httpMock.verify();
         sinon.restore();
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(comp).to.be.ok;
+    // because this component should be looked at
+    describe('Service methods with Category Notification Settings', () => {
+        userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
+        const notificationOptionCoresForTesting: NotificationOptionCore[] = [notificationOptionCoreA, notificationOptionCoreB];
+
+        describe('test loadSettings', () => {
+            it('should call userSettingsService to load OptionsCores', () => {
+                const expectedUserSettings: UserSettings<NotificationOptionCore> = defaultNotificationSettings;
+                updateNotificationSettingsByProvidedNotificationOptionCores(expectedUserSettings, notificationOptionCoresForTesting);
+                resultingUserSettings = userSettingsService.loadUserOptionCoresSuccessAsSettings(notificationOptionCoresForTesting, userSettingsCategory);
+                compareSettings(expectedUserSettings, resultingUserSettings);
+            });
+
+            it('should correctly update and return option cores based on received option cores', () => {
+                const expectedNotificationOptionCores: NotificationOptionCore[] = userSettingsService.extractOptionCoresFromSettings(
+                    defaultNotificationSettings,
+                ) as NotificationOptionCore[];
+                updateNotificationOptionCoresByProvidedNotificationOptionCores(expectedNotificationOptionCores, notificationOptionCoresForTesting);
+
+                let resultingOptionCores: NotificationOptionCore[];
+                resultingOptionCores = userSettingsService.loadUserOptionCoresSuccessAsOptionCores(
+                    notificationOptionCoresForTesting,
+                    userSettingsCategory,
+                ) as NotificationOptionCore[];
+
+                expect(resultingOptionCores.length).to.equal(expectedNotificationOptionCores.length);
+                checkIfProvidedNotificationCoresArePartOfExpectedCores(resultingOptionCores, expectedNotificationOptionCores);
+            });
+        });
+
+        describe('test saving methods', () => {
+            it('should call correct URL to save option cores', () => {
+                userSettingsService.saveUserOptions(notificationOptionCoresForTesting, userSettingsCategory).subscribe();
+                const req = httpMock.expectOne({ method: 'POST' });
+                const infoUrl = notificationSettingsResourceUrl + '/save-options';
+                expect(req.request.url).to.equal(infoUrl);
+            });
+
+            it('server response should contain inputted options', fakeAsync(() => {
+                userSettingsService.saveUserOptions(notificationOptionCoresForTesting, userSettingsCategory).subscribe((resp) => {
+                    checkIfProvidedNotificationCoresArePartOfExpectedCores(resp.body as NotificationOptionCore[], notificationOptionCoresForTesting);
+                });
+                const req = httpMock.expectOne({ method: 'POST' });
+                req.flush(notificationOptionCoresForTesting);
+                tick();
+            }));
+
+            it('should correctly update and return settings based on received option cores', () => {
+                const expectedUserSettings: UserSettings<NotificationOptionCore> = defaultNotificationSettings;
+                updateNotificationSettingsByProvidedNotificationOptionCores(expectedUserSettings, notificationOptionCoresForTesting);
+                resultingUserSettings = userSettingsService.saveUserOptionsSuccess(notificationOptionCoresForTesting, userSettingsCategory);
+                compareSettings(expectedUserSettings, resultingUserSettings);
+            });
+        });
     });
 });

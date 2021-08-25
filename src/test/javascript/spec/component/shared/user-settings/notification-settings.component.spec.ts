@@ -46,9 +46,9 @@ describe('NotificationSettingsComponent', () => {
                 fixture = TestBed.createComponent(NotificationSettingsComponent);
                 comp = fixture.componentInstance;
 
-                //vll doch eher
-                //const notificationService = TestBed.inject(NotificationService);
-                //stub(notificationService, 'methodName'.returns();
+                // vll doch eher
+                // const notificationService = TestBed.inject(NotificationService);
+                // stub(notificationService, 'methodName'.returns();
                 notificationService = TestBed.inject(NotificationService);
                 userSettingsService = TestBed.inject(UserSettingsService);
             });

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Observable, Subject } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
-import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { defaultNotificationSettings, NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Option, OptionCore, OptionGroup, UserSettings } from 'app/shared/user-settings/user-settings.model';

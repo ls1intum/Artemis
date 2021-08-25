@@ -14,11 +14,11 @@ export class TextToLowerCamelCasePipe implements PipeTransform {
         input = input.replace(/_/g, ' ');
         let words = input.split(' ');
 
-        //remove extra white space
+        // remove extra white space
         words = words.filter((word) => word !== '');
 
         // converts words to lowerCamelCase
-        let upperCamelCase = words.reduce((accumulator: string, currentWord: string) => {
+        const upperCamelCase = words.reduce((accumulator: string, currentWord: string) => {
             return accumulator + currentWord[0].toUpperCase() + currentWord.substr(1).toLowerCase();
         }, '');
 

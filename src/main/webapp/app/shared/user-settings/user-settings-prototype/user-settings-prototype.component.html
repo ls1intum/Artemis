@@ -1,14 +1,16 @@
-<!--
+<div>
+    Exemplary HTML template for UserSettings
+    <!--
        Exemplary HTML template for UserSettings
        Every settings page will be somewhat unique, especially its optionCore (different properties and methods)
        This nested behavior could not be realized via polymorphism due to different types and strong bidirectional dependencies
        Therefore just copy this template for new settings and modify it. The minimal adjustment needed for the template to work is to implement the
        option core with its properties and functionalities under <! --OptionCore-- >
        Look at notification-settings.component.html for a good example
-    -->
+
 <div class="d-flex justify-content-between">
     <h1>
-        <!--UserSettingsCategory-->
+        <! --UserSettingsCategory-- >
         {{ 'artemisApp.userSettings.categories.' + (userSettingsCategory | lowerCamelCase) | artemisTranslate }}
     </h1>
     <button type="button" class="btn btn-primary" *ngIf="optionsChanged" id="apply-changes-button" (click)="saveOptions()">
@@ -20,20 +22,21 @@
     <div *ngFor="let optionGroup of userSettings.groups">
         <div *jhiHasAnyAuthority="[optionGroup.restrictionLevel]" class="list-group-item">
             <h3>
-                <!--GroupName-->
+                <! --GroupName-- >
                 {{ 'artemisApp.userSettings.optionGroupNames.' + (optionGroup.name | lowerCamelCase) | artemisTranslate }}
             </h3>
             <div *ngFor="let option of optionGroup.options">
                 <dt>
-                    <!--OptionName-->
+                    <! --OptionName-- >
                     {{ 'artemisApp.userSettings.optionNames.' + (option.name | lowerCamelCase) | artemisTranslate }}
                 </dt>
                 <span>
-                    <!--OptionDescription-->
+                    <! --OptionDescription-- >
                     {{ 'artemisApp.userSettings.optionDescriptions.' + (option.description | lowerCamelCase) | artemisTranslate }}
                 </span>
-                <!--Put Settings specific core properties & functions here-->
+                <! --Put Settings specific core properties & functions here-- >
             </div>
         </div>
     </div>
 </div>
+--></div>

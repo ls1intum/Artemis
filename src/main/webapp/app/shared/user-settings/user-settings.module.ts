@@ -9,6 +9,6 @@ import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-se
 
 @NgModule({
     imports: [RouterModule.forChild(userSettingsState), ArtemisSharedModule],
-    declarations: [UserSettingsContainerComponent, UserSettingsPrototypeComponent, AccountInformationComponent, NotificationSettingsComponent],
+    declarations: [UserSettingsContainerComponent, AccountInformationComponent, NotificationSettingsComponent],
 })
 export class UserSettingsModule {}

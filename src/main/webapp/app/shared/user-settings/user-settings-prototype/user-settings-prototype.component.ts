@@ -8,13 +8,13 @@ import { OptionCore, UserSettings } from 'app/shared/user-settings/user-settings
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 
 /**
- * Is used as the "abstract" user-settings "parent" component with all the necessary basic logic for other "child" components to implement/inherit from.
+ * Is used as the abstract user-settings "parent" component with all the necessary basic logic for other "child" components to implement/inherit from.
  */
 @Component({
     templateUrl: 'user-settings-prototype.component.html',
     styleUrls: ['user-settings-prototype.component.scss'],
 })
-export class UserSettingsPrototypeComponent implements OnInit {
+export abstract class UserSettingsPrototypeComponent implements OnInit {
     // HTML template related
     optionsChanged = false;
     currentUser: User;
@@ -27,7 +27,7 @@ export class UserSettingsPrototypeComponent implements OnInit {
     page = 0;
     error?: string;
 
-    constructor(
+    protected constructor(
         protected notificationService: NotificationService,
         protected userSettingsService: UserSettingsService,
         protected alertService: JhiAlertService,
@@ -43,7 +43,7 @@ export class UserSettingsPrototypeComponent implements OnInit {
     /**
      * Fetches the userOptionCores based on the settings category, updates the currently loaded userSettings, optionCores, and HTML template
      */
-    loadSetting(): void {
+    protected loadSetting(): void {
         this.userSettingsService.loadUserOptions(this.userSettingsCategory).subscribe((res: HttpResponse<OptionCore[]>) => {
             this.userSettings = this.userSettingsService.loadUserOptionCoresSuccessAsSettings(res.body!, this.userSettingsCategory);
             this.finishUpdate();
@@ -57,7 +57,7 @@ export class UserSettingsPrototypeComponent implements OnInit {
      * Is invoked by clicking the save button
      * Sends all option cores which were changed by the user to the server for saving
      */
-    saveOptions() {
+    public saveOptions() {
         this.userSettingsService.saveUserOptions(this.optionCores, this.userSettingsCategory).subscribe(
             (res: HttpResponse<OptionCore[]>) => {
                 this.userSettings = this.userSettingsService.saveUserOptionsSuccess(res.body!, this.userSettingsCategory);
