@@ -188,34 +188,6 @@ export class MetisService {
     }
 
     /**
-     * updates the pin state of a post by invoking the post service
-     * @param post      post for which the pin state is toggled
-     * @param pinState  updated pin state
-     */
-    updatePostPinState(post: Post, pinState: boolean): Observable<Post> {
-        return this.postService.updatePinState(this.courseId, post.id!, pinState).pipe(
-            tap(() => {
-                this.getPostsForFilter(this.currentPostFilter);
-            }),
-            map((res: HttpResponse<Post>) => res.body!),
-        );
-    }
-
-    /**
-     * updates the archive state of a post by invoking the post service
-     * @param post          post for which the archive state is toggled
-     * @param archiveState  updated archive state
-     */
-    updatePostArchiveState(post: Post, archiveState: boolean): Observable<Post> {
-        return this.postService.updateArchiveState(this.courseId, post.id!, archiveState).pipe(
-            tap(() => {
-                this.getPostsForFilter(this.currentPostFilter);
-            }),
-            map((res: HttpResponse<Post>) => res.body!),
-        );
-    }
-
-    /**
      * deletes a post by invoking the post service
      * fetches the posts for the currently set filter on response and updates course tags
      * @param post post to delete
@@ -285,28 +257,14 @@ export class MetisService {
 
     /**
      * sorts posts by two criteria
-     * 1. criterion: pin -> pinned posts come first
-     * 2. criterion: archive -> archived posts come last
-     * 3. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
-     * 4. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
+     * 1. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
+     * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      * @return Post[] sorted array of posts
      */
     static sortPosts(posts: Post[]): Post[] {
         return posts.sort(function (postA, postB) {
             const postAVoteEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
             const postBVoteEmojiCount = postB.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
-            if (postA.pinned && !postB.pinned) {
-                return -1;
-            }
-            if (!postA.pinned && postB.pinned) {
-                return 1;
-            }
-            if (postA.archived && !postB.archived) {
-                return 1;
-            }
-            if (!postA.archived && postB.archived) {
-                return -1;
-            }
             if (postAVoteEmojiCount > postBVoteEmojiCount) {
                 return -1;
             }

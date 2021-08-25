@@ -28,14 +28,9 @@ $reaction-button-reacted-accent-color: rgba(90, 163, 208);
 
     .emoji-count {
         font-size: 11px;
-
-        &.reaction-count--reacted {
-            font-weight: bold;
-            color: $reaction-button-reacted-accent-color;
-        }
     }
 
-    &:not(.reaction-button--not-hoverable):hover {
+    &:hover {
         box-shadow: inset 0 0 0 1px $reaction-button-accent-color;
         background: $reaction-button-hover-color;
     }

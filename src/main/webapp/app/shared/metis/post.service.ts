@@ -40,28 +40,6 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * updates pin state of a post
-     * @param {number} courseId
-     * @param {number} postId
-     * @param {boolean} pinState
-     * @return {Observable<EntityResponseType>}
-     */
-    updatePinState(courseId: number, postId: number, pinState: boolean): Observable<EntityResponseType> {
-        return this.http.put(`${this.resourceUrl}${courseId}/posts/${postId}/pin`, pinState, { observe: 'response' }).pipe(map(this.convertDateFromServer));
-    }
-
-    /**
-     * updates archive state of a post
-     * @param {number} courseId
-     * @param {number} postId
-     * @param {boolean} archiveState
-     * @return {Observable<EntityResponseType>}
-     */
-    updateArchiveState(courseId: number, postId: number, archiveState: boolean): Observable<EntityResponseType> {
-        return this.http.put(`${this.resourceUrl}${courseId}/posts/${postId}/archive`, archiveState, { observe: 'response' }).pipe(map(this.convertDateFromServer));
-    }
-
-    /**
      * gets all posts for course by its id
      * @param {number} courseId
      * @return {Observable<EntityArrayResponseType>}

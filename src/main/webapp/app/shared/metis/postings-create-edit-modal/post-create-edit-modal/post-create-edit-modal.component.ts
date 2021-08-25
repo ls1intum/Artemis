@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component } from '@angular/core';
 import { PostingsCreateEditModalDirective } from 'app/shared/metis/postings-create-edit-modal/postings-create-edit-modal.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseWideContext, Post } from 'app/entities/metis/post.model';
@@ -37,7 +37,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         protected lectureService: LectureService,
     ) {
         super(metisService, modalService, formBuilder);
-        this.tags = this.posting?.tags ?? [];
+        // TODO: maybe move to ngOnInit
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.course = this.metisService.getCourse();
         this.lectures = this.course.lectures;
@@ -50,7 +50,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     resetFormGroup(): void {
         this.pageType = this.metisService.getPageType();
         this.initialContext = this.setInitialContext();
-        this.tags = this.posting.tags ? this.posting.tags : [];
+        this.tags = this.posting?.tags ?? [];
         this.formGroup = this.formBuilder.group({
             title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH)]],
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength)]],

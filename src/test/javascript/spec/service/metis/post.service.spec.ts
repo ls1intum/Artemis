@@ -86,35 +86,6 @@ describe('Post Service', () => {
             tick();
         }));
 
-        it('should pin a Post', fakeAsync(() => {
-            const newPinState = true;
-            const returnedFromService = { ...elemDefault, pinned: newPinState };
-
-            const expected = { ...returnedFromService };
-            service
-                .updatePinState(1, elemDefault.id!, newPinState)
-                .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
-            const req = httpMock.expectOne({ method: 'PUT' });
-            req.flush(returnedFromService);
-            tick();
-        }));
-
-        it('should archive a Post', fakeAsync(() => {
-            const newArchiveState = true;
-
-            const returnedFromService = { ...elemDefault, archived: newArchiveState };
-
-            const expected = { ...returnedFromService };
-            service
-                .updateArchiveState(1, elemDefault.id!, newArchiveState)
-                .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
-            const req = httpMock.expectOne({ method: 'PUT' });
-            req.flush(returnedFromService);
-            tick();
-        }));
-
         it('should delete a Post', fakeAsync(() => {
             service.delete(1, elemDefault).subscribe((resp) => expect(resp.ok).to.be.true);
 
