@@ -10,6 +10,12 @@ export enum CourseWideContext {
     RANDOM = 'RANDOM',
 }
 
+export enum DisplayPriority {
+    PINNED = 'PINNED',
+    ARCHIVED = 'ARCHIVED',
+    NONE = 'NONE',
+}
+
 export class Post extends Posting {
     public title?: string;
     public visibleForStudents?: boolean;
@@ -19,8 +25,7 @@ export class Post extends Posting {
     public lecture?: Lecture;
     public course?: Course;
     public courseWideContext?: CourseWideContext;
-    public pinned?: boolean;
-    public archived?: boolean;
+    public displayPriority?: DisplayPriority;
     // deprecated, will be removed
     public votes?: number;
 
@@ -29,7 +34,6 @@ export class Post extends Posting {
         // set default values
         this.visibleForStudents = true;
         this.votes = 0;
-        this.pinned = false;
-        this.archived = false;
+        this.displayPriority = DisplayPriority.NONE;
     }
 }

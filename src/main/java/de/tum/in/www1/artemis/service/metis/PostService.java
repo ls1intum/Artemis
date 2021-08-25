@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -61,9 +62,8 @@ public class PostService extends PostingService {
 
         // set author to current user
         post.setAuthor(user);
-        // set default value for pin / archive
-        post.setPinned(false);
-        post.setArchived(false);
+        // set default value display priority -> NONE
+        post.setDisplayPriority(DisplayPriority.NONE);
         Post savedPost = postRepository.save(post);
 
         sendNotification(savedPost);
@@ -99,8 +99,7 @@ public class PostService extends PostingService {
         existingPost.setTags(post.getTags());
 
         if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            existingPost.setArchived(post.isArchived());
-            existingPost.setPinned(post.isPinned());
+            existingPost.setDisplayPriority(post.getDisplayPriority());
         }
 
         Post updatedPost = postRepository.save(existingPost);
@@ -114,49 +113,16 @@ public class PostService extends PostingService {
     }
 
     /**
-     * Checks course, user and post validity,
-     * updates the pin state, persists the post,
-     * and ensures that sensitive information is filtered out
+     * Invokes the updatePost method to persist the change of displayPriority
      *
-     * @param courseId  id of the course the post belongs to
-     * @param postId    id of the post to change the pin state for
-     * @param pinState  new boolean value of the pinned flag for the given post
+     * @param courseId                          id of the course the post belongs to
+     * @param postId                            id of the post to change the pin state for
+     * @param postWithDisplayPriorityToUpdate   post with new dislayPriority
      * @return updated post that was persisted
      */
-    public Post updatePinState(Long courseId, Long postId, boolean pinState) {
+    public Post changeDisplayPriority(Long courseId, Long postId, Post postWithDisplayPriorityToUpdate) {
         Post post = postRepository.findByIdElseThrow(postId);
-
-        // update pin state
-        post.setPinned(pinState);
-        // ensure that pin state is compatible with archive state -> either one of them can be true
-        if (post.isArchived() && post.isPinned()) {
-            // if after archive state update both, archived and pinned, would be true the archive flag is flipped
-            post.setArchived(false);
-        }
-
-        return updatePost(courseId, post);
-    }
-
-    /**
-     * Checks course, user and post validity,
-     * updates the archive state, persists the post,
-     * and ensures that sensitive information is filtered out
-     *
-     * @param courseId      id of the course the post belongs to
-     * @param postId        id of the post to change the archive state for
-     * @param archiveState  new boolean value of the archived flag for the given post
-     * @return updated post that was persisted
-     */
-    public Post updateArchiveState(Long courseId, Long postId, boolean archiveState) {
-        Post post = postRepository.findByIdElseThrow(postId);
-
-        // update archive state
-        post.setArchived(archiveState);
-        // ensure that pin state is compatible with archive state -> either one of them can be true
-        if (post.isPinned() && post.isArchived()) {
-            // if after archive state update both, archived and pinned, would be true, the pin flag is flipped
-            post.setPinned(false);
-        }
+        post.setDisplayPriority(postWithDisplayPriorityToUpdate.getDisplayPriority());
 
         return updatePost(courseId, post);
     }

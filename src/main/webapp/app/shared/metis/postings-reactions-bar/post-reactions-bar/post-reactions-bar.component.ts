@@ -1,6 +1,6 @@
 import { Component, OnChanges, OnInit } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { Post } from 'app/entities/metis/post.model';
+import { DisplayPriority, Post } from 'app/entities/metis/post.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/postings-reactions-bar/postings-reactions-bar.component';
 
 @Component({
@@ -11,23 +11,23 @@ import { PostingsReactionsBarDirective } from 'app/shared/metis/postings-reactio
 export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges {
     pinTooltip: string;
     archiveTooltip: string;
+    displayPriority: DisplayPriority;
+    eDisplayPriority = DisplayPriority;
 
     /**
-     * on initialization: sets the required tooltips
+     * on initialization: call resetTooltipsAndPriority
      */
     ngOnInit() {
         super.ngOnInit();
-        this.pinTooltip = this.getPinTooltip();
-        this.archiveTooltip = this.getArchiveTooltip();
+        this.resetTooltipsAndPriority();
     }
 
     /**
-     * on changes: sets the required tooltips
+     * on changes: call resetTooltipsAndPriority
      */
     ngOnChanges() {
         super.ngOnChanges();
-        this.pinTooltip = this.getPinTooltip();
-        this.archiveTooltip = this.getArchiveTooltip();
+        this.resetTooltipsAndPriority();
     }
 
     /**
@@ -42,27 +42,42 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     }
 
     /**
-     * flips the value of the pinned property on a posting by invoking the metis service
+     * changes the the state of the displayPriority property on a post to PINNED by invoking the metis service
+     * in case the displayPriority is already set to PINNED, it will changed to NONE
      */
     togglePin() {
-        this.metisService.updatePostPinState(this.posting, !this.posting.pinned).subscribe(() => {});
+        if (this.displayPriority === DisplayPriority.PINNED) {
+            this.displayPriority = DisplayPriority.NONE;
+        } else {
+            this.displayPriority = DisplayPriority.PINNED;
+        }
+        this.posting.displayPriority = this.displayPriority;
+        this.metisService.updatePostDisplayPriority(this.posting).subscribe(() => {});
     }
 
     /**
-     * flips the value of the archived property on a posting by invoking the metis service
+     * changes the the state of the displayPriority property on a post to ARCHIVED by invoking the metis service,
+     * in case the displayPriority is already set to ARCHIVED, it will changed to NONE
      */
     toggleArchive() {
-        this.metisService.updatePostArchiveState(this.posting, !this.posting.archived).subscribe(() => {});
+        if (this.displayPriority === DisplayPriority.ARCHIVED) {
+            this.displayPriority = DisplayPriority.NONE;
+        } else {
+            this.displayPriority = DisplayPriority.ARCHIVED;
+        }
+        this.posting.displayPriority = this.displayPriority;
+        this.metisService.updatePostDisplayPriority(this.posting).subscribe(() => {});
     }
 
     /**
      * provides the tooltip for the pin icon dependent on the user authority and the pin state of a posting
+     *
      */
     getPinTooltip(): string {
-        if (this.currentUserIsAtLeastTutor && this.posting.pinned) {
+        if (this.currentUserIsAtLeastTutor && this.displayPriority === DisplayPriority.PINNED) {
             return 'artemisApp.metis.removePinPostTutorTooltip';
         }
-        if (this.currentUserIsAtLeastTutor && !this.posting.pinned) {
+        if (this.currentUserIsAtLeastTutor && this.displayPriority === DisplayPriority.NONE) {
             return 'artemisApp.metis.pinPostTutorTooltip';
         }
         return 'artemisApp.metis.pinnedPostTooltip';
@@ -72,12 +87,18 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
      * provides the tooltip for the archive icon dependent on the user authority and the archive state of a posting
      */
     getArchiveTooltip(): string {
-        if (this.currentUserIsAtLeastTutor && this.posting.archived) {
+        if (this.currentUserIsAtLeastTutor && this.displayPriority === DisplayPriority.ARCHIVED) {
             return 'artemisApp.metis.removeArchivePostTutorTooltip';
         }
-        if (this.currentUserIsAtLeastTutor && !this.posting.archived) {
+        if (this.currentUserIsAtLeastTutor && this.displayPriority === DisplayPriority.NONE) {
             return 'artemisApp.metis.archivePostTutorTooltip';
         }
         return 'artemisApp.metis.archivedPostTooltip';
+    }
+
+    private resetTooltipsAndPriority() {
+        this.displayPriority = this.posting.displayPriority!;
+        this.pinTooltip = this.getPinTooltip();
+        this.archiveTooltip = this.getArchiveTooltip();
     }
 }

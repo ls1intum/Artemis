@@ -1,11 +1,11 @@
 import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as sinon from 'sinon';
+import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
-import { CourseWideContext, Post } from 'app/entities/metis/post.model';
+import { CourseWideContext, DisplayPriority, Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -82,8 +82,7 @@ describe('Metis Service', () => {
         post1.tags = ['tag1', 'tag2'];
         post1.author = user1;
         post1.creationDate = moment();
-        post1.pinned = true;
-        post1.archived = false;
+        post1.displayPriority = DisplayPriority.PINNED;
 
         post2 = new Post();
         post2.id = 2;
@@ -92,8 +91,7 @@ describe('Metis Service', () => {
         post2.tags = ['tag1', 'tag2'];
         post2.author = user2;
         post2.creationDate = moment().subtract(1, 'day');
-        post2.pinned = false;
-        post2.archived = false;
+        post2.displayPriority = DisplayPriority.NONE;
 
         post3 = new Post();
         post3.id = 3;
@@ -104,8 +102,7 @@ describe('Metis Service', () => {
         post3.courseWideContext = CourseWideContext.RANDOM;
         post3.creationDate = moment().subtract(2, 'day');
         post3.reactions = [reactionWithVoteEmoji];
-        post3.pinned = false;
-        post3.archived = false;
+        post3.displayPriority = DisplayPriority.NONE;
 
         post4 = new Post();
         post4.id = 4;
@@ -116,8 +113,7 @@ describe('Metis Service', () => {
         post4.courseWideContext = CourseWideContext.RANDOM;
         post4.creationDate = moment().subtract(2, 'minute');
         post4.reactions = [reactionWithVoteEmoji];
-        post4.pinned = false;
-        post4.archived = true;
+        post4.displayPriority = DisplayPriority.ARCHIVED;
 
         const posts: Post[] = [post1, post2, post3, post4];
 
@@ -186,10 +182,10 @@ describe('Metis Service', () => {
         }));
 
         it('should pin a post', fakeAsync(() => {
-            const postServiceSpy = spy(postService, 'updatePinState');
-            const newPinState = true;
-            const updatedPostSub = metisService.updatePostPinState(post1, newPinState).subscribe((updatedPost) => {
-                expect(updatedPost).to.be.deep.equal({ id: post1.id, pinned: newPinState });
+            const postServiceSpy = spy(postService, 'updatePostDisplayPriority');
+            post1.displayPriority = DisplayPriority.PINNED;
+            const updatedPostSub = metisService.updatePostDisplayPriority(post1).subscribe((updatedPost) => {
+                expect(updatedPost).to.be.deep.equal({ id: post1.id, displayPriority: DisplayPriority.PINNED });
             });
             expect(postServiceSpy).to.have.been.called;
             tick();
@@ -198,10 +194,10 @@ describe('Metis Service', () => {
         }));
 
         it('should archive a post', fakeAsync(() => {
-            const postServiceSpy = spy(postService, 'updateArchiveState');
-            const newArchiveState = true;
-            const updatedPostSub = metisService.updatePostArchiveState(post1, newArchiveState).subscribe((updatedPost) => {
-                expect(updatedPost).to.be.deep.equal({ id: post1.id, archived: newArchiveState });
+            const postServiceSpy = spy(postService, 'updatePostDisplayPriority');
+            post1.displayPriority = DisplayPriority.ARCHIVED;
+            const updatedPostSub = metisService.updatePostDisplayPriority(post1).subscribe((updatedPost) => {
+                expect(updatedPost).to.be.deep.equal({ id: post1.id, displayPriority: DisplayPriority.ARCHIVED });
             });
             expect(postServiceSpy).to.have.been.called;
             tick();

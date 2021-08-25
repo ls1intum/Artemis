@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
@@ -16,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 
 /**
  * A Post, i.e. start of a Metis thread.
@@ -70,29 +70,9 @@ public class Post extends Posting {
     @Column(name = "course_wide_context")
     private CourseWideContext courseWideContext;
 
-    @NotNull
-    @Column(name = "is_pinned")
-    private boolean pinned;
-
-    @NotNull
-    @Column(name = "is_archived")
-    private boolean archived;
-
-    public boolean isPinned() {
-        return pinned;
-    }
-
-    public void setPinned(boolean pinned) {
-        this.pinned = pinned;
-    }
-
-    public boolean isArchived() {
-        return archived;
-    }
-
-    public void setArchived(boolean archived) {
-        this.archived = archived;
-    }
+    @Enumerated(EnumType.STRING)
+    @Column(name = "display_priority")
+    private DisplayPriority displayPriority;
 
     public String getTitle() {
         return title;
@@ -189,9 +169,17 @@ public class Post extends Posting {
         this.courseWideContext = courseWideContext;
     }
 
+    public DisplayPriority getDisplayPriority() {
+        return displayPriority;
+    }
+
+    public void setDisplayPriority(DisplayPriority displayPriority) {
+        this.displayPriority = displayPriority;
+    }
+
     @Override
     public String toString() {
         return "Post{" + "id=" + getId() + ", content='" + getContent() + "'" + ", creationDate='" + getCreationDate() + "'" + ", visibleForStudents='" + isVisibleForStudents()
-                + "'" + ", votes='" + getVotes() + "'" + "}";
+                + "'" + ", displayPriority='" + getDisplayPriority() + "'" + "}";
     }
 }

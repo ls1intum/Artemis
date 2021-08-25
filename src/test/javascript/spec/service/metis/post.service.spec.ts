@@ -2,7 +2,7 @@ import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import * as chai from 'chai';
 import { take } from 'rxjs/operators';
-import { Post } from 'app/entities/metis/post.model';
+import { DisplayPriority, Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -87,12 +87,12 @@ describe('Post Service', () => {
         }));
 
         it('should pin a Post', fakeAsync(() => {
-            const newPinState = true;
-            const returnedFromService = { ...elemDefault, pinned: newPinState };
+            const newDisplayPriority = DisplayPriority.PINNED;
+            const returnedFromService = { ...elemDefault, displayPriority: newDisplayPriority };
 
             const expected = { ...returnedFromService };
             service
-                .updatePinState(1, elemDefault.id!, newPinState)
+                .updatePostDisplayPriority(1, elemDefault.id!, returnedFromService)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
@@ -101,13 +101,12 @@ describe('Post Service', () => {
         }));
 
         it('should archive a Post', fakeAsync(() => {
-            const newArchiveState = true;
-
-            const returnedFromService = { ...elemDefault, archived: newArchiveState };
+            const newDisplayPriority = DisplayPriority.ARCHIVED;
+            const returnedFromService = { ...elemDefault, displayPriority: newDisplayPriority };
 
             const expected = { ...returnedFromService };
             service
-                .updateArchiveState(1, elemDefault.id!, newArchiveState)
+                .updatePostDisplayPriority(1, elemDefault.id!, returnedFromService)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'PUT' });

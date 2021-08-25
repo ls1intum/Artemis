@@ -66,33 +66,17 @@ public class PostResource {
     /**
      * PUT /courses/{courseId}/posts/{postId}/pin : Pin an existing post by setting the pinned flag to true (is used as criterion for sorting the posts)
      *
-     * @param courseId  id of the course the post belongs to
-     * @param postId    id of the post to pin
-     * @param pinState  updated boolean value of the pinned flag for the given post
+     * @param courseId                          id of the course the post belongs to
+     * @param postId                            id of the post change the displayPriority for
+     * @param postWithDisplayPriorityToUpdate   post with new enum value for displayPriority, i.e. either PINNED, ARCHIVED, NONE
      * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
      * or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
-    @PutMapping("courses/{courseId}/posts/{postId}/pin")
+    @PutMapping("courses/{courseId}/posts/{postId}/display-priority")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Post> updatePinState(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody boolean pinState) {
-        Post postWithUpdatedPinState = postService.updatePinState(courseId, postId, pinState);
-        return ResponseEntity.ok().body(postWithUpdatedPinState);
-    }
-
-    /**
-     * PUT /courses/{courseId}/posts/{postId}/archive : Archive an existing post by setting the archive flag to true (is used as criterion for sorting the posts)
-     *
-     * @param courseId      id of the course the post belongs to
-     * @param postId        id of the post to vote on
-     * @param archiveState  updated boolean value of the archived flag for the given post
-     * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
-     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
-     */
-    @PutMapping("courses/{courseId}/posts/{postId}/archive")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Post> updateArchiveState(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody boolean archiveState) {
-        Post postWithUpdatedArchiveState = postService.updateArchiveState(courseId, postId, archiveState);
-        return ResponseEntity.ok().body(postWithUpdatedArchiveState);
+    public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Post postWithDisplayPriorityToUpdate) {
+        Post postWithUpdatedDisplayPriority = postService.changeDisplayPriority(courseId, postId, postWithDisplayPriorityToUpdate);
+        return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
     }
 
     /**

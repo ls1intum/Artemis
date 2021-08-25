@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -242,9 +243,11 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "student1", roles = "USER")
     public void testPinPost_asStudent_forbidden() throws Exception {
         Post postToNotPin = editExistingPost(existingPosts.get(1));
+        postToNotPin.setDisplayPriority(DisplayPriority.PINNED);
 
-        // set pin flag to true in request body
-        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotPin.getId() + "/pin", true, Post.class, HttpStatus.FORBIDDEN);
+        // try to change display priority to PINNED
+        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotPin.getId() + "/display-priority", postToNotPin, Post.class,
+                HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
     }
 
@@ -252,9 +255,10 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testPinPost_asTutor() throws Exception {
         Post postToPin = editExistingPost(existingPosts.get(0));
+        postToPin.setDisplayPriority(DisplayPriority.PINNED);
 
-        // set pin flag to true in request body
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToPin.getId() + "/pin", true, Post.class, HttpStatus.OK);
+        // change display priority to PINNED
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToPin.getId() + "/display-priority", postToPin, Post.class, HttpStatus.OK);
         assertThat(updatedPost).isEqualTo(postToPin);
     }
 
@@ -262,9 +266,11 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "student1", roles = "USER")
     public void testArchivePost_asStudent_forbidden() throws Exception {
         Post postToNotArchive = editExistingPost(existingPosts.get(1));
+        postToNotArchive.setDisplayPriority(DisplayPriority.ARCHIVED);
 
-        // set archive flag to true in request body
-        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotArchive.getId() + "/archive", true, Post.class, HttpStatus.FORBIDDEN);
+        // try to change display priority to ARCHIVED
+        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotArchive.getId() + "/display-priority", postToNotArchive, Post.class,
+                HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
     }
 
@@ -272,36 +278,12 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testArchivePost_asTutor() throws Exception {
         Post postToArchive = editExistingPost(existingPosts.get(0));
+        postToArchive.setDisplayPriority(DisplayPriority.ARCHIVED);
 
-        // set archive flag to true in request body
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToArchive.getId() + "/archive", true, Post.class, HttpStatus.OK);
+        // change display priority to ARCHIVED
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToArchive.getId() + "/display-priority", postToArchive, Post.class,
+                HttpStatus.OK);
         assertThat(updatedPost).isEqualTo(postToArchive);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testPinArchivedPost_asTutor() throws Exception {
-        Post postToArchive = editExistingPost(existingPosts.get(0));
-        // post is archived
-        Post archivedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToArchive.getId() + "/archive", true, Post.class, HttpStatus.OK);
-
-        // post is pinned -> archive flag should be flipped
-        Post pinnedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + archivedPost.getId() + "/pin", true, Post.class, HttpStatus.OK);
-        assertThat(pinnedPost.isPinned()).isEqualTo(true);
-        assertThat(pinnedPost.isArchived()).isEqualTo(false);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testArchivePinnedPost_asTutor() throws Exception {
-        Post postToPin = editExistingPost(existingPosts.get(0));
-        // post is archived
-        Post pinnedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToPin.getId() + "/pin", true, Post.class, HttpStatus.OK);
-
-        // post is archived -> pinned flag should be flipped
-        Post archivedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + pinnedPost.getId() + "/archive", true, Post.class, HttpStatus.OK);
-        assertThat(archivedPost.isArchived()).isEqualTo(true);
-        assertThat(archivedPost.isPinned()).isEqualTo(false);
     }
 
     // GET
@@ -423,6 +405,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         post.setTitle("Title Post");
         post.setContent("Content Post");
         post.setVisibleForStudents(true);
+        post.setDisplayPriority(DisplayPriority.NONE);
         post.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
         post.addTag("Tag");
         return post;
@@ -449,8 +432,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // check if default values are set correctly on creation
         assertThat(createdPost.getAnswers()).isEmpty();
-        assertThat(createdPost.getVotes()).isEqualTo(0);
         assertThat(createdPost.getReactions()).isEmpty();
+        assertThat(createdPost.getDisplayPriority()).isEqualTo(expectedPost.getDisplayPriority());
 
         // check if context, i.e. either correct lecture, exercise or course-wide context are set correctly on creation
         assertThat(createdPost.getExercise()).isEqualTo(expectedPost.getExercise());

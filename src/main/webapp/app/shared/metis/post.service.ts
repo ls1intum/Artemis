@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Post } from 'app/entities/metis/post.model';
+import { DisplayPriority, Post } from 'app/entities/metis/post.model';
 import { PostingsService } from 'app/shared/metis/postings.service';
 
 type EntityResponseType = HttpResponse<Post>;
@@ -47,25 +47,14 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * updates pin state of a post
+     * updates the display priority of a post
      * @param {number} courseId
      * @param {number} postId
-     * @param {boolean} pinState
+     * @param {Post} post
      * @return {Observable<EntityResponseType>}
      */
-    updatePinState(courseId: number, postId: number, pinState: boolean): Observable<EntityResponseType> {
-        return this.http.put(`${this.resourceUrl}${courseId}/posts/${postId}/pin`, pinState, { observe: 'response' }).pipe(map(this.convertDateFromServer));
-    }
-
-    /**
-     * updates archive state of a post
-     * @param {number} courseId
-     * @param {number} postId
-     * @param {boolean} archiveState
-     * @return {Observable<EntityResponseType>}
-     */
-    updateArchiveState(courseId: number, postId: number, archiveState: boolean): Observable<EntityResponseType> {
-        return this.http.put(`${this.resourceUrl}${courseId}/posts/${postId}/archive`, archiveState, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+    updatePostDisplayPriority(courseId: number, postId: number, post: Post): Observable<EntityResponseType> {
+        return this.http.put(`${this.resourceUrl}${courseId}/posts/${postId}/display-priority`, post, { observe: 'response' }).pipe(map(this.convertDateFromServer));
     }
 
     /**
