@@ -150,6 +150,7 @@ Open Rancher on `<https://rancher.localhost/>`__.
 
 You will be notified that the connection is not private. The reason for that is that the Rancher deployment uses a self-signed certificate by an unknown authority 'dynamiclistener-ca'. 
 It is used for secure communication between internal components. Since it's your local environment this is not an issue and you can proceed to the website.
+If you can't continue using the Chrome browser, you can try with another browser, i.e. Firefox. 
 
 You will be prompted to set a password which later will be used to login to Rancher. The password will be used often, that's why you shouldn't forget it.
 
@@ -259,7 +260,15 @@ Configure Local User Mangement
 
 If you want to run with local user management and no programming exercises setup follow the steps: 
 
-1. Go to the ``src/main/resources/config/application-artemis.yml`` file, and set use-external in the user-management section to false.
+1. Go to the ``src/main/resources/config/application-artemis.yml`` file, and set use-external in the user-management section to false. If you have created additional ``application-local.yml`` file as it is described in the `Setup documentation <https://artemis-platform.readthedocs.io/en/latest/dev/setup/#server-setup>`, make sure to edit this one.
+
+   Another possibility is to add the variable directly in ``src/main/kubernetes/artemis/configmap/artemis-configmap.yml``.
+
+   ::
+
+      data:
+         artemis.user-management.use-external: false
+ 
 
 2. Remove the jira profile from the ``SPRING_PROFILES_ACTIVE`` field in the ConfigMap found at ``src/main/kubernetes/artemis/configmap/artemis-configmap.yml``
 
@@ -351,3 +360,30 @@ Open the workload which logs you need to check. There is a list of pods. Open th
 
 .. figure:: kubernetes/rancher_logs.png
    :align: center
+
+Troubleshooting
+---------------
+If the Artemis application is successfully deployed but there is an error while trying to run the application, the reason is most likely related to the Artemis yml configuration files.
+One of the common errors is related to missing ``server.url`` variable. You can fix it by adding it as an environment variable to the Artemis deployment.
+
+Set additional environment variables
+------------------------------------
+
+This chapter explains how you can set environment varibales for your deployment in case you need it.
+
+Open the Workloads view on Rancher
+
+.. figure:: kubernetes/rancher_workloads.png
+   :align: center
+
+Enter in the details page of the Artemis workload and then select Edit in the three dot menu
+
+.. figure:: kubernetes/workload_edit.png
+   :align: center
+
+Expand the ``Environment Variables`` menu. After pressing the ``Add Variable`` button two fields will appear where you can add the variable key and the value.
+
+.. figure:: kubernetes/workload_set_environment_variable.png
+   :align: center
+
+You can add as many varibales as you want. Once you are done you can save your changes which will trigger the Redeploy the application.
