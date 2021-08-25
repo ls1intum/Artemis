@@ -66,6 +66,13 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./exercises/file-upload/participate/file-upload-participation.module').then((m) => m.ArtemisFileUploadParticipationModule),
                 },
                 {
+                    path: 'courses/:courseId/transformation-modeling-exercises/:exerciseId',
+                    loadChildren: () =>
+                        import('./exercises/transformation/participate/transformation-modeling-participation.module').then(
+                            (m) => m.ArtemisTransformationModelingParticipationModule,
+                        ),
+                },
+                {
                     path: 'courses/:courseId/grading-system',
                     loadChildren: () => import('./grading-system/grading-system.module').then((m) => m.GradingSystemModule),
                 },

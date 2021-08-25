@@ -40,7 +40,8 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming"), @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),
         @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"), @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
-        @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"), })
+        @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"),
+        @JsonSubTypes.Type(value = TransformationModelingExercise.class, name = "transformation-modeling"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Exercise extends DomainObject {
 

@@ -1,0 +1,63 @@
+{
+    "artemisApp": {
+        "transformationModelingExercise": {
+            "home": {
+                "title": "Transformation Modelling Exercises",
+                "createLabel": "Create new Transformation Modelling Exercise",
+                "editLabel": "Edit Transformation Modelling Exercise",
+                "importLabel": "Import Transformation Modelling Exercise"
+            },
+            "created": "Created new Transformation Modelling Exercise with identifier {{ param }}",
+            "updated": "Updated Transformation Modelling Exercise with identifier {{ param }}",
+            "deleted": "Deleted Transformation Modelling Exercise with identifier {{ param }}",
+            "detail": {
+                "title": "Transformation Modelling Exercise"
+            },
+            "diagramType": "Diagram Type",
+            "sourceDiagramType": "Source diagram type",
+            "targetDiagramType": "Target diagram type",
+            "problemStatement": "Problem Statement:",
+            "exampleSolution": "Example Solution",
+            "exampleSolutionExplanation": "Example Solution Explanation",
+            "createExampleSolution": "Create Example Solution",
+            "exampleSolutionRequiresExercise": "To create an example solution, you first need to finish creating the transformation modelling exercise.",
+            "exampleSolutionForModelingExercise": "Example Solution for Transformation Modelling Exercise {{ exerciseTitle }}",
+            "saveExampleSolution": "Save Example Solution",
+            "generateSolution": "Generate Example solution",
+            "exampleSubmission": "Example Submission {{ number }}",
+            "exampleSubmissions": "Example Submissions",
+            "createExampleSubmission": "Create Example Submission",
+            "createNewExampleSubmission": "Create new Example Submission",
+            "saveExampleSubmission": "Save Example Submission",
+            "saveExampleAssessment": "Save Example Assessment",
+            "showExampleSubmission": "Show Submission",
+            "showExampleAssessment": "Show Assessment",
+            "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the modelling exercise. You will be redirected automatically.",
+            "exampleSubmissionForModelingExercise": "Example Submission for Modelling Exercise {{ exerciseTitle }}",
+            "usedForTutorial": "Used for Tutorial",
+            "apollonConversion": {
+                "error": "Apollon conversion is not available"
+            },
+            "clusters": "Clusters",
+            "buildClusters": {
+                "action": "Build Clusters",
+                "error": "Building Clusters failed",
+                "success": "Building Clusters were successful"
+            },
+            "deleteClusters": {
+                "action": "Delete Clusters",
+                "error": "Deleting Clusters failed",
+                "success": "Deleting Clusters were successful"
+            },
+            "correctionScheme": {
+                "correctMarking": "Points per correct marking",
+                "correctArc": "Points per correct arc",
+                "correctInitialMarking": "Points per correct initial marking",
+                "additionalMarking": "Points per additional marking",
+                "additionalArc": "Points per additional arc",
+                "additionalInitialMarking": "Points per additional initial marking"
+            },
+            "solutionCouldNotBeGenerated": "Example solution could not be generated"
+        }
+    }
+}

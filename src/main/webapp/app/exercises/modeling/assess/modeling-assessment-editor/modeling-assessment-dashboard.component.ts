@@ -88,7 +88,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
             });
             this.exerciseId = params['exerciseId'];
             this.exerciseService.find(this.exerciseId).subscribe((res: HttpResponse<Exercise>) => {
-                if (res.body!.type === ExerciseType.MODELING) {
+                if (res.body!.type === ExerciseType.MODELING || res.body!.type === ExerciseType.TRANSFORMATION) {
                     this.exercise = res.body as ModelingExercise;
                     this.courseId = this.exercise.course ? this.exercise.course.id! : this.exercise.exerciseGroup!.exam!.course!.id!;
                     this.getSubmissions();

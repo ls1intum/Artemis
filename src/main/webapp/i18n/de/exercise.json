@@ -142,6 +142,7 @@
             "isQuiz": "Das ist eine Quizaufgabe",
             "isText": "Das ist eine Textaufgabe",
             "isFileUpload": "Das ist eine Datei-Upload-Aufgabe",
+            "isTransformation": "Das ist eine Transformationsaufgabe",
             "notificationText": "Optional: Mitteilung über die Änderung",
             "submissionSuccessful": "Die Einreichung war erfolgreich",
             "submissionUnsuccessful": "Die Einreichung war nicht erfolgreich",

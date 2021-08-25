@@ -1,7 +1,8 @@
 <ng-container *ngIf="course">
     <h3>
         <span
-            >{{ course.title }} - {{ quizExercisesCount + programmingExercisesCount + modelingExercisesCount + fileUploadExercisesCount + textExercisesCount }}
+            >{{ course.title }} -
+            {{ quizExercisesCount + programmingExercisesCount + modelingExercisesCount + fileUploadExercisesCount + textExercisesCount + transformationExerciseCount }}
             {{ 'artemisApp.course.exercises' | artemisTranslate }}</span
         >
     </h3>
@@ -30,5 +31,9 @@
 
     <jhi-course-exercise-card *jhiExtensionPoint="overrideNonProgrammingExerciseCard" headingJhiTranslate="artemisApp.course.fileUploadExercises">
         <jhi-file-upload-exercise [embedded]="true" [course]="course" (exerciseCount)="fileUploadExercisesCount = $event"></jhi-file-upload-exercise>
+    </jhi-course-exercise-card>
+
+    <jhi-course-exercise-card jhiOrionFilter [showInOrionWindow]="false" headingJhiTranslate="artemisApp.course.transformationModelingExercises">
+        <jhi-transformation-modeling-exercise [embedded]="true" [course]="course" (exerciseCount)="transformationExerciseCount = $event"></jhi-transformation-modeling-exercise>
     </jhi-course-exercise-card>
 </ng-container>

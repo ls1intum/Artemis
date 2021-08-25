@@ -36,7 +36,8 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 // Annotation necessary to distinguish between concrete implementations of Submission when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = ProgrammingSubmission.class, name = "programming"), @JsonSubTypes.Type(value = ModelingSubmission.class, name = "modeling"),
         @JsonSubTypes.Type(value = QuizSubmission.class, name = "quiz"), @JsonSubTypes.Type(value = TextSubmission.class, name = "text"),
-        @JsonSubTypes.Type(value = FileUploadSubmission.class, name = "file-upload"), })
+        @JsonSubTypes.Type(value = FileUploadSubmission.class, name = "file-upload"),
+        @JsonSubTypes.Type(value = TransformationModelingSubmission.class, name = "transformation-modeling"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Submission extends DomainObject {
 

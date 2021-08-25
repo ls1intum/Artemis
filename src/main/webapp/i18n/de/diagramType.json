@@ -11,6 +11,7 @@
             "ComponentDiagram": "Komponentendiagramm",
             "DeploymentDiagram": "Verteilungsdiagramm",
             "PetriNet": "Petri-Netz",
+            "ReachabilityGraph": "Erreichbarkeitsgraph",
             "SyntaxTree": "Syntaxbaum",
             "Flowchart": "Flussdiagramm"
         }

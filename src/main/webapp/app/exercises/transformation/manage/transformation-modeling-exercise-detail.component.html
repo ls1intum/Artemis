@@ -1,0 +1,63 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="transformationModelingExercise">
+            <h2><span jhiTranslate="artemisApp.modelingExercise.detail.title">Transformation Modeling Exercise</span> {{ transformationModelingExercise.id }}</h2>
+            <hr />
+            <jhi-alert></jhi-alert>
+            <jhi-alert-error></jhi-alert-error>
+            <div class="text-start">
+                <jhi-non-programming-exercise-detail-common-actions
+                    *ngIf="transformationModelingExercise.course"
+                    [isExamExercise]="false"
+                    [course]="transformationModelingExercise.course"
+                    [exercise]="transformationModelingExercise"
+                ></jhi-non-programming-exercise-detail-common-actions>
+                <a *ngIf="transformationModelingExercise.isAtLeastEditor" class="btn btn-outline-primary btn-sm me-1" id="check-plagiarism-download" routerLink="plagiarism">
+                    <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
+                </a>
+            </div>
+            <div *ngIf="transformationModelingExercise.releaseDate != undefined && moment(transformationModelingExercise.releaseDate).isBefore(moment())" class="mt-3">
+                <jhi-exercise-detail-statistics
+                    [exercise]="transformationModelingExercise"
+                    [doughnutStats]="doughnutStats"
+                    [exerciseType]="ExerciseType.TRANSFORMATION"
+                ></jhi-exercise-detail-statistics>
+                <hr />
+                <div>
+                    <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
+                </div>
+                <hr />
+            </div>
+            <dl class="row-md jh-entity-details markdown-preview">
+                <jhi-exercise-details [exercise]="transformationModelingExercise"></jhi-exercise-details>
+                <dt><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span></dt>
+                <dd>
+                    <span jhiTranslate="{{ 'artemisApp.DiagramType.' + transformationModelingExercise.diagramType }}">{{ transformationModelingExercise.diagramType }}</span>
+                </dd>
+
+                <dt>
+                    <span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span>
+                    <button
+                        *ngIf="transformationModelingExercise && transformationModelingExercise.sampleSolutionModel"
+                        (click)="downloadAsPDf()"
+                        class="btn btn-primary"
+                        jhiTranslate="entity.action.export"
+                    >
+                        Export
+                    </button>
+                </dt>
+                <dd class="editor-outline-background">
+                    <jhi-modeling-editor
+                        *ngIf="sampleSolutionUML"
+                        [readOnly]="true"
+                        [diagramType]="transformationModelingExercise.diagramType!"
+                        [umlModel]="sampleSolutionUML!"
+                    ></jhi-modeling-editor>
+                </dd>
+                <dd class="editor-outline-background">
+                    <span [innerHTML]="sampleSolution"></span>
+                </dd>
+            </dl>
+        </div>
+    </div>
+</div>

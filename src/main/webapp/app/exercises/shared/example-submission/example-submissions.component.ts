@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
@@ -52,8 +52,12 @@ export class ExampleSubmissionsComponent implements OnInit {
      * @param id id of the submission or new for a new submission
      */
     getLinkToExampleSubmission(id: number | 'new') {
+        let exerciseType = this.exercise.type;
+        if (exerciseType === ExerciseType.TRANSFORMATION) {
+            exerciseType = ExerciseType.MODELING; // since a transformation modeling exercise is a specific type of modeling exercise
+        }
         if (!this.exercise.exerciseGroup) {
-            return ['/course-management', this.exercise.course!.id, this.exercise.type + '-exercises', this.exercise.id, 'example-submissions', id];
+            return ['/course-management', this.exercise.course!.id, exerciseType + '-exercises', this.exercise.id, 'example-submissions', id];
         } else {
             return [
                 '/course-management',
@@ -62,7 +66,7 @@ export class ExampleSubmissionsComponent implements OnInit {
                 this.exercise.exerciseGroup!.exam!.id,
                 'exercise-groups',
                 this.exercise.exerciseGroup!.id,
-                this.exercise.type + '-exercises',
+                exerciseType + '-exercises',
                 this.exercise.id,
                 'example-submissions',
                 id,

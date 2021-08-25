@@ -15,6 +15,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     programmingExercisesCount = 0;
     modelingExercisesCount = 0;
     fileUploadExercisesCount = 0;
+    transformationExerciseCount = 0;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;

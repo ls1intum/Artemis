@@ -52,7 +52,7 @@ export const isProgrammingOrQuiz = (participation: Participation) => {
 };
 
 /**
- * Checks if given participation is related to a modeling, text or file-upload exercise.
+ * Checks if given participation is related to a (transformation) modeling, text or file-upload exercise.
  *
  * @param participation
  */
@@ -61,7 +61,13 @@ export const isModelingOrTextOrFileUpload = (participation: Participation) => {
         return false;
     }
     const exercise = getExercise(participation);
-    return exercise && (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD);
+    return (
+        exercise &&
+        (exercise.type === ExerciseType.MODELING ||
+            exercise.type === ExerciseType.TEXT ||
+            exercise.type === ExerciseType.FILE_UPLOAD ||
+            exercise.type === ExerciseType.TRANSFORMATION)
+    );
 };
 
 /**

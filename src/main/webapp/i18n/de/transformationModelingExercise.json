@@ -1,0 +1,63 @@
+{
+    "artemisApp": {
+        "transformationModelingExercise": {
+            "home": {
+                "title": "Transformationsaufgaben",
+                "createLabel": "Neue Transformationsaufgabe erstellen",
+                "editLabel": "Transformationsaufgabe bearbeiten",
+                "importLabel": "Transformationsaufgabe importieren"
+            },
+            "created": "Transformationsaufgabe erstellt mit ID {{ param }}",
+            "updated": "Transformationsaufgabe aktualisiert mit ID {{ param }}",
+            "deleted": "Transformationsaufgabe gelöscht mit ID {{ param }}",
+            "detail": {
+                "title": "Transformationsaufgabe"
+            },
+            "diagramType": "Diagrammtyp",
+            "sourceDiagramType": "Ausgangsdiagrammtyp",
+            "targetDiagramType": "Zieldiagrammtyp",
+            "problemStatement": "Aufgabenstellung:",
+            "exampleSolution": "Beispiellösung",
+            "exampleSolutionExplanation": "Erklärung Beispiellösung",
+            "createExampleSolution": "Beispiellösung erstellen",
+            "exampleSolutionRequiresExercise": "Um eine Beispiellösung zu erstellen, musst du zunächst die Erstellung der Transformationsaufgabe abschließen.",
+            "exampleSolutionForModelingExercise": "Beispiellösung für Transformationsaufgabe {{ exerciseTitle }}",
+            "saveExampleSolution": "Beispiellösung speichern",
+            "generateSolution": "Beispiellösung generieren",
+            "exampleSubmission": "Beispielabgabe {{ number }}",
+            "exampleSubmissions": "Beispielabgaben",
+            "createExampleSubmission": "Beispielabgabe erstellen",
+            "createNewExampleSubmission": "Neue Beispielabgabe erstellen",
+            "saveExampleSubmission": "Beispielabgabe speichern",
+            "saveExampleAssessment": "Beispielbewertung speichern",
+            "showExampleSubmission": "Abgabe anzeigen",
+            "showExampleAssessment": "Bewertung anzeigen",
+            "exampleSubmissionsRequireExercise": "Um eine Beispielabgabe zu erstellen, musst du zunächst die Erstellung der Transformationsaufgabe abschließen. Du wirst automatisch weitergeleitet.",
+            "exampleSubmissionForModelingExercise": "Beispielabgabe für Transformationsaufgabe {{ exerciseTitle }}",
+            "usedForTutorial": "Für Tutorial",
+            "apollonConversion": {
+                "error": "Apollon-Konvertierung ist nicht verfügbar"
+            },
+            "clusters": "Cluster",
+            "buildClusters": {
+                "action": "Cluster erstellen",
+                "error": "Cluster erstellen fehlgeschlagen",
+                "success": "Cluster erfolgreich erstellt"
+            },
+            "deleteClusters": {
+                "action": "Cluster löschen",
+                "error": "Cluster löschen fehlgeschlagen",
+                "success": "Cluster erfolgreich gelöscht"
+            },
+            "correctionScheme": {
+                "correctMarking": "Punkte pro richtiger Markierung",
+                "correctArc": "Punkte pro richtiger Kante",
+                "correctInitialMarking": "Punkte pro richtiger Startmarkierung",
+                "additionalMarking": "Punkte pro zusätzlicher Markierung",
+                "additionalArc": "Punkte pro zusätzlicher Kante",
+                "additionalInitialMarking": "Punkte pro zusätzlicher Startmarkierung"
+            },
+            "solutionCouldNotBeGenerated": "Beispiellösung konnte nicht generiert werden"
+        }
+    }
+}

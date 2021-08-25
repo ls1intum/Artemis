@@ -100,6 +100,9 @@ export const getLinkToSubmissionAssessment = (
     exerciseGroupId: number,
     resultId?: number,
 ): string[] => {
+    if (exerciseType === ExerciseType.TRANSFORMATION) {
+        exerciseType = ExerciseType.MODELING; // since a transformation modeling exercise is a specific type of modeling exercise
+    }
     if (examId > 0) {
         let route;
         if (exerciseType === ExerciseType.TEXT && submissionId !== 'new' && participationId !== undefined) {

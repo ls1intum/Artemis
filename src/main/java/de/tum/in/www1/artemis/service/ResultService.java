@@ -110,6 +110,15 @@ public class ResultService {
         return createNewManualResult(result, isProgrammingExerciseWithFeedback, true);
     }
 
+    public Result createNewRatedAutomaticResult(Result result, List<Feedback> feedbacks) {
+        for (Feedback feedback : feedbacks) {
+            feedback.setResult(result);
+        }
+
+        return resultRepository.save(result.assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now()).rated(true).successful(true).hasFeedback(true)
+                .feedbacks(feedbacks).resultString("Automatische Korrektur"));
+    }
+
     /**
      * NOTE: As we use delete methods with underscores, we need a transactional context here!
      * Deletes result with corresponding complaint and complaint response

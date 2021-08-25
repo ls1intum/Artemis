@@ -35,9 +35,17 @@ export enum ExerciseType {
     QUIZ = 'quiz',
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload',
+    TRANSFORMATION = 'transformation-modeling',
 }
 
-export const exerciseTypes: string[] = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ];
+export const exerciseTypes: string[] = [
+    ExerciseType.TEXT,
+    ExerciseType.MODELING,
+    ExerciseType.PROGRAMMING,
+    ExerciseType.FILE_UPLOAD,
+    ExerciseType.QUIZ,
+    ExerciseType.TRANSFORMATION,
+];
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
 export enum IncludedInOverallScore {
@@ -157,6 +165,7 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         [ExerciseType.QUIZ]: 'check-double',
         [ExerciseType.TEXT]: 'font',
         [ExerciseType.FILE_UPLOAD]: 'file-upload',
+        [ExerciseType.TRANSFORMATION]: 'project-diagram',
     };
 
     return icons[exerciseType] as IconProp;
@@ -172,6 +181,7 @@ export function getIconTooltip(exerciseType?: ExerciseType): string {
         [ExerciseType.QUIZ]: 'artemisApp.exercise.isQuiz',
         [ExerciseType.TEXT]: 'artemisApp.exercise.isText',
         [ExerciseType.FILE_UPLOAD]: 'artemisApp.exercise.isFileUpload',
+        [ExerciseType.TRANSFORMATION]: 'artemisApp.exercise.isTransformation',
     };
 
     return tooltips[exerciseType];

@@ -13,14 +13,6 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activity.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.communication.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.petrinet.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.usecase.*;
 
 public class UMLModelParser {
 
@@ -51,6 +43,7 @@ public class UMLModelParser {
             case DeploymentDiagram -> DeploymentDiagramParser.buildDeploymentDiagramFromJSON(modelElements, relationships, modelSubmissionId);
             case ObjectDiagram -> ObjectDiagramParser.buildObjectDiagramFromJSON(modelElements, relationships, modelSubmissionId);
             case PetriNet -> PetriNetParser.buildPetriNetFromJSON(modelElements, relationships, modelSubmissionId);
+            case ReachabilityGraph -> ReachabilityGraphParser.buildReachabilityGraphFromJSON(modelElements, relationships, modelSubmissionId);
             case SyntaxTree -> SyntaxTreeParser.buildSyntaxTreeFromJSON(modelElements, relationships, modelSubmissionId);
             case Flowchart -> FlowchartParser.buildFlowchartFromJSON(modelElements, relationships, modelSubmissionId);
         };

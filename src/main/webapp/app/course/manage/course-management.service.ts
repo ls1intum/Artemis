@@ -25,6 +25,7 @@ import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overvie
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
+import { TransformationModelingExercise } from 'app/entities/transformation-modeling-exercise.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -609,6 +610,18 @@ export class CourseExerciseService {
             .get<FileUploadExercise[]>(`${this.resourceUrl}/${courseId}/file-upload-exercises/`, { observe: 'response' })
             .pipe(map((res: HttpResponse<FileUploadExercise[]>) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: HttpResponse<FileUploadExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)));
+    }
+
+    /**
+     * returns all modeling exercises for the course corresponding to courseId
+     * Note: the exercises in the response do not contain participations and do not contain the course to save network bandwidth
+     * @param courseId - the unique identifier of the course
+     */
+    findAllTransformationModelingExercisesForCourse(courseId: number): Observable<HttpResponse<TransformationModelingExercise[]>> {
+        return this.http
+            .get<TransformationModelingExercise[]>(`${this.resourceUrl}/${courseId}/transformation-modeling-exercises/`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<TransformationModelingExercise[]>) => this.convertDateArrayFromServer(res)))
+            .pipe(map((res: HttpResponse<TransformationModelingExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)));
     }
 
     /**

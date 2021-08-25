@@ -121,7 +121,14 @@
                     <td *ngFor="let item of [].constructor(numberOfCorrectionrounds); let correctionRound = index">
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                             <!-- exercise without exam-->
-                            <span *ngIf="course.isAtLeastInstructor && exercise.type === ExerciseType.MODELING && submission && exercise.course">
+                            <span
+                                *ngIf="
+                                    course.isAtLeastInstructor &&
+                                    (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TRANSFORMATION) &&
+                                    submission &&
+                                    exercise.course
+                                "
+                            >
                                 <a
                                     *ngIf="!submission.latestResult"
                                     [class.disabled]="busy"

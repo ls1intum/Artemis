@@ -142,6 +142,7 @@
             "isQuiz": "This is a quiz exercise",
             "isText": "This is a text exercise",
             "isFileUpload": "This is a file upload exercise",
+            "isTransformation": "This is a transformation modeling exercise",
             "notificationText": "Optional: Notification about changes",
             "submissionSuccessful": "The submission was successful",
             "submissionUnsuccessful": "The submission was unsuccessful",

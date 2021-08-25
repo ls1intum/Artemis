@@ -1,0 +1,129 @@
+<jhi-header-participation-page class="d-block mb-4" [exercise]="transformationModelingExercise" [participation]="participation">
+    <span pagetitle>
+        {{ 'artemisApp.modelingSubmission.modelingEditor' | artemisTranslate }}: <span class="font-weight-normal">{{ transformationModelingExercise?.title }}</span>
+    </span>
+    <jhi-button
+        submitbutton
+        class="guided-tour submission-button"
+        [disabled]="(!isActive && !isLate) || !submission || !!result || (isLate && !!submission.submitted)"
+        [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+        (onClick)="submit()"
+        [isLoading]="isSaving"
+        [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
+        [tooltip]="submitButtonTooltip"
+    ></jhi-button>
+</jhi-header-participation-page>
+
+<jhi-alert></jhi-alert>
+
+<jhi-resizeable-container *ngIf="transformationModelingExercise" [isExerciseParticipation]="true">
+    <!--region Left Panel-->
+    <div left-body class="submission-container d-flex flex-column w-100">
+        <div class="d-flex flex-column flex-md-row" *ngIf="transformationModelingExercise">
+            <div *ngIf="transformationModelingExercise?.teamMode && (isActive || isLate)" class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ms-md-2 ms-lg-3">
+                <jhi-team-participate-info-box
+                    [exercise]="transformationModelingExercise"
+                    [participation]="participation"
+                    [dockedToRightSide]="true"
+                ></jhi-team-participate-info-box>
+            </div>
+        </div>
+
+        <jhi-fullscreen>
+            <div class="row flex-grow-1">
+                <div *ngIf="submission && (isActive || isLate) && !result && (!isLate || !submission.submitted)" class="col-12 editor-large">
+                    <jhi-modeling-editor [umlModel]="umlModel" [diagramType]="transformationModelingExercise.diagramType!" [withExplanation]="false"></jhi-modeling-editor>
+                </div>
+                <div *ngIf="(!isActive || result) && transformationModelingExercise && (!isLate || submission.submitted)" class="col-9">
+                    <div class="flex flex-column h-100">
+                        <jhi-modeling-assessment
+                            [model]="umlModel"
+                            [resultFeedbacks]="assessmentResult?.feedbacks || []"
+                            [diagramType]="transformationModelingExercise.diagramType!"
+                            [maxScore]="transformationModelingExercise.maxPoints || 0"
+                            [maxBonusPoints]="transformationModelingExercise.bonusPoints || 0"
+                            [readOnly]="true"
+                            [enablePopups]="false"
+                            [displayPoints]="false"
+                            (selectionChanged)="onSelectionChanged($event)"
+                            [explanation]="explanation"
+                        ></jhi-modeling-assessment>
+                    </div>
+                </div>
+
+                <div class="col-3 pt-5" *ngIf="submission?.submitted && (!isActive || result)">
+                    <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title">Assessment</h4>
+                    <p
+                        *ngIf="!assessmentResult || !assessmentResult!.feedbacks || assessmentResult!.feedbacks!.length === 0"
+                        jhiTranslate="artemisApp.modelingSubmission.assessment.noAssessment"
+                    >
+                        There is no assessment available yet.
+                    </p>
+                    <ng-container *ngIf="assessmentResult && assessmentResult!.feedbacks && assessmentResult!.feedbacks!.length > 0">
+                        <p jhiTranslate="artemisApp.modelingSubmission.assessment.instructions">Select elements in the editor to filter the assessment.</p>
+                        <table class="table">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th jhiTranslate="artemisApp.modelingSubmission.assessment.element">Element</th>
+                                    <th class="text-center" jhiTranslate="artemisApp.modelingSubmission.assessment.score">Score</th>
+                                </tr>
+                            </thead>
+                            <tbody *ngIf="assessmentsNames">
+                                <tr *ngFor="let feedback of referencedFeedback" [hidden]="!shouldBeDisplayed(feedback)">
+                                    <td>
+                                        <span *ngIf="feedback.reference">{{ assessmentsNames[feedback.referenceId!]['type'] }} </span>
+                                        <code *ngIf="feedback.reference" class="text-primary">{{ assessmentsNames[feedback.referenceId!]['name'] }}</code
+                                        ><br *ngIf="feedback.reference" />
+                                        <span *ngIf="feedback.text" [ngClass]="{ 'text-success': feedback.credits! > 0, 'text-danger': feedback.credits! < 0 }"
+                                            ><strong>Feedback:</strong> {{ feedback.text }}</span
+                                        >
+                                        <span *ngIf="feedback.detailText" [ngClass]="{ 'text-success': feedback.credits! > 0, 'text-danger': feedback.credits! < 0 }"
+                                            ><strong>Feedback:</strong> {{ feedback.detailText }}</span
+                                        >
+                                    </td>
+                                    <td class="text-center">{{ feedback.credits | number: '1.0-1' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </ng-container>
+                </div>
+            </div>
+        </jhi-fullscreen>
+        <div class="row">
+            <jhi-additional-feedback
+                *ngIf="unreferencedFeedback && unreferencedFeedback!.length > 0"
+                class="col-xl-8 mt-3 alert unreferencedFeedback"
+                [feedback]="unreferencedFeedback || []"
+                [additional]="true"
+            >
+            </jhi-additional-feedback>
+        </div>
+        <div class="row" *ngIf="result">
+            <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)"></jhi-rating>
+        </div>
+        <jhi-complaint-interactions
+            *ngIf="transformationModelingExercise && result"
+            [exercise]="transformationModelingExercise"
+            [participation]="participation"
+            [result]="resultWithComplaint ? resultWithComplaint : result"
+        >
+        </jhi-complaint-interactions>
+    </div>
+    <!--endregion-->
+    <!--region Right Panel-->
+    <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
+    <span right-header jhiTranslate="artemisApp.modelingSubmission.problemStatement">Problem Statement</span>
+    <p right-body class="mb-3 markdown-preview" *ngIf="transformationModelingExercise!.problemStatement!">
+        <span [innerHTML]="transformationModelingExercise!.problemStatement! | htmlForMarkdown"></span>
+    </p>
+    <jhi-modeling-editor
+        right-body
+        *ngIf="transformationModelingExercise!.problemModel!"
+        [umlModel]="problemModel"
+        [diagramType]="transformationModelingExercise!.problemDiagramType!"
+        [readOnly]="true"
+        [showHelpButton]="false"
+        [withExplanation]="false"
+    ></jhi-modeling-editor>
+    <!--endregion-->
+</jhi-resizeable-container>

@@ -379,3 +379,80 @@
     <!-- INFORMATION END -->
 </div>
 <!-- FILE UPLOAD EXERCISE ACTIONS END -->
+
+<!--TRANSFORMATION MODELING EXERCISE ACTIONS START -->
+<div *ngIf="exercise.type === ExerciseType.TRANSFORMATION">
+    <!-- ACTION START -->
+    <div class="btn-group me-2">
+        <button
+            jhi-exercise-action-button
+            buttonIcon="users"
+            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
+            *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="true"
+            [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
+        ></button>
+        <button
+            jhi-exercise-action-button
+            buttonIcon="play-circle"
+            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
+            [buttonLoading]="!!exercise.loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
+            (click)="startExercise()"
+        ></button>
+        <button
+            jhi-exercise-action-button
+            buttonIcon="folder-open"
+            [buttonLabel]="'artemisApp.exerciseActions.openModelingEditor' | artemisTranslate"
+            [buttonLoading]="!!exercise.loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
+            [routerLink]="['/courses', courseId, 'transformation-modeling-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+        ></button>
+    </div>
+    <!-- ACTION END -->
+    <!-- INFORMATION START -->
+    <div class="btn-group" *ngIf="!actionsOnly">
+        <div class="btn-group">
+            <button
+                jhi-exercise-action-button
+                buttonIcon="folder-open"
+                [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
+                [outlined]="true"
+                [buttonLoading]="!!exercise.loading"
+                [smallButton]="smallButtons"
+                *ngIf="
+                    exercise.studentParticipations &&
+                    exercise.studentParticipations.length > 0 &&
+                    exercise.studentParticipations[0].initializationState === 'FINISHED' &&
+                    (!exercise.studentParticipations[0].results || exercise.studentParticipations[0].results.length === 0 || !showResult)
+                "
+                [routerLink]="['/courses', courseId, 'transformation-modeling-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+            ></button>
+            <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
+            <button
+                jhi-exercise-action-button
+                buttonIcon="folder-open"
+                [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
+                [outlined]="true"
+                [buttonLoading]="!!exercise.loading"
+                [smallButton]="smallButtons"
+                *ngIf="
+                    exercise.studentParticipations &&
+                    exercise.studentParticipations.length > 0 &&
+                    exercise.studentParticipations[0].initializationState === 'FINISHED' &&
+                    exercise.studentParticipations[0].results &&
+                    exercise.studentParticipations[0].results.length > 0 &&
+                    showResult
+                "
+                [routerLink]="['/courses', courseId, 'transformation-modeling-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+            ></button>
+        </div>
+    </div>
+    <!-- INFORMATION END -->
+</div>
+<!-- TRANSFORMATION MODELING EXERCISE ACTIONS END -->

@@ -1,0 +1,200 @@
+<form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
+    <div>
+        <h4 *ngIf="!transformationModelingExercise.id" id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.transformationModelingExercise.home.createLabel">
+            Create a new Transformation Modeling Exercise
+        </h4>
+        <h4 *ngIf="transformationModelingExercise.id" id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.transformationModelingExercise.home.editLabel">
+            Edit a Modeling Exercise
+        </h4>
+    </div>
+    <div>
+        <jhi-alert></jhi-alert>
+        <jhi-alert-error></jhi-alert-error>
+        <div class="form-group-narrow" [hidden]="!transformationModelingExercise.id">
+            <label for="id" jhiTranslate="global.field.id">ID</label>
+            <input type="text" class="form-control" id="id" name="id" [(ngModel)]="transformationModelingExercise.id" readonly />
+        </div>
+        <div class="form-group-narrow">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
+            <input required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="transformationModelingExercise.title" />
+        </div>
+        <div class="form-group-narrow position-relative">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
+            <jhi-category-selector
+                [exerciseCategories]="exerciseCategories"
+                [existingCategories]="existingCategories"
+                (selectedCategories)="updateCategories($event)"
+            ></jhi-category-selector>
+        </div>
+        <div class="form-group-narrow">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
+            <div>
+                <jhi-difficulty-picker [exercise]="transformationModelingExercise"></jhi-difficulty-picker>
+            </div>
+        </div>
+        <div class="d-flex">
+            <div class="form-group-narrow flex-grow-1">
+                <jhi-date-time-picker
+                    labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
+                    [(ngModel)]="transformationModelingExercise.releaseDate"
+                    (valueChange)="validateDate()"
+                    [error]="false"
+                    name="releaseDate"
+                ></jhi-date-time-picker>
+            </div>
+            <div class="form-group-narrow flex-grow-1 ms-3">
+                <jhi-date-time-picker
+                    name="dueDate"
+                    [error]="!!transformationModelingExercise.dueDateError"
+                    labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
+                    (valueChange)="validateDate()"
+                    [(ngModel)]="transformationModelingExercise.dueDate"
+                ></jhi-date-time-picker>
+                <span *ngIf="transformationModelingExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-control-label">{{
+                'artemisApp.exercise.includedInOverallScore' + (transformationModelingExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
+            }}</label>
+            <div>
+                <jhi-included-in-overall-score-picker [(includedInOverallScore)]="transformationModelingExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points">Points</label>
+            <input
+                type="number"
+                required
+                class="form-control"
+                name="points"
+                id="field_points"
+                [(ngModel)]="transformationModelingExercise.maxPoints"
+                #points="ngModel"
+                [readOnly]="true"
+            />
+            <div *ngIf="points?.invalid && (points?.dirty || points?.touched) && points?.errors" class="alert alert-danger">
+                {{ 'artemisApp.exercise.pointsError' | artemisTranslate }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col" *ngFor="let key of getCorrectionSchemeKeys()">
+                <div class="form-group-narrow">
+                    <label class="form-control-label" jhiTranslate="artemisApp.transformationModelingExercise.correctionScheme.{{ key }}" for="field_{{ key }}">{{ key }}</label>
+                    <input
+                        type="number"
+                        required
+                        class="form-control"
+                        [customMin]="-9999"
+                        [customMax]="9999"
+                        name="{{ key }}"
+                        id="field_{{ key }}"
+                        [(ngModel)]="this.correctionScheme[key]"
+                    />
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="form-group-narrow">
+                    <label class="form-control-label" jhiTranslate="artemisApp.transformationModelingExercise.sourceDiagramType" for="field_problemDiagramType"
+                        >Source Diagram Type</label
+                    >
+                    <select
+                        [disabled]="!!transformationModelingExercise.id"
+                        class="form-control"
+                        name="problemDiagramType"
+                        [(ngModel)]="transformationModelingExercise.problemDiagramType"
+                        id="field_problemDiagramType"
+                    >
+                        <option value="PetriNet">{{ 'artemisApp.DiagramType.PetriNet' | artemisTranslate }}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col">
+                <div class="form-group-narrow">
+                    <label class="form-control-label" jhiTranslate="artemisApp.transformationModelingExercise.targetDiagramType" for="field_diagramType">Target Diagram Type</label>
+                    <select
+                        [disabled]="!!transformationModelingExercise.id"
+                        class="form-control"
+                        name="diagramType"
+                        [(ngModel)]="transformationModelingExercise.diagramType"
+                        id="field_diagramType"
+                    >
+                        <option value="ReachabilityGraph">{{ 'artemisApp.DiagramType.ReachabilityGraph' | artemisTranslate }}</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="form-group" name="problemStatement" id="field_problemStatement">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
+            <jhi-markdown-editor
+                class="markdown-editor background-editor-color"
+                [domainCommands]="domainCommandsProblemStatement"
+                [(markdown)]="transformationModelingExercise.problemStatement"
+                [editorMode]="EditorMode.LATEX"
+                [shouldDisplayAlert]="false"
+            ></jhi-markdown-editor>
+            <jhi-modeling-editor
+                [diagramType]="transformationModelingExercise.problemDiagramType"
+                [umlModel]="problemModel"
+                [withExplanation]="false"
+                [showHelpButton]="false"
+            ></jhi-modeling-editor>
+        </div>
+        <div class="form-group">
+            <span jhiTranslate="artemisApp.transformationModelingExercise.exampleSolution">Example Solution</span><br />
+            <button type="button" class="btn btn-primary mb-2" (click)="fetchSolution()">
+                <fa-icon [icon]="'sync'"></fa-icon>
+                <span jhiTranslate="artemisApp.transformationModelingExercise.generateSolution">Generate solution</span>
+            </button>
+            <span jhiTranslate="artemisApp.transformationModelingExercise.solutionCouldNotBeGenerated" class="error" *ngIf="this.solutionCouldNotBeGenerated"
+                >Example solution could not be generated</span
+            >
+            <jhi-modeling-editor
+                [diagramType]="transformationModelingExercise.diagramType"
+                [umlModel]="exampleSolution"
+                [withExplanation]="false"
+                [showHelpButton]="false"
+            ></jhi-modeling-editor>
+        </div>
+        <div class="form-group" name="exampleSolutionExplanation" id="field_exampleSolutionExplanation">
+            <label class="form-control-label" jhiTranslate="artemisApp.transformationModelingExercise.exampleSolutionExplanation" for="field_exampleSolutionExplanation">
+                Example Solution Explanation
+            </label>
+            <jhi-markdown-editor
+                class="markdown-editor background-editor-color"
+                [domainCommands]="domainCommandsSampleSolution"
+                [(markdown)]="transformationModelingExercise.sampleSolutionExplanation"
+                [editorMode]="EditorMode.LATEX"
+                [shouldDisplayAlert]="false"
+            ></jhi-markdown-editor>
+        </div>
+        <div class="form-group" *ngIf="!transformationModelingExercise.id">
+            <span jhiTranslate="artemisApp.transformationModelingExercise.exampleSubmissions">Example submissions</span>
+            <div
+                class="alert alert-info mt-3"
+                *ngIf="!transformationModelingExercise.id"
+                jhiTranslate="artemisApp.transformationModelingExercise.exampleSubmissionsRequireExercise"
+            ></div>
+        </div>
+        <div class="form-group" *ngIf="transformationModelingExercise.id">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
+            <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
+        </div>
+    </div>
+    <jhi-alert></jhi-alert>
+    <div>
+        <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" (click)="previousState()">
+            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <button
+            type="button"
+            [disabled]="editForm.form.invalid || isSaving || transformationModelingExercise.dueDateError || transformationModelingExercise.assessmentDueDateError"
+            class="btn btn-primary"
+            (click)="save()"
+        >
+            <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        </button>
+    </div>
+</form>

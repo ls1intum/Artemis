@@ -29,6 +29,7 @@ const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
 const MODELING_EXERCISE_COLOR = '#6610f2';
 const TEXT_EXERCISE_COLOR = '#B00B6B';
 const FILE_UPLOAD_EXERCISE_COLOR = '#2D9C88';
+const TRANSFORMATION_MODELING_EXERCISE_COLOR = '#FF00FF';
 
 export interface CourseStatisticsDataSet {
     data: Array<number>;
@@ -103,6 +104,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         'file-upload': {
             name: this.translateService.instant('artemisApp.course.fileUploadExercises'),
             color: FILE_UPLOAD_EXERCISE_COLOR,
+        },
+        transformation: {
+            name: this.translateService.instant('artemisApp.course.transformationModelingExercises'),
+            color: TRANSFORMATION_MODELING_EXERCISE_COLOR,
         },
     };
 

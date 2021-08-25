@@ -382,6 +382,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                     submissionsObservable = this.textSubmissionService.getTextSubmissionsForExerciseByCorrectionRound(this.exerciseId, { assessedByTutor: true }, correctionRound);
                     break;
                 case ExerciseType.MODELING:
+                case ExerciseType.TRANSFORMATION:
                     submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExerciseByCorrectionRound(
                         this.exerciseId,
                         { assessedByTutor: true },

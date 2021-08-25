@@ -428,6 +428,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
         if (exercise instanceof ProgrammingExercise) {
             submission = new ProgrammingSubmission();
         }
+        else if (exercise instanceof TransformationModelingExercise) { // has to be listed before ModelingExercise since it is its subclass
+            submission = new TransformationModelingSubmission();
+        }
         else if (exercise instanceof ModelingExercise) {
             submission = new ModelingSubmission();
         }

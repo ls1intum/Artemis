@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.petrinet;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
@@ -16,9 +17,12 @@ public class PetriNet extends UMLDiagram {
 
     public PetriNet(long modelSubmissionId, List<PetriNetPlace> places, List<PetriNetTransition> transitions, List<PetriNetArc> arcs) {
         super(modelSubmissionId);
-        this.places = places;
-        this.transitions = transitions;
-        this.arcs = arcs;
+        this.places = new ArrayList<>(places);
+        this.transitions = new ArrayList<>(transitions);
+        this.arcs = new ArrayList<>(arcs);
+
+        this.places.sort(Comparator.comparing(PetriNetPlace::getName));
+        this.transitions.sort(Comparator.comparing(PetriNetTransition::getName));
     }
 
     @Override
