@@ -11,15 +11,21 @@ Follow the links to install the tools which will be needed in order to proceed w
    Docker is a platform for developing, shipping an running application. 
    In our case we will use it to build the images which we will deploy. 
    It is also needed from k3d in order to create cluster. The cluster nodes are deployed on Docker containers.
+
 * `DockerHub Account <https://hub.docker.com/signup>`__ 
    Docker Hub is a service provided by Docker for finding and sharing container images. 
    Account in DockerHub is needed in order to push the Artemis image which will be used by the Kubernetes deployment.
+
 * `k3d <https://k3d.io/#installation>`__ - v4.4.7
    k3d is lightweight wrapper to run k3s which is a lightweght Kubernetes distribution in Docker. 
    k3d makes it very easy to create k3s clusters especially for local deployment on Kubernetes. 
+
+   Windows users can use ``choco`` to install it. More details can be found in the link under ``Other Installation Methods``
+
 * `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl/>`__ - v1.21 
    kubectl is the Kubernetes command-line tool, which allows you to run commands against Kubernetes clusters. 
    It can be used to deploy applications, inspect and manage cluster resources, and view logs.
+
 * `helm <https://helm.sh/docs/intro/install/>`__ - v3.6.3 
    Helm is the package manager for Kubernetes. We will be use it to install cert-manager and Rancher
 
@@ -34,18 +40,30 @@ In order to be able to deploy Artemis on Kubernetes, you need to setup a cluster
 
 With the following commands you will setup one cluster with 3 agents as well as Rancher which is a platform for cluster management with easy to use user interface.
 
-**IMPORTANT: The following commands may differ for your OS, the examples are working for Linux machines.**
+**IMPORTANT: Before you continute make sure Docker has been started.**
+
 
 1. Set environment variables
    
    The CLUSTER_NAME, RANCHER_SERVER_HOSTNAME and KUBECONFIG_FILE environment variables need to be set so that they can be used in the next commands.
    If you don't want to set environment variables you can replace their values in the commands. What you need to do is replace $CLUSTER_NAME with "k3d-rancher", $RANCHER_SERVER_HOSTNAME with "rancher.localhost" and $KUBECONFIG_FILE with "k3d-rancher.yml".
    
+   **For MacOS/Linux**:
+
    ::
 
       export CLUSTER_NAME="k3d-rancher" 
       export RANCHER_SERVER_HOSTNAME="rancher.localhost"
       export KUBECONFIG_FILE="$CLUSTER_NAME.yaml"
+
+      
+   **For Windows**:
+
+   ::
+   
+      $env:CLUSTER_NAME="k3d-rancher"
+      $env:RANCHER_SERVER_HOSTNAME="rancher.localhost"
+      $env:KUBECONFIG_FILE="${env:CLUSTER_NAME}.yaml"
 
 2. Create the cluster
 
@@ -59,6 +77,8 @@ With the following commands you will setup one cluster with 3 agents as well as 
    You should also write the cluster configuration into the KUBECONFIG_FILE. This configuration will be later needed when you are creating deployments. 
    You can either set the path to the file as an environment variable or replce it with "<path-to-kubeconfig-file>" when needed.
    
+   **For MacOS/Linux**:
+
    ::
 
       k3d cluster create $CLUSTER_NAME --api-port 6550 --servers 1 --agents 3 --port 443:443@loadbalancer --wait 
@@ -66,6 +86,16 @@ With the following commands you will setup one cluster with 3 agents as well as 
       kubectl get nodes 
       k3d kubeconfig get $CLUSTER_NAME > $KUBECONFIG_FILE 
       export KUBECONFIG=$KUBECONFIG_FILE 
+
+   **For Windows**:
+
+   ::
+
+      k3d cluster create $env:CLUSTER_NAME --api-port 6550 --servers 1 --agents 3 --port 443:443@loadbalancer --wait 
+      k3d cluster list 
+      kubectl get nodes 
+      k3d kubeconfig get ${env:CLUSTER_NAME} > $env:KUBECONFIG_FILE 
+      $env:KUBECONFIG=($env:KUBECONFIG_FILE)
 
 3. Install cert-manager
    
@@ -94,12 +124,24 @@ With the following commands you will setup one cluster with 3 agents as well as 
    During the installation we set the namespace and the hostname which Ranchen will be accessible on.
    Then we can check the installation status. 
 
+   **For MacOS/Linux**:
+
    ::
 
       helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
       helm repo update
       kubectl create namespace cattle-system
       helm install rancher rancher-latest/rancher --namespace cattle-system --set hostname=$RANCHER_SERVER_HOSTNAME --wait 
+      kubectl -n cattle-system rollout status deploy/rancher
+
+   **For Windows**:
+   
+   ::
+
+      helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+      helm repo update
+      kubectl create namespace cattle-system
+      helm install rancher rancher-latest/rancher --namespace cattle-system --set hostname=${env:RANCHER_SERVER_HOSTNAME} --wait 
       kubectl -n cattle-system rollout status deploy/rancher
 
 5. Open Rancher and update the password
@@ -249,6 +291,14 @@ Push the image to DockerHub from where it will be pulled during the deployment:
 ::
 
    docker push <DockerId>/artemis
+
+In case that you get an "Access denied" error during the push, first execute
+
+::
+
+   docker login
+
+and then try again the ``docker push`` command.
 
 
 Configure Spring profiles

@@ -395,7 +395,7 @@ The build result is displayed in the code editor.
 Deployment on Kubernetes
 ------------------------
 
-This part of the documentation assumes you have a Kubernetes cluster running, as well as DockerHub account, if not you can find how to set it up here TO DO `<>`__
+This part of the documentation assumes you have a Kubernetes cluster running, as well as DockerHub account, if not you can find how to set it up here # TO DO `<>`__ The link will be added when the URL to the Kubernetes documentation is available
 
 1. Create artemis-bamboo repository in DockerHub
 2. Build the preconfigured Bamboo

@@ -40,7 +40,7 @@ spec:
           value: prod,api-docs
         - name: _JAVA_OPTIONS
           value: -Xmx512m -Xms256m
-        image: mmehmed/artemis-gateway
+        image: <DockerId>/artemis-gateway
         imagePullPolicy: Always
         name: gateway
         ports:
