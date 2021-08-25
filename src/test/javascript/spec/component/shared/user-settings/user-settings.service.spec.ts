@@ -1,19 +1,12 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { SERVER_API_URL } from 'app/app.constants';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { Notification } from 'app/entities/notification.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import * as sinon from 'sinon';
-import { SinonStub, stub } from 'sinon';
-import { Course } from 'app/entities/course.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
-import * as moment from 'moment';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { OptionSpecifier, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
@@ -27,69 +20,31 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('User Settings Service', () => {
+    // general & common
     let userSettingsService: UserSettingsService;
     let httpMock: HttpTestingController;
-    let router: Router;
-
     let userSettingsCategory: UserSettingsCategory;
-    //let notificationSettingsCategory: UserSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
-    let notificationSettingsResourceUrl = SERVER_API_URL + 'api/notification-settings';
+    let applyNewChangesSource: Subject<string>;
+    let receivedOptionCoresFromServer: OptionCore[];
+    let resultingUserSettings: UserSettings<OptionCore>;
+    const user = { id: 1, name: 'name', login: 'login' } as User;
 
-    let websocketService: JhiWebsocketService;
-    let wsSubscribeStub: SinonStub;
-    let wsReceiveNotificationStub: SinonStub;
-    let wsNotificationSubject: Subject<Notification | undefined>;
-
-    let wsQuizExerciseSubject: Subject<QuizExercise | undefined>;
-    let wsReceiveQuizExerciseStub: SinonStub;
-
-    let courseManagementService: CourseManagementService;
-    let cmGetCoursesForNotificationsStub: SinonStub;
-    let cmCoursesSubject: Subject<[Course] | undefined>;
-    const course: Course = new Course();
-    course.id = 42;
-
-    const quizExercise: QuizExercise = { course, title: 'test quiz', started: true, visibleToStudents: true, id: 27 } as QuizExercise;
-
-    const generateQuizNotification = () => {
-        const generatedNotification = {
-            title: 'Quiz started',
-            text: 'Quiz "' + quizExercise.title + '" just started.',
-            notificationDate: moment(),
-        } as Notification;
-        generatedNotification.target = JSON.stringify({ course: course.id, mainPage: 'courses', entity: 'exercises', id: quizExercise.id });
-        return generatedNotification;
+    // notification settings specific
+    const notificationSettingsResourceUrl = SERVER_API_URL + 'api/notification-settings';
+    let notificationOptionCoreA: NotificationOptionCore = {
+        id: 1,
+        optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
+        webapp: false,
+        email: false,
     };
-    const quizNotification = generateQuizNotification();
-
-    const generateSingleUserNotification = () => {
-        const generatedNotification = { title: 'Single user notification', text: 'This is a notification for a single user' } as Notification;
-        generatedNotification.notificationDate = moment().subtract(3, 'days');
-        return generatedNotification;
+    let notificationOptionCoreB: NotificationOptionCore = {
+        id: 2,
+        optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES,
+        webapp: true,
+        email: false,
     };
-    const singleUserNotification = generateSingleUserNotification();
-
-    const generateGroupNotification = () => {
-        const generatedNotification = { title: 'simple group notification', text: 'This is a  simple group notification' } as Notification;
-        generatedNotification.notificationDate = moment();
-        return generatedNotification;
-    };
-    const groupNotification = generateGroupNotification();
 
     beforeEach(() => {
-        /*
-        TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, TranslateTestingModule, RouterTestingModule.withRoutes([])],
-            providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: Router, useClass: MockRouter },
-                { provide: CourseManagementService, useClass: MockCourseManagementService },
-                { provide: AccountService, useClass: MockAccountService },
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
-            ],
-        })
-         */
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, TranslateTestingModule],
             providers: [
@@ -100,14 +55,8 @@ describe('User Settings Service', () => {
             .compileComponents()
             .then(() => {
                 userSettingsService = TestBed.inject(UserSettingsService);
-
                 httpMock = TestBed.inject(HttpTestingController);
-
-                wsQuizExerciseSubject = new Subject<QuizExercise | undefined>();
-
-                courseManagementService = TestBed.inject(CourseManagementService);
-                cmCoursesSubject = new Subject<[Course] | undefined>();
-                cmGetCoursesForNotificationsStub = stub(courseManagementService, 'getCoursesForNotifications').returns(cmCoursesSubject as BehaviorSubject<[Course] | undefined>);
+                applyNewChangesSource = new Subject<string>();
             });
     });
 
@@ -116,27 +65,10 @@ describe('User Settings Service', () => {
         sinon.restore();
     });
 
-    const user1 = { id: 1, name: 'name', login: 'login' } as User;
-
-    let notificationOptionCoreA: NotificationOptionCore = {
-        id: 1,
-        optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
-        webapp: false,
-        email: false,
-    };
-
-    let notificationOptionCoreB: NotificationOptionCore = {
-        id: 2,
-        optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES,
-        webapp: true,
-        email: false,
-    };
-
-    let receivedOptionCoresFromServer: OptionCore[] = [notificationOptionCoreA, notificationOptionCoreB];
-
     describe('Service methods with Category Notification Settings', () => {
         beforeAll(() => {
             userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
+            receivedOptionCoresFromServer = [notificationOptionCoreA, notificationOptionCoreB];
         });
 
         it('should call correct URL to fetch all option cores', () => {
@@ -146,14 +78,30 @@ describe('User Settings Service', () => {
             expect(req.request.url).to.equal(infoUrl);
         });
 
-        let resultingUserSettings: UserSettings<OptionCore>;
-
         describe('test loading methods', () => {
             it('should load correct default settings as foundation', () => {
                 // to make sure the default settings are not modified
                 resultingUserSettings = userSettingsService.loadUserOptionCoresSuccessAsSettings([], userSettingsCategory);
                 expect(resultingUserSettings).to.deep.equal(defaultNotificationSettings);
             });
+
+            function checkExpectedAndProvidedNotificationOptionCoresForEquality(
+                expectedNotificationCores: NotificationOptionCore[],
+                providedNotificationCores: NotificationOptionCore[],
+            ) {}
+
+            function checkExpectedAndProvidedNotificationOptionCoreForEquality(
+                expectedNotificationCore: NotificationOptionCore,
+                providedNotificationCore: NotificationOptionCore,
+            ) {}
+            /*
+            function updateNotificationSettingsByProvidedNotificationOptionCores(
+                settings : UserSettings<NotificationOptionCore>, optionCores : NotificationOptionCore[]) {
+                settings.groups.find((group) => {
+                    if(option)
+                }
+            }
+ */
 
             it('should correctly update and return settings based on received option cores', () => {
                 let expectedUserSettings: UserSettings<NotificationOptionCore> = defaultNotificationSettings;
