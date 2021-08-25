@@ -1,4 +1,4 @@
-import { AfterViewChecked, AfterViewInit, ChangeDetectorRef, Component, ElementRef, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
@@ -12,8 +12,6 @@ import { DragAndDropQuestionStatistic } from 'app/entities/quiz/drag-and-drop-qu
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { blueColor, greenColor, QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
-import { ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { debounceTime, filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
@@ -22,14 +20,8 @@ import { debounceTime, filter } from 'rxjs/operators';
     styleUrls: ['./drag-and-drop-question-statistic.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent implements AfterViewChecked {
-    @ViewChild('backgroundImage', { static: false })
-    private backgroundImage: SecuredImageComponent;
-    @ViewChild('clickLayer', { static: false })
-    private clickLayer: ElementRef;
-
+export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
     question: DragAndDropQuestion;
-    backgroundFilePath = '';
 
     constructor(
         route: ActivatedRoute,
@@ -41,46 +33,8 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
         quizStatisticUtil: QuizStatisticUtil,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         private artemisMarkdown: ArtemisMarkdownService,
-        private changeDetector: ChangeDetectorRef,
     ) {
         super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService);
-    }
-
-    ngAfterViewChecked(): void {
-        if (this.question.backgroundFilePath) {
-            this.backgroundFilePath = this.question.backgroundFilePath;
-            // Trigger image render with the question background file path in order to adjust the click layer.
-            setTimeout(() => {
-                this.changeDetector.detectChanges();
-            }, 0);
-        }
-
-        if (this.backgroundImage) {
-            this.backgroundImage.endLoadingProcess
-                .pipe(
-                    filter((loadingStatus) => loadingStatus === ImageLoadingStatus.SUCCESS),
-                    // Some time until image render. Need to wait until image width is computed.
-                    debounceTime(300),
-                )
-                .subscribe(() => this.adjustClickLayerWidth());
-
-            // Trigger click layer width adjustment upon window resize.
-            window.onresize = () => this.adjustClickLayerWidth();
-        }
-    }
-
-    /**
-     * Adjusts the click-layer width to equal the background image width.
-     */
-    adjustClickLayerWidth() {
-        // Make the background image visible upon successful image load. Initially it is set to hidden and not
-        // conditionally loaded via '*ngIf' because otherwise the reference would be undefined and hence we
-        // wouldn't be able to subscribe to the loading process updates.
-        this.backgroundImage.element.nativeElement.style.visibility = 'visible';
-
-        // Adjust the click layer to correspond to the area of the background image.
-        this.clickLayer.nativeElement.style.width = `${this.backgroundImage.element.nativeElement.offsetWidth}px`;
-        // this.clickLayer.nativeElement.style.left = `${this.backgroundImage.element.nativeElement.offsetLeft}px`;
     }
 
     /**
