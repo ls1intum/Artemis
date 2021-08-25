@@ -5,26 +5,61 @@ import * as moment from 'moment';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockTranslateValuesDirective } from '../course/course-scores/course-scores.component.spec';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingScale } from 'app/entities/grading-scale.model';
+import { HttpResponse } from '@angular/common/http';
+import { GradeStep } from 'app/entities/grade-step.model';
+import { of } from 'rxjs';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
     let fixture: ComponentFixture<AssessmentHeaderComponent>;
 
+    const gradeStep1: GradeStep = {
+        isPassingGrade: false,
+        lowerBoundInclusive: true,
+        lowerBoundPercentage: 0,
+        upperBoundInclusive: false,
+        upperBoundPercentage: 40,
+        gradeName: 'D',
+    };
+    const gradeStep2: GradeStep = {
+        isPassingGrade: true,
+        lowerBoundInclusive: true,
+        lowerBoundPercentage: 40,
+        upperBoundInclusive: false,
+        upperBoundPercentage: 60,
+        gradeName: 'C',
+    };
+
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, RouterTestingModule],
-            declarations: [AssessmentHeaderComponent, MockComponent(AssessmentWarningComponent)],
+            imports: [ArtemisTestModule, RouterTestingModule],
+            declarations: [
+                AssessmentHeaderComponent,
+                AssessmentWarningComponent,
+                AlertComponent,
+                NgbAlert,
+                NgbTooltip,
+                TranslateDirective,
+                ArtemisTranslatePipe,
+                MockTranslateValuesDirective,
+                MockComponent(FaIconComponent),
+            ],
             providers: [
                 {
                     provide: JhiAlertService,
@@ -33,6 +68,22 @@ describe('AssessmentHeaderComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                MockProvider(GradingSystemService, {
+                    findGradingScaleForExam: () => {
+                        return of(
+                            new HttpResponse({
+                                body: new GradingScale(),
+                                status: 200,
+                            }),
+                        );
+                    },
+                    findMatchingGradeStep: () => {
+                        return gradeStep1;
+                    },
+                    sortGradeSteps: () => {
+                        return [gradeStep1, gradeStep2];
+                    },
+                }),
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
