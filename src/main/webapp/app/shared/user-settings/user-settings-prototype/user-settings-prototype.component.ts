@@ -60,7 +60,7 @@ export class UserSettingsPrototypeComponent implements OnInit {
     saveOptions() {
         this.userSettingsService.saveUserOptions(this.optionCores, this.userSettingsCategory).subscribe(
             (res: HttpResponse<OptionCore[]>) => {
-                this.userSettings = this.userSettingsService.saveUserOptionsSuccess(res.body!, res.headers, this.userSettingsCategory);
+                this.userSettings = this.userSettingsService.saveUserOptionsSuccess(res.body!, this.userSettingsCategory);
                 this.finishUpdate();
                 this.finishSaving();
             },

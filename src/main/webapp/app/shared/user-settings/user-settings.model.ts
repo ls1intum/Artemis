@@ -31,6 +31,8 @@ export interface OptionGroup<T> {
 export interface Option<T> {
     name: string;
     description: string;
+    // can not replace T with OptionCore due to shadowing rules of TSLint
+    // generic is needed to make OptionCore polymorphic (e.g. for default setting) otherwise compiler errors occur
     optionCore: T; // concrete OptionCore Implementation
 }
 
@@ -40,7 +42,6 @@ export interface Option<T> {
  */
 export abstract class OptionCore {
     id?: number;
-    //optionSpecifier: string;
     optionSpecifier: OptionSpecifier;
     changed?: boolean;
 }

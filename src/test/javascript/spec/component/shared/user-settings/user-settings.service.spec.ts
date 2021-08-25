@@ -1,6 +1,6 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { SERVER_API_URL } from 'app/app.constants';
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -25,7 +25,6 @@ describe('User Settings Service', () => {
     let httpMock: HttpTestingController;
     let userSettingsCategory: UserSettingsCategory;
     let applyNewChangesSource: Subject<string>;
-    let receivedOptionCoresFromServer: OptionCore[];
     let resultingUserSettings: UserSettings<OptionCore>;
     const user = { id: 1, name: 'name', login: 'login' } as User;
 
@@ -40,9 +39,63 @@ describe('User Settings Service', () => {
     let notificationOptionCoreB: NotificationOptionCore = {
         id: 2,
         optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES,
-        webapp: true,
+        webapp: false,
         email: false,
     };
+
+    function updateNotificationSettingsByProvidedNotificationOptionCores(settings: UserSettings<NotificationOptionCore>, providedOptionCores: NotificationOptionCore[]) {
+        providedOptionCores.forEach((providedOptionCore) => {
+            for (let group of settings.groups) {
+                for (let option of group.options) {
+                    if (option.optionCore.optionSpecifier === providedOptionCore.optionSpecifier) {
+                        option.optionCore.webapp = providedOptionCore.webapp;
+                        option.optionCore.email = providedOptionCore.email;
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    function updateNotificationOptionCoresByProvidedNotificationOptionCores(originalOptionCores: NotificationOptionCore[], providedOptionCores: NotificationOptionCore[]) {
+        providedOptionCores.forEach((providedCore) => {
+            for (let originalCore of originalOptionCores) {
+                if (originalCore.optionSpecifier === providedCore.optionSpecifier) {
+                    originalCore.webapp = providedCore.webapp;
+                    originalCore.email = providedCore.email;
+                    break;
+                }
+            }
+        });
+    }
+
+    function checkIfProvidedNotificationCoresArePartOfExpectedCores(providedNotificationCores: NotificationOptionCore[], expectedNotificationCores: NotificationOptionCore[]) {
+        providedNotificationCores.forEach((providedCore) => {
+            for (let expectedNotificationCore of expectedNotificationCores) {
+                if (providedCore.optionSpecifier === expectedNotificationCore.optionSpecifier) {
+                    expect(providedCore.webapp).to.equal(expectedNotificationCore.webapp);
+                    expect(providedCore.email).to.equal(expectedNotificationCore.email);
+                    break;
+                }
+            }
+        });
+    }
+
+    function extractOptionCoresFromSettings(settings: UserSettings<OptionCore>): OptionCore[] {
+        let extractedOptionCores: OptionCore[] = [];
+        settings.groups.forEach((group) => {
+            group.options.forEach((option) => {
+                extractedOptionCores.push(option.optionCore);
+            });
+        });
+        return extractedOptionCores;
+    }
+
+    function compareSettings(expectedSettings: UserSettings<OptionCore>, resultSettings: UserSettings<OptionCore>) {
+        let expectedOptionCores = extractOptionCoresFromSettings(expectedSettings);
+        let resultOptionCores = extractOptionCoresFromSettings(resultSettings);
+        expect(expectedOptionCores).to.deep.equal(resultOptionCores);
+    }
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -66,81 +119,69 @@ describe('User Settings Service', () => {
     });
 
     describe('Service methods with Category Notification Settings', () => {
-        beforeAll(() => {
-            userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
-            receivedOptionCoresFromServer = [notificationOptionCoreA, notificationOptionCoreB];
-        });
-
-        it('should call correct URL to fetch all option cores', () => {
-            userSettingsService.loadUserOptions(userSettingsCategory).subscribe(() => {});
-            const req = httpMock.expectOne({ method: 'GET' });
-            const infoUrl = notificationSettingsResourceUrl + '/fetch-options';
-            expect(req.request.url).to.equal(infoUrl);
-        });
+        userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
+        const notificationOptionCoresForTesting: NotificationOptionCore[] = [notificationOptionCoreA, notificationOptionCoreB];
 
         describe('test loading methods', () => {
+            it('should call correct URL to fetch all option cores', () => {
+                userSettingsService.loadUserOptions(userSettingsCategory).subscribe();
+                const req = httpMock.expectOne({ method: 'GET' });
+                const infoUrl = notificationSettingsResourceUrl + '/fetch-options';
+                expect(req.request.url).to.equal(infoUrl);
+            });
+
             it('should load correct default settings as foundation', () => {
                 // to make sure the default settings are not modified
                 resultingUserSettings = userSettingsService.loadUserOptionCoresSuccessAsSettings([], userSettingsCategory);
-                expect(resultingUserSettings).to.deep.equal(defaultNotificationSettings);
+                compareSettings(defaultNotificationSettings, resultingUserSettings);
             });
-
-            function checkExpectedAndProvidedNotificationOptionCoresForEquality(
-                expectedNotificationCores: NotificationOptionCore[],
-                providedNotificationCores: NotificationOptionCore[],
-            ) {}
-
-            function checkExpectedAndProvidedNotificationOptionCoreForEquality(
-                expectedNotificationCore: NotificationOptionCore,
-                providedNotificationCore: NotificationOptionCore,
-            ) {}
-            /*
-            function updateNotificationSettingsByProvidedNotificationOptionCores(
-                settings : UserSettings<NotificationOptionCore>, optionCores : NotificationOptionCore[]) {
-                settings.groups.find((group) => {
-                    if(option)
-                }
-            }
- */
 
             it('should correctly update and return settings based on received option cores', () => {
                 let expectedUserSettings: UserSettings<NotificationOptionCore> = defaultNotificationSettings;
-                expectedUserSettings.groups.find((group) => {
-                    group.options.find((option) => {
-                        if (option.optionCore.optionSpecifier === notificationOptionCoreA.optionSpecifier) {
-                            option.optionCore.webapp = notificationOptionCoreA.webapp;
-                            option.optionCore.email = notificationOptionCoreA.email;
-                        }
-
-                        if (option.optionCore.optionSpecifier === notificationOptionCoreB.optionSpecifier) {
-                            option.optionCore.webapp = notificationOptionCoreB.webapp;
-                            option.optionCore.email = notificationOptionCoreB.email;
-                        }
-                    });
-                });
-
-                resultingUserSettings = userSettingsService.loadUserOptionCoresSuccessAsSettings(receivedOptionCoresFromServer, userSettingsCategory);
-                expect(resultingUserSettings).to.deep.equal(defaultNotificationSettings);
+                updateNotificationSettingsByProvidedNotificationOptionCores(expectedUserSettings, notificationOptionCoresForTesting);
+                resultingUserSettings = userSettingsService.loadUserOptionCoresSuccessAsSettings(notificationOptionCoresForTesting, userSettingsCategory);
+                compareSettings(expectedUserSettings, resultingUserSettings);
             });
 
             it('should correctly update and return option cores based on received option cores', () => {
-                let defaultOptionCores = userSettingsService.loadUserOptionCoresSuccessAsOptionCores([], userSettingsCategory);
-                let numberOfDefaultOptionCores = defaultOptionCores.length;
+                let expectedNotificationOptionCores: NotificationOptionCore[] = userSettingsService.extractOptionCoresFromSettings(
+                    defaultNotificationSettings,
+                ) as NotificationOptionCore[];
+                updateNotificationOptionCoresByProvidedNotificationOptionCores(expectedNotificationOptionCores, notificationOptionCoresForTesting);
+
                 let resultingOptionCores: NotificationOptionCore[];
-                resultingOptionCores = userSettingsService.loadUserOptionCoresSuccessAsOptionCores(receivedOptionCoresFromServer, userSettingsCategory) as NotificationOptionCore[];
+                resultingOptionCores = userSettingsService.loadUserOptionCoresSuccessAsOptionCores(
+                    notificationOptionCoresForTesting,
+                    userSettingsCategory,
+                ) as NotificationOptionCore[];
 
-                expect(resultingOptionCores.length).to.equal(numberOfDefaultOptionCores);
+                expect(resultingOptionCores.length).to.equal(expectedNotificationOptionCores.length);
+                checkIfProvidedNotificationCoresArePartOfExpectedCores(resultingOptionCores, expectedNotificationOptionCores);
+            });
+        });
 
-                resultingOptionCores.find((optionCore) => {
-                    if (optionCore.optionSpecifier === notificationOptionCoreA.optionSpecifier) {
-                        expect(optionCore.webapp).to.equal(notificationOptionCoreA.webapp);
-                        expect(optionCore.email).to.equal(notificationOptionCoreA.email);
-                    }
-                    if (optionCore.optionSpecifier === notificationOptionCoreB.optionSpecifier) {
-                        expect(optionCore.webapp).to.equal(notificationOptionCoreB.webapp);
-                        expect(optionCore.email).to.equal(notificationOptionCoreB.email);
-                    }
+        describe('test saving methods', () => {
+            it('should call correct URL to save option cores', () => {
+                userSettingsService.saveUserOptions(notificationOptionCoresForTesting, userSettingsCategory).subscribe();
+                const req = httpMock.expectOne({ method: 'POST' });
+                const infoUrl = notificationSettingsResourceUrl + '/save-options';
+                expect(req.request.url).to.equal(infoUrl);
+            });
+
+            it('server response should contain inputted options', fakeAsync(() => {
+                userSettingsService.saveUserOptions(notificationOptionCoresForTesting, userSettingsCategory).subscribe((resp) => {
+                    checkIfProvidedNotificationCoresArePartOfExpectedCores(resp.body as NotificationOptionCore[], notificationOptionCoresForTesting);
                 });
+                const req = httpMock.expectOne({ method: 'POST' });
+                req.flush(notificationOptionCoresForTesting);
+                tick();
+            }));
+
+            it('should correctly update and return settings based on received option cores', () => {
+                let expectedUserSettings: UserSettings<NotificationOptionCore> = defaultNotificationSettings;
+                updateNotificationSettingsByProvidedNotificationOptionCores(expectedUserSettings, notificationOptionCoresForTesting);
+                resultingUserSettings = userSettingsService.saveUserOptionsSuccess(notificationOptionCoresForTesting, userSettingsCategory);
+                compareSettings(expectedUserSettings, resultingUserSettings);
             });
         });
     });
