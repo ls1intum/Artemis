@@ -22,14 +22,12 @@ let testCourse: any;
 let modelingExercise: any;
 
 const uid = generateUUID();
-const courseName = 'Cypress course' + uid;
-const courseShortName = 'cy' + uid;
 
 describe('Modeling Exercise Spec', () => {
     before('Log in as admin and create a course', () => {
         cy.intercept('POST', '/api/modeling-exercises').as('createModelingExercise');
         cy.login(admin);
-        courseManagementRequests.createCourse(courseName, courseShortName).then((courseResp) => {
+        courseManagementRequests.createCourse().then((courseResp) => {
             testCourse = courseResp.body;
             cy.visit(`/course-management/${testCourse.id}`).get('.row-md > :nth-child(2)').should('contain.text', testCourse.title);
             // set tutor group
