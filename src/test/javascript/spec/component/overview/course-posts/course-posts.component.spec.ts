@@ -1,21 +1,28 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import { CoursePostsComponent } from 'app/course/course-posts/course-posts.component';
+import { CoursePostsComponent, PostForOverview } from 'app/course/course-posts/course-posts.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Post } from 'app/entities/metis/post.model';
-import { PostForOverview } from 'app/course/course-posts/course-posts.component';
 import { User } from 'app/core/user/user.model';
 import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { PostService } from 'app/shared/metis/post.service';
+import { MockPostService } from '../../../helpers/mocks/service/mock-post.service';
+import { spy } from 'sinon';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('CoursePostsComponent', () => {
     let component: CoursePostsComponent;
-    let componentFixture: ComponentFixture<CoursePostsComponent>;
+    let fixture: ComponentFixture<CoursePostsComponent>;
+    let postService: PostService;
 
     const user1 = {
         id: 1,
@@ -41,7 +48,7 @@ describe('CoursePostsComponent', () => {
         author: user2,
     } as AnswerPost;
 
-    const post = {
+    const post1 = {
         id: 1,
         content: 'post',
         creationDate: undefined,
@@ -52,29 +59,38 @@ describe('CoursePostsComponent', () => {
         id: 1,
         content: 'post',
         creationDate: undefined,
-        votes: 1,
         answers: 2,
+        votes: 1,
         approvedAnswerPosts: 1,
         exerciseOrLectureId: 1,
         exerciseOrLectureTitle: 'Test exercise',
         belongsToExercise: true,
     } as PostForOverview;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
-            declarations: [CoursePostsComponent],
+            imports: [HttpClientTestingModule, ArtemisTestModule],
+            providers: [{ provide: PostService, useClass: MockPostService }],
+            declarations: [CoursePostsComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(HtmlForMarkdownPipe)],
+            schemas: [NO_ERRORS_SCHEMA],
         })
-            .overrideTemplate(CoursePostsComponent, '')
             .compileComponents()
             .then(() => {
-                componentFixture = TestBed.createComponent(CoursePostsComponent);
-                component = componentFixture.componentInstance;
+                fixture = TestBed.createComponent(CoursePostsComponent);
+                component = fixture.componentInstance;
+                component.courseId = 1;
+                postService = TestBed.inject(PostService);
             });
     });
 
+    it('should initialize post for overview correctly', () => {
+        const postServiceGetPostByCourseIdSpy = spy(postService, 'getAllPostsByCourseId');
+        component.updatePosts();
+        expect(postServiceGetPostByCourseIdSpy).to.have.been.called;
+    });
+
     it('should count approved answers correctly', () => {
-        expect(component.getNumberOfApprovedAnswerPosts(post)).to.deep.equal(1);
+        expect(component.getNumberOfApprovedAnswerPosts(post1)).to.deep.equal(1);
     });
 
     it('should hide questions with approved answers', () => {
