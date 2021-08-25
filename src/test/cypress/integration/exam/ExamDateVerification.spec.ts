@@ -1,3 +1,4 @@
+import { PUT } from './../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs';
 import { artemis } from '../../support/ArtemisTesting';
@@ -95,7 +96,7 @@ describe('Exam management', () => {
                         cy.get('#text-editor-tab').type(
                             'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                         );
-                        cy.intercept('PUT', `/api/exercises/${textExercise.id}/text-submissions`).as('savedSubmission');
+                        cy.intercept(PUT, `/api/exercises/${textExercise.id}/text-submissions`).as('savedSubmission');
                         cy.contains('Save').click();
                         cy.wait('@savedSubmission');
                     });
