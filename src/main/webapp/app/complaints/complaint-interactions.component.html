@@ -6,7 +6,6 @@
             [class.not-allowed]="(!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid"
             (click)="toggleComplaintForm()"
             [disabled]="(!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid"
-            e
             title="{{ (!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | artemisTranslate) : '' }}"
         >
             {{ 'artemisApp.complaint.moreInfo' | artemisTranslate }}
@@ -29,6 +28,7 @@
             class="flex-grow-1"
             [exercise]="exercise"
             [resultId]="result.id!"
+            [submissionId]="submission.id!"
             [examId]="exam?.id!"
             [allowedComplaints]="numberOfAllowedComplaints"
             [maxComplaintsPerCourse]="calculateMaxComplaints()"
@@ -43,6 +43,7 @@
             class="flex-grow-1"
             [exercise]="exercise"
             [resultId]="result.id!"
+            [submissionId]="submission.id!"
             [complaintType]="ComplaintType.MORE_FEEDBACK"
             [isCurrentUserSubmissionAuthor]="isCurrentUserSubmissionAuthor"
             (submit)="hasRequestMoreFeedback = true"

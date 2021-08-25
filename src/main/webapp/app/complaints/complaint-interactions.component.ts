@@ -10,6 +10,7 @@ import { Course } from 'app/entities/course.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-complaint-interactions',
@@ -27,6 +28,8 @@ export class ComplaintInteractionsComponent implements OnInit {
     get isExamMode() {
         return this.exam != undefined;
     }
+
+    submission: Submission;
 
     showRequestMoreFeedbackForm = false;
     // indicates if there is a complaint for the result of the submission
@@ -50,37 +53,34 @@ export class ComplaintInteractionsComponent implements OnInit {
      */
     ngOnInit(): void {
         if (this.isExamMode) {
-            if (this.participation && this.participation.id && this.exercise) {
-                if (this.participation.results && this.participation.results.length > 0) {
-                    // Make sure result and participation are connected
-                    this.result = this.participation.results[0];
-                    this.result.participation = this.participation;
-                }
+            if (this.participation?.id && this.exercise && this.participation.results && this.participation.results.length > 0) {
+                // Make sure results and participation are connected
+                this.result = this.participation.results[0];
+                this.result.participation = this.participation;
             }
-        } else {
-            if (this.course) {
-                // for normal exercises we track the number of allowed complaints
-                if (this.course.complaintsEnabled) {
-                    this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course.id!, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
-                        this.numberOfAllowedComplaints = allowedComplaints;
-                    });
-                } else {
-                    this.numberOfAllowedComplaints = 0;
-                }
+        } else if (this.course) {
+            // for normal exercises we track the number of allowed complaints
+            if (this.course.complaintsEnabled) {
+                this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course.id!, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
+                    this.numberOfAllowedComplaints = allowedComplaints;
+                });
+            } else {
+                this.numberOfAllowedComplaints = 0;
             }
         }
         if (this.participation.submissions && this.participation.submissions.length > 0) {
-            if (this.result && this.result.completionDate) {
-                this.complaintService.findByResultId(this.result.id!).subscribe((res) => {
-                    if (res.body) {
-                        if (res.body.complaintType == undefined || res.body.complaintType === ComplaintType.COMPLAINT) {
-                            this.hasComplaint = true;
-                        } else {
-                            this.hasRequestMoreFeedback = true;
-                        }
+            this.submission = this.participation.submissions[0];
+        }
+        if (this.result && this.result.completionDate) {
+            this.complaintService.findBySubmissionId(this.submission.id!).subscribe((res) => {
+                if (res.body) {
+                    if (res.body.complaintType == undefined || res.body.complaintType === ComplaintType.COMPLAINT) {
+                        this.hasComplaint = true;
+                    } else {
+                        this.hasRequestMoreFeedback = true;
                     }
-                });
-            }
+                }
+            });
         }
         this.accountService.identity().then((user) => {
             if (this.participation && this.participation.student && user && user.id) {
@@ -97,10 +97,7 @@ export class ComplaintInteractionsComponent implements OnInit {
      * We disable the component, if no complaint has been made by the user during the Student Review period, for exam exercises.
      */
     get noValidComplaintWasSubmittedWithinTheStudentReviewPeriod() {
-        if (this.testRun) {
-            return false;
-        }
-        return !this.isTimeOfComplaintValid && !this.hasComplaint;
+        return !(this.testRun || this.isTimeOfComplaintValid || this.hasComplaint);
     }
 
     /**
@@ -113,36 +110,34 @@ export class ComplaintInteractionsComponent implements OnInit {
      */
     get isTimeOfComplaintValid(): boolean {
         if (this.isExamMode) {
-            if (this.testRun) {
-                return !!this.result && !!this.result.completionDate;
+            if (!!this.result && !!this.result.completionDate) {
+                return this.testRun || this.isWithinStudentReviewPeriod();
             }
-            return this.isWithinStudentReviewPeriod() && !!this.result && !!this.result.completionDate;
         } else if (this.result && this.result.completionDate) {
-            const resultCompletionDate = moment(this.result.completionDate!);
-            if (!this.exercise.assessmentDueDate || resultCompletionDate.isAfter(this.exercise.assessmentDueDate)) {
-                return resultCompletionDate.isAfter(moment().subtract(this.course?.maxComplaintTimeDays, 'day'));
-            }
-            return moment(this.exercise.assessmentDueDate).isAfter(moment().subtract(this.course?.maxComplaintTimeDays, 'day'));
-        } else {
-            return false;
+            return this.isComplaintWithinTimeBoundaries();
         }
+        return false;
     }
 
     /**
      * Analogous to isTimeOfComplaintValid but exams cannot have more feedback requests.
      */
     get isTimeOfFeedbackRequestValid(): boolean {
-        if (this.isExamMode) {
-            return false;
-        } else if (this.result && this.result.completionDate) {
-            const resultCompletionDate = moment(this.result.completionDate!);
-            if (!this.exercise.assessmentDueDate || resultCompletionDate.isAfter(this.exercise.assessmentDueDate)) {
-                return resultCompletionDate.isAfter(moment().subtract(this.course?.maxRequestMoreFeedbackTimeDays, 'day'));
-            }
-            return moment(this.exercise.assessmentDueDate).isAfter(moment().subtract(this.course?.maxRequestMoreFeedbackTimeDays, 'day'));
-        } else {
-            return false;
+        if (!this.isExamMode && this.result && this.result.completionDate) {
+            return this.isComplaintWithinTimeBoundaries();
         }
+        return false;
+    }
+
+    /**
+     * Checks if a complaint (either actual complaint or more feedback request) can be filed
+     */
+    isComplaintWithinTimeBoundaries(): boolean {
+        const resultCompletionDate = moment(this.result.completionDate!);
+        if (!this.exercise.assessmentDueDate || resultCompletionDate.isAfter(this.exercise.assessmentDueDate)) {
+            return resultCompletionDate.isAfter(moment().subtract(this.course?.maxRequestMoreFeedbackTimeDays, 'day'));
+        }
+        return moment(this.exercise.assessmentDueDate).isAfter(moment().subtract(this.course?.maxRequestMoreFeedbackTimeDays, 'day'));
     }
 
     /**
@@ -152,12 +147,10 @@ export class ComplaintInteractionsComponent implements OnInit {
     private isWithinStudentReviewPeriod(): boolean {
         if (this.testRun) {
             return true;
-        }
-        if (this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd) {
+        } else if (this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd) {
             return this.serverDateService.now().isBetween(this.exam.examStudentReviewStart, this.exam.examStudentReviewEnd);
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
@@ -183,8 +176,7 @@ export class ComplaintInteractionsComponent implements OnInit {
     calculateMaxComplaints() {
         if (this.course) {
             return this.exercise.teamMode ? this.course.maxTeamComplaints! : this.course.maxComplaints!;
-        } else {
-            return 1;
         }
+        return 1;
     }
 }

@@ -26,7 +26,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { getFirstResultWithComplaint, getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -343,11 +343,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     getComplaint(): void {
-        const resultWithComplaint = getFirstResultWithComplaint(this.submission);
-        if (!resultWithComplaint) {
-            return;
-        }
-        this.complaintService.findByResultId(resultWithComplaint.id!).subscribe(
+        this.complaintService.findBySubmissionId(this.submission.id!).subscribe(
             (res) => {
                 if (!res.body) {
                     return;

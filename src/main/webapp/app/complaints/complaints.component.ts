@@ -20,6 +20,7 @@ import { onError } from 'app/shared/util/global.utils';
 export class ComplaintsComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() resultId: number;
+    @Input() submissionId: number;
     @Input() examId?: number;
     @Input() allowedComplaints: number; // the number of complaints that a student can still submit in the course
     @Input() maxComplaintsPerCourse: number;
@@ -27,7 +28,7 @@ export class ComplaintsComponent implements OnInit {
     @Input() isCurrentUserSubmissionAuthor = false;
     @Output() submit: EventEmitter<void> = new EventEmitter();
     complaintText?: string;
-    alreadySubmitted: boolean;
+    alreadySubmitted = false;
     submittedDate: Moment;
     accepted?: boolean;
     handled: boolean;
@@ -39,7 +40,7 @@ export class ComplaintsComponent implements OnInit {
 
     ngOnInit(): void {
         this.complaintService
-            .findByResultId(this.resultId)
+            .findBySubmissionId(this.submissionId)
             .pipe(filter((res) => !!res.body))
             .subscribe(
                 (res) => {
@@ -51,7 +52,7 @@ export class ComplaintsComponent implements OnInit {
                     this.handled = this.accepted !== undefined;
 
                     if (this.handled) {
-                        this.complaintResponseService.findByComplaintId(complaint.id!).subscribe((complaintResponse) => (this.complaintResponse = complaintResponse.body!));
+                        this.complaintResponse = complaint.complaintResponse!;
                     }
                 },
                 (error: HttpErrorResponse) => {
@@ -72,11 +73,9 @@ export class ComplaintsComponent implements OnInit {
             (res) => {
                 this.submittedDate = res.body!.submittedTime!;
                 this.alreadySubmitted = true;
-                if (complaint.complaintType === ComplaintType.COMPLAINT) {
+                if (complaint.complaintType === ComplaintType.COMPLAINT && !this.examId) {
                     // we do not track the number of complaints for exams
-                    if (!this.examId) {
-                        this.allowedComplaints--;
-                    }
+                    this.allowedComplaints--;
                 }
                 this.loaded = true;
                 this.submit.emit();
