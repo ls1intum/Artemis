@@ -17,9 +17,9 @@ SAFE=false
 BUILD_ROOT=$(realpath ..)
 
 # run hidden tests before this date, this should be somtimes before the release of the exercise
-HIDDEN_START=$(date -d '2020-01-01 00:00 CEST' +%s)
+HIDDEN_START=$(date -d 'TZ="Europe/Berlin" 2020-01-01 00:00' +%s)
 # run hidden tests after this date, this should be somtimes after the deadline and before the run of the after due tests
-HIDDEN_END=$(date -d '2030-01-01 00:00 CEST' +%s)
+HIDDEN_END=$(date -d 'TZ="Europe/Berlin" 2030-01-01 00:00' +%s)
 NOW=$(date +%s)
 RUN_HIDDEN=false
 
@@ -34,6 +34,12 @@ while getopts s opt; do
     *)
   esac
 done
+
+if $SAFE; then
+  exec 3>/dev/null
+else
+  exec 3>&1
+fi
 
 # check for symlink is the submission
 find ../assignment/ -type l | grep -q . && echo "Cannot build with symlinks in submission." && exit 0
@@ -58,7 +64,7 @@ if ! timeout -s SIGTERM $BUILD_TIMEOUT dune build --force assignment; then
 fi
 # If there are build failures, the compiler sometimes prints source code of tests to stderr by default, which is shown to the participant.
 # Therefore, drop stderr output. If the student submission builds and matches the interface, this should never fail
-if ! timeout -s SIGTERM $BUILD_TIMEOUT dune build --force test >/dev/null 2>/dev/null; then
+if ! timeout -s SIGTERM $BUILD_TIMEOUT dune build --force test >&3 2>&3; then
     echo "Unable to build tests, please report this failure to an instructor" >&2
     exit 0
 fi
