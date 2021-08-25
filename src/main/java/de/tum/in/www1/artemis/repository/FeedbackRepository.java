@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -41,6 +42,9 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     List<Feedback> findByResult(Result result);
 
     List<Feedback> findByReferenceInAndResult_Submission_Participation_Exercise(List<String> references, Exercise exercise);
+
+    @EntityGraph(attributePaths = { "result", "result.submission" })
+    List<Feedback> findAllByResult_Submission_Participation_ExerciseIdIn(List<Long> exerciseIds);
 
     @Query("select feedback from Feedback feedback where feedback.gradingInstruction.id in :gradingInstructionsIds")
     List<Feedback> findFeedbackByGradingInstructionIds(@Param("gradingInstructionsIds") List<Long> gradingInstructionsIds);
