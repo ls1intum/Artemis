@@ -35,6 +35,7 @@ env:
   CI: true
   node: 14.x
   java: 16
+  RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
 
 jobs:
 
@@ -71,6 +72,22 @@ jobs:
         asset_name: Artemis.war
         asset_content_type: application/x-webarchive
 
+  docker:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download Artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: Artemis.war
+    - name: Download Dockerfile
+      run: curl -O $RAW_URL/src/main/docker/Dockerfile -O $RAW_URL/src/main/docker/entrypoint.sh
+    - name: Build Docker Image
+      run: docker build -t ghcr.io/ls1intum/artemis:latest .
+    # TODO: Push to GitHub Container Registry (develop + tag + open prs maybe)
+    # TODO: Push to Docker Hub (develop + tag)
+    # TODO: Push to Chair Habour (??)
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -92,8 +109,8 @@ jobs:
             owner: context.repo.owner,
             repo: context.repo.repo,
             labels: ['lock:${{ matrix.environment }}']
-          })
-          const issues = await github.paginate(opts)
+          });
+          const issues = await github.paginate(opts);
           if (issues.length == 1 && (!context.issue || issues[0].number != context.issue.number)) {
             core.setFailed(`Testserver "${{ matrix.environment }}" is already in use by PR #${issues[0].number}.`);
           } else if (issues.length > 1) {
@@ -104,7 +121,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               labels: ['lock:${{ matrix.environment }}']
-            })
+            });
           }
 
     - name: Download Artifact
@@ -114,6 +131,12 @@ jobs:
     - name: Store Artifact Name
       id: artifact-name
       run: echo "::set-output name=war-file::$(ls)"
+
+    # Downlaod artemis-server-cli from GH without cloning the Repo
+    - name: Fetch Artemis CLI
+      run: |
+        wget $RAW_URL/artemis-server-cli
+        chmod +x artemis-server-cli
 
     - name: Install vpnc
       run: sudo apt-get install vpnc
@@ -145,12 +168,6 @@ jobs:
           done
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
           ssh-add - <<< $SSH_PRIVATE_KEY
-
-    # Downlaod artemis-server-cli from GH without cloning the Repo
-    - name: Fetch Artemis CLI
-      run: |
-        wget https://raw.githubusercontent.com/ls1intum/Artemis/develop/artemis-server-cli
-        chmod +x artemis-server-cli
 
     - name: Deploy Artemis WAR artifact
       env:
