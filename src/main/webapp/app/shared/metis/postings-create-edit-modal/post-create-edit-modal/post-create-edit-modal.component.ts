@@ -12,7 +12,6 @@ import { Course } from 'app/entities/course.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { PageType } from 'app/shared/metis/metis.util';
 import { Subscription } from 'rxjs';
-
 const TITLE_MAX_LENGTH = 200;
 
 @Component({
@@ -46,12 +45,12 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     }
 
     /**
-     * resets the post title and post content
+     * resets the pageType, initialContext, post tags, post title, and post content
      */
     resetFormGroup(): void {
         this.pageType = this.metisService.getPageType();
         this.initialContext = this.setInitialContext();
-        this.tags = this.posting.tags ?? [];
+        this.tags = this.posting.tags ? this.posting.tags : [];
         this.formGroup = this.formBuilder.group({
             title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH)]],
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength)]],
@@ -72,6 +71,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         } else {
             this.posting.courseWideContext = this.formGroup.get('context')?.value;
         }
+        this.posting.tags = this.tags;
         this.posting.creationDate = moment();
         this.metisService.createPost(this.posting).subscribe({
             next: (post: Post) => {
@@ -91,6 +91,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
      */
     updatePosting(): void {
         this.posting.title = this.formGroup.get('title')?.value;
+        this.posting.tags = this.tags;
         this.metisService.updatePost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;

@@ -2,7 +2,29 @@
     <div class="col-auto p-0" *ngFor="let reactionCount of reactionCountMap | keyvalue">
         <button class="reaction-button clickable" [class.reaction-button--reacted]="reactionCount.value.hasReacted" (click)="updateReaction(reactionCount.key)">
             <ngx-emoji class="emoji" [emoji]="reactionCount.key" [size]="16"></ngx-emoji>
-            <span class="emoji-count">{{ reactionCount.value.count }}</span>
+            <span class="emoji-count" [class.reaction-count--reacted]="reactionCount.value.hasReacted">{{ reactionCount.value.count }}</span>
+        </button>
+    </div>
+    <div class="col-auto p-0" *ngIf="posting.pinned || currentUserIsAtLeastTutor">
+        <button
+            class="reaction-button pin"
+            [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
+            [class.reaction-button--reacted]="posting.pinned && currentUserIsAtLeastTutor"
+            [disabled]="!currentUserIsAtLeastTutor"
+            (click)="currentUserIsAtLeastTutor && togglePin()"
+        >
+            <ngx-emoji class="emoji" [ngbTooltip]="pinTooltip | artemisTranslate" [emoji]="pinEmojiId" [size]="16"> </ngx-emoji>
+        </button>
+    </div>
+    <div class="col-auto p-0" *ngIf="posting.archived || currentUserIsAtLeastTutor">
+        <button
+            class="reaction-button archive"
+            [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
+            [class.reaction-button--reacted]="posting.archived && currentUserIsAtLeastTutor"
+            [disabled]="!currentUserIsAtLeastTutor"
+            (click)="currentUserIsAtLeastTutor && toggleArchive()"
+        >
+            <ngx-emoji class="emoji" [ngbTooltip]="archiveTooltip | artemisTranslate" [emoji]="archiveEmojiId" [size]="16"> </ngx-emoji>
         </button>
     </div>
     <div class="col-auto px-0">
@@ -18,6 +40,7 @@
     </div>
     <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="trigger" [cdkConnectedOverlayOpen]="showReactionSelector">
         <emoji-mart
+            [emojisToShowFilter]="emojisToShowFilter"
             (emojiSelect)="selectReaction($event)"
             [emojiSize]="20"
             [categoriesIcons]="categoriesIcons"
