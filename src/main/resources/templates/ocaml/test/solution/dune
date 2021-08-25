@@ -1,0 +1,8 @@
+(env
+ (dev
+  (flags
+   (:standard -warn-error -A))))
+
+(library
+ (name solution)
+ (libraries batteries core))

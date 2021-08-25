@@ -57,7 +57,7 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
   | Swift                | no                   | no                   | no               | no           | no           | no                           |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | OCaml                | no                   | no                   | no               | no           | no           | no                           |
+  | OCaml                | no                   | no                   | no               | no           | no           | yes                          |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
 
   - *Sequential Test Runs*: ``Artemis`` can generate a build plan which first executes structural and then behavioral tests. This feature can help students to better concentrate on the immediate challenge at hand.
@@ -305,6 +305,71 @@ Exercise Creation
         cp -R "$NAME/template" "$NAME/assignment" && \
         # remove the .git folder from the assignment folder
         rm -r "$NAME/assignment/.git/"
+
+  - **Notes for OCaml:** The tests expect to be placed in a folder **tests** next to a folder **assignment** containing the submission to test and a folder **solution** with the solution repository.
+    You can use the following script to conveniently checkout an exercise and create the right folder structure:
+
+    .. code-block:: bash
+
+      #!/bin/sh
+      # Arguments:
+      # $1: exercise short name as specified on Artemis
+      # $2: (optional) output folder name
+      #
+      # Note: you might want to adapt the `BASE` variable below according to your needs
+
+      # shortname of the course to pick exercises from
+      PREFIX=
+
+      if [ -z "$1" ]; then
+        echo "No exercise short name supplied."
+        exit 1
+      fi
+
+      # full name of the exercise to load
+      EXERCISE="$PREFIX$1"
+
+      if [ -z "$2" ]; then
+        # use the exercise name if no output folder name is specified
+        NAME="$1"
+      else
+        NAME="$2"
+      fi
+
+      # default base URL to repositories; change this according to your needs
+      BASE="ssh://git@bitbucket.ase.in.tum.de:7999/$EXERCISE/$EXERCISE"
+
+      # clone the test repository
+      git clone "$BASE-tests.git" "$NAME/tests"
+      # clone the template repository
+      git clone "$BASE-exercise.git" "$NAME/template"
+      # clone the solution repository
+      git clone "$BASE-solution.git" "$NAME/solution"
+
+      # hardlink the various assignment interfaces to ensure they stay in sync
+      # the version in the solution repositiory is authoritive in case of conflict
+      rm "$NAME/template/src/assignment.mli"
+      rm "$NAME/tests/assignment/assignment.mli"
+      rm "$NAME/tests/solution/solution.mli"
+      ln "$NAME/solution/src/assignment.mli" "$NAME/template/src/assignment.mli"
+      ln "$NAME/solution/src/assignment.mli" "$NAME/tests/assignment/assignment.mli"
+      ln "$NAME/solution/src/assignment.mli" "$NAME/tests/solution/solution.mli"
+
+    To run the tests run the following script in either the solution or template folder:
+
+    .. code-block:: bash
+
+      #!/bin/sh
+      dir="$(realpath ./)"
+
+      cd .. || exit 1
+      rm ./assignment
+      ln -s "$dir" ./assignment
+      cd tests || exit 1
+      ./run.sh
+
+    It is possible to checkout additional student repositories next to the solution and template folder to run tests on them for manual grading.
+
 
 - **Alternative 2:** Open |edit-in-editor| in Artemis (in the browser) and adapt the code in online code editor
 

@@ -1,0 +1,6 @@
+(executable
+ (name test)
+ (flags
+  (:standard -warn-error -A))
+ (libraries ounit2 qcheck batteries core assignment solution)
+ (promote))
