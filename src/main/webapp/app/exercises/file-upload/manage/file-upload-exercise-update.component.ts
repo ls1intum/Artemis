@@ -32,6 +32,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     EditorMode = EditorMode;
+    notificationText?: string;
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
 
@@ -89,7 +90,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
 
-        this.saveCommand.save(this.fileUploadExercise).subscribe(
+        this.saveCommand.save(this.fileUploadExercise, this.notificationText).subscribe(
             () => this.onSaveSuccess(),
             (res: HttpErrorResponse) => this.onSaveError(res),
             () => {

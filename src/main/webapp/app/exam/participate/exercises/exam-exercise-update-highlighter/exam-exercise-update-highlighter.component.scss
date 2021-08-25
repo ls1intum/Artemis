@@ -1,0 +1,13 @@
+#highlightDiffButton {
+    background-color: #fbc107;
+    border: none;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    color: #353d47;
+
+    &:hover {
+        color: #fff;
+    }
+}
