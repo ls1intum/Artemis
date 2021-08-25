@@ -20,14 +20,15 @@ export class ExamManagementRequests extends ExerciseRequests {
     }
 
     /**
-     * add exercise group to exam
-     * @returns <Chainable> request response
+     * Creates an exercise group and adds it to the specified exam.
+     * @param exam the exam
+     * @param title the title of the exercise group
+     * @param isMandatory whether the exercise group is mandatory
+     * @returns <Chainable> request
      * */
-    addExerciseGroup(exam: any, title: string, mandatory: boolean) {
-        exerciseGroup.exam = exam;
-        exerciseGroup.title = title;
-        exerciseGroup.isMandatory = mandatory;
-        return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/exerciseGroups', body: exerciseGroup });
+    createExerciseGroup(exam: any, title = 'group' + generateUUID(), isMandatory = true) {
+        const group = { ...exerciseGroup, exam, title, isMandatory };
+        return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/exerciseGroups', body: group });
     }
 
     /**
@@ -76,30 +77,30 @@ export class ExamManagementRequests extends ExerciseRequests {
      * @param title the title of the programming exercise
      * @param programmingShortName the short name of the programming exercise
      * @param packageName the package name of the programming exercise
-     * @param course the exercise group object returned by a {@link ExamManagementRequests.addExerciseGroup} request
+     * @param course the exercise group object returned by a {@link ExamManagementRequests.createExerciseGroup} request
      * @param releaseDate when the programming exercise should be available (default is now)
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
      * @returns <Chainable> request response
      */
     createProgrammingExercise(
-        title: string,
-        programmingShortName: string,
-        packageName: string,
         exerciseGroup: any,
-        releaseDate = new Date(),
-        dueDate = new Date(Date.now() + this.oneDay),
+        title = 'Cypress programming exercise ' + generateUUID(),
+        programmingShortName = 'cypress' + generateUUID(),
+        packageName = 'de.test',
+        releaseDate = day(),
+        dueDate = day().add(1, 'days'),
     ) {
-        return super.createProgrammingExercise(title, programmingShortName, packageName, { exerciseGroup }, releaseDate, dueDate);
+        return super.createProgrammingExercise({ exerciseGroup }, title, programmingShortName, packageName, releaseDate, dueDate);
     }
 
     /**
      * Creates a text exercise with the specified settings and adds it to the specified exercise group.
-     * @param title the title of the text exercise
      * @param exerciseGroup the exercise group object
+     * @param title the title of the text exercise
      * @returns <Chainable> request response
      */
-    createTextExercise(title: string, exerciseGroup: any) {
-        return super.createTextExercise(title, { exerciseGroup });
+    createTextExercise(exerciseGroup: any, title = 'Text exercise ' + generateUUID()) {
+        return super.createTextExercise({ exerciseGroup }, title);
     }
 
     /**

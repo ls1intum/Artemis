@@ -2,6 +2,8 @@ import { ExerciseRequests } from './ExerciseRequests';
 import { BASE_API, DELETE, POST } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import { CypressCredentials } from '../users';
+import { generateUUID } from '../utils';
+import day from 'dayjs';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 
@@ -19,15 +21,13 @@ export class CourseManagementRequests extends ExerciseRequests {
     }
 
     /**
-     * Creates a course with the specified title and short name.
-     * @param courseName the title of the course
-     * @param courseShortName the short name
-     * @returns <Chainable> request response
+     * Creates a course with the specified settings.
+     * @param courseName the title of the course (will generate default name if not provided)
+     * @param courseShortName the short name (will generate default name if not provided)
+     * @returns <Chainable> request
      */
-    createCourse(courseName: string, courseShortName: string) {
-        const course = courseTemplate;
-        course.title = courseName;
-        course.shortName = courseShortName;
+    createCourse(courseName = 'Cypress course' + generateUUID(), courseShortName = 'cypress' + generateUUID()) {
+        const course = { ...courseTemplate, title: courseName, shortName: courseShortName };
         return cy.request({
             url: BASE_API + 'courses',
             method: POST,
@@ -60,27 +60,27 @@ export class CourseManagementRequests extends ExerciseRequests {
      * @param course the course object returned by a create course request
      * @param releaseDate when the programming exercise should be available (default is now)
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
-     * @returns <Chainable> request response
+     * @returns <Chainable> request
      */
     createProgrammingExercise(
-        title: string,
-        programmingShortName: string,
-        packageName: string,
         course: any,
-        releaseDate = new Date(),
-        dueDate = new Date(Date.now() + this.oneDay),
+        title = 'Cypress programming exercise ' + generateUUID(),
+        programmingShortName = 'cypress' + generateUUID(),
+        packageName = 'de.test',
+        releaseDate = day(),
+        dueDate = day().add(1, 'days'),
     ) {
-        return super.createProgrammingExercise(title, programmingShortName, packageName, { course }, releaseDate, dueDate);
+        return super.createProgrammingExercise({ course }, title, programmingShortName, packageName, releaseDate, dueDate);
     }
 
     /**
      * Creates a text exercise with the specified settings and adds it to the specified course.
-     * @param title the title of the text exercise
      * @param course the course object
+     * @param title the title of the text exercise
      * @returns <Chainable> request response
      */
-    createTextExercise(title: string, course: any) {
-        return super.createTextExercise(title, { course });
+    createTextExercise(course: any, title = 'Text exercise ' + generateUUID()) {
+        return super.createTextExercise({ course }, title);
     }
 
     /**

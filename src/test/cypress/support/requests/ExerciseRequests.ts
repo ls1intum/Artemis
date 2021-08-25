@@ -1,6 +1,8 @@
+import { Dayjs } from 'dayjs';
 import { BASE_API, DELETE, POST } from '../constants';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
+import { dayjsToString, generateUUID } from '../utils';
 
 export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
 const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises/';
@@ -13,21 +15,21 @@ export abstract class ExerciseRequests {
 
     /**
      * Creates programming exercise with the specified settings and adds it to the specified course or exam.
+     * @param body an object containing either the course or exercise group the exercise will be added to
      * @param title the title of the programming exercise
      * @param programmingShortName the short name of the programming exercise
      * @param packageName the package name of the programming exercise
      * @param releaseDate when the programming exercise should be available (default is now)
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
-     * @param body an object containing either the course or exercise group the exercise will be added to
      * @returns <Chainable> request
      */
     protected createProgrammingExercise(
+        body: { course: any } | { exerciseGroup: any },
         title: string,
         programmingShortName: string,
         packageName: string,
-        body: { course: any } | { exerciseGroup: any },
-        releaseDate = new Date(),
-        dueDate = new Date(Date.now() + this.oneDay),
+        releaseDate: Dayjs,
+        dueDate: Dayjs,
     ) {
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
         const programmingTemplate: any = Object.assign({}, programmingExerciseTemplate, body);
@@ -35,8 +37,8 @@ export abstract class ExerciseRequests {
         programmingTemplate.shortName = programmingShortName;
         programmingTemplate.packageName = packageName;
         if (!isExamExercise) {
-            programmingTemplate.releaseDate = releaseDate.toISOString();
-            programmingTemplate.dueDate = dueDate.toISOString();
+            programmingTemplate.releaseDate = dayjsToString(releaseDate);
+            programmingTemplate.dueDate = dayjsToString(dueDate);
         } else {
             programmingTemplate.allowComplaintsForAutomaticAssessments = true;
         }
@@ -55,13 +57,12 @@ export abstract class ExerciseRequests {
 
     /**
      * Creates a text exercise with the specified settings and adds it to the specified course or exercise group (exam).
-     * @param title title of the text exercise
      * @param body a json object containing the course or exercise group.
+     * @param title title of the text exercise
      * @returns <Chainable> request
      */
-    protected createTextExercise(title: string, body: { course: any } | { exerciseGroup: any }) {
-        const textExercise: any = Object.assign({}, textExerciseTemplate, body);
-        textExercise.title = title;
+    protected createTextExercise(body: { course: any } | { exerciseGroup: any }, title: string) {
+        const textExercise: any = Object.assign({ title }, textExerciseTemplate, body);
         return cy.request({ method: POST, url: BASE_API + 'text-exercises', body: textExercise });
     }
 
