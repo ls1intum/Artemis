@@ -122,13 +122,13 @@
     <!--endregion-->
 </jhi-resizeable-container>
 
-<div class="col-12 text-end" *ngIf="toComplete">
+<div class="col-12 text-end pt-2" *ngIf="toComplete">
     <button class="btn btn-primary col-3 guided-tour-check-assessment" (click)="checkAssessment()" [disabled]="!assessmentsAreValid" id="checkAssessment">
         {{ 'artemisApp.exampleSubmission.submitAssessment' | artemisTranslate }}
     </button>
 </div>
 
-<div class="col-12 text-end" *ngIf="readOnly">
+<div class="col-12 text-end pt-2" *ngIf="readOnly">
     <button (click)="readAndUnderstood()" class="btn btn-success col-3 guided-tour-read">
         <fa-icon [icon]="'save'"></fa-icon>
         {{ 'artemisApp.exampleSubmission.readAndUnderstood' | artemisTranslate }}
