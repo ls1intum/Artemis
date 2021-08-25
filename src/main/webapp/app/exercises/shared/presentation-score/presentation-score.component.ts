@@ -29,6 +29,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
             </div>
         </ng-container>
     `,
+    styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
 export class PresentationScoreComponent {
     @Input() exercise: Exercise;

@@ -257,10 +257,10 @@
                             <fa-icon [icon]="'code-branch'" class="me-1"></fa-icon>
                             Repository
                         </a>
-                        <button *ngIf="buildPlanId(value)" class="btn btn-primary btn-sm me-1" jhiBuildPlanButton [projectKey]="projectKey()" [buildPlanId]="buildPlanId(value)!">
+                        <a *ngIf="buildPlanId(value)" target="_blank" rel="noreferrer" href="{{ value.participation.buildPlanUrl }}" class="btn btn-primary btn-sm me-1">
                             <fa-icon class="me-1" [icon]="['far', 'file-code']"></fa-icon>
                             Build plan
-                        </button>
+                        </a>
                         <a
                             [routerLink]="['/courses', course.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id]"
                             class="btn btn-info btn-sm me-1"

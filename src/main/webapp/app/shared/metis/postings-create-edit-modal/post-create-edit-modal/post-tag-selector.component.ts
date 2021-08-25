@@ -17,7 +17,7 @@ export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy {
     constructor(private metisService: MetisService) {}
 
     /**
-     * on initialization: subscribes to exsting post tags used in this course (will be shown in dropdown of tag selector),
+     * on initialization: subscribes to existing post tags used in this course (will be shown in dropdown of tag selector),
      * copies the input post tags to tags, so that they are shown in the selector
      */
     ngOnInit(): void {

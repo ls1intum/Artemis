@@ -3,17 +3,19 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import * as sinon from 'sinon';
 import { spy } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { User } from 'app/core/user/user.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
+import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -27,10 +29,15 @@ describe('AnswerPostCreateEditModalComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: NgbModal, useClass: MockNgbModalService }],
-            declarations: [AnswerPostCreateEditModalComponent, MockPipe(ArtemisTranslatePipe)],
-            schemas: [NO_ERRORS_SCHEMA],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
+            declarations: [
+                AnswerPostCreateEditModalComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(PostingsMarkdownEditorComponent),
+                MockComponent(PostingsButtonComponent),
+                MockComponent(HelpIconComponent),
+            ],
         })
             .compileComponents()
             .then(() => {

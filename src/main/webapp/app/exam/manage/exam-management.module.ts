@@ -30,7 +30,6 @@ import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/stude
 import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-participation-summary.module';
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
-import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
@@ -68,7 +67,6 @@ const ENTITY_STATES = [...examManagementState];
         MomentModule,
         ArtemisParticipationSummaryModule,
         ArtemisProgrammingExerciseStatusModule,
-        ProgrammingExerciseUtilsModule,
         ArtemisMarkdownModule,
         ArtemisTutorParticipationGraphModule,
         ArtemisExamParticipantScoresModule,

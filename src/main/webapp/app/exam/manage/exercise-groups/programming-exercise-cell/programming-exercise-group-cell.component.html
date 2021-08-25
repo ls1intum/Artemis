@@ -67,9 +67,9 @@
                     !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.templateParticipation?.repositoryUrl || '');
                     else noVersionControlAndContinuousIntegrationAvailableTemplate
                 "
-                jhiBuildPlanLink
-                [projectKey]="programmingExercise.projectKey || ''"
-                [buildPlanId]="programmingExercise.templateParticipation?.buildPlanId || ''"
+                target="_blank"
+                rel="noreferrer"
+                href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}"
                 >Template</a
             ></span
         >
@@ -81,9 +81,9 @@
                     !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.solutionParticipation?.repositoryUrl || '');
                     else noVersionControlAndContinuousIntegrationAvailableSolution
                 "
-                jhiBuildPlanLink
-                [projectKey]="programmingExercise.projectKey || ''"
-                [buildPlanId]="programmingExercise.solutionParticipation?.buildPlanId || ''"
+                target="_blank"
+                rel="noreferrer"
+                href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}"
                 >Solution</a
             ></span
         >

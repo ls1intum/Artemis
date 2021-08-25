@@ -258,11 +258,4 @@ describe('ModelingExercise Management Update Component', () => {
         comp.diagramTypeChanged();
         expect(comp.modelingExercise.assessmentType).toEqual(AssessmentType.SEMI_AUTOMATIC);
     });
-
-    it('should set checked flag to given value', () => {
-        comp.getCheckedFlag(true);
-        expect(comp.checkedFlag).toBe(true);
-        comp.getCheckedFlag(false);
-        expect(comp.checkedFlag).toBe(false);
-    });
 });
