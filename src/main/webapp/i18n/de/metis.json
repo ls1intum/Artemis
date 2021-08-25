@@ -33,7 +33,7 @@
             },
             "post": {
                 "title": "Titel",
-                "titleTooltip": "Gib deinem Beitrag einen prägnanten und zusammenfassenden Titel.",
+                "titleTooltip": "Gib deinem Beitrag einen prägnanten und zusammenfassenden Titel",
                 "tags": "Tags",
                 "tagsTooltip": "Gib deinem Beitrag bis zu drei aussagekräftige und wiederverwendbare Tags. Tippe in das Eingabefeld und bestätige mit Enter, um ein Tag hinzuzufügen.",
                 "tagPlaceholder": "+ Tag",
