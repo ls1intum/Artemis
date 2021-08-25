@@ -37,7 +37,7 @@
                 "tags": "Tags",
                 "tagPlaceholder": "+ Tag",
                 "tagSecondaryPlaceholder": "Add tag(s)",
-                "tagsTooltip": "Add up to three descriptive and reusable tags to your post",
+                "tagsTooltip": "Add up to three descriptive and reusable tags to your post. Type in the input field and confirm with Enter to add a tag.",
                 "content": "Content",
                 "contentTooltip": "Describe your issue or request as precise as possible. Use markdown formatting where it improves readability.",
                 "created": "New post successfully created",

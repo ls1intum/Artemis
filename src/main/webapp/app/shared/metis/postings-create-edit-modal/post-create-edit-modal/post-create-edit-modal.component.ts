@@ -17,14 +17,13 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
 
     constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {
         super(metisService, modalService, formBuilder);
-        this.tags = this.posting?.tags ?? [];
     }
 
     /**
      * resets the post title, post content, and post tags
      */
     resetFormGroup(): void {
-        this.tags = this.posting.tags ? this.posting.tags : [];
+        this.tags = this.posting?.tags ?? [];
         this.formGroup = this.formBuilder.group({
             title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH)]],
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength)]],

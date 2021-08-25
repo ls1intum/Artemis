@@ -51,8 +51,11 @@ export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAcce
         this.cdref.detectChanges();
     }
 
+    /**
+     * the callback function to register on UI change
+     */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _onChange = (val: string) => {};
+    onChange = (val: string) => {};
 
     /**
      * emits the value change from component
@@ -62,7 +65,8 @@ export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAcce
     }
 
     /**
-     * writes the current value of a form group into the `content` variable
+     * writes the current value of a form group into the `content` variable,
+     * i.e. sets the value programmatically
      * @param value
      */
     writeValue(value: any): void {
@@ -72,25 +76,25 @@ export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAcce
     }
 
     /**
-     * registers a callback function used when form group input changes (required)
+     * upon UI element value changes, this method is triggered (required)
      * @param fn
      */
     registerOnChange(fn: any): void {
-        this._onChange = fn;
+        this.onChange = fn;
     }
 
     /**
-     * defines a behavior when from group input is touched (required)
+     * upon touching the element, this method gets triggered (required)
      */
     registerOnTouched(): void {}
 
     /**
-     * function that is called on changes in markdown editor component
+     * changes in bound markdown content
      * @param newValue
      */
     updateField(newValue: string) {
         this.content = newValue;
-        this._onChange(this.content);
+        this.onChange(this.content);
         this.valueChanged();
     }
 }
