@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Notification, NotificationType, OriginalNotificationType } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { OptionSpecifier } from 'app/shared/constants/user-settings.constants';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationSettingsService {
@@ -46,28 +47,28 @@ export class NotificationSettingsService {
      */
     private findCorrespondingNotificationTypesForNotificationOptionCore(notificationOptionCore: NotificationOptionCore): OriginalNotificationType[] {
         switch (notificationOptionCore.optionSpecifier) {
-            case 'notification.exercise-notification.exercise-created-or-started': {
+            case OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED: {
                 return [OriginalNotificationType.EXERCISE_CREATED];
             }
-            case 'notification.exercise-notification.exercise-open-for-practice': {
+            case OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE: {
                 return [OriginalNotificationType.EXERCISE_PRACTICE];
             }
-            case 'notification.exercise-notification.new-post-exercises': {
+            case OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_POST_EXERCISES: {
                 return [OriginalNotificationType.NEW_POST_FOR_EXERCISE];
             }
-            case 'notification.exercise-notification.new-answer-post-exercises': {
+            case OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES: {
                 return [OriginalNotificationType.NEW_ANSWER_POST_FOR_EXERCISE];
             }
-            case 'notification.lecture-notification.attachment-changes': {
+            case OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES: {
                 return [OriginalNotificationType.ATTACHMENT_CHANGE];
             }
-            case 'notification.lecture-notification.new-post-for-lecture': {
+            case OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__NEW_POST_FOR_LECTURE: {
                 return [OriginalNotificationType.NEW_POST_FOR_LECTURE];
             }
-            case 'notification.lecture-notification.new-answer-post-for-lecture': {
+            case OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE: {
                 return [OriginalNotificationType.NEW_ANSWER_POST_FOR_LECTURE];
             }
-            case 'notification.instructor-exclusive-notification.course-and-exam-archiving-started': {
+            case OptionSpecifier.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED: {
                 return [OriginalNotificationType.EXAM_ARCHIVE_STARTED, OriginalNotificationType.COURSE_ARCHIVE_STARTED];
             }
             default: {

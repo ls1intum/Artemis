@@ -1,4 +1,4 @@
-import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { OptionSpecifier, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 /**
@@ -40,6 +40,7 @@ export interface Option<T> {
  */
 export abstract class OptionCore {
     id?: number;
-    optionSpecifier: string;
+    //optionSpecifier: string;
+    optionSpecifier: OptionSpecifier;
     changed?: boolean;
 }

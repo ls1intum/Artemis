@@ -22,6 +22,16 @@ describe('TextToLowerCamelCasePipe', () => {
         expect(pipeOutput).to.be.equal('');
     });
 
+    it('check replace underscores with white space', () => {
+        pipeOutput = pipe.transform('IMPORTANT_LONG_ENUM_NAME_A');
+        expect(pipeOutput).to.be.equal('importantLongEnumNameA');
+    });
+
+    it('check extra underscores', () => {
+        pipeOutput = pipe.transform('___STRANGE___ENUM___');
+        expect(pipeOutput).to.be.equal('strangeEnum');
+    });
+
     it('check extra white space', () => {
         pipeOutput = pipe.transform('  EXTRA  SPACE     ');
         expect(pipeOutput).to.be.equal('extraSpace');

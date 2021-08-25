@@ -1,5 +1,5 @@
 import { Authority } from 'app/shared/constants/authority.constants';
-import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { OptionSpecifier, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { OptionCore, UserSettings } from '../user-settings.model';
 
 export interface NotificationOptionCore extends OptionCore {
@@ -16,11 +16,11 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
             options: [
                 {
                     name: 'Exercise created or started',
-                    description: 'Get notified if a (new) exercise has been created or started',
+                    description: 'Get notified if a new exercise has been created or started',
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionSpecifier: 'notification.exercise-notification.exercise-created-or-started',
+                        optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED,
                     },
                 },
                 {
@@ -29,7 +29,7 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionSpecifier: 'notification.exercise-notification.exercise-open-for-practice',
+                        optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
                     },
                 },
                 {
@@ -38,7 +38,7 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionSpecifier: 'notification.exercise-notification.new-post-exercises',
+                        optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_POST_EXERCISES,
                     },
                 },
                 {
@@ -47,7 +47,7 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionSpecifier: 'notification.exercise-notification.new-answer-post-exercises',
+                        optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES,
                     },
                 },
             ],
@@ -62,7 +62,7 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionSpecifier: 'notification.lecture-notification.attachment-changes',
+                        optionSpecifier: OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES,
                     },
                 },
                 {
@@ -71,7 +71,7 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionSpecifier: 'notification.lecture-notification.new-post-for-lecture',
+                        optionSpecifier: OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__NEW_POST_FOR_LECTURE,
                     },
                 },
                 {
@@ -80,7 +80,7 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionSpecifier: 'notification.lecture-notification.new-answer-post-for-lecture',
+                        optionSpecifier: OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE,
                     },
                 },
             ],
@@ -90,12 +90,12 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
             restrictionLevel: Authority.INSTRUCTOR,
             options: [
                 {
-                    name: 'Course or Exam Archiving Started',
+                    name: 'Course and Exam Archiving Started',
                     description: 'Receive a notification when the process of archiving a course or exam has been started',
                     optionCore: {
                         webapp: true,
                         email: false,
-                        optionSpecifier: 'notification.instructor-exclusive-notification.course-and-exam-archiving-started',
+                        optionSpecifier: OptionSpecifier.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
                     },
                 },
             ],
