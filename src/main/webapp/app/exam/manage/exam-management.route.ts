@@ -64,6 +64,9 @@ import { QuizStatisticComponent } from 'app/exercises/quiz/manage/statistics/qui
 import { MultipleChoiceQuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/multiple-choice-question-statistic/multiple-choice-question-statistic.component';
 import { DragAndDropQuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
 import { ShortAnswerQuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/short-answer-question-statistic/short-answer-question-statistic.component';
+import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
+import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
+import { isOrion } from 'app/shared/orion/orion';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -691,7 +694,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/assessment-dashboard/:exerciseId',
-        component: ExerciseAssessmentDashboardComponent,
+        component: !isOrion ? ExerciseAssessmentDashboardComponent : OrionExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
@@ -700,7 +703,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-assessment-dashboard/:exerciseId',
-        component: ExerciseAssessmentDashboardComponent,
+        component: !isOrion ? ExerciseAssessmentDashboardComponent : OrionExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader',
@@ -852,7 +855,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessment',
-        component: CodeEditorTutorAssessmentContainerComponent,
+        component: !isOrion ? CodeEditorTutorAssessmentContainerComponent : OrionTutorAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',

@@ -5,6 +5,10 @@
                 "outdated": "The version of Orion you are currently using is outdated!",
                 "usedVersion": "You are using version ",
                 "allowedVersion": "The allowed version is (minimum): "
+            },
+            "assessment": {
+                "updateFailed": "Update of assessment failed. Associated assessment could not be found. Ensure the correct page is opened and retry.",
+                "submissionIdDontMatch": "Id of the loaded page does not match the submission opened in Orion. Updating Feedback aborted. Ensure the correct page is opened and retry."
             }
         },
         "orionExerciseAssessmentDashboard": {

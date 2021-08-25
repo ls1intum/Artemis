@@ -1,0 +1,18 @@
+<jhi-code-editor-tutor-assessment (onFeedbackLoaded)="initializeFeedback()" [overrideNextSubmission]="openNextSubmission.bind(this)">
+    <ng-template #overrideCodeEditor let-title="title" let-toolbar="toolbar" let-exercise="exercise" let-participation="participation" let-feedback="feedback">
+        <div class="d-flex">
+            <h4><ng-container *ngTemplateOutlet="title"></ng-container></h4>
+            <ng-container *ngTemplateOutlet="toolbar"></ng-container>
+        </div>
+        <jhi-orion-assessment-instructions
+            *ngIf="exercise"
+            class="card-body markdown-preview instructions-wrapper__content overflow-auto"
+            [exercise]="exercise!"
+            [programmingParticipation]="participation"
+        ></jhi-orion-assessment-instructions>
+        <ng-container *ngTemplateOutlet="feedback"></ng-container>
+    </ng-template>
+    <ng-template #overrideExportGoToRepository>
+        <!-- Nothing, suppress the buttons -->
+    </ng-template>
+</jhi-code-editor-tutor-assessment>

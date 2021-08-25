@@ -11,6 +11,7 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { OrionAssessmentInstructionsComponent } from 'app/orion/assessment/orion-assessment-instructions.component';
 
 @NgModule({
     imports: [
@@ -23,7 +24,19 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
         ArtemisSharedComponentModule,
         ArtemisMarkdownModule,
     ],
-    declarations: [ExpandableSectionComponent, AssessmentInstructionsComponent, CollapsableAssessmentInstructionsComponent, StructuredGradingInstructionsAssessmentLayoutComponent],
-    exports: [CollapsableAssessmentInstructionsComponent, ExpandableSectionComponent, StructuredGradingInstructionsAssessmentLayoutComponent, AssessmentInstructionsComponent],
+    declarations: [
+        ExpandableSectionComponent,
+        AssessmentInstructionsComponent,
+        OrionAssessmentInstructionsComponent,
+        CollapsableAssessmentInstructionsComponent,
+        StructuredGradingInstructionsAssessmentLayoutComponent,
+    ],
+    exports: [
+        CollapsableAssessmentInstructionsComponent,
+        ExpandableSectionComponent,
+        StructuredGradingInstructionsAssessmentLayoutComponent,
+        AssessmentInstructionsComponent,
+        OrionAssessmentInstructionsComponent,
+    ],
 })
 export class AssessmentInstructionsModule {}
