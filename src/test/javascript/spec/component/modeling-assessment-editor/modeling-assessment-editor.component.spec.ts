@@ -484,12 +484,12 @@ describe('ModelingAssessmentEditorComponent', () => {
             text: 'Test\n\nTest\n\nTest',
         } as unknown as ModelingSubmission;
 
-        const fake = sinon.fake.returns(of({ body: new ExampleSubmission() }));
-        sinon.replace(exampleSubmissionService, 'import', fake);
+        const importStub = sinon.stub(exampleSubmissionService, 'import');
+        importStub.returns(of(new HttpResponse({ body: new ExampleSubmission() })));
 
         component.importStudentSubmissionAsExampleSubmission();
 
-        expect(fake).to.have.calledOnce;
-        expect(fake).to.have.been.calledWith(component.submission, component.modelingExercise!.id);
+        expect(importStub).to.have.calledOnce;
+        expect(importStub).to.have.been.calledWith(component.submission, component.modelingExercise!.id);
     });
 });

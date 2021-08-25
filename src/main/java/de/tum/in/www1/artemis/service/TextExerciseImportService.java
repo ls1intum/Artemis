@@ -141,7 +141,8 @@ public class TextExerciseImportService extends ExerciseImportService {
         return newSubmission;
     }
 
-    /** Updates the feedback references with new text block id after making hard copy of original submission
+    /**
+     * Updates the feedback references with new text block id after making hard copy of original submission
      * with this update operation, the feedback and newly created text blocks will be matched, and the submission will be copied
      * with its assessment successfully
      *

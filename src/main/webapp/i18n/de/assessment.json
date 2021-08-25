@@ -29,7 +29,7 @@
                 "overrideAssessment": "Bewertung überschreiben",
                 "nextSubmission": "Nächste Abgabe bewerten",
                 "resolveConflict": "Konflikte behandeln",
-                "importExampleSubmission": "Import als Beispielabgabe"
+                "importExampleSubmission": "Als Beispielabgabe importieren"
             },
             "detail": {
                 "feedback": "Feedback",

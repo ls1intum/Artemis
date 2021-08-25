@@ -155,7 +155,7 @@ public class ExampleSubmissionResource {
     }
 
     /**
-     * POST exercises/{exerciseId}/example-submissions/import : Import exampleSubmission.
+     * POST exercises/:exerciseId/example-submissions/import : Import exampleSubmission.
      *
      * @param exerciseId        the id of the corresponding exercise
      * @param submission        the submission to be imported as an example submission

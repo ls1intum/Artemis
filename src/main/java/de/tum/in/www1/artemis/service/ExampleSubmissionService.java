@@ -96,10 +96,9 @@ public class ExampleSubmissionService {
         if (exercise instanceof ModelingExercise) {
             newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(submission));
         }
-        else if (exercise instanceof TextExercise) {
+        if (exercise instanceof TextExercise) {
             newExampleSubmission.setSubmission(textExerciseImportService.copySubmission(submission));
         }
-
         return exampleSubmissionRepository.save(newExampleSubmission);
     }
 }

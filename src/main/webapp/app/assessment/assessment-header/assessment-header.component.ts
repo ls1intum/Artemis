@@ -48,7 +48,7 @@ export class AssessmentHeaderComponent {
     @Output() importExampleSubmission = new EventEmitter<void>();
 
     private _highlightDifferences: boolean;
-    exerciseType = ExerciseType;
+    readonly exerciseType = ExerciseType;
 
     @Input() set highlightDifferences(highlightDifferences: boolean) {
         this._highlightDifferences = highlightDifferences;

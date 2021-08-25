@@ -13,7 +13,6 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
-import { TranslateModule } from '@ngx-translate/core';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -44,6 +43,9 @@ import { ResizeableContainerComponent } from 'app/shared/resizeable-container/re
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { HttpResponse } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -132,7 +134,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     } as unknown as ActivatedRoute;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), RouterTestingModule],
+            imports: [ArtemisTestModule, RouterTestingModule],
             declarations: [
                 TextSubmissionAssessmentComponent,
                 TextAssessmentAreaComponent,
@@ -153,6 +155,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .overrideModule(ArtemisTestModule, {
@@ -220,12 +223,12 @@ describe('TextSubmissionAssessmentComponent', () => {
         textBlockRef.feedback!.detailText = 'my feedback';
         textBlockRef.feedback!.credits = 42;
 
-        const fake = sinon.fake.returns(of({ body: result }));
-        sinon.replace(textAssessmentService, 'save', fake);
+        const saveStub = sinon.stub(textAssessmentService, 'save');
+        saveStub.returns(of(new HttpResponse({ body: result })));
 
         component.validateFeedback();
         component.save();
-        expect(fake).to.have.been.calledWith(
+        expect(saveStub).to.have.been.calledWith(
             result?.participation?.id,
             result!.id!,
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
@@ -252,13 +255,14 @@ describe('TextSubmissionAssessmentComponent', () => {
         unreferencedFeedback.id = 1;
         component.unreferencedFeedback = [unreferencedFeedback];
         textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
-        const fake = sinon.fake.returns(of({ body: new Result() }));
-        sinon.replace(textAssessmentService, 'updateAssessmentAfterComplaint', fake);
+
+        const updateAssessmentAfterComplaintStub = sinon.stub(textAssessmentService, 'updateAssessmentAfterComplaint');
+        updateAssessmentAfterComplaintStub.returns(of(new HttpResponse({ body: new Result() })));
 
         // would be called on receive of event
         const complaintResponse = new ComplaintResponse();
         component.updateAssessmentAfterComplaint(complaintResponse);
-        expect(fake).to.have.been.called;
+        expect(updateAssessmentAfterComplaintStub).to.have.been.called;
     });
     it('should submit the assessment with correct parameters', function () {
         textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
@@ -271,12 +275,12 @@ describe('TextSubmissionAssessmentComponent', () => {
         textBlockRef.feedback!.detailText = 'my feedback';
         textBlockRef.feedback!.credits = 42;
 
-        const fake = sinon.fake.returns(of({ body: result }));
-        sinon.replace(textAssessmentService, 'submit', fake);
+        const submitStub = sinon.stub(textAssessmentService, 'submit');
+        submitStub.returns(of(new HttpResponse({ body: result })));
 
         component.validateFeedback();
         component.submit();
-        expect(fake).to.have.been.calledWith(
+        expect(submitStub).to.have.been.calledWith(
             participation.id!,
             result!.id!,
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
@@ -287,12 +291,12 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.submission = submission;
         component.exercise = exercise;
 
-        const fake = sinon.fake.returns(of({ body: new ExampleSubmission() }));
-        sinon.replace(exampleSubmissionService, 'import', fake);
+        const importStub = sinon.stub(exampleSubmissionService, 'import');
+        importStub.returns(of(new HttpResponse({ body: new ExampleSubmission() })));
 
         component.importStudentSubmissionAsExampleSubmission();
 
-        expect(fake).to.have.calledOnce;
-        expect(fake).to.have.been.calledWith(submission, exercise.id);
+        expect(importStub).to.have.calledOnce;
+        expect(importStub).to.have.been.calledWith(submission, exercise.id);
     });
 });
