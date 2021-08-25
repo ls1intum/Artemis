@@ -80,7 +80,7 @@ describe('Exam management', () => {
                 courseManagementRequests.registerStudentForExam(exam, student);
                 courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.addTextExerciseToExam(exerciseGroup).then((exerciseResponse) => {
+                    courseManagementRequests.createAndAddTextExerciseToExam(exerciseGroup).then((exerciseResponse) => {
                         textExercise = exerciseResponse.body;
                         courseManagementRequests.generateMissingIndividualExams(exam);
                         courseManagementRequests.prepareExerciseStartForExam(exam);
@@ -116,7 +116,7 @@ describe('Exam management', () => {
                 courseManagementRequests.registerStudentForExam(exam, student);
                 courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.addTextExerciseToExam(exerciseGroup).then((response) => {
+                    courseManagementRequests.createAndAddTextExerciseToExam(exerciseGroup).then((response) => {
                         const textExercise = response.body;
                         courseManagementRequests.generateMissingIndividualExams(exam);
                         courseManagementRequests.prepareExerciseStartForExam(exam);

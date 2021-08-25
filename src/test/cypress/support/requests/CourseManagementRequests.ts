@@ -150,7 +150,7 @@ export class CourseManagementRequests {
      * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
      * */
-    addTextExerciseToExam(group: any, title = 'Text exercise ' + generateUUID()) {
+    createAndAddTextExerciseToExam(group: any, title = 'Text exercise ' + generateUUID()) {
         const textExercise: any = { ...textExerciseTemplate, exerciseGroup: group };
         textExercise.exerciseGroup = group;
         textExercise.title = title;
