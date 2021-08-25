@@ -85,7 +85,7 @@ describe('Exam management', () => {
                 examManagementRequests.registerStudent(course, exam, student);
                 examManagementRequests.addExerciseGroup(course, exam, 'group 1', true).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    examManagementRequests.addTextExercise(exerciseGroup, 'Text exercise 1').then((exerciseResponse) => {
+                    courseManagementRequests.createTextExercise('Text exercise 1', { exerciseGroup }).then((exerciseResponse) => {
                         textExercise = exerciseResponse.body;
                         examManagementRequests.generateMissingIndividualExams(course, exam);
                         examManagementRequests.prepareExerciseStart(course, exam);
@@ -95,7 +95,7 @@ describe('Exam management', () => {
                         cy.contains('Welcome to ' + exam.title).should('be.visible');
                         examStartEnd.setConfirmCheckmark();
                         examStartEnd.enterFirstnameLastname();
-                        examStartEnd.startExam();
+                        examStartEnd.pressStart();
                         cy.contains('Exam Overview').should('exist');
                         cy.contains('Text exercise 1').should('be.visible').click();
                         artemis.pageobjects.textEditor.typeSubmission(
@@ -123,26 +123,23 @@ describe('Exam management', () => {
                 examManagementRequests.registerStudent(course, exam, student);
                 examManagementRequests.addExerciseGroup(course, exam, 'group 1', true).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    examManagementRequests.addTextExercise(exerciseGroup, 'Text exercise 1').then(() => {
-                        examManagementRequests.generateMissingIndividualExams(course, exam);
-                        examManagementRequests.prepareExerciseStart(course, exam);
-                        cy.login(student, `/courses/${course.id}/exams`);
-                        cy.contains(exam.title).click();
-                        cy.contains('Welcome to ' + exam.title).should('be.visible');
-                        examStartEnd.setConfirmCheckmark();
-                        examStartEnd.enterFirstnameLastname();
-                        examStartEnd.startExam();
-                        cy.contains('Text exercise 1').should('be.visible').click();
-                        cy.get('#text-editor-tab').type(
-                            'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-                        );
-                        cy.contains('Save').click();
-                        cy.contains('This is the end of ' + exam.title, { timeout: 20000 });
-                        examStartEnd.setConfirmCheckmark();
-                        examStartEnd.enterFirstnameLastname();
-                        examStartEnd.finishExam();
-                        cy.get('.alert').contains('Your exam was submitted successfully.');
-                    });
+                    courseManagementRequests.createTextExercise('Text exercise 1', { exerciseGroup });
+                    examManagementRequests.generateMissingIndividualExams(course, exam);
+                    examManagementRequests.prepareExerciseStart(course, exam);
+                    cy.login(student, `/courses/${course.id}/exams`);
+                    cy.contains(exam.title).click();
+                    cy.contains('Welcome to ' + exam.title).should('be.visible');
+                    examStartEnd.setConfirmCheckmark();
+                    examStartEnd.enterFirstnameLastname();
+                    examStartEnd.pressStart();
+                    cy.contains('Text exercise 1').should('be.visible').click();
+                    cy.get('#text-editor-tab').type('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.');
+                    cy.contains('Save').click();
+                    cy.contains('This is the end of ' + exam.title, { timeout: 20000 });
+                    examStartEnd.setConfirmCheckmark();
+                    examStartEnd.enterFirstnameLastname();
+                    examStartEnd.pressFinish();
+                    cy.get('.alert').contains('Your exam was submitted successfully.');
                 });
             });
         });

@@ -52,10 +52,10 @@ describe('Exam participation', () => {
                 exam = examResponse.body;
                 examRequests.registerStudent(course, exam, student);
                 examRequests.addExerciseGroup(course, exam, 'group 1', true).then((groupResponse) => {
-                    examRequests.addTextExercise(groupResponse.body, textExerciseTitle);
+                    courseRequests.createTextExercise(textExerciseTitle, { exerciseGroup: groupResponse.body });
                 });
                 examRequests.addExerciseGroup(course, exam, 'group 2', true).then((groupResponse) => {
-                    examRequests.addProgrammingExercise(groupResponse.body, programmingExerciseTitle, programmingShortName, packageName);
+                    courseRequests.createProgrammingExercise(programmingExerciseTitle, programmingShortName, packageName, { exerciseGroup: groupResponse.body });
                 });
                 examRequests.generateMissingIndividualExams(course, exam);
                 examRequests.prepareExerciseStart(course, exam);

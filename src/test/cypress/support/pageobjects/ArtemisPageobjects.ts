@@ -9,7 +9,7 @@ import { CourseManagementPage } from './course/CourseManagementPage';
 import { NavigationBar } from './NavigationBar';
 import { OnlineEditorPage } from './OnlineEditorPage';
 import { CreateModelingExercisePage } from './CreateModelingExercisePage';
-import { ModelingExerciseExampleSubmissionPage } from './ModelingExerciseExampleSubmissionPage';
+import { ModelingExerciseAssessmentEditor } from './ModelingExerciseAssessmentEditor';
 import { ModelingEditor } from './ModelingEditor';
 import { ExamStartEndPage } from './exam/ExamStartEndPage';
 
@@ -28,7 +28,7 @@ export class ArtemisPageobjects {
     examNavigationBar = new ExamNavigationBar();
     programmingExerciseCreation = new ProgrammingExerciseCreationPage();
     createModelingExercise = new CreateModelingExercisePage();
-    modelingExerciseExampleSubmission = new ModelingExerciseExampleSubmissionPage();
+    modelingExerciseAssessmentEditor = new ModelingExerciseAssessmentEditor();
     modelingEditor = new ModelingEditor();
     textEditor = new TextEditor();
 }
