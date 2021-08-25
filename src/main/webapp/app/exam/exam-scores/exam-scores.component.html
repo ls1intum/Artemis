@@ -18,7 +18,7 @@
         </div>
 
         <div class="d-flex mb-1">
-            <h6 *ngIf="examScoreDTO.maxPoints">{{ toLocaleString(examScoreDTO.maxPoints) }} {{ 'artemisApp.examScores.maxPoints' | artemisTranslate }},</h6>
+            <h6 *ngIf="examScoreDTO.maxPoints">{{ 'artemisApp.examScores.maxPoints' | artemisTranslate }}: {{ toLocaleString(examScoreDTO.maxPoints) }},</h6>
             <h6 class="ms-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | artemisTranslate }},</h6>
             <h6 class="ms-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | artemisTranslate }}</h6>
         </div>

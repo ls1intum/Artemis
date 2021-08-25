@@ -63,7 +63,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public barChartOptions: ChartOptions = {};
     public barChartLabels: Label[] = [];
     public barChartType: ChartType = 'bar';
-    public barChartLegend = true;
+    public barChartLegend = false;
     public barChartData: ChartDataSets[] = [];
 
     gradingScaleExists = false;
