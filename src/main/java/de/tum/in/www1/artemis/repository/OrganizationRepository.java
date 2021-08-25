@@ -64,6 +64,19 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     Long getNumberOfCoursesByOrganizationId(@Param("organizationId") long organizationId);
 
     /**
+     * Returns the title of the organization with the given id
+     *
+     * @param organizationId the id of the organization
+     * @return the name/title of the organization or null if the organization does not exist
+     */
+    @Query("""
+            SELECT o.name
+            FROM Organization o
+            WHERE o.id = :organizationId
+            """)
+    String getOrganizationTitle(@Param("organizationId") Long organizationId);
+
+    /**
      * Get an organization with eagerly loaded users, or else throw exception
      * @param organizationId the id of the organization to find
      * @return the organization entity with eagerly loaded users, if it exists
