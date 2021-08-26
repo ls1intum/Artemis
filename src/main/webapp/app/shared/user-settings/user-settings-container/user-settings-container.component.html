@@ -1,0 +1,36 @@
+<div class="container">
+    <div class="row">
+        <div class="col-lg-3 col-sm-12">
+            <!-- profile header -->
+            <div class="d-flex">
+                <fa-icon id="avatar" size="3x" [icon]="'user'"></fa-icon>
+                <div *ngIf="currentUser">
+                    <span *ngIf="currentUser.name" id="user-header">{{ currentUser.name }}</span>
+                    <br />
+                    <span id="login">{{ currentUser.login }}</span>
+                </div>
+            </div>
+            <!-- links to the different settings -->
+            <section id="navigation-bar" class="list-group d-block pt-2">
+                <span class="list-group-item disabled fw-bold">
+                    <!--User Settings Menu Title-->
+                    {{ 'artemisApp.userSettings.userSettings' | artemisTranslate }}
+                </span>
+                <a class="list-group-item btn btn-outline-primary" routerLink="account" routerLinkActive="active">
+                    <!--Account Information-->
+                    {{ 'artemisApp.userSettings.accountInformation' | artemisTranslate }}
+                </a>
+                <a class="list-group-item btn btn-outline-primary" routerLink="notifications" routerLinkActive="active">
+                    <!--Notification Settings-->
+                    {{ 'artemisApp.userSettings.notificationSettings' | artemisTranslate }}
+                </a>
+            </section>
+        </div>
+        <!-- the currently opened settings -->
+        <div class="col-lg-8 col-sm-12">
+            <section id="current-settings" class="pt-3">
+                <router-outlet></router-outlet>
+            </section>
+        </div>
+    </div>
+</div>

@@ -98,6 +98,7 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Sprache",
+            "settings": "Einstellungen",
             "guidedTutorial": "Guided Tutorial",
             "startTutorial": "Tutorial starten",
             "restartTutorial": "Tutorial wiederholen",

@@ -34,9 +34,6 @@
     }
     .header {
         height: 85px;
-        .close {
-            right: 16px;
-        }
     }
     #notification-sidebar-container {
         height: calc(100vh - 85px);
@@ -60,5 +57,11 @@
     .no-notifications {
         display: block;
         padding: 20px 16px;
+    }
+
+    .header-icon {
+        fa-icon {
+            color: #353d47; /* main navigation bar gray  */
+        }
     }
 }

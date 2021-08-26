@@ -27,7 +27,7 @@ import * as moment from 'moment';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('Logs Service', () => {
+describe('Notification Service', () => {
     let notificationService: NotificationService;
     let httpMock: HttpTestingController;
     let router: Router;
@@ -110,11 +110,18 @@ describe('Logs Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should call correct URL', () => {
+        it('should call correct URL to fetch all notifications', () => {
             notificationService.query().subscribe(() => {});
             const req = httpMock.expectOne({ method: 'GET' });
             const infoUrl = SERVER_API_URL + 'api/notifications';
             expect(req.request.url).to.equal(infoUrl);
+        });
+
+        it('should call correct URL to fetch all notifications filtered by current notification settings', () => {
+            notificationService.queryFiltered().subscribe(() => {});
+            const req = httpMock.expectOne({ method: 'GET' });
+            const url = SERVER_API_URL + 'api/notifications/filtered-by-settings';
+            expect(req.request.url).to.equal(url);
         });
 
         it('should navigate to notification target', () => {
