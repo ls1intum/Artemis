@@ -8,26 +8,68 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
 
 /**
- * A Rating.
+ * A TutorEffort.
  */
 @Entity
-@Table(name = "tutor_effort_statistics")
+@Table(name = "tutor_effort")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TutorEffort extends DomainObject {
 
-    @ManyToOne(cascade = CascadeType.REMOVE)
-    @JoinColumn(name = "tutor_id")
-    private User tutor;
+    @Column(name = "userId")
+    private Long userId;
 
-    @Column(name = "submission")
-    private Submission submission;
+    @Column(name = "number_submissions_assessed")
+    private int numberOfSubmissionsAssessed;
 
-    @Column(name = "total_time_spent_grading")
-    private Long totalTimeSpentGrading;
+    @Column(name = "total_time_spent_minutes")
+    private int totalTimeSpentMinutes;
 
+    @Column(name = "exercise_id")
+    private Long exerciseId;
+
+    @Column(name = "course_id")
+    private Long courseId;
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public int getNumberOfSubmissionsAssessed() {
+        return numberOfSubmissionsAssessed;
+    }
+
+    public void setNumberOfSubmissionsAssessed(int numberOfSubmissionsAssessed) {
+        this.numberOfSubmissionsAssessed = numberOfSubmissionsAssessed;
+    }
+
+    public int getTotalTimeSpentMinutes() {
+        return totalTimeSpentMinutes;
+    }
+
+    public void setTotalTimeSpentMinutes(int totalTimeSpentMinutes) {
+        this.totalTimeSpentMinutes = totalTimeSpentMinutes;
+    }
+
+    public Long getExerciseId() {
+        return exerciseId;
+    }
+
+    public void setExerciseId(Long exerciseId) {
+        this.exerciseId = exerciseId;
+    }
+
+    public Long getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(Long courseId) {
+        this.courseId = courseId;
+    }
 }
