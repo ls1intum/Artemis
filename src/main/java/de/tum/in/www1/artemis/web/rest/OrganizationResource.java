@@ -107,7 +107,7 @@ public class OrganizationResource {
     }
 
     /**
-     * DELETE organizations/{organizationId}/users/{userLogin} :
+     * DELETE organizations/:organizationId/users/:userLogin :
      * Remove a user from an organization
      *
      * Keep in mind that removing a user from an organization does not remove it
@@ -144,7 +144,7 @@ public class OrganizationResource {
     }
 
     /**
-     * PUT organizations/{organizationId} : Update an existing organization
+     * PUT organizations/:organizationId : Update an existing organization
      *
      * @param organizationId id of the organization in the body
      * @param organization the updated organization entity
