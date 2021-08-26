@@ -26,4 +26,12 @@ public class TextAssessmentKnowledge extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("knowledge")
     private Set<TextBlock> textBlocks = new HashSet<>();
+
+    public Set<TextExercise> getExercises() {
+        return exercises;
+    }
+
+    public Set<TextBlock> getTextBlocks() {
+        return textBlocks;
+    }
 }
