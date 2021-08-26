@@ -18,12 +18,16 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
     private Course course1;
 
@@ -43,6 +47,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
         exam2 = database.addExamWithExerciseGroup(course1, true);
         exerciseGroup1 = exam1.getExerciseGroups().get(0);
         var textEx = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
+        textEx.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         textExercise1 = textExerciseRepository.save(textEx);
     }
 

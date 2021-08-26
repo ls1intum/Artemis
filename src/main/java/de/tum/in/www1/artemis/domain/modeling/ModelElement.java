@@ -11,6 +11,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.ModelAssessmentKnowledge;
+
 @Entity
 @Table(name = "model_element")
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -39,6 +41,10 @@ public class ModelElement implements Serializable {
     @ManyToOne
     @JsonIgnore
     private ModelCluster cluster;
+
+    @ManyToOne
+    @JsonIgnore
+    private ModelAssessmentKnowledge knowledge;
 
     public String getModelElementId() {
         return modelElementId;
@@ -70,5 +76,13 @@ public class ModelElement implements Serializable {
 
     public void setCluster(ModelCluster cluster) {
         this.cluster = cluster;
+    }
+
+    public ModelAssessmentKnowledge getKnowledge() {
+        return knowledge;
+    }
+
+    public void setKnowledge(ModelAssessmentKnowledge knowledge) {
+        this.knowledge = knowledge;
     }
 }

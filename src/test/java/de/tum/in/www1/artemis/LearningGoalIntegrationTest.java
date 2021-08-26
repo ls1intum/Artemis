@@ -29,7 +29,9 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ModelAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
@@ -68,6 +70,12 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private LectureUnitRepository lectureUnitRepository;
+
+    @Autowired
+    private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
+
+    @Autowired
+    private ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
     private Long idOfCourse;
 
@@ -234,6 +242,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
+        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         textExercise = exerciseRepository.save(textExercise);
         idOfTextExercise = textExercise.getId();
     }
@@ -245,6 +254,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         modelingExercise.setMaxPoints(10.0);
         modelingExercise.setBonusPoints(0.0);
+        modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
         modelingExercise = exerciseRepository.save(modelingExercise);
         idOfModelingExercise = modelingExercise.getId();
     }
@@ -257,6 +267,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         textExercise.setMode(ExerciseMode.TEAM);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
+        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         textExercise = exerciseRepository.save(textExercise);
         idOfTeamTextExercise = textExercise.getId();
     }
