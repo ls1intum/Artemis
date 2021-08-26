@@ -1,6 +1,6 @@
-import { CourseWideContext, DisplayPriority, Post } from 'app/entities/metis/post.model';
+import { DisplayPriority, Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { BehaviorSubject, map, Observable, Subscription, tap } from 'rxjs';
+import { BehaviorSubject, map, Observable, tap } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -40,6 +40,46 @@ export class MetisService {
 
     get tags(): Observable<string[]> {
         return this.tags$.asObservable();
+    }
+
+    /**
+     * sorts posts by two criteria
+     * 1. criterion: displayPriority is PINNED -> pinned posts come first
+     * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
+     * 3. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
+     * 4. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
+     * @return Post[] sorted array of posts
+     */
+    static sortPosts(posts: Post[]): Post[] {
+        return posts.sort(function (postA, postB) {
+            const postAVoteEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
+            const postBVoteEmojiCount = postB.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
+            if (postA.displayPriority === DisplayPriority.PINNED && postB.displayPriority !== DisplayPriority.PINNED) {
+                return -1;
+            }
+            if (postA.displayPriority !== DisplayPriority.PINNED && postB.displayPriority === DisplayPriority.PINNED) {
+                return 1;
+            }
+            if (postA.displayPriority === DisplayPriority.ARCHIVED && postB.displayPriority !== DisplayPriority.ARCHIVED) {
+                return 1;
+            }
+            if (postA.displayPriority !== DisplayPriority.ARCHIVED && postB.displayPriority === DisplayPriority.ARCHIVED) {
+                return -1;
+            }
+            if (postAVoteEmojiCount > postBVoteEmojiCount) {
+                return -1;
+            }
+            if (postAVoteEmojiCount < postBVoteEmojiCount) {
+                return 1;
+            }
+            if (Number(postA.creationDate) > Number(postB.creationDate)) {
+                return 1;
+            }
+            if (Number(postA.creationDate) < Number(postB.creationDate)) {
+                return -1;
+            }
+            return 0;
+        });
     }
 
     getPageType(): PageType {
@@ -266,45 +306,5 @@ export class MetisService {
      */
     metisUserIsAuthorOfPosting(posting: Posting): boolean {
         return this.user ? posting?.author!.id === this.getUser().id : false;
-    }
-
-    /**
-     * sorts posts by two criteria
-     * 1. criterion: displayPriority is PINNED -> pinned posts come first
-     * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
-     * 3. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
-     * 4. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
-     * @return Post[] sorted array of posts
-     */
-    static sortPosts(posts: Post[]): Post[] {
-        return posts.sort(function (postA, postB) {
-            const postAVoteEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
-            const postBVoteEmojiCount = postB.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
-            if (postA.displayPriority === DisplayPriority.PINNED && postB.displayPriority !== DisplayPriority.PINNED) {
-                return -1;
-            }
-            if (postA.displayPriority !== DisplayPriority.PINNED && postB.displayPriority === DisplayPriority.PINNED) {
-                return 1;
-            }
-            if (postA.displayPriority === DisplayPriority.ARCHIVED && postB.displayPriority !== DisplayPriority.ARCHIVED) {
-                return 1;
-            }
-            if (postA.displayPriority !== DisplayPriority.ARCHIVED && postB.displayPriority === DisplayPriority.ARCHIVED) {
-                return -1;
-            }
-            if (postAVoteEmojiCount > postBVoteEmojiCount) {
-                return -1;
-            }
-            if (postAVoteEmojiCount < postBVoteEmojiCount) {
-                return 1;
-            }
-            if (Number(postA.creationDate) > Number(postB.creationDate)) {
-                return 1;
-            }
-            if (Number(postA.creationDate) < Number(postB.creationDate)) {
-                return -1;
-            }
-            return 0;
-        });
     }
 }

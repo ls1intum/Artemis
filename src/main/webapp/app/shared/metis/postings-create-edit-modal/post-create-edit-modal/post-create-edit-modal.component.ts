@@ -11,7 +11,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { Course } from 'app/entities/course.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { PageType } from 'app/shared/metis/metis.util';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 const TITLE_MAX_LENGTH = 200;
 
