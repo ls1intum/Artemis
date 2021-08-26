@@ -194,7 +194,7 @@ export class CourseManagementRequests {
             method: DELETE
         });
     }
-  
+
     /**
      * Because the only difference between course exercises and exam exercises is the "course" or "exerciseGroup" field
      * This function takes an exercise template and adds one of the fields to it
