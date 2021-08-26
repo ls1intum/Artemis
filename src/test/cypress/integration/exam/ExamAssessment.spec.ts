@@ -57,8 +57,8 @@ describe('Exam Assessment', () => {
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(3, 'hours'))
-                .endDate(dayjs().add(20, 'seconds'))
-                .publishResultsDate(dayjs().add(30, 'seconds'))
+                .endDate(dayjs().add(30, 'seconds'))
+                .publishResultsDate(dayjs().add(35, 'seconds'))
                 .gracePeriod(1)
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
@@ -132,6 +132,7 @@ describe('Exam Assessment', () => {
     describe('Exam Programming Exercise Assessment', () => {
         let programmingExerciseName: string;
         let programmingExerciseShortName: string;
+        const examEnd = Cypress.env('isBamboo') ? 160 : 100;
 
         before('Generate exercise names', () => {
             uid = generateUUID();
@@ -145,8 +146,8 @@ describe('Exam Assessment', () => {
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(3, 'hours'))
-                .endDate(dayjs().add(100, 'seconds'))
-                .publishResultsDate(dayjs().add(100, 'seconds'))
+                .endDate(dayjs().add(examEnd, 'seconds'))
+                .publishResultsDate(dayjs().add(examEnd + 1, 'seconds'))
                 .gracePeriod(0)
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
@@ -179,7 +180,7 @@ describe('Exam Assessment', () => {
                         examStartEnd.finishExam();
                         cy.get('.alert').should('be.visible');
                         cy.login(tutor, '/course-management/' + course.id + '/exams');
-                        cy.contains('Assessment Dashboard', {timeout: 80000}).click();
+                        cy.contains('Assessment Dashboard', {timeout: examEnd * 1000}).click();
                         assessmentDashboard.startAssessing();
                         assessmentDashboard.addNewFeedback(2, 'Good job');
                         assessmentDashboard.submitAssessment();
