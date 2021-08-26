@@ -9,6 +9,8 @@ import { Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
+import { fakeAsync, tick } from '@angular/core/testing';
+import { OrganizationCountDto } from 'app/admin/organization-management/organization-count-dto.model';
 
 describe('Organization Service', () => {
     let injector: TestBed;
@@ -44,6 +46,14 @@ describe('Organization Service', () => {
         req.flush(JSON.stringify(elemDefault));
     });
 
+    it('should return an Organization with Users and Courses', fakeAsync(() => {
+        service.getOrganizationByIdWithUsersAndCourses(0).subscribe((data) => expect(data).toEqual(elemDefault));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(elemDefault);
+        tick();
+    }));
+
     it('should return all organizations', async () => {
         const returnElement = createTestReturnElement();
         service.getOrganizations().subscribe((data) => expect(data).toMatchObject({ body: returnElement }));
@@ -51,6 +61,17 @@ describe('Organization Service', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(JSON.stringify(returnElement));
     });
+
+    it('should return number of users and courses of organization', fakeAsync(() => {
+        const returnElement = new OrganizationCountDto();
+        returnElement.numberOfCourses = 2;
+        returnElement.numberOfUsers = 17;
+        service.getNumberOfUsersAndCoursesOfOrganizations().subscribe((data) => expect(data).toEqual(returnElement));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnElement);
+        tick();
+    }));
 
     it('should return all Organizations a course is assigned to', async () => {
         const returnElement = createTestReturnElement();
