@@ -5,7 +5,7 @@ import { dayjsToString, generateUUID } from '../utils';
 import examTemplate from '../../fixtures/requests/exam_template.json';
 import day from 'dayjs';
 import { CypressCredentials } from '../users';
-import textExercise from '../../fixtures/requests/exam_textExercise_template.json';
+import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 
 const COURSE_BASE = BASE_API + 'courses/';
@@ -53,26 +53,42 @@ export class CourseManagementRequests {
 
     /**
      * Creates a course with the specified title and short name.
-     * @param course the response object from a previous call to createCourse
      * @param title the title of the programming exercise
      * @param programmingShortName the short name of the programming exercise
      * @param packageName the package name of the programming exercise
      * @param releaseDate when the programming exercise should be available (default is now)
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
+     * @param body an object containing either the course or exercise group the exercise will be added to
      * @returns <Chainable> request response
      */
-    createProgrammingExercise(course: any, title: string, programmingShortName: string, packageName: string, releaseDate = new Date(), dueDate = new Date(Date.now() + oneDay)) {
-        const programmingTemplate = programmingExerciseTemplate;
+    createProgrammingExercise(
+        title: string,
+        programmingShortName: string,
+        packageName: string,
+        body: { course: any } | { exerciseGroup: any },
+        releaseDate = new Date(),
+        dueDate = new Date(Date.now() + oneDay),
+    ) {
+        const isExamExercise = body.hasOwnProperty('exerciseGroup');
+        const programmingTemplate: any = this.getCourseOrExamExercise(programmingExerciseTemplate, body);
         programmingTemplate.title = title;
         programmingTemplate.shortName = programmingShortName;
         programmingTemplate.packageName = packageName;
-        programmingTemplate.releaseDate = releaseDate.toISOString();
-        programmingTemplate.dueDate = dueDate.toISOString();
-        programmingTemplate.course = course;
+        if (!isExamExercise) {
+            programmingTemplate.releaseDate = releaseDate.toISOString();
+            programmingTemplate.dueDate = dueDate.toISOString();
+        } else {
+            programmingTemplate.allowComplaintsForAutomaticAssessments = true;
+        }
+
+        const runsOnBamboo: boolean = Cypress.env('isBamboo');
+        if (runsOnBamboo) {
+            cy.waitForGroupSynchronization();
+        }
 
         return cy.request({
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
-            method: 'POST',
+            method: POST,
             body: programmingTemplate,
         });
     }
@@ -88,6 +104,13 @@ export class CourseManagementRequests {
     }
 
     /**
+     * Adds the specified user to the tutor group in the course
+     */
+    addTutorToCourse(course: any, user: CypressCredentials) {
+        return cy.request({ method: POST, url: COURSE_BASE + course.id + '/tutors/' + user.username });
+    }
+
+    /**
      * Creates an exam with the provided settings.
      * @param exam the exam object created by a {@link CypressExamBuilder}
      * @returns <Chainable> request response
@@ -99,7 +122,7 @@ export class CourseManagementRequests {
     /**
      * Deletes the exam with the given parameters
      * @returns <Chainable> request response
-     * */
+     */
     deleteExam(course: any, exam: any) {
         return cy.request({ method: DELETE, url: COURSE_BASE + course.id + '/exams/' + exam.id });
     }
@@ -115,7 +138,7 @@ export class CourseManagementRequests {
     /**
      * add exercise group to exam
      * @returns <Chainable> request response
-     * */
+     */
     addExerciseGroupForExam(course: any, exam: any, title: string, mandatory: boolean) {
         exerciseGroup.exam = exam;
         exerciseGroup.title = title;
@@ -124,11 +147,11 @@ export class CourseManagementRequests {
     }
 
     /**
-     * add text exercise to exercise group in exam
+     * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
-     * */
-    addTextExerciseToExam(group: any, title: string) {
-        textExercise.exerciseGroup = group;
+     */
+    createTextExercise(title: string, body: { course: any } | { exerciseGroup: any }) {
+        const textExercise: any = this.getCourseOrExamExercise(textExerciseTemplate, body);
         textExercise.title = title;
         return cy.request({ method: POST, url: BASE_API + 'text-exercises', body: textExercise });
     }
@@ -149,11 +172,12 @@ export class CourseManagementRequests {
         return cy.request({ method: POST, url: COURSE_BASE + course.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
     }
 
-    createModelingExercise(modelingExercise: string) {
+    createModelingExercise(modelingExercise: any, body: { course: any } | { exerciseGroup: any }) {
+        const newModelingExercise = this.getCourseOrExamExercise(modelingExercise, body);
         return cy.request({
             url: '/api/modeling-exercises',
             method: 'POST',
-            body: modelingExercise,
+            body: newModelingExercise,
         });
     }
 
@@ -170,13 +194,23 @@ export class CourseManagementRequests {
             method: DELETE
         });
     }
+  
+    /**
+     * Because the only difference between course exercises and exam exercises is the "course" or "exerciseGroup" field
+     * This function takes an exercise template and adds one of the fields to it
+     * @param exercise the exercise template
+     * @param body the exercise group or course the exercise will be added to
+     */
+    private getCourseOrExamExercise(exercise: object, body: { course: any } | { exerciseGroup: any }) {
+        return Object.assign({}, exercise, body);
+    }
 }
 
 /**
  * Helper class to construct exam objects for the {@link CourseManagementRequests.createExam} method.
  */
 export class CypressExamBuilder {
-    readonly template = examTemplate;
+    readonly template: any = examTemplate;
 
     /**
      * Initializes the exam builder.
@@ -261,6 +295,21 @@ export class CypressExamBuilder {
      */
     endDate(date: day.Dayjs) {
         this.template.endDate = dayjsToString(date);
+        return this;
+    }
+
+    publishResultsDate(date: day.Dayjs) {
+        this.template.publishResultsDate = dayjsToString(date);
+        return this;
+    }
+
+    examStudentReviewStart(date: day.Dayjs) {
+        this.template.examStudentReviewStart = dayjsToString(date);
+        return this;
+    }
+
+    examStudentReviewEnd(date: day.Dayjs) {
+        this.template.examStudentReviewEnd = dayjsToString(date);
         return this;
     }
 
