@@ -70,8 +70,8 @@
                 "exerciseHint": "Exercise Hint",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)",
                 "metis": {
-                    "post": "Beitrag",
-                    "answerPost": "Antwort"
+                    "post": "Post",
+                    "answerPost": "Reply"
                 }
             },
             "account": {
