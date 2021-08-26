@@ -190,7 +190,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void participateInProgrammingTeamExercise_withoutAssignedTeam() throws Exception {
         programmingExercise.setMode(ExerciseMode.TEAM);
         exerciseRepo.save(programmingExercise);
-        request.post("/api/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.NOT_FOUND);
+        request.post("/api/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.BAD_REQUEST);
     }
 
     @Test

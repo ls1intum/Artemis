@@ -606,5 +606,10 @@ public class ParticipationResource {
         public static final String ROOT = "/api";
 
         public static final String START_PARTICIPATION = "exercises/{exerciseId}/participations";
+
+        private Endpoints() {
+
+        }
+
     }
 }
