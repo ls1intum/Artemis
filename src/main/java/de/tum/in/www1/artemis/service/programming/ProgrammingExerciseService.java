@@ -299,6 +299,9 @@ public class ProgrammingExerciseService {
             exercisePath = programmingLanguageProjectTypePath + "/exercise/**/*.*";
             solutionPath = programmingLanguageProjectTypePath + "/solution/**/*.*";
             testPath = programmingLanguageProjectTypePath + "/test/**/*.*";
+            if (programmingExercise.getProgrammingLanguage().equals(ProgrammingLanguage.SWIFT) && programmingExercise.getProjectType().equals(ProjectType.XCODE)) {
+                testPath = programmingLanguageProjectTypePath + "/test/**/**";
+            }
 
             if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
                 // For Xcode we don't share source code, so we only copy files once
