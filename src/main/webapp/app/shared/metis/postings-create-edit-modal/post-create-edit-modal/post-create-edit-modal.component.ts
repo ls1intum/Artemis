@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnChanges, OnInit } from '@angular/core';
 import { PostingsCreateEditModalDirective } from 'app/shared/metis/postings-create-edit-modal/postings-create-edit-modal.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseWideContext, Post } from 'app/entities/metis/post.model';
@@ -11,14 +11,21 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { Course } from 'app/entities/course.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { PageType } from 'app/shared/metis/metis.util';
-import { Subscription } from 'rxjs';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
+
 const TITLE_MAX_LENGTH = 200;
+
+interface ContextSelectorOption {
+    lecture?: Lecture;
+    exercise?: Exercise;
+    courseWideContext?: CourseWideContext;
+}
 
 @Component({
     selector: 'jhi-post-create-edit-modal',
     templateUrl: './post-create-edit-modal.component.html',
 })
-export class PostCreateEditModalComponent extends PostingsCreateEditModalDirective<Post> {
+export class PostCreateEditModalComponent extends PostingsCreateEditModalDirective<Post> implements OnInit, OnChanges {
     exercises?: Exercise[];
     lectures?: Lecture[];
     tags: string[];
@@ -27,7 +34,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     pageType: PageType;
     ePageType = PageType;
     isAtLeastTutorInCourse: boolean;
-    initialContext: Lecture | Exercise | CourseWideContext | string;
+    currentContextSelectorOption: ContextSelectorOption;
 
     constructor(
         protected metisService: MetisService,
@@ -37,11 +44,20 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         protected lectureService: LectureService,
     ) {
         super(metisService, modalService, formBuilder);
-        // TODO: maybe move to ngOnInit
+    }
+
+    ngOnInit() {
+        super.ngOnInit();
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.course = this.metisService.getCourse();
         this.lectures = this.course.lectures;
         this.exercises = this.course.exercises;
+        this.resetCurrentContextSelectorOption();
+    }
+
+    ngOnChanges() {
+        super.ngOnChanges();
+        this.resetCurrentContextSelectorOption();
     }
 
     /**
@@ -49,12 +65,11 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
      */
     resetFormGroup(): void {
         this.pageType = this.metisService.getPageType();
-        this.initialContext = this.setInitialContext();
         this.tags = this.posting?.tags ?? [];
         this.formGroup = this.formBuilder.group({
             title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH)]],
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength)]],
-            context: [this.initialContext, [Validators.required]],
+            context: [this.currentContextSelectorOption, [Validators.required]],
         });
     }
 
@@ -64,13 +79,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
      */
     createPosting(): void {
         this.posting.title = this.formGroup.get('title')?.value;
-        if (this.lectures?.includes(this.formGroup.get('context')?.value)) {
-            this.posting.lecture = this.formGroup.get('context')?.value;
-        } else if (this.exercises?.includes(this.formGroup.get('context')?.value)) {
-            this.posting.exercise = this.formGroup.get('context')?.value;
-        } else {
-            this.posting.courseWideContext = this.formGroup.get('context')?.value;
-        }
+        this.setPostContextPropertyWithFormValue();
         this.posting.tags = this.tags;
         this.posting.creationDate = moment();
         this.metisService.createPost(this.posting).subscribe({
@@ -92,7 +101,8 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     updatePosting(): void {
         this.posting.title = this.formGroup.get('title')?.value;
         this.posting.tags = this.tags;
-        this.metisService.updatePost(this.posting).subscribe({
+        this.setPostContextPropertyWithFormValue();
+        this.metisService.createPost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
                 this.modalRef?.close();
@@ -114,15 +124,38 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         }
     }
 
-    setInitialContext(): string | Lecture | Exercise | CourseWideContext {
-        if (this.posting.exercise) {
-            return this.posting.exercise;
-        } else if (this.posting.lecture) {
-            return this.posting.lecture;
-        } else if (this.posting.courseWideContext) {
-            return this.posting.courseWideContext;
-        } else {
-            return '';
+    compareContextSelectorOptionFn(option1: ContextSelectorOption, option2: ContextSelectorOption) {
+        if (option1.exercise && option2.exercise) {
+            return option1.exercise.id === option2.exercise.id;
+        } else if (option1.lecture && option2.lecture) {
+            return option1.lecture.id === option2.lecture.id;
+        } else if (option1.courseWideContext && option2.courseWideContext) {
+            return option1.courseWideContext === option2.courseWideContext;
         }
+        return false;
+    }
+
+    private setPostContextPropertyWithFormValue() {
+        const currentContextSelectorOption: ContextSelectorOption = {
+            exercise: undefined,
+            lecture: undefined,
+            courseWideContext: undefined,
+            ...this.formGroup.get('context')?.value,
+        };
+        this.posting = {
+            ...this.posting,
+            ...currentContextSelectorOption,
+        };
+        if (currentContextSelectorOption.courseWideContext) {
+            this.posting.course = { id: this.course.id };
+        }
+    }
+
+    private resetCurrentContextSelectorOption() {
+        this.currentContextSelectorOption = {
+            lecture: this.posting.lecture,
+            exercise: this.posting.exercise,
+            courseWideContext: this.posting.courseWideContext,
+        };
     }
 }

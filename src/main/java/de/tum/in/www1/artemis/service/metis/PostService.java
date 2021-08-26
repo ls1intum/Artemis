@@ -92,14 +92,20 @@ public class PostService extends PostingService {
         preCheckPostValidity(existingPost);
         mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
 
-        // update: allow overwriting of values only for depicted fields
+        // update: allow overwriting of values only for depicted fields if they are USERS
         existingPost.setTitle(post.getTitle());
         existingPost.setContent(post.getContent());
         existingPost.setVisibleForStudents(post.isVisibleForStudents());
         existingPost.setTags(post.getTags());
 
+        // update: allow overwriting of certain values if they are at least TAs in this course
         if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             existingPost.setDisplayPriority(post.getDisplayPriority());
+            // allow changing the post context (moving it to another context)
+            existingPost.setLecture(post.getLecture());
+            existingPost.setExercise(post.getExercise());
+            existingPost.setCourseWideContext(post.getCourseWideContext());
+            existingPost.setCourse(post.getCourse());
         }
 
         Post updatedPost = postRepository.save(existingPost);

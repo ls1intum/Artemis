@@ -32,6 +32,11 @@
                 "hideApproved": "Hide posts with approved replies"
             },
             "post": {
+                "context": "Context",
+                "contextTooltip": "Choose the context in which you want your post to be published. You can choose between specific exercises and lectures of the course or choose one of the course-wide, more general topics. If you choose an exercise or a lecture, the post will appear in the discussion panel on the exercise or lecture page. If you choose a course-wide topic, the post will only be listed in the overview (discussion tab).",
+                "courseWideContext": "Course-wide Topics",
+                "exercises": "Exercises",
+                "lectures": "Lectures",
                 "title": "Title",
                 "titleTooltip": "Add a precise and summarizing title to your post",
                 "tags": "Tags",

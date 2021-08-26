@@ -6,17 +6,23 @@
         </div>
         <div class="modal-body">
             <div *ngIf="pageType === ePageType.OVERVIEW || isAtLeastTutorInCourse" class="position-relative mb-3">
-                <label class="mb-1" jhiTranslate="artemisApp.metis.post.courseWideContext">Topic</label>
-                <jhi-help-icon placement="top auto" text="artemisApp.metis.post.courseWideContext"></jhi-help-icon>
-                <select formControlName="context" class="form-select" name="context">
-                    <optgroup label="Course Wide Context">
-                        <option *ngFor="let context of eCourseContext | keyvalue" [ngValue]="context">{{ context.value }}</option>
+                <label class="mb-1" jhiTranslate="artemisApp.metis.post.context">Topic</label>
+                <jhi-help-icon placement="top auto" text="artemisApp.metis.post.contextTooltip"></jhi-help-icon>
+                <select formControlName="context" class="form-select" [compareWith]="compareContextSelectorOptionFn" name="context">
+                    <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
+                        <option *ngFor="let context of eCourseContext | keyvalue" [ngValue]="{ courseWideContext: context.value }">
+                            {{ context.value }}
+                        </option>
                     </optgroup>
-                    <optgroup *ngIf="exercises !== undefined && exercises!.length > 0 && isAtLeastTutorInCourse" label="Course Exercises">
-                        <option *ngFor="let exercise of exercises" [ngValue]="exercise">{{ exercise.title }}</option>
+                    <optgroup *ngIf="exercises !== undefined && exercises!.length > 0 && isAtLeastTutorInCourse" [label]="'artemisApp.metis.post.exercises' | artemisTranslate">
+                        <option *ngFor="let exercise of exercises" [ngValue]="{ exercise: exercise }">
+                            {{ exercise.title }}
+                        </option>
                     </optgroup>
-                    <optgroup *ngIf="lectures !== undefined && lectures!.length > 0 && isAtLeastTutorInCourse" label="Course Lectures">
-                        <option *ngFor="let lecture of lectures" [ngValue]="lecture">{{ lecture.title }}</option>
+                    <optgroup *ngIf="lectures !== undefined && lectures!.length > 0 && isAtLeastTutorInCourse" [label]="'artemisApp.metis.post.lectures' | artemisTranslate">
+                        <option *ngFor="let lecture of lectures" [ngValue]="{ lecture: lecture }">
+                            {{ lecture.title }}
+                        </option>
                     </optgroup>
                 </select>
             </div>

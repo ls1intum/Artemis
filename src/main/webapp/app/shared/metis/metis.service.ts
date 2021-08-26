@@ -131,7 +131,7 @@ export class MetisService {
 
     /**
      * creates a new post by invoking the post service
-     * fetches the post for the currently set filter on response  and updates course tags
+     * fetches the posts for the currently set filter on response and updates course tags
      * @param post newly created post
      */
     createPost(post: Post): Observable<Post> {
@@ -146,7 +146,7 @@ export class MetisService {
 
     /**
      * creates a new answer post by invoking the answer post service
-     * fetches the post for the currently set filter on response
+     * fetches the posts for the currently set filter on response
      * @param answerPost newly created answer post
      */
     createAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
@@ -159,8 +159,8 @@ export class MetisService {
     }
 
     /**
-     * updates a given answer posts by invoking the answer post service,
-     * fetches the post for the currently set filter on response
+     * updates a given posts by invoking the post service,
+     * fetches the posts for the currently set filter on response and updates course tags
      * @param post post to update
      */
     updatePost(post: Post): Observable<Post> {
@@ -175,7 +175,7 @@ export class MetisService {
 
     /**
      * updates a given answer posts by invoking the answer post service,
-     * fetches the post for the currently set filter on response
+     * fetches the posts for the currently set filter on response
      * @param answerPost answer post to update
      */
     updateAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
