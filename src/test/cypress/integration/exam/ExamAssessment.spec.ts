@@ -92,7 +92,7 @@ describe('Exam Assessment', () => {
                 cy.contains('Hand in early').click();
                 examStartEnd.finishExam();
                 cy.login(tutor, '/course-management/' + course.id + '/exams');
-                cy.contains('Assessment Dashboard', {timeout: 60000}).click();
+                cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
                 assessmentDashboard.startAssessing();
                 modelingAssessment.addNewFeedback(2, 'Noice');
                 modelingAssessment.openAssessmentForComponent(1);
@@ -108,24 +108,24 @@ describe('Exam Assessment', () => {
         });
 
         it('assess a text exercise submission', () => {
-                courseManagementRequests.createTextExercise('Cypress Text Exercise', { exerciseGroup }).then(() => {
-                    courseManagementRequests.generateMissingIndividualExams(course, exam);
-                    courseManagementRequests.prepareExerciseStartForExam(course, exam);
-                    cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                    examStartEnd.startExam();
-                    cy.contains('Cypress Text Exercise').click();
-                    cy.get('#text-editor-tab').type(textSubmission.text);
-                    cy.contains('Save').click();
-                    cy.contains('Hand in early').click();
-                    examStartEnd.finishExam();
-                    cy.login(tutor, '/course-management/' + course.id + '/exams');
-                    cy.contains('Assessment Dashboard', {timeout: 60000}).click();
-                    assessmentDashboard.startAssessing();
-                    assessmentDashboard.addNewFeedback(7, 'Good job');
-                    assessmentDashboard.submitAssessment();
-                    cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                    cy.get('.question-options').contains('7 of 10 points').should('be.visible');
-                });
+            courseManagementRequests.createTextExercise('Cypress Text Exercise', { exerciseGroup }).then(() => {
+                courseManagementRequests.generateMissingIndividualExams(course, exam);
+                courseManagementRequests.prepareExerciseStartForExam(course, exam);
+                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                examStartEnd.startExam();
+                cy.contains('Cypress Text Exercise').click();
+                cy.get('#text-editor-tab').type(textSubmission.text);
+                cy.contains('Save').click();
+                cy.contains('Hand in early').click();
+                examStartEnd.finishExam();
+                cy.login(tutor, '/course-management/' + course.id + '/exams');
+                cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
+                assessmentDashboard.startAssessing();
+                assessmentDashboard.addNewFeedback(7, 'Good job');
+                assessmentDashboard.submitAssessment();
+                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                cy.get('.question-options').contains('7 of 10 points').should('be.visible');
+            });
         });
     });
 
@@ -166,28 +166,26 @@ describe('Exam Assessment', () => {
 
         it('assess a programming exercise submission (MANUAL)', () => {
             cy.login(artemis.users.getAdmin());
-            courseManagementRequests
-                .createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, { exerciseGroup })
-                .then((progRespone) => {
-                    const programmingExercise = progRespone.body;
-                    courseManagementRequests.generateMissingIndividualExams(course, exam);
-                    courseManagementRequests.prepareExerciseStartForExam(course, exam);
+            courseManagementRequests.createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, { exerciseGroup }).then((progRespone) => {
+                const programmingExercise = progRespone.body;
+                courseManagementRequests.generateMissingIndividualExams(course, exam);
+                courseManagementRequests.prepareExerciseStartForExam(course, exam);
+                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                examStartEnd.startExam();
+                cy.contains(programmingExercise.title).should('be.visible').click();
+                makeSubmissionAndVerifyResults(partiallySuccessful, () => {
+                    cy.get('.btn-danger').click();
+                    examStartEnd.finishExam();
+                    cy.get('.alert').should('be.visible');
+                    cy.login(tutor, '/course-management/' + course.id + '/exams');
+                    cy.contains('Assessment Dashboard', { timeout: examEnd * 1000 }).click();
+                    assessmentDashboard.startAssessing();
+                    assessmentDashboard.addNewFeedback(2, 'Good job');
+                    assessmentDashboard.submitAssessment();
                     cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                    examStartEnd.startExam();
-                    cy.contains(programmingExercise.title).should('be.visible').click();
-                    makeSubmissionAndVerifyResults(partiallySuccessful, () => {
-                        cy.get('.btn-danger').click();
-                        examStartEnd.finishExam();
-                        cy.get('.alert').should('be.visible');
-                        cy.login(tutor, '/course-management/' + course.id + '/exams');
-                        cy.contains('Assessment Dashboard', {timeout: examEnd * 1000}).click();
-                        assessmentDashboard.startAssessing();
-                        assessmentDashboard.addNewFeedback(2, 'Good job');
-                        assessmentDashboard.submitAssessment();
-                        cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                        cy.get('.question-options').contains('6.6 of 10 points').should('be.visible');
-                    });
+                    cy.get('.question-options').contains('6.6 of 10 points').should('be.visible');
                 });
+            });
         });
     });
 });

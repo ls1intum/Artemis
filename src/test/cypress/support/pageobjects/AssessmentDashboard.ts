@@ -1,6 +1,4 @@
-
 export class AssessmentDashboard {
-
     openExerciseDashboard() {
         cy.get('[jhitranslate="entity.action.exerciseDashboard"]').should('be.visible').click();
     }
