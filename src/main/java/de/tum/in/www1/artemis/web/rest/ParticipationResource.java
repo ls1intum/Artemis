@@ -209,7 +209,7 @@ public class ParticipationResource {
     }
 
     /**
-     * PUT exercises/{exerciseId}/participations : Updates an existing participation.
+     * PUT exercises/:exerciseId/participations : Updates an existing participation.
      *
      * @param exerciseId the id of the exercise, the participation belongs to
      * @param participation the participation to update
@@ -382,7 +382,7 @@ public class ParticipationResource {
     }
 
     /**
-     * GET participations/{participationId}/build-artifact : Retrieves the latest build artifact of a given programming exercise participation
+     * GET participations/:participationId/build-artifact : Retrieves the latest build artifact of a given programming exercise participation
      *
      * @param participationId The participationId of the participation
      * @return The latest build artifact (JAR/WAR) for the participation
@@ -542,7 +542,7 @@ public class ParticipationResource {
     }
 
     /**
-     * DELETE participations/{participationId}/build-plan : remove the build plan of the ProgrammingExerciseStudentParticipation of the "participationId".
+     * DELETE participations/:participationId/build-plan : remove the build plan of the ProgrammingExerciseStudentParticipation of the "participationId".
      * This only works for programming exercises.
      *
      * @param participationId the participationId of the ProgrammingExerciseStudentParticipation for which the build plan should be removed
@@ -587,7 +587,7 @@ public class ParticipationResource {
     }
 
     /**
-     * GET participations/{participationId}/submissions : fetches all submissions of a specific participation
+     * GET participations/:participationId/submissions : fetches all submissions of a specific participation
      * @param participationId the id of the participation
      * @return all submissions that belong to the participation
      */
