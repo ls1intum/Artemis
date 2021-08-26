@@ -61,10 +61,7 @@
                         <span *ngIf="numberOfSubmissions.late > 0"> | </span>
                         <span *ngIf="numberOfSubmissions.late > 0" class="text-danger">{{ numberOfSubmissions.late }}</span>
                         /
-                        <a
-                            [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'submissions']"
-                            [queryParams]="{ tutorId: tutor?.id }"
-                            title="{{ 'artemisApp.exerciseAssessmentDashboard.numberOfSubmissionsAssessedByYou' | artemisTranslate }}"
+                        <a [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'submissions']" [queryParams]="{ tutorId: tutor?.id }"
                             >{{ numberOfTutorAssessments }} ({{ tutorAssessmentPercentage }}%)</a
                         >
                     </div>
@@ -76,12 +73,9 @@
                     </div>
                     <div class="col-5">
                         {{ numberOfComplaints }} /
-                        <a
-                            [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'complaints']"
-                            [queryParams]="{ tutorId: tutor?.id }"
-                            title="{{ 'artemisApp.assessmentDashboard.complaintsAboutYourAssessments' | artemisTranslate }}"
-                            >{{ numberOfTutorComplaints }}</a
-                        >
+                        <a [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'complaints']" [queryParams]="{ tutorId: tutor?.id }">{{
+                            numberOfTutorComplaints
+                        }}</a>
                     </div>
                 </div>
 
@@ -94,7 +88,6 @@
                         <a
                             [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'more-feedback-requests']"
                             [queryParams]="{ tutorId: tutor?.id }"
-                            title="{{ 'artemisApp.assessmentDashboard.moreFeedbackRequestsForYourAssessments' | artemisTranslate }}"
                             >{{ numberOfTutorMoreFeedbackRequests }}</a
                         >
                     </div>
@@ -597,7 +590,7 @@
     </div>
 
     <div *ngIf="this.tutorParticipation.status! === TRAINED || isAtLeastInstructor">
-        <h2 *ngIf="!isExamMode">{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | artemisTranslate }}</h2>
+        <h2>{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | artemisTranslate }}</h2>
         <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="statsForDashboard.tutorLeaderboardEntries" [exercise]="exercise"></jhi-tutor-leaderboard>
     </div>
 </div>
