@@ -300,7 +300,7 @@ public class ProgrammingExerciseService {
             solutionPath = programmingLanguageProjectTypePath + "/solution/**/*.*";
             testPath = programmingLanguageProjectTypePath + "/test/**/*.*";
             if (programmingExercise.getProgrammingLanguage().equals(ProgrammingLanguage.SWIFT) && programmingExercise.getProjectType().equals(ProjectType.XCODE)) {
-                testPath = programmingLanguageProjectTypePath + "/test/**/**";
+                testPath = programmingLanguageProjectTypePath + "/test/**/*";
             }
 
             if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
