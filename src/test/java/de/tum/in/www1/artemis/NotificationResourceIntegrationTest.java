@@ -38,6 +38,9 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     @Autowired
     private SystemNotificationRepository systemNotificationRepository;
 
+    @Autowired
+    private NotificationOptionRepository notificationOptionRepository;
+
     private Exercise exercise;
 
     private Course course1;
