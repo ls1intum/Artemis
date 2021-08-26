@@ -84,10 +84,8 @@ public class LectureResource {
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("lecture.course", "400", "The Lecture in the body should have a course object!");
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         Long courseId = lecture.getCourse().getId(); // use the courseId in path instead after refactoring, then check if id matches in body
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+        checkAuthorizationAndGetCourse(Role.EDITOR, courseId);
         Lecture result = lectureRepository.save(lecture);
         return ResponseEntity.created(new URI("/api/lectures/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -97,6 +95,7 @@ public class LectureResource {
      * PUT lectures/{lectureId} : Updates an existing lecture.
      *
      * @param lecture the lecture to update
+     * @param lectureId the id of the lecture to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated lecture, or with status 400 (Bad Request) if the lecture is not valid, or with status 500 (Internal
      *         Server Error) if the lecture couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -114,10 +113,8 @@ public class LectureResource {
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("lecture.course", "400", "The Lecture in the body should have a course object!");
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         Long courseId = lecture.getCourse().getId(); // use the courseId in path instead after refactoring, then check if id matches in body
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+        checkAuthorizationAndGetCourse(Role.EDITOR, courseId);
 
         // Make sure that the original references are preserved.
         Lecture originalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lecture.getId());
@@ -141,9 +138,7 @@ public class LectureResource {
     public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+        checkAuthorizationAndGetCourse(Role.EDITOR, courseId);
 
         Set<Lecture> lectures;
         if (withLectureUnits) {
@@ -238,16 +233,17 @@ public class LectureResource {
     @DeleteMapping("/lectures/{lectureId}")// TODO: should be /courses/{courseId}/lectures/{lectureId}
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> deleteLecture(@PathVariable Long lectureId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
-        Course course = lecture.getCourse();
-        if (course == null) {
-            return ResponseEntity.badRequest().build();
-        }
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
-
+        Long courseId = lecture.getCourse().getId();
+        checkAuthorizationAndGetCourse(Role.EDITOR, courseId);
         log.debug("REST request to delete Lecture : {}", lectureId);
         lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
+    }
+
+    private Course checkAuthorizationAndGetCourse(Role role, long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
+        return course;
     }
 }
