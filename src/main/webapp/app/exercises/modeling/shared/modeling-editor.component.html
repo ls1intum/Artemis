@@ -87,8 +87,11 @@
 
     <div #resizeContainer class="modeling-editor" [class.resizable]="resizeOptions" [ngStyle]="{ marginTop: isFullScreen ? '30px' : '' }">
         <div #editorContainer class="apollon-container"></div>
-        <div *ngIf="resizeOptions" class="draggable-right">
+        <div *ngIf="resizeOptions && resizeOptions.initialWidth" class="draggable-right">
             <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
+        </div>
+        <div *ngIf="resizeOptions && resizeOptions.verticalResize" class="draggable-bottom">
+            <fa-icon [icon]="'grip-lines'"></fa-icon>
         </div>
     </div>
 

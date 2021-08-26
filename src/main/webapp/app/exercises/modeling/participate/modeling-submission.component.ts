@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Selection, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -83,6 +83,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     teamSyncInterval: number;
     private submissionChange = new Subject<ModelingSubmission>();
     submissionObservable = this.submissionChange.asObservable();
+
+    resizeOptions = { verticalResize: true };
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
