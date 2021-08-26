@@ -70,6 +70,8 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
             size: 'lg',
             backdrop: 'static',
             beforeDismiss: () => {
+                // when cancelling the create/update action, we do not want to store the current values
+                // but rather reset the formGroup values so when re-opening the modal we do not show the previously unsaved changes
                 this.resetFormGroup();
                 return true;
             },
