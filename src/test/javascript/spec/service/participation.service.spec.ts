@@ -103,7 +103,7 @@ describe('Participation Service', () => {
 
     it('should cleanup build plan', fakeAsync(() => {
         service.cleanupBuildPlan(elemDefault).subscribe((resp) => expect(resp).toMatchObject(elemDefault));
-        httpMock.expectOne({ method: 'PUT' });
+        httpMock.expectOne({ method: 'DELETE' });
     }));
 
     it('should merge student participations', fakeAsync(() => {

@@ -86,7 +86,7 @@ export class ExerciseDetailsStudentActionsComponent {
 
         this.exercise.loading = true;
         this.courseExerciseService
-            .startExercise(this.courseId, this.exercise.id!)
+            .startExercise(this.exercise.id!)
             .pipe(finalize(() => (this.exercise.loading = false)))
             .subscribe(
                 (participation) => {
@@ -114,7 +114,7 @@ export class ExerciseDetailsStudentActionsComponent {
     resumeProgrammingExercise() {
         this.exercise.loading = true;
         this.courseExerciseService
-            .resumeProgrammingExercise(this.courseId, this.exercise.id!)
+            .resumeProgrammingExercise(this.exercise.id!)
             .pipe(finalize(() => (this.exercise.loading = false)))
             .subscribe(
                 (participation: StudentParticipation) => {

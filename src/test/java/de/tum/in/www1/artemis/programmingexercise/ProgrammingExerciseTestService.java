@@ -647,8 +647,7 @@ public class ProgrammingExerciseTestService {
             participant = setupTeam(user);
         }
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
-        final var path = ParticipationResource.Endpoints.ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId()))
-                .replace("{exerciseId}", String.valueOf(exercise.getId()));
+        final var path = ROOT + '/' + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{exerciseId}", String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
@@ -664,8 +663,8 @@ public class ProgrammingExerciseTestService {
 
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), false, HttpStatus.CREATED);
 
-        final var path = ParticipationResource.Endpoints.ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId()))
-                .replace("{exerciseId}", String.valueOf(exercise.getId()));
+        final var path = ROOT + '/' + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
+                String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
@@ -682,8 +681,8 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void resumeProgrammingExercise_doesNotExist(ExerciseMode exerciseMode) throws Exception {
         final Course course = setupCourseWithProgrammingExercise(exerciseMode);
-        request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/resume-programming-participation", null,
-                ProgrammingExerciseStudentParticipation.class, HttpStatus.NOT_FOUND);
+        request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.NOT_FOUND);
     }
 
     // TEST
@@ -698,8 +697,8 @@ public class ProgrammingExerciseTestService {
         var participant = participation.getParticipant();
         mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
 
-        participation = request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/resume-programming-participation", null,
-                ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
+        participation = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.OK);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(participation.getBuildPlanId()).as("Build Plan Id should be set")
@@ -776,7 +775,7 @@ public class ProgrammingExerciseTestService {
 
         if (!buildPlanExists) {
             mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
-            participation = request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/resume-programming-participation", null,
+            participation = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation", null,
                     ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         }
 
@@ -1189,7 +1188,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.resetMockProvider();
         mockDelegate.mockRetrieveArtifacts(participation);
 
-        var artifact = request.get(PARTICIPATION_BASE_URL + participation.getId() + "/buildArtifact", HttpStatus.OK, byte[].class);
+        var artifact = request.get(PARTICIPATION_BASE_URL + participation.getId() + "/build-artifact", HttpStatus.OK, byte[].class);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(artifact).as("No build artifact available for this plan").isEmpty();
@@ -1495,8 +1494,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private ProgrammingExerciseStudentParticipation createUserParticipation(Course course) throws Exception {
-        final var path = ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
-                String.valueOf(exercise.getId()));
+        final var path = ROOT + '/' + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{exerciseId}", String.valueOf(exercise.getId()));
         return request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
     }
 
