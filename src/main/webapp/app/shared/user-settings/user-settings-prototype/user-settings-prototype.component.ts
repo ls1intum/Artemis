@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { JhiAlertService } from 'ng-jhipster';
@@ -39,11 +39,13 @@ export abstract class UserSettingsPrototypeComponent implements OnInit {
      * Fetches the userOptionCores based on the settings category, updates the currently loaded userSettings, optionCores, and HTML template
      */
     protected loadSetting(): void {
-        this.userSettingsService.loadUserOptions(this.userSettingsCategory).subscribe((res: HttpResponse<OptionCore[]>) => {
-            this.userSettings = this.userSettingsService.loadUserOptionCoresSuccessAsSettings(res.body!, this.userSettingsCategory);
-            this.finishUpdate();
-            // (res: HttpErrorResponse) => (this.error = res.message) TODO
-        });
+        this.userSettingsService.loadUserOptions(this.userSettingsCategory).subscribe(
+            (res: HttpResponse<OptionCore[]>) => {
+                this.userSettings = this.userSettingsService.loadUserOptionCoresSuccessAsSettings(res.body!, this.userSettingsCategory);
+                this.finishUpdate();
+            },
+            (res: HttpErrorResponse) => this.onError(res),
+        );
     }
 
     // methods related to saving
@@ -91,5 +93,20 @@ export abstract class UserSettingsPrototypeComponent implements OnInit {
     protected finishUpdate(): void {
         this.optionCores = this.userSettingsService.extractOptionCoresFromSettings(this.userSettings);
         this.changeDetector.detectChanges();
+    }
+
+    /**
+     * Send out an error alert if an error occurred
+     * @param httpErrorResponse which contains the error information
+     */
+    protected onError(httpErrorResponse: HttpErrorResponse) {
+        const error = httpErrorResponse.error;
+        if (error) {
+            this.alertService.error(error.message, error.params);
+        } else {
+            this.alertService.error('error.unexpectedError', {
+                error: httpErrorResponse.message,
+            });
+        }
     }
 }

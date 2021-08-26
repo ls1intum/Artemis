@@ -40,6 +40,11 @@ describe('User Settings Service', () => {
         email: false,
     };
 
+    /**
+     * Updates the NotificationOptionCores of the provided NotificationSettings by using provided Cores
+     * @param settings to be updated
+     * @param providedOptionCores are used to find matching cores and update them
+     */
     function updateNotificationSettingsByProvidedNotificationOptionCores(settings: UserSettings<NotificationOptionCore>, providedOptionCores: NotificationOptionCore[]) {
         providedOptionCores.forEach((providedOptionCore) => {
             for (const group of settings.groups) {
@@ -54,6 +59,11 @@ describe('User Settings Service', () => {
         });
     }
 
+    /**
+     * Updates the original NotificationOptionCores by using provided Cores
+     * @param originalOptionCores which should be updated
+     * @param providedOptionCores which are used to update the original cores
+     */
     function updateNotificationOptionCoresByProvidedNotificationOptionCores(originalOptionCores: NotificationOptionCore[], providedOptionCores: NotificationOptionCore[]) {
         providedOptionCores.forEach((providedCore) => {
             for (const originalCore of originalOptionCores) {
@@ -66,6 +76,11 @@ describe('User Settings Service', () => {
         });
     }
 
+    /**
+     * Checks if the provided (newly updated) cores are a subset of the expected cores
+     * @param providedNotificationCores which should be part of the expected ones
+     * @param expectedNotificationCores the bigger array of cores which should contain the provided cores
+     */
     function checkIfProvidedNotificationCoresArePartOfExpectedCores(providedNotificationCores: NotificationOptionCore[], expectedNotificationCores: NotificationOptionCore[]) {
         providedNotificationCores.forEach((providedCore) => {
             for (const expectedNotificationCore of expectedNotificationCores) {
@@ -78,6 +93,11 @@ describe('User Settings Service', () => {
         });
     }
 
+    /**
+     * extracts OptionCores from provided UserSettings
+     * @param settings where the cores should be extracted from
+     * @return extracted option cores
+     */
     function extractOptionCoresFromSettings(settings: UserSettings<OptionCore>): OptionCore[] {
         const extractedOptionCores: OptionCore[] = [];
         settings.groups.forEach((group) => {
@@ -88,7 +108,15 @@ describe('User Settings Service', () => {
         return extractedOptionCores;
     }
 
+    /**
+     * Compares UserSettings correctly by first checking the settings for the same "signature/structure"
+     * afterwards extracting the cores and comparing them
+     * @param expectedSettings
+     * @param resultSettings
+     */
     function compareSettings(expectedSettings: UserSettings<OptionCore>, resultSettings: UserSettings<OptionCore>) {
+        // this step alone is not enough due to the polymorphic nature of the optionCores
+        expect(expectedSettings).to.deep.equal(resultSettings);
         const expectedOptionCores = extractOptionCoresFromSettings(expectedSettings);
         const resultOptionCores = extractOptionCoresFromSettings(resultSettings);
         expect(expectedOptionCores).to.deep.equal(resultOptionCores);

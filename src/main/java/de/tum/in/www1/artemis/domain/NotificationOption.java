@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.util.Objects;
+
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -35,6 +37,23 @@ public class NotificationOption extends DomainObject {
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties("notificationOption")
     private User user;
+
+    public NotificationOption() {
+    };
+
+    public NotificationOption(boolean webapp, boolean email, String optionSpecifier) {
+        setWebapp(webapp);
+        setEmail(email);
+        setOptionSpecifier(optionSpecifier);
+    }
+
+    public NotificationOption(Long id, User user, boolean webapp, boolean email, String optionSpecifier) {
+        setId(id);
+        setUser(user);
+        setWebapp(webapp);
+        setEmail(email);
+        setOptionSpecifier(optionSpecifier);
+    }
 
     @Override
     public Long getId() {
@@ -80,5 +99,10 @@ public class NotificationOption extends DomainObject {
     @Override
     public String toString() {
         return "NotificationOption{" + "id=" + id + ", optionSpecifier='" + optionSpecifier + '\'' + ", webapp=" + webapp + ", email=" + email + ", user=" + user + '}';
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getOptionSpecifier(), getUser(), isWebapp(), isEmail());
     }
 }

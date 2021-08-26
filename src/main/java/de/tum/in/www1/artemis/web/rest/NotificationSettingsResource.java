@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +16,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.NotificationSettingsService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.swagger.annotations.ApiParam;
 
 /**
  * REST controller for managing NotificationSettings (NotificationOptions).
@@ -52,7 +50,8 @@ public class NotificationSettingsResource {
      * @return the list of found NotificationOptions
      */
     @GetMapping("/notification-settings/fetch-options")
-    public ResponseEntity<Set<NotificationOption>> getNotificationOptionsForCurrentUser(@ApiParam Pageable pageable) {
+    // public ResponseEntity<Set<NotificationOption>> getNotificationOptionsForCurrentUser(@ApiParam Pageable pageable) {
+    public ResponseEntity<Set<NotificationOption>> getNotificationOptionsForCurrentUser() {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         final Set<NotificationOption> notificationOptionSet = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
         return new ResponseEntity<>(notificationOptionSet, HttpStatus.OK);
