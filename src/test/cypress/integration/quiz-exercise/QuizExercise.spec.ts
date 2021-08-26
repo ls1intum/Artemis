@@ -20,7 +20,6 @@ let uid: string;
 let courseName: string;
 let courseShortName: string;
 let quizExerciseName: string;
-let quizExerciseShortName: string;
 
 describe('Quiz Exercise Management', () => {
     let course: any;
@@ -35,14 +34,13 @@ describe('Quiz Exercise Management', () => {
         });
     });
 
-    beforeEach(('New UID'), () => {
-       uid = generateUUID();
-       quizExerciseName = 'Cypress Quiz ' + uid;
-       quizExerciseShortName = 'cypress' + uid;
-       cy.intercept(POST, '/api/quiz-exercises').as('createQuizExercise');
+    beforeEach('New UID', () => {
+        uid = generateUUID();
+        quizExerciseName = 'Cypress Quiz ' + uid;
+        cy.intercept(POST, '/api/quiz-exercises').as('createQuizExercise');
     });
 
-    after(('Delete Course'), () => {
+    after('Delete Course', () => {
         courseManagementRequest.deleteCourse(course.id);
     });
 
@@ -50,18 +48,18 @@ describe('Quiz Exercise Management', () => {
         let quizExercise: any;
 
         afterEach('Delete Quiz', () => {
-           courseManagementRequest.deleteQuizExercise(quizExercise.id);
+            courseManagementRequest.deleteQuizExercise(quizExercise.id);
         });
 
         it('Creates a Quiz with Multiple Choice', () => {
-           beginQuizCreation();
-           quizCreation.addMultipleChoiceQuestion('MC Quiz' + uid);
-           quizCreation.saveQuiz();
-           cy.wait('@createQuizExercise').then((quizResponse) => {
-               quizExercise = quizResponse?.response?.body;
-               cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
-               cy.contains('MC Quiz' + uid).should('be.visible');
-           });
+            beginQuizCreation();
+            quizCreation.addMultipleChoiceQuestion('MC Quiz' + uid);
+            quizCreation.saveQuiz();
+            cy.wait('@createQuizExercise').then((quizResponse) => {
+                quizExercise = quizResponse?.response?.body;
+                cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
+                cy.contains('MC Quiz' + uid).should('be.visible');
+            });
         });
 
         it('Creates a Quiz with Short Answer', () => {
@@ -82,7 +80,7 @@ describe('Quiz Exercise Management', () => {
         beforeEach('Create Quiz Exercise', () => {
             const mcQuestion: any = multipleChoiceTemplate;
             mcQuestion.title = 'Cypress MC' + uid;
-            courseManagementRequest.createQuizExercise([ mcQuestion ] , quizExerciseName, dayjs(), { course }).then((quizResponse) => {
+            courseManagementRequest.createQuizExercise([mcQuestion], quizExerciseName, dayjs(), { course }).then((quizResponse) => {
                 quizExercise = quizResponse?.body;
             });
         });

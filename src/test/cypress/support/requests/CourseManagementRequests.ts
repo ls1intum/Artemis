@@ -192,7 +192,7 @@ export class CourseManagementRequests {
     deleteQuizExercise(exerciseId: number) {
         return cy.request({
             url: `/api/quiz-exercises/${exerciseId}`,
-            method: DELETE
+            method: DELETE,
         });
     }
 
