@@ -1,3 +1,4 @@
+import { ExamManagementRequests } from './ExamManagementRequests';
 import { CourseManagementRequests } from './CourseManagementRequests';
 
 /**
@@ -5,4 +6,5 @@ import { CourseManagementRequests } from './CourseManagementRequests';
  */
 export class ArtemisRequests {
     courseManagement = new CourseManagementRequests();
+    examManagement = new ExamManagementRequests();
 }
