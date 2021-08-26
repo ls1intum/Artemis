@@ -76,7 +76,7 @@ describe('Exam Assessment', () => {
         });
 
         it('assess a modeling exercise submission', () => {
-            courseManagementRequests.createModelingExercise(modelingExerciseTemplate, null, exerciseGroup).then((modelingResponse) => {
+            courseManagementRequests.createModelingExercise(modelingExerciseTemplate, { exerciseGroup }).then((modelingResponse) => {
                 const modelingExercise = modelingResponse.body;
                 courseManagementRequests.generateMissingIndividualExams(course, exam);
                 courseManagementRequests.prepareExerciseStartForExam(course, exam);
@@ -108,7 +108,7 @@ describe('Exam Assessment', () => {
         });
 
         it('assess a text exercise submission', () => {
-                courseManagementRequests.createTextExercise('Cypress Text Exercise', null, exerciseGroup).then(() => {
+                courseManagementRequests.createTextExercise('Cypress Text Exercise', { exerciseGroup }).then(() => {
                     courseManagementRequests.generateMissingIndividualExams(course, exam);
                     courseManagementRequests.prepareExerciseStartForExam(course, exam);
                     cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
@@ -166,7 +166,7 @@ describe('Exam Assessment', () => {
         it('assess a programming exercise submission (MANUAL)', () => {
             cy.login(artemis.users.getAdmin());
             courseManagementRequests
-                .createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, null, exerciseGroup)
+                .createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, { exerciseGroup })
                 .then((progRespone) => {
                     const programmingExercise = progRespone.body;
                     courseManagementRequests.generateMissingIndividualExams(course, exam);
