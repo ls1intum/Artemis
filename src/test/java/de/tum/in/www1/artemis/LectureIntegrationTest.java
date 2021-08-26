@@ -79,7 +79,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     private void testAllPreAuthorize() throws Exception {
         request.postWithResponseBody("/api/lectures", new Lecture(), Lecture.class, HttpStatus.FORBIDDEN);
-        request.putWithResponseBody("/api/lectures", new Lecture(), Lecture.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/lectures/" + 1, new Lecture(), Lecture.class, HttpStatus.FORBIDDEN);
         request.getList("/api/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
     }
@@ -133,7 +133,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Lecture originalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get();
         originalLecture.setTitle("Updated");
         originalLecture.setDescription("Updated");
-        Lecture updatedLecture = request.putWithResponseBody("/api/lectures", originalLecture, Lecture.class, HttpStatus.OK);
+        Lecture updatedLecture = request.putWithResponseBody("/api/lectures/" + originalLecture.getId(), originalLecture, Lecture.class, HttpStatus.OK);
         assertThat(updatedLecture.getTitle()).isEqualTo("Updated");
         assertThat(updatedLecture.getDescription()).isEqualTo("Updated");
     }
@@ -143,7 +143,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     public void updateLecture_NoId_shouldReturnBadRequest() throws Exception {
         Lecture originalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get();
         originalLecture.setId(null);
-        request.putWithResponseBody("/api/lectures", originalLecture, Lecture.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/lectures/" + originalLecture.getId(), originalLecture, Lecture.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

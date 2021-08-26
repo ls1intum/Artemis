@@ -74,7 +74,7 @@ describe('Lecture Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: resourceUrl,
+                url: `${resourceUrl}/${elemDefault.id!}`,
                 method: 'PUT',
             });
             req.flush(returnedFromService);
