@@ -1,5 +1,6 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
+import { POST } from '../../support/constants';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -43,19 +44,44 @@ describe('Quiz Exercise Management', () => {
     });
 
     describe('Quiz Exercise Creation', () => {
-        let quizId: number;
+        let quizExercise: any;
 
         afterEach('Delete Quiz', () => {
-           // courseManagementRequest.deleteQuizExercise(quizId);
+           courseManagementRequest.deleteQuizExercise(quizExercise.id);
+        });
+
+        beforeEach('intercept creation', () => {
+            cy.intercept(POST, '/api/quiz-exercises').as('createQuizExercise');
         });
 
         it('Creates a Quiz with Multiple Choice', () => {
-           cy.login(admin, '/');
-           navigationBar.openCourseManagement();
-           courseManagement.openExercisesOfCourse(courseName, courseShortName);
-           cy.get('#create-quiz-button').should('be.visible').click();
-           quizCreation.setTitle(quizExerciseName);
-           quizCreation.addMCQuestion();
+           beginExerciseCreation();
+           quizCreation.addMultipleChoiceQuestion('MC Quiz' + uid);
+           quizCreation.saveQuiz();
+           cy.wait('@createQuizExercise').then((quizResponse) => {
+               quizExercise = quizResponse?.response?.body;
+               cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
+               cy.contains('MC Quiz' + uid).should('be.visible');
+           });
+        });
+
+        it('Creates a Quiz with Short Answer', () => {
+            beginExerciseCreation();
+            quizCreation.addShortAnswerQuestion('SA Quiz' + uid);
+            quizCreation.saveQuiz();
+            cy.wait('@createQuizExercise').then((quizResponse) => {
+                quizExercise = quizResponse?.response?.body;
+                cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
+                cy.contains('SA Quiz' + uid).should('be.visible');
+            });
         });
     });
 });
+
+function beginExerciseCreation() {
+    cy.login(admin, '/');
+    navigationBar.openCourseManagement();
+    courseManagement.openExercisesOfCourse(courseName, courseShortName);
+    cy.get('#create-quiz-button').should('be.visible').click();
+    quizCreation.setTitle(quizExerciseName);
+}
