@@ -39,6 +39,7 @@ public class NotificationOption extends DomainObject {
     private User user;
 
     public NotificationOption() {
+        // Default empty constructor
     };
 
     public NotificationOption(boolean webapp, boolean email, String optionSpecifier) {

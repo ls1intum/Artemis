@@ -59,6 +59,10 @@ public class NotificationSettingsServiceTest {
         savedNotificationOptions = new NotificationOption[] { completeNotificationOptionA, completeNotificationOptionB, completeNotificationOptionC };
     }
 
+    /**
+     * Tests the method setCurrentUser
+     * Each provided notification option should have the same user afterwards
+     */
     @Test
     public void testSetCurrentUser() {
         NotificationOption[] tmpNotificationOptions = Arrays.copyOf(unsavedNotificationOptions, unsavedNotificationOptions.length);
@@ -70,6 +74,11 @@ public class NotificationSettingsServiceTest {
         }
     }
 
+    /**
+     * Tests the method findDeactivatedNotificationTypes
+     * This test also tests the private methods convertNotificationOptionsToNotificationTypesWithActivationStatus
+     * & convertNotificationOptionsToNotificationTypesWithActivationStatus
+     */
     @Test
     public void testFindDeactivatedNotificationTypes() {
         NotificationOption[] tmpNotificationOptionsArray = Arrays.copyOf(savedNotificationOptions, savedNotificationOptions.length);
