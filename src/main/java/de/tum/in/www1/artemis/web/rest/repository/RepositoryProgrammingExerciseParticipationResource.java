@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.util.*;
 
@@ -18,9 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.RepositoryService;
@@ -51,15 +49,19 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final BuildLogEntryService buildLogService;
 
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService) {
+            ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository) {
         super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository);
         this.participationService = participationService;
         this.participationRepository = participationRepository;
         this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     @Override
@@ -329,10 +331,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * GET /repository/:participationId/buildlogs : get the build log from Bamboo for the "participationId" repository.
      *
      * @param participationId to identify the repository with.
+     * @param resultId an optional result ID to get the build logs for the submission that the result belongs to. If the result ID is not specified, the latest submission is used.
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping(value = "/repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<BuildLogEntry>> getBuildLogs(@PathVariable Long participationId) {
+    public ResponseEntity<List<BuildLogEntry>> getBuildLogs(@PathVariable Long participationId, @RequestParam(name = "resultId") Optional<Long> resultId) {
         log.debug("REST request to get build log : {}", participationId);
 
         ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
@@ -341,20 +344,30 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return forbidden();
         }
 
-        Optional<Submission> optionalSubmission = participation.getSubmissions().stream().findFirst();
-        if (optionalSubmission.isEmpty()) {
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.getSubmissions().stream().findFirst().orElse(null);
+        // If a resultId is specified and the ID does not belong to the latest result, find the corresponding submission. Otherwise use the latest submission.
+        if (resultId.isPresent() && (programmingSubmission == null || programmingSubmission.getResults().stream().noneMatch(r -> resultId.get().equals(r.getId())))) {
+            // Note: if the submission was null, this will fail with a good message.
+            programmingSubmission = programmingSubmissionRepository.findByResultIdElseThrow(resultId.get());
+            if (!Objects.equals(participation.getId(), programmingSubmission.getParticipation().getId())) {
+                // The result of the given ID must belong to the participation
+                log.warn("Participation ID {} tried to access the build logs of another participation's submission with ID {}.", participation.getId(),
+                        programmingSubmission.getId());
+                return badRequest();
+            }
+        }
+        else if (programmingSubmission == null) {
             // Can't return build logs if a submission doesn't exist yet
             return ResponseEntity.ok(new ArrayList<>());
         }
 
-        ProgrammingSubmission latestSubmission = (ProgrammingSubmission) optionalSubmission.get();
         // Do not return build logs if the build hasn't failed
-        if (!latestSubmission.isBuildFailed()) {
+        if (!programmingSubmission.isBuildFailed()) {
             return forbidden();
         }
 
         // Load the logs from the database
-        List<BuildLogEntry> buildLogsFromDatabase = buildLogService.getLatestBuildLogs(latestSubmission);
+        List<BuildLogEntry> buildLogsFromDatabase = buildLogService.getLatestBuildLogs(programmingSubmission);
 
         // If there are logs present in the database, return them (they were already filtered when inserted)
         if (!buildLogsFromDatabase.isEmpty()) {
@@ -362,7 +375,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         }
 
         // Otherwise attempt to fetch the build logs from the CI
-        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(latestSubmission);
+        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(programmingSubmission);
 
         return new ResponseEntity<>(logs, HttpStatus.OK);
     }
