@@ -82,20 +82,20 @@ describe('Modeling Exercise Spec', () => {
 
         it('Creates Example Submission', () => {
             cy.visit(`/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
-            cy.contains('Create Example Submission').click();
+            cy.get('[jhitranslate="artemisApp.modelingExercise.createExampleSubmission"]').click();
             modelingEditor.addComponentToModel(1);
             modelingEditor.addComponentToModel(2);
             modelingEditor.addComponentToModel(3);
-            cy.contains('Create new Example Submission').click();
+            cy.get('[jhitranslate="artemisApp.modelingExercise.createNewExampleSubmission"]').click();
             cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
-            cy.contains('Show Assessment').click();
+            cy.get('[jhitranslate="artemisApp.modelingExercise.showExampleAssessment"]').click();
             modelingExerciseExampleSubmission.openAssessmentForComponent(1);
             modelingExerciseExampleSubmission.assessComponent(-1, 'False');
             modelingExerciseExampleSubmission.openAssessmentForComponent(2);
             modelingExerciseExampleSubmission.assessComponent(2, 'Good');
             modelingExerciseExampleSubmission.openAssessmentForComponent(3);
             modelingExerciseExampleSubmission.assessComponent(0, 'Unnecessary');
-            modelingExerciseExampleSubmission.saveExampleAssessment();
+            cy.contains('Save Example Assessment').click();
         });
 
         it('Edit Existing Modeling Exercise', () => {
@@ -124,7 +124,7 @@ describe('Modeling Exercise Spec', () => {
                 exercise.dueDate = dayjs().add(2, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
                 exercise.assessmentDueDate = dayjs().add(3, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
                 exercise.sampleSolutionModel = null;
-                courseManagementRequests.createModelingExercise(exercise, testCourse, null).then((resp) => {
+                courseManagementRequests.createModelingExercise(exercise, { course: testCourse }).then((resp) => {
                     modelingExercise = resp.body;
                 });
             });

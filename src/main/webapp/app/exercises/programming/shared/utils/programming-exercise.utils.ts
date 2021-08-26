@@ -19,6 +19,12 @@ export const isLegacyResult = (result: Result) => {
     }
 };
 
+export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string): string | undefined => {
+    if (template && projectKey && buildPlanId) {
+        return template.replace('{buildPlanId}', buildPlanId).replace('{projectKey}', projectKey);
+    }
+};
+
 /**
  * A result is preliminary if:
  * - The programming exercise buildAndTestAfterDueDate is set

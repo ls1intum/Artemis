@@ -23,8 +23,8 @@ export class ExamStartEndPage {
         this.pressStart();
     }
 
-    finishExam(timeout = 20000) {
-        this.setConfirmCheckmark(timeout);
+    finishExam(timeout?: number) {
+        this.setConfirmCheckmark(timeout ? timeout : Cypress.config('defaultCommandTimeout'));
         this.enterFirstnameLastname();
         this.pressFinish();
     }
