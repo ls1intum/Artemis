@@ -132,7 +132,7 @@ describe('Exam Assessment', () => {
     describe('Exam Programming Exercise Assessment', () => {
         let programmingExerciseName: string;
         let programmingExerciseShortName: string;
-        const examEnd = Cypress.env('isBamboo') ? 160 : 100;
+        const examEnd = Cypress.env('isBamboo') ? 180 : 100;
 
         before('Generate exercise names', () => {
             uid = generateUUID();
