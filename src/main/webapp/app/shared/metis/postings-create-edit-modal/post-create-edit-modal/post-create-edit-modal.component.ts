@@ -101,7 +101,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         this.posting.title = this.formGroup.get('title')?.value;
         this.posting.tags = this.tags;
         this.setPostContextPropertyWithFormValue();
-        this.metisService.createPost(this.posting).subscribe({
+        this.metisService.updatePost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
                 this.modalRef?.close();
