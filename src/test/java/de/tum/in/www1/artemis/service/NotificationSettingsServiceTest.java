@@ -79,6 +79,10 @@ public class NotificationSettingsServiceTest {
         // OptionB : attachment-changes -> [ATTACHMENT_CHANGE] : webapp activated <- not part of set
         // OptionC : course-and-exam-archiving-started -> [EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED] : webapp deactivated
         assertThat(resultingTypeSet).hasSize(3);
-
+        assertThat(resultingTypeSet).contains(NotificationType.EXERCISE_PRACTICE);
+        assertThat(resultingTypeSet).contains(NotificationType.EXAM_ARCHIVE_STARTED);
+        assertThat(resultingTypeSet).contains(NotificationType.COURSE_ARCHIVE_STARTED);
+        assertThat(resultingTypeSet).contains(NotificationType.COURSE_ARCHIVE_STARTED);
+        assertThat(!resultingTypeSet.contains(NotificationType.ATTACHMENT_CHANGE));
     }
 }
