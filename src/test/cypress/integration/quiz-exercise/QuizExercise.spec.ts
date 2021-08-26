@@ -1,6 +1,8 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
 import { POST } from '../../support/constants';
+import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
+import dayjs from 'dayjs';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -37,6 +39,7 @@ describe('Quiz Exercise Management', () => {
        uid = generateUUID();
        quizExerciseName = 'Cypress Quiz ' + uid;
        quizExerciseShortName = 'cypress' + uid;
+       cy.intercept(POST, '/api/quiz-exercises').as('createQuizExercise');
     });
 
     after(('Delete Course'), () => {
@@ -50,12 +53,8 @@ describe('Quiz Exercise Management', () => {
            courseManagementRequest.deleteQuizExercise(quizExercise.id);
         });
 
-        beforeEach('intercept creation', () => {
-            cy.intercept(POST, '/api/quiz-exercises').as('createQuizExercise');
-        });
-
         it('Creates a Quiz with Multiple Choice', () => {
-           beginExerciseCreation();
+           beginQuizCreation();
            quizCreation.addMultipleChoiceQuestion('MC Quiz' + uid);
            quizCreation.saveQuiz();
            cy.wait('@createQuizExercise').then((quizResponse) => {
@@ -66,7 +65,7 @@ describe('Quiz Exercise Management', () => {
         });
 
         it('Creates a Quiz with Short Answer', () => {
-            beginExerciseCreation();
+            beginQuizCreation();
             quizCreation.addShortAnswerQuestion('SA Quiz' + uid);
             quizCreation.saveQuiz();
             cy.wait('@createQuizExercise').then((quizResponse) => {
@@ -76,9 +75,34 @@ describe('Quiz Exercise Management', () => {
             });
         });
     });
+
+    describe('Quiz Exercise deletion', () => {
+        let quizExercise: any;
+
+        beforeEach('Create Quiz Exercise', () => {
+            const mcQuestion: any = multipleChoiceTemplate;
+            mcQuestion.title = 'Cypress MC' + uid;
+            courseManagementRequest.createQuizExercise([ mcQuestion ] , quizExerciseName, dayjs(), { course }).then((quizResponse) => {
+                quizExercise = quizResponse?.body;
+            });
+        });
+
+        it('Deletes a Quiz Exercise', () => {
+            cy.login(admin, '/');
+            navigationBar.openCourseManagement();
+            courseManagement.openExercisesOfCourse(courseName, courseShortName);
+            cy.get('#delete-quiz-' + quizExercise.id).click();
+            cy.get('.form-control').type(quizExercise.title);
+            cy.intercept('DELETE', '/api/quiz-exercises/*').as('deleteQuizQuery');
+            cy.get('.modal-footer').contains('Delete').click();
+            cy.wait('@deleteQuizQuery').then((deleteResponse) => {
+                expect(deleteResponse?.response?.statusCode).to.eq(200);
+            });
+        });
+    });
 });
 
-function beginExerciseCreation() {
+function beginQuizCreation() {
     cy.login(admin, '/');
     navigationBar.openCourseManagement();
     courseManagement.openExercisesOfCourse(courseName, courseShortName);

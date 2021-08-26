@@ -7,6 +7,7 @@ import day from 'dayjs';
 import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
+import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
 
 const COURSE_BASE = BASE_API + 'courses/';
 const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
@@ -192,6 +193,19 @@ export class CourseManagementRequests {
         return cy.request({
             url: `/api/quiz-exercises/${exerciseId}`,
             method: DELETE
+        });
+    }
+
+    createQuizExercise(quizQuestions: [any], title: string, releaseDate: day.Dayjs, body: { course: any } | { exerciseGroup: any }) {
+        const quizExercise: any = quizTemplate;
+        quizExercise.title = title;
+        quizExercise.releaseDate = dayjsToString(releaseDate);
+        quizExercise.quizQuestions = quizQuestions;
+        const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
+        return cy.request({
+            url: '/api/quiz-exercises',
+            method: 'POST',
+            body: newQuizExercise,
         });
     }
 
