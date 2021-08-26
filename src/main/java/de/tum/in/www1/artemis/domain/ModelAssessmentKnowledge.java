@@ -29,24 +29,4 @@ public class ModelAssessmentKnowledge extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("knowledge")
     private Set<ModelElement> modelElements = new HashSet<>();
-
-    public Set<ModelingExercise> getExercises() {
-        return exercises;
-    }
-
-    public ModelAssessmentKnowledge addExercises(ModelingExercise exercise) {
-        exercise.setKnowledge(this);
-        this.exercises.add(exercise);
-        return this;
-    }
-
-    public Set<ModelElement> getTextBlocks() {
-        return modelElements;
-    }
-
-    public ModelAssessmentKnowledge addModelElement(ModelElement modelElement) {
-        modelElement.setKnowledge(this);
-        this.modelElements.add(modelElement);
-        return this;
-    }
 }
