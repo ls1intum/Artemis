@@ -2,7 +2,7 @@
     <jhi-markdown-editor
         #markdownEditor
         class="markdown-editor"
-        [markdown]="questionEditorText"
+        [markdown]="markdownEditorText"
         [showPreviewButton]="true"
         [domainCommands]="domainCommands"
         (markdownChange)="prepareForSave()"
@@ -43,8 +43,23 @@
 
 <div class="edit-sqi" *ngIf="exercise.gradingInstructionFeedbackUsed">
     <div class="grading-instructions-update-border">
+        <div class="instructions pb-2 row-cols-2">
+            <jhi-markdown-editor
+                #markdownEditor
+                class="editor col-md-8"
+                [markdown]="markdownEditorText"
+                [domainCommands]="domainCommandsGradingInstructions"
+                (markdownChange)="prepareForSave()"
+                (textWithDomainCommandsFound)="setExerciseGradingInstructionText($event)"
+                [enableFileUpload]="false"
+                [shouldDisplayAlert]="false"
+                [enableResize]="true"
+                [showEditButton]="false"
+                [showPreviewButton]="false"
+            ></jhi-markdown-editor>
+        </div>
         <div *ngFor="let criteria of exercise.gradingCriteria">
-            <div class="criteria-content" style="padding-bottom: 12px">
+            <div class="criteria-content pb-2">
                 <div class="row">
                     <div class="col-md-10 text-start">
                         <div class="input-group" style="height: 33px; width: 75%">
@@ -75,9 +90,10 @@
 
                 <div *ngIf="criteria.structuredGradingInstructions!">
                     <div *ngFor="let instruction of criteria.structuredGradingInstructions">
-                        <div class="instructions">
+                        <div class="instructions row-cols-2">
                             <jhi-markdown-editor
-                                #markdownEditor
+                                #markdownEditors
+                                class="editor col-md-8"
                                 [metaCommands]="[]"
                                 [defaultCommands]="[]"
                                 [headerCommands]="[]"
@@ -87,10 +103,10 @@
                                 [domainCommands]="domainCommandsGradingInstructions"
                                 (markdownChange)="prepareForSave()"
                                 (textWithDomainCommandsFound)="onInstructionChange($event, instruction)"
-                                class="editor"
-                                style="width: 65%"
+                                [enableFileUpload]="false"
+                                [shouldDisplayAlert]="false"
                             ></jhi-markdown-editor>
-                            <div class="form-group text-center" style="width: 25%">
+                            <div class="form-group text-center col-md-4" style="display: block">
                                 <span class="re-evaluate-button" id="reset-button" (click)="resetInstruction(instruction, criteria)">
                                     <fa-icon [icon]="'undo'" size="2x" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentInstruction' | artemisTranslate }}"></fa-icon>
                                 </span>
