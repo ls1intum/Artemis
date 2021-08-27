@@ -1,7 +1,6 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
 import { POST } from '../../support/constants';
-import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import dayjs from 'dayjs';
 
 // Accounts
@@ -48,7 +47,7 @@ describe('Quiz Exercise Management', () => {
         let quizExercise: any;
 
         afterEach('Delete Quiz', () => {
-            courseManagementRequest.deleteQuizExercise(quizExercise.id);
+            courseManagementRequest.deleteQuizExercise(quizExercise);
         });
 
         it('Creates a Quiz with Multiple Choice', () => {
@@ -78,9 +77,7 @@ describe('Quiz Exercise Management', () => {
         let quizExercise: any;
 
         beforeEach('Create Quiz Exercise', () => {
-            const mcQuestion: any = multipleChoiceTemplate;
-            mcQuestion.title = 'Cypress MC' + uid;
-            courseManagementRequest.createQuizExercise([mcQuestion], quizExerciseName, dayjs(), { course }).then((quizResponse) => {
+            courseManagementRequest.createQuizExercise(quizExerciseName, dayjs(), { course }).then((quizResponse) => {
                 quizExercise = quizResponse?.body;
             });
         });

@@ -1,6 +1,5 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
-import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import dayjs from 'dayjs';
 
 // Accounts
@@ -9,8 +8,6 @@ const student = artemis.users.getStudentOne();
 
 // Requests
 const courseManagementRequest = artemis.requests.courseManagement;
-
-// PageObjects
 
 // Common primitives
 let uid: string;
@@ -39,6 +36,11 @@ describe('Quiz Exercise Management', () => {
         cy.login(admin);
     });
 
+    afterEach('Delete Quiz', () => {
+        cy.login(admin);
+        courseManagementRequest.deleteQuizExercise(quizExercise);
+    });
+
     after('Delete Course', () => {
         cy.login(admin);
         courseManagementRequest.deleteCourse(course.id);
@@ -46,31 +48,29 @@ describe('Quiz Exercise Management', () => {
 
     describe('Cannot access unreleased exercise', () => {
         beforeEach('Create unreleased exercise', () => {
-            const mcQuestion: any = multipleChoiceTemplate;
-            mcQuestion.title = 'Cypress MC' + uid;
-            courseManagementRequest.createQuizExercise([mcQuestion], quizExerciseName, dayjs().add(1, 'day'), { course }).then((quizResponse) => {
+            courseManagementRequest.createQuizExercise(quizExerciseName, dayjs(), { course }).then((quizResponse) => {
                 quizExercise = quizResponse?.body;
             });
         });
 
-        it('Student can not access unreleased quiz', () => {
+        it('Student can not see non visible quiz', () => {
             cy.login(student, '/courses/' + course.id);
             cy.contains('No exercises available for the course.').should('be.visible');
         });
-    });
 
-    describe('Can participate in released MC quiz', () => {
-        beforeEach('Create unreleased exercise', () => {
-            const mcQuestion: any = multipleChoiceTemplate;
-            mcQuestion.title = 'Cypress MC' + uid;
-            courseManagementRequest.createQuizExercise([mcQuestion], quizExerciseName, dayjs().subtract(1, 'day'), { course }).then((quizResponse) => {
-                quizExercise = quizResponse?.body;
-            });
-        });
-
-        it('Student can start a MC quiz', () => {
+        it('Student can see a visible quiz', () => {
+            courseManagementRequest.setQuizVisible(quizExercise);
             cy.login(student, '/courses/' + course.id);
             cy.contains(quizExercise.title).should('be.visible').click();
+            cy.get('.btn').contains('Open quiz').click();
+        });
+
+        it('Student can start and submit to started quiz', () => {
+            courseManagementRequest.setQuizVisible(quizExercise);
+            courseManagementRequest.startQuizNow(quizExercise);
+            cy.login(student, '/courses/' + course.id);
+            cy.contains(quizExercise.title).should('be.visible').click();
+            cy.get('.btn').contains('Start quiz').click();
         });
     });
 });
