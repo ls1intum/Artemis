@@ -80,6 +80,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     /**
      * retrieves an exam with exercise groups and student exams
      * @param examId id of the exam to retrieve
+     * @return exam with exercise groups and student exams
      * @throws EntityNotFoundException if exam isn't found
      */
     @NotNull
@@ -122,6 +123,12 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     String getExamTitle(@Param("examId") Long examId);
 
+    /**
+     * retrieves an exam title
+     * @param examId id of the exam title to retrieve
+     * @return title of the exam
+     * @throws EntityNotFoundException if exam isn't found
+     */
     @NotNull
     default String getExamTitleByIdElseThrow(Long examId) {
         String title = getExamTitle(examId);
