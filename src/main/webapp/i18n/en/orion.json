@@ -6,6 +6,13 @@
                 "usedVersion": "You are using version ",
                 "allowedVersion": "The allowed version is (minimum): "
             }
+        },
+        "orionExerciseAssessmentDashboard": {
+            "startYourParticipation": "Assess exercise in Orion",
+            "startAssessment": "Start new assessment in Orion",
+            "continueAssessment": "Continue assessment in Orion",
+            "openAssessment": "Open assessment in Orion",
+            "downloadFailed": "Could not download submission. The file might be too large. Try downloading it manually."
         }
     }
 }

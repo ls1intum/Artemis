@@ -153,7 +153,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     }
 
     /**
-     * This method needs to be checked and updated if there is a new class attribute. Creates a clone with all attributes set to the value of the object, including the id.
+     * Needs to be checked and updated if there is a new class attribute. Creates a clone with all attributes set to the value of the object, including the id.
      *
      * @return a clone of the object.
      */
@@ -165,7 +165,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     }
 
     /**
-     * this methods checks for logical equality based on the name and the exercise
+     * Checks for logical equality based on the name and the exercise
      * @param testCase another test case which should be checked for being the same
      * @return whether this and the other test case are the same based on name and exercise
      */

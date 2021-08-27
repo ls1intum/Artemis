@@ -1,7 +1,5 @@
 import { NgModule } from '@angular/core';
-
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-
 import { AssessmentHeaderComponent } from './assessment-header/assessment-header.component';
 import { AssessmentLayoutComponent } from './assessment-layout/assessment-layout.component';
 import { AssessmentComplaintAlertComponent } from './assessment-complaint-alert/assessment-complaint-alert.component';

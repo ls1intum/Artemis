@@ -1,15 +1,9 @@
+@import '../../shared/exercise/_exercise-update.scss';
+
 .form__editable-instructions ::ng-deep .editable-instruction-container__editor {
     height: 500px;
 }
 
-.label-timeline {
-    font-size: 11.5pt;
-}
-
 .label-preview {
     font-size: 9pt;
-}
-
-.markdown-editor {
-    height: 350px;
 }

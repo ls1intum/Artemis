@@ -13,7 +13,7 @@ export class GradingInstructionCommand extends DomainTagCommand {
     feedbackCommand = new FeedbackCommand();
     usageCountCommand = new UsageCountCommand();
 
-    public static readonly identifier = '[gradingInstruction]';
+    public static readonly identifier = '[instruction]';
     // public static readonly text = ' Add grading instruction here';
 
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addInstruction';
@@ -67,6 +67,6 @@ export class GradingInstructionCommand extends DomainTagCommand {
      * @desc identify the end of the grading instruction
      */
     getClosingIdentifier(): string {
-        return '[/gradingInstruction]';
+        return '[/instruction]';
     }
 }

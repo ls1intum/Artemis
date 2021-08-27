@@ -4,7 +4,7 @@
             <fa-icon [icon]="'terminal'"></fa-icon>
             <span jhiTranslate="artemisApp.editor.buildOutput"> &nbsp; Build Output</span>
         </h3>
-        <fa-icon class="ms-auto" [icon]="'chevron-down'"></fa-icon>
+        <fa-icon class="ms-auto clickable" [icon]="'chevron-down'"></fa-icon>
     </div>
     <div class="card-body" *ngIf="!isBuilding && !rawBuildLogs.length">
         <p class="text-center no-buildoutput" jhiTranslate="artemisApp.editor.noBuildOutput">No build results available</p>

@@ -177,10 +177,8 @@ public class AssessmentService {
         // cancel is only possible for the latest result.
         Result result = submission.getLatestResult();
 
-        /*
-         * We only want to be able to cancel a result if it is not of the AUTOMATIC AssessmentType
-         */
-        if (result != null && result.getAssessmentType() != null && !result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
+        // We only want to be able to cancel a result if it is not of the AUTOMATIC AssessmentType
+        if (result != null && result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC) {
             participation.removeResult(result);
             feedbackRepository.deleteByResult_Id(result.getId());
             resultRepository.deleteById(result.getId());
@@ -309,7 +307,7 @@ public class AssessmentService {
     @Transactional // NOTE: As we use delete methods with underscores, we need a transactional context here!
     public void deleteAssessment(Submission submission, Result result) {
 
-        if (complaintRepository.findByResult_Id(result.getId()).isPresent()) {
+        if (complaintRepository.findByResultId(result.getId()).isPresent()) {
             throw new BadRequestAlertException("Result has a complaint", "result", "hasComplaint");
         }
         submission.getResults().remove(result);

@@ -19,5 +19,15 @@
 module.exports = (on, config) => {
     // `on` is used to hook into various events Cypress emits
     // `config` is the resolved Cypress config
+    on(`task`, {
+        error(message) {
+            console.error('\x1b[31m', 'ERROR: ', message, '\x1b[0m');
+            return null;
+        },
+        warn(message) {
+            console.error('\x1b[33m', 'WARNING: ', message, '\x1b[0m');
+            return null;
+        },
+    });
 };
 /*eslint-enable */

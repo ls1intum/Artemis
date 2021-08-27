@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -205,6 +206,11 @@ public class TextExerciseResource {
         }
         TextExercise textExerciseBeforeUpdate = textExerciseRepository.findByIdElseThrow(textExercise.getId());
 
+        // Forbid changing the course the exercise belongs to.
+        if (!Objects.equals(textExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), textExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+            return conflict("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
+        }
+
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 
@@ -222,8 +228,7 @@ public class TextExerciseResource {
             updatedTextExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
-        // Only notify students about changes if a regular exercise was updated
-        if (notificationText != null && textExercise.isCourseExercise()) {
+        if ((notificationText != null && textExercise.isCourseExercise()) || textExercise.isExamExercise()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
         }
 

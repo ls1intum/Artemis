@@ -509,8 +509,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
                 ModelingSubmission.class);
 
         // set dates to UTC and round to milliseconds for comparison
-        submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.SECONDS).toInstant(), ZoneId.of("UTC")));
+        storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.SECONDS).toInstant(), ZoneId.of("UTC")));
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results", "similarElementCounts");
         assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);

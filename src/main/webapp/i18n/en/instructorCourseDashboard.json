@@ -26,6 +26,7 @@
             "discussion": "Discussion",
             "tutorLeaderboard": {
                 "courseTitle": "Tutor Course Leaderboard",
+                "examTitle": "Tutor Exam Leaderboard",
                 "id": "ID",
                 "name": "Name",
                 "numberOfAssessments": "Assessments",

@@ -49,6 +49,7 @@ import { ArtemisCourseParticipantScoresModule } from 'app/course/course-particip
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { CourseManagementStatisticsComponent } from 'app/course/manage/course-management-statistics.component';
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
+import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
 
 @NgModule({
@@ -98,6 +99,7 @@ import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-
         CourseUpdateComponent,
         CourseExerciseCardComponent,
         CourseManagementExercisesComponent,
+        OrionCourseManagementExercisesComponent,
         CourseManagementStatisticsComponent,
         CourseGroupComponent,
         CourseManagementCardComponent,
