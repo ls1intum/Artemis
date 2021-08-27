@@ -69,7 +69,7 @@ public class PostResource {
      *
      * @param courseId          id of the course the post belongs to
      * @param postId            id of the post change the displayPriority for
-     * @param displayPriority   post with new enum value for displayPriority, i.e. either PINNED, ARCHIVED, NONE
+     * @param displayPriority   new enum value for displayPriority, i.e. either PINNED, ARCHIVED, NONE
      * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
      * or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
