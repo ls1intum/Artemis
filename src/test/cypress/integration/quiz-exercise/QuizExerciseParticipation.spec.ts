@@ -49,8 +49,8 @@ describe('Quiz Exercise Management', () => {
         courseManagementRequest.deleteCourse(course.id);
     });
 
-    describe('Cannot access unreleased exercise', () => {
-        beforeEach('Create unreleased exercise', () => {
+    describe('Quiz exercise participation', () => {
+        beforeEach('Create quiz exercise', () => {
             courseManagementRequest.createQuizExercise(quizExerciseName, dayjs(), { course }).then((quizResponse) => {
                 quizExercise = quizResponse?.body;
             });
