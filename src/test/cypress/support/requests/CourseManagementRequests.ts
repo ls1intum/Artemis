@@ -213,14 +213,14 @@ export class CourseManagementRequests {
     setQuizVisible(quizExercise: any) {
         return cy.request({
             url: '/api/quiz-exercises/' + quizExercise.id + '/set-visible',
-            method: PUT
+            method: PUT,
         });
     }
 
     startQuizNow(quizExercise: any) {
         return cy.request({
             url: '/api/quiz-exercises/' + quizExercise.id + '/start-now',
-            method: PUT
+            method: PUT,
         });
     }
 

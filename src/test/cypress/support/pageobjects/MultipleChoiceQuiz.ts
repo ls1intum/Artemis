@@ -1,11 +1,12 @@
 export class MultipleChoiceQuiz {
-
     getQuizBody() {
         return cy.get('.mc-question');
     }
 
     tickAnswerOption(optionNumber: number) {
-        this.getQuizBody().get('#answer-option-' + optionNumber + ' > .selection > .ng-fa-icon > .svg-inline--fa').click();
+        this.getQuizBody()
+            .get('#answer-option-' + optionNumber + ' > .selection > .ng-fa-icon > .svg-inline--fa')
+            .click();
     }
 
     submit() {
