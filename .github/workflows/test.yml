@@ -42,19 +42,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
+    - uses: actions/checkout@v2
     - name: Setup Java
-      uses: actions/setup-java@v2.2.0
+      uses: actions/setup-java@v2.3.0
       with:
         distribution: 'zulu'
         java-version: '${{ env.java }}'
-    - uses: actions/checkout@v2
-    - name: Cache Gradle dependencies
-      uses: actions/cache@v2
-      with:
-        path: ~/.gradle/caches
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
+        cache: 'gradle'
     - name: Java Tests
       run: ./gradlew --console=plain executeTests jacocoTestReport -x yarn -x webpack jacocoTestCoverageVerification
     - name: "Codacy: Report coverage"
@@ -75,19 +69,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+    - uses: actions/checkout@v2
     - name: Setup Java
-      uses: actions/setup-java@v2.2.0
+      uses: actions/setup-java@v2.3.0
       with:
         distribution: 'zulu'
         java-version: '${{ env.java }}'
-    - uses: actions/checkout@v2
-    - name: Cache Gradle dependencies
-      uses: actions/cache@v2
-      with:
-        path: ~/.gradle/caches
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
+        cache: 'gradle'
     - name: Java Code Style
       run: ./gradlew spotlessCheck
     - name: Java Documentation
@@ -98,18 +86,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+        - uses: actions/checkout@v2
         - name: Setup Node.js
           uses: actions/setup-node@v2.4.0
           with:
               node-version: '${{ env.node }}'
-        - uses: actions/checkout@v2
-        - name: Cache node modules
-          uses: actions/cache@v2
-          with:
-              path: node_modules
-              key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
-              restore-keys: |
-                  ${{ runner.os }}-node_modules-
+              cache: 'yarn'
         - name: Install Dependencies
           run: yarn install
         - name: Fast TypeScript Test without Typechecking
@@ -132,18 +114,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
+        - uses: actions/checkout@v2
         - name: Setup Node.js
           uses: actions/setup-node@v2.4.0
           with:
               node-version: '${{ env.node }}'
-        - uses: actions/checkout@v2
-        - name: Cache node modules
-          uses: actions/cache@v2
-          with:
-              path: node_modules
-              key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
-              restore-keys: |
-                  ${{ runner.os }}-node_modules-
+              cache: 'yarn'
         - name: Install Dependencies
           run: yarn install
         - name: TypeScript Test With Typechecking
@@ -160,18 +136,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+    - uses: actions/checkout@v2
     - name: Setup Node.js
       uses: actions/setup-node@v2.4.0
       with:
         node-version: '${{ env.node }}'
-    - uses: actions/checkout@v2
-    - name: Cache node modules
-      uses: actions/cache@v2
-      with:
-        path: node_modules
-        key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-node_modules-
+        cache: 'yarn'
     - name: Install Dependencies
       run: yarn install
     - name: TypeScript Formatting
