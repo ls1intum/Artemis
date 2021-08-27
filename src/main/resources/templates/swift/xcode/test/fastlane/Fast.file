@@ -2,10 +2,10 @@ default_platform(:ios)
 
 desc "Build only"
 lane :build do
-    # Build the Xpense application without tests
-    xcodebuild(workspace: "XpenseTest.xcworkspace",
+    # Build the ${packageName} application without tests
+    xcodebuild(workspace: "${packageName}Test.xcworkspace",
                derived_data_path: "DerivedData",
-               scheme: "Xpense",
+               scheme: "${packageName}",
                configuration: "Debug",
                clean: true,
                build: true,
@@ -20,27 +20,27 @@ end
 desc "Run All Tests"
 lane :test do
     # Run UI and Unit Tests
-    run_tests(workspace: "XpenseTest.xcworkspace",
+    run_tests(workspace: "${packageName}Test.xcworkspace",
       		  derived_data_path: "DerivedData",
       		  clean: true,
-       		  scheme: "Xpense")
+       		  scheme: "${packageName}")
 end
 
     
 desc "Run Unit Tests only"
 lane :unittest do
     # Run Unit Tests
-    run_tests(workspace: "XpenseTest.xcworkspace",
+    run_tests(workspace: "${packageName}Test.xcworkspace",
       		  derived_data_path: "DerivedData",
       		  clean: true,
-       		  scheme: "XpenseTest")
+       		  scheme: "${packageName}Test")
 end
 
 desc "Run UI Tests only"
 lane :uitest do
     # Run UI Tests
-    run_tests(workspace: "XpenseTest.xcworkspace",
+    run_tests(workspace: "${packageName}Test.xcworkspace",
       		  derived_data_path: "DerivedData",
       		  clean: true,
-       		  scheme: "XpenseUITest")
+       		  scheme: "${packageName}UITest")
 end

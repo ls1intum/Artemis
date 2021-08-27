@@ -1,1 +1,1 @@
-app_identifier "de.tum.in.ase.Xpense" # The bundle identifier of your app
+app_identifier "de.tum.in.ase.${packageName}" # The bundle identifier of your app
