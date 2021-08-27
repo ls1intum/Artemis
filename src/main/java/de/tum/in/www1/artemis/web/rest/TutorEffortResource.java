@@ -56,6 +56,7 @@ public class TutorEffortResource {
     @PostMapping(value = "/courses/{courseId}/exercises/{exerciseId}/tutor-effort")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> calculateTutorEfforts(@PathVariable Long courseId, @PathVariable Long exerciseId) {
+        log.debug("tutor-effort with argument[s] course = {}, exercise = {}", courseId, exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userRepository.getUserWithGroupsAndAuthorities();

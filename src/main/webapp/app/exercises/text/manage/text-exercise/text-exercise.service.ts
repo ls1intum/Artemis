@@ -128,6 +128,26 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
             .pipe(map((response: HttpResponse<TextPlagiarismResult>) => response.body!));
     }
 
+    getTutorEfforts(courseId: number, exerciseId: number): Observable<any> {
+        return this.http
+            .get<any>(`api/courses/${courseId}/exercises/${exerciseId}/tutor-effort`, {
+                observe: 'response',
+            })
+            .pipe(map((response: HttpResponse<any>) => response.body!));
+    }
+
+    calculateTutorEfforts(courseId: number, exerciseId: number): Observable<any> {
+        return this.http
+            .post<any>(
+                `api/courses/${courseId}/exercises/${exerciseId}/tutor-effort`,
+                {},
+                {
+                    observe: 'response',
+                },
+            )
+            .pipe(map((response: HttpResponse<any>) => response.body!));
+    }
+
     /**
      * Re-evaluates and updates an existing text exercise.
      *
