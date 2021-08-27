@@ -305,7 +305,7 @@ describe('Metis Service', () => {
         // first is the pinned post, second the post with highest voteEmoji count, third is newest post that is not pinned and has no votes,
         // fourth is the archived post (even if it has votes or is new)
         const sortedPosts: Post[] = [post1, post3, post2, post4];
-        expect(MetisService.sortPosts([post1, post3, post2, post4])).to.be.deep.equal(sortedPosts);
+        expect(metisService.sortPosts([post1, post3, post2, post4])).to.be.deep.equal(sortedPosts);
     });
 
     it('should determine that metis user is at least tutor in course', () => {

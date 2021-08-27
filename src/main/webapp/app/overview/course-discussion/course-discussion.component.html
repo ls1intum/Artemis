@@ -1,1 +1,52 @@
-<jhi-discussion-list *ngIf="course" [course]="course!" [pageType]="pageType"> </jhi-discussion-list>
+<div class="row p-3 justify-content-center" *ngIf="course">
+    <div class="row col-8">
+        <form [formGroup]="formGroup">
+            <div class="row">
+                <!-- Context Filter -->
+                <div class="col-auto p-0 filter-sort-prefix">
+                    <span> Show posts in: </span>
+                </div>
+                <div class="col-auto p-0">
+                    <select formControlName="context" class="form-select" [compareWith]="compareContextFilterOptionFn" (change)="onSelect($event)" name="context">
+                        <option [ngValue]="{ course: course }">{{ course.title }}</option>
+                        <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
+                            <option *ngFor="let context of eCourseContext | keyvalue" [ngValue]="{ courseWideContext: context.value }">
+                                {{ context.value }}
+                            </option>
+                        </optgroup>
+                        <optgroup *ngIf="exercises !== undefined && exercises!.length > 0" [label]="'artemisApp.metis.post.exercises' | artemisTranslate">
+                            <option *ngFor="let exercise of exercises" [ngValue]="{ exercise: exercise }">
+                                {{ exercise.title }}
+                            </option>
+                        </optgroup>
+                        <optgroup *ngIf="lectures !== undefined && lectures!.length > 0" [label]="'artemisApp.metis.post.lectures' | artemisTranslate">
+                            <option *ngFor="let lecture of lectures" [ngValue]="{ lecture: lecture }">
+                                {{ lecture.title }}
+                            </option>
+                        </optgroup>
+                    </select>
+                </div>
+                <!-- Sort Dropdown -->
+                <div class="col-auto p-0 filter-sort-prefix">
+                    <span> Sort by </span>
+                </div>
+                <div class="col-auto p-0">
+                    <select formControlName="sortBy" class="form-select" [compareWith]="comparePostSortByOptionFn" (change)="onSelect($event)" name="sortBy">
+                        <option *ngFor="let sortByOption of eSortBy | keyvalue" [ngValue]="{ sortBy: sortByOption.value }">
+                            {{ sortByOption.value }}
+                        </option>
+                    </select>
+                </div>
+                <div class="col-auto p-0">
+                    <select formControlName="sortDirection" class="form-select" [compareWith]="compareSortDirectionOptionFn" (change)="onSelect($event)" name="sortDirection">
+                        <option *ngFor="let sortDirectionOption of eSortDirection | keyvalue" [ngValue]="{ sortDirection: sortDirectionOption.value }">
+                            {{ sortDirectionOption.value }}
+                        </option>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="bold-line row col-8 mb-3 mt-1"></div>
+    <jhi-discussion-list class="row col-8" [course]="course!"></jhi-discussion-list>
+</div>

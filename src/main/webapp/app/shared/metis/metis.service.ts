@@ -11,7 +11,7 @@ import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
-import { PageType, PostFilter, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
+import { PageType, PostFilter, PostSortCriterion, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 
 @Injectable()
 export class MetisService {
@@ -43,14 +43,14 @@ export class MetisService {
     }
 
     /**
-     * sorts posts by two criteria
+     * sorts posts by several criteria for discussion section on lecture or exercise pages
      * 1. criterion: displayPriority is PINNED -> pinned posts come first
      * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
      * 3. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
      * 4. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      * @return Post[] sorted array of posts
      */
-    static sortPosts(posts: Post[]): Post[] {
+    sortPostsForSection(posts: Post[]): Post[] {
         return posts.sort(function (postA, postB) {
             const postAVoteEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
             const postBVoteEmojiCount = postB.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
@@ -80,6 +80,58 @@ export class MetisService {
             }
             return 0;
         });
+    }
+
+    /**
+     * sorts posts by several criteria for course discussion overview
+     * @return Post[] sorted array of posts
+     */
+    sortPostsForOverview(posts: Post[]): Post[] {
+        return posts.sort((postA, postB) => {
+            if (this.currentPostFilter?.sortBy === PostSortCriterion.VOTES) {
+                const postAVoteEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
+                const postBVoteEmojiCount = postB.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
+                if (postAVoteEmojiCount > postBVoteEmojiCount) {
+                    return this.currentPostFilter?.sortDirection === SortDirection.DESC ? -1 : 1;
+                }
+                if (postAVoteEmojiCount < postBVoteEmojiCount) {
+                    return this.currentPostFilter?.sortDirection === SortDirection.DESC ? 1 : -1;
+                }
+            }
+
+            if (this.currentPostFilter?.sortBy === PostSortCriterion.ANSWER_COUNT) {
+                const postAAnswerCount = postA.answers?.length ?? 0;
+                const postBAnswerCount = postB.answers?.length ?? 0;
+                if (postAAnswerCount > postBAnswerCount) {
+                    return this.currentPostFilter?.sortDirection === SortDirection.DESC ? -1 : 1;
+                }
+                if (postAAnswerCount < postBAnswerCount) {
+                    return this.currentPostFilter?.sortDirection === SortDirection.DESC ? 1 : -1;
+                }
+            }
+
+            if (this.currentPostFilter?.sortBy === PostSortCriterion.CREATION_DATE) {
+                const postACreationDate = Number(postA.creationDate);
+                const postBCreationDate = Number(postB.creationDate);
+                if (postACreationDate > postBCreationDate) {
+                    return this.currentPostFilter?.sortDirection === SortDirection.DESC ? -1 : 1;
+                }
+                if (postACreationDate < postBCreationDate) {
+                    return this.currentPostFilter?.sortDirection === SortDirection.DESC ? 1 : -1;
+                }
+            }
+            return 0;
+        });
+    }
+
+    sortPosts(posts: Post[]): Post[] {
+        if (this.pageType === PageType.PAGE_SECTION) {
+            return this.sortPostsForSection(posts);
+        } else if (this.pageType === PageType.OVERVIEW) {
+            return this.sortPostsForOverview(posts);
+        } else {
+            return posts;
+        }
     }
 
     getPageType(): PageType {
@@ -140,14 +192,14 @@ export class MetisService {
         if (postFilter?.lecture) {
             this.postService
                 .getAllPostsByLectureId(this.courseId, postFilter.lecture.id!)
-                .pipe(map((res: HttpResponse<Post[]>) => MetisService.sortPosts(res.body!)))
+                .pipe(map((res: HttpResponse<Post[]>) => this.sortPosts(res.body!)))
                 .subscribe((posts: Post[]) => {
                     this.posts$.next(posts);
                 });
         } else if (postFilter?.exercise) {
             this.postService
                 .getAllPostsByExerciseId(this.courseId, postFilter.exercise.id!)
-                .pipe(map((res: HttpResponse<Post[]>) => MetisService.sortPosts(res.body!)))
+                .pipe(map((res: HttpResponse<Post[]>) => this.sortPosts(res.body!)))
                 .subscribe((posts: Post[]) => {
                     this.posts$.next(posts);
                 });
@@ -160,7 +212,7 @@ export class MetisService {
                         if (postFilter?.courseWideContext) {
                             posts = posts.filter((post) => post.courseWideContext === postFilter.courseWideContext);
                         }
-                        return MetisService.sortPosts(posts);
+                        return this.sortPosts(posts);
                     }),
                 )
                 .subscribe((posts: Post[]) => {

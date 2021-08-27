@@ -1,7 +1,7 @@
 <div class="card-body pt-2">
     <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post"> </jhi-postings-thread>
     <!-- new post button -->
-    <div class="row mt-2" *ngIf="createdPost">
+    <div class="row mt-2" *ngIf="createdPost && pageType === ePageType.PAGE_SECTION">
         <div class="col-12">
             <button class="btn btn-sm btn-outline-secondary" (click)="createEditModal.open()">
                 <fa-icon [icon]="'plus'"></fa-icon>

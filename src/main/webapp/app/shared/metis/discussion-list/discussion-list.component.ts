@@ -12,15 +12,15 @@ import { PageType } from 'app/shared/metis/metis.util';
 @Component({
     selector: 'jhi-discussion-list',
     templateUrl: './discussion-list.component.html',
-    providers: [MetisService],
 })
 export class DiscussionListComponent implements OnInit, OnChanges, OnDestroy {
     @Input() exercise?: Exercise;
     @Input() lecture?: Lecture;
-    @Input() pageType: PageType;
     @Input() course: Course;
     posts: Post[];
     createdPost: Post;
+    pageType: PageType;
+    ePageType = PageType;
 
     private postsSubscription: Subscription;
 
@@ -34,14 +34,17 @@ export class DiscussionListComponent implements OnInit, OnChanges, OnDestroy {
      * on initialization: resets course and posts
      */
     ngOnInit(): void {
-        this.resetInputRelatedAttributes();
+        this.metisService.getPostsForFilter({ exercise: this.exercise, lecture: this.lecture });
+        this.pageType = this.metisService.getPageType();
+        this.createdPost = this.createEmptyPost();
     }
 
     /**
      * on changes: resets course and posts
      */
     ngOnChanges(): void {
-        this.resetInputRelatedAttributes();
+        this.metisService.getPostsForFilter({ exercise: this.exercise, lecture: this.lecture });
+        this.createdPost = this.createEmptyPost();
     }
 
     /**
@@ -61,7 +64,6 @@ export class DiscussionListComponent implements OnInit, OnChanges, OnDestroy {
                 id: this.lecture!.id,
             };
         }
-        post.course = this.course;
         return post;
     }
 
@@ -82,16 +84,5 @@ export class DiscussionListComponent implements OnInit, OnChanges, OnDestroy {
 
     ngOnDestroy(): void {
         this.postsSubscription?.unsubscribe();
-    }
-
-    /**
-     * @private sets all attributes on metis service based on this component's input and creates an empty default post.
-     * Triggers method on metis service to fetch (an push back via subscription) exercise or lecture posts respectively.
-     */
-    private resetInputRelatedAttributes(): void {
-        this.metisService.setCourse(this.course);
-        this.metisService.setPageType(this.pageType);
-        this.metisService.getPostsForFilter({ exercise: this.exercise, lecture: this.lecture });
-        this.createdPost = this.createEmptyPost();
     }
 }

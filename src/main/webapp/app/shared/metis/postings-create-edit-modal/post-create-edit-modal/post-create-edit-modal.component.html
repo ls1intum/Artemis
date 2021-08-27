@@ -6,7 +6,7 @@
         </div>
         <div class="modal-body">
             <div *ngIf="pageType === ePageType.OVERVIEW || isAtLeastTutorInCourse" class="position-relative mb-3">
-                <label class="mb-1" jhiTranslate="artemisApp.metis.post.context">Topic</label>
+                <label class="mb-1" jhiTranslate="artemisApp.metis.post.context"></label>
                 <jhi-help-icon placement="top auto" text="artemisApp.metis.post.contextTooltip"></jhi-help-icon>
                 <select formControlName="context" class="form-select" [compareWith]="compareContextSelectorOptionFn" name="context">
                     <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">

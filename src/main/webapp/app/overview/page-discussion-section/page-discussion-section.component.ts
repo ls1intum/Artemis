@@ -7,11 +7,13 @@ import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
     selector: 'jhi-page-discussion-section',
     templateUrl: './page-discussion-section.component.html',
     styleUrls: ['./page-discussion-section.scss'],
+    providers: [MetisService],
 })
 export class PageDiscussionSectionComponent implements AfterViewInit, OnDestroy {
     @Input() exercise?: Exercise;
@@ -22,11 +24,19 @@ export class PageDiscussionSectionComponent implements AfterViewInit, OnDestroy 
 
     private paramSubscription: Subscription;
 
-    constructor(private activatedRoute: ActivatedRoute, private courseCalculationService: CourseScoreCalculationService) {
+    constructor(private metisService: MetisService, private activatedRoute: ActivatedRoute, private courseCalculationService: CourseScoreCalculationService) {
         this.paramSubscription = this.activatedRoute.params.subscribe((params) => {
             const courseId = parseInt(params['courseId'], 10);
             this.course = this.courseCalculationService.getCourse(courseId);
+            if (this.course) {
+                this.initMetisService();
+            }
         });
+    }
+
+    private initMetisService(): void {
+        this.metisService.setCourse(this.course!);
+        this.metisService.setPageType(this.pageType);
     }
 
     ngOnDestroy(): void {

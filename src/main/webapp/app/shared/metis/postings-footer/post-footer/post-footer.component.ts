@@ -29,19 +29,7 @@ export class PostFooterComponent extends PostingsFooterDirective<Post> implement
      */
     ngOnInit(): void {
         this.updateTags();
-        if (this.pageType === PageType.OVERVIEW) {
-            if (this.posting.exercise) {
-                this.associatedContextName = this.posting.exercise.title;
-                this.contextNavigationComponents = ['courses', this.courseId, 'exercises', this.posting.exercise.id!];
-            }
-            if (this.posting.lecture) {
-                this.associatedContextName = this.posting.lecture.title;
-                this.contextNavigationComponents = ['courses', this.courseId, 'lectures', this.posting.lecture.id!];
-            }
-            if (this.posting.courseWideContext) {
-                this.associatedContextName = this.posting.courseWideContext;
-            }
-        }
+        this.updateContextName();
     }
 
     /**
@@ -49,6 +37,7 @@ export class PostFooterComponent extends PostingsFooterDirective<Post> implement
      */
     ngOnChanges(): void {
         this.updateTags();
+        this.updateContextName();
     }
 
     navigateToContext(event: any) {
@@ -63,6 +52,22 @@ export class PostFooterComponent extends PostingsFooterDirective<Post> implement
             this.tags = this.posting.tags;
         } else {
             this.tags = [];
+        }
+    }
+
+    private updateContextName(): void {
+        if (this.pageType === PageType.OVERVIEW) {
+            if (this.posting.exercise) {
+                this.associatedContextName = this.posting.exercise.title;
+                this.contextNavigationComponents = ['courses', this.courseId, 'exercises', this.posting.exercise.id!];
+            }
+            if (this.posting.lecture) {
+                this.associatedContextName = this.posting.lecture.title;
+                this.contextNavigationComponents = ['courses', this.courseId, 'lectures', this.posting.lecture.id!];
+            }
+            if (this.posting.courseWideContext) {
+                this.associatedContextName = this.posting.courseWideContext;
+            }
         }
     }
 }

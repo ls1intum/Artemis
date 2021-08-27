@@ -150,7 +150,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         }
     }
 
-    private resetCurrentContextSelectorOption() {
+    private resetCurrentContextSelectorOption(): void {
         this.currentContextSelectorOption = {
             lecture: this.posting.lecture,
             exercise: this.posting.exercise,
