@@ -2,7 +2,7 @@
     <div class="col-auto p-0" *ngFor="let reactionCount of reactionCountMap | keyvalue">
         <button class="reaction-button clickable" [class.reaction-button--reacted]="reactionCount.value.hasReacted" (click)="updateReaction(reactionCount.key)">
             <ngx-emoji class="emoji" [emoji]="reactionCount.key" [size]="16"></ngx-emoji>
-            <span class="emoji-count">{{ reactionCount.value.count }}</span>
+            <span class="emoji-count" [class.reaction-count--reacted]="reactionCount.value.hasReacted">{{ reactionCount.value.count }}</span>
         </button>
     </div>
     <div class="col-auto px-0">
@@ -18,6 +18,7 @@
     </div>
     <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="trigger" [cdkConnectedOverlayOpen]="showReactionSelector">
         <emoji-mart
+            [emojisToShowFilter]="emojisToShowFilter"
             (emojiSelect)="selectReaction($event)"
             [categoriesIcons]="categoriesIcons"
             [emojiSize]="20"

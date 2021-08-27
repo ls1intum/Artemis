@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Post } from 'app/entities/metis/post.model';
+import { DisplayPriority, Post } from 'app/entities/metis/post.model';
 import { PostingsService } from 'app/shared/metis/postings.service';
 
 type EntityResponseType = HttpResponse<Post>;
@@ -44,6 +44,19 @@ export class PostService extends PostingsService<Post> {
     update(courseId: number, post: Post): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(post);
         return this.http.put<Post>(`${this.resourceUrl}${courseId}/posts`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+    }
+
+    /**
+     * updates the display priority of a post
+     * @param {number} courseId
+     * @param {number} postId
+     * @param {DisplayPriority} displayPriority
+     * @return {Observable<EntityResponseType>}
+     */
+    updatePostDisplayPriority(courseId: number, postId: number, displayPriority: DisplayPriority): Observable<EntityResponseType> {
+        return this.http
+            .put(`${this.resourceUrl}${courseId}/posts/${postId}/display-priority`, {}, { params: { displayPriority }, observe: 'response' })
+            .pipe(map(this.convertDateFromServer));
     }
 
     /**
