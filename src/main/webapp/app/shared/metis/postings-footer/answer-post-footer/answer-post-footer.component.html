@@ -1,0 +1,17 @@
+<ng-template #notApproved>
+    <div *ngIf="isAtLeastTutorInCourse" class="row ms-0 not-approved-badge badge">
+        <fa-icon class="col-auto m-0 p-0" [icon]="'check'"></fa-icon>
+        <span class="col-auto p-0">{{ 'artemisApp.metis.approveAnswer' | artemisTranslate }}</span>
+    </div>
+</ng-template>
+<div class="my-1 me-0 row justify-content-between align-items-center">
+    <div id="toggleElement" class="col-auto" [ngClass]="isAtLeastTutorInCourse ? 'clickable' : ''" (click)="toggleApprove()">
+        <div *ngIf="posting.tutorApproved; else notApproved" class="row ms-0 approved-badge text-white badge">
+            <fa-icon class="col-auto m-0 p-0" [icon]="'check-double'"></fa-icon>
+            <span class="col-auto p-0">{{ 'artemisApp.metis.approvedAnswer' | artemisTranslate }}</span>
+        </div>
+    </div>
+    <div class="col-auto ps-4 pe-0">
+        <jhi-answer-post-reactions-bar [posting]="posting"></jhi-answer-post-reactions-bar>
+    </div>
+</div>

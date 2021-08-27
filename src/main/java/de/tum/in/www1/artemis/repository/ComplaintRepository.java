@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Complaint entity.
@@ -23,7 +24,11 @@ import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
 @Repository
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
-    Optional<Complaint> findByResult_Id(Long resultId);
+    Optional<Complaint> findByResultId(Long resultId);
+
+    default Complaint findByResultIdElseThrow(Long resultId) {
+        return findById(resultId).orElseThrow(() -> new EntityNotFoundException("Complaint by ResultId", resultId));
+    }
 
     @Query("SELECT c FROM Complaint c LEFT JOIN FETCH c.result r LEFT JOIN FETCH r.assessor WHERE c.id = :#{#complaintId}")
     Optional<Complaint> findByIdWithEagerAssessor(@Param("complaintId") Long complaintId);
@@ -243,6 +248,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                     c.complaintType = 'COMPLAINT'
                 and e.course.id = :courseId
                 and r.completionDate IS NOT NULL
+                and r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByCourseId(@Param("courseId") long courseId);
@@ -267,6 +273,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                     c.complaintType = 'COMPLAINT'
                 and e.id = :#{#exerciseId}
                 and r.completionDate IS NOT NULL
+                and r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByExerciseId(@Param("exerciseId") long exerciseId);
@@ -291,6 +298,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                     c.complaintType = 'COMPLAINT'
                 and eg.exam.id = :#{#examId}
                 and r.completionDate IS NOT NULL
+                and r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByExamId(@Param("examId") long examId);

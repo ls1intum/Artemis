@@ -1,13 +1,23 @@
 <div class="notification-popup-container">
     <div *ngFor="let notification of notifications; let i = index" (click)="removeNotification(i); navigateToTarget(notification)">
         <div class="icon-container d-flex flex-column justify-content-center p-4">
-            <fa-icon [icon]="'check-double'"></fa-icon>
+            <div *ngIf="notification.title === LiveExamExerciseUpdateNotificationTitleHtmlConst; else displayQuizIcon">
+                <fa-icon [icon]="'exclamation-triangle'"></fa-icon>
+            </div>
+            <ng-template #displayQuizIcon>
+                <fa-icon [icon]="'check-double'"></fa-icon>
+            </ng-template>
         </div>
         <div class="pe-4 py-3">
             <button class="m-0 px-1 py-0" (click)="removeNotification(i)">
                 <fa-icon [icon]="'times'"></fa-icon>
             </button>
-            <h5 class="pe-4">{{ notification.title }}</h5>
+            <div *ngIf="notification.title === LiveExamExerciseUpdateNotificationTitleHtmlConst; else displayNormalNotificationTitle">
+                <h5 class="pe-4">{{ 'artemisApp.notification.liveExamExerciseUpdateNotification' | artemisTranslate }}</h5>
+            </div>
+            <ng-template #displayNormalNotificationTitle>
+                <h5 class="pe-4">{{ notification.title }}</h5>
+            </ng-template>
             {{ notification.text }}
         </div>
     </div>

@@ -1,6 +1,5 @@
 import * as $ from 'jquery';
 import { AfterViewInit, Component, ContentChild, ElementRef, ViewEncapsulation, EventEmitter, Output, Input } from '@angular/core';
-
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ResizeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
@@ -20,6 +19,10 @@ export class CodeEditorGridComponent implements AfterViewInit {
     isTutorAssessment = false;
     @Output()
     onResize = new EventEmitter<ResizeType>();
+
+    fileBrowserIsCollapsed = false;
+    rightPanelIsCollapsed = false;
+    buildOutputIsCollapsed = false;
 
     interactResizableMain: Interactable;
     resizableMinHeightMain = 480;
@@ -175,6 +178,22 @@ export class CodeEditorGridComponent implements AfterViewInit {
         } else {
             card.addClass(collapsed);
             interactResizable.resizable({ enabled: false });
+        }
+
+        // used to disable draggable icons
+        switch (interactResizable.target) {
+            case '.resizable-instructions': {
+                this.rightPanelIsCollapsed = !this.rightPanelIsCollapsed;
+                break;
+            }
+            case '.resizable-filebrowser': {
+                this.fileBrowserIsCollapsed = !this.fileBrowserIsCollapsed;
+                break;
+            }
+            case '.resizable-buildoutput': {
+                this.buildOutputIsCollapsed = !this.buildOutputIsCollapsed;
+                break;
+            }
         }
     }
 }

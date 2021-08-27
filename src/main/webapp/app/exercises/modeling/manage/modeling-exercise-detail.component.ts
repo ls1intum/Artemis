@@ -12,6 +12,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import * as moment from 'moment';
+import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 
 @Component({
@@ -27,11 +28,14 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     gradingInstructions: SafeHtml;
     sampleSolution: SafeHtml;
     sampleSolutionUML: UMLModel;
+    numberOfClusters: number;
 
     readonly ExerciseType = ExerciseType;
     readonly moment = moment;
     doughnutStats: ExerciseManagementStatisticsDto;
     isExamExercise: boolean;
+
+    isAdmin = false;
 
     constructor(
         private eventManager: JhiEventManager,
@@ -40,9 +44,11 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         private artemisMarkdown: ArtemisMarkdownService,
         private jhiAlertService: JhiAlertService,
         private statisticsService: StatisticsService,
+        private accountService: AccountService,
     ) {}
 
     ngOnInit() {
+        this.isAdmin = this.accountService.isAdmin();
         this.subscription = this.route.params.subscribe((params) => {
             this.load(params['exerciseId']);
         });
@@ -64,6 +70,9 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         this.statisticsService.getExerciseStatistics(id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
         });
+        if (this.isAdmin) {
+            this.countModelClusters(id);
+        }
     }
 
     downloadAsPDf() {
@@ -84,7 +93,9 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     registerChangeInModelingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', () => this.load(this.modelingExercise.id!));
+        this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', () => {
+            this.load(this.modelingExercise.id!);
+        });
     }
 
     buildModelClusters() {
@@ -108,6 +119,19 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
                 },
                 () => {
                     this.jhiAlertService.error('artemisApp.modelingExercise.deleteClusters.error');
+                },
+            );
+        }
+    }
+
+    countModelClusters(exerciseId: number) {
+        if (exerciseId) {
+            this.modelingExerciseService.getNumberOfClusters(exerciseId).subscribe(
+                (res) => {
+                    this.numberOfClusters = res?.body || 0;
+                },
+                () => {
+                    this.jhiAlertService.error('artemisApp.modelingExercise.checkClusters.error');
                 },
             );
         }

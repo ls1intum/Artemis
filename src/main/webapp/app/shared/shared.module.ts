@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { SlideToggleComponent } from 'app/exercises/shared/slide-toggle/slide-toggle.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -31,6 +30,7 @@ import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exe
 import { DoughnutChartComponent } from 'app/exercises/shared/statistics/doughnut-chart.component';
 import { RouterModule } from '@angular/router';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
 
 @NgModule({
@@ -40,13 +40,13 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
         CircularProgressBarComponent,
         ArtemisDurationFromSecondsPipe,
         HasAnyAuthorityDirective,
+        ExtensionPointDirective,
         SecuredImageComponent,
         DeleteDialogComponent,
         AdditionalFeedbackComponent,
         DeleteButtonDirective,
         ResizeableContainerComponent,
         SecureLinkDirective,
-        SlideToggleComponent,
         JhiConnectionStatusComponent,
         ChartComponent,
         OrganizationSelectorComponent,
@@ -73,6 +73,7 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
         AlertErrorComponent,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
+        ExtensionPointDirective,
         ArtemisSharedCommonModule,
         ArtemisSharedPipesModule,
         SecuredImageComponent,
@@ -80,7 +81,6 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
         DeleteDialogComponent,
         ResizeableContainerComponent,
         SecureLinkDirective,
-        SlideToggleComponent,
         JhiConnectionStatusComponent,
         ChartComponent,
         CustomMinDirective,

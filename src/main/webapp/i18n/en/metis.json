@@ -1,43 +1,46 @@
 {
     "artemisApp": {
         "metis": {
-            "sidebar": {
+            "noPosts": "There are no posts yet.",
+            "addNewPost": "New post",
+            "answerNow": "Reply now",
+            "startDiscussion": "Start discussion",
+            "cancel": "Cancel",
+            "savePosting": "Save",
+            "toggleThread": "Click to toggle the thread",
+            "deletePost": "Do you want to delete your post?",
+            "confirmDeletePost": "Please confirm that you want to delete your post!",
+            "deleteAnswer": "Do you want to delete your reply?",
+            "confirmDeleteAnswer": "Please confirm that you want to delete your reply!",
+            "createModalTitlePost": "Create post",
+            "createModalTitleAnswer": "Create reply",
+            "editPosting": "Edit content",
+            "approveAnswer": "Approve",
+            "approvedAnswer": "Approved",
+            "today": "Today",
+            "chooseReaction": "Choose a reaction...",
+            "searchEmoji": "Search emoji",
+            "courseEmojiSelectionCategory": "Selected emojis for this course",
+            "discussion": {
                 "header": "Discussion",
                 "show": "Show discussion",
-                "hide": "Hide discussion",
-                "noPosts": "There are no discussions",
-                "addNewPost": "Add a new post",
-                "newPostLabel": "New post",
-                "newAnswerLabel": "New reply",
-                "answerLabel": "Reply",
-                "postLabel": "Post",
-                "approvedLabel": "Approved by a tutor",
-                "answerNow": "Reply now",
-                "answerCount": "Show replies ({{count}})",
-                "yourPost": "Your Question",
-                "cancel": "Cancel",
-                "addPost": "Add post",
-                "savePost": "Save post",
-                "addAnswer": "Add reply",
-                "saveAnswer": "Save reply",
-                "deletePost": "Do you want to delete your post?",
-                "confirmDeletePost": "Please confirm that you want to delete your post!",
-                "editPost": "Edit post",
-                "deleteAnswer": "Do you want to delete your reply?",
-                "confirmDeleteAnswer": "Please confirm that you want to delete your reply!",
-                "editAnswer": "Edit reply",
-                "approveAnswer": "Approve reply",
-                "unapproveAnswer": "Unapprove reply",
-                "hideAnswers": "Show fewer replies",
-                "showAnswers": "Show more replies ({{count}})"
+                "hide": "Hide discussion"
             },
             "overview": {
                 "title": "Posts",
-                "noPosts": "There are no posts for this course",
+                "noPosts": "There are no posts for this course yet.",
                 "showApproved": "Show posts with approved replies",
                 "hideApproved": "Hide posts with approved replies"
             },
             "post": {
+                "title": "Title",
+                "titleTooltip": "Add a precise and summarizing title to your post",
+                "tags": "Tags",
+                "tagPlaceholder": "+ Tag",
+                "tagSecondaryPlaceholder": "Add tag(s)",
+                "tagsTooltip": "Add up to three descriptive and reusable tags to your post",
+                "content": "Content",
+                "contentTooltip": "Describe your issue or request as precise as possible. Use markdown formatting where it improves readability.",
                 "created": "New post successfully created",
                 "updated": "Post successfully updated",
                 "deleted": "Post successfully deleted",
@@ -50,7 +53,6 @@
             },
             "answerPost": {
                 "created": "New reply successfully created",
-                "updated": "Reply successfully updated",
                 "deleted": "Reply successfully deleted"
             }
         }

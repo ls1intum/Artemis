@@ -11,11 +11,8 @@
     <jhi-alert-error></jhi-alert-error>
     <!-- EXERCISE ACTIONS START -->
     <div class="tab-bar tab-bar-exercise-details ps-2 pe-2 mb-2 justify-content-between">
-        <jhi-programming-exercise-student-ide-actions jhiOrionFilter [showInOrionWindow]="true" [courseId]="courseId" [exercise]="exercise">
-        </jhi-programming-exercise-student-ide-actions>
         <jhi-exercise-details-student-actions
-            jhiOrionFilter
-            [showInOrionWindow]="false"
+            *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise, showResult: showResults && latestRatedResult != undefined }"
             [courseId]="courseId"
             [exercise]="exercise"
             [showResult]="showResults && latestRatedResult != undefined"
@@ -97,18 +94,16 @@
             <!-- EXERCISE ACTIONS END -->
             <!-- PROBLEM STATEMENT START -->
             <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="mb-4">
-                <button
-                    class="mb-2"
-                    jhi-exercise-action-button
-                    jhiBuildPlanButton
-                    buttonIcon="external-link-alt"
-                    [buttonLabel]="'artemisApp.exerciseActions.goToBuildPlan' | artemisTranslate"
-                    [buttonLoading]="exercise!.loading!"
-                    [hideLabelMobile]="false"
-                    [projectKey]="projectKey()"
-                    [buildPlanId]="buildPlanId(exercise.studentParticipations![0])!"
+                <a
+                    class="btn btn-primary btn-sm me-1"
+                    target="_blank"
+                    rel="noreferrer"
+                    href="{{ buildPlanUrl(exercise.studentParticipations![0]) }}"
                     *ngIf="publishBuildPlanUrl() && buildPlanActive()"
-                ></button>
+                >
+                    <fa-icon class="me-1" [icon]="'external-link-alt'" [fixedWidth]="true"></fa-icon>
+                    {{ 'artemisApp.exerciseActions.goToBuildPlan' | artemisTranslate }}
+                </a>
                 <jhi-programming-exercise-instructions
                     *ngIf="exercise"
                     [exercise]="exercise"
@@ -212,14 +207,16 @@
                 *ngIf="
                     exercise &&
                     exercise.type === PROGRAMMING &&
-                    studentParticipation &&
-                    latestRatedResult &&
-                    (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
+                    !!studentParticipation &&
+                    !!latestRatedResult &&
+                    (latestRatedResult.assessmentType === AssessmentType.MANUAL ||
+                        latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
+                        allowComplaintsForAutomaticAssessments)
                 "
                 class="mb-2 mt-2 ms-3"
                 [exercise]="exercise"
                 [participation]="studentParticipation!"
-                [result]="resultWithComplaint ? resultWithComplaint : latestRatedResult"
+                [result]="resultWithComplaint ? resultWithComplaint! : latestRatedResult!"
             >
             </jhi-complaint-interactions>
             <div

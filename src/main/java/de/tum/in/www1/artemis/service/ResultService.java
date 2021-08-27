@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -11,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -62,17 +60,6 @@ public class ResultService {
         this.submissionRepository = submissionRepository;
         this.complaintRepository = complaintRepository;
         this.ratingRepository = ratingRepository;
-    }
-
-    /**
-     * Sets the assessor field of the given result with the current user and stores these changes to the database. The User object set as assessor gets Groups and Authorities
-     * eagerly loaded.
-     *
-     * @param result Result for which current user is set as an assessor
-     */
-    public void setAssessor(Result result) {
-        User currentUser = userRepository.getUser();
-        result.setAssessor(currentUser);
     }
 
     /**
@@ -134,38 +121,6 @@ public class ResultService {
         complaintRepository.deleteByResult_Id(resultId);
         ratingRepository.deleteByResult_Id(resultId);
         resultRepository.deleteById(resultId);
-    }
-
-    /**
-     * Creates a copy of the given original result with all properties except for the participation and submission and converts it to a JSON string. This method is used for storing
-     * the original result of a submission before updating the result due to a complaint.
-     *
-     * @param originalResult the original result that was complained about
-     * @return the reduced result as a JSON string
-     * @throws JsonProcessingException when the conversion to JSON string fails
-     */
-    public String getOriginalResultAsString(Result originalResult) throws JsonProcessingException {
-        Result resultCopy = new Result();
-        resultCopy.setId(originalResult.getId());
-        resultCopy.setResultString(originalResult.getResultString());
-        resultCopy.setCompletionDate(originalResult.getCompletionDate());
-        resultCopy.setSuccessful(originalResult.isSuccessful());
-        resultCopy.setScore(originalResult.getScore());
-        resultCopy.setRated(originalResult.isRated());
-        resultCopy.hasFeedback(originalResult.getHasFeedback());
-        resultCopy.setFeedbacks(originalResult.getFeedbacks());
-        resultCopy.setAssessor(originalResult.getAssessor());
-        resultCopy.setAssessmentType(originalResult.getAssessmentType());
-
-        Optional<Boolean> hasComplaint = originalResult.getHasComplaint();
-        if (hasComplaint.isPresent()) {
-            resultCopy.setHasComplaint(originalResult.getHasComplaint().get());
-        }
-        else {
-            resultCopy.setHasComplaint(false);
-        }
-
-        return objectMapper.writeValueAsString(resultCopy);
     }
 
     /**

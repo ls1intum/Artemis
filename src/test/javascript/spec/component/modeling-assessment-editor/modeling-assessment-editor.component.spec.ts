@@ -26,7 +26,6 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
-import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import * as chai from 'chai';
@@ -42,6 +41,10 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { MockComponent } from 'ng-mocks';
+import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -58,10 +61,16 @@ describe('ModelingAssessmentEditorComponent', () => {
     let router: any;
     let submissionService: SubmissionService;
 
-    beforeEach(fakeAsync(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisModelingAssessmentEditorModule, RouterTestingModule],
-            declarations: [],
+            imports: [ArtemisTestModule, RouterTestingModule],
+            declarations: [
+                ModelingAssessmentEditorComponent,
+                MockComponent(AssessmentLayoutComponent),
+                MockComponent(ModelingAssessmentComponent),
+                MockComponent(CollapsableAssessmentInstructionsComponent),
+                MockComponent(UnreferencedFeedbackComponent),
+            ],
             providers: [
                 JhiLanguageHelper,
                 mockedActivatedRoute({}, { showBackButton: 'false', submissionId: 'new', exerciseId: 1 }),
@@ -84,7 +93,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 mockAuth.identity();
                 fixture.detectChanges();
             });
-    }));
+    });
 
     afterEach(() => {
         sinon.restore();

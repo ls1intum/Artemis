@@ -113,6 +113,23 @@ public class GroupNotification extends Notification {
     }
 
     /**
+     * Create JSON representation for a GroupNotification for an Exercise in an Exam including the updated Problem Statement.
+     *
+     * @param exercise for which to create the notification.
+     * @return the stringified JSON of the target with the updated problem statement of exercise.
+     */
+    public String getExamExerciseTargetWithExerciseUpdate(Exercise exercise) {
+        JsonObject target = new JsonObject();
+        target.addProperty("problemStatement", exercise.getProblemStatement());
+        target.addProperty("exercise", exercise.getId());
+        target.addProperty("exam", exercise.getExamViaExerciseGroupOrCourseMember().getId());
+        target.addProperty("entity", "exams");
+        target.addProperty("course", exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        target.addProperty("mainPage", "courses");
+        return target.toString();
+    }
+
+    /**
      * Create JSON representation for a GroupNotification for an Exercise.
      *
      * @param exercise for which to create the notification.
