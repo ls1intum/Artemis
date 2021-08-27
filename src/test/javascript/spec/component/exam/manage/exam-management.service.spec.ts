@@ -70,7 +70,7 @@ describe('Exam Management Service Tests', () => {
         service.update(course.id!, mockExam).subscribe((res) => expect(res.body).to.eq(mockExam));
 
         // THEN
-        const req = httpMock.expectOne({ method: 'PUT', url: `${service.resourceUrl}/${course.id!}/exams` });
+        const req = httpMock.expectOne({ method: 'PUT', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}` });
         expect(req.request.body).to.include(mockCopyExam);
 
         // CLEANUP
@@ -192,7 +192,7 @@ describe('Exam Management Service Tests', () => {
         service.findAllCurrentAndUpcomingExams().subscribe((res) => expect(res.body).to.deep.equal([mockExamPopulated]));
 
         // THEN
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/upcoming-exams` });
+        const req = httpMock.expectOne({ method: 'GET', url: `api/exams/upcoming` });
         req.flush(mockExamResponse);
         tick();
     }));
@@ -596,7 +596,7 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'GET',
-            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/lockedSubmissions`,
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/locked-submissions`,
         });
         req.flush(mockResponse);
         tick();
@@ -629,7 +629,7 @@ describe('Exam Management Service Tests', () => {
 
         // THEN
         const req = httpMock.expectOne({
-            method: 'PUT',
+            method: 'POST',
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/archive`,
         });
         req.flush({});

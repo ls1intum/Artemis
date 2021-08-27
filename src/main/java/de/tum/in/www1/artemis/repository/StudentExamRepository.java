@@ -129,6 +129,10 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
+    default StudentExam findByExamIdAndUserIdElseThrow(long examId, long userId) {
+        return findByExamIdAndUserId(examId, userId).orElseThrow(() -> new EntityNotFoundException("No StudentExam foudn to examId " + examId + " and userId " + userId + "!"));
+    }
+
     @Query("""
             SELECT DISTINCT se FROM StudentExam se
             LEFT JOIN FETCH se.exercises e

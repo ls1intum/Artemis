@@ -78,6 +78,23 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
 
     /**
+     * retrieves an exam with exercise groups and student exams
+     * @param examId id of the exam to retrieve
+     * @return exam with exercise groups and student exams
+     * @throws EntityNotFoundException if exam isn't found
+     */
+    @NotNull
+    default Exam findOneWithEagerExercisesGroupsAndStudentExamsElseThrow(Long examId) {
+        Exam exam = findOneWithEagerExercisesGroupsAndStudentExams(examId);
+        if (exam == null) {
+            throw new EntityNotFoundException("Exam", examId);
+        }
+        else {
+            return exam;
+        }
+    }
+
+    /**
      * Checks if the user is registered for the exam.
      *
      * @param examId the id of the exam
@@ -105,6 +122,23 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             WHERE e.id = :examId
             """)
     String getExamTitle(@Param("examId") Long examId);
+
+    /**
+     * retrieves an exam title
+     * @param examId id of the exam title to retrieve
+     * @return title of the exam
+     * @throws EntityNotFoundException if exam isn't found
+     */
+    @NotNull
+    default String getExamTitleByIdElseThrow(Long examId) {
+        String title = getExamTitle(examId);
+        if (title == null) {
+            throw new EntityNotFoundException("No Exam with Id " + examId + "found!");
+        }
+        else {
+            return title;
+        }
+    }
 
     @NotNull
     default Exam findByIdElseThrow(long examId) throws EntityNotFoundException {
