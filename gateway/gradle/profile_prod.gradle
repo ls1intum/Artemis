@@ -1,0 +1,56 @@
+dependencies {
+    testImplementation "com.h2database:h2"
+}
+
+def profiles = "prod"
+if (project.hasProperty("no-liquibase")) {
+    profiles += ",no-liquibase"
+}
+
+if (project.hasProperty("api-docs")) {
+    profiles += ",api-docs"
+}
+
+springBoot {
+    buildInfo()
+}
+
+bootRun {
+    args = []
+}
+
+task webpack_test(type: YarnTask, dependsOn: 'yarn') {
+    args = ["--cwd", "../", "run", "webpack:test"]
+}
+
+task webpack(type: YarnTask, dependsOn: 'yarn') {
+    args = [ "--cwd", "../", "run", "webpack:prod"]
+    environment = [APP_VERSION: project.version]
+}
+
+task copyClientBuildFiles(type: Copy) {
+    from "../build/resources/main/"
+    into "build/resources/main/"
+    exclude "config"
+    fileMode = 0644
+}
+
+processResources {
+    inputs.property('version', version)
+    inputs.property('springProfiles', profiles)
+    filesMatching("**/application.yml") {
+        filter {
+            it.replace("#project.version#", version)
+        }
+    }
+    filesMatching("**/bootstrap.yml") {
+        filter {
+            it.replace("#spring.profiles.active#", profiles)
+        }
+    }
+}
+
+test.dependsOn webpack_test
+tasks.copyClientBuildFiles.dependsOn webpack
+processResources.dependsOn tasks.copyClientBuildFiles
+bootJar.dependsOn processResources
