@@ -39,4 +39,9 @@ public interface FileUploadExerciseRepository extends JpaRepository<FileUploadEx
     default FileUploadExercise findOneByIdElseThrow(Long exerciseId) {
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("File Upload Exercise", exerciseId));
     }
+
+    @NotNull
+    default FileUploadExercise findWithEagerTeamAssignmentConfigAndCategoriesByIdElseThrow(Long exerciseId) {
+        return findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("File Upload Exercise"));
+    }
 }
