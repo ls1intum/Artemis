@@ -75,18 +75,18 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * POST file-upload-exercises : Create a new FileUploadExercise.
+     * POST file-upload-exercises : Create a new File Upload Exercise.
      *
-     * @param fileUploadExercise the fileUploadExercise to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new fileUploadExercise, or with status 400 (Bad Request) if the fileUploadExercise has already an ID
+     * @param fileUploadExercise the File Upload Exercise to create
+     * @return the ResponseEntity with status 201 (Created) and with body the new File Upload Exercise, or with status 400 (Bad Request) if the fileUploadExercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("file-upload-exercises")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<FileUploadExercise> createFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise) throws URISyntaxException {
-        log.debug("REST request to save FileUploadExercise : {}", fileUploadExercise);
+        log.debug("REST request to save File Upload Exercise : {}", fileUploadExercise);
         if (fileUploadExercise.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new fileUploadExercise cannot already have an ID", "idExists")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new File Upload Exercise cannot already have an ID", "idExists")).body(null);
         }
 
         // validates general settings: points, dates
@@ -144,12 +144,12 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * PUT file-upload-exercises : Updates an existing FileUploadExercise.
+     * PUT file-upload-exercises : Updates an existing File Upload Exercise.
      *
-     * @param fileUploadExercise the FileUploadExercise to update
+     * @param fileUploadExercise the File Upload Exercise to update
      * @param notificationText the text shown to students
      * @param exerciseId the id of exercise
-     * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or with status 400 (Bad Request) if the fileUploadExercise is not valid, or
+     * @return the ResponseEntity with status 200 (OK) and with body the updated File Upload Exercise, or with status 400 (Bad Request) if the File Upload Exercise is not valid, or
      *         with status 500 (Internal Server Error) if the fileUploadExercise couldn't be updated
      */
     @PutMapping("file-upload-exercises/{exerciseId}")
@@ -187,10 +187,10 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * GET courses/:courseId/file-upload-exercises : get all the exercises.
+     * GET courses/:courseId/file-upload-exercises : get all File Upload Exercises.
      *
      * @param courseId the id of the course
-     * @return the ResponseEntity with status 200 (OK) and the list of fileUploadExercises in body
+     * @return the ResponseEntity with status 200 (OK) and the list of File Upload Exercises in body
      */
     @GetMapping("courses/{courseId}/file-upload-exercises")
     @PreAuthorize("hasRole('TA')")
@@ -208,10 +208,10 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * GET file-upload-exercises/:exerciseId : get the fileUploadExercise with id exerciseId.
+     * GET file-upload-exercises/:exerciseId : get the File Upload Exercise with id exerciseId.
      *
-     * @param exerciseId the id of the fileUploadExercise to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the fileUploadExercise, or with status 404 (Not Found)
+     * @param exerciseId the id of the File Upload Exercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the File Upload Exercise, or with status 404 (Not Found)
      */
     @GetMapping("file-upload-exercises/{exerciseId}")
     @PreAuthorize("hasRole('TA')")
@@ -264,7 +264,7 @@ public class FileUploadExerciseResource {
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(fileUploadExercise, course, user);
         exerciseService.delete(exerciseId, false, false);
