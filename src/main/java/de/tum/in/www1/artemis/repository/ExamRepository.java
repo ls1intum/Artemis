@@ -77,6 +77,11 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("select distinct exam from Exam exam left join fetch exam.studentExams studentExams left join fetch exam.exerciseGroups exerciseGroups left join fetch exerciseGroups.exercises where (exam.id = :#{#examId})")
     Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
 
+    /**
+     * retrieves an exam with exercise groups and student exams
+     * @param examId id of the exam to retrieve
+     * @throws EntityNotFoundException if exam isn't found
+     */
     @NotNull
     default Exam findOneWithEagerExercisesGroupsAndStudentExamsElseThrow(Long examId) {
         Exam exam = findOneWithEagerExercisesGroupsAndStudentExams(examId);

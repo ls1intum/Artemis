@@ -1631,6 +1631,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor6", roles = "INSTRUCTOR")
     public void testCourseAndExamAccessForInstructors_notInstructorInCourse_forbidden() throws Exception {
         // Instructor6 is not instructor for the course
+        examRepository.save(exam1);
         // Update exam
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), exam1, HttpStatus.FORBIDDEN);
         // Get exam
@@ -2162,10 +2163,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private void testGetExamTitle() throws Exception {
         Course course = database.createCourse();
         Exam exam = ModelFactory.generateExam(course);
-        exam = examRepository.save(exam);
         exam.setTitle("Test Exam");
         course.addExam(exam);
         courseRepo.save(course);
+        examRepository.save(exam);
         final var title = request.get("/api/exams/" + exam.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(exam.getTitle());
     }

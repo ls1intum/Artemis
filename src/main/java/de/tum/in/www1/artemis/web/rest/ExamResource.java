@@ -153,7 +153,7 @@ public class ExamResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Exam> updateExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Exam updatedExam) {
         log.debug("REST request to update an exam : {}", updatedExam);
-        if (updatedExam.getId() != examId) {
+        if (!updatedExam.getId().equals(examId)) {
             return badRequest("examId", "400", "ExamId in path and in Body don't match!");
         }
         if (updatedExam.getCourse() == null || updatedExam.getMaxPoints() <= 0 || !updatedExam.getCourse().getId().equals(courseId) || updatedExam.getVisibleDate() == null
@@ -244,7 +244,7 @@ public class ExamResource {
     public ResponseEntity<String> getExamTitle(@PathVariable Long examId) {
         log.debug("REST request to get exam title: {}", examId);
         Exam exam = examRepository.findByIdElseThrow(examId);
-        examAccessService.checkCourseAndExamAccessForRoleElseThrow(Role.STUDENT, exam.getCourse().getId(), exam.getId());
+        examAccessService.checkCourseAndExamAccessForRoleElseThrow(Role.STUDENT, exam.getCourse().getId(), examId);
         final var title = examRepository.getExamTitleByIdElseThrow(examId);
         return ResponseEntity.ok(title);
     }
