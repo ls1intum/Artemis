@@ -652,7 +652,7 @@ public class AuthorizationCheckService {
         }
     }
 
-    public void isAllowedToAssessExerciseElseThrow(Exercise exercise, User user, Long resultId) {
+    public void checkIsAllowedToAssessExerciseElseThrow(Exercise exercise, User user, Long resultId) {
         if (!isAllowedToAssessExercise(exercise, user, resultId)) {
             throw new AccessForbiddenException("You are not allowed to assess this exercise!");
         }
