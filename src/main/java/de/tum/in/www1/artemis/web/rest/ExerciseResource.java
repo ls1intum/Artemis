@@ -116,7 +116,7 @@ public class ExerciseResource {
         }
         // Normal exercise
         else {
-            authCheckService.isAllowedToSeeExerciseElseThrow(exercise, user);
+            authCheckService.checkIsAllowedToSeeExerciseElseThrow(exercise, user);
             if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                 exercise.filterSensitiveInformation();
             }
@@ -288,7 +288,7 @@ public class ExerciseResource {
         }
 
         // if exercise is not yet released to the students they should not have any access to it
-        authCheckService.isAllowedToSeeExerciseElseThrow(exercise, user);
+        authCheckService.checkIsAllowedToSeeExerciseElseThrow(exercise, user);
 
         List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerResultsAndSubmissions(exercise, user.getId());
         exercise.setStudentParticipations(new HashSet<>());
