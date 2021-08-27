@@ -284,10 +284,11 @@ export class MetisService {
 
     /**
      * updates the display priority of a post to NONE, PINNED, ARCHIVED
-     * @param post              post for which the pin state is toggled
+     * @param postId            id of the post for which the displayPriority is changed
+     * @param displayPriority   new displayPriority
      */
-    updatePostDisplayPriority(post: Post): Observable<Post> {
-        return this.postService.updatePostDisplayPriority(this.courseId, post.id!, post).pipe(
+    updatePostDisplayPriority(postId: number, displayPriority: DisplayPriority): Observable<Post> {
+        return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(
             tap(() => {
                 this.getPostsForFilter(this.currentPostFilter);
             }),

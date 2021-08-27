@@ -51,8 +51,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         } else {
             this.displayPriority = DisplayPriority.PINNED;
         }
-        this.posting.displayPriority = this.displayPriority;
-        this.metisService.updatePostDisplayPriority(this.posting).subscribe();
+        this.metisService.updatePostDisplayPriority(this.posting.id!, this.displayPriority).subscribe();
     }
 
     /**
@@ -65,8 +64,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         } else {
             this.displayPriority = DisplayPriority.ARCHIVED;
         }
-        this.posting.displayPriority = this.displayPriority;
-        this.metisService.updatePostDisplayPriority(this.posting).subscribe();
+        this.metisService.updatePostDisplayPriority(this.posting.id!, this.displayPriority).subscribe();
     }
 
     /**
