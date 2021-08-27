@@ -56,7 +56,7 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
             WHERE participation.exercise.id = :#{#exerciseId}
             GROUP BY textblock.cluster.id HAVING textblock.cluster.id > 0
             """)
-    List<TextClusterStatisticsDTO> getClusterStatistics1(@Param("exerciseId") Long exerciseId);
+    List<TextClusterStatisticsDTO> getClusterStatistics(@Param("exerciseId") Long exerciseId);
 
     interface TextClusterIdAndDisabled {
 

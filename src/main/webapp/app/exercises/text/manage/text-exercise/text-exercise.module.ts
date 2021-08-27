@@ -48,7 +48,6 @@ const ENTITY_STATES = [...textExerciseRoute];
         NonProgrammingExerciseDetailCommonActionsModule,
         ArtemisExerciseUpdateWarningModule,
         ExampleSubmissionsModule,
-        ArtemisTextClusterStatisticsModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, TextExerciseRowButtonsComponent],
     exports: [TextExerciseComponent],

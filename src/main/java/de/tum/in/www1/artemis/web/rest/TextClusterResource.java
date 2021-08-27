@@ -60,7 +60,7 @@ public class TextClusterResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
 
         // Get cluster statistics without the disabled state
-        List<TextClusterStatisticsDTO> clusterStats = textClusterRepository.getClusterStatistics1(exerciseId);
+        List<TextClusterStatisticsDTO> clusterStats = textClusterRepository.getClusterStatistics(exerciseId);
 
         // Fetch cluster with id and disabled state
         Map<Long, Boolean> clusterIdAndDisabled = textClusterRepository.getTextClusterWithIdAndDisabled();
