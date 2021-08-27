@@ -198,7 +198,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         modelingExercise.setGradingCriteria(gradingCriteria);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.isAllowedToAssessExerciseElseThrow(modelingExercise, user, resultId);
+        authCheckService.checkIsAllowedToAssessExerciseElseThrow(modelingExercise, user, resultId);
 
         if (!withoutResults) {
             // load submission with results either by resultId or by correctionRound
