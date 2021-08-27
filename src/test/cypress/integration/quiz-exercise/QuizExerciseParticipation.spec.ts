@@ -9,6 +9,9 @@ const student = artemis.users.getStudentOne();
 // Requests
 const courseManagementRequest = artemis.requests.courseManagement;
 
+// Page objects
+const multipleChoiceQuiz = artemis.pageobjects.multipleChoiceQuiz;
+
 // Common primitives
 let uid: string;
 let courseName: string;
@@ -63,14 +66,19 @@ describe('Quiz Exercise Management', () => {
             cy.login(student, '/courses/' + course.id);
             cy.contains(quizExercise.title).should('be.visible').click();
             cy.get('.btn').contains('Open quiz').click();
+            cy.get('.quiz-waiting-for-start-overlay > span').should('contain.text', 'This page will refresh automatically, when the quiz starts.');
         });
 
-        it('Student can start and submit to started quiz', () => {
+        it('Student can participate in MC quiz', () => {
             courseManagementRequest.setQuizVisible(quizExercise);
             courseManagementRequest.startQuizNow(quizExercise);
             cy.login(student, '/courses/' + course.id);
             cy.contains(quizExercise.title).should('be.visible').click();
             cy.get('.btn').contains('Start quiz').click();
+            multipleChoiceQuiz.tickAnswerOption(0);
+            multipleChoiceQuiz.tickAnswerOption(2);
+            multipleChoiceQuiz.submit();
+            cy.get('.quiz-submitted-overlay > span').should('contain.text', 'Your answers have been successfully submitted!');
         });
     });
 });

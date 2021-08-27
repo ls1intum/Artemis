@@ -197,7 +197,7 @@ export class CourseManagementRequests {
         });
     }
 
-    createQuizExercise(title: string, releaseDate: day.Dayjs, body: { course: any } | { exerciseGroup: any }, quizQuestions: [any] = [multipleChoiceTemplate]) {
+    createQuizExercise(title: string, releaseDate: day.Dayjs, body: { course: any } | { exerciseGroup: any }, quizQuestions: any = [multipleChoiceTemplate]) {
         const quizExercise: any = quizTemplate;
         quizExercise.title = title;
         quizExercise.releaseDate = dayjsToString(releaseDate);
