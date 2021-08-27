@@ -183,8 +183,7 @@ describe('Metis Service', () => {
 
         it('should pin a post', fakeAsync(() => {
             const postServiceSpy = spy(postService, 'updatePostDisplayPriority');
-            post1.displayPriority = DisplayPriority.PINNED;
-            const updatedPostSub = metisService.updatePostDisplayPriority(post1).subscribe((updatedPost) => {
+            const updatedPostSub = metisService.updatePostDisplayPriority(post1.id!, DisplayPriority.PINNED).subscribe((updatedPost) => {
                 expect(updatedPost).to.be.deep.equal({ id: post1.id, displayPriority: DisplayPriority.PINNED });
             });
             expect(postServiceSpy).to.have.been.called;
@@ -195,8 +194,7 @@ describe('Metis Service', () => {
 
         it('should archive a post', fakeAsync(() => {
             const postServiceSpy = spy(postService, 'updatePostDisplayPriority');
-            post1.displayPriority = DisplayPriority.ARCHIVED;
-            const updatedPostSub = metisService.updatePostDisplayPriority(post1).subscribe((updatedPost) => {
+            const updatedPostSub = metisService.updatePostDisplayPriority(post1.id!, DisplayPriority.ARCHIVED).subscribe((updatedPost) => {
                 expect(updatedPost).to.be.deep.equal({ id: post1.id, displayPriority: DisplayPriority.ARCHIVED });
             });
             expect(postServiceSpy).to.have.been.called;

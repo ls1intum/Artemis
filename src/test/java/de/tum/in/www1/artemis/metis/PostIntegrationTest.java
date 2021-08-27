@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
@@ -243,11 +245,12 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "student1", roles = "USER")
     public void testPinPost_asStudent_forbidden() throws Exception {
         Post postToNotPin = editExistingPost(existingPosts.get(1));
-        postToNotPin.setDisplayPriority(DisplayPriority.PINNED);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("displayPriority", DisplayPriority.PINNED.toString());
 
         // try to change display priority to PINNED
-        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotPin.getId() + "/display-priority", postToNotPin, Post.class,
-                HttpStatus.FORBIDDEN);
+        Post notUpdatedPost = request.putWithResponseBodyAndParams("/api/courses/" + courseId + "/posts/" + postToNotPin.getId() + "/display-priority", null, Post.class,
+                HttpStatus.FORBIDDEN, params);
         assertThat(notUpdatedPost).isNull();
     }
 
@@ -255,10 +258,12 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testPinPost_asTutor() throws Exception {
         Post postToPin = editExistingPost(existingPosts.get(0));
-        postToPin.setDisplayPriority(DisplayPriority.PINNED);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("displayPriority", DisplayPriority.PINNED.toString());
 
         // change display priority to PINNED
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToPin.getId() + "/display-priority", postToPin, Post.class, HttpStatus.OK);
+        Post updatedPost = request.putWithResponseBodyAndParams("/api/courses/" + courseId + "/posts/" + postToPin.getId() + "/display-priority", null, Post.class, HttpStatus.OK,
+                params);
         assertThat(updatedPost).isEqualTo(postToPin);
     }
 
@@ -266,11 +271,12 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "student1", roles = "USER")
     public void testArchivePost_asStudent_forbidden() throws Exception {
         Post postToNotArchive = editExistingPost(existingPosts.get(1));
-        postToNotArchive.setDisplayPriority(DisplayPriority.ARCHIVED);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("displayPriority", DisplayPriority.ARCHIVED.toString());
 
         // try to change display priority to ARCHIVED
-        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotArchive.getId() + "/display-priority", postToNotArchive, Post.class,
-                HttpStatus.FORBIDDEN);
+        Post notUpdatedPost = request.putWithResponseBodyAndParams("/api/courses/" + courseId + "/posts/" + postToNotArchive.getId() + "/display-priority", null, Post.class,
+                HttpStatus.FORBIDDEN, params);
         assertThat(notUpdatedPost).isNull();
     }
 
@@ -278,11 +284,12 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testArchivePost_asTutor() throws Exception {
         Post postToArchive = editExistingPost(existingPosts.get(0));
-        postToArchive.setDisplayPriority(DisplayPriority.ARCHIVED);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("displayPriority", DisplayPriority.ARCHIVED.toString());
 
         // change display priority to ARCHIVED
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToArchive.getId() + "/display-priority", postToArchive, Post.class,
-                HttpStatus.OK);
+        Post updatedPost = request.putWithResponseBodyAndParams("/api/courses/" + courseId + "/posts/" + postToArchive.getId() + "/display-priority", null, Post.class,
+                HttpStatus.OK, params);
         assertThat(updatedPost).isEqualTo(postToArchive);
     }
 

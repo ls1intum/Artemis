@@ -11,8 +11,8 @@ export class MockPostService {
         return of({ body: post }) as Observable<HttpResponse<Post>>;
     }
 
-    updatePostDisplayPriority(courseId: number, postId: number, post: Post): Observable<HttpResponse<Post>> {
-        return of({ body: { id: postId, displayPriority: post.displayPriority } as Post }) as Observable<HttpResponse<Post>>;
+    updatePostDisplayPriority(courseId: number, postId: number, displayPriority: DisplayPriority): Observable<HttpResponse<Post>> {
+        return of({ body: { id: postId, displayPriority } as Post }) as Observable<HttpResponse<Post>>;
     }
 
     delete(post: Post): Observable<HttpResponse<Post>> {

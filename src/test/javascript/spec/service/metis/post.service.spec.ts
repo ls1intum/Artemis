@@ -92,7 +92,7 @@ describe('Post Service', () => {
 
             const expected = { ...returnedFromService };
             service
-                .updatePostDisplayPriority(1, elemDefault.id!, returnedFromService)
+                .updatePostDisplayPriority(1, elemDefault.id!, newDisplayPriority)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
@@ -106,7 +106,7 @@ describe('Post Service', () => {
 
             const expected = { ...returnedFromService };
             service
-                .updatePostDisplayPriority(1, elemDefault.id!, returnedFromService)
+                .updatePostDisplayPriority(1, elemDefault.id!, newDisplayPriority)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
