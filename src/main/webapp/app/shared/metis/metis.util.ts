@@ -26,6 +26,7 @@ export interface PostFilter {
     exercise?: Exercise;
     lecture?: Lecture;
     courseWideContext?: CourseWideContext;
-    sortDirection?: SortDirection | undefined;
-    sortBy?: PostSortCriterion | undefined;
+    sortDirection?: SortDirection;
+    sortBy?: PostSortCriterion;
+    searchText?: string;
 }

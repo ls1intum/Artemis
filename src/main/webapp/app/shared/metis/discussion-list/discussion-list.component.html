@@ -1,4 +1,4 @@
-<div class="card-body pt-2">
+<div class="card-body pt-0">
     <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post"> </jhi-postings-thread>
     <!-- new post button -->
     <div class="row mt-2" *ngIf="createdPost && pageType === ePageType.PAGE_SECTION">

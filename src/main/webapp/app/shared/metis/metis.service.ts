@@ -125,6 +125,9 @@ export class MetisService {
     }
 
     sortPosts(posts: Post[]): Post[] {
+        if (this.currentPostFilter?.searchText) {
+            posts = posts.filter((post) => post.title?.includes(this.currentPostFilter?.searchText!));
+        }
         if (this.pageType === PageType.PAGE_SECTION) {
             return this.sortPostsForSection(posts);
         } else if (this.pageType === PageType.OVERVIEW) {

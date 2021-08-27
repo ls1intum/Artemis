@@ -35,6 +35,7 @@ export class CourseDiscussionComponent implements OnDestroy {
     eSortBy = PostSortCriterion;
     eSortDirection = SortDirection;
     formGroup: FormGroup;
+    searchText = '';
 
     private paramSubscription: Subscription;
 
@@ -76,7 +77,13 @@ export class CourseDiscussionComponent implements OnDestroy {
         this.paramSubscription?.unsubscribe();
     }
 
-    public onSelect(event: any) {
+    onSelect() {
+        this.setPostOverviewControlsWithFormValue();
+        this.metisService.getPostsForFilter(this.postFilter);
+    }
+
+    onSearch() {
+        this.postFilter.searchText = this.searchText;
         this.setPostOverviewControlsWithFormValue();
         this.metisService.getPostsForFilter(this.postFilter);
     }
@@ -113,6 +120,7 @@ export class CourseDiscussionComponent implements OnDestroy {
             ...this.formGroup.get('context')?.value,
             ...this.formGroup.get('sortBy')?.value,
             ...this.formGroup.get('sortDirection')?.value,
+            searchText: this.searchText,
         };
     }
 
