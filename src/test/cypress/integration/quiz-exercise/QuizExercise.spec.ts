@@ -81,7 +81,7 @@ describe('Quiz Exercise Management', () => {
             const mcQuestion: any = multipleChoiceTemplate;
             mcQuestion.title = 'Cypress MC' + uid;
             courseManagementRequest.createQuizExercise([mcQuestion], quizExerciseName, dayjs(), { course }).then((quizResponse) => {
-                quizExercise = quizResponse?.body;
+                quizExercise = quizResponse.body;
             });
         });
 
@@ -93,9 +93,7 @@ describe('Quiz Exercise Management', () => {
             cy.get('.form-control').type(quizExercise.title);
             cy.intercept('DELETE', '/api/quiz-exercises/*').as('deleteQuizQuery');
             cy.get('.modal-footer').contains('Delete').click();
-            cy.wait('@deleteQuizQuery').then((deleteResponse) => {
-                expect(deleteResponse?.response?.statusCode).to.eq(200);
-            });
+            cy.wait('@deleteQuizQuery');
         });
     });
 });
