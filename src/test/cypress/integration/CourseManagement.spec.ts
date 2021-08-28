@@ -1,5 +1,5 @@
 import { artemis } from '../support/ArtemisTesting';
-import { CourseManagementPage } from '../support/pageobjects/CourseManagementPage';
+import { CourseManagementPage } from '../support/pageobjects/course/CourseManagementPage';
 import { NavigationBar } from '../support/pageobjects/NavigationBar';
 import { ArtemisRequests } from '../support/requests/ArtemisRequests';
 import { generateUUID } from '../support/utils';
