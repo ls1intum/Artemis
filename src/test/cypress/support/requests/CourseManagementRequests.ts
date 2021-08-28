@@ -204,7 +204,7 @@ export class CourseManagementRequests {
         const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
         return cy.request({
             url: '/api/quiz-exercises',
-            method: 'POST',
+            method: POST,
             body: newQuizExercise,
         });
     }
