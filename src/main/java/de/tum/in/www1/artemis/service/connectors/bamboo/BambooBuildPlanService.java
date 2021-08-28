@@ -211,7 +211,7 @@ public class BambooBuildPlanService {
                     // Create artifacts and a final task for the execution of static code analysis
                     List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.C);
                     Artifact[] artifacts = staticCodeAnalysisTools.stream()
-                        .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
+                            .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
                     defaultJob.artifacts(artifacts);
                     var scaTasks = readScriptTasksFromTemplate(programmingLanguage, "", false, true, null);
                     defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
