@@ -22,14 +22,12 @@ let testCourse: any;
 let modelingExercise: any;
 
 const uid = generateUUID();
-const courseName = 'Cypress course' + uid;
-const courseShortName = 'cy' + uid;
 
 describe('Modeling Exercise Spec', () => {
     before('Log in as admin and create a course', () => {
         cy.intercept('POST', '/api/modeling-exercises').as('createModelingExercise');
         cy.login(admin);
-        courseManagementRequests.createCourse(courseName, courseShortName).then((courseResp) => {
+        courseManagementRequests.createCourse().then((courseResp) => {
             testCourse = courseResp.body;
             cy.visit(`/course-management/${testCourse.id}`).get('.row-md > :nth-child(2)').should('contain.text', testCourse.title);
             // set tutor group
@@ -124,7 +122,7 @@ describe('Modeling Exercise Spec', () => {
                 exercise.dueDate = dayjs().add(2, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
                 exercise.assessmentDueDate = dayjs().add(3, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
                 exercise.sampleSolutionModel = null;
-                courseManagementRequests.createModelingExercise(exercise, { course: testCourse }).then((resp) => {
+                courseManagementRequests.createModelingExercise(exercise, testCourse).then((resp) => {
                     modelingExercise = resp.body;
                 });
             });
