@@ -18,6 +18,18 @@ RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/jav
 RUN mkdir /artemis && mkdir /artemis/bin && printf '#!/bin/bash\nJAVA_HOME=/usr/lib/jvm/java-16-oracle /usr/bin/mvn "$@"\n' > /artemis/bin/mvn && chmod 777 /artemis/bin/mvn
 
 # Install dependencies for C static analysis
-RUN apt-get install -y cppcheck gcc-10=10.3.*
+RUN apt-get install -y cppcheck gcc-10 python3 python3-pip sudo
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 20
+RUN update-alternatives --config gcc
 
+# Add the artemis_user
+COPY add_user.sh .
+RUN bash ./add_user.sh
+# Give the artemis_user sudo rights without a password by default
+RUN echo "artemis_user     ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers
+RUN echo "${BAMBOO_USER}     ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers
+
+# We have to use the Bamboo User, otherwise it won't work, since Bamboo requires the user to be present.
+# We can modify the tasks for C locally, by removing sudo, as BAMBOO_USER is already root.
+# The part where the Makefile is being replaced can also be left out for local testing.
 USER ${BAMBOO_USER}
