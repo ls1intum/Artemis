@@ -21,6 +21,7 @@ const assessmentDashboard = artemis.pageobjects.assessmentDashboard;
 let uid = generateUUID();
 const courseName = 'Cypress course' + uid;
 const courseShortName = 'cypress' + uid;
+const admin = artemis.users.getAdmin();
 const student = artemis.users.getStudentOne();
 const tutor = artemis.users.getTutor();
 const packageName = 'de.test';
@@ -32,7 +33,7 @@ describe('Exam Assessment', () => {
     let exerciseGroup: any;
 
     before('Create a course', () => {
-        cy.login(artemis.users.getAdmin());
+        cy.login(admin);
         courseManagementRequests.createCourse(courseName, courseShortName).then((response) => {
             course = response.body;
             courseManagementRequests.addStudentToCourse(course.id, artemis.users.getStudentOne().username);
@@ -42,17 +43,17 @@ describe('Exam Assessment', () => {
 
     beforeEach('Generate new exam name', () => {
         examTitle = 'exam' + generateUUID();
-        cy.login(artemis.users.getAdmin());
+        cy.login(admin);
     });
 
     after('Delete Course', () => {
-        cy.login(artemis.users.getAdmin());
+        cy.login(admin);
         courseManagementRequests.deleteCourse(course.id);
     });
 
     describe('Exam exercise Assessment', () => {
         beforeEach('Create Exam', () => {
-            cy.login(artemis.users.getAdmin());
+            cy.login(admin);
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
@@ -71,7 +72,7 @@ describe('Exam Assessment', () => {
         });
 
         afterEach('Delete Exam', () => {
-            cy.login(artemis.users.getAdmin());
+            cy.login(admin);
             courseManagementRequests.deleteExam(course, exam);
         });
 
@@ -141,7 +142,7 @@ describe('Exam Assessment', () => {
         });
 
         beforeEach('Create Exam', () => {
-            cy.login(artemis.users.getAdmin());
+            cy.login(admin);
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
@@ -160,12 +161,12 @@ describe('Exam Assessment', () => {
         });
 
         afterEach('Delete Exam', () => {
-            cy.login(artemis.users.getAdmin());
+            cy.login(admin);
             courseManagementRequests.deleteExam(course, exam);
         });
 
         it('assess a programming exercise submission (MANUAL)', () => {
-            cy.login(artemis.users.getAdmin());
+            cy.login(admin);
             courseManagementRequests.createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, { exerciseGroup }).then((progRespone) => {
                 const programmingExercise = progRespone.body;
                 courseManagementRequests.generateMissingIndividualExams(course, exam);
