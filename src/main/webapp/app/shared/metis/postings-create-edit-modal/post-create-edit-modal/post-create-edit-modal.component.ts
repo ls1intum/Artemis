@@ -4,7 +4,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import * as moment from 'moment';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, Validators } from '@angular/forms';
 
 const TITLE_MAX_LENGTH = 200;
 
@@ -25,8 +25,9 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     resetFormGroup(): void {
         this.tags = this.posting?.tags ?? [];
         this.formGroup = this.formBuilder.group({
-            title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH)]],
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength)]],
+            // the pattern ensures that the title and content must include at least one non-whitespace character
+            title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), Validators.pattern(/^.*\S+.*$/)]],
+            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^.*\S+.*$/)]],
         });
     }
 
