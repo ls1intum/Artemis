@@ -93,7 +93,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
+    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C"})
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void testCreateDefaultCategories(ProgrammingLanguage programmingLanguage) {
         var testExercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1),
@@ -109,6 +109,10 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         else if (programmingLanguage == ProgrammingLanguage.JAVA) {
             assertThat(categories.size()).isEqualTo(11);
             assertThat(categories.stream().filter(c -> c.getState() == CategoryState.FEEDBACK).count()).isEqualTo(7);
+        }
+        else if (programmingLanguage == ProgrammingLanguage.C) {
+            assertThat(categories.size()).isEqualTo(5);
+            assertThat(categories.stream().filter(c -> c.getState() == CategoryState.FEEDBACK).count()).isEqualTo(4);
         }
     }
 
@@ -135,7 +139,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
+    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C" })
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) throws Exception {
         var programmingExSCAEnabled = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
@@ -185,7 +189,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
+    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testResetCategories(ProgrammingLanguage programmingLanguage) throws Exception {
         // Create a programming exercise with real categories
