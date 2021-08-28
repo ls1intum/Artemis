@@ -2,6 +2,7 @@ import { generateUUID } from '../../support/utils';
 import { artemis } from '../../support/ArtemisTesting';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_template.json';
+import { GROUP_SYNCHRONIZATION } from '../../support/constants';
 import dayjs from 'dayjs';
 import { ProgrammingExerciseSubmission } from '../../support/pageobjects/OnlineEditorPage';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
@@ -131,7 +132,7 @@ describe('Exam Assessment', () => {
     describe('Exam Programming Exercise Assessment', () => {
         let programmingExerciseName: string;
         let programmingExerciseShortName: string;
-        const examEnd = Cypress.env('isBamboo') ? 180 : 100;
+        const examEnd = 100 + Cypress.env('isBamboo') ? GROUP_SYNCHRONIZATION : 0;
 
         before('Generate exercise names', () => {
             uid = generateUUID();
