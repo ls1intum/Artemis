@@ -52,7 +52,7 @@ describe('Quiz Exercise Management', () => {
     describe('Quiz exercise participation', () => {
         beforeEach('Create quiz exercise', () => {
             courseManagementRequest.createQuizExercise(quizExerciseName, dayjs(), { course }).then((quizResponse) => {
-                quizExercise = quizResponse?.body;
+                quizExercise = quizResponse.body;
             });
         });
 
