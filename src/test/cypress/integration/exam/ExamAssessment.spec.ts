@@ -90,7 +90,7 @@ describe('Exam Assessment', () => {
                 cy.intercept('PUT', '/api/exercises/' + modelingExercise.id + '/modeling-submissions').as('createModelingSubmission');
                 cy.contains('Save').click();
                 cy.wait('@createModelingSubmission');
-                cy.contains('Hand in early').click();
+                cy.get('#exam-navigation-bar').find('.btn-danger').click();
                 examStartEnd.finishExam();
                 cy.login(tutor, '/course-management/' + course.id + '/exams');
                 cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
@@ -117,7 +117,7 @@ describe('Exam Assessment', () => {
                 cy.contains('Cypress Text Exercise').click();
                 cy.get('#text-editor-tab').type(textSubmission.text);
                 cy.contains('Save').click();
-                cy.contains('Hand in early').click();
+                cy.get('#exam-navigation-bar').find('.btn-danger').click();
                 examStartEnd.finishExam();
                 cy.login(tutor, '/course-management/' + course.id + '/exams');
                 cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
@@ -175,7 +175,7 @@ describe('Exam Assessment', () => {
                 examStartEnd.startExam();
                 cy.contains(programmingExercise.title).should('be.visible').click();
                 makeSubmissionAndVerifyResults(partiallySuccessful, () => {
-                    cy.get('.btn-danger').click();
+                    cy.get('#exam-navigation-bar').find('.btn-danger').click();
                     examStartEnd.finishExam();
                     cy.get('.alert').should('be.visible');
                     cy.login(tutor, '/course-management/' + course.id + '/exams');
