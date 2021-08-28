@@ -71,7 +71,7 @@ describe('Quiz Exercise Management', () => {
         });
     });
 
-    describe.only('Quiz Exercise deletion', () => {
+    describe('Quiz Exercise deletion', () => {
         let quizExercise: any;
 
         beforeEach('Create Quiz Exercise', () => {
@@ -98,6 +98,6 @@ function beginQuizCreation() {
     cy.login(admin, '/');
     navigationBar.openCourseManagement();
     courseManagement.openExercisesOfCourse(courseName, courseShortName);
-    cy.get('#create-quiz-button').should('be.visible').click();
+    cy.get('#create-quiz-button').click();
     quizCreation.setTitle(quizExerciseName);
 }
