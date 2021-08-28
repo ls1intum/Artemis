@@ -7,7 +7,6 @@ metadata:
     cattle.io/creator: norman
     workload.user.cattle.io/workloadselector: deployment-artemis-kafka
   name: kafka
-  resourceVersion: "88518"
 spec:
   replicas: 1
   selector:
@@ -62,8 +61,6 @@ metadata:
     cattle.io/creator: norman
     workload.user.cattle.io/workloadselector: deployment-artemis-zookeeper
   name: zookeeper
-  resourceVersion: "85772"
-  uid: 8972e986-282a-4a9b-aa33-00dbca9ae6fa
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
