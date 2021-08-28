@@ -210,16 +210,16 @@ export class CourseManagementRequests {
         });
     }
 
-    setQuizVisible(quizExercise: any) {
+    setQuizVisible(quizId: number) {
         return cy.request({
-            url: '/api/quiz-exercises/' + quizExercise.id + '/set-visible',
+            url: '/api/quiz-exercises/' + quizId + '/set-visible',
             method: PUT,
         });
     }
 
-    startQuizNow(quizExercise: any) {
+    startQuizNow(quizId: number) {
         return cy.request({
-            url: '/api/quiz-exercises/' + quizExercise.id + '/start-now',
+            url: '/api/quiz-exercises/' + quizId + '/start-now',
             method: PUT,
         });
     }

@@ -62,7 +62,7 @@ describe('Quiz Exercise Management', () => {
         });
 
         it('Student can see a visible quiz', () => {
-            courseManagementRequest.setQuizVisible(quizExercise);
+            courseManagementRequest.setQuizVisible(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
             cy.contains(quizExercise.title).should('be.visible').click();
             cy.get('.btn').contains('Open quiz').click();
@@ -70,8 +70,8 @@ describe('Quiz Exercise Management', () => {
         });
 
         it('Student can participate in MC quiz', () => {
-            courseManagementRequest.setQuizVisible(quizExercise);
-            courseManagementRequest.startQuizNow(quizExercise);
+            courseManagementRequest.setQuizVisible(quizExercise.id);
+            courseManagementRequest.startQuizNow(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
             cy.contains(quizExercise.title).should('be.visible').click();
             cy.get('.btn').contains('Start quiz').click();
