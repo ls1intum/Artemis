@@ -62,7 +62,7 @@ describe('Programming exercise participations', () => {
             courseManagement.addStudentToCourse(course.id, users.getStudentTwo().username);
             courseManagement.addStudentToCourse(course.id, users.getStudentThree().username);
             courseManagement
-                .createProgrammingExercise({ course })
+                .createProgrammingExercise(course)
                 .its('body')
                 .then((exercise) => {
                     expect(exercise).to.not.be.null;

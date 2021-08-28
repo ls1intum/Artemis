@@ -70,7 +70,7 @@ export class CourseManagementRequests extends ExerciseRequests {
         releaseDate = day(),
         dueDate = day().add(1, 'days'),
     ) {
-        return super.createProgrammingExercise({ course }, title, programmingShortName, packageName, releaseDate, dueDate);
+        return super.createProgrammingExercise(course, title, programmingShortName, packageName, releaseDate, dueDate);
     }
 
     /**

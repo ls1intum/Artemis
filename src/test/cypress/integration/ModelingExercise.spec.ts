@@ -122,7 +122,7 @@ describe('Modeling Exercise Spec', () => {
                 exercise.dueDate = dayjs().add(2, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
                 exercise.assessmentDueDate = dayjs().add(3, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
                 exercise.sampleSolutionModel = null;
-                courseManagementRequests.createModelingExercise(exercise, { course: testCourse }).then((resp) => {
+                courseManagementRequests.createModelingExercise(exercise, testCourse).then((resp) => {
                     modelingExercise = resp.body;
                 });
             });

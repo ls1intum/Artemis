@@ -35,7 +35,7 @@ describe('Programming Exercise Management', () => {
 
         beforeEach(() => {
             artemisRequests.courseManagement
-                .createProgrammingExercise({ course })
+                .createProgrammingExercise(course)
                 .its('body')
                 .then((exercise) => {
                     expect(exercise).to.not.be.null;
