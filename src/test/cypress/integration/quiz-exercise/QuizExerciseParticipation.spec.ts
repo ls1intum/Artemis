@@ -56,7 +56,7 @@ describe('Quiz Exercise Management', () => {
             });
         });
 
-        it('Student can not see non visible quiz', () => {
+        it('Student cannot see hidden quiz', () => {
             cy.login(student, '/courses/' + course.id);
             cy.contains('No exercises available for the course.').should('be.visible');
         });
