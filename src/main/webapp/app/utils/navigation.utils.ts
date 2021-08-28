@@ -184,3 +184,22 @@ export const getExerciseSubmissionsLink = (exerciseType: ExerciseType, courseId:
 
     return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'submissions'];
 };
+
+/**
+ * A generic method which navigates into a subpage of an exam exercise
+ * @router the router th component uses to navigate into different webpages
+ * @subPage the subpage of an exercise which we want to navigate into, e.g. scores
+ */
+export const navigateToExamExercise = (
+    router: Router,
+    courseId: number,
+    examId: number,
+    exerciseGroupId: number,
+    exerciseType: ExerciseType,
+    exerciseId: number,
+    subPage: string,
+): void => {
+    setTimeout(() => {
+        router.navigate(['course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, `${exerciseType}-exercises`, exerciseId, subPage]);
+    }, 1000);
+};

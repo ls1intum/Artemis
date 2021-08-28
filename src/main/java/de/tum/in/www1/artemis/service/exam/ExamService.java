@@ -224,8 +224,8 @@ public class ExamService {
                     participantsForExercise = 0L;
                 }
                 numberOfExerciseGroupParticipants += participantsForExercise;
-                exerciseGroupDTO.containedExercises
-                        .add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), participantsForExercise));
+                exerciseGroupDTO.containedExercises.add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(),
+                        participantsForExercise, exercise.getClass().getSimpleName()));
             }
             exerciseGroupDTO.numberOfParticipants = numberOfExerciseGroupParticipants;
             scores.exerciseGroups.add(exerciseGroupDTO);
@@ -296,12 +296,15 @@ public class ExamService {
 
             if (scores.maxPoints != null) {
                 studentResult.overallScoreAchieved = (studentResult.overallPointsAchieved / scores.maxPoints) * 100.0;
+                var overallScoreAchievedInFirstCorrection = (studentResult.overallPointsAchievedInFirstCorrection / scores.maxPoints) * 100.0;
                 // Sets grading scale related properties for exam scores
                 Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
                 if (gradingScale.isPresent()) {
                     // Calculate current student grade
                     GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(studentResult.overallScoreAchieved, gradingScale.get().getId());
+                    GradeStep studentGradeInFirstCorrection = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchievedInFirstCorrection, gradingScale.get().getId());
                     studentResult.overallGrade = studentGrade.getGradeName();
+                    studentResult.overallGradeInFirstCorrection = studentGradeInFirstCorrection.getGradeName();
                     studentResult.hasPassed = studentGrade.getIsPassingGrade();
                 }
             }

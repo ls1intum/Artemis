@@ -64,7 +64,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
 
     it('should initialize', () => {
         expect(component).to.be.ok;
-        expect(component.barChartLabels).to.deep.equal(['Patterns', 'StrategyPattern', 'BridgePattern']);
+        expect(component.barChartLabels).to.deep.equal(['Patterns', '2 StrategyPattern', '3 BridgePattern']);
         expect(component.chartData[0].data).to.deep.equal([50, 60, 40]);
     });
 
