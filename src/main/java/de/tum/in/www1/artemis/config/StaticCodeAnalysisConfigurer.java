@@ -100,7 +100,7 @@ public class StaticCodeAnalysisConfigurer {
                 new StaticCodeAnalysisDefaultCategory("Memory Management", 0.2D, 2D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.GCC, "Memory"))),
                 new StaticCodeAnalysisDefaultCategory("Undefined Behavior", 0.2D, 2D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.GCC, "UndefinedBehavior"))),
                 new StaticCodeAnalysisDefaultCategory("Security", 0.2D, 2D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.GCC, "Security"))),
-                new StaticCodeAnalysisDefaultCategory("Miscellaneous", 0.2D, 2D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.GCC, "Misc"))));
+                new StaticCodeAnalysisDefaultCategory("Miscellaneous", 0.2D, 2D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.GCC, "Misc"))));
     }
 
     @Bean(name = "staticCodeAnalysisConfiguration")
