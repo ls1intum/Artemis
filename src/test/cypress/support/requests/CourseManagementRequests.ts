@@ -1,4 +1,4 @@
-import { BASE_API, DELETE, POST } from '../constants';
+import { BASE_API, DELETE, POST, PUT } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import { dayjsToString, generateUUID } from '../utils';
@@ -7,9 +7,13 @@ import day from 'dayjs';
 import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
+import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
+import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
+import dayjs from 'dayjs';
 
 const COURSE_BASE = BASE_API + 'courses/';
 const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
+const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
 const oneDay = 24 * 60 * 60 * 1000;
 
 /**
@@ -176,7 +180,7 @@ export class CourseManagementRequests {
         const newModelingExercise = this.getCourseOrExamExercise(modelingExercise, body);
         return cy.request({
             url: '/api/modeling-exercises',
-            method: 'POST',
+            method: POST,
             body: newModelingExercise,
         });
     }
@@ -184,7 +188,42 @@ export class CourseManagementRequests {
     deleteModelingExercise(exerciseID: number) {
         return cy.request({
             url: `/api/modeling-exercises/${exerciseID}`,
-            method: 'DELETE',
+            method: DELETE,
+        });
+    }
+
+    deleteQuizExercise(quizId: number) {
+        return cy.request({
+            url: QUIZ_EXERCISE_BASE + `${quizId}`,
+            method: DELETE,
+        });
+    }
+
+    createQuizExercise(body: { course: any } | { exerciseGroup: any }, title = 'Cypress Quiz', releaseDate = dayjs(), quizQuestions: any = [multipleChoiceTemplate]) {
+        const quizExercise = {
+            ...quizTemplate,
+            releaseDate: dayjsToString(releaseDate),
+            quizQuestions,
+        };
+        const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
+        return cy.request({
+            url: QUIZ_EXERCISE_BASE,
+            method: POST,
+            body: newQuizExercise,
+        });
+    }
+
+    setQuizVisible(quizId: number) {
+        return cy.request({
+            url: QUIZ_EXERCISE_BASE + `${quizId}` + '/set-visible',
+            method: PUT,
+        });
+    }
+
+    startQuizNow(quizId: number) {
+        return cy.request({
+            url: QUIZ_EXERCISE_BASE + `${quizId}` + '/start-now',
+            method: PUT,
         });
     }
 
