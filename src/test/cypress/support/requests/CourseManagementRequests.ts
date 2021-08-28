@@ -12,6 +12,7 @@ import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multip
 
 const COURSE_BASE = BASE_API + 'courses/';
 const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
+const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
 const oneDay = 24 * 60 * 60 * 1000;
 
 /**
@@ -192,7 +193,7 @@ export class CourseManagementRequests {
 
     deleteQuizExercise(quizId: number) {
         return cy.request({
-            url: `/api/quiz-exercises/${quizId}`,
+            url: QUIZ_EXERCISE_BASE + `${quizId}`,
             method: DELETE,
         });
     }
@@ -205,7 +206,7 @@ export class CourseManagementRequests {
         };
         const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
         return cy.request({
-            url: '/api/quiz-exercises',
+            url: QUIZ_EXERCISE_BASE,
             method: POST,
             body: newQuizExercise,
         });
@@ -213,14 +214,14 @@ export class CourseManagementRequests {
 
     setQuizVisible(quizId: number) {
         return cy.request({
-            url: '/api/quiz-exercises/' + quizId + '/set-visible',
+            url: QUIZ_EXERCISE_BASE + `${quizId}` + '/set-visible',
             method: PUT,
         });
     }
 
     startQuizNow(quizId: number) {
         return cy.request({
-            url: '/api/quiz-exercises/' + quizId + '/start-now',
+            url: QUIZ_EXERCISE_BASE + `${quizId}` + '/start-now',
             method: PUT,
         });
     }
