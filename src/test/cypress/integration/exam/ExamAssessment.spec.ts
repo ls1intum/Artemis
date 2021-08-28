@@ -165,7 +165,7 @@ describe('Exam Assessment', () => {
             courseManagementRequests.deleteExam(course, exam);
         });
 
-        it('assess a programming exercise submission (MANUAL)', () => {
+        it('Assess a programming exercise submission (MANUAL)', () => {
             cy.login(admin);
             courseManagementRequests.createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, { exerciseGroup }).then((progRespone) => {
                 const programmingExercise = progRespone.body;
