@@ -190,9 +190,9 @@ export class CourseManagementRequests {
         });
     }
 
-    deleteQuizExercise(quizExercise: any) {
+    deleteQuizExercise(quizId: number) {
         return cy.request({
-            url: `/api/quiz-exercises/${quizExercise.id}`,
+            url: `/api/quiz-exercises/${quizId}`,
             method: DELETE,
         });
     }

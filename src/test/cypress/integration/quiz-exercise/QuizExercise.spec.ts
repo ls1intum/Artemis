@@ -47,7 +47,7 @@ describe('Quiz Exercise Management', () => {
         let quizExercise: any;
 
         afterEach('Delete Quiz', () => {
-            courseManagementRequest.deleteQuizExercise(quizExercise);
+            courseManagementRequest.deleteQuizExercise(quizExercise.id);
         });
 
         it('Creates a Quiz with Multiple Choice', () => {

@@ -41,7 +41,7 @@ describe('Quiz Exercise Management', () => {
 
     afterEach('Delete Quiz', () => {
         cy.login(admin);
-        courseManagementRequest.deleteQuizExercise(quizExercise);
+        courseManagementRequest.deleteQuizExercise(quizExercise.id);
     });
 
     after('Delete Course', () => {
