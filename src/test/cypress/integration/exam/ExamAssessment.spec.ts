@@ -40,7 +40,7 @@ describe('Exam Assessment', () => {
         });
     });
 
-    beforeEach('Generate new exam Name', () => {
+    beforeEach('Generate new exam name', () => {
         examTitle = 'exam' + generateUUID();
         cy.login(artemis.users.getAdmin());
     });
