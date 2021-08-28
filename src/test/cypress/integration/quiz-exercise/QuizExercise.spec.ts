@@ -2,6 +2,7 @@ import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
 import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import dayjs from 'dayjs';
+import { DELETE } from '../../support/constants';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -74,8 +75,7 @@ describe('Quiz Exercise Management', () => {
         let quizExercise: any;
 
         beforeEach('Create Quiz Exercise', () => {
-            const mcQuestion: any = multipleChoiceTemplate;
-            mcQuestion.title = 'Cypress MC' + uid;
+            const mcQuestion: any = { ...multipleChoiceTemplate, title:  'Cypress MC' + uid };
             courseManagementRequest.createQuizExercise([mcQuestion], quizExerciseName, dayjs(), { course }).then((quizResponse) => {
                 quizExercise = quizResponse.body;
             });
@@ -87,7 +87,7 @@ describe('Quiz Exercise Management', () => {
             courseManagement.openExercisesOfCourse(courseName, courseShortName);
             cy.get('#delete-quiz-' + quizExercise.id).click();
             cy.get('.form-control').type(quizExercise.title);
-            cy.intercept('DELETE', '/api/quiz-exercises/*').as('deleteQuizQuery');
+            cy.intercept(DELETE, '/api/quiz-exercises/*').as('deleteQuizQuery');
             cy.get('.modal-footer').contains('Delete').click();
             cy.wait('@deleteQuizQuery');
         });
