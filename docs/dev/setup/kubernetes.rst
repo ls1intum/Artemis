@@ -1,4 +1,4 @@
-Setup Kubernetes and Kubernetes deployment
+Setup Kubernetes and Kubernetes Deployment
 ===============================================================
 
 This page describes how to set up an environment deployed in Kubernetes.
@@ -17,7 +17,7 @@ Follow the links to install the tools which will be needed in order to proceed w
    Account in DockerHub is needed in order to push the Artemis image which will be used by the Kubernetes deployment.
 
 * `k3d <https://k3d.io/#installation>`__ - v4.4.7
-   k3d is lightweight wrapper to run k3s which is a lightweght Kubernetes distribution in Docker. 
+   k3d is lightweight wrapper to run k3s which is a lightweight Kubernetes distribution in Docker. 
    k3d makes it very easy to create k3s clusters especially for local deployment on Kubernetes. 
 
    Windows users can use ``choco`` to install it. More details can be found in the link under ``Other Installation Methods``
@@ -34,13 +34,13 @@ Follow the links to install the tools which will be needed in order to proceed w
     :local:
     :depth: 1
 
-Setup Kubernetes cluster
+Setup Kubernetes Cluster
 ------------------------
 In order to be able to deploy Artemis on Kubernetes, you need to setup a cluster. A cluster is a set of nodes that run containerized applications. Kubernetes clusters allow for applications to be more easily developed, moved and managed.
 
-With the following commands you will setup one cluster with 3 agents as well as Rancher which is a platform for cluster management with easy to use user interface.
+With the following commands you will set up one cluster with three agents as well as Rancher which is a platform for cluster management with an easy to use user interface.
 
-**IMPORTANT: Before you continute make sure Docker has been started.**
+**IMPORTANT: Before you continue make sure Docker has been started.**
 
 
 1. Set environment variables
@@ -75,7 +75,7 @@ With the following commands you will setup one cluster with 3 agents as well as 
    Using ``kubectl get nodes`` you can see the status of each node of the newly created cluster.
    
    You should also write the cluster configuration into the KUBECONFIG_FILE. This configuration will be later needed when you are creating deployments. 
-   You can either set the path to the file as an environment variable or replce it with "<path-to-kubeconfig-file>" when needed.
+   You can either set the path to the file as an environment variable or replace it with "<path-to-kubeconfig-file>" when needed.
    
    **For MacOS/Linux**:
 
@@ -101,12 +101,12 @@ With the following commands you will setup one cluster with 3 agents as well as 
    
    cert-manager is used to add certificates and certificate issuers as resource types in Kubernetes clusters. 
    It simplifies the process of obtaining, renewing and using those certificates.
-   It can issue certificates from a variety of supported sources, i.e. Let’s Encrypt, HashiCorp Vault, Venafi.
+   It can issue certificates from a variety of supported sources, e.g. Let’s Encrypt, HashiCorp Vault, Venafi.
    
    In our case it will issue self-signed certificates to our Kubernetes deployments to secure the communication between the different deployments.
 
    Before the installation, you need to add the Jetstack repository and update the local Helm chart repository cache.
-   cert-manager has to be installed in a separate namespace called ``cert-manager`` so one should be created as well. After the installation you can check the status of the installation.
+   cert-manager has to be installed in a separate namespace called ``cert-manager`` so one should be created as well. After the installation, you can check the status of the installation.
 
    ::
 
@@ -120,8 +120,8 @@ With the following commands you will setup one cluster with 3 agents as well as 
 
    Rancher is a Kubernetes management tool which gives you the opportunity to create and manage Kubernetes deployments more easily than with the CLI tools.
    
-   You can install Rancher using helm - the package manager for Kubernetes. It has to be installed in a namespace called ``cattle-system`` and we should create such a namespace before the installation itself.
-   During the installation we set the namespace and the hostname which Ranchen will be accessible on.
+   You can install Rancher using Helm - the package manager for Kubernetes. It has to be installed in a namespace called ``cattle-system`` and we should create such a namespace before the installation itself.
+   During the installation we set the namespace and the hostname which Rancher will be accessible on.
    Then we can check the installation status. 
 
    **For MacOS/Linux**:
@@ -150,9 +150,9 @@ Open Rancher on `<https://rancher.localhost/>`__.
 
 You will be notified that the connection is not private. The reason for that is that the Rancher deployment uses a self-signed certificate by an unknown authority 'dynamiclistener-ca'. 
 It is used for secure communication between internal components. Since it's your local environment this is not an issue and you can proceed to the website.
-If you can't continue using the Chrome browser, you can try with another browser, i.e. Firefox. 
+If you can't continue using the Chrome browser, you can try with another browser, e.g. Firefox. 
 
-You will be prompted to set a password which later will be used to login to Rancher. The password will be used often, that's why you shouldn't forget it.
+You will be prompted to set a password which later will be used to log in to Rancher. The password will often be used, so you shouldn't forget it.
 
 .. figure:: kubernetes/rancher_password.png
    :align: center
@@ -179,7 +179,7 @@ You can open the workloads using the menu, there will be no workloads deployed a
 6. Create new namespace in Rancher
 
 Namespaces are virtual clusters backed by the same physical cluster. Namespaces provide a scope for names. Names of resources need to be unique within a namespace, but not across namespaces.
-Usually different namespaces are created to separate environments deployments i.e. development, staging, production.
+Usually different namespaces are created to separate environments deployments e.g. development, staging, production.
 
 For our development purposes we will create a namespace called artemis.
 It can be done easily using Rancher.
@@ -198,7 +198,7 @@ c. Put ``artemis`` as namespace's name and select the ``Create`` button
 
 
 
-Create DockerHub repository
+Create DockerHub Repository
 ---------------------------
 The Artemis image will be stored and managed in DockerHub. Kubernetes will pull it from there and deploy it afterwards.
 After you log in to your `DockerHub <https://hub.docker.com/>`__ account you can create as many public repositories as you want.
@@ -229,7 +229,7 @@ Open the ``src/main/kubernetes/artemis/deployment/artemis-deployment.yml`` file 
 
 and replace <DockerId> with your docker ID in DockerHub
 
-i.e. it will look like this:
+e.g. it will look like this:
 
    ::
 
@@ -240,22 +240,21 @@ i.e. it will look like this:
 
 
 
-Configure Artemis resources
+Configure Artemis Resources
 ---------------------------
-
 In order to run Artemis, you need to configure the Artemis' User Management, Version Control and Continuous Integration. You can either run it with Jira, Bitbucket, Bamboo or Jenkins, Gitlab.
-Make sure to configure the the ``src/main/resources/config/application-artemis.yml`` file with the proper configuration for User Management, Version Control and Continuous Integration.
-If you want to configure Artemis with ``Bitbucket, Jira, Bamboo`` continue with ``Configure Bitbucket, Jira, Bamboo`` or if you want to configure Artemis with local user management and no programming exercise continue with ``Configure Local User Mangement``.
+Make sure to configure the ``src/main/resources/config/application-artemis.yml`` file with the proper configuration for User Management, Version Control and Continuous Integration.
+If you want to configure Artemis with ``Bitbucket, Jira, Bamboo`` continue with ``Configure Bitbucket, Jira, Bamboo`` or if you want to configure Artemis with local user management and no programming exercise continue with ``Configure Local User Management``.
 
 Configure Bitbucket, Jira, Bamboo
 #################################
 
-If you run Artemis with Bitbucket, Jira, Bamboo you have to deploy them on Kubernetes. Since Artemis will be deployed on a cluster, local connections to Jira, Bitbucket, Bamboo will not work. 
-Therefore you have to deploy them on Kubernetes or to set connection to existing staging or production deployments, if any. The latter can be done only if you have admin access to them.
+Since Artemis will be deployed on a cluster, local connections to Jira, Bitbucket, Bamboo will not work. 
+Therefore, you have to deploy them on Kubernetes or to set connection to existing staging or production deployments, if any. The latter can be done only if you have admin access to them.
 In order to deploy Bitbucket, Jira, Bamboo on Kubernetes use the following documentation: `Bitbucket, Jira, Bamboo <https://docs.artemis.ase.in.tum.de/dev/setup/bamboo-bitbucket-jira/>`__.
-Once you are done continue with the next step ``Build Artemis``
+Once you are done, continue with the next step ``Build Artemis``
 
-Configure Local User Mangement
+Configure Local User Management
 ##############################
 
 If you want to run with local user management and no programming exercises setup follow the steps: 
@@ -283,7 +282,7 @@ Build the Artemis application war file using the following command:
 
    ./gradlew -Pprod -Pwar clean bootWar
 
-Run Docker build
+Run Docker Build
 ----------------
 Run Docker build and prepare the Artemis image to be pushed in DockerHub using the following command:
 
@@ -310,11 +309,11 @@ In case that you get an "Access denied" error during the push, first execute
 and then try again the ``docker push`` command.
 
 
-Configure Spring profiles
+Configure Spring Profiles
 --------------------------
 ConfigMaps are used to store configuration data in key-value pairs.
 
-You can change the current Spring profiles used for running Artemis in the ``src/main/kubernetes/artemis-k8s/artemis-configmap.yml`` file by changing ``SPRING_PROFILES_ACTIVE``.
+You can change the current Spring profiles used for running Artemis in the ``src/main/kubernetes/artemis/configmap/artemis-configmap.yml`` file by changing ``SPRING_PROFILES_ACTIVE``.
 The current ones are set to use Bitbucket, Jira and Bamboo. If you want to use Jenkins and Gitlab please replace ``bamboo,bitbucket,jira`` with ``jenkins,gitlab``.
 You can also change ``prod`` to ``dev`` if you want to run in development profile.
 
@@ -342,21 +341,21 @@ Check the deployments in Rancher
 --------------------------------
 Open Rancher using `<https://rancher.localhost/>`__ and navigate to your cluster.
 
-It may take some time but at the end you should see that all the workloads have Active status. In case there is aa problem with some of the workloads you can check the logs to see what the issue is.
+It may take some time but at the end you should see that all the workloads have Active status. In case there is a problem with some workloads you can check the logs to see what the issue is.
 
 .. figure:: kubernetes/rancher_workloads.png
    :align: center
 
 You can open the Artemis application using the link `<https://artemis-app.artemis.rancher.localhost/>`__
 
-You will get the same "Connection is not private" issue as you did when opening `<https://rancher.localhost/>`__. As said before this is because a self-signed certificate is used and it is safe to proceeed.
+You will get the same "Connection is not private" issue as you did when opening `<https://rancher.localhost/>`__. As said before this is because a self-signed certificate is used and it is safe to proceed.
 
 It takes several minutes for the application to start. If you get a "Bad Gateway" error it may happen that the application has not been started yet. 
-Wait everal minutes and if you still have this issue or another one you can check out the pod logs (described in the next chapter). 
+Wait several minutes and if you still have this issue or another one you can check out the pod logs (described in the next chapter). 
 
-Check out the logs
+Check out the Logs
 ------------------
-Open the workload which logs you need to check. There is a list of pods. Open the menu for one of the pods and select ``View Logs``. A popup with the logs will be opened.
+Open the workload which logs you need to check. There is a list of pods. Open the menu for one of the pods and select ``View Logs``. A pop-up with the logs will be opened.
 
 .. figure:: kubernetes/rancher_logs.png
    :align: center
@@ -366,17 +365,17 @@ Troubleshooting
 If the Artemis application is successfully deployed but there is an error while trying to run the application, the reason is most likely related to the Artemis yml configuration files.
 One of the common errors is related to missing ``server.url`` variable. You can fix it by adding it as an environment variable to the Artemis deployment.
 
-Set additional environment variables
+Set Additional Environment Variables
 ------------------------------------
 
-This chapter explains how you can set environment varibales for your deployment in case you need it.
+This chapter explains how you can set environment variables for your deployment in case you need it.
 
 Open the Workloads view on Rancher
 
 .. figure:: kubernetes/rancher_workloads.png
    :align: center
 
-Enter in the details page of the Artemis workload and then select Edit in the three dot menu
+Enter the details page of the Artemis workload and then select Edit in the three dot menu
 
 .. figure:: kubernetes/workload_edit.png
    :align: center
@@ -386,4 +385,4 @@ Expand the ``Environment Variables`` menu. After pressing the ``Add Variable`` b
 .. figure:: kubernetes/workload_set_environment_variable.png
    :align: center
 
-You can add as many varibales as you want. Once you are done you can save your changes which will trigger the Redeploy the application.
+You can add as many variables as you want. Once you are done you can save your changes which will trigger the Redeploy of the application.
