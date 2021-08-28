@@ -33,12 +33,6 @@ describe('Quiz Exercise Management', () => {
         });
     });
 
-    beforeEach('New UID', () => {
-        uid = generateUUID();
-        quizExerciseName = 'Cypress Quiz ' + uid;
-        cy.login(admin);
-    });
-
     afterEach('Delete Quiz', () => {
         cy.login(admin);
         courseManagementRequest.deleteQuizExercise(quizExercise.id);
@@ -51,6 +45,9 @@ describe('Quiz Exercise Management', () => {
 
     describe('Quiz exercise participation', () => {
         beforeEach('Create quiz exercise', () => {
+            uid = generateUUID();
+            quizExerciseName = 'Cypress Quiz ' + uid;
+            cy.login(admin);
             courseManagementRequest.createQuizExercise(quizExerciseName, dayjs(), { course }).then((quizResponse) => {
                 quizExercise = quizResponse.body;
             });
