@@ -201,6 +201,8 @@ c. Put ``artemis`` as namespace's name and select the ``Create`` button
 Create DockerHub Repository
 ---------------------------
 The Artemis image will be stored and managed in DockerHub. Kubernetes will pull it from there and deploy it afterwards.
+This approach should not be used in production since the Docker image will contain all configuation secrets in the ``application-*.yml`` files. Instead, private Docker registry should be used.
+
 After you log in to your `DockerHub <https://hub.docker.com/>`__ account you can create as many public repositories as you want.
 In order to create a repository you need to select the ``Create repository`` button.
 
@@ -337,7 +339,7 @@ In the console you will see that the resources are created. It will take a litte
 .. figure:: kubernetes/kubectl_kustomization.png
    :align: center
 
-Check the deployments in Rancher
+Check the Deployments in Rancher
 --------------------------------
 Open Rancher using `<https://rancher.localhost/>`__ and navigate to your cluster.
 
