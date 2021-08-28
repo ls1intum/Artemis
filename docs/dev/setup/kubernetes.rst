@@ -267,7 +267,7 @@ If you want to run with local user management and no programming exercises setup
    ::
 
       data:
-         artemis.user-management.use-external: false
+         artemis.user-management.use-external: "false"
  
 
 2. Remove the jira profile from the ``SPRING_PROFILES_ACTIVE`` field in the ConfigMap found at ``src/main/kubernetes/artemis/configmap/artemis-configmap.yml``
