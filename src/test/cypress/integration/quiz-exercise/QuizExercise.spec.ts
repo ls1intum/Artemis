@@ -71,7 +71,7 @@ describe('Quiz Exercise Management', () => {
         });
     });
 
-    describe('Quiz Exercise deletion', () => {
+    describe.only('Quiz Exercise deletion', () => {
         let quizExercise: any;
 
         beforeEach('Create Quiz Exercise', () => {
@@ -88,7 +88,7 @@ describe('Quiz Exercise Management', () => {
             cy.get('#delete-quiz-' + quizExercise.id).click();
             cy.get('.form-control').type(quizExercise.title);
             cy.intercept(DELETE, '/api/quiz-exercises/*').as('deleteQuizQuery');
-            cy.get('.modal-footer').contains('Delete').click();
+            cy.get('.modal-footer').find('.btn-danger').click();
             cy.wait('@deleteQuizQuery');
         });
     });
