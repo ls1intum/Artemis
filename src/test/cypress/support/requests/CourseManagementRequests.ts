@@ -6,7 +6,6 @@ import examTemplate from '../../fixtures/requests/exam_template.json';
 import day from 'dayjs';
 import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
-import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
