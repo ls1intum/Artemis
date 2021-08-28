@@ -1,7 +1,6 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
 import { POST } from '../../support/constants';
-import dayjs from 'dayjs';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -77,7 +76,7 @@ describe('Quiz Exercise Management', () => {
         let quizExercise: any;
 
         beforeEach('Create Quiz Exercise', () => {
-            courseManagementRequest.createQuizExercise(quizExerciseName, dayjs(), { course }).then((quizResponse) => {
+            courseManagementRequest.createQuizExercise({ course }, quizExerciseName).then((quizResponse) => {
                 quizExercise = quizResponse?.body;
             });
         });

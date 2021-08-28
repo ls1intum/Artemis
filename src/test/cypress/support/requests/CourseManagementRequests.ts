@@ -9,6 +9,7 @@ import textExerciseTemplate from '../../fixtures/requests/textExercise_template.
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
 import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
+import dayjs from 'dayjs';
 
 const COURSE_BASE = BASE_API + 'courses/';
 const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
@@ -198,7 +199,7 @@ export class CourseManagementRequests {
         });
     }
 
-    createQuizExercise(title: string, releaseDate: day.Dayjs, body: { course: any } | { exerciseGroup: any }, quizQuestions: any = [multipleChoiceTemplate]) {
+    createQuizExercise(body: { course: any } | { exerciseGroup: any }, title = 'Cypress Quiz', releaseDate = dayjs(), quizQuestions: any = [multipleChoiceTemplate]) {
         const quizExercise = {
             ...quizTemplate,
             releaseDate: dayjsToString(releaseDate),

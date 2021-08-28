@@ -1,6 +1,5 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
-import dayjs from 'dayjs';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -48,7 +47,7 @@ describe('Quiz Exercise Management', () => {
             uid = generateUUID();
             quizExerciseName = 'Cypress Quiz ' + uid;
             cy.login(admin);
-            courseManagementRequest.createQuizExercise(quizExerciseName, dayjs(), { course }).then((quizResponse) => {
+            courseManagementRequest.createQuizExercise( { course }, quizExerciseName).then((quizResponse) => {
                 quizExercise = quizResponse.body;
             });
         });
