@@ -602,7 +602,7 @@ public class ProgrammingExerciseService {
             fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
         }
         else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT && programmingExercise.getProjectType() == ProjectType.XCODE) {
-            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${shortName}", programmingExercise.getShortName();
+            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${shortName}", programmingExercise.getShortName());
             fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${shortName}", programmingExercise.getShortName());
         }
 
