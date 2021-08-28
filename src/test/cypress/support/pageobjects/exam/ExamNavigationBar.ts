@@ -22,6 +22,7 @@ export class ExamNavigationBar {
      */
     handInEarly() {
         this.getNavigationBarRoot().find('.btn-danger').click();
+        cy.get('[jhitranslate="artemisApp.examParticipation.handInEarlyNoticeFirstSentence"]').should('be.visible');
     }
 
     /**

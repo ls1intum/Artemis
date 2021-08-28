@@ -7,7 +7,7 @@ export class ExamStartEndPage {
     }
 
     setConfirmCheckmark(timeout?: number) {
-        cy.get('#confirmBox', { timeout }).click();
+        cy.get('#confirmBox', { timeout }).check();
     }
 
     pressStart() {

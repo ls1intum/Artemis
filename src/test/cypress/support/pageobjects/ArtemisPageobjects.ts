@@ -1,4 +1,4 @@
-import { TextEditor } from './TextEditor';
+import { TextEditorPage } from './exercises/text/TextEditorPage';
 import { ExamNavigationBar } from './exam/ExamNavigationBar';
 import { CourseOverviewPage } from './course/CourseOverviewPage';
 import { CoursesPage } from './course/CoursesPage';
@@ -30,5 +30,5 @@ export class ArtemisPageobjects {
     createModelingExercise = new CreateModelingExercisePage();
     modelingExerciseAssessmentEditor = new ModelingExerciseAssessmentEditor();
     modelingEditor = new ModelingEditor();
-    textEditor = new TextEditor();
+    textEditor = new TextEditorPage();
 }

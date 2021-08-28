@@ -1,4 +1,4 @@
-import { GET, GROUP_SYNCHRONIZATION } from './../../support/constants';
+import { GET, BASE_API } from './../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
@@ -39,7 +39,6 @@ describe('Exam participation', () => {
         cy.login(users.getAdmin());
         courseRequests.createCourse(courseName, courseShortName).then((response) => {
             course = response.body;
-            cy.wait(GROUP_SYNCHRONIZATION);
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
@@ -64,27 +63,20 @@ describe('Exam participation', () => {
     });
 
     it('Participates as a student in a registered exam', () => {
-        navigateToExam();
         startParticipation();
         openTextExercise();
         makeTextExerciseSubmission();
-        openProgrammingExercise();
         makeProgrammingExerciseSubmission();
         handInEarly();
         verifyFinalPage();
     });
 
-    function navigateToExam() {
+    function startParticipation() {
         cy.login(student, '/');
         courses.openCourse(courseName);
         courseOverview.openExamsTab();
         courseOverview.openExam(examTitle);
         cy.url().should('contain', `/exams/${exam.id}`);
-    }
-
-    function startParticipation() {
-        examStartEnd.setConfirmCheckmark();
-        examStartEnd.enterFirstnameLastname();
         examStartEnd.startExam();
     }
 
@@ -93,15 +85,11 @@ describe('Exam participation', () => {
     }
 
     function makeTextExerciseSubmission() {
-        artemis.pageobjects.textEditor.typeSubmission(submissionText);
-        cy.intercept('PUT', `/api/exercises/*/text-submissions`).as('savedSubmission');
-        cy.contains('Save').click();
-        cy.wait('@savedSubmission').its('request.body.text').should('eq', submissionText);
-    }
-
-    function openProgrammingExercise() {
-        cy.intercept(GET, '/api/repository/*/files').as('getFiles');
-        examNavigation.navigateRight();
+        const textEditor = artemis.pageobjects.textEditor;
+        textEditor.typeSubmission(submissionText);
+        // Loading the content of the existing files might take some time so we wait for the return of the request here
+        cy.intercept(GET, BASE_API + 'repository/*/files').as('getFiles');
+        textEditor.saveAndContinue().its('request.body.text').should('eq', submissionText);
         cy.wait('@getFiles').its('response.statusCode').should('eq', 200);
     }
 
@@ -122,9 +110,6 @@ describe('Exam participation', () => {
 
     function handInEarly() {
         examNavigation.handInEarly();
-        cy.get('[jhitranslate="artemisApp.examParticipation.handInEarlyNoticeFirstSentence"]').should('be.visible');
-        examStartEnd.setConfirmCheckmark();
-        examStartEnd.enterFirstnameLastname();
         examStartEnd.finishExam().its('response.statusCode').should('eq', 200);
     }
 
