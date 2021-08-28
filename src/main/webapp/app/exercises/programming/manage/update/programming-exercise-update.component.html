@@ -214,7 +214,7 @@
                 #packageName="ngModel"
             />
             <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
-                <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
+                <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched) && ProjectType.XCODE !== selectedProjectType" class="alert alert-danger">
                     <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
                 </div>
             </ng-container>
