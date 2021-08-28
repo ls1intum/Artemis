@@ -76,7 +76,7 @@ describe('Exam Assessment', () => {
             courseManagementRequests.deleteExam(course, exam);
         });
 
-        it('assess a modeling exercise submission', () => {
+        it('Assess a modeling exercise submission', () => {
             courseManagementRequests.createModelingExercise(modelingExerciseTemplate, { exerciseGroup }).then((modelingResponse) => {
                 const modelingExercise = modelingResponse.body;
                 courseManagementRequests.generateMissingIndividualExams(course, exam);
@@ -108,7 +108,7 @@ describe('Exam Assessment', () => {
             });
         });
 
-        it('assess a text exercise submission', () => {
+        it('Assess a text exercise submission', () => {
             courseManagementRequests.createTextExercise('Cypress Text Exercise', { exerciseGroup }).then(() => {
                 courseManagementRequests.generateMissingIndividualExams(course, exam);
                 courseManagementRequests.prepareExerciseStartForExam(course, exam);
