@@ -137,14 +137,6 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: ':courseId/text-exercises/:exerciseId/text-cluster-statistics',
-        component: ClusterStatisticsComponent,
-        resolve: {
-            exercise: TextExerciseResolver,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.textExercise.clusterStatistics.title',
-        },
-        canActivate: [UserRouteAccessService],
+        loadChildren: () => import('../cluster-statistics/cluster-statistics.module').then((m) => m.ArtemisTextClusterStatisticsModule),
     },
 ];

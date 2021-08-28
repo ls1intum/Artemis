@@ -44,10 +44,6 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'course-management/:courseId/text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
                     loadChildren: () => import('./exercises/text/manage/example-text-submission/example-text-submission.module').then((m) => m.ArtemisExampleTextSubmissionModule),
                 },
-                {
-                    path: 'course-management/:courseId/text-exercises/:exerciseId/text-cluster-statistics',
-                    loadChildren: () => import('./exercises/text/manage/cluster-statistics/cluster-statistics.module').then((m) => m.ArtemisTextClusterStatisticsModule),
-                },
                 // ===== COURSES =====
                 {
                     path: 'courses/:courseId/programming-exercises/:exerciseId/code-editor',

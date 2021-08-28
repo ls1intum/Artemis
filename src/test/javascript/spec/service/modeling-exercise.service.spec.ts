@@ -7,14 +7,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { routes } from 'app/exercises/modeling/manage/modeling-exercise.route';
-import { RouterTestingModule } from '@angular/router/testing';
-import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import * as moment from 'moment';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
-import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ArtemisTestModule } from '../test.module';
 
 describe('ModelingExercise Service', () => {
     let injector: TestBed;
@@ -26,11 +24,12 @@ describe('ModelingExercise Service', () => {
     const categories = [JSON.stringify(category) as ExerciseCategory];
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisModelingExerciseModule, HttpClientTestingModule, RouterTestingModule.withRoutes(routes), ArtemisTextExerciseModule],
+            imports: [ArtemisTestModule, HttpClientTestingModule],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                ExerciseService,
             ],
         });
         injector = getTestBed();
