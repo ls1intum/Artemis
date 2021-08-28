@@ -78,7 +78,7 @@ describe('Quiz Exercise Management', () => {
             multipleChoiceQuiz.tickAnswerOption(0);
             multipleChoiceQuiz.tickAnswerOption(2);
             multipleChoiceQuiz.submit();
-            cy.get('.quiz-submitted-overlay > span').should('contain.text', 'Your answers have been successfully submitted!');
+            cy.get('[jhitranslate="artemisApp.quizExercise.successfullySubmittedText"]').should('be.visible');
         });
     });
 });
