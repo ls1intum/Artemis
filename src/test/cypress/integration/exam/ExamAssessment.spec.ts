@@ -108,25 +108,24 @@ describe('Exam Assessment', () => {
             });
         });
 
-        it('Assess a text exercise submission', () => {
-            courseManagementRequests.createTextExercise('Cypress Text Exercise', { exerciseGroup }).then(() => {
-                courseManagementRequests.generateMissingIndividualExams(course, exam);
-                courseManagementRequests.prepareExerciseStartForExam(course, exam);
-                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                examStartEnd.startExam();
-                cy.contains('Cypress Text Exercise').click();
-                cy.get('#text-editor-tab').type(textSubmission.text);
-                cy.contains('Save').click();
-                cy.get('#exam-navigation-bar').find('.btn-danger').click();
-                examStartEnd.finishExam();
-                cy.login(tutor, '/course-management/' + course.id + '/exams');
-                cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
-                assessmentDashboard.startAssessing();
-                assessmentDashboard.addNewFeedback(7, 'Good job');
-                assessmentDashboard.submitAssessment();
-                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                cy.get('.question-options').contains('7 of 10 points').should('be.visible');
-            });
+        it.only('Assess a text exercise submission', () => {
+            courseManagementRequests.createTextExercise('Cypress Text Exercise', { exerciseGroup });
+            courseManagementRequests.generateMissingIndividualExams(course, exam);
+            courseManagementRequests.prepareExerciseStartForExam(course, exam);
+            cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+            examStartEnd.startExam();
+            cy.contains('Cypress Text Exercise').click();
+            cy.get('#text-editor-tab').type(textSubmission.text);
+            cy.contains('Save').click();
+            cy.get('#exam-navigation-bar').find('.btn-danger').click();
+            examStartEnd.finishExam();
+            cy.login(tutor, '/course-management/' + course.id + '/exams');
+            cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
+            assessmentDashboard.startAssessing();
+            assessmentDashboard.addNewFeedback(7, 'Good job');
+            assessmentDashboard.submitAssessment();
+            cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+            cy.get('.question-options').contains('7 of 10 points').should('be.visible');
         });
     });
 
