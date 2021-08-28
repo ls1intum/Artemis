@@ -34,7 +34,7 @@
                         </button>
                     </div>
                     <p>&nbsp;</p>
-                    <div class="drag-and-drop-quizStatistic-picture">
+                    <div class="drag-and-drop-quizStatistic-picture col-md-8 offset-md-2">
                         <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath"></jhi-secured-image>
                         <div class="click-layer">
                             <div *ngIf="!showSolution">
@@ -42,10 +42,10 @@
                                     class="drop-location"
                                     *ngFor="let dropLocation of question.dropLocations; let i = index"
                                     [ngStyle]="{
-                                        top: (dropLocation.posY! / 2).toString() + '%',
-                                        left: (dropLocation.posX! / 2).toString() + '%',
-                                        width: (dropLocation.width! / 2).toString() + '%',
-                                        height: (dropLocation.height! / 2).toString() + '%'
+                                        top: dropLocation.posY! / 2 + '%',
+                                        left: dropLocation.posX! / 2 + '%',
+                                        width: dropLocation.width! / 2 + '%',
+                                        height: dropLocation.height! / 2 + '%'
                                     }"
                                 >
                                     <div class="letter">
@@ -61,10 +61,10 @@
                                     class="drop-location solution"
                                     *ngFor="let dropLocation of question.dropLocations; let i = index"
                                     [ngStyle]="{
-                                        top: (dropLocation.posY! / 2).toString() + '%',
-                                        left: (dropLocation.posX! / 2).toString() + '%',
-                                        width: (dropLocation.width! / 2).toString() + '%',
-                                        height: (dropLocation.height! / 2).toString() + '%'
+                                        top: dropLocation.posY! / 2 + '%',
+                                        left: dropLocation.posX! / 2 + '%',
+                                        width: dropLocation.width! / 2 + '%',
+                                        height: dropLocation.height! / 2 + '%'
                                     }"
                                 >
                                     <div class="letter-solution">

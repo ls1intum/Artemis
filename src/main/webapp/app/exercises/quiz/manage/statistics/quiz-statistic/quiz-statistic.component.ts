@@ -96,7 +96,7 @@ export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimatio
                 const meta = chartInstance.getDatasetMeta(datasetIndex);
                 meta.data.forEach((bar: any, dataIndex: number) => {
                     const data = round(dataset.data[dataIndex], 2).toString();
-                    const dataPercentage = round(dataset.data[dataIndex] / participants, 3) * 100 || 0;
+                    const dataPercentage = round((dataset.data[dataIndex] / participants) * 100 || 0, 1);
                     ctx.fillText(data, bar._model.x, bar._model.y - 20);
                     ctx.fillText(`(${dataPercentage}%)`, bar._model.x, bar._model.y - 5);
                 });
