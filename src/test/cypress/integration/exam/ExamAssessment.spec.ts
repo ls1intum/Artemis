@@ -109,12 +109,13 @@ describe('Exam Assessment', () => {
         });
 
         it.only('Assess a text exercise submission', () => {
-            courseManagementRequests.createTextExercise('Cypress Text Exercise', { exerciseGroup });
+            const exerciseTitle = 'Cypress Text Exercise';
+            courseManagementRequests.createTextExercise(exerciseTitle, { exerciseGroup });
             courseManagementRequests.generateMissingIndividualExams(course, exam);
             courseManagementRequests.prepareExerciseStartForExam(course, exam);
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
             examStartEnd.startExam();
-            cy.contains('Cypress Text Exercise').click();
+            cy.contains(exerciseTitle).click();
             cy.get('#text-editor-tab').type(textSubmission.text);
             cy.contains('Save').click();
             cy.get('#exam-navigation-bar').find('.btn-danger').click();
