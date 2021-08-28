@@ -5,7 +5,8 @@
 <ng-template #longText>
     <div *ngIf="isCollapsed; else opened">
         <fa-icon class="fa-angle" [icon]="'angle-right'" (click)="isCollapsed = !isCollapsed"></fa-icon>
-        {{ text.substring(0, 100) }} ...
+        <!-- Only show first line as preview -->
+        {{ text.split('\n', 1)[0] }} ...
     </div>
     <ng-template #opened>
         <div class="feedback-text">

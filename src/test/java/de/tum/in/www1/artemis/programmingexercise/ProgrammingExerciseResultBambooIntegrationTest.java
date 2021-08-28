@@ -78,6 +78,10 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
             assertThat(scaReports.size()).isEqualTo(4);
             scaReports.get(0).getIssues().forEach(issue -> assertThat(issue.getCategory()).isNotNull());
         }
+        else if (programmingLanguage == ProgrammingLanguage.C) {
+            assertThat(scaReports.size()).isEqualTo(5);
+            scaReports.get(0).getIssues().forEach(issue -> assertThat(issue.getCategory()).isNotNull());
+        }
         programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification, programmingLanguage);
     }
 
