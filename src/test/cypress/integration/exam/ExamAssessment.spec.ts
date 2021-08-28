@@ -56,8 +56,8 @@ describe('Exam Assessment', () => {
             cy.login(admin);
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
-                .visibleDate(dayjs().subtract(3, 'days'))
-                .startDate(dayjs().subtract(3, 'hours'))
+                .visibleDate(dayjs())
+                .startDate(dayjs())
                 .endDate(dayjs().add(30, 'seconds'))
                 .publishResultsDate(dayjs().add(35, 'seconds'))
                 .gracePeriod(1)
@@ -145,8 +145,8 @@ describe('Exam Assessment', () => {
             cy.login(admin);
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
-                .visibleDate(dayjs().subtract(3, 'days'))
-                .startDate(dayjs().subtract(3, 'hours'))
+                .visibleDate(dayjs())
+                .startDate(dayjs())
                 .endDate(dayjs().add(examEnd, 'seconds'))
                 .publishResultsDate(dayjs().add(examEnd + 1, 'seconds'))
                 .gracePeriod(0)
