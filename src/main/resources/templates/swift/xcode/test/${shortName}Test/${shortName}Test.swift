@@ -1,4 +1,6 @@
 //
+//  ${shortName}Tests.swift
+//  ${shortName}
 //
 //  Created by Daniel Kainz on 06.08.21.
 //

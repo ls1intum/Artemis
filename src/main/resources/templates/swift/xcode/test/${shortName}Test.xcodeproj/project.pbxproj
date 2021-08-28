@@ -12,15 +12,15 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		4F44754626BD9016004E6064 /* ${shortName}Test.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ${shortName}Test.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		4F44754A26BD9016004E6064 /* ${shortName}Test.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ${shortName}Test.swift; sourceTree = "<group>"; };
+		4F44754626BD9016004E6064 /* ${shortName}Test.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "${shortName}Test.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4F44754A26BD9016004E6064 /* ${shortName}Test.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "${shortName}Test.swift"; sourceTree = "<group>"; };
 		4F44754C26BD9016004E6064 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		4F44755126BD9016004E6064 /* ${shortName}UITest.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ${shortName}UITest.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		4F44755526BD9016004E6064 /* ${shortName}UITest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ${shortName}UITest.swift; sourceTree = "<group>"; };
+		4F44755126BD9016004E6064 /* ${shortName}UITest.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "${shortName}UITest.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4F44755526BD9016004E6064 /* ${shortName}UITest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "${shortName}UITest.swift"; sourceTree = "<group>"; };
 		4F44755726BD9016004E6064 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		5E88C3E226C15952006E704E /* ${shortName}.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = ${shortName}.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5E88C3E226C15952006E704E /* ${shortName}.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = "${shortName}.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5E88C3E426C15B2D006E704E /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
-		5EAADF4C26BDBE3B0037A6DA /* ${shortName}.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = ${shortName}.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5EAADF4C26BDBE3B0037A6DA /* ${shortName}.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = "${shortName}.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,7 +66,7 @@
 				4F44754A26BD9016004E6064 /* ${shortName}Test.swift */,
 				4F44754C26BD9016004E6064 /* Info.plist */,
 			);
-			path = ${shortName}Test;
+			path = "${shortName}Test";
 			sourceTree = "<group>";
 		};
 		4F44755426BD9016004E6064 /* ${shortName}UITest */ = {
@@ -75,7 +75,7 @@
 				4F44755526BD9016004E6064 /* ${shortName}UITest.swift */,
 				4F44755726BD9016004E6064 /* Info.plist */,
 			);
-			path = ${shortName}UITest;
+			path = "${shortName}UITest";
 			sourceTree = "<group>";
 		};
 		5EAADF4B26BDBE3B0037A6DA /* Frameworks */ = {
@@ -103,8 +103,8 @@
 			);
 			dependencies = (
 			);
-			name = ${shortName}Test;
-			productName = ${shortName}TestTests;
+			name = "${shortName}Test";
+			productName = XpenseTestTests;
 			productReference = 4F44754626BD9016004E6064 /* ${shortName}Test.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
@@ -120,8 +120,8 @@
 			);
 			dependencies = (
 			);
-			name = ${shortName}UITest;
-			productName = ${shortName}TestUITests;
+			name = "${shortName}UITest";
+			productName = XpenseTestUITests;
 			productReference = 4F44755126BD9016004E6064 /* ${shortName}UITest.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
@@ -320,14 +320,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				INFOPLIST_FILE = ${shortName}Test/Info.plist;
+				INFOPLIST_FILE = XpenseTest/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = de.tum.in.ase.${shortName}Test;
+				PRODUCT_BUNDLE_IDENTIFIER = de.tum.in.ase;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SCAN_ALL_SOURCE_FILES_FOR_INCLUDES = YES;
 				SWIFT_VERSION = 5.0;
@@ -340,14 +340,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				INFOPLIST_FILE = ${shortName}Test/Info.plist;
+				INFOPLIST_FILE = XpenseTest/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = de.tum.in.ase.${shortName}Test;
+				PRODUCT_BUNDLE_IDENTIFIER = de.tum.in.ase;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SCAN_ALL_SOURCE_FILES_FOR_INCLUDES = YES;
 				SWIFT_VERSION = 5.0;
@@ -361,13 +361,13 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "";
-				INFOPLIST_FILE = ${shortName}UITest/Info.plist;
+				INFOPLIST_FILE = XpenseUITest/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = de.tum.in.ase.${shortName}UITest;
+				PRODUCT_BUNDLE_IDENTIFIER = de.tum.in.ase;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SCAN_ALL_SOURCE_FILES_FOR_INCLUDES = YES;
 				SWIFT_VERSION = 5.0;
@@ -380,13 +380,13 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "";
-				INFOPLIST_FILE = ${shortName}UITest/Info.plist;
+				INFOPLIST_FILE = XpenseUITest/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = de.tum.in.ase.${shortName}UITest;
+				PRODUCT_BUNDLE_IDENTIFIER = de.tum.in.ase;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SCAN_ALL_SOURCE_FILES_FOR_INCLUDES = YES;
 				SWIFT_VERSION = 5.0;

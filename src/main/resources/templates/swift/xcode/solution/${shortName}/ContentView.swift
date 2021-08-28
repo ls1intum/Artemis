@@ -1,5 +1,6 @@
 //
 //  ContentView.swift
+//  ${shortName}
 //
 //  Created by Daniel Kainz on 06.08.21.
 //
@@ -8,10 +9,10 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-	/*
-	 Task 2: 
-	 Greet the world!
-	*/
+        /*
+         Task 2:
+         Greet the world!
+        */
         Text(Greeting.greet())
             .padding()
     }

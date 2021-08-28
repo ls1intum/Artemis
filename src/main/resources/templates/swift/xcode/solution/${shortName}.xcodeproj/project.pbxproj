@@ -15,8 +15,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		4F4474F526BD8F87004E6064 /* ${shortName}.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ${shortName}.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		4F4474F826BD8F87004E6064 /* ${shortName}App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ${shortName}App.swift; sourceTree = "<group>"; };
+		4F4474F526BD8F87004E6064 /* ${shortName}.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "${shortName}.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4F4474F826BD8F87004E6064 /* ${shortName}App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "${shortName}App.swift"; sourceTree = "<group>"; };
 		4F4474FA26BD8F87004E6064 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		4F4474FC26BD8F8A004E6064 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4F4474FF26BD8F8A004E6064 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -61,7 +61,7 @@
 				4F4474FE26BD8F8A004E6064 /* Preview Content */,
 				4F44756926BD9060004E6064 /* Greeting.swift */,
 			);
-			path = ${shortName};
+			path = "${shortName}";
 			sourceTree = "<group>";
 		};
 		4F4474FE26BD8F8A004E6064 /* Preview Content */ = {
@@ -87,8 +87,8 @@
 			);
 			dependencies = (
 			);
-			name = ${shortName};
-			productName = ${shortName};
+			name = "${shortName}";
+			productName = Xpense;
 			productReference = 4F4474F526BD8F87004E6064 /* ${shortName}.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -276,13 +276,13 @@
 				DEVELOPMENT_ASSET_PATHS = "\"${shortName}/Preview Content\"";
 				DEVELOPMENT_TEAM = HCGRMUSJ2H;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = ${shortName}/Info.plist;
+				INFOPLIST_FILE = Xpense/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = de.tum.in.ase.${shortName};
+				PRODUCT_BUNDLE_IDENTIFIER = de.tum.in.ase;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -299,13 +299,13 @@
 				DEVELOPMENT_ASSET_PATHS = "\"${shortName}/Preview Content\"";
 				DEVELOPMENT_TEAM = HCGRMUSJ2H;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = ${shortName}/Info.plist;
+				INFOPLIST_FILE = Xpense/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = de.tum.in.ase.${shortName};
+				PRODUCT_BUNDLE_IDENTIFIER = de.tum.in.ase;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
