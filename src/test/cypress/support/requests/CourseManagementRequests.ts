@@ -11,6 +11,7 @@ import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_tem
 
 const COURSE_BASE = BASE_API + 'courses/';
 const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
+const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
 const oneDay = 24 * 60 * 60 * 1000;
 
 /**
@@ -191,7 +192,7 @@ export class CourseManagementRequests {
 
     deleteQuizExercise(exerciseId: number) {
         return cy.request({
-            url: `/api/quiz-exercises/${exerciseId}`,
+            url: QUIZ_EXERCISE_BASE + exerciseId,
             method: DELETE,
         });
     }
@@ -203,7 +204,7 @@ export class CourseManagementRequests {
         quizExercise.quizQuestions = quizQuestions;
         const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
         return cy.request({
-            url: '/api/quiz-exercises',
+            url: QUIZ_EXERCISE_BASE,
             method: POST,
             body: newQuizExercise,
         });
