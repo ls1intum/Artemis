@@ -69,9 +69,10 @@ describe('Programming Exercise Management', () => {
             cy.get('#jh-create-entity').click();
             cy.url().should('include', '/programming-exercises/new');
             cy.log('Filling out programming exercise info...');
-            const exerciseTitle = 'Cypress programming exercise ' + generateUUID();
+            const uid = generateUUID();
+            const exerciseTitle = 'Cypress programming exercise ' + uid;
             programmingCreation.setTitle(exerciseTitle);
-            programmingCreation.setShortName('cypress' + generateUUID());
+            programmingCreation.setShortName('cypress' + uid);
             programmingCreation.setPackageName('de.test');
 
             // Set release and due dates via owl date picker
