@@ -47,6 +47,11 @@ describe('Exam Assessment', () => {
         cy.login(admin);
     });
 
+    afterEach('Delete Exam', () => {
+        cy.login(admin);
+        courseManagementRequests.deleteExam(course, exam);
+    });
+
     after('Delete Course', () => {
         cy.login(admin);
         courseManagementRequests.deleteCourse(course.id);
@@ -72,12 +77,7 @@ describe('Exam Assessment', () => {
             });
         });
 
-        afterEach('Delete Exam', () => {
-            cy.login(admin);
-            courseManagementRequests.deleteExam(course, exam);
-        });
-
-        it.only('Assess a modeling exercise submission', () => {
+        it('Assess a modeling exercise submission', () => {
             courseManagementRequests.createModelingExercise(modelingExerciseTemplate, { exerciseGroup });
             courseManagementRequests.generateMissingIndividualExams(course, exam);
             courseManagementRequests.prepareExerciseStartForExam(course, exam);
@@ -132,7 +132,7 @@ describe('Exam Assessment', () => {
     describe('Exam Programming Exercise Assessment', () => {
         let programmingExerciseName: string;
         let programmingExerciseShortName: string;
-        const examEnd = 100 + Cypress.env('isBamboo') ? GROUP_SYNCHRONIZATION : 0;
+        const examEnd = (Cypress.env('isBamboo') ? (GROUP_SYNCHRONIZATION / 1000) : 0) + 115;
 
         before('Generate exercise names', () => {
             uid = generateUUID();
@@ -141,6 +141,7 @@ describe('Exam Assessment', () => {
         });
 
         beforeEach('Create Exam', () => {
+            cy.log(examEnd.toString());
             cy.login(admin);
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
@@ -157,11 +158,6 @@ describe('Exam Assessment', () => {
                     exerciseGroup = groupResponse.body;
                 });
             });
-        });
-
-        afterEach('Delete Exam', () => {
-            cy.login(admin);
-            courseManagementRequests.deleteExam(course, exam);
         });
 
         it('Assess a programming exercise submission (MANUAL)', () => {
