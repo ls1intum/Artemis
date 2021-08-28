@@ -8,16 +8,15 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisTestModule } from '../../test.module';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from '../../helpers/mocks/service/mock-text-editor.service';
 import * as sinonChai from 'sinon-chai';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { BehaviorSubject } from 'rxjs';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
@@ -29,10 +28,6 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { ComplaintsComponent } from 'app/complaints/complaints.component';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
-import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
-import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text-submission.service';
 import { Language } from 'app/entities/tutor-group.model';
@@ -41,6 +36,17 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-participate-info-box/team-participate-info-box.component';
+import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
+import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
+import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgModel } from '@angular/forms';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -69,18 +75,9 @@ describe('TextEditorComponent', () => {
         result.id = 1;
     });
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [
-                TranslateModule.forRoot(),
-                ArtemisTestModule,
-                ArtemisSharedModule,
-                ArtemisTeamModule,
-                ArtemisTeamSubmissionSyncModule,
-                ArtemisHeaderExercisePageWithDetailsModule,
-                RouterTestingModule.withRoutes([textEditorRoute[0]]),
-                RatingModule,
-            ],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([textEditorRoute[0]])],
             declarations: [
                 TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),
@@ -89,6 +86,16 @@ describe('TextEditorComponent', () => {
                 MockComponent(ComplaintsComponent),
                 MockComponent(ComplaintInteractionsComponent),
                 MockPipe(HtmlForMarkdownPipe),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(HeaderParticipationPageComponent),
+                MockComponent(ResizeableContainerComponent),
+                MockComponent(TeamParticipateInfoBoxComponent),
+                MockComponent(TeamSubmissionSyncComponent),
+                MockComponent(AdditionalFeedbackComponent),
+                MockComponent(RatingComponent),
+                MockComponent(AlertComponent),
+                MockComponent(FaIconComponent),
+                MockDirective(NgModel),
             ],
             providers: [
                 JhiAlertService,
@@ -97,6 +104,7 @@ describe('TextEditorComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TextSubmissionService, useClass: MockTextSubmissionService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })

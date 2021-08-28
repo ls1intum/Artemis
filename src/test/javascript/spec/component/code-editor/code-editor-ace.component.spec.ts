@@ -1,11 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement, EventEmitter } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
-import { TreeviewModule } from 'ngx-treeview';
 import { SinonStub, spy, stub } from 'sinon';
 import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -17,9 +15,9 @@ import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-ed
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -31,10 +29,10 @@ describe('CodeEditorAceComponent', () => {
     let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
     let loadRepositoryFileStub: SinonStub;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, TreeviewModule.forRoot(), ArtemisProgrammingManualAssessmentModule],
-            declarations: [CodeEditorAceComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, AceEditorModule],
+            declarations: [CodeEditorAceComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent)],
             providers: [
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },

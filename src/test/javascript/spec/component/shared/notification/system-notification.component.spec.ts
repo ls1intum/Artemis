@@ -9,11 +9,12 @@ import { SystemNotificationComponent } from 'app/shared/notification/system-noti
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,8 +38,8 @@ describe('System Notification Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule],
-            declarations: [SystemNotificationComponent],
+            imports: [ArtemisTestModule],
+            declarations: [SystemNotificationComponent, MockComponent(FaIconComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
