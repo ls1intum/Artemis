@@ -76,39 +76,37 @@ describe('Exam Assessment', () => {
             courseManagementRequests.deleteExam(course, exam);
         });
 
-        it('Assess a modeling exercise submission', () => {
-            courseManagementRequests.createModelingExercise(modelingExerciseTemplate, { exerciseGroup }).then((modelingResponse) => {
-                const modelingExercise = modelingResponse.body;
-                courseManagementRequests.generateMissingIndividualExams(course, exam);
-                courseManagementRequests.prepareExerciseStartForExam(course, exam);
-                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                examStartEnd.startExam();
-                cy.contains('Cypress Modeling Exercise').should('be.visible').click();
-                modelingEditor.addComponentToModel(1);
-                modelingEditor.addComponentToModel(2);
-                modelingEditor.addComponentToModel(3);
-                cy.intercept('PUT', '/api/exercises/' + modelingExercise.id + '/modeling-submissions').as('createModelingSubmission');
-                cy.contains('Save').click();
-                cy.wait('@createModelingSubmission');
-                cy.get('#exam-navigation-bar').find('.btn-danger').click();
-                examStartEnd.finishExam();
-                cy.login(tutor, '/course-management/' + course.id + '/exams');
-                cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
-                assessmentDashboard.startAssessing();
-                modelingAssessment.addNewFeedback(2, 'Noice');
-                modelingAssessment.openAssessmentForComponent(1);
-                modelingAssessment.assessComponent(1, 'Good');
-                modelingAssessment.openAssessmentForComponent(2);
-                modelingAssessment.assessComponent(0, 'Neutral');
-                modelingAssessment.openAssessmentForComponent(3);
-                modelingAssessment.assessComponent(-1, 'Wrong');
-                assessmentDashboard.submitAssessment();
-                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                cy.get('.question-options').contains('2 of 10 points').should('be.visible');
-            });
+        it.only('Assess a modeling exercise submission', () => {
+            courseManagementRequests.createModelingExercise(modelingExerciseTemplate, { exerciseGroup });
+            courseManagementRequests.generateMissingIndividualExams(course, exam);
+            courseManagementRequests.prepareExerciseStartForExam(course, exam);
+            cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+            examStartEnd.startExam();
+            cy.contains('Cypress Modeling Exercise').should('be.visible').click();
+            modelingEditor.addComponentToModel(1);
+            modelingEditor.addComponentToModel(2);
+            modelingEditor.addComponentToModel(3);
+            cy.intercept('PUT', '/api/exercises/*/modeling-submissions').as('createModelingSubmission');
+            cy.contains('Save').click();
+            cy.wait('@createModelingSubmission');
+            cy.get('#exam-navigation-bar').find('.btn-danger').click();
+            examStartEnd.finishExam();
+            cy.login(tutor, '/course-management/' + course.id + '/exams');
+            cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
+            assessmentDashboard.startAssessing();
+            modelingAssessment.addNewFeedback(2, 'Noice');
+            modelingAssessment.openAssessmentForComponent(1);
+            modelingAssessment.assessComponent(1, 'Good');
+            modelingAssessment.openAssessmentForComponent(2);
+            modelingAssessment.assessComponent(0, 'Neutral');
+            modelingAssessment.openAssessmentForComponent(3);
+            modelingAssessment.assessComponent(-1, 'Wrong');
+            assessmentDashboard.submitAssessment();
+            cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+            cy.get('.question-options').contains('2 of 10 points').should('be.visible');
         });
 
-        it.only('Assess a text exercise submission', () => {
+        it('Assess a text exercise submission', () => {
             const exerciseTitle = 'Cypress Text Exercise';
             courseManagementRequests.createTextExercise(exerciseTitle, { exerciseGroup });
             courseManagementRequests.generateMissingIndividualExams(course, exam);
