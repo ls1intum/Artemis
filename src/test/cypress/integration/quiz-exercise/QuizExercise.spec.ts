@@ -56,7 +56,7 @@ describe('Quiz Exercise Management', () => {
             quizCreation.addMultipleChoiceQuestion('MC Quiz' + uid);
             quizCreation.saveQuiz();
             cy.wait('@createQuizExercise').then((quizResponse) => {
-                quizExercise = quizResponse?.response?.body;
+                quizExercise = quizResponse.response?.body;
                 cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
                 cy.contains('MC Quiz' + uid).should('be.visible');
             });
@@ -67,7 +67,7 @@ describe('Quiz Exercise Management', () => {
             quizCreation.addShortAnswerQuestion('SA Quiz' + uid);
             quizCreation.saveQuiz();
             cy.wait('@createQuizExercise').then((quizResponse) => {
-                quizExercise = quizResponse?.response?.body;
+                quizExercise = quizResponse.response?.body;
                 cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
                 cy.contains('SA Quiz' + uid).should('be.visible');
             });
