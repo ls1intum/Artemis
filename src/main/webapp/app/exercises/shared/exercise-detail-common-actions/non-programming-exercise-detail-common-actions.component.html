@@ -51,6 +51,16 @@
             <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions">Example Submissions</span>
         </a>
 
+        <a
+            *ngIf="exercise.isAtLeastInstructor && exercise.type == 'text'"
+            [routerLink]="baseResource + 'text-cluster-statistics'"
+            class="btn btn-success btn-sm me-1"
+            style="margin-bottom: 10px"
+        >
+            <fa-icon [icon]="'chart-bar'"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.clusterStatistics.title">Cluster Statistics</span>
+        </a>
+
         <!-- Delete exercise -->
         <button
             *ngIf="exercise.isAtLeastInstructor"

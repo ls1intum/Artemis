@@ -29,7 +29,17 @@
             "checkPlagiarism": "Auf Plagiate prüfen",
             "exampleSubmissionsRequireExercise": "Um eine Beispielabgabe zu erstellen, musst du zunächst die Erstellung der Textaufgabe abschließen. Du wirst automatisch weitergeleitet.",
             "saveSuccessful": "Dein Antwort wurde erfolgreich gespeichert!",
-            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal."
+            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
+            "clusterStatistics": {
+                "title": "Cluster Statistik",
+                "clusterId": "Cluster ID",
+                "reusedFeedbackRatio": "Quote wiederverwendeter Feedbacks im Cluster",
+                "reusedFeedbackRatioTooltip": "Anzahl der wiederverwendeten automatischen Feedbacks / Clustergröße",
+                "action": "Aktion",
+                "disable": "Deaktivieren",
+                "enable": "Aktivieren",
+                "noClustersFound": "<b>Keine Textcluster für diese Aufgabe gefunden</b>"
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { getTestBed, TestBed, fakeAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
@@ -100,6 +100,20 @@ describe('TextExercise Service', () => {
             req.flush({ status: 200 });
             expect(requestResult.status).to.equal(200);
         });
+
+        it('should retrieve TextExercise cluster statistics', fakeAsync(() => {
+            service.getClusterStats(1).subscribe((resp) => (requestResult = resp));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush({ status: 200 });
+            expect(requestResult.status).to.equal(200);
+        }));
+
+        it('should set TextExercise cluster disabled predicate', fakeAsync(() => {
+            service.setClusterDisabledPredicate(1, true).subscribe((resp) => (requestResult = resp));
+            const req = httpMock.expectOne({ method: 'PATCH' });
+            req.flush({ status: 200 });
+            expect(requestResult.status).to.equal(200);
+        }));
     });
 
     afterEach(() => {
