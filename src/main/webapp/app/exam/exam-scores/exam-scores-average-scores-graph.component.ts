@@ -107,7 +107,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit, AfterViewI
             },
             title: {
                 display: true,
-                text: self.averageScores.title,
+                text: `Average scores of exercise group "${self.averageScores.title}" in comparison`,
             },
             responsive: true,
             hover: {
