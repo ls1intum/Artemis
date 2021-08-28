@@ -66,7 +66,14 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
     }
 
     open(): void {
-        this.modalRef = this.modalService.open(this.postingEditor, { size: 'lg' });
+        this.modalRef = this.modalService.open(this.postingEditor, {
+            size: 'lg',
+            backdrop: 'static',
+            beforeDismiss: () => {
+                this.resetFormGroup();
+                return true;
+            },
+        });
     }
 
     abstract updateModalTitle(): void;

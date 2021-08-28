@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsService } from 'app/shared/metis/postings.service';
+import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
 
 type EntityResponseType = HttpResponse<Post>;
 type EntityArrayResponseType = HttpResponse<Post[]>;
@@ -25,13 +26,6 @@ export class PostService extends PostingsService<Post> {
      */
     create(courseId: number, post: Post): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(post);
-        // as we need course information at server side, we need to make sure that the course id is set
-        if (post.lecture && post.lecture.course === undefined) {
-            post.lecture.course = { id: courseId };
-        }
-        if (post.exercise && post.exercise.course === undefined) {
-            post.exercise.course = { id: courseId };
-        }
         return this.http.post<Post>(`${this.resourceUrl}${courseId}/posts`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
     }
 
@@ -44,6 +38,53 @@ export class PostService extends PostingsService<Post> {
     update(courseId: number, post: Post): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(post);
         return this.http.put<Post>(`${this.resourceUrl}${courseId}/posts`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+    }
+
+    /**
+     * updates the display priority of a post
+     * @param {number} courseId
+     * @param {number} postId
+     * @param {DisplayPriority} displayPriority
+     * @return {Observable<EntityResponseType>}
+     */
+    updatePostDisplayPriority(courseId: number, postId: number, displayPriority: DisplayPriority): Observable<EntityResponseType> {
+        return this.http
+            .put(
+                `${this.resourceUrl}${courseId}/posts/${postId}/display-priority`,
+                {},
+                {
+                    params: { displayPriority },
+                    observe: 'response',
+                },
+            )
+            .pipe(map(this.convertDateFromServer));
+    }
+
+    /**
+     * gets all posts for course by its id, filtered by context if PostContextFilter is passed
+     * a context to filter posts for can be a course-wide topic, a lecture, or an exercise within a course
+     * @param {number} courseId
+     * @param {PostContextFilter} postContextFilter
+     * @return {Observable<EntityArrayResponseType>}
+     */
+    getPosts(courseId: number, postContextFilter: PostContextFilter): Observable<EntityArrayResponseType> {
+        let params = new HttpParams();
+        if (postContextFilter.courseWideContext) {
+            params = params.set('courseWideContext', postContextFilter.courseWideContext.toString());
+        }
+        if (postContextFilter.lectureId) {
+            params = params.set('lectureId', postContextFilter.lectureId.toString());
+        }
+        if (postContextFilter.exerciseId) {
+            console.log(postContextFilter.exerciseId.toString());
+            params = params.set('exerciseId', postContextFilter.exerciseId.toString());
+        }
+        return this.http
+            .get<Post[]>(`${this.resourceUrl}${courseId}/posts`, {
+                params,
+                observe: 'response',
+            })
+            .pipe(map(this.convertDateArrayFromServer));
     }
 
     /**

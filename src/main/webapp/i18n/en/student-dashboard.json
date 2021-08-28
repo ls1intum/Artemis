@@ -29,7 +29,8 @@
                 "exercises": "Exercises",
                 "statistics": "Statistics",
                 "lectures": "Lectures",
-                "exams": "Exams"
+                "exams": "Exams",
+                "discussion": "Discussion"
             },
             "exerciseList": {
                 "releaseDate": "Release Date",

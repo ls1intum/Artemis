@@ -68,7 +68,11 @@
                 "shortAnswerMapping": "Short Answer Mapping",
                 "programmingExerciseTestCase": "Programming Exercise Test Case",
                 "exerciseHint": "Exercise Hint",
-                "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
+                "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)",
+                "metis": {
+                    "post": "Post",
+                    "answerPost": "Reply"
+                }
             },
             "account": {
                 "main": "Account",
@@ -235,7 +239,6 @@
             "manageHints": "Manage Hints",
             "addExternalSubmission": "Add External Submission",
             "addAuxiliaryRepository": "Add Auxiliary Repository",
-            "discussion": "Discussions",
             "toggleToUnsubmitted": "Change Student Exam to Unsubmitted",
             "toggleToSubmitted": "Change Student Exam to Submitted"
         },
@@ -316,7 +319,8 @@
         "lectures": "Lectures",
         "exercise": "Exercise details",
         "statistics": "Course statistics",
-        "exams": "Exams"
+        "exams": "Exams",
+        "discussion": "Discussion"
     },
     "connectionStatus": {
         "connected": "Connected",

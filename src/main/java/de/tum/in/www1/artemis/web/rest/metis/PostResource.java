@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.metis;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -12,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.service.metis.PostService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -61,6 +64,22 @@ public class PostResource {
     public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @RequestBody Post post) {
         Post updatedPost = postService.updatePost(courseId, post);
         return new ResponseEntity<>(updatedPost, null, HttpStatus.OK);
+    }
+
+    /**
+     * PUT /courses/{courseId}/posts/{postId}/display-priority : Update the display priority of an existing post
+     *
+     * @param courseId          id of the course the post belongs to
+     * @param postId            id of the post change the displayPriority for
+     * @param displayPriority   new enum value for displayPriority, i.e. either PINNED, ARCHIVED, NONE
+     * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
+     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     */
+    @PutMapping("courses/{courseId}/posts/{postId}/display-priority")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
+        Post postWithUpdatedDisplayPriority = postService.changeDisplayPriority(courseId, postId, displayPriority);
+        return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
     }
 
     /**
@@ -115,10 +134,34 @@ public class PostResource {
      * or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @GetMapping("courses/{courseId}/posts")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<List<Post>> getAllPostsForCourse(@PathVariable Long courseId) {
-        List<Post> coursePosts = postService.getAllCoursePosts(courseId);
-        return new ResponseEntity<>(coursePosts, null, HttpStatus.OK);
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<Post>> getPostsForCourse(@PathVariable Long courseId, @RequestParam(required = false) CourseWideContext courseWideContext,
+            @RequestParam(required = false) Long exerciseId, @RequestParam(required = false) Long lectureId) {
+        // no filter -> get all posts in course
+        List<Post> posts = new ArrayList<Post>();
+        if (courseWideContext == null && exerciseId == null && lectureId == null) {
+            posts = postService.getAllCoursePosts(courseId);
+
+        }
+        // filter by course wide context
+        if (courseWideContext != null && exerciseId == null && lectureId == null) {
+            List<Post> coursePosts = postService.getAllPostsByCourseWideContext(courseId, courseWideContext);
+            return new ResponseEntity<>(coursePosts, null, HttpStatus.OK);
+        }
+        // filter by exercise
+        if (courseWideContext == null && exerciseId != null && lectureId == null) {
+            List<Post> coursePosts = postService.getAllExercisePosts(courseId, exerciseId);
+            return new ResponseEntity<>(coursePosts, null, HttpStatus.OK);
+        }
+        // filter by lecture
+        if (courseWideContext == null && exerciseId == null && lectureId != null) {
+            List<Post> coursePosts = postService.getAllLecturePosts(courseId, lectureId);
+            return new ResponseEntity<>(coursePosts, null, HttpStatus.OK);
+        }
+        else {
+            // TODO: throw error, cause more than one context filter is set
+        }
+        return new ResponseEntity<>(posts, null, HttpStatus.OK);
     }
 
     /**

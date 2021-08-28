@@ -1,17 +1,17 @@
 import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as sinon from 'sinon';
+import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
-import { CourseWideContext, Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { MockPostService } from '../../helpers/mocks/service/mock-post.service';
 import { MockAnswerPostService } from '../../helpers/mocks/service/mock-answer-post.service';
-import { MetisService, VOTE_EMOJI_ID } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/shared/metis/metis.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ArtemisTestModule } from '../../test.module';
 import { PostService } from 'app/shared/metis/post.service';
@@ -22,6 +22,7 @@ import { User } from 'app/core/user/user.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../helpers/mocks/service/mock-reaction.service';
 import { Reaction } from 'app/entities/metis/reaction.model';
+import { CourseWideContext, DisplayPriority, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -40,6 +41,7 @@ describe('Metis Service', () => {
     let post1: Post;
     let post2: Post;
     let post3: Post;
+    let post4: Post;
     let user1: User;
     let user2: User;
     let answerPost: AnswerPost;
@@ -65,10 +67,10 @@ describe('Metis Service', () => {
         postService = injector.get(PostService);
         answerPostService = injector.get(AnswerPostService);
         accountService = injector.get(AccountService);
-        metisServiceGetPostsForFilterSpy = spy(metisService, 'getPostsForFilter');
+        metisServiceGetPostsForFilterSpy = spy(metisService, 'getFilteredAndSortedPosts');
 
-        user1 = { id: 1, name: 'usersame1', login: 'login1' } as User;
-        user2 = { id: 2, name: 'usersame2', login: 'login2' } as User;
+        user1 = { id: 1, name: 'username1', login: 'login1' } as User;
+        user2 = { id: 2, name: 'username2', login: 'login2' } as User;
 
         reactionWithVoteEmoji = new Reaction();
         reactionWithVoteEmoji.emojiId = VOTE_EMOJI_ID;
@@ -81,6 +83,7 @@ describe('Metis Service', () => {
         post1.tags = ['tag1', 'tag2'];
         post1.author = user1;
         post1.creationDate = moment();
+        post1.displayPriority = DisplayPriority.PINNED;
 
         post2 = new Post();
         post2.id = 2;
@@ -89,6 +92,7 @@ describe('Metis Service', () => {
         post2.tags = ['tag1', 'tag2'];
         post2.author = user2;
         post2.creationDate = moment().subtract(1, 'day');
+        post2.displayPriority = DisplayPriority.NONE;
 
         post3 = new Post();
         post3.id = 3;
@@ -99,8 +103,20 @@ describe('Metis Service', () => {
         post3.courseWideContext = CourseWideContext.RANDOM;
         post3.creationDate = moment().subtract(2, 'day');
         post3.reactions = [reactionWithVoteEmoji];
+        post3.displayPriority = DisplayPriority.NONE;
 
-        const posts: Post[] = [post1, post2, post3];
+        post4 = new Post();
+        post4.id = 4;
+        post4.content = 'This is a test post';
+        post4.title = 'title';
+        post4.tags = ['tag1', 'tag2'];
+        post4.author = user2;
+        post4.courseWideContext = CourseWideContext.RANDOM;
+        post4.creationDate = moment().subtract(2, 'minute');
+        post4.reactions = [reactionWithVoteEmoji];
+        post4.displayPriority = DisplayPriority.ARCHIVED;
+
+        const posts: Post[] = [post1, post2, post3, post4];
 
         answerPost = new AnswerPost();
         answerPost.id = 1;
@@ -166,6 +182,28 @@ describe('Metis Service', () => {
             updatedPostSub.unsubscribe();
         }));
 
+        it('should pin a post', fakeAsync(() => {
+            const postServiceSpy = spy(postService, 'updatePostDisplayPriority');
+            const updatedPostSub = metisService.updatePostDisplayPriority(post1.id!, DisplayPriority.PINNED).subscribe((updatedPost) => {
+                expect(updatedPost).to.be.deep.equal({ id: post1.id, displayPriority: DisplayPriority.PINNED });
+            });
+            expect(postServiceSpy).to.have.been.called;
+            tick();
+            expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
+            updatedPostSub.unsubscribe();
+        }));
+
+        it('should archive a post', fakeAsync(() => {
+            const postServiceSpy = spy(postService, 'updatePostDisplayPriority');
+            const updatedPostSub = metisService.updatePostDisplayPriority(post1.id!, DisplayPriority.ARCHIVED).subscribe((updatedPost) => {
+                expect(updatedPost).to.be.deep.equal({ id: post1.id, displayPriority: DisplayPriority.ARCHIVED });
+            });
+            expect(postServiceSpy).to.have.been.called;
+            tick();
+            expect(metisServiceGetPostsForFilterSpy).to.have.been.called;
+            updatedPostSub.unsubscribe();
+        }));
+
         it('should get correct list of posts when set', fakeAsync(() => {
             metisService.setPosts([post1]);
             tick();
@@ -184,25 +222,25 @@ describe('Metis Service', () => {
 
         it('should get posts for lecture filter', () => {
             const postServiceSpy = spy(postService, 'getAllPostsByLectureId');
-            metisService.getPostsForFilter({ lecture: lectureDefault });
+            metisService.getFilteredAndSortedPosts({ lectureId: lectureDefault.id }, {});
             expect(postServiceSpy).to.have.been.called;
         });
 
         it('should get posts for exercise filter', () => {
             const postServiceSpy = spy(postService, 'getAllPostsByExerciseId');
-            metisService.getPostsForFilter({ exercise: exerciseDefault });
+            metisService.getFilteredAndSortedPosts({ exerciseId: exerciseDefault.id }, {});
             expect(postServiceSpy).to.have.been.called;
         });
 
         it('should get posts for course-context filter', () => {
             const postServiceSpy = spy(postService, 'getAllPostsByCourseId');
-            metisService.getPostsForFilter({ courseWideContext: CourseWideContext.RANDOM });
+            metisService.getFilteredAndSortedPosts({ courseWideContext: CourseWideContext.RANDOM }, {});
             expect(postServiceSpy).to.have.been.called;
         });
 
         it('should get posts for course', () => {
             const postServiceSpy = spy(postService, 'getAllPostsByCourseId');
-            metisService.getPostsForFilter({});
+            metisService.getFilteredAndSortedPosts({ courseId: courseDefault.id }, {});
             expect(postServiceSpy).to.have.been.called;
         });
     });
@@ -259,12 +297,6 @@ describe('Metis Service', () => {
             tick();
             expect(reactionServiceSpy).to.have.been.called;
         }));
-    });
-
-    it('should sort posts', () => {
-        // first is the post with highest voteEmoji count, second is newest post, third is oldest post
-        const sortedPosts: Post[] = [post3, post2, post1];
-        expect(MetisService.sortPosts([post1, post2, post3])).to.be.deep.equal(sortedPosts);
     });
 
     it('should determine that metis user is at least tutor in course', () => {

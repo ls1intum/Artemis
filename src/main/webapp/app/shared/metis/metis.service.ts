@@ -1,7 +1,5 @@
-import { CourseWideContext, Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { Exercise } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
 import { BehaviorSubject, map, Observable, tap } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
@@ -13,25 +11,25 @@ import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
-
-interface PostFilter {
-    exercise?: Exercise;
-    lecture?: Lecture;
-    courseWideContext?: CourseWideContext;
-}
-
-export const VOTE_EMOJI_ID = 'heavy_plus_sign';
+import { DisplayPriority, PageType, PostContextFilter, PostSortFilter } from 'app/shared/metis/metis.util';
 
 @Injectable()
 export class MetisService {
     private posts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([]);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
-    private courseId: number;
-    private currentPostFilter?: PostFilter;
+    private currentPostContextFilter: PostContextFilter = {};
+    private currentPostSortFilter: PostSortFilter = {};
     private user: User;
+    private pageType: PageType = PageType.OVERVIEW;
     private course: Course;
+    private courseId: number;
 
-    constructor(private postService: PostService, private answerPostService: AnswerPostService, private reactionService: ReactionService, private accountService: AccountService) {
+    constructor(
+        protected postService: PostService,
+        protected answerPostService: AnswerPostService,
+        protected reactionService: ReactionService,
+        protected accountService: AccountService,
+    ) {
         this.accountService.identity().then((user: User) => {
             this.user = user!;
         });
@@ -45,6 +43,14 @@ export class MetisService {
         return this.tags$.asObservable();
     }
 
+    getPageType(): PageType {
+        return this.pageType;
+    }
+
+    setPageType(pageType: PageType) {
+        this.pageType = pageType;
+    }
+
     getUser(): User {
         return this.user;
     }
@@ -53,10 +59,16 @@ export class MetisService {
         return this.course;
     }
 
+    /**
+     * Set course property before using metis service.
+     * @param course
+     */
     setCourse(course: Course) {
-        this.course = course;
-        this.courseId = course.id!;
-        this.updateCoursePostTags();
+        if (this.courseId === undefined || this.courseId !== course.id) {
+            this.courseId = course.id!;
+            this.course = course;
+            this.updateCoursePostTags();
+        }
     }
 
     /**
@@ -82,51 +94,47 @@ export class MetisService {
     /**
      * fetches all posts for a course, optionally fetching posts only for a certain context, i.e. a lecture, exercise or specified course-wide-context,
      * informs all components that subscribed on posts by sending out the sorted, newly fetched posts
-     * @param postFilter criteria to filter course posts with (lecture, exercise, course-wide context)
+     * @param postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
+     * @param postSortFilter criteria to filter course posts with (lecture, exercise, course-wide context)
+     * @param forceReload
      */
-    getPostsForFilter(postFilter?: PostFilter): void {
-        this.currentPostFilter = postFilter;
-        if (postFilter?.lecture) {
+    getFilteredAndSortedPosts(postContextFilter: PostContextFilter, postSortFilter: PostSortFilter, forceReload = true): void {
+        this.currentPostSortFilter = postSortFilter;
+        // check if the post context did change
+        if (
+            forceReload ||
+            postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
+            postContextFilter?.courseWideContext !== this.currentPostContextFilter?.courseWideContext ||
+            postContextFilter?.lectureId !== this.currentPostContextFilter?.lectureId ||
+            postContextFilter?.exerciseId !== this.currentPostContextFilter?.exerciseId
+        ) {
+            // if the context changed, we need to fetch posts before doing the content filtering and sorting
+            this.currentPostContextFilter = postContextFilter;
             this.postService
-                .getAllPostsByLectureId(this.courseId, postFilter.lecture.id!)
-                .pipe(map((res: HttpResponse<Post[]>) => MetisService.sortPosts(res.body!)))
-                .subscribe((posts: Post[]) => {
-                    this.posts$.next(posts);
-                });
-        } else if (postFilter?.exercise) {
-            this.postService
-                .getAllPostsByExerciseId(this.courseId, postFilter.exercise.id!)
-                .pipe(map((res: HttpResponse<Post[]>) => MetisService.sortPosts(res.body!)))
-                .subscribe((posts: Post[]) => {
+                .getPosts(this.courseId, this.currentPostContextFilter)
+                .pipe(
+                    map((res: HttpResponse<Post[]>) => {
+                        return this.filterAndSortIfSpecified(res.body!, postSortFilter);
+                    }),
+                )
+                .subscribe((posts) => {
                     this.posts$.next(posts);
                 });
         } else {
-            this.postService
-                .getAllPostsByCourseId(this.courseId)
-                .pipe(
-                    map((res: HttpResponse<Post[]>) => {
-                        let posts: Post[] = res.body!;
-                        if (postFilter?.courseWideContext) {
-                            posts = posts.filter((post) => post.courseWideContext === postFilter.courseWideContext);
-                        }
-                        return MetisService.sortPosts(posts);
-                    }),
-                )
-                .subscribe((posts: Post[]) => {
-                    this.posts$.next(posts);
-                });
+            // if the context did not change, we do not need to fetch posts again but only do the content filtering and sorting the current posts
+            this.posts$.next(this.filterAndSortIfSpecified(this.posts$.getValue(), postSortFilter));
         }
     }
 
     /**
      * creates a new post by invoking the post service
-     * fetches the post for the currently set filter on response  and updates course tags
+     * fetches the posts for the currently set filter on response and updates course tags
      * @param post newly created post
      */
     createPost(post: Post): Observable<Post> {
         return this.postService.create(this.courseId, post).pipe(
             tap(() => {
-                this.getPostsForFilter(this.currentPostFilter);
+                this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
                 this.updateCoursePostTags();
             }),
             map((res: HttpResponse<Post>) => res.body!),
@@ -135,27 +143,27 @@ export class MetisService {
 
     /**
      * creates a new answer post by invoking the answer post service
-     * fetches the post for the currently set filter on response
+     * fetches the posts for the currently set filter on response
      * @param answerPost newly created answer post
      */
     createAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
         return this.answerPostService.create(this.courseId, answerPost).pipe(
             tap(() => {
-                this.getPostsForFilter(this.currentPostFilter);
+                this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
             }),
             map((res: HttpResponse<Post>) => res.body!),
         );
     }
 
     /**
-     * updates a given answer posts by invoking the answer post service,
-     * fetches the post for the currently set filter on response
+     * updates a given posts by invoking the post service,
+     * fetches the posts for the currently set filter on response and updates course tags
      * @param post post to update
      */
     updatePost(post: Post): Observable<Post> {
         return this.postService.update(this.courseId, post).pipe(
             tap(() => {
-                this.getPostsForFilter(this.currentPostFilter);
+                this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
                 this.updateCoursePostTags();
             }),
             map((res: HttpResponse<Post>) => res.body!),
@@ -164,13 +172,27 @@ export class MetisService {
 
     /**
      * updates a given answer posts by invoking the answer post service,
-     * fetches the post for the currently set filter on response
+     * fetches the posts for the currently set filter on response
      * @param answerPost answer post to update
      */
     updateAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
         return this.answerPostService.update(this.courseId, answerPost).pipe(
             tap(() => {
-                this.getPostsForFilter(this.currentPostFilter);
+                this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
+            }),
+            map((res: HttpResponse<Post>) => res.body!),
+        );
+    }
+
+    /**
+     * updates the display priority of a post to NONE, PINNED, ARCHIVED
+     * @param postId            id of the post for which the displayPriority is changed
+     * @param displayPriority   new displayPriority
+     */
+    updatePostDisplayPriority(postId: number, displayPriority: DisplayPriority): Observable<Post> {
+        return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(
+            tap(() => {
+                this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
             }),
             map((res: HttpResponse<Post>) => res.body!),
         );
@@ -183,7 +205,7 @@ export class MetisService {
      */
     deletePost(post: Post): void {
         this.postService.delete(this.courseId, post).subscribe(() => {
-            this.getPostsForFilter(this.currentPostFilter);
+            this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
             this.updateCoursePostTags();
         });
     }
@@ -195,7 +217,7 @@ export class MetisService {
      */
     deleteAnswerPost(answerPost: AnswerPost): void {
         this.answerPostService.delete(this.courseId, answerPost).subscribe(() => {
-            this.getPostsForFilter(this.currentPostFilter);
+            this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
         });
     }
 
@@ -207,7 +229,7 @@ export class MetisService {
     createReaction(reaction: Reaction): Observable<Reaction> {
         return this.reactionService.create(this.courseId, reaction).pipe(
             tap(() => {
-                this.getPostsForFilter(this.currentPostFilter);
+                this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
             }),
             map((res: HttpResponse<Post>) => res.body!),
         );
@@ -221,7 +243,7 @@ export class MetisService {
     deleteReaction(reaction: Reaction): Observable<void> {
         return this.reactionService.delete(this.courseId, reaction).pipe(
             tap(() => {
-                this.getPostsForFilter(this.currentPostFilter);
+                this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
             }),
             map((res: HttpResponse<void>) => res.body!),
         );
@@ -244,29 +266,13 @@ export class MetisService {
         return this.user ? posting?.author!.id === this.getUser().id : false;
     }
 
-    /**
-     * sorts posts by two criteria
-     * 1. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
-     * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
-     * @return Post[] sorted array of posts
-     */
-    static sortPosts(posts: Post[]): Post[] {
-        return posts.sort(function (postA, postB) {
-            const postAVoteEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
-            const postBVoteEmojiCount = postB.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
-            if (postAVoteEmojiCount > postBVoteEmojiCount) {
-                return -1;
-            }
-            if (postAVoteEmojiCount < postBVoteEmojiCount) {
-                return 1;
-            }
-            if (Number(postA.creationDate) > Number(postB.creationDate)) {
-                return 1;
-            }
-            if (Number(postA.creationDate) < Number(postB.creationDate)) {
-                return -1;
-            }
-            return 0;
-        });
+    private filterAndSortIfSpecified(posts: Post[], postSortFilter?: PostSortFilter): Post[] {
+        if (postSortFilter?.filter) {
+            posts = posts.filter(postSortFilter.filter);
+        }
+        if (postSortFilter?.sort) {
+            posts = posts.sort(postSortFilter.sort);
+        }
+        return posts;
     }
 }

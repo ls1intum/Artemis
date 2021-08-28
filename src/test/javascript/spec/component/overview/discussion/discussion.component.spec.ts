@@ -6,7 +6,6 @@ import * as sinon from 'sinon';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { DiscussionComponent } from 'app/overview/discussion/discussion.component';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -21,13 +20,14 @@ import { PostService } from 'app/shared/metis/post.service';
 import { MockPostService } from '../../../helpers/mocks/service/mock-post.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { PageDiscussionSectionComponent } from 'app/overview/page-discussion-section/page-discussion-section.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('DiscussionComponent', () => {
-    let component: DiscussionComponent;
-    let fixture: ComponentFixture<DiscussionComponent>;
+    let component: PageDiscussionSectionComponent;
+    let fixture: ComponentFixture<PageDiscussionSectionComponent>;
 
     const mockCourse = new Course();
     mockCourse.id = 1;
@@ -62,17 +62,17 @@ describe('DiscussionComponent', () => {
                 { provide: PostService, useClass: MockPostService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
-            declarations: [DiscussionComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [PageDiscussionSectionComponent, MockPipe(ArtemisTranslatePipe)],
             schemas: [NO_ERRORS_SCHEMA],
         })
-            .overrideComponent(DiscussionComponent, {
+            .overrideComponent(PageDiscussionSectionComponent, {
                 set: {
                     providers: [{ provide: MetisService, useClass: MetisService }],
                 },
             })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(DiscussionComponent);
+                fixture = TestBed.createComponent(PageDiscussionSectionComponent);
                 component = fixture.componentInstance;
                 fixture.debugElement.injector.get(MetisService);
             });

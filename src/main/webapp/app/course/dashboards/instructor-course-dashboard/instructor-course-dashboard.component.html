@@ -53,8 +53,8 @@
                                 </a>
                             </li>
                             <li>
-                                <a *ngIf="course.postsEnabled" [routerLink]="['/course-management', course.id, 'posts']">
-                                    <b>{{ 'artemisApp.instructorCourseDashboard.discussion' | artemisTranslate }}</b>
+                                <a *ngIf="course.postsEnabled" [routerLink]="['/courses', course.id, 'discussion']">
+                                    <b>{{ 'artemisApp.metis.discussion.label' | artemisTranslate }}</b>
                                 </a>
                             </li>
                         </ul>
