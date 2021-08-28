@@ -198,10 +198,11 @@ export class CourseManagementRequests {
     }
 
     createQuizExercise(title: string, releaseDate: day.Dayjs, body: { course: any } | { exerciseGroup: any }, quizQuestions: any = [multipleChoiceTemplate]) {
-        const quizExercise: any = quizTemplate;
-        quizExercise.title = title;
-        quizExercise.releaseDate = dayjsToString(releaseDate);
-        quizExercise.quizQuestions = quizQuestions;
+        const quizExercise = {
+            ...quizTemplate,
+            releaseDate: dayjsToString(releaseDate),
+            quizQuestions,
+        };
         const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
         return cy.request({
             url: '/api/quiz-exercises',
