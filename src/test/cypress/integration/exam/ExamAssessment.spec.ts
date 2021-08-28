@@ -26,12 +26,12 @@ const admin = artemis.users.getAdmin();
 const student = artemis.users.getStudentOne();
 const tutor = artemis.users.getTutor();
 const packageName = 'de.test';
+let exam: any;
+let exerciseGroup: any;
+let course: any;
+let examTitle: string;
 
 describe('Exam Assessment', () => {
-    let course: any;
-    let examTitle: string;
-    let exam: any;
-    let exerciseGroup: any;
 
     before('Create a course', () => {
         cy.login(admin);
@@ -59,22 +59,7 @@ describe('Exam Assessment', () => {
 
     describe('Exam exercise Assessment', () => {
         beforeEach('Create Exam', () => {
-            cy.login(admin);
-            const examContent = new CypressExamBuilder(course)
-                .title(examTitle)
-                .visibleDate(dayjs().subtract(1, 'day'))
-                .startDate(dayjs())
-                .endDate(dayjs().add(30, 'seconds'))
-                .publishResultsDate(dayjs().add(35, 'seconds'))
-                .gracePeriod(1)
-                .build();
-            courseManagementRequests.createExam(examContent).then((examResponse) => {
-                exam = examResponse.body;
-                courseManagementRequests.registerStudentForExam(course, exam, student);
-                courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
-                    exerciseGroup = groupResponse.body;
-                });
-            });
+            prepareExam(dayjs().add(30, 'seconds'));
         });
 
         it('Assess a modeling exercise submission', () => {
@@ -141,23 +126,7 @@ describe('Exam Assessment', () => {
         });
 
         beforeEach('Create Exam', () => {
-            cy.log(examEnd.toString());
-            cy.login(admin);
-            const examContent = new CypressExamBuilder(course)
-                .title(examTitle)
-                .visibleDate(dayjs().subtract(1, 'day'))
-                .startDate(dayjs())
-                .endDate(dayjs().add(examEnd, 'seconds'))
-                .publishResultsDate(dayjs().add(examEnd + 1, 'seconds'))
-                .gracePeriod(0)
-                .build();
-            courseManagementRequests.createExam(examContent).then((examResponse) => {
-                exam = examResponse.body;
-                courseManagementRequests.registerStudentForExam(course, exam, student);
-                courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
-                    exerciseGroup = groupResponse.body;
-                });
-            });
+            prepareExam(dayjs().add(examEnd, 'seconds'));
         });
 
         it('Assess a programming exercise submission (MANUAL)', () => {
@@ -196,4 +165,24 @@ function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmissio
     editorPage.typeSubmission(submission, packageName);
     editorPage.submit();
     verifyOutput();
+}
+
+function prepareExam(examEnd: dayjs.Dayjs) {
+    cy.log(examEnd.toString());
+    cy.login(admin);
+    const examContent = new CypressExamBuilder(course)
+        .title(examTitle)
+        .visibleDate(dayjs().subtract(1, 'day'))
+        .startDate(dayjs())
+        .endDate(examEnd)
+        .publishResultsDate(examEnd.add(1, 'seconds'))
+        .gracePeriod(0)
+        .build();
+    courseManagementRequests.createExam(examContent).then((examResponse) => {
+        exam = examResponse.body;
+        courseManagementRequests.registerStudentForExam(course, exam, student);
+        courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
+            exerciseGroup = groupResponse.body;
+        });
+    });
 }
