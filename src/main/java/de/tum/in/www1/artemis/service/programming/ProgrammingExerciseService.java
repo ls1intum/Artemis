@@ -597,16 +597,23 @@ public class ProgrammingExerciseService {
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
         }
-        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
+        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT && programmingExercise.getProjectType() == ProjectType.PLAIN) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageName());
             fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
+        }
+        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT && programmingExercise.getProjectType() == ProjectType.XCODE) {
+            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${shortName}", programmingExercise.getShortName();
+            fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${shortName}", programmingExercise.getShortName());
         }
 
         Map<String, String> replacements = new HashMap<>();
 
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN
-                || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
+                || (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT && programmingExercise.getProjectType() == ProjectType.PLAIN)) {
             replacements.put("${packageName}", programmingExercise.getPackageName());
+        }
+        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT && programmingExercise.getProjectType() == ProjectType.XCODE) {
+            replacements.put("${shortName}", programmingExercise.getShortName());
         }
         // there is no need in python to replace package names
 
