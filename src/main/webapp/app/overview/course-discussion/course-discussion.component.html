@@ -1,59 +1,88 @@
 <div class="row p-3 justify-content-center" *ngIf="course">
-    <div class="row col-8">
-        <div class="row">
+    <div class="row col-9 justify-content-center">
+        <div class="row ps-0">
             <!-- Search Bar -->
-            <div class="input-group col-12 p-0 mb-4">
-                <input name="searchText" [(ngModel)]="searchText" class="form-control" placeholder="Type to search for post content" />
-                <jhi-button [icon]="'search'" (onClick)="onSearch()"> </jhi-button>
+            <div class="input-group col-10 px-0 mb-4">
+                <input name="searchText" [(ngModel)]="searchText" class="form-control" placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}" />
+                <jhi-button [icon]="'search'" (onClick)="onSearch()"></jhi-button>
+            </div>
+            <!-- New Post -->
+            <div class="col-2" *ngIf="createdPost">
+                <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
+                    <fa-icon [icon]="'plus'"></fa-icon>
+                    <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
+                </button>
+                <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
             </div>
         </div>
         <form [formGroup]="formGroup">
-            <div class="row">
+            <!-- Filter and Sort Controls -->
+            <div class="row justify-content-between">
                 <!-- Context Filter -->
-                <div class="col-auto p-0 filter-sort-prefix">
-                    <span> Show posts in: </span>
-                </div>
-                <div class="col-auto p-0">
-                    <select formControlName="context" class="form-select" [compareWith]="compareContextFilterOptionFn" (change)="onSelect()" name="context">
-                        <option [ngValue]="{ course: course }">{{ course.title }}</option>
-                        <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
-                            <option *ngFor="let context of eCourseContext | keyvalue" [ngValue]="{ courseWideContext: context.value }">
-                                {{ context.value }}
-                            </option>
-                        </optgroup>
-                        <optgroup *ngIf="exercises !== undefined && exercises!.length > 0" [label]="'artemisApp.metis.post.exercises' | artemisTranslate">
-                            <option *ngFor="let exercise of exercises" [ngValue]="{ exercise: exercise }">
-                                {{ exercise.title }}
-                            </option>
-                        </optgroup>
-                        <optgroup *ngIf="lectures !== undefined && lectures!.length > 0" [label]="'artemisApp.metis.post.lectures' | artemisTranslate">
-                            <option *ngFor="let lecture of lectures" [ngValue]="{ lecture: lecture }">
-                                {{ lecture.title }}
-                            </option>
-                        </optgroup>
-                    </select>
+                <div class="col-auto">
+                    <div class="row">
+                        <div class="col-auto p-0 filter-sort-prefix">
+                            <span>{{ 'artemisApp.metis.overview.postContextFilter' | artemisTranslate }}</span>
+                        </div>
+                        <div class="col-auto p-0">
+                            <select formControlName="context" class="form-select" [compareWith]="compareContextFilterOptionFn" (change)="onSelect()" name="context">
+                                <option [ngValue]="{ courseId: course.id }">{{ course.title }}</option>
+                                <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
+                                    <option *ngFor="let context of eCourseContext | keyvalue" [ngValue]="{ courseWideContext: context.value }">
+                                        {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
+                                    </option>
+                                </optgroup>
+                                <optgroup *ngIf="exercises !== undefined && exercises!.length > 0" [label]="'artemisApp.metis.post.exercises' | artemisTranslate">
+                                    <option *ngFor="let exercise of exercises" [ngValue]="{ exerciseId: exercise.id }">
+                                        {{ exercise.title }}
+                                    </option>
+                                </optgroup>
+                                <optgroup *ngIf="lectures !== undefined && lectures!.length > 0" [label]="'artemisApp.metis.post.lectures' | artemisTranslate">
+                                    <option *ngFor="let lecture of lectures" [ngValue]="{ lectureId: lecture.id }">
+                                        {{ lecture.title }}
+                                    </option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 <!-- Sort Dropdown -->
-                <div class="col-auto p-0 filter-sort-prefix">
-                    <span> Sort by </span>
-                </div>
                 <div class="col-auto p-0">
-                    <select formControlName="sortBy" class="form-select" [compareWith]="comparePostSortByOptionFn" (change)="onSelect()" name="sortBy">
-                        <option *ngFor="let sortByOption of eSortBy | keyvalue" [ngValue]="{ sortBy: sortByOption.value }">
-                            {{ sortByOption.value }}
-                        </option>
-                    </select>
-                </div>
-                <div class="col-auto p-0">
-                    <select formControlName="sortDirection" class="form-select" [compareWith]="compareSortDirectionOptionFn" (change)="onSelect()" name="sortDirection">
-                        <option *ngFor="let sortDirectionOption of eSortDirection | keyvalue" [ngValue]="{ sortDirection: sortDirectionOption.value }">
-                            {{ sortDirectionOption.value }}
-                        </option>
-                    </select>
+                    <div class="row">
+                        <div class="col-auto p-0 filter-sort-prefix">
+                            <span>{{ 'artemisApp.metis.overview.sortPostsBy' | artemisTranslate }}</span>
+                        </div>
+                        <div class="col-auto p-0">
+                            <select formControlName="sortBy" class="form-select" [compareWith]="comparePostSortByOptionFn" (change)="onSelect()" name="sortBy">
+                                <option *ngFor="let sortByOption of eSortBy | keyvalue" [ngValue]="sortByOption.value">
+                                    {{ 'artemisApp.metis.overview.' + sortByOption.value | artemisTranslate }}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-auto p-0">
+                            <select
+                                formControlName="sortDirection"
+                                class="form-select ps-0"
+                                [compareWith]="compareSortDirectionOptionFn"
+                                (change)="onSelect()"
+                                name="sortDirection"
+                            >
+                                <option *ngFor="let sortDirectionOption of eSortDirection | keyvalue" [ngValue]="sortDirectionOption.value">
+                                    {{ 'artemisApp.metis.overview.' + sortDirectionOption.value | artemisTranslate }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>
     </div>
-    <div class="bold-line row col-8 mt-1 mb-2"></div>
-    <jhi-discussion-list class="row col-8" [course]="course!"></jhi-discussion-list>
+    <div class="bold-line row col-9 mt-1 mb-2"></div>
+    <div class="class=row col-9">
+        <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post"> </jhi-postings-thread>
+        <!-- no posts -->
+        <div class="row mt-2" *ngIf="!posts || posts.length === 0">
+            <div class="col-12">{{ 'artemisApp.metis.noPosts' | artemisTranslate }}</div>
+        </div>
+    </div>
 </div>

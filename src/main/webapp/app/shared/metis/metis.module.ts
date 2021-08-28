@@ -25,7 +25,6 @@ import { CommonModule } from '@angular/common';
 import { PostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { DiscussionListComponent } from 'app/shared/metis/discussion-list/discussion-list.component';
 
 @NgModule({
     imports: [
@@ -58,7 +57,6 @@ import { DiscussionListComponent } from 'app/shared/metis/discussion-list/discus
         AnswerPostComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
-        DiscussionListComponent,
     ],
     exports: [
         PostingsThreadComponent,
@@ -75,7 +73,6 @@ import { DiscussionListComponent } from 'app/shared/metis/discussion-list/discus
         AnswerPostComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
-        DiscussionListComponent,
     ],
 })
 export class MetisModule {}

@@ -21,15 +21,24 @@
             "searchEmoji": "Search emoji",
             "courseEmojiSelectionCategory": "Selected emojis for this course",
             "discussion": {
-                "header": "Discussion",
+                "label": "Discussion",
                 "show": "Show discussion",
                 "hide": "Hide discussion"
             },
             "overview": {
                 "title": "Posts",
-                "noPosts": "There are no posts for this course yet.",
-                "showApproved": "Show posts with approved replies",
-                "hideApproved": "Hide posts with approved replies"
+                "noPosts": "No posts found.",
+                "searchBarDefault": "Type to search for post...",
+                "postContextFilter": "Show posts for:",
+                "sortPostsBy": "Sort by:",
+                "DESC": "Descending",
+                "ASC": "Ascending",
+                "ANSWER_COUNT": "Number of replies",
+                "CREATION_DATE": "Creation date",
+                "VOTES": "Upvotes",
+                "TECH_SUPPORT": "Tech Support",
+                "ORGANIZATION": "Organization",
+                "RANDOM": "Random"
             },
             "post": {
                 "context": "Context",

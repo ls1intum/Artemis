@@ -6,7 +6,6 @@ import * as sinon from 'sinon';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { PageDiscussionSectionComponent } from 'app/overview/page-discussion-section/discussion.component';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -21,6 +20,7 @@ import { PostService } from 'app/shared/metis/post.service';
 import { MockPostService } from '../../../helpers/mocks/service/mock-post.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { PageDiscussionSectionComponent } from 'app/overview/page-discussion-section/page-discussion-section.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

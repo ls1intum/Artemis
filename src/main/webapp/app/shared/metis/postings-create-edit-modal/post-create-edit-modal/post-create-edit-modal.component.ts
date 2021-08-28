@@ -1,7 +1,7 @@
 import { Component, OnChanges, OnInit } from '@angular/core';
 import { PostingsCreateEditModalDirective } from 'app/shared/metis/postings-create-edit-modal/postings-create-edit-modal.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { CourseWideContext, Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import * as moment from 'moment';
 import { FormBuilder, Validators } from '@angular/forms';
@@ -10,7 +10,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Course } from 'app/entities/course.model';
 import { LectureService } from 'app/lecture/lecture.service';
-import { PageType } from 'app/shared/metis/metis.util';
+import { CourseWideContext, PageType } from 'app/shared/metis/metis.util';
 
 const TITLE_MAX_LENGTH = 200;
 

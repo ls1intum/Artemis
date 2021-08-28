@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
-import { DisplayPriority, Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/entities/metis/post.model';
 import { PostingsService } from 'app/shared/metis/postings.service';
+import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
 
 type EntityResponseType = HttpResponse<Post>;
 type EntityArrayResponseType = HttpResponse<Post[]>;
@@ -48,8 +49,42 @@ export class PostService extends PostingsService<Post> {
      */
     updatePostDisplayPriority(courseId: number, postId: number, displayPriority: DisplayPriority): Observable<EntityResponseType> {
         return this.http
-            .put(`${this.resourceUrl}${courseId}/posts/${postId}/display-priority`, {}, { params: { displayPriority }, observe: 'response' })
+            .put(
+                `${this.resourceUrl}${courseId}/posts/${postId}/display-priority`,
+                {},
+                {
+                    params: { displayPriority },
+                    observe: 'response',
+                },
+            )
             .pipe(map(this.convertDateFromServer));
+    }
+
+    /**
+     * gets all posts for course by its id, filtered by context if PostContextFilter is passed
+     * a context to filter posts for can be a course-wide topic, a lecture, or an exercise within a course
+     * @param {number} courseId
+     * @param {PostContextFilter} postContextFilter
+     * @return {Observable<EntityArrayResponseType>}
+     */
+    getPosts(courseId: number, postContextFilter: PostContextFilter): Observable<EntityArrayResponseType> {
+        let params = new HttpParams();
+        if (postContextFilter.courseWideContext) {
+            params = params.set('courseWideContext', postContextFilter.courseWideContext.toString());
+        }
+        if (postContextFilter.lectureId) {
+            params = params.set('lectureId', postContextFilter.lectureId.toString());
+        }
+        if (postContextFilter.exerciseId) {
+            console.log(postContextFilter.exerciseId.toString());
+            params = params.set('exerciseId', postContextFilter.exerciseId.toString());
+        }
+        return this.http
+            .get<Post[]>(`${this.resourceUrl}${courseId}/posts`, {
+                params,
+                observe: 'response',
+            })
+            .pipe(map(this.convertDateArrayFromServer));
     }
 
     /**

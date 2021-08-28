@@ -10,6 +10,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -145,6 +146,52 @@ public class PostService extends PostingService {
     }
 
     /**
+     * Checks course, user and post validity,
+     * retrieves all posts for a course by its id
+     * and ensures that sensitive information is filtered out
+     *
+     * @param courseId id of the course the post belongs to
+     * @return list of posts that belong to the course
+     */
+    public List<Post> getAllCoursePosts(Long courseId) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        Course course = preCheckUserAndCourse(user, courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        // retrieve posts
+        List<Post> coursePosts = postRepository.findPostsForCourse(courseId);
+        // protect sample solution, grading instructions, etc.
+        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+
+        return coursePosts;
+    }
+
+    /**
+     * Checks course, user and post validity,
+     * retrieves all posts with a certain course wide context by course id
+     * and ensures that sensitive information is filtered out
+     *
+     * @param courseId id of the course the post belongs to
+     * @return list of posts that belong to the course
+     */
+    public List<Post> getAllPostsByCourseWideContext(Long courseId, CourseWideContext courseWideContext) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        Course course = preCheckUserAndCourse(user, courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        // retrieve posts
+        List<Post> coursePosts = postRepository.findPostsForCourseWideContext(courseId, courseWideContext);
+        // protect sample solution, grading instructions, etc.
+        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+
+        return coursePosts;
+    }
+
+    /**
      * Checks course, user, exercise and post validity,
      * retrieves all posts for an exercise by its id
      * and ensures that sensitive information is filtered out
@@ -190,29 +237,6 @@ public class PostService extends PostingService {
         lecturePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 
         return lecturePosts;
-    }
-
-    /**
-     * Checks course, user and post validity,
-     * retrieves all posts for a course by its id
-     * and ensures that sensitive information is filtered out
-     *
-     * @param courseId id of the course the post belongs to
-     * @return list of posts that belong to the course
-     */
-    public List<Post> getAllCoursePosts(Long courseId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        Course course = preCheckUserAndCourse(user, courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-
-        // retrieve posts
-        List<Post> coursePosts = postRepository.findPostsForCourse(courseId);
-        // protect sample solution, grading instructions, etc.
-        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-
-        return coursePosts;
     }
 
     /**

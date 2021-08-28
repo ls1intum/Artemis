@@ -1,7 +1,16 @@
-import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
-import { CourseWideContext } from 'app/entities/metis/post.model';
+import { Post } from 'app/entities/metis/post.model';
+
+export enum CourseWideContext {
+    TECH_SUPPORT = 'TECH_SUPPORT',
+    ORGANIZATION = 'ORGANIZATION',
+    RANDOM = 'RANDOM',
+}
+
+export enum DisplayPriority {
+    PINNED = 'PINNED',
+    ARCHIVED = 'ARCHIVED',
+    NONE = 'NONE',
+}
 
 export enum PageType {
     OVERVIEW = 'OVERVIEW',
@@ -16,17 +25,19 @@ export enum SortDirection {
 }
 
 export enum PostSortCriterion {
-    CREATION_DATE = 'CREATION DATE',
+    CREATION_DATE = 'CREATION_DATE',
     VOTES = 'VOTES',
-    ANSWER_COUNT = 'ANSWER COUNT',
+    ANSWER_COUNT = 'ANSWER_COUNT',
 }
 
-export interface PostFilter {
-    course?: Course;
-    exercise?: Exercise;
-    lecture?: Lecture;
+export interface PostContextFilter {
+    courseId?: number;
     courseWideContext?: CourseWideContext;
-    sortDirection?: SortDirection;
-    sortBy?: PostSortCriterion;
-    searchText?: string;
+    exerciseId?: number;
+    lectureId?: number;
+}
+
+export interface PostSortFilter {
+    filter?: (post: Post) => boolean;
+    sort?: (post1: Post, post2: Post) => number;
 }

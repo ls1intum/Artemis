@@ -21,15 +21,24 @@
             "searchEmoji": "Emoji suchen",
             "courseEmojiSelectionCategory": "Ausgewählte Emojis für diesen Kurs",
             "discussion": {
-                "header": "Diskussion",
+                "label": "Diskussion",
                 "show": "Diskussion anzeigen",
                 "hide": "Diskussion einklappen"
             },
             "overview": {
                 "title": "Beiträge",
-                "noPosts": "Es gibt noch keine Beiträge in diesem Kurs.",
-                "showApproved": "Zeige Beiträge mit bestätigten Antworten an",
-                "hideApproved": "Ignoriere Beiträge mit bestätigten Antworten"
+                "noPosts": "Es wurden keine Beitrage gefunden.",
+                "searchBarDefault": "Tippe hier, um nach einem bestimmten Beitrag zu suchen...",
+                "postContextFilter": "Zeige Beiträge in:",
+                "sortPostsBy": "Sortiere nach:",
+                "DESC": "Absteigend",
+                "ASC": "Aufsteigend",
+                "ANSWER_COUNT": "Anzahl bestätigter Antworten",
+                "CREATION_DATE": "Zeitpunkt der Erstellung",
+                "VOTES": "Zustimmung",
+                "TECH_SUPPORT": "Technische Hilfe",
+                "ORGANIZATION": "Organisation",
+                "RANDOM": "Sonstiges"
             },
             "post": {
                 "context": "Kontext",

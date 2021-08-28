@@ -239,7 +239,6 @@
             "manageHints": "Manage Hints",
             "addExternalSubmission": "Add External Submission",
             "addAuxiliaryRepository": "Add Auxiliary Repository",
-            "discussion": "Discussions",
             "toggleToUnsubmitted": "Change Student Exam to Unsubmitted",
             "toggleToSubmitted": "Change Student Exam to Submitted"
         },
@@ -320,7 +319,8 @@
         "lectures": "Lectures",
         "exercise": "Exercise details",
         "statistics": "Course statistics",
-        "exams": "Exams"
+        "exams": "Exams",
+        "discussion": "Discussion"
     },
     "connectionStatus": {
         "connected": "Connected",

@@ -18,7 +18,7 @@ export class PostFooterComponent extends PostingsFooterDirective<Post> implement
     contextNavigationComponents?: (string | number)[];
     courseId: number;
 
-    constructor(private metisService: MetisService, private router: Router) {
+    constructor(private metisService: MetisService) {
         super();
         this.pageType = metisService.getPageType();
         this.courseId = metisService.getCourse().id!;
@@ -40,10 +40,6 @@ export class PostFooterComponent extends PostingsFooterDirective<Post> implement
         this.updateContextName();
     }
 
-    navigateToContext(event: any) {
-        this.router.navigate(this.contextNavigationComponents!);
-    }
-
     /**
      * sets the current post tags, empty error if none exit
      */
@@ -59,11 +55,11 @@ export class PostFooterComponent extends PostingsFooterDirective<Post> implement
         if (this.pageType === PageType.OVERVIEW) {
             if (this.posting.exercise) {
                 this.associatedContextName = this.posting.exercise.title;
-                this.contextNavigationComponents = ['courses', this.courseId, 'exercises', this.posting.exercise.id!];
+                this.contextNavigationComponents = ['/courses', this.courseId, 'exercises', this.posting.exercise.id!];
             }
             if (this.posting.lecture) {
                 this.associatedContextName = this.posting.lecture.title;
-                this.contextNavigationComponents = ['courses', this.courseId, 'lectures', this.posting.lecture.id!];
+                this.contextNavigationComponents = ['/courses', this.courseId, 'lectures', this.posting.lecture.id!];
             }
             if (this.posting.courseWideContext) {
                 this.associatedContextName = this.posting.courseWideContext;

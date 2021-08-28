@@ -11,7 +11,7 @@
                 <select formControlName="context" class="form-select" [compareWith]="compareContextSelectorOptionFn" name="context">
                     <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
                         <option *ngFor="let context of eCourseContext | keyvalue" [ngValue]="{ courseWideContext: context.value }">
-                            {{ context.value }}
+                            {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
                         </option>
                     </optgroup>
                     <optgroup *ngIf="exercises !== undefined && exercises!.length > 0 && isAtLeastTutorInCourse" [label]="'artemisApp.metis.post.exercises' | artemisTranslate">

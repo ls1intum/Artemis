@@ -238,7 +238,6 @@
             "manageHints": "Verwalte Hinweise",
             "addExternalSubmission": "Externe Einreichung anlegen",
             "addAuxiliaryRepository": "Hilfsrepository anlegen",
-            "discussion": "Diskussion",
             "toggleToUnsubmitted": "Setze Studierenden-Klausur auf nicht abgegeben",
             "toggleToSubmitted": "Setze Studierenden-Klausur auf abgegeben"
         },
@@ -320,7 +319,8 @@
         "exercise": "Aufgabendetails",
         "lectures": "Vorlesungen",
         "statistics": "Kursstatistiken",
-        "exams": "Klausuren"
+        "exams": "Klausuren",
+        "discussion": "Diskussion"
     },
     "connectionStatus": {
         "connected": "Verbunden",
