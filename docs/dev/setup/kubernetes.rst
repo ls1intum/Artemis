@@ -5,19 +5,19 @@ This page describes how to set up an environment deployed in Kubernetes.
 
 **Prerequisites:**
 
-Follow the links to install the tools which will be needed in order to proceed with the Kubernetes cluster setup.
+Follow the links to install the tools which will be needed to proceed with the Kubernetes cluster setup.
 
 * `Docker <https://docs.docker.com/get-docker/>`__ - v20.10.7 
-   Docker is a platform for developing, shipping an running application. 
-   In our case we will use it to build the images which we will deploy. 
-   It is also needed from k3d in order to create cluster. The cluster nodes are deployed on Docker containers.
+   Docker is a platform for developing, shipping and running applications. 
+   In our case, we will use it to build the images which we will deploy. 
+   It is also needed from k3d to create a cluster. The cluster nodes are deployed on Docker containers.
 
 * `DockerHub Account <https://hub.docker.com/signup>`__ 
    Docker Hub is a service provided by Docker for finding and sharing container images. 
-   Account in DockerHub is needed in order to push the Artemis image which will be used by the Kubernetes deployment.
+   Account in DockerHub is needed to push the Artemis image which will be used by the Kubernetes deployment.
 
 * `k3d <https://k3d.io/#installation>`__ - v4.4.7
-   k3d is lightweight wrapper to run k3s which is a lightweight Kubernetes distribution in Docker. 
+   k3d is a lightweight wrapper to run k3s which is a lightweight Kubernetes distribution in Docker. 
    k3d makes it very easy to create k3s clusters especially for local deployment on Kubernetes. 
 
    Windows users can use ``choco`` to install it. More details can be found in the link under ``Other Installation Methods``
@@ -27,7 +27,7 @@ Follow the links to install the tools which will be needed in order to proceed w
    It can be used to deploy applications, inspect and manage cluster resources, and view logs.
 
 * `helm <https://helm.sh/docs/intro/install/>`__ - v3.6.3 
-   Helm is the package manager for Kubernetes. We will be use it to install cert-manager and Rancher
+   Helm is the package manager for Kubernetes. We will use it to install cert-manager and Rancher
 
 
 .. contents:: Content of this document
@@ -36,9 +36,9 @@ Follow the links to install the tools which will be needed in order to proceed w
 
 Setup Kubernetes Cluster
 ------------------------
-In order to be able to deploy Artemis on Kubernetes, you need to setup a cluster. A cluster is a set of nodes that run containerized applications. Kubernetes clusters allow for applications to be more easily developed, moved and managed.
+To be able to deploy Artemis on Kubernetes, you need to set up a cluster. A cluster is a set of nodes that run containerized applications. Kubernetes clusters allow for applications to be more easily developed, moved and managed.
 
-With the following commands you will set up one cluster with three agents as well as Rancher which is a platform for cluster management with an easy to use user interface.
+With the following commands, you will set up one cluster with three agents as well as Rancher which is a platform for cluster management with an easy to use user interface.
 
 **IMPORTANT: Before you continue make sure Docker has been started.**
 
@@ -68,7 +68,7 @@ With the following commands you will set up one cluster with three agents as wel
 2. Create the cluster
 
 
-   With the help of the commands block below you can create a cluster with 1 server and 3 agents at total 4 nodes. Your deployments will be distributed almost equally among the 4 nodes.
+   With the help of the commands block below you can create a cluster with one server and three agents at a total of four nodes. Your deployments will be distributed almost equally among the 4 nodes.
    
    Using ``k3d cluster list`` you can see whether your cluster is created and how many of its nodes are running.
    
@@ -103,7 +103,7 @@ With the following commands you will set up one cluster with three agents as wel
    It simplifies the process of obtaining, renewing and using those certificates.
    It can issue certificates from a variety of supported sources, e.g. Let’s Encrypt, HashiCorp Vault, Venafi.
    
-   In our case it will issue self-signed certificates to our Kubernetes deployments to secure the communication between the different deployments.
+   In our case, it will issue self-signed certificates to our Kubernetes deployments to secure the communication between the different deployments.
 
    Before the installation, you need to add the Jetstack repository and update the local Helm chart repository cache.
    cert-manager has to be installed in a separate namespace called ``cert-manager`` so one should be created as well. After the installation, you can check the status of the installation.
@@ -118,10 +118,10 @@ With the following commands you will set up one cluster with three agents as wel
 
 4. Install Rancher
 
-   Rancher is a Kubernetes management tool which gives you the opportunity to create and manage Kubernetes deployments more easily than with the CLI tools.
+   Rancher is a Kubernetes management tool that allows you to create and manage Kubernetes deployments more easily than with the CLI tools.
    
    You can install Rancher using Helm - the package manager for Kubernetes. It has to be installed in a namespace called ``cattle-system`` and we should create such a namespace before the installation itself.
-   During the installation we set the namespace and the hostname which Rancher will be accessible on.
+   During the installation, we set the namespace and the hostname on which Rancher will be accessible.
    Then we can check the installation status. 
 
    **For MacOS/Linux**:
@@ -162,7 +162,7 @@ Then you should save the Rancher Server URL, please use the predefined name.
 .. figure:: kubernetes/rancher_url.png
    :align: center
 
-After saving you will be redirected to the main page of Rancher, where you see your cluters. There will be one local cluster.
+After saving, you will be redirected to the main page of Rancher, where you see your clusters. There will be one local cluster.
 
 .. figure:: kubernetes/rancher_cluster.png
    :align: center
@@ -176,12 +176,12 @@ You can open the workloads using the menu, there will be no workloads deployed a
 .. figure:: kubernetes/rancher_empty_workloads.png
    :align: center
 
-6. Create new namespace in Rancher
+6. Create a new namespace in Rancher
 
 Namespaces are virtual clusters backed by the same physical cluster. Namespaces provide a scope for names. Names of resources need to be unique within a namespace, but not across namespaces.
-Usually different namespaces are created to separate environments deployments e.g. development, staging, production.
+Usually, different namespaces are created to separate environments deployments e.g. development, staging, production.
 
-For our development purposes we will create a namespace called artemis.
+For our development purposes, we will create a namespace called artemis.
 It can be done easily using Rancher.
 
 a. Navigate to Namespaces using the top menu of Rancher
@@ -201,10 +201,10 @@ c. Put ``artemis`` as namespace's name and select the ``Create`` button
 Create DockerHub Repository
 ---------------------------
 The Artemis image will be stored and managed in DockerHub. Kubernetes will pull it from there and deploy it afterwards.
-This approach should not be used in production since the Docker image will contain all configuation secrets in the ``application-*.yml`` files. Instead, private Docker registry should be used.
+This approach should not be used in production since the Docker image will contain all configuration secrets in the ``application-*.yml`` files. Instead, a private Docker registry should be used.
 
 After you log in to your `DockerHub <https://hub.docker.com/>`__ account you can create as many public repositories as you want.
-In order to create a repository you need to select the ``Create repository`` button.
+To create a repository you need to select the ``Create repository`` button.
 
 
 **DockerHub:**
@@ -212,7 +212,7 @@ In order to create a repository you need to select the ``Create repository`` but
 .. figure:: kubernetes/dockerhub.png
    :align: center
 
-Then fill in the repository name with ``artemis``. The use the ``Create`` button and you repository is created.
+Then fill in the repository name with ``artemis``. Then use the ``Create`` button to create your repository.
 
 .. figure:: kubernetes/dockerhub_create_repository.png
    :align: center
@@ -244,7 +244,7 @@ e.g. it will look like this:
 
 Configure Artemis Resources
 ---------------------------
-In order to run Artemis, you need to configure the Artemis' User Management, Version Control and Continuous Integration. You can either run it with Jira, Bitbucket, Bamboo or Jenkins, Gitlab.
+To run Artemis, you need to configure the Artemis' User Management, Version Control and Continuous Integration. You can either run it with Jira, Bitbucket, Bamboo or Jenkins, Gitlab.
 Make sure to configure the ``src/main/resources/config/application-artemis.yml`` file with the proper configuration for User Management, Version Control and Continuous Integration.
 If you want to configure Artemis with ``Bitbucket, Jira, Bamboo`` continue with ``Configure Bitbucket, Jira, Bamboo`` or if you want to configure Artemis with local user management and no programming exercise continue with ``Configure Local User Management``.
 
@@ -252,8 +252,8 @@ Configure Bitbucket, Jira, Bamboo
 #################################
 
 Since Artemis will be deployed on a cluster, local connections to Jira, Bitbucket, Bamboo will not work. 
-Therefore, you have to deploy them on Kubernetes or to set connection to existing staging or production deployments, if any. The latter can be done only if you have admin access to them.
-In order to deploy Bitbucket, Jira, Bamboo on Kubernetes use the following documentation: `Bitbucket, Jira, Bamboo <https://docs.artemis.ase.in.tum.de/dev/setup/bamboo-bitbucket-jira/>`__.
+Therefore, you have to deploy them on Kubernetes or to set a connection to existing staging or production deployments, if any. The latter can be done only if you have admin access to them.
+To deploy Bitbucket, Jira, Bamboo on Kubernetes use the following documentation: `Bitbucket, Jira, Bamboo <https://docs.artemis.ase.in.tum.de/dev/setup/bamboo-bitbucket-jira/>`__.
 Once you are done, continue with the next step ``Build Artemis``
 
 Configure Local User Management
@@ -261,7 +261,7 @@ Configure Local User Management
 
 If you want to run with local user management and no programming exercises setup follow the steps: 
 
-1. Go to the ``src/main/resources/config/application-artemis.yml`` file, and set use-external in the user-management section to false. If you have created additional ``application-local.yml`` file as it is described in the `Setup documentation <https://artemis-platform.readthedocs.io/en/latest/dev/setup/#server-setup>`, make sure to edit this one.
+1. Go to the ``src/main/resources/config/application-artemis.yml`` file, and set use-external in the user-management section to false. If you have created an additional ``application-local.yml`` file as it is described in the `Setup documentation <https://artemis-platform.readthedocs.io/en/latest/dev/setup/#server-setup>`, make sure to edit this one.
 
    Another possibility is to add the variable directly in ``src/main/kubernetes/artemis/configmap/artemis-configmap.yml``.
 
@@ -334,7 +334,7 @@ You can do it by executing the following command:
 <path-to-kubeconfig-file> is the path where you created the KUBECONFIG_FILE.
 
 
-In the console you will see that the resources are created. It will take a litte bit of time when you are doing this for the first time. Be patient!
+In the console, you will see that the resources are created. It will take a little bit of time when you are doing this for the first time. Be patient!
 
 .. figure:: kubernetes/kubectl_kustomization.png
    :align: center
@@ -343,7 +343,7 @@ Check the Deployments in Rancher
 --------------------------------
 Open Rancher using `<https://rancher.localhost/>`__ and navigate to your cluster.
 
-It may take some time but at the end you should see that all the workloads have Active status. In case there is a problem with some workloads you can check the logs to see what the issue is.
+It may take some time but in the end, you should see that all the workloads have Active status. In case there is a problem with some workloads you can check the logs to see what the issue is.
 
 .. figure:: kubernetes/rancher_workloads.png
    :align: center
@@ -377,7 +377,7 @@ Open the Workloads view on Rancher
 .. figure:: kubernetes/rancher_workloads.png
    :align: center
 
-Enter the details page of the Artemis workload and then select Edit in the three dot menu
+Enter the details page of the Artemis workload and then select Edit in the three-dot menu
 
 .. figure:: kubernetes/workload_edit.png
    :align: center
