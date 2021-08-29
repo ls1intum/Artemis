@@ -4,6 +4,13 @@ import { Post } from 'app/entities/metis/post.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { User } from 'app/core/user/user.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
+import { PageType, PostContextFilter } from 'app/shared/metis/metis.util';
+import { Course } from 'app/entities/course.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+
+let pageType: PageType;
+const defaultExercise = { id: 1, type: ExerciseType.TEXT, title: 'default exercise' } as Exercise;
+const defaultLecture = { id: 1, title: 'default lecture' } as Exercise;
 
 export class MockMetisService {
     get tags(): Observable<string[]> {
@@ -12,6 +19,18 @@ export class MockMetisService {
 
     getUser(): User {
         return { id: 1, name: 'username', login: 'login' } as User;
+    }
+
+    getCourse(): Course {
+        return { id: 1, exercises: [defaultExercise], lectures: [defaultLecture] } as Course;
+    }
+
+    getPageType(): PageType {
+        return pageType;
+    }
+
+    setPageType(newPageType: PageType) {
+        pageType = newPageType;
     }
 
     createPost = (post: Post): Observable<Post> => of(post);
@@ -39,4 +58,6 @@ export class MockMetisService {
     metisUserIsAuthorOfPosting(posting: Posting): boolean {
         return true;
     }
+
+    getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {}
 }

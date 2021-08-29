@@ -21,14 +21,14 @@ export class PostFooterComponent extends PostingsFooterDirective<Post> implement
 
     constructor(private metisService: MetisService, private translateService: TranslateService) {
         super();
-        this.pageType = metisService.getPageType();
-        this.courseId = metisService.getCourse().id!;
     }
 
     /**
      * on initialization: updates the post tags
      */
     ngOnInit(): void {
+        this.pageType = this.metisService.getPageType();
+        this.courseId = this.metisService.getCourse().id!;
         this.updateTags();
         this.updateContextName();
     }

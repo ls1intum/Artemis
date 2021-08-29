@@ -12,7 +12,7 @@ import { CourseWideContext, PageType, PostingEditType } from 'app/shared/metis/m
 
 const TITLE_MAX_LENGTH = 200;
 
-interface ContextSelectorOption {
+export interface ContextSelectorOption {
     lecture?: Lecture;
     exercise?: Exercise;
     courseWideContext?: CourseWideContext;
