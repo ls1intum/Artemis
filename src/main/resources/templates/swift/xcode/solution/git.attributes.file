@@ -1,3 +1,0 @@
-# Swift gitattributes
-*.pbxproj merge=union
-*.swift   text diff=swift

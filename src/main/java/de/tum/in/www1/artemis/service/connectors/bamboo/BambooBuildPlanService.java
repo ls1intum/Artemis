@@ -115,8 +115,8 @@ public class BambooBuildPlanService {
         Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName,
                 programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryName, auxiliaryRepositories)
                         .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
-                                programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository(),
-                                programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
+                                programmingExercise.getShortName(), programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(),
+                                programmingExercise.getCheckoutSolutionRepository(), programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
 
         bambooServer.publish(plan);
         setBuildPlanPermissionsForExercise(programmingExercise, plan.getKey().toString());
@@ -146,7 +146,7 @@ public class BambooBuildPlanService {
         return new Project().key(key).name(name);
     }
 
-    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, ProjectType projectType, String packageName, final boolean sequentialBuildRuns,
+    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, ProjectType projectType, String packageName, String shortName, final boolean sequentialBuildRuns,
             Boolean staticCodeAnalysisEnabled, boolean checkoutSolutionRepository, List<AuxiliaryRepository> auxiliaryRepositories) {
         final var assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         final var testPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
@@ -219,7 +219,11 @@ public class BambooBuildPlanService {
                 var isXcodeProject = ProjectType.XCODE.equals(projectType);
                 var subDirectory = isXcodeProject ? "/xcode" : "";
                 Map<String, String> replacements = Map.of("${packageName}", packageName);
-                final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/tests.xml");
+                var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/tests.xml");
+                if (isXcodeProject) {
+                    testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/report.junit");
+                    replacements = Map.of("${shortName}", shortName);
+                }
                 var tasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, sequentialBuildRuns, false, replacements);
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask);
@@ -234,9 +238,12 @@ public class BambooBuildPlanService {
                     defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
                 }
                 if (isXcodeProject) {
+                    // add a requirement to be able to run the Xcode build tasks using fastlane
+                    var requirement1 = new Requirement("system.builder.fastlane.fastlane");
                     // add a requirement to be able to run the Xcode build tasks
-                    var requirement = new Requirement("system.builder.xcode.Simulator - iOS 14.5");
-                    defaultJob.requirements(requirement);
+                    var requirement2 = new Requirement("system.builder.xcode.Simulator - iOS 14.5");
+                    defaultJob.requirements(requirement1);
+                    defaultJob.requirements(requirement2);
                 }
                 return defaultStage.jobs(defaultJob);
             }

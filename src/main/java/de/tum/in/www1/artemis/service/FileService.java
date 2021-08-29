@@ -352,6 +352,18 @@ public class FileService implements DisposableBean {
             if (targetFilePath.endsWith("dune.file")) {
                 targetFilePath = targetFilePath.replace("dune.file", "dune");
             }
+            // special case for 'Fastfile' files which would not be included in the build otherwise
+            if (targetFilePath.endsWith("Fast.file")) {
+                targetFilePath = targetFilePath.replace("Fast.file", "Fastfile");
+            }
+            // special case for 'Appfile' files which would not be included in the build otherwise
+            if (targetFilePath.endsWith("App.file")) {
+                targetFilePath = targetFilePath.replace("App.file", "Appfile");
+            }
+            // special case for 'Scanfile' files which would not be included in the build otherwise
+            if (targetFilePath.endsWith("Scan.file")) {
+                targetFilePath = targetFilePath.replace("Scan.file", "Scanfile");
+            }
             // special case for Xcode where directories get falsely scanned as files
             if (targetFilePath.endsWith(".xcassets/") || targetFilePath.endsWith(".colorset/") || targetFilePath.endsWith(".appiconset/")
                     || targetFilePath.endsWith(".xcworkspace/") || targetFilePath.endsWith(".xcodeproj/")) {
