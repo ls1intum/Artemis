@@ -257,3 +257,55 @@ For a description of the various PMD CPD configuration parameters refer to the `
   <!-- Similar to ignoreLiterals but for identifiers, i.e. variable names, methods names.
   If activated, most tokens will be ignored so minimumTokens must be lowered significantly -->
   <ignoreIdentifiers>false</ignoreIdentifiers>
+
+.. _c_sca_default_config:
+
+C
+^
+
+**GCC**
+
+For a description of the rules/warnings refer to the `GCC Documentation <https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html>`__.
+For readability reasons the rule/warning prefix ``-Wanalyzer-`` is omitted.
+
++-------------------------------+---------------------------------------------+
+| Category (Tool/Artemis)       | Rule                                        |
++===============================+=============================================+
+| Memory Management             | free-of-non-heap                            |
+|                               +---------------------------------------------+
+|                               | malloc-leak                                 |
+|                               +---------------------------------------------+
+|                               | file-leak                                   |
+|                               +---------------------------------------------+
+|                               | mismatching-deallocation                    |
++-------------------------------+---------------------------------------------+
+| Undefined Behavior            | double-free                                 |
+| (Potential Bugs)              +---------------------------------------------+
+|                               | null-argument                               |
+|                               +---------------------------------------------+
+|                               | use-after-free                              |
+|                               +---------------------------------------------+
+|                               | use-of-uninitialized-value                  |
+|                               +---------------------------------------------+
+|                               | write-to-const                              |
+|                               +---------------------------------------------+
+|                               | write-to-string-literal                     |
+|                               +---------------------------------------------+
+|                               | possible-null-argument                      |
+|                               +---------------------------------------------+
+|                               | possible-null-dereference                   |
++-------------------------------+---------------------------------------------+
+| Bad Practice                  | double-fclose                               |
+|                               +---------------------------------------------+
+|                               | too-complex                                 |
+|                               +---------------------------------------------+
+|                               | stale-setjmp-buffer                         |
++-------------------------------+---------------------------------------------+
+| Security                      | exposure-through-output-file                |
+|                               +---------------------------------------------+
+|                               | unsafe-call-within-signal-handler           |
+|                               +---------------------------------------------+
+|                               | use-of-pointer-in-stale-stack-frame         |
+|                               +---------------------------------------------+
+|                               | tainted-array-index                         |
++-------------------------------+---------------------------------------------+
