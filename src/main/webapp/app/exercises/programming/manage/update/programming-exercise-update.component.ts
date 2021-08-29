@@ -298,7 +298,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.problemStatementLoaded = true;
         }
         // Select the correct pattern
-        this.setPackageNamePattern(); // this.selectedProgrammingLanguage);
+        this.setPackageNamePattern(this.selectedProgrammingLanguage);
 
         // Checks if the current environment is production
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -482,7 +482,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
         }
         // Select the correct pattern
-        this.setPackageNamePattern(); // language);
+        this.setPackageNamePattern(language);
         this.selectedProgrammingLanguage = language;
         return language;
     }
@@ -492,13 +492,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      *
      * @param language to choose from
      */
-    setPackageNamePattern() {
-        // language: ProgrammingLanguage) {
-        // if (language === ProgrammingLanguage.SWIFT) {
-        // this.packageNamePattern = this.packageNamePatternForSwift;
-        // } else {
-        this.packageNamePattern = this.packageNamePatternForJavaKotlin;
-        // }
+    setPackageNamePattern(language: ProgrammingLanguage) {
+        if (language === ProgrammingLanguage.SWIFT) {
+            this.packageNamePattern = this.packageNamePatternForSwift;
+        } else {
+            this.packageNamePattern = this.packageNamePatternForJavaKotlin;
+        }
     }
 
     /**

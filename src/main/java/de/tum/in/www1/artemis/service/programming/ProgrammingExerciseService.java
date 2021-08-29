@@ -598,8 +598,8 @@ public class ProgrammingExerciseService {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
         }
         else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT && programmingExercise.getProjectType() == ProjectType.PLAIN) {
-            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getShortName());
-            fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getShortName());
+            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageName());
+            fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
         }
         else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT && programmingExercise.getProjectType() == ProjectType.XCODE) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${shortName}", programmingExercise.getShortName());
@@ -612,7 +612,7 @@ public class ProgrammingExerciseService {
             replacements.put("${packageName}", programmingExercise.getPackageName());
         }
         else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT && programmingExercise.getProjectType() == ProjectType.PLAIN) {
-            replacements.put("${packageName}", programmingExercise.getShortName());
+            replacements.put("${packageName}", programmingExercise.getPackageName());
         }
         else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT && programmingExercise.getProjectType() == ProjectType.XCODE) {
             replacements.put("${shortName}", programmingExercise.getShortName());
