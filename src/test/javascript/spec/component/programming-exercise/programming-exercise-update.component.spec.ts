@@ -233,7 +233,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(courseService.find).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.SWIFT);
             expect(comp.staticCodeAnalysisAllowed).toEqual(true);
-            expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForSwift);
+            // expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForSwift);
         }));
 
         it('Should activate SCA for Java', fakeAsync(() => {
@@ -340,7 +340,7 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 sequentialTestRuns: false,
                 staticCodeAnalysis: true,
                 plagiarismCheckSupported: false,
-                packageNameRequired: true,
+                packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: false,
                 projectTypes: [ProjectType.PLAIN, ProjectType.XCODE],
             } as ProgrammingLanguageFeature;
