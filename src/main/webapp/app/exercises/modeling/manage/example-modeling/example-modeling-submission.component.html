@@ -39,22 +39,45 @@
         </div>
     </div>
 
-    <div class="col-12 text-end mb-2" *ngIf="readOnly">
-        <button (click)="readAndUnderstood()" class="btn btn-success">
-            <fa-icon [icon]="'save'"></fa-icon>
-            <span jhiTranslate="artemisApp.exampleSubmission.readAndUnderstood">I have viewed and understood the example</span>
-        </button>
-    </div>
+    <div class="row">
+        <div class="col-6">
+            <span class="pe-2" style="font-weight: bolder">Legend: </span>
+            <div *ngFor="let legendElement of legend.slice(0, 2)" class="pe-5" style="display: inline-block">
+                <span>{{ legendElement.text | artemisTranslate }}</span>
+                <fa-layers>
+                    <fa-icon style="color: #e9ecef" [icon]="'circle'" size="2x"></fa-icon>
+                    <fa-icon [icon]="legendElement.icon" [styles]="{ width: '29px', color: legendElement.color }" transform="shrink-6" size="2x"></fa-icon>
+                </fa-layers>
+            </div>
 
-    <div class="col-12 text-end mb-2" *ngIf="toComplete">
-        <button
-            class="btn btn-primary px-5"
-            (click)="checkAssessment()"
-            [disabled]="!feedbacks || !assessmentsAreValid"
-            jhiTranslate="artemisApp.exampleSubmission.submitAssessment"
-        >
-            Submit Assessment
-        </button>
+            <!-- extra logic for the display warning icon -->
+            <div class="pe-5" style="display: inline-block">
+                <span>{{ legend[2].text | artemisTranslate }}</span>
+                <fa-layers>
+                    <fa-icon style="color: #e9ecef" [icon]="'circle'" size="2x"></fa-icon>
+                    <fa-icon [icon]="legend[2].icon" [styles]="{ color: '#ffc800', width: '29px', 'margin-top': '-9px' }" transform="shrink-6" size="2x"></fa-icon>
+                    <fa-icon [icon]="'exclamation'" size="2x" [styles]="{ width: '29px', 'margin-top': '-8px' }" transform="shrink-10"></fa-icon>
+                </fa-layers>
+            </div>
+        </div>
+
+        <div class="col-6 text-end mb-2" *ngIf="readOnly">
+            <button (click)="readAndUnderstood()" class="btn btn-success">
+                <fa-icon [icon]="'save'"></fa-icon>
+                <span jhiTranslate="artemisApp.exampleSubmission.readAndUnderstood">I have viewed and understood the example</span>
+            </button>
+        </div>
+
+        <div class="col-6 text-end mb-2" *ngIf="toComplete">
+            <button
+                class="btn btn-primary px-5"
+                (click)="checkAssessment()"
+                [disabled]="!feedbacks || !assessmentsAreValid"
+                jhiTranslate="artemisApp.exampleSubmission.submitAssessment"
+            >
+                Submit Assessment
+            </button>
+        </div>
     </div>
 
     <div class="col-12">

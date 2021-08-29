@@ -54,6 +54,23 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     assessmentExplanation: string;
     isExamMode: boolean;
 
+    legend = [
+        {
+            text: 'artemisApp.exampleSubmission.legend.positiveScore',
+            icon: 'check',
+            color: 'green',
+        },
+        {
+            text: 'artemisApp.exampleSubmission.legend.negativeScore',
+            icon: 'times',
+            color: 'red',
+        },
+        {
+            text: 'artemisApp.exampleSubmission.legend.incorrectAssessment',
+            icon: 'exclamation-triangle',
+        },
+    ];
+
     private exampleSubmissionId: number;
 
     constructor(
@@ -391,9 +408,9 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                     // Mark all wrongly made feedbacks accordingly.
                     const correctionErrors: FeedbackCorrectionError[] = JSON.parse(error['error']['title'])['errors'];
                     correctionErrors.forEach((res) => {
-                        const feedback = this.feedbacks.find((feedback) => feedback.reference === res.reference);
-                        if (feedback != undefined) {
-                            feedback.correctionStatus = res.type;
+                        const validatedFeedback = this.feedbacks.find((feedback) => feedback.reference === res.reference);
+                        if (validatedFeedback != undefined) {
+                            validatedFeedback.correctionStatus = res.type;
                         }
                     });
 
@@ -401,7 +418,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
                     const msg =
                         correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
-                    this.jhiAlertService.error(msg);
+                    this.jhiAlertService.error(msg, { mistakeCount: correctionErrors.length });
                 } else {
                     onError(this.jhiAlertService, error);
                 }
@@ -413,7 +430,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         this.feedbacks.forEach((feedback) => {
             feedback.correctionStatus = 'CORRECT';
         });
-
         this.assessmentEditor.resultFeedbacks = this.feedbacks;
     }
 

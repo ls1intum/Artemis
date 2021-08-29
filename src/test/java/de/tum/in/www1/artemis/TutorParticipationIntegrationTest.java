@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
@@ -118,24 +117,6 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
 
         exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createManualTextFeedback(1D, textBlockIds.get(1)));
         var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
-        request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testTutorParticipateInModelingExerciseWithExampleSubmissionTooHigh() throws Exception {
-        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL));
-        var path = "/api/exercises/" + modelingExercise.getId() + "/assess-example-submission";
-        request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testTutorParticipateInModelingExerciseWithExampleSubmissionTooLow() throws Exception {
-        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createNegativeFeedback(FeedbackType.MANUAL));
-        var path = "/api/exercises/" + modelingExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
