@@ -5,7 +5,6 @@
 # Am I Root user?
 if [ $(id -u) -eq 0 ]; then
 	username="artemis_user"
-	password="artemis_user"
 	egrep "^$username" /etc/passwd >/dev/null
 	if [ $? -eq 0 ]; then
 		echo "$username exists!"
