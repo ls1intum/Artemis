@@ -15,6 +15,7 @@ import { ExamStartEndPage } from './ExamStartEndPage';
 import { TextExerciseCreationPage } from './exercises/text/TextExerciseCreationPage';
 import { TextExerciseExampleSubmissionsPage } from './exercises/text/TextExerciseExampleSubmissionsPage';
 import { TextExerciseExampleSubmissionCreationPage } from './exercises/text/TextExerciseExampleSubmissionCreationPage';
+import { TextExerciseAssessmentPage } from './assessment/TextExerciseAssessmentPage';
 
 /**
  * A class which encapsulates all pageobjects, which can be used to automate the Artemis UI.
@@ -40,5 +41,6 @@ export class ArtemisPageobjects {
     assessment = {
         course: new CourseAssessmentDashboardPage(),
         exercise: new ExerciseAssessmentDashboardPage(),
+        text: new TextExerciseAssessmentPage(),
     };
 }

@@ -12,6 +12,9 @@ const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
 const coursesPage = artemis.pageobjects.courseManagement;
+const courseAssessment = artemis.pageobjects.assessment.course;
+const exerciseAssessment = artemis.pageobjects.assessment.exercise;
+const textAssessment = artemis.pageobjects.assessment.text;
 
 // Common primitives
 const uid = generateUUID();
@@ -32,12 +35,25 @@ describe('Text exercise assessment', () => {
     it('Assesses the text exercise submission', () => {
         cy.login(tutor, '/course-management');
         coursesPage.openAssessmentDashboardOfCourseWithId(course.id);
+        courseAssessment.clickExerciseDashboardButton();
+        exerciseAssessment.clickHaveReadInstructionsButton();
+        cy.contains('There are no complaints at the moment').should('be.visible');
+        cy.contains('There are no requests at the moment.').should('be.visible');
+        exerciseAssessment.clickStartNewAssessment();
+        const instructionsRoot = textAssessment.getInstructionsRootElement();
+        instructionsRoot.contains(exercise.title).should('be.visible');
+        instructionsRoot.contains(exercise.problemStatement).should('be.visible');
+        instructionsRoot.contains(exercise.sampleSolution).should('be.visible');
+        instructionsRoot.contains(exercise.gradingInstructions).should('be.visible');
+        cy.contains('Number of words: 100').should('be.visible');
+        cy.contains('Number of characters: 591').should('be.visible');
+        textAssessment.addNewFeedback(4, 'Try to use some newlines next time!');
     });
 
     after(() => {
         if (!!course) {
-            cy.login(users.getAdmin());
-            courseManagement.deleteCourse(course.id);
+            // cy.login(users.getAdmin());
+            // courseManagement.deleteCourse(course.id);
         }
     });
 
