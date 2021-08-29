@@ -31,7 +31,6 @@ describe('Text exercise participation', () => {
 
     it('Creates a text exercise in the UI', () => {
         cy.login(users.getStudentOne(), `/courses/${course.id}/exercises`);
-        // BLOCKED: Need pageobjects from https://github.com/ls1intum/Artemis/pull/3919 to navigate to the exercise properly
         cy.contains('Start exercise').click();
         cy.get('[data-icon="folder-open"]').click();
 
