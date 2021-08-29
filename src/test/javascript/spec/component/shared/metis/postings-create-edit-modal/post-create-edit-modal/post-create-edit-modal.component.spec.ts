@@ -3,15 +3,18 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import * as sinon from 'sinon';
 import { spy } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { User } from 'app/core/user/user.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
+import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-tag-selector.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -24,10 +27,16 @@ describe('PostCreateEditModalComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
-            declarations: [PostCreateEditModalComponent, MockPipe(ArtemisTranslatePipe)],
-            schemas: [NO_ERRORS_SCHEMA],
+            declarations: [
+                PostCreateEditModalComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(PostingsMarkdownEditorComponent),
+                MockComponent(PostingsButtonComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(PostTagSelectorComponent),
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -71,7 +80,11 @@ describe('PostCreateEditModalComponent', () => {
             content: newContent,
         });
         component.confirm();
-        expect(metisServiceCreateSpy).to.be.have.been.calledWith({ ...component.posting, content: newContent, title: newTitle });
+        expect(metisServiceCreateSpy).to.be.have.been.calledWith({
+            ...component.posting,
+            content: newContent,
+            title: newTitle,
+        });
         expect(component.posting.creationDate).to.not.be.undefined;
         tick();
         expect(component.isLoading).to.equal(false);
@@ -87,7 +100,11 @@ describe('PostCreateEditModalComponent', () => {
             title: updatedTitle,
         });
         component.confirm();
-        expect(metisServiceCreateSpy).to.be.have.been.calledWith({ ...component.posting, content: updatedContent, title: updatedTitle });
+        expect(metisServiceCreateSpy).to.be.have.been.calledWith({
+            ...component.posting,
+            content: updatedContent,
+            title: updatedTitle,
+        });
         tick();
         expect(component.isLoading).to.equal(false);
     }));
