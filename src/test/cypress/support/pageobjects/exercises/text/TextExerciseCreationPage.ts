@@ -1,3 +1,4 @@
+import { BASE_API } from './../../../constants';
 import { Dayjs } from 'dayjs';
 import { POST } from '../../../constants';
 import { dayjsToString } from '../../../utils';
@@ -46,7 +47,7 @@ export class TextExerciseCreationPage {
 
     create() {
         cy.get('[jhitranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise"]').should('be.visible');
-        cy.intercept(POST, 'api/text-exercises').as('textExerciseCreation');
+        cy.intercept(POST, BASE_API + 'text-exercises').as('textExerciseCreation');
         cy.get('#submit-entity').click();
         return cy.wait('@textExerciseCreation');
     }

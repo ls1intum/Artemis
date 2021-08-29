@@ -8,8 +8,9 @@ import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 
-const COURSE_BASE = BASE_API + 'courses/';
-const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
+export const COURSE_BASE = BASE_API + 'courses/';
+export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
+export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
 const oneDay = 24 * 60 * 60 * 1000;
 
 /**
@@ -153,7 +154,7 @@ export class CourseManagementRequests {
     createTextExercise(body: { course: any } | { exerciseGroup: any }, title = 'Text exercise ' + generateUUID()) {
         const textExercise: any = this.getCourseOrExamExercise(textExerciseTemplate, body);
         textExercise.title = title;
-        return cy.request({ method: POST, url: BASE_API + 'text-exercises', body: textExercise });
+        return cy.request({ method: POST, url: TEXT_EXERCISE_BASE, body: textExercise });
     }
 
     /**

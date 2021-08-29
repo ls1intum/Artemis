@@ -1,3 +1,4 @@
+import { BASE_API } from './../../../support/constants';
 import { DELETE } from '../../../support/constants';
 import { generateUUID } from '../../../support/utils';
 import { artemis } from '../../../support/ArtemisTesting';
@@ -87,12 +88,12 @@ describe('Text exercise management', () => {
             courseManagement.createTextExercise({ course }, exerciseTitle).its('status').should('eq', 201);
         });
 
-        it('Deletes an existing programming exercise', function () {
+        it('Deletes an existing text exercise', function () {
             cy.login(users.getAdmin(), '/');
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(courseName, courseShortName);
             courseManagementExercises.clickDeleteExercise(exerciseTitle);
-            cy.intercept(DELETE, '/api/text-exercises/*').as('deleteTextExercise');
+            cy.intercept(DELETE, BASE_API + 'text-exercises/*').as('deleteTextExercise');
             cy.get('[type="text"], [name="confirmExerciseName"]').type(exerciseTitle).type('{enter}');
             cy.wait('@deleteTextExercise').its('response.statusCode').should('eq', 200);
             cy.contains(exerciseTitle).should('not.exist');
