@@ -75,7 +75,7 @@ describe('Quiz Exercise Management', () => {
         let quizExercise: any;
 
         beforeEach('Create Quiz Exercise', () => {
-            const mcQuestion: any = { ...multipleChoiceTemplate, title:  'Cypress MC' + uid };
+            const mcQuestion: any = { ...multipleChoiceTemplate, title: 'Cypress MC' + uid };
             courseManagementRequest.createQuizExercise([mcQuestion], quizExerciseName, dayjs(), { course }).then((quizResponse) => {
                 quizExercise = quizResponse.body;
             });
