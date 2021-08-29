@@ -1,3 +1,4 @@
+import { ExerciseResultPage } from './exercises/ExerciseResultPage';
 import { ExerciseAssessmentDashboardPage } from './assessment/ExerciseAssessmentDashboardPage';
 import { CourseAssessmentDashboardPage } from './assessment/CourseAssessmentDashboardPage';
 import { TextEditorPage } from './exercises/text/TextEditorPage';
@@ -16,6 +17,7 @@ import { TextExerciseCreationPage } from './exercises/text/TextExerciseCreationP
 import { TextExerciseExampleSubmissionsPage } from './exercises/text/TextExerciseExampleSubmissionsPage';
 import { TextExerciseExampleSubmissionCreationPage } from './exercises/text/TextExerciseExampleSubmissionCreationPage';
 import { TextExerciseAssessmentPage } from './assessment/TextExerciseAssessmentPage';
+import { TextExerciseFeedbackPage } from './exercises/text/TextExerciseFeedbackPage';
 
 /**
  * A class which encapsulates all pageobjects, which can be used to automate the Artemis UI.
@@ -37,10 +39,12 @@ export class ArtemisPageobjects {
         exampleSubmissions: new TextExerciseExampleSubmissionsPage(),
         exampleSubmissionCreation: new TextExerciseExampleSubmissionCreationPage(),
         editor: new TextEditorPage(),
+        feedback: new TextExerciseFeedbackPage(),
     };
     assessment = {
         course: new CourseAssessmentDashboardPage(),
         exercise: new ExerciseAssessmentDashboardPage(),
         text: new TextExerciseAssessmentPage(),
     };
+    exerciseResult = new ExerciseResultPage();
 }

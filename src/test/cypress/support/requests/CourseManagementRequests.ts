@@ -152,9 +152,18 @@ export class CourseManagementRequests {
      * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
      */
-    createTextExercise(body: { course: any } | { exerciseGroup: any }, title = 'Text exercise ' + generateUUID()) {
+    createTextExercise(
+        body: { course: any } | { exerciseGroup: any },
+        title = 'Text exercise ' + generateUUID(),
+        releaseDate = day().subtract(1, 'days'),
+        dueDate = day().add(1, 'days'),
+        assessmentDueDate = day().add(2, 'days'),
+    ) {
         const textExercise: any = this.getCourseOrExamExercise(textExerciseTemplate, body);
         textExercise.title = title;
+        textExercise.releaseDate = dayjsToString(releaseDate);
+        textExercise.dueDate = dayjsToString(dueDate);
+        textExercise.assessmentDueDate = dayjsToString(assessmentDueDate);
         return cy.request({ method: POST, url: TEXT_EXERCISE_BASE, body: textExercise });
     }
 

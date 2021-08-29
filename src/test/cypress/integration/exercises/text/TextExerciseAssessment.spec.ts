@@ -1,3 +1,4 @@
+import day from 'dayjs';
 import { artemis } from 'src/test/cypress/support/ArtemisTesting';
 import { generateUUID } from 'src/test/cypress/support/utils';
 
@@ -15,6 +16,8 @@ const coursesPage = artemis.pageobjects.courseManagement;
 const courseAssessment = artemis.pageobjects.assessment.course;
 const exerciseAssessment = artemis.pageobjects.assessment.exercise;
 const textAssessment = artemis.pageobjects.assessment.text;
+const exerciseResult = artemis.pageobjects.exerciseResult;
+const textFeedback = artemis.pageobjects.textExercise.feedback;
 
 // Common primitives
 const uid = generateUUID();
@@ -29,17 +32,27 @@ Cypress.on('uncaught:exception', (err, runnable) => {
 describe('Text exercise assessment', () => {
     let course: any;
     let exercise: any;
+    const tutorFeedback = 'Try to use some newlines next time!';
+    const feedbackPoints = 4;
 
     before(() => {
         createCourseWithTextExercise().then(() => {
             makeTextSubmissionAsStudent();
-            updateExerciseDueDateForAssessment();
+            updateExerciseDueDate();
         });
+    });
+
+    after(() => {
+        if (!!course) {
+            cy.login(users.getAdmin());
+            courseManagement.deleteCourse(course.id);
+        }
     });
 
     it('Assesses the text exercise submission', () => {
         cy.login(tutor, '/course-management');
         coursesPage.openAssessmentDashboardOfCourseWithId(course.id);
+        courseAssessment.checkShowFinishedExercises();
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
         cy.contains('There are no complaints at the moment').should('be.visible');
@@ -51,15 +64,24 @@ describe('Text exercise assessment', () => {
         textAssessment.getInstructionsRootElement().contains(exercise.gradingInstructions).should('be.visible');
         cy.contains('Number of words: 100').should('be.visible');
         cy.contains('Number of characters: 591').should('be.visible');
-        textAssessment.addNewFeedback(4, 'Try to use some newlines next time!');
+        textAssessment.addNewFeedback(feedbackPoints, tutorFeedback);
         textAssessment.submit();
     });
 
-    after(() => {
-        if (!!course) {
-            cy.login(users.getAdmin());
-            courseManagement.deleteCourse(course.id);
-        }
+    describe('Student feedback', () => {
+        before(() => {
+            updateExerciseAssessmentDueDate();
+            cy.login(student, `/courses/${course.id}/exercises/${exercise.id}`);
+        });
+
+        it('Student sees feedback after assessment due date and complains', () => {
+            exerciseResult.shouldShowExerciseTitle(exercise.title);
+            exerciseResult.shouldShowProblemStatement(exercise.problemStatement);
+            exerciseResult.shouldShowScore(40);
+            exerciseResult.clickViewSubmission();
+            textFeedback.shouldShowFeedback(feedbackPoints, tutorFeedback);
+            textFeedback.shouldShowScore(feedbackPoints, 10, 40);
+        });
     });
 
     function createCourseWithTextExercise() {
@@ -82,9 +104,19 @@ describe('Text exercise assessment', () => {
         });
     }
 
-    function updateExerciseDueDateForAssessment() {
+    function updateExerciseDueDate() {
         cy.login(admin);
-        courseManagement.updateTextExerciseDueDate(exercise);
-        cy.wait(1000);
+        courseManagement
+            .updateTextExerciseDueDate(exercise)
+            .its('body')
+            .then((newExercise) => {
+                // We need to save the returned dto. Otherwise we will overwrite the due date when we update the assessment date later.
+                exercise = newExercise;
+            });
+    }
+
+    function updateExerciseAssessmentDueDate() {
+        cy.login(admin);
+        courseManagement.updateTextExerciseAssessmentDueDate(exercise).wait(1000);
     }
 });

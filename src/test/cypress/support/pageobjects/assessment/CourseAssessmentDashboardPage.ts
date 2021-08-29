@@ -5,4 +5,8 @@ export class CourseAssessmentDashboardPage {
     clickExerciseDashboardButton() {
         cy.get('[jhitranslate="entity.action.exerciseDashboard"]').click();
     }
+
+    checkShowFinishedExercises() {
+        cy.get('#field_showFinishedExercise').check();
+    }
 }
