@@ -64,15 +64,8 @@ export class ExampleSubmissionService {
      * @param exerciseId the id of the corresponding exercise
      */
     import(submission: Submission, exerciseId: number): Observable<EntityResponseType> {
-        const copy = Object.assign({}, submission);
-        // avoid infinite recursion for JSON, example submission does not need participation
-        copy.participation = undefined;
-        copy.results?.forEach((result) => {
-            result.submission = undefined;
-            result.participation = undefined;
-        });
         return this.http
-            .post<ExampleSubmission>(`api/exercises/${exerciseId}/example-submissions/import`, copy, {
+            .post<ExampleSubmission>(`api/exercises/${exerciseId}/example-submissions/import`, submission.id, {
                 observe: 'response',
             })
             .pipe(map((res: EntityResponseType) => this.convertResponse(res)));

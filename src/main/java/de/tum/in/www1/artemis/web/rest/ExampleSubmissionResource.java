@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -158,14 +157,14 @@ public class ExampleSubmissionResource {
      * POST exercises/:exerciseId/example-submissions/import : Import exampleSubmission.
      *
      * @param exerciseId        the id of the corresponding exercise
-     * @param submission        the submission to be imported as an example submission
+     * @param submissionId        the submission id to be imported as an example submission
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("exercises/{exerciseId}/example-submissions/import")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId, @RequestBody Submission submission) {
-        log.debug("REST request to save ExampleSubmission : {}", submission);
-        if (submission.getId() == null) {
+    public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId, @RequestBody Long submissionId) {
+        log.debug("REST request to import ExampleSubmission : {}", submissionId);
+        if (submissionId == null) {
             log.debug("Submission id must be set for an import");
             return badRequest();
         }
@@ -174,7 +173,7 @@ public class ExampleSubmissionResource {
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
-        ExampleSubmission exampleSubmission = exampleSubmissionService.importStudentSubmissionAsExampleSubmission(submission, exercise);
+        ExampleSubmission exampleSubmission = exampleSubmissionService.importStudentSubmissionAsExampleSubmission(submissionId, exercise);
 
         return ResponseEntity.ok(exampleSubmission);
     }

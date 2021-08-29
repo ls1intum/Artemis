@@ -250,8 +250,8 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         assertThat(exampleSubmissionRepo.findBySubmissionId(randomId)).isEmpty();
     }
 
-    private ExampleSubmission importExampleSubmission(HttpStatus expectedStatus, Submission submission, Long exerciseId) throws Exception {
-        return request.postWithResponseBody("/api/exercises/" + exerciseId + "/example-submissions/import", submission, ExampleSubmission.class, expectedStatus);
+    private ExampleSubmission importExampleSubmission(HttpStatus expectedStatus, Long submissionId, Long exerciseId) throws Exception {
+        return request.postWithResponseBody("/api/exercises/" + exerciseId + "/example-submissions/import", submissionId, ExampleSubmission.class, expectedStatus);
     }
 
     @Test
@@ -279,7 +279,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
 
         database.addFeedbackToResult(feedback, submission.getLatestResult());
 
-        ExampleSubmission exampleSubmission = importExampleSubmission(HttpStatus.OK, submission, textExercise.getId());
+        ExampleSubmission exampleSubmission = importExampleSubmission(HttpStatus.OK, submission.getId(), textExercise.getId());
         List<TextBlock> copiedTextBlocks = new ArrayList<>(((TextSubmission) exampleSubmission.getSubmission()).getBlocks());
         assertThat(exampleSubmission.getId()).isNotNull();
         assertThat(((TextSubmission) exampleSubmission.getSubmission()).getText()).isEqualTo(((TextSubmission) submission).getText());
@@ -295,7 +295,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         submission = database.addModelingSubmission(modelingExercise, (ModelingSubmission) submission, "student1");
         database.addResultToSubmission(submission, AssessmentType.MANUAL);
 
-        ExampleSubmission exampleSubmission = importExampleSubmission(HttpStatus.OK, submission, modelingExercise.getId());
+        ExampleSubmission exampleSubmission = importExampleSubmission(HttpStatus.OK, submission.getId(), modelingExercise.getId());
         assertThat(exampleSubmission.getId()).isNotNull();
         assertThat(exampleSubmission.getSubmission().getLatestResult().getScore()).isEqualTo(submission.getLatestResult().getScore());
     }
@@ -305,7 +305,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
     public void importExampleSubmissionWithStudentSubmission_badRequest() throws Exception {
         Submission submission = new TextSubmission();
         Long randomId = 1233L;
-        importExampleSubmission(HttpStatus.BAD_REQUEST, submission, randomId);
+        importExampleSubmission(HttpStatus.BAD_REQUEST, submission.getId(), randomId);
     }
 
     @Test
@@ -314,7 +314,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         Submission submission = new TextSubmission();
         submission.setId(12345L);
         Long randomId = 1233L;
-        importExampleSubmission(HttpStatus.NOT_FOUND, submission, randomId);
+        importExampleSubmission(HttpStatus.NOT_FOUND, submission.getId(), randomId);
     }
 
     @Test
@@ -324,7 +324,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         submission.setId(12345L);
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        importExampleSubmission(HttpStatus.FORBIDDEN, submission, textExercise.getId());
+        importExampleSubmission(HttpStatus.FORBIDDEN, submission.getId(), textExercise.getId());
     }
 
 }
