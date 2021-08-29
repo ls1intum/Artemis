@@ -2,8 +2,8 @@ import { Component, OnChanges, OnInit } from '@angular/core';
 import { PostingsFooterDirective } from 'app/shared/metis/postings-footer/postings-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { Router } from '@angular/router';
 import { PageType } from 'app/shared/metis/metis.util';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-post-footer',
@@ -17,8 +17,9 @@ export class PostFooterComponent extends PostingsFooterDirective<Post> implement
     associatedContextName?: string;
     contextNavigationComponents?: (string | number)[];
     courseId: number;
+    private translationBasePath = 'artemisApp.metis.overview.';
 
-    constructor(private metisService: MetisService) {
+    constructor(private metisService: MetisService, private translateService: TranslateService) {
         super();
         this.pageType = metisService.getPageType();
         this.courseId = metisService.getCourse().id!;
@@ -62,7 +63,7 @@ export class PostFooterComponent extends PostingsFooterDirective<Post> implement
                 this.contextNavigationComponents = ['/courses', this.courseId, 'lectures', this.posting.lecture.id!];
             }
             if (this.posting.courseWideContext) {
-                this.associatedContextName = this.posting.courseWideContext;
+                this.associatedContextName = this.translateService.instant(this.translationBasePath + this.posting.courseWideContext);
             }
         }
     }
