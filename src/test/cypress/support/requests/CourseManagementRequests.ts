@@ -207,6 +207,15 @@ export class CourseManagementRequests {
 
     updateTextExerciseDueDate(exercise: any, due = day()) {
         exercise.dueDate = dayjsToString(due);
+        return this.updateTextExercise(exercise);
+    }
+
+    updateTextExerciseAssessmentDueDate(exercise: any, due = day()) {
+        exercise.assessmentDueDate = dayjsToString(due);
+        return this.updateTextExercise(exercise);
+    }
+
+    private updateTextExercise(exercise: any) {
         return cy.request({
             url: TEXT_EXERCISE_BASE,
             method: PUT,
