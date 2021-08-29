@@ -1,5 +1,10 @@
 import { Post } from 'app/entities/metis/post.model';
 
+export enum PostingEditType {
+    CREATE,
+    UPDATE,
+}
+
 export enum CourseWideContext {
     TECH_SUPPORT = 'TECH_SUPPORT',
     ORGANIZATION = 'ORGANIZATION',

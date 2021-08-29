@@ -19,14 +19,14 @@
             <!-- body -->
             <div class="card-body pt-0">
                 <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post"> </jhi-postings-thread>
-                <!-- New Post button -->
+                <!-- new post button -->
                 <div class="row mt-2" *ngIf="createdPost">
                     <div class="col-12">
                         <button class="btn btn-sm btn-primary" (click)="createEditModal.open()">
                             <fa-icon [icon]="'plus'"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
                         </button>
-                        <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="onCreatePost()"></jhi-post-create-edit-modal>
+                        <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
                     </div>
                 </div>
                 <!-- no posts -->

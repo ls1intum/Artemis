@@ -10,7 +10,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Course } from 'app/entities/course.model';
 import { LectureService } from 'app/lecture/lecture.service';
-import { CourseWideContext, PageType } from 'app/shared/metis/metis.util';
+import { CourseWideContext, PageType, PostingEditType } from 'app/shared/metis/metis.util';
 
 const TITLE_MAX_LENGTH = 200;
 
@@ -32,6 +32,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     course: Course;
     pageType: PageType;
     ePageType = PageType;
+    eEditType = PostingEditType;
     isAtLeastTutorInCourse: boolean;
     currentContextSelectorOption: ContextSelectorOption;
 

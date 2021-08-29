@@ -5,12 +5,11 @@ import { Lecture } from 'app/entities/lecture.model';
 import { DisplayPriority, PageType, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { map, Subscription } from 'rxjs';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-page-discussion-section',
@@ -30,12 +29,7 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
     private postsSubscription: Subscription;
     private paramSubscription: Subscription;
 
-    constructor(
-        private metisService: MetisService,
-        private activatedRoute: ActivatedRoute,
-        private courseCalculationService: CourseScoreCalculationService,
-        private exerciseService: ExerciseService,
-    ) {
+    constructor(private metisService: MetisService, private activatedRoute: ActivatedRoute, private courseCalculationService: CourseScoreCalculationService) {
         this.paramSubscription = this.activatedRoute.params.subscribe((params) => {
             const courseId = parseInt(params['courseId'], 10);
             this.course = this.courseCalculationService.getCourse(courseId);
@@ -43,30 +37,24 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
                 this.initMetisService();
             }
         });
-        this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
+        this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.sort(this.sectionSortFn))).subscribe((posts: Post[]) => {
             this.posts = posts;
         });
     }
 
     ngOnInit() {
-        this.metisService.getFilteredAndSortedPosts(
-            {
-                exerciseId: this.exercise?.id,
-                lectureId: this.lecture?.id,
-            },
-            { sort: this.sectionSortFn },
-        );
-        this.createdPost = this.createEmptyPost();
+        this.metisService.getFilteredPosts({
+            exerciseId: this.exercise?.id,
+            lectureId: this.lecture?.id,
+        });
+        this.createdPost = this.metisService.createEmptyPostForContext();
     }
 
     ngOnChanges() {
-        this.metisService.getFilteredAndSortedPosts(
-            {
-                exerciseId: this.exercise?.id,
-                lectureId: this.lecture?.id,
-            },
-            { sort: this.sectionSortFn },
-        );
+        this.metisService.getFilteredPosts({
+            exerciseId: this.exercise?.id,
+            lectureId: this.lecture?.id,
+        });
         this.createdPost = this.createEmptyPost();
     }
 
@@ -108,35 +96,14 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
      * @return Post created empty default post
      */
     createEmptyPost(): Post {
-        const post = new Post();
-        post.content = '';
-        post.visibleForStudents = true;
-        if (this.exercise) {
-            post.exercise = {
-                ...this.exerciseService.convertExerciseForServer(this.exercise),
-            };
-        } else if (this.lecture) {
-            post.lecture = {
-                id: this.lecture!.id,
-            };
-        }
-        return post;
+        return this.metisService.createEmptyPostForContext(undefined, this.exercise?.id, this.lecture?.id);
     }
 
     /**
      * defines a function that returns the post id as unique identifier,
      * by this means, Angular determines which post in the collection of posts has to be reloaded/destroyed on changes
      */
-    postsTrackByFn(index: number, post: Post): number {
-        return post.id!;
-    }
-
-    /**
-     * resets createdPost to a new default post after a post was successfully created
-     */
-    onCreatePost(): void {
-        this.createdPost = this.createEmptyPost();
-    }
+    postsTrackByFn = (index: number, post: Post): number => post.id!;
 
     private initMetisService(): void {
         this.metisService.setCourse(this.course!);

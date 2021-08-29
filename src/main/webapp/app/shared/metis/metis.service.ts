@@ -11,14 +11,15 @@ import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
-import { DisplayPriority, PageType, PostContextFilter, PostSortFilter } from 'app/shared/metis/metis.util';
+import { CourseWideContext, DisplayPriority, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
+import { Exercise } from 'app/entities/exercise.model';
+import { Lecture } from 'app/entities/lecture.model';
 
 @Injectable()
 export class MetisService {
     private posts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([]);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private currentPostContextFilter: PostContextFilter = {};
-    private currentPostSortFilter: PostSortFilter = {};
     private user: User;
     private pageType: PageType = PageType.OVERVIEW;
     private course: Course;
@@ -93,16 +94,12 @@ export class MetisService {
 
     /**
      * fetches all posts for a course, optionally fetching posts only for a certain context, i.e. a lecture, exercise or specified course-wide-context,
-     * informs all components that subscribed on posts by sending out the sorted, newly fetched posts
+     * informs all components that subscribed on posts by sending the newly fetched posts
      * @param postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
-     * @param postSortFilter criteria to filter course posts with (lecture, exercise, course-wide context)
-     * @param forceReload
      */
-    getFilteredAndSortedPosts(postContextFilter: PostContextFilter, postSortFilter: PostSortFilter, forceReload = true): void {
-        this.currentPostSortFilter = postSortFilter;
+    getFilteredPosts(postContextFilter: PostContextFilter): void {
         // check if the post context did change
         if (
-            forceReload ||
             postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
             postContextFilter?.courseWideContext !== this.currentPostContextFilter?.courseWideContext ||
             postContextFilter?.lectureId !== this.currentPostContextFilter?.lectureId ||
@@ -110,19 +107,12 @@ export class MetisService {
         ) {
             // if the context changed, we need to fetch posts before doing the content filtering and sorting
             this.currentPostContextFilter = postContextFilter;
-            this.postService
-                .getPosts(this.courseId, this.currentPostContextFilter)
-                .pipe(
-                    map((res: HttpResponse<Post[]>) => {
-                        return this.filterAndSortIfSpecified(res.body!, postSortFilter);
-                    }),
-                )
-                .subscribe((posts) => {
-                    this.posts$.next(posts);
-                });
+            this.postService.getPosts(this.courseId, this.currentPostContextFilter).subscribe((res) => {
+                this.posts$.next(res.body!);
+            });
         } else {
             // if the context did not change, we do not need to fetch posts again but only do the content filtering and sorting the current posts
-            this.posts$.next(this.filterAndSortIfSpecified(this.posts$.getValue(), postSortFilter));
+            this.posts$.next(this.posts$.getValue());
         }
     }
 
@@ -134,7 +124,7 @@ export class MetisService {
     createPost(post: Post): Observable<Post> {
         return this.postService.create(this.courseId, post).pipe(
             tap(() => {
-                this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
+                this.getFilteredPosts(this.currentPostContextFilter);
                 this.updateCoursePostTags();
             }),
             map((res: HttpResponse<Post>) => res.body!),
@@ -149,7 +139,7 @@ export class MetisService {
     createAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
         return this.answerPostService.create(this.courseId, answerPost).pipe(
             tap(() => {
-                this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
+                this.getFilteredPosts(this.currentPostContextFilter);
             }),
             map((res: HttpResponse<Post>) => res.body!),
         );
@@ -163,7 +153,7 @@ export class MetisService {
     updatePost(post: Post): Observable<Post> {
         return this.postService.update(this.courseId, post).pipe(
             tap(() => {
-                this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
+                this.getFilteredPosts(this.currentPostContextFilter);
                 this.updateCoursePostTags();
             }),
             map((res: HttpResponse<Post>) => res.body!),
@@ -178,7 +168,7 @@ export class MetisService {
     updateAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
         return this.answerPostService.update(this.courseId, answerPost).pipe(
             tap(() => {
-                this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
+                this.getFilteredPosts(this.currentPostContextFilter);
             }),
             map((res: HttpResponse<Post>) => res.body!),
         );
@@ -192,7 +182,7 @@ export class MetisService {
     updatePostDisplayPriority(postId: number, displayPriority: DisplayPriority): Observable<Post> {
         return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(
             tap(() => {
-                this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
+                this.getFilteredPosts(this.currentPostContextFilter);
             }),
             map((res: HttpResponse<Post>) => res.body!),
         );
@@ -205,7 +195,7 @@ export class MetisService {
      */
     deletePost(post: Post): void {
         this.postService.delete(this.courseId, post).subscribe(() => {
-            this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
+            this.getFilteredPosts(this.currentPostContextFilter);
             this.updateCoursePostTags();
         });
     }
@@ -217,7 +207,7 @@ export class MetisService {
      */
     deleteAnswerPost(answerPost: AnswerPost): void {
         this.answerPostService.delete(this.courseId, answerPost).subscribe(() => {
-            this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
+            this.getFilteredPosts(this.currentPostContextFilter);
         });
     }
 
@@ -229,7 +219,7 @@ export class MetisService {
     createReaction(reaction: Reaction): Observable<Reaction> {
         return this.reactionService.create(this.courseId, reaction).pipe(
             tap(() => {
-                this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
+                this.getFilteredPosts(this.currentPostContextFilter);
             }),
             map((res: HttpResponse<Post>) => res.body!),
         );
@@ -243,7 +233,7 @@ export class MetisService {
     deleteReaction(reaction: Reaction): Observable<void> {
         return this.reactionService.delete(this.courseId, reaction).pipe(
             tap(() => {
-                this.getFilteredAndSortedPosts(this.currentPostContextFilter, this.currentPostSortFilter);
+                this.getFilteredPosts(this.currentPostContextFilter);
             }),
             map((res: HttpResponse<void>) => res.body!),
         );
@@ -266,13 +256,24 @@ export class MetisService {
         return this.user ? posting?.author!.id === this.getUser().id : false;
     }
 
-    private filterAndSortIfSpecified(posts: Post[], postSortFilter?: PostSortFilter): Post[] {
-        if (postSortFilter?.filter) {
-            posts = posts.filter(postSortFilter.filter);
+    /**
+     * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
+     */
+    createEmptyPostForContext(courseWideContext?: CourseWideContext, exerciseId?: number, lectureId?: number): Post {
+        const emptyPost: Post = new Post();
+        if (courseWideContext) {
+            emptyPost.courseWideContext = courseWideContext;
+            emptyPost.course = { id: this.courseId } as Course;
         }
-        if (postSortFilter?.sort) {
-            posts = posts.sort(postSortFilter.sort);
+        if (exerciseId) {
+            emptyPost.exercise = { id: exerciseId } as Exercise;
         }
-        return posts;
+        if (lectureId) {
+            emptyPost.lecture = { id: lectureId } as Lecture;
+        } else {
+            // set default
+            emptyPost.courseWideContext = CourseWideContext.TECH_SUPPORT as CourseWideContext;
+        }
+        return emptyPost;
     }
 }

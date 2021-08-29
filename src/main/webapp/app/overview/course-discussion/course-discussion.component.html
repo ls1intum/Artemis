@@ -1,7 +1,7 @@
 <div class="row p-3 justify-content-center" *ngIf="course">
     <div class="row col-9 justify-content-center">
         <div class="row ps-0">
-            <!-- Search Bar -->
+            <!-- search bar -->
             <div class="input-group col-10 px-0 mb-4">
                 <input
                     name="searchText"
@@ -12,7 +12,7 @@
                 />
                 <jhi-button [icon]="'search'" (onClick)="onSearch()"></jhi-button>
             </div>
-            <!-- New Post -->
+            <!-- new post button -->
             <div class="col-2" *ngIf="createdPost">
                 <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
                     <fa-icon [icon]="'plus'"></fa-icon>
@@ -22,16 +22,16 @@
             </div>
         </div>
         <form [formGroup]="formGroup">
-            <!-- Filter and Sort Controls -->
+            <!-- filter and sort controls -->
             <div class="row justify-content-between">
-                <!-- Context Filter -->
+                <!-- context filter -->
                 <div class="col-auto">
                     <div class="row">
                         <div class="col-auto p-0 filter-sort-prefix">
                             <span>{{ 'artemisApp.metis.overview.postContextFilter' | artemisTranslate }}</span>
                         </div>
                         <div class="col-auto p-0">
-                            <select formControlName="context" class="form-select" [compareWith]="compareContextFilterOptionFn" (change)="onSelect()" name="context">
+                            <select formControlName="context" class="form-select" [compareWith]="compareContextFilterOptionFn" (change)="onSelectContext()" name="context">
                                 <option [ngValue]="{ courseId: course.id }">{{ course.title }}</option>
                                 <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
                                     <option *ngFor="let context of eCourseContext | keyvalue" [ngValue]="{ courseWideContext: context.value }">
@@ -52,27 +52,21 @@
                         </div>
                     </div>
                 </div>
-                <!-- Sort Dropdown -->
+                <!-- sort dropdown -->
                 <div class="col-auto p-0">
                     <div class="row">
                         <div class="col-auto p-0 filter-sort-prefix">
                             <span>{{ 'artemisApp.metis.overview.sortPostsBy' | artemisTranslate }}</span>
                         </div>
                         <div class="col-auto p-0">
-                            <select formControlName="sortBy" class="form-select" [compareWith]="comparePostSortByOptionFn" (change)="onSelect()" name="sortBy">
+                            <select formControlName="sortBy" class="form-select" [compareWith]="comparePostSortOptionFn" (change)="onChangeSort()" name="sortBy">
                                 <option *ngFor="let sortByOption of eSortBy | keyvalue" [ngValue]="sortByOption.value">
                                     {{ 'artemisApp.metis.overview.' + sortByOption.value | artemisTranslate }}
                                 </option>
                             </select>
                         </div>
                         <div class="col-auto p-0">
-                            <select
-                                formControlName="sortDirection"
-                                class="form-select ps-0"
-                                [compareWith]="compareSortDirectionOptionFn"
-                                (change)="onSelect()"
-                                name="sortDirection"
-                            >
+                            <select formControlName="sortDirection" class="form-select ps-0" [compareWith]="comparePostSortOptionFn" (change)="onChangeSort()" name="sortDirection">
                                 <option *ngFor="let sortDirectionOption of eSortDirection | keyvalue" [ngValue]="sortDirectionOption.value">
                                     {{ 'artemisApp.metis.overview.' + sortDirectionOption.value | artemisTranslate }}
                                 </option>

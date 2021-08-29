@@ -3,17 +3,13 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { PostingEditType } from 'app/shared/metis/metis.util';
 
 const MAX_CONTENT_LENGTH = 1000;
 
-enum EditType {
-    CREATE,
-    UPDATE,
-}
-
 @Directive()
 export abstract class PostingsCreateEditModalDirective<T extends Posting> implements OnInit, OnChanges {
-    readonly EditType = EditType;
+    readonly EditType = PostingEditType;
 
     @Input() posting: T;
     @ViewChild('postingEditor') postingEditor: TemplateRef<any>;
@@ -27,8 +23,8 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
 
     protected constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {}
 
-    get editType(): EditType {
-        return this.posting.id ? EditType.UPDATE : EditType.CREATE;
+    get editType(): PostingEditType {
+        return this.posting.id ? PostingEditType.UPDATE : PostingEditType.CREATE;
     }
 
     /**
@@ -57,9 +53,9 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
         if (this.formGroup.valid) {
             this.isLoading = true;
             this.posting.content = this.formGroup.get('content')?.value;
-            if (this.editType === EditType.UPDATE) {
+            if (this.editType === PostingEditType.UPDATE) {
                 this.updatePosting();
-            } else if (this.editType === EditType.CREATE) {
+            } else if (this.editType === PostingEditType.CREATE) {
                 this.createPosting();
             }
         }

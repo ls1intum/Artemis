@@ -1,7 +1,7 @@
 import { Component, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CourseWideContext, DisplayPriority, PageType, PostSortCriterion, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
-import { Subscription } from 'rxjs';
+import { map, Subscription } from 'rxjs';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -49,7 +49,7 @@ export class CourseDiscussionComponent implements OnDestroy {
     private paramSubscription: Subscription;
 
     constructor(
-        private metisService: MetisService,
+        protected metisService: MetisService,
         private activatedRoute: ActivatedRoute,
         private courseCalculationService: CourseScoreCalculationService,
         private formBuilder: FormBuilder,
@@ -66,7 +66,7 @@ export class CourseDiscussionComponent implements OnDestroy {
                 this.initMetisService();
             }
         });
-        this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
+        this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.filter(this.filterFn).sort(this.overviewSortFn))).subscribe((posts: Post[]) => {
             this.posts = posts;
         });
     }
@@ -84,28 +84,18 @@ export class CourseDiscussionComponent implements OnDestroy {
         this.postsSubscription?.unsubscribe();
     }
 
-    onSelect() {
+    onSelectContext() {
         this.setFilterAndSort();
-        this.metisService.getFilteredAndSortedPosts(
-            this.currentPostContextFilter,
-            {
-                filter: this.filterFn,
-                sort: this.overviewSortFn,
-            },
-            false, // we do not force reload, as when same context is selected, we do not want to fetch posts again
-        );
+        this.metisService.getFilteredPosts(this.currentPostContextFilter);
+    }
+
+    onChangeSort() {
+        this.setFilterAndSort();
     }
 
     onSearch() {
         this.currentPostContentFilter.searchText = this.searchText;
-        this.metisService.getFilteredAndSortedPosts(
-            this.currentPostContextFilter,
-            {
-                filter: this.filterFn,
-                sort: this.overviewSortFn,
-            },
-            true, // we do not force reload, as when same context is selected, we do not want to fetch posts again
-        );
+        // this.metisService.getFilteredPosts(this.currentPostContextFilter);
     }
 
     compareContextFilterOptionFn(option1: ContextFilterOption, option2: ContextFilterOption) {
@@ -121,11 +111,7 @@ export class CourseDiscussionComponent implements OnDestroy {
         return false;
     }
 
-    comparePostSortByOptionFn(option1: PostSortCriterion, option2: PostSortCriterion) {
-        return option1 === option2;
-    }
-
-    compareSortDirectionOptionFn(option1: SortDirection, option2: SortDirection) {
+    comparePostSortOptionFn(option1: PostSortCriterion | SortDirection, option2: PostSortCriterion | SortDirection) {
         return option1 === option2;
     }
 
@@ -180,35 +166,23 @@ export class CourseDiscussionComponent implements OnDestroy {
      * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
      */
     createEmptyPost() {
-        const emptyPost: Post = new Post();
-        if (this.currentPostContextFilter.courseWideContext) {
-            emptyPost.courseWideContext = this.currentPostContextFilter.courseWideContext;
-        }
-        if (this.currentPostContextFilter.exerciseId) {
-            emptyPost.exercise = { id: this.currentPostContextFilter.exerciseId } as Exercise;
-        }
-        if (this.currentPostContextFilter.lectureId) {
-            emptyPost.lecture = { id: this.currentPostContextFilter.lectureId } as Lecture;
-        } else {
-            emptyPost.courseWideContext = CourseWideContext.TECH_SUPPORT as CourseWideContext;
-        }
-        this.createdPost = emptyPost;
+        this.createdPost = this.metisService.createEmptyPostForContext(
+            this.currentPostContextFilter.courseWideContext,
+            this.currentPostContextFilter.exerciseId,
+            this.currentPostContextFilter.lectureId,
+        );
     }
 
-    postsTrackByFn(index: number, post: Post): number {
-        return post.id!;
-    }
+    /**
+     * defines a function that returns the post id as unique identifier,
+     * by this means, Angular determines which post in the collection of posts has to be reloaded/destroyed on changes
+     */
+    postsTrackByFn = (index: number, post: Post): number => post.id!;
 
     private initMetisService(): void {
         this.metisService.setCourse(this.course!);
         this.metisService.setPageType(this.pageType);
-        this.metisService.getFilteredAndSortedPosts(
-            { courseId: this.course!.id },
-            {
-                filter: this.filterFn,
-                sort: this.overviewSortFn,
-            },
-        );
+        this.metisService.getFilteredPosts({ courseId: this.course!.id });
     }
 
     private setFilterAndSort() {

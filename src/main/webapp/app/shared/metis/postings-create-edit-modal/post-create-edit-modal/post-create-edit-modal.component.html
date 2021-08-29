@@ -5,7 +5,7 @@
             <button type="button" class="btn-close" aria-label="Close" (click)="d('Cross click')"></button>
         </div>
         <div class="modal-body">
-            <div *ngIf="pageType === ePageType.OVERVIEW || isAtLeastTutorInCourse" class="position-relative mb-3">
+            <div *ngIf="pageType === ePageType.OVERVIEW || (isAtLeastTutorInCourse && editType === eEditType.UPDATE)" class="position-relative mb-3">
                 <label class="mb-1" jhiTranslate="artemisApp.metis.post.context"></label>
                 <jhi-help-icon placement="top auto" text="artemisApp.metis.post.contextTooltip"></jhi-help-icon>
                 <select formControlName="context" class="form-select" [compareWith]="compareContextSelectorOptionFn" name="context">

@@ -222,25 +222,25 @@ describe('Metis Service', () => {
 
         it('should get posts for lecture filter', () => {
             const postServiceSpy = spy(postService, 'getAllPostsByLectureId');
-            metisService.getFilteredAndSortedPosts({ lectureId: lectureDefault.id }, {});
+            metisService.getFilteredPosts({ lectureId: lectureDefault.id }, {});
             expect(postServiceSpy).to.have.been.called;
         });
 
         it('should get posts for exercise filter', () => {
             const postServiceSpy = spy(postService, 'getAllPostsByExerciseId');
-            metisService.getFilteredAndSortedPosts({ exerciseId: exerciseDefault.id }, {});
+            metisService.getFilteredPosts({ exerciseId: exerciseDefault.id }, {});
             expect(postServiceSpy).to.have.been.called;
         });
 
         it('should get posts for course-context filter', () => {
             const postServiceSpy = spy(postService, 'getAllPostsByCourseId');
-            metisService.getFilteredAndSortedPosts({ courseWideContext: CourseWideContext.RANDOM }, {});
+            metisService.getFilteredPosts({ courseWideContext: CourseWideContext.RANDOM }, {});
             expect(postServiceSpy).to.have.been.called;
         });
 
         it('should get posts for course', () => {
             const postServiceSpy = spy(postService, 'getAllPostsByCourseId');
-            metisService.getFilteredAndSortedPosts({ courseId: courseDefault.id }, {});
+            metisService.getFilteredPosts({ courseId: courseDefault.id }, {});
             expect(postServiceSpy).to.have.been.called;
         });
     });
