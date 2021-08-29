@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { SlideToggleComponent } from 'app/exercises/shared/slide-toggle/slide-toggle.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -48,7 +47,6 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
         DeleteButtonDirective,
         ResizeableContainerComponent,
         SecureLinkDirective,
-        SlideToggleComponent,
         JhiConnectionStatusComponent,
         ChartComponent,
         OrganizationSelectorComponent,
@@ -83,7 +81,6 @@ import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pa
         DeleteDialogComponent,
         ResizeableContainerComponent,
         SecureLinkDirective,
-        SlideToggleComponent,
         JhiConnectionStatusComponent,
         ChartComponent,
         CustomMinDirective,
