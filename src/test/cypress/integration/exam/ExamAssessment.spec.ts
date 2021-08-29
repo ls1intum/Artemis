@@ -32,7 +32,6 @@ let course: any;
 let examTitle: string;
 
 describe('Exam Assessment', () => {
-
     before('Create a course', () => {
         cy.login(admin);
         courseManagementRequests.createCourse(courseName, courseShortName).then((response) => {
@@ -117,7 +116,7 @@ describe('Exam Assessment', () => {
     describe('Exam Programming Exercise Assessment', () => {
         let programmingExerciseName: string;
         let programmingExerciseShortName: string;
-        const examEnd = (Cypress.env('isBamboo') ? (GROUP_SYNCHRONIZATION / 1000) : 0) + 115;
+        const examEnd = (Cypress.env('isBamboo') ? GROUP_SYNCHRONIZATION / 1000 : 0) + 115;
 
         before('Generate exercise names', () => {
             uid = generateUUID();
