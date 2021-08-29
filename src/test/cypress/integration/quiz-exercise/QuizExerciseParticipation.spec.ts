@@ -47,7 +47,7 @@ describe('Quiz Exercise Management', () => {
             uid = generateUUID();
             quizExerciseName = 'Cypress Quiz ' + uid;
             cy.login(admin);
-            courseManagementRequest.createQuizExercise( { course }, quizExerciseName).then((quizResponse) => {
+            courseManagementRequest.createQuizExercise({ course }, quizExerciseName).then((quizResponse) => {
                 quizExercise = quizResponse.body;
             });
         });
