@@ -13,10 +13,10 @@ import { TranslateService } from '@ngx-translate/core';
 export class PostFooterComponent extends PostingsFooterDirective<Post> implements OnInit, OnChanges {
     tags: string[];
     pageType: PageType;
-    ePageType = PageType;
     associatedContextName?: string;
     contextNavigationComponents?: (string | number)[];
     courseId: number;
+    readonly PageType = PageType;
     private translationBasePath = 'artemisApp.metis.overview.';
 
     constructor(private metisService: MetisService, private translateService: TranslateService) {

@@ -7,9 +7,7 @@ import * as moment from 'moment';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Course } from 'app/entities/course.model';
-import { LectureService } from 'app/lecture/lecture.service';
 import { CourseWideContext, PageType, PostingEditType } from 'app/shared/metis/metis.util';
 
 const TITLE_MAX_LENGTH = 200;
@@ -28,21 +26,15 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     exercises?: Exercise[];
     lectures?: Lecture[];
     tags: string[];
-    eCourseContext = CourseWideContext;
     course: Course;
     pageType: PageType;
-    ePageType = PageType;
-    eEditType = PostingEditType;
     isAtLeastTutorInCourse: boolean;
     currentContextSelectorOption: ContextSelectorOption;
+    readonly CourseWideContext = CourseWideContext;
+    readonly PageType = PageType;
+    readonly EditType = PostingEditType;
 
-    constructor(
-        protected metisService: MetisService,
-        protected modalService: NgbModal,
-        protected formBuilder: FormBuilder,
-        protected exerciseService: ExerciseService,
-        protected lectureService: LectureService,
-    ) {
+    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {
         super(metisService, modalService, formBuilder);
     }
 

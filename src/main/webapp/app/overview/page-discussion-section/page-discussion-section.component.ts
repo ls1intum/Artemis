@@ -47,7 +47,7 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
             exerciseId: this.exercise?.id,
             lectureId: this.lecture?.id,
         });
-        this.createdPost = this.metisService.createEmptyPostForContext();
+        this.createdPost = this.createEmptyPost();
     }
 
     ngOnChanges() {
@@ -96,7 +96,7 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
      * @return Post created empty default post
      */
     createEmptyPost(): Post {
-        return this.metisService.createEmptyPostForContext(undefined, this.exercise?.id, this.lecture?.id);
+        return this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture?.id);
     }
 
     /**

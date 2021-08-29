@@ -64,6 +64,11 @@ $label-color: #6a737d;
     }
 }
 
+.post-result-information {
+    font-size: small;
+    font-style: italic;
+}
+
 @media screen and (max-width: 992px) {
     .expanded-discussion {
         width: 94vw;

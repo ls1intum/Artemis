@@ -34,9 +34,6 @@ export class CourseDiscussionComponent implements OnDestroy {
     exercises?: Exercise[];
     lectures?: Lecture[];
     currentPostContextFilter: ContextFilterOption;
-    eCourseContext = CourseWideContext;
-    eSortBy = PostSortCriterion;
-    eSortDirection = SortDirection;
     currentSortCriterion = PostSortCriterion.CREATION_DATE;
     currentSortDirection = SortDirection.DESC;
     currentPostContentFilter: ContentFilterOption;
@@ -44,8 +41,12 @@ export class CourseDiscussionComponent implements OnDestroy {
     formGroup: FormGroup;
     createdPost: Post;
     posts: Post[];
-    readonly pageType = PageType.OVERVIEW;
+    readonly CourseWideContext = CourseWideContext;
+    readonly SortBy = PostSortCriterion;
+    readonly SortDirection = SortDirection;
+    readonly PageType = PageType;
     readonly ButtonType = ButtonType;
+    readonly pageType = PageType.OVERVIEW;
 
     private postsSubscription: Subscription;
     private paramSubscription: Subscription;
@@ -93,11 +94,12 @@ export class CourseDiscussionComponent implements OnDestroy {
 
     onChangeSort() {
         this.setFilterAndSort();
+        this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
     }
 
     onSearch() {
         this.currentPostContentFilter.searchText = this.searchText;
-        this.metisService.getFilteredPosts(this.currentPostContextFilter);
+        this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
     }
 
     compareContextFilterOptionFn(option1: ContextFilterOption, option2: ContextFilterOption) {
@@ -171,7 +173,7 @@ export class CourseDiscussionComponent implements OnDestroy {
     createEmptyPost() {
         this.createdPost = this.metisService.createEmptyPostForContext(
             this.currentPostContextFilter.courseWideContext,
-            this.currentPostContextFilter.exerciseId,
+            this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseId),
             this.currentPostContextFilter.lectureId,
         );
     }

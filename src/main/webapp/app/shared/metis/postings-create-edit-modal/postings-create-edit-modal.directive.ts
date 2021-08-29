@@ -9,8 +9,6 @@ const MAX_CONTENT_LENGTH = 1000;
 
 @Directive()
 export abstract class PostingsCreateEditModalDirective<T extends Posting> implements OnInit, OnChanges {
-    readonly EditType = PostingEditType;
-
     @Input() posting: T;
     @ViewChild('postingEditor') postingEditor: TemplateRef<any>;
     @Output() onCreate: EventEmitter<T> = new EventEmitter<T>();
@@ -20,6 +18,7 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
     maxContentLength = MAX_CONTENT_LENGTH;
     content: string;
     formGroup: FormGroup;
+    readonly EditType = PostingEditType;
 
     protected constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {}
 

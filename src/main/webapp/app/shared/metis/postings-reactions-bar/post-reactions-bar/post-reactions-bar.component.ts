@@ -13,7 +13,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     pinTooltip: string;
     archiveTooltip: string;
     displayPriority: DisplayPriority;
-    eDisplayPriority = DisplayPriority;
+    readonly DisplayPriority = DisplayPriority;
 
     /**
      * on initialization: call resetTooltipsAndPriority

@@ -14,6 +14,7 @@ import { ReactionService } from 'app/shared/metis/reaction.service';
 import { CourseWideContext, DisplayPriority, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Injectable()
 export class MetisService {
@@ -21,7 +22,7 @@ export class MetisService {
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private currentPostContextFilter: PostContextFilter = {};
     private user: User;
-    private pageType: PageType = PageType.OVERVIEW;
+    private pageType: PageType;
     private course: Course;
     private courseId: number;
 
@@ -30,6 +31,7 @@ export class MetisService {
         protected answerPostService: AnswerPostService,
         protected reactionService: ReactionService,
         protected accountService: AccountService,
+        protected exerciseService: ExerciseService,
     ) {
         this.accountService.identity().then((user: User) => {
             this.user = user!;
@@ -96,10 +98,12 @@ export class MetisService {
      * fetches all posts for a course, optionally fetching posts only for a certain context, i.e. a lecture, exercise or specified course-wide-context,
      * informs all components that subscribed on posts by sending the newly fetched posts
      * @param postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
+     * @param forceUpdate
      */
-    getFilteredPosts(postContextFilter: PostContextFilter): void {
+    getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {
         // check if the post context did change
         if (
+            forceUpdate ||
             postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
             postContextFilter?.courseWideContext !== this.currentPostContextFilter?.courseWideContext ||
             postContextFilter?.lectureId !== this.currentPostContextFilter?.lectureId ||
@@ -259,16 +263,14 @@ export class MetisService {
     /**
      * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
      */
-    createEmptyPostForContext(courseWideContext?: CourseWideContext, exerciseId?: number, lectureId?: number): Post {
+    createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lectureId?: number): Post {
         const emptyPost: Post = new Post();
         if (courseWideContext) {
             emptyPost.courseWideContext = courseWideContext;
             emptyPost.course = { id: this.courseId } as Course;
-        }
-        if (exerciseId) {
-            emptyPost.exercise = { id: exerciseId } as Exercise;
-        }
-        if (lectureId) {
+        } else if (exercise) {
+            emptyPost.exercise = { ...this.exerciseService.convertExerciseForServer(exercise) };
+        } else if (lectureId) {
             emptyPost.lecture = { id: lectureId } as Lecture;
         } else {
             // set default

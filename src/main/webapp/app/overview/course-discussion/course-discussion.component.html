@@ -35,7 +35,7 @@
                             <select formControlName="context" class="form-select" [compareWith]="compareContextFilterOptionFn" (change)="onSelectContext()" name="context">
                                 <option [ngValue]="{ courseId: course.id }">{{ course.title }}</option>
                                 <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
-                                    <option *ngFor="let context of eCourseContext | keyvalue" [ngValue]="{ courseWideContext: context.value }">
+                                    <option *ngFor="let context of CourseWideContext | keyvalue" [ngValue]="{ courseWideContext: context.value }">
                                         {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
                                     </option>
                                 </optgroup>
@@ -61,14 +61,14 @@
                         </div>
                         <div class="col-auto p-0">
                             <select formControlName="sortBy" class="form-select" [compareWith]="comparePostSortOptionFn" (change)="onChangeSort()" name="sortBy">
-                                <option *ngFor="let sortByOption of eSortBy | keyvalue" [ngValue]="sortByOption.value">
+                                <option *ngFor="let sortByOption of SortBy | keyvalue" [ngValue]="sortByOption.value">
                                     {{ 'artemisApp.metis.overview.' + sortByOption.value | artemisTranslate }}
                                 </option>
                             </select>
                         </div>
                         <div class="col-auto p-0">
                             <select formControlName="sortDirection" class="form-select ps-0" [compareWith]="comparePostSortOptionFn" (change)="onChangeSort()" name="sortDirection">
-                                <option *ngFor="let sortDirectionOption of eSortDirection | keyvalue" [ngValue]="sortDirectionOption.value">
+                                <option *ngFor="let sortDirectionOption of SortDirection | keyvalue" [ngValue]="sortDirectionOption.value">
                                     {{ 'artemisApp.metis.overview.' + sortDirectionOption.value | artemisTranslate }}
                                 </option>
                             </select>

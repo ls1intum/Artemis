@@ -1,5 +1,3 @@
-import { Post } from 'app/entities/metis/post.model';
-
 export enum PostingEditType {
     CREATE,
     UPDATE,
@@ -40,9 +38,4 @@ export interface PostContextFilter {
     courseWideContext?: CourseWideContext;
     exerciseId?: number;
     lectureId?: number;
-}
-
-export interface PostSortFilter {
-    filter?: (post: Post) => boolean;
-    sort?: (post1: Post, post2: Post) => number;
 }
