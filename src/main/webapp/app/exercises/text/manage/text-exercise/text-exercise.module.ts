@@ -24,7 +24,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.module';
 import { ArtemisExerciseUpdateWarningModule } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.module';
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
-import { ArtemisTextClusterStatisticsModule } from 'app/exercises/text/manage/cluster-statistics/cluster-statistics.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
