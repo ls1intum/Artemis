@@ -73,7 +73,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     // Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
     // with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
     // packageNamePatternForSwift =
-       // '^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][0-9A-Za-z]*$';
+    // '^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][0-9A-Za-z]*$';
     packageNamePattern = '';
 
     readonly shortNamePattern = shortNamePattern; // must start with a letter and cannot contain special characters
@@ -298,7 +298,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.problemStatementLoaded = true;
         }
         // Select the correct pattern
-        this.setPackageNamePattern(this.selectedProgrammingLanguage);
+        this.setPackageNamePattern(); // this.selectedProgrammingLanguage);
 
         // Checks if the current environment is production
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -482,7 +482,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
         }
         // Select the correct pattern
-        this.setPackageNamePattern(language);
+        this.setPackageNamePattern(); // language);
         this.selectedProgrammingLanguage = language;
         return language;
     }
@@ -492,12 +492,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      *
      * @param language to choose from
      */
-    setPackageNamePattern(language: ProgrammingLanguage) {
+    setPackageNamePattern() { // language: ProgrammingLanguage) {
         // if (language === ProgrammingLanguage.SWIFT) {
-           // this.packageNamePattern = this.packageNamePatternForSwift;
+        // this.packageNamePattern = this.packageNamePatternForSwift;
         // } else {
-            this.packageNamePattern = this.packageNamePatternForJavaKotlin;
-        //}
+        this.packageNamePattern = this.packageNamePatternForJavaKotlin;
+        // }
     }
 
     /**
