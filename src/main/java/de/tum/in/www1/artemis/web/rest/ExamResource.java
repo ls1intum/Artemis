@@ -243,8 +243,6 @@ public class ExamResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getExamTitle(@PathVariable Long examId) {
         log.debug("REST request to get exam title: {}", examId);
-        Exam exam = examRepository.findByIdElseThrow(examId);
-        examAccessService.checkCourseAndExamAccessForRoleElseThrow(Role.STUDENT, exam.getCourse().getId(), examId);
         final var title = examRepository.getExamTitleByIdElseThrow(examId);
         return ResponseEntity.ok(title);
     }

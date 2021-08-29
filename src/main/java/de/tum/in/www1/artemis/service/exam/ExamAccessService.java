@@ -125,6 +125,11 @@ public class ExamAccessService {
         checkCourseAndExamAccessForRoleElseThrow(role, courseId, exam);
     }
 
+    public void checkCourseAndExamAccessForRoleElseThrow(Role role, Long examId) {
+        Exam exam = examRepository.findByIdElseThrow(examId);
+        checkCourseAndExamAccessForRoleElseThrow(role, exam.getCourse().getId(), exam);
+    }
+
     /**
      * Checks if the current user is allowed to manage exams of the given course, otherwise throws an AccessForbiddenException
      *
