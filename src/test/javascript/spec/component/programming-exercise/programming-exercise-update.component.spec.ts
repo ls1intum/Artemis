@@ -236,6 +236,18 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForSwift);
         }));
 
+        it('Should activate SCA for C', fakeAsync(() => {
+            // WHEN
+            fixture.detectChanges();
+            tick();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+
+            // THEN
+            expect(courseService.find).toHaveBeenCalledWith(courseId);
+            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.C);
+            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
+        }));
+
         it('Should activate SCA for Java', fakeAsync(() => {
             // WHEN
             fixture.detectChanges();
@@ -360,6 +372,16 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 sequentialTestRuns: false,
                 staticCodeAnalysis: false,
                 plagiarismCheckSupported: false,
+                packageNameRequired: false,
+                checkoutSolutionRepositoryAllowed: true,
+                projectTypes: [],
+            } as ProgrammingLanguageFeature;
+        case ProgrammingLanguage.C:
+            return {
+                programmingLanguage: ProgrammingLanguage.C,
+                sequentialTestRuns: false,
+                staticCodeAnalysis: true,
+                plagiarismCheckSupported: true,
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
                 projectTypes: [],
