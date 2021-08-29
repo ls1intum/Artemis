@@ -150,7 +150,7 @@ export class CourseManagementRequests {
      * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
      */
-    createTextExercise(title: string, body: { course: any } | { exerciseGroup: any }) {
+    createTextExercise(body: { course: any } | { exerciseGroup: any }, title = 'Text exercise ' + generateUUID()) {
         const textExercise: any = this.getCourseOrExamExercise(textExerciseTemplate, body);
         textExercise.title = title;
         return cy.request({ method: POST, url: BASE_API + 'text-exercises', body: textExercise });

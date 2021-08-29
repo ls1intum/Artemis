@@ -84,7 +84,7 @@ describe('Exam management', () => {
                 courseManagementRequests.registerStudentForExam(course, exam, student);
                 courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.createTextExercise('Text exercise 1', { exerciseGroup }).then((exerciseResponse) => {
+                    courseManagementRequests.createTextExercise({ exerciseGroup }).then((exerciseResponse) => {
                         textExercise = exerciseResponse.body;
                         courseManagementRequests.generateMissingIndividualExams(course, exam);
                         courseManagementRequests.prepareExerciseStartForExam(course, exam);
@@ -96,7 +96,7 @@ describe('Exam management', () => {
                         examStartEnd.enterFirstnameLastname();
                         examStartEnd.pressStart();
                         cy.contains('Exam Overview').should('exist');
-                        cy.contains('Text exercise 1').should('be.visible').click();
+                        cy.contains(textExercise.title).should('be.visible').click();
                         cy.get('#text-editor-tab').type(
                             'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                         );
@@ -122,7 +122,7 @@ describe('Exam management', () => {
                 courseManagementRequests.registerStudentForExam(course, exam, student);
                 courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.createTextExercise('Text exercise 1', { exerciseGroup }).then(() => {
+                    courseManagementRequests.createTextExercise({ exerciseGroup }).then(() => {
                         courseManagementRequests.generateMissingIndividualExams(course, exam);
                         courseManagementRequests.prepareExerciseStartForExam(course, exam);
                         cy.login(student, `/courses/${course.id}/exams`);
@@ -131,7 +131,7 @@ describe('Exam management', () => {
                         examStartEnd.setConfirmCheckmark();
                         examStartEnd.enterFirstnameLastname();
                         examStartEnd.pressStart();
-                        cy.contains('Text exercise 1').should('be.visible').click();
+                        cy.contains(textExercise.title).should('be.visible').click();
                         cy.get('#text-editor-tab').type(
                             'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                         );
