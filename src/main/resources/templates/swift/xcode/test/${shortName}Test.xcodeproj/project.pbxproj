@@ -98,6 +98,7 @@
 				4F44754226BD9016004E6064 /* Sources */,
 				4F44754326BD9016004E6064 /* Frameworks */,
 				4F44754426BD9016004E6064 /* Resources */,
+				4FC5C8EA26DBD01D000C7CF1 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -179,6 +180,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		4FC5C8EA26DBD01D000C7CF1 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\nkillall Simulator\ndefaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		4F44754226BD9016004E6064 /* Sources */ = {
