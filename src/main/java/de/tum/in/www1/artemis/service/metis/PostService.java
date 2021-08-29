@@ -122,9 +122,9 @@ public class PostService extends PostingService {
     /**
      * Invokes the updatePost method to persist the change of displayPriority
      *
-     * @param courseId          id of the course the post belongs to
-     * @param postId            id of the post to change the pin state for
-     * @param displayPriority   new displayPriority
+     * @param courseId        id of the course the post belongs to
+     * @param postId          id of the post to change the pin state for
+     * @param displayPriority new displayPriority
      * @return updated post that was persisted
      */
     public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
@@ -143,6 +143,35 @@ public class PostService extends PostingService {
     public void updateWithReaction(Post post, Reaction reaction) {
         post.addReaction(reaction);
         postRepository.save(post);
+    }
+
+    /**
+     * @param courseId          id of the course the fetch posts for
+     * @param courseWideContext course wide context for which the posts should be fetched
+     * @param exerciseId        id of the exercise for which the posts should be fetched
+     * @param lectureId         id of the lecture for which the posts should be fetched
+     * @return list of posts that match the given context
+     */
+    public List<Post> getPostsInCourse(Long courseId, CourseWideContext courseWideContext, Long exerciseId, Long lectureId) {
+        // no filter -> get all posts in course
+        if (courseWideContext == null && exerciseId == null && lectureId == null) {
+            return this.getAllCoursePosts(courseId);
+        }
+        // filter by course wide context
+        if (courseWideContext != null && exerciseId == null && lectureId == null) {
+            return this.getAllPostsByCourseWideContext(courseId, courseWideContext);
+        }
+        // filter by exercise
+        if (courseWideContext == null && exerciseId != null && lectureId == null) {
+            return this.getAllExercisePosts(courseId, exerciseId);
+        }
+        // filter by lecture
+        if (courseWideContext == null && exerciseId == null && lectureId != null) {
+            return this.getAllLecturePosts(courseId, lectureId);
+        }
+        else {
+            throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
+        }
     }
 
     /**
@@ -173,8 +202,9 @@ public class PostService extends PostingService {
      * retrieves all posts with a certain course wide context by course id
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId id of the course the post belongs to
-     * @return list of posts that belong to the course
+     * @param courseId          id of the course the post belongs to
+     * @param courseWideContext specific course wide context to filter course get posts for
+     * @return list of posts for a cretain course wide contex
      */
     public List<Post> getAllPostsByCourseWideContext(Long courseId, CourseWideContext courseWideContext) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -263,7 +293,7 @@ public class PostService extends PostingService {
      * Checks course and user validity,
      * retrieves all tags for posts in a certain course
      *
-     * @param courseId  id of the course the tags belongs to
+     * @param courseId id of the course the tags belongs to
      * @return tags of all posts that belong to the course
      */
     public List<String> getAllCourseTags(Long courseId) {

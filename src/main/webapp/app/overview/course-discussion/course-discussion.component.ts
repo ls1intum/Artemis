@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CourseWideContext, DisplayPriority, PageType, PostSortCriterion, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { Subscription } from 'rxjs';
@@ -28,7 +28,7 @@ interface ContentFilterOption {
     styleUrls: ['./course-discussion.scss'],
     providers: [MetisService],
 })
-export class CourseDiscussionComponent implements OnInit, OnDestroy {
+export class CourseDiscussionComponent implements OnDestroy {
     course?: Course;
     exercises?: Exercise[];
     lectures?: Lecture[];
@@ -71,8 +71,6 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         });
     }
 
-    ngOnInit(): void {}
-
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
             context: [this.currentPostContextFilter],
@@ -106,7 +104,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
                 filter: this.filterFn,
                 sort: this.overviewSortFn,
             },
-            false, // we do not force reload, as when same context is selected, we do not want to fetch posts again
+            true, // we do not force reload, as when same context is selected, we do not want to fetch posts again
         );
     }
 
@@ -197,6 +195,10 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         this.createdPost = emptyPost;
     }
 
+    postsTrackByFn(index: number, post: Post): number {
+        return post.id!;
+    }
+
     private initMetisService(): void {
         this.metisService.setCourse(this.course!);
         this.metisService.setPageType(this.pageType);
@@ -231,9 +233,5 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
         this.currentPostContentFilter = {
             searchText: undefined,
         };
-    }
-
-    postsTrackByFn(index: number, post: Post): number {
-        return post.id!;
     }
 }

@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest.metis;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -129,39 +128,19 @@ public class PostResource {
     /**
      * GET /courses/{courseId}/posts : Get all posts for a course by its id
      *
-     * @param courseId id of the course the post belongs to
-     * @return ResponseEntity with status 200 (OK) and with body all posts for course,
+     * @param courseId          id of the course the fetch posts for
+     * @param courseWideContext optional request param if a course wide topic is the targeted context
+     * @param exerciseId        optional request param if a certain exercise is the targeted context
+     * @param lectureId         optional request param if a certain lecture is the targeted context
+     * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context
      * or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @GetMapping("courses/{courseId}/posts")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Post>> getPostsForCourse(@PathVariable Long courseId, @RequestParam(required = false) CourseWideContext courseWideContext,
+    public ResponseEntity<List<Post>> getPostsInCourse(@PathVariable Long courseId, @RequestParam(required = false) CourseWideContext courseWideContext,
             @RequestParam(required = false) Long exerciseId, @RequestParam(required = false) Long lectureId) {
-        // no filter -> get all posts in course
-        List<Post> posts = new ArrayList<Post>();
-        if (courseWideContext == null && exerciseId == null && lectureId == null) {
-            posts = postService.getAllCoursePosts(courseId);
-
-        }
-        // filter by course wide context
-        if (courseWideContext != null && exerciseId == null && lectureId == null) {
-            List<Post> coursePosts = postService.getAllPostsByCourseWideContext(courseId, courseWideContext);
-            return new ResponseEntity<>(coursePosts, null, HttpStatus.OK);
-        }
-        // filter by exercise
-        if (courseWideContext == null && exerciseId != null && lectureId == null) {
-            List<Post> coursePosts = postService.getAllExercisePosts(courseId, exerciseId);
-            return new ResponseEntity<>(coursePosts, null, HttpStatus.OK);
-        }
-        // filter by lecture
-        if (courseWideContext == null && exerciseId == null && lectureId != null) {
-            List<Post> coursePosts = postService.getAllLecturePosts(courseId, lectureId);
-            return new ResponseEntity<>(coursePosts, null, HttpStatus.OK);
-        }
-        else {
-            // TODO: throw error, cause more than one context filter is set
-        }
-        return new ResponseEntity<>(posts, null, HttpStatus.OK);
+        List<Post> coursePosts = postService.getPostsInCourse(courseId, courseWideContext, exerciseId, lectureId);
+        return new ResponseEntity<>(coursePosts, null, HttpStatus.OK);
     }
 
     /**

@@ -3,7 +3,13 @@
         <div class="row ps-0">
             <!-- Search Bar -->
             <div class="input-group col-10 px-0 mb-4">
-                <input name="searchText" [(ngModel)]="searchText" class="form-control" placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}" />
+                <input
+                    name="searchText"
+                    [(ngModel)]="searchText"
+                    class="form-control"
+                    (keyup.enter)="onSearch()"
+                    placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}"
+                />
                 <jhi-button [icon]="'search'" (onClick)="onSearch()"></jhi-button>
             </div>
             <!-- New Post -->
@@ -79,7 +85,7 @@
     </div>
     <div class="bold-line row col-9 mt-1 mb-2"></div>
     <div class="class=row col-9">
-        <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post"> </jhi-postings-thread>
+        <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post"></jhi-postings-thread>
         <!-- no posts -->
         <div class="row mt-2" *ngIf="!posts || posts.length === 0">
             <div class="col-12">{{ 'artemisApp.metis.noPosts' | artemisTranslate }}</div>

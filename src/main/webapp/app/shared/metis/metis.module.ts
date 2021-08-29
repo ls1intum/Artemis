@@ -25,6 +25,8 @@ import { CommonModule } from '@angular/common';
 import { PostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArtemisAppRoutingModule } from 'app/app-routing.module';
+import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 
 @NgModule({
     imports: [
@@ -32,6 +34,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
         ArtemisConfirmIconModule,
         ArtemisMarkdownModule,
         ArtemisMarkdownEditorModule,
+        ArtemisCoursesRoutingModule,
         ReactiveFormsModule,
         FormsModule,
         TagInputModule,

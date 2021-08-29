@@ -76,7 +76,6 @@ export class PostService extends PostingsService<Post> {
             params = params.set('lectureId', postContextFilter.lectureId.toString());
         }
         if (postContextFilter.exerciseId) {
-            console.log(postContextFilter.exerciseId.toString());
             params = params.set('exerciseId', postContextFilter.exerciseId.toString());
         }
         return this.http
