@@ -492,7 +492,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      *
      * @param language to choose from
      */
-    setPackageNamePattern() { // language: ProgrammingLanguage) {
+    setPackageNamePattern() {
+        // language: ProgrammingLanguage) {
         // if (language === ProgrammingLanguage.SWIFT) {
         // this.packageNamePattern = this.packageNamePatternForSwift;
         // } else {

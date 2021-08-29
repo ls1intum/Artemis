@@ -200,7 +200,7 @@
             </select>
         </div>
 
-        <div class="form-group" *ngIf="programmingExercise.programmingLanguage && packageNameRequired && ProjectType.XCODE !== selectedProjectType">
+        <div class="form-group" *ngIf="programmingExercise.programmingLanguage && packageNameRequired">
             <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName">Package Name</label>
             <input
                 required
