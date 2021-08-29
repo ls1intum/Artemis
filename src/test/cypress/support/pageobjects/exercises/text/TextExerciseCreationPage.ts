@@ -41,7 +41,7 @@ export class TextExerciseCreationPage {
     }
 
     typeAssessmentInstructions(statement: string) {
-        this.typeText('#field_gradingInstructions', statement);
+        this.typeText('#gradingInstructions', statement);
     }
 
     create() {

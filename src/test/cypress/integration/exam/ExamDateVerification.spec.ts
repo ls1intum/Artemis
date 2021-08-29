@@ -33,6 +33,7 @@ describe('Exam management', () => {
 
     describe('Exam timing', () => {
         let exam: any;
+        let textExercise: any;
         it('Does not show exam before visible date', () => {
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
@@ -71,7 +72,6 @@ describe('Exam management', () => {
 
         it('Student can start after start Date', () => {
             let exerciseGroup: any;
-            let textExercise: any;
             const student = artemis.users.getStudentOne();
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
@@ -122,7 +122,8 @@ describe('Exam management', () => {
                 courseManagementRequests.registerStudentForExam(course, exam, student);
                 courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.createTextExercise({ exerciseGroup }).then(() => {
+                    courseManagementRequests.createTextExercise({ exerciseGroup }).then((exerciseResponse) => {
+                        textExercise = exerciseResponse.body;
                         courseManagementRequests.generateMissingIndividualExams(course, exam);
                         courseManagementRequests.prepareExerciseStartForExam(course, exam);
                         cy.login(student, `/courses/${course.id}/exams`);
