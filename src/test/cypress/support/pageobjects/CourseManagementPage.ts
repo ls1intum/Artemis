@@ -105,4 +105,9 @@ export class CourseManagementPage {
         this.getCourseCard(courseName, courseShortName).find('.card-footer').children().eq(1).click();
         cy.url().should('include', '/exams');
     }
+
+    openAssessmentDashboardOfCourseWithId(courseId: number) {
+        cy.get(`[href="/course-management/${courseId}/assessment-dashboard"]`).click();
+        cy.url().should('contain', `/course-management/${courseId}/assessment-dashboard`);
+    }
 }

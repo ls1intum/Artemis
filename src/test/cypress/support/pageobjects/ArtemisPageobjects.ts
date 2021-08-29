@@ -1,3 +1,5 @@
+import { ExerciseAssessmentDashboardPage } from './assessment/ExerciseAssessmentDashboardPage';
+import { CourseAssessmentDashboardPage } from './assessment/CourseAssessmentDashboardPage';
 import { TextEditorPage } from './exercises/text/TextEditorPage';
 import { CourseManagementExercisesPage } from './CourseManagementExercisesPage';
 import { ProgrammingExerciseCreationPage } from './ProgrammingExerciseCreationPage';
@@ -34,5 +36,9 @@ export class ArtemisPageobjects {
         exampleSubmissions: new TextExerciseExampleSubmissionsPage(),
         exampleSubmissionCreation: new TextExerciseExampleSubmissionCreationPage(),
         editor: new TextEditorPage(),
+    };
+    assessment = {
+        course: new CourseAssessmentDashboardPage(),
+        exercise: new ExerciseAssessmentDashboardPage(),
     };
 }

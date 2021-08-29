@@ -1,4 +1,4 @@
-import { BASE_API, DELETE, POST } from '../constants';
+import { BASE_API, DELETE, POST, PUT } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import { dayjsToString, generateUUID } from '../utils';
@@ -11,6 +11,7 @@ import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 export const COURSE_BASE = BASE_API + 'courses/';
 export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
 export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
+export const EXERCISE_BASE = BASE_API + 'exercises/';
 const oneDay = 24 * 60 * 60 * 1000;
 
 /**
@@ -186,6 +187,30 @@ export class CourseManagementRequests {
         return cy.request({
             url: `/api/modeling-exercises/${exerciseID}`,
             method: 'DELETE',
+        });
+    }
+
+    startExerciseParticipation(courseId: number, exerciseId: number) {
+        return cy.request({
+            url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/participations`,
+            method: POST,
+        });
+    }
+
+    makeTextExerciseSubmission(exerciseId: number, text: string) {
+        return cy.request({
+            url: `${EXERCISE_BASE}${exerciseId}/text-submissions`,
+            method: PUT,
+            body: { submissionExerciseType: 'text', text, id: null },
+        });
+    }
+
+    updateTextExerciseDueDate(exercise: any, due = day()) {
+        exercise.dueDate = dayjsToString(due);
+        return cy.request({
+            url: `${TEXT_EXERCISE_BASE}`,
+            method: PUT,
+            body: exercise,
         });
     }
 
