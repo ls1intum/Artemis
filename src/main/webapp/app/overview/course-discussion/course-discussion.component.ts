@@ -10,6 +10,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Reaction } from 'app/entities/metis/reaction.model';
+import { ButtonType } from 'app/shared/components/button.component';
 
 interface ContextFilterOption {
     courseId?: number;
@@ -44,6 +45,7 @@ export class CourseDiscussionComponent implements OnDestroy {
     createdPost: Post;
     posts: Post[];
     readonly pageType = PageType.OVERVIEW;
+    readonly ButtonType = ButtonType;
 
     private postsSubscription: Subscription;
     private paramSubscription: Subscription;
@@ -95,7 +97,7 @@ export class CourseDiscussionComponent implements OnDestroy {
 
     onSearch() {
         this.currentPostContentFilter.searchText = this.searchText;
-        // this.metisService.getFilteredPosts(this.currentPostContextFilter);
+        this.metisService.getFilteredPosts(this.currentPostContextFilter);
     }
 
     compareContextFilterOptionFn(option1: ContextFilterOption, option2: ContextFilterOption) {
@@ -118,7 +120,8 @@ export class CourseDiscussionComponent implements OnDestroy {
     filterFn = (post: Post): boolean => {
         if (this.currentPostContentFilter.searchText && this.currentPostContentFilter.searchText.trim().length > 0) {
             // check if the search text is either contained in the title or in the content
-            return (post.title?.includes(this.currentPostContentFilter.searchText) || post.content?.includes(this.currentPostContentFilter.searchText)) ?? false;
+            const lowerCasedSearchString = this.currentPostContentFilter.searchText.toLowerCase();
+            return (post.title?.toLowerCase().includes(lowerCasedSearchString) || post.content?.toLowerCase().includes(lowerCasedSearchString)) ?? false;
         }
         return true;
     };
