@@ -1,7 +1,8 @@
 {
     "artemisApp": {
         "metis": {
-            "noPosts": "Es gibt noch keine Beiträge.",
+            "noPosts": "Keine Beiträge gefunden.",
+            "postNumberInformation": "{{ number }} Treffer",
             "addNewPost": "Neuer Beitrag",
             "answerNow": "Jetzt beantworten",
             "startDiscussion": "Diskussion beginnen",
@@ -27,7 +28,6 @@
             },
             "overview": {
                 "title": "Beiträge",
-                "noPosts": "Es wurden keine Beitrage gefunden.",
                 "searchBarDefault": "Tippe hier, um nach einem bestimmten Beitrag zu suchen...",
                 "postContextFilter": "Zeige Beiträge in:",
                 "sortPostsBy": "Sortiere nach:",
