@@ -21,6 +21,11 @@ const uid = generateUUID();
 const courseName = 'Cypress course' + uid;
 const courseShortName = 'cypress' + uid;
 
+// This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
+Cypress.on('uncaught:exception', (err, runnable) => {
+    return false;
+});
+
 describe('Text exercise assessment', () => {
     let course: any;
     let exercise: any;
@@ -40,20 +45,20 @@ describe('Text exercise assessment', () => {
         cy.contains('There are no complaints at the moment').should('be.visible');
         cy.contains('There are no requests at the moment.').should('be.visible');
         exerciseAssessment.clickStartNewAssessment();
-        const instructionsRoot = textAssessment.getInstructionsRootElement();
-        instructionsRoot.contains(exercise.title).should('be.visible');
-        instructionsRoot.contains(exercise.problemStatement).should('be.visible');
-        instructionsRoot.contains(exercise.sampleSolution).should('be.visible');
-        instructionsRoot.contains(exercise.gradingInstructions).should('be.visible');
+        textAssessment.getInstructionsRootElement().contains(exercise.title).should('be.visible');
+        textAssessment.getInstructionsRootElement().contains(exercise.problemStatement).should('be.visible');
+        textAssessment.getInstructionsRootElement().contains(exercise.sampleSolution).should('be.visible');
+        textAssessment.getInstructionsRootElement().contains(exercise.gradingInstructions).should('be.visible');
         cy.contains('Number of words: 100').should('be.visible');
         cy.contains('Number of characters: 591').should('be.visible');
         textAssessment.addNewFeedback(4, 'Try to use some newlines next time!');
+        textAssessment.submit();
     });
 
     after(() => {
         if (!!course) {
-            // cy.login(users.getAdmin());
-            // courseManagement.deleteCourse(course.id);
+            cy.login(users.getAdmin());
+            courseManagement.deleteCourse(course.id);
         }
     });
 
