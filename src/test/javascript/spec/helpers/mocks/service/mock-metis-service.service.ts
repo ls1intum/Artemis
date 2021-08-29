@@ -15,6 +15,7 @@ export class MockMetisService {
     }
 
     createPost = (post: Post): Observable<Post> => of(post);
+
     createAnswerPost = (answerPost: AnswerPost): Observable<AnswerPost> => of(answerPost);
 
     createReaction(reaction: Reaction): Observable<Reaction> {
@@ -22,6 +23,7 @@ export class MockMetisService {
     }
 
     updatePost = (post: Post): Observable<Post> => of(post);
+
     updateAnswerPost = (answerPost: AnswerPost): Observable<AnswerPost> => of(answerPost);
 
     deletePost(post: Post): void {}

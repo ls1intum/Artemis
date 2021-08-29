@@ -1,6 +1,7 @@
 import { Observable, of } from 'rxjs';
-import { DisplayPriority, Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/entities/metis/post.model';
 import { HttpResponse } from '@angular/common/http';
+import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
 
 export class MockPostService {
     create(courseId: number, post: Post): Observable<HttpResponse<Post>> {
@@ -19,19 +20,12 @@ export class MockPostService {
         return of({ body: {} }) as Observable<HttpResponse<Post>>;
     }
 
-    getAllPostTagsByCourseId(courseId: number): Observable<HttpResponse<string[]>> {
-        return of({ body: ['mockTag1', 'mockTag2'] }) as Observable<HttpResponse<string[]>>;
-    }
-
-    getAllPostsByCourseId(courseId: number): Observable<HttpResponse<Post[]>> {
+    getPosts(courseId: number, postContextFilter: PostContextFilter): Observable<HttpResponse<Post[]>> {
+        // Todo: write if else logic and return posts that match all the filter options
         return of({ body: [{ id: 1, course: { id: courseId } }] }) as Observable<HttpResponse<Post[]>>;
     }
 
-    getAllPostsByLectureId(courseId: number, lectureId: number): Observable<HttpResponse<Post[]>> {
-        return of({ body: [{ id: 1, course: { id: courseId }, lecture: { id: lectureId } }] }) as Observable<HttpResponse<Post[]>>;
-    }
-
-    getAllPostsByExerciseId(courseId: number, exerciserId: number): Observable<HttpResponse<Post[]>> {
-        return of({ body: [{ id: 1, course: { id: courseId }, exercise: { id: exerciserId } }] }) as Observable<HttpResponse<Post[]>>;
+    getAllPostTagsByCourseId(courseId: number): Observable<HttpResponse<string[]>> {
+        return of({ body: ['mockTag1', 'mockTag2'] }) as Observable<HttpResponse<string[]>>;
     }
 }

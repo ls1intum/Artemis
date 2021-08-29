@@ -82,36 +82,6 @@ public class PostResource {
     }
 
     /**
-     * GET /courses/{courseId}/exercises/{exerciseId}/posts : Get all posts for an exercise by its id
-     *
-     * @param courseId   id of the course the post belongs to
-     * @param exerciseId id of the exercise for which the posts should be retrieved
-     * @return ResponseEntity with status 200 (OK) containing the a list of posts in the response body,
-     * or 400 (Bad Request) if the checks on user, course, exercise or post validity fail
-     */
-    @GetMapping("courses/{courseId}/exercises/{exerciseId}/posts")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Post>> getAllPostsForExercise(@PathVariable Long courseId, @PathVariable Long exerciseId) {
-        List<Post> exercisePosts = postService.getAllExercisePosts(courseId, exerciseId);
-        return new ResponseEntity<>(exercisePosts, null, HttpStatus.OK);
-    }
-
-    /**
-     * GET /courses/{courseId}/lectures/{lectureId}/posts : Get all posts a lecture by its id
-     *
-     * @param courseId  id of the course the post belongs to
-     * @param lectureId id of the lecture for which the posts should be retrieved
-     * @return ResponseEntity with status 200 (OK) containing the a list of posts in the response body,
-     * or 400 (Bad Request) if the checks on user, course, lecture or post validity fail
-     */
-    @GetMapping("courses/{courseId}/lectures/{lectureId}/posts")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Post>> getAllPostsForLecture(@PathVariable Long courseId, @PathVariable Long lectureId) {
-        List<Post> lecturePosts = postService.getAllLecturePosts(courseId, lectureId);
-        return new ResponseEntity<>(lecturePosts, null, HttpStatus.OK);
-    }
-
-    /**
      * GET /courses/{courseId}/posts/tags : Get all tags for posts in a certain course
      *
      * @param courseId  id of the course the post belongs to
