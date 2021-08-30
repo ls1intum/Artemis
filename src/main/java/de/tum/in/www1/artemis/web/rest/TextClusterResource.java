@@ -54,7 +54,7 @@ public class TextClusterResource {
     @GetMapping("text-exercises/{exerciseId}/cluster-statistics")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<TextClusterStatisticsDTO>> getClusterStats(@PathVariable Long exerciseId) {
-        // Check if Instructor has permission to access the exercise with given exerciseId
+        // Check if instructor has permission to access the exercise with given exerciseId
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
@@ -65,7 +65,7 @@ public class TextClusterResource {
         // Fetch cluster with id and disabled state
         Map<Long, Boolean> clusterIdAndDisabled = textClusterRepository.getTextClusterWithIdAndDisabled();
 
-        // set cluster statistics disabled state
+        // Set cluster statistics disabled state
         clusterStats.forEach(s -> s.setDisabled(clusterIdAndDisabled.get(s.getClusterId())));
         log.debug("REST request to get clusterStats : {}", clusterStats);
         return ResponseEntity.ok().body(clusterStats);
