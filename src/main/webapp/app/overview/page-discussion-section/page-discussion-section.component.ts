@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -10,6 +10,7 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
+import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 
 @Component({
     selector: 'jhi-page-discussion-section',
@@ -20,10 +21,12 @@ import { Reaction } from 'app/entities/metis/reaction.model';
 export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
     @Input() exercise?: Exercise;
     @Input() lecture?: Lecture;
+    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     course?: Course;
     collapsed = false;
     createdPost: Post;
     posts: Post[];
+    isLoading = true;
     readonly pageType = PageType.PAGE_SECTION;
 
     private postsSubscription: Subscription;
@@ -40,10 +43,15 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
         });
         this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.sort(this.sectionSortFn))).subscribe((posts: Post[]) => {
             this.posts = posts;
+            this.isLoading = false;
         });
     }
 
-    ngOnInit() {
+    /**
+     * on initialization: fetches the posts for the exercise or lecture the discussion section is placed at,
+     * triggers the creation of an empty post
+     */
+    ngOnInit(): void {
         this.metisService.getFilteredPosts({
             exerciseId: this.exercise?.id,
             lectureId: this.lecture?.id,
@@ -51,7 +59,11 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
         this.createdPost = this.createEmptyPost();
     }
 
-    ngOnChanges() {
+    /**
+     * on changes: fetches the posts for the exercise or lecture the discussion section is placed at,
+     * triggers the creation of an empty post
+     */
+    ngOnChanges(): void {
         this.metisService.getFilteredPosts({
             exerciseId: this.exercise?.id,
             lectureId: this.lecture?.id,
@@ -59,9 +71,13 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
         this.createdPost = this.createEmptyPost();
     }
 
+    /**
+     * on leaving the page, the modal should be closed, subscriptions unsubscribed
+     */
     ngOnDestroy(): void {
         this.paramSubscription?.unsubscribe();
         this.postsSubscription?.unsubscribe();
+        this.postCreateEditModal?.modalRef?.close();
     }
 
     /**
@@ -104,8 +120,8 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
-     * @return Post created empty default post
+     * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post
+     * @return Post created empty default post with either exercise or lecture set as context
      */
     createEmptyPost(): Post {
         return this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture?.id);

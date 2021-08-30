@@ -76,6 +76,9 @@ export class CourseDiscussionComponent implements OnDestroy {
         });
     }
 
+    /**
+     * by default, the form group fields are set to show all posts in a course by descending creation date
+     */
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
             context: [this.currentPostContextFilter],
@@ -89,21 +92,37 @@ export class CourseDiscussionComponent implements OnDestroy {
         this.postsSubscription?.unsubscribe();
     }
 
-    onSelectContext() {
+    /**
+     * on changing the context via dropdown, the metis service is invoked to deliver the posts for the currently set context,
+     * they are sorted on return
+     */
+    onSelectContext(): void {
         this.setFilterAndSort();
         this.metisService.getFilteredPosts(this.currentPostContextFilter);
     }
 
-    onChangeSort() {
+    /**
+     * on changing the sort options via dropdown, the metis service is invoked to deliver the posts for the currently set context,
+     * as the posts themselves will not change, the forceReload flag is set to false, they are sorted on return
+     */
+    onChangeSort(): void {
         this.setFilterAndSort();
         this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
     }
 
-    onSearch() {
+    /**
+     * on changing the search text via input, the metis service is invoked to deliver the posts for the currently set context,
+     * the sort will be done on the currently visible posts, so the forceReload flag is set to false
+     */
+    onSearch(): void {
         this.currentPostContentFilter.searchText = this.searchText;
         this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
     }
 
+    /**
+     * required for distinguishing different select options for the context selector,
+     * Angular needs to be able to identify the currently selected option
+     */
     compareContextFilterOptionFn(option1: ContextFilterOption, option2: ContextFilterOption) {
         if (option1.exerciseId && option2.exerciseId) {
             return option1.exerciseId === option2.exerciseId;
@@ -117,10 +136,19 @@ export class CourseDiscussionComponent implements OnDestroy {
         return false;
     }
 
+    /**
+     * required for distinguishing different select options for the sort selector (sortBy, and sortDirection),
+     * Angular needs to be able to identify the currently selected option
+     */
     comparePostSortOptionFn(option1: PostSortCriterion | SortDirection, option2: PostSortCriterion | SortDirection) {
         return option1 === option2;
     }
 
+    /**
+     * filters posts on their context: checks if a current non-empty search text (provided via user input) in contained in either the post title or post content,
+     * the compared strings are lowercase in advance
+     * @return boolean predicate if the post is filtered out or not
+     */
     filterFn = (post: Post): boolean => {
         if (this.currentPostContentFilter.searchText && this.currentPostContentFilter.searchText.trim().length > 0) {
             // check if the search text is either contained in the title or in the content
@@ -139,7 +167,6 @@ export class CourseDiscussionComponent implements OnDestroy {
      * @return Post[] sorted array of posts
      */
     overviewSortFn = (postA: Post, postB: Post): number => {
-        // TODO: think about how to visually separate pinned posts?
         if (postA.displayPriority === DisplayPriority.PINNED && postB.displayPriority !== DisplayPriority.PINNED) {
             return -1;
         }
@@ -187,9 +214,10 @@ export class CourseDiscussionComponent implements OnDestroy {
     };
 
     /**
-     * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
-     */
-    createEmptyPost() {
+     * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post,
+     * this post has a default course-wide context as well as the course set as context
+     **/
+    createEmptyPost(): void {
         this.createdPost = this.metisService.createEmptyPostForContext(
             this.currentPostContextFilter.courseWideContext,
             this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseId),
@@ -203,7 +231,7 @@ export class CourseDiscussionComponent implements OnDestroy {
      */
     postsTrackByFn = (index: number, post: Post): number => post.id!;
 
-    private setFilterAndSort() {
+    private setFilterAndSort(): void {
         this.currentPostContextFilter = {
             courseId: undefined,
             courseWideContext: undefined,
@@ -215,6 +243,9 @@ export class CourseDiscussionComponent implements OnDestroy {
         this.currentSortDirection = this.formGroup.get('sortDirection')?.value;
     }
 
+    /**
+     * sets the current filter for context (default: course) and content (default: undefined)
+     */
     private resetCurrentFilter(): void {
         this.currentPostContextFilter = {
             courseId: this.course!.id,

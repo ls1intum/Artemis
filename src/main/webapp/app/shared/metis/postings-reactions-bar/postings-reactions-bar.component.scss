@@ -28,6 +28,11 @@ $reaction-button-reacted-accent-color: #0f6ab4;
 
     .emoji-count {
         font-size: 11px;
+
+        &.reaction-count--reacted {
+            font-weight: bold;
+            color: $reaction-button-reacted-accent-color;
+        }
     }
 
     &:hover {

@@ -117,7 +117,11 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         }
     }
 
-    compareContextSelectorOptionFn(option1: ContextSelectorOption, option2: ContextSelectorOption) {
+    /**
+     * required for distinguishing different select options for the context selector,
+     * Angular needs to be able to identify the currently selected option
+     */
+    compareContextSelectorOptionFn(option1: ContextSelectorOption, option2: ContextSelectorOption): boolean {
         if (option1.exercise && option2.exercise) {
             return option1.exercise.id === option2.exercise.id;
         } else if (option1.lecture && option2.lecture) {
@@ -128,7 +132,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         return false;
     }
 
-    private setPostContextPropertyWithFormValue() {
+    private setPostContextPropertyWithFormValue(): void {
         const currentContextSelectorOption: ContextSelectorOption = {
             exercise: undefined,
             lecture: undefined,
