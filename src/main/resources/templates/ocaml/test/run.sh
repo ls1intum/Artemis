@@ -39,6 +39,7 @@ if $SAFE; then
   exec 3>/dev/null
 else
   exec 3>&1
+  RUN_HIDDEN=true
 fi
 
 # check for symlink is the submission
