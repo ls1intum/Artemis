@@ -121,6 +121,26 @@ spring:
               args:
                 regexp: "'/services/' + serviceId.toLowerCase() + '/(?<remaining>.*)'"
                 replacement: "'/${remaining}'"
+      routes:
+        - id: artemis_api_route
+          uri: lb://artemis
+          predicates:
+            - Path=/api/**
+        - id: websocket-sockjs-route
+          uri: lb://artemis
+          predicates:
+            - Path=/websocket/tracker/info
+        - id: websocket_route
+          uri: lb:ws://artemis
+          predicates:
+            - Path=/websocket/**
+#          filters:
+#            - RewritePath=/api(?<segment>/?.*), /api/$\{segment}
+#      routes:
+#        - id: artemis
+#          uri: lb://api
+#          predicates:
+#            - Path=/services/artemis/**
       httpclient:
         pool:
           max-connections: 1000
