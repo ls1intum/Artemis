@@ -201,7 +201,6 @@ c. Put ``artemis`` as namespace's name and select the ``Create`` button
 Create DockerHub Repository
 ---------------------------
 The Artemis image will be stored and managed in DockerHub. Kubernetes will pull it from there and deploy it afterwards.
-This approach should not be used in production since the Docker image will contain all configuration secrets in the ``application-*.yml`` files. Instead, a private Docker registry should be used.
 
 After you log in to your `DockerHub <https://hub.docker.com/>`__ account you can create as many public repositories as you want.
 To create a repository you need to select the ``Create repository`` button.
