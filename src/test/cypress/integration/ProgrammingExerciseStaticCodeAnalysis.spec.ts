@@ -72,7 +72,7 @@ describe('Static code analysis tests', () => {
     function makeSuccessfulSubmissionWithScaErrors() {
         makeSubmissionAndVerifyResults(editorPage, packageName, scaSubmission, () => {
             editorPage.getResultPanel().contains('50%').should('be.visible');
-            editorPage.getResultPanel().contains('13 of 13 passed, 17 issues').click();
+            editorPage.getResultPanel().contains('13 of 13 passed').click();
             scaFeedback.shouldShowPointChart();
             scaFeedback.shouldShowFeedback(13, '10.0');
             scaFeedback.shouldShowCodeIssue("Variable 'literal1' must be private and have accessor methods.", '5.0');

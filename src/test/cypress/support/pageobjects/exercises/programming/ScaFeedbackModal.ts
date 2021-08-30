@@ -20,6 +20,7 @@ export class ScaFeedbackModal {
             .should('be.visible')
             .parents('.feedback-item')
             .find('.feedback-points')
+            .scrollIntoView()
             .should('contain.text', `-${pointReduction}P`)
             .and('be.visible');
     }
