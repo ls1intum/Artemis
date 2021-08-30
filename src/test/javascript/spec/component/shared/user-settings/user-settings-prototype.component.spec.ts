@@ -1,5 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import * as sinon from 'sinon';
@@ -10,18 +10,16 @@ import { OptionSpecifier, UserSettingsCategory } from 'app/shared/constants/user
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
-import { OptionCore, UserSettings } from 'app/shared/user-settings/user-settings.model';
 import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-settings-prototype/user-settings-prototype.component';
 import { JhiAlertService } from 'ng-jhipster';
 import { MockProvider } from 'ng-mocks';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { SinonStub, stub } from 'sinon';
+import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { stub } from 'sinon';
 
 /**
  * needed for testing the abstract UserSettingsPrototypeComponent
@@ -42,10 +40,8 @@ describe('User Settings Prototype Component', () => {
 
     let userSettingsService: UserSettingsService;
     let httpMock: HttpTestingController;
-    let userSettingsCategory: UserSettingsCategory;
-    let resultingUserSettings: UserSettings<OptionCore>;
-    let notificationService: NotificationService;
-    let alertService: JhiAlertService;
+    // let notificationService: NotificationService;
+    // let alertService: JhiAlertService;
     let changeDetector: ChangeDetectorRef;
 
     const router = new MockRouter();
@@ -83,8 +79,8 @@ describe('User Settings Prototype Component', () => {
                 component.userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
                 userSettingsService = TestBed.inject(UserSettingsService);
                 httpMock = TestBed.inject(HttpTestingController);
-                notificationService = TestBed.inject(NotificationService);
-                alertService = TestBed.inject(JhiAlertService);
+                // notificationService = TestBed.inject(NotificationService);
+                // alertService = TestBed.inject(JhiAlertService);
                 changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
             });
     });
@@ -148,8 +144,6 @@ describe('User Settings Prototype Component', () => {
                 const saveUserOptionCoresSuccessSpy = sinon.spy(userSettingsService, 'saveUserOptionsSuccess');
                 const extractOptionCoresFromSettingsSpy = sinon.spy(userSettingsService, 'extractOptionCoresFromSettings');
                 const createApplyChangesEventSpy = sinon.spy(userSettingsService, 'sendApplyChangesEvent');
-
-
 
                 //component = fixture.componentInstance;
                 //const spy = spyOn((component as any).changeDetector, 'detectChanges');

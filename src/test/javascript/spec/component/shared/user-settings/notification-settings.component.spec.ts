@@ -1,7 +1,5 @@
 import { NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NotificationService } from 'app/shared/notification/notification.service';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockProvider } from 'ng-mocks/cjs/lib/mock-provider/mock-provider';
 import { TextToLowerCamelCasePipe } from 'app/shared/pipes/text-to-lower-camel-case.pipe';
@@ -22,9 +20,9 @@ describe('NotificationSettingsComponent', () => {
     let comp: NotificationSettingsComponent;
     let fixture: ComponentFixture<NotificationSettingsComponent>;
 
-    let notificationService: NotificationService;
+    // let notificationService: NotificationService;
 
-    let userSettingsService: UserSettingsService;
+    // let userSettingsService: UserSettingsService;
 
     const imports = [ArtemisTestModule, TranslateTestingModule];
     const declarations = [NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe), MockPipe(TextToLowerCamelCasePipe)];
@@ -46,8 +44,8 @@ describe('NotificationSettingsComponent', () => {
                 fixture = TestBed.createComponent(NotificationSettingsComponent);
                 comp = fixture.componentInstance;
 
-                notificationService = TestBed.inject(NotificationService);
-                userSettingsService = TestBed.inject(UserSettingsService);
+                // notificationService = TestBed.inject(NotificationService);
+                // userSettingsService = TestBed.inject(UserSettingsService);
             });
     });
 
