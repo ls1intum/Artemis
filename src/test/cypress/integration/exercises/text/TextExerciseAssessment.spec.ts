@@ -25,7 +25,7 @@ const courseName = 'Cypress course' + uid;
 const courseShortName = 'cypress' + uid;
 
 // This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
-Cypress.on('uncaught:exception', (err, runnable) => {
+Cypress.on('uncaught:exception', () => {
     return false;
 });
 
