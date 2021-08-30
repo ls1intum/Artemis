@@ -56,9 +56,10 @@ export class CourseManagementRequests {
      * @param title the title of the programming exercise
      * @param programmingShortName the short name of the programming exercise
      * @param packageName the package name of the programming exercise
+     * @param body an object containing either the course or exercise group the exercise will be added to
+     * @param scaMaxPenalty the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
      * @param releaseDate when the programming exercise should be available (default is now)
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
-     * @param body an object containing either the course or exercise group the exercise will be added to
      * @returns <Chainable> request response
      */
     createProgrammingExercise(
@@ -66,6 +67,7 @@ export class CourseManagementRequests {
         programmingShortName: string,
         packageName: string,
         body: { course: any } | { exerciseGroup: any },
+        scaMaxPenalty?: number,
         releaseDate = new Date(),
         dueDate = new Date(Date.now() + oneDay),
     ) {
@@ -81,6 +83,10 @@ export class CourseManagementRequests {
             programmingTemplate.allowComplaintsForAutomaticAssessments = true;
         }
 
+        if (scaMaxPenalty) {
+            programmingTemplate.staticCodeAnalysisEnabled = true;
+            programmingTemplate.maxStaticCodeAnalysisPenalty = scaMaxPenalty;
+        }
         const runsOnBamboo: boolean = Cypress.env('isBamboo');
         if (runsOnBamboo) {
             cy.waitForGroupSynchronization();
