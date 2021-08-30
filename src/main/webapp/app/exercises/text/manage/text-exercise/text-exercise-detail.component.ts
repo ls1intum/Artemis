@@ -50,15 +50,6 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         // TODO: route determines whether the component is in exam mode
         this.subscription = this.route.params.subscribe((params) => {
             this.load(params['exerciseId']);
-            console.log('Params', params);
-            // this.textExerciseService.calculateTutorEfforts(params['courseId'], params['exerciseId']).subscribe(
-            //     (res) => {
-            //         console.log(res);
-            //     }
-            // );
-            this.textExerciseService.getTutorEfforts(params['courseId'], params['exerciseId']).subscribe((res) => {
-                console.log(res);
-            });
         });
         this.registerChangeInTextExercises();
     }

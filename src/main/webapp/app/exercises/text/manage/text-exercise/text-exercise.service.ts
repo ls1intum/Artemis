@@ -9,6 +9,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { TutorEffort } from 'app/entities/tutor-effort.model';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
@@ -163,5 +164,9 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
             map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
         );
+    }
+
+    public calculateTutorEffort(exerciseId: number, courseId: number): Observable<TutorEffort[]> {
+        return this.http.post<TutorEffort[]>(`api/courses/${courseId}/exercises/${exerciseId}/tutor-effort`, {}, { params: { exerciseId, courseId } });
     }
 }

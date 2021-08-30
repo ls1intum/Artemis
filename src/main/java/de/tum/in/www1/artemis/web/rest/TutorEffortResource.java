@@ -38,24 +38,21 @@ public class TutorEffortResource {
 
     private final UserRepository userRepository;
 
-    private final TutorEffortRepository tutorEffortRepository;
-
     private final TextAssessmentEventRepository textAssessmentEventRepository;
 
     private final int THRESHOLD_MINUTES = 5;
 
     public TutorEffortResource(AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository,
-            TutorEffortRepository tutorEffortRepository, TextAssessmentEventRepository textAssessmentEventRepository) {
+            TextAssessmentEventRepository textAssessmentEventRepository) {
         this.exerciseRepository = exerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
-        this.tutorEffortRepository = tutorEffortRepository;
         this.textAssessmentEventRepository = textAssessmentEventRepository;
     }
 
     @PostMapping(value = "/courses/{courseId}/exercises/{exerciseId}/tutor-effort")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> calculateTutorEfforts(@PathVariable Long courseId, @PathVariable Long exerciseId) {
+    public ResponseEntity<List<TutorEffort>> calculateTutorEfforts(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         log.debug("tutor-effort with argument[s] course = {}, exercise = {}", courseId, exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -63,7 +60,7 @@ public class TutorEffortResource {
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
 
         Map<Long, Integer> submissionsPerTutor = textAssessmentEventRepository.getAssessedSubmissionCountPerTutor(course.getId(), exerciseId);
-        List<TextAssessmentEvent> listOfEvents = textAssessmentEventRepository.findAll();
+        List<TextAssessmentEvent> listOfEvents = textAssessmentEventRepository.findAllNonEmptyEvents(courseId, exerciseId);
         List<TutorEffort> tutorEffortList = new ArrayList<>();
 
         Map<Long, List<TextAssessmentEvent>> newMap = groupByUserId(listOfEvents);
@@ -78,19 +75,7 @@ public class TutorEffortResource {
                 tutorEffortList.add(effort);
             }
         }
-        tutorEffortRepository.saveAll(tutorEffortList);
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/tutor-effort")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<TutorEffort>> getTutorEffort(@PathVariable Long courseId, @PathVariable Long exerciseId) {
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
-        List<TutorEffort> tutorEfforts = tutorEffortRepository.findAll();
-        return ResponseEntity.ok().body(tutorEfforts);
+        return ResponseEntity.ok().body(tutorEffortList);
     }
 
     private TutorEffort setTutorEffortInformation(Long userId, List<TextAssessmentEvent> events, int submissions) {
@@ -139,6 +124,7 @@ public class TutorEffortResource {
             }
             // key, value pair exists, append to value list, a new element (pass by reference, map.put redundant)
             cEvents.add(event);
+            map.putIfAbsent(cUserId, cEvents);
         });
         return map;
     }

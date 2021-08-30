@@ -29,7 +29,12 @@
             "checkPlagiarism": "Auf Plagiate prüfen",
             "exampleSubmissionsRequireExercise": "Um eine Beispielabgabe zu erstellen, musst du zunächst die Erstellung der Textaufgabe abschließen. Du wirst automatisch weitergeleitet.",
             "saveSuccessful": "Dein Antwort wurde erfolgreich gespeichert!",
-            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal."
+            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
+            "tutorEffortStatistics": {
+                "title": "Tutor Effort Statistics",
+                "calculate": "Calculate",
+                "numberOfSubmissionsAssessed": "Number of total submissions assessed"
+            }
         }
     }
 }

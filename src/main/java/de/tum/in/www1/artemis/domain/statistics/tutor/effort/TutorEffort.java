@@ -1,36 +1,18 @@
 package de.tum.in.www1.artemis.domain.statistics.tutor.effort;
 
-import javax.persistence.*;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.in.www1.artemis.domain.DomainObject;
-
 /**
  * A TutorEffort.
  */
-@Entity
-@Table(name = "tutor_effort")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class TutorEffort extends DomainObject {
+public class TutorEffort {
 
-    @Column(name = "userId")
     private Long userId;
 
-    @Column(name = "number_submissions_assessed")
     private int numberOfSubmissionsAssessed;
 
-    @Column(name = "total_time_spent_minutes")
     private int totalTimeSpentMinutes;
 
-    @Column(name = "exercise_id")
     private Long exerciseId;
 
-    @Column(name = "course_id")
     private Long courseId;
 
     public Long getUserId() {

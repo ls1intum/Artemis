@@ -9,7 +9,7 @@
             <column name="number_submissions_assessed" type="INT"/>
             <column name="total_time_spent_minutes" type="INT"/>
             <column name="course_id" type="BIGINT"/>
-            <column name="text_exercise_id" type="BIGINT"/>
+            <column name="exercise_id" type="BIGINT"/>
         </createTable>
     </changeSet>
 </databaseChangeLog>
