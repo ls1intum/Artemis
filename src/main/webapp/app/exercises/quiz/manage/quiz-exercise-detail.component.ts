@@ -671,10 +671,21 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             if (question.points == undefined || question.points < 1) {
                 return false;
             }
+
+            if (question.explanation && question.explanation.length > 254) {
+                return false;
+            }
+            if (question.hint && question.hint.length > 254) {
+                return false;
+            }
+
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
                 if (mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect)) {
-                    return question.title && question.title !== '' && question.title.length < 250;
+                    return question.title && question.title !== '' && question.title.length < 255
+                        ? mcQuestion.answerOptions?.every((answerOption) => !answerOption.explanation || answerOption.explanation.length < 255) &&
+                              mcQuestion.answerOptions?.every((answerOption) => !answerOption.hint || answerOption.hint.length < 255)
+                        : false;
                 }
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
@@ -904,10 +915,34 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                         translateValues: { index: index + 1 },
                     });
                 }
+                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.explanation && answerOption.explanation.length >= 255)) {
+                    invalidReasons.push({
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.answerExplanationLength',
+                        translateValues: { index: index + 1 },
+                    });
+                }
+                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.hint && answerOption.hint.length >= 255)) {
+                    invalidReasons.push({
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.answerHintLength',
+                        translateValues: { index: index + 1 },
+                    });
+                }
             }
             if (question.title && question.title.length >= 250) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionTitleLength',
+                    translateValues: { index: index + 1 },
+                });
+            }
+            if (question.explanation && question.explanation.length >= 255) {
+                invalidReasons.push({
+                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionExplanationLength',
+                    translateValues: { index: index + 1 },
+                });
+            }
+            if (question.hint && question.hint.length >= 255) {
+                invalidReasons.push({
+                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionHintLength',
                     translateValues: { index: index + 1 },
                 });
             }
