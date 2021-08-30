@@ -202,6 +202,7 @@ export class CourseManagementRequests {
     createQuizExercise(body: { course: any } | { exerciseGroup: any }, title = 'Cypress Quiz', releaseDate = dayjs(), quizQuestions: any = [multipleChoiceTemplate]) {
         const quizExercise = {
             ...quizTemplate,
+            title,
             releaseDate: dayjsToString(releaseDate),
             quizQuestions,
         };
