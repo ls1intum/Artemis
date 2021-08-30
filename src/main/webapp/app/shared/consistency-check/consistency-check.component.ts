@@ -33,8 +33,8 @@ export class ConsistencyCheckComponent implements OnInit {
             );
         } else if (this.checkType === CheckType.COURSE) {
             this.consistencyCheckService.checkConsistencyForCourse(this.id).subscribe(
-                (errors) => {
-                    this.inconsistencies = errors;
+                (inconsistencies) => {
+                    this.inconsistencies = inconsistencies;
                 },
                 (err) => {
                     this.jhiAlertService.error(err);
