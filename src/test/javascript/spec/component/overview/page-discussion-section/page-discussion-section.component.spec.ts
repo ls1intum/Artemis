@@ -4,7 +4,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { Post } from 'app/entities/metis/post.model';
 import * as sinon from 'sinon';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -21,22 +21,31 @@ import { MockPostService } from '../../../helpers/mocks/service/mock-post.servic
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { PageDiscussionSectionComponent } from 'app/overview/page-discussion-section/page-discussion-section.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { PostingsThreadComponent } from 'app/shared/metis/postings-thread/postings-thread.component';
+import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { SinonStub, stub } from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('DiscussionComponent', () => {
+describe('PageDiscussionSectionComponent', () => {
     let component: PageDiscussionSectionComponent;
     let fixture: ComponentFixture<PageDiscussionSectionComponent>;
+    let courseScoreCalculationService: CourseScoreCalculationService;
+    let getCourseStub: SinonStub;
 
     const mockCourse = new Course();
     mockCourse.id = 1;
     const mockExercise = new FileUploadExercise(mockCourse, undefined);
     const mockLecture = new Lecture();
     mockLecture.course = mockCourse;
+    mockCourse.exercises = [mockExercise];
+    mockCourse.lectures = [mockLecture];
 
     /*
-    This test post has to match to the object returned by `getAllPostsByExerciseId` in `MockPostService`
+    This test post has to match to the object returned by `MockPostService`
      */
     const postReturnedFromMockPostServiceForExercise = {
         id: 1,
@@ -45,7 +54,7 @@ describe('DiscussionComponent', () => {
     } as Post;
 
     /*
-    This test post has to match to the object returned by `getAllPostsByLectureId` in `MockPostService`
+    This test post has to match to the object returned by `MockPostService`
      */
     const postReturnedFromMockPostServiceForLecture = {
         id: 1,
@@ -62,8 +71,13 @@ describe('DiscussionComponent', () => {
                 { provide: PostService, useClass: MockPostService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
-            declarations: [PageDiscussionSectionComponent, MockPipe(ArtemisTranslatePipe)],
-            schemas: [NO_ERRORS_SCHEMA],
+            declarations: [
+                PageDiscussionSectionComponent,
+                MockComponent(PostingsThreadComponent),
+                MockComponent(PostCreateEditModalComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(NgbTooltip),
+            ],
         })
             .overrideComponent(PageDiscussionSectionComponent, {
                 set: {
@@ -72,6 +86,9 @@ describe('DiscussionComponent', () => {
             })
             .compileComponents()
             .then(() => {
+                courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
+                getCourseStub = stub(courseScoreCalculationService, 'getCourse');
+                getCourseStub.returns(mockCourse);
                 fixture = TestBed.createComponent(PageDiscussionSectionComponent);
                 component = fixture.componentInstance;
                 fixture.debugElement.injector.get(MetisService);
@@ -88,7 +105,6 @@ describe('DiscussionComponent', () => {
         component.ngOnInit();
         tick();
         expect(component.course).to.deep.equal(mockCourse);
-        expect(component.courseId).to.deep.equal(mockCourse.id);
         expect(component.createdPost).to.not.be.undefined;
         expect(component.posts).to.be.deep.equal([
             {

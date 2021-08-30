@@ -6,23 +6,21 @@ import { User } from 'app/core/user/user.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PageType, PostContextFilter } from 'app/shared/metis/metis.util';
 import { Course } from 'app/entities/course.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { metisCourse, metisTags, metisUser1 } from '../../sample/metis-sample-data';
 
 let pageType: PageType;
-const defaultExercise = { id: 1, type: ExerciseType.TEXT, title: 'default exercise' } as Exercise;
-const defaultLecture = { id: 1, title: 'default lecture' } as Exercise;
 
 export class MockMetisService {
     get tags(): Observable<string[]> {
-        return of(['tag1', 'tag2']);
+        return of(metisTags);
     }
 
     getUser(): User {
-        return { id: 1, name: 'username', login: 'login' } as User;
+        return metisUser1;
     }
 
     getCourse(): Course {
-        return { id: 1, exercises: [defaultExercise], lectures: [defaultLecture] } as Course;
+        return metisCourse;
     }
 
     getPageType(): PageType {

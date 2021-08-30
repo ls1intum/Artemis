@@ -21,13 +21,14 @@ import { MockPostService } from '../../../helpers/mocks/service/mock-post.servic
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { PageDiscussionSectionComponent } from 'app/overview/page-discussion-section/page-discussion-section.component';
+import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('DiscussionComponent', () => {
-    let component: PageDiscussionSectionComponent;
-    let fixture: ComponentFixture<PageDiscussionSectionComponent>;
+describe('CourseDiscussionComponent', () => {
+    let component: CourseDiscussionComponent;
+    let fixture: ComponentFixture<CourseDiscussionComponent>;
 
     const mockCourse = new Course();
     mockCourse.id = 1;

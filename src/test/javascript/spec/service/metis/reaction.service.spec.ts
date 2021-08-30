@@ -4,7 +4,7 @@ import * as chai from 'chai';
 import { take } from 'rxjs/operators';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
-import { User } from 'app/core/user/user.model';
+import { metisReactionToCreateUser1, metisReactionUser2 } from '../../helpers/sample/metis-sample-data';
 
 const expect = chai.expect;
 
@@ -12,7 +12,6 @@ describe('Reaction Service', () => {
     let injector: TestBed;
     let service: ReactionService;
     let httpMock: HttpTestingController;
-    let elemDefault: Reaction;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -21,16 +20,11 @@ describe('Reaction Service', () => {
         injector = getTestBed();
         service = injector.get(ReactionService);
         httpMock = injector.get(HttpTestingController);
-
-        elemDefault = new Reaction();
-        elemDefault.creationDate = undefined;
-        elemDefault.emojiId = 'smile';
-        elemDefault.user = { id: 1, name: 'username', login: 'login' } as User;
     });
 
     describe('Service methods', () => {
         it('should create a Reaction', fakeAsync(() => {
-            const returnedFromService = { ...elemDefault, id: 0 };
+            const returnedFromService = { ...metisReactionToCreateUser1 };
             const expected = { ...returnedFromService };
             service
                 .create(1, new Reaction())
@@ -42,7 +36,7 @@ describe('Reaction Service', () => {
         }));
 
         it('should delete a Reaction', fakeAsync(() => {
-            service.delete(1, elemDefault).subscribe((resp) => expect(resp.ok).to.be.true);
+            service.delete(1, metisReactionUser2).subscribe((resp) => expect(resp.ok).to.be.true);
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
             tick();

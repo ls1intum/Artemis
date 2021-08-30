@@ -1,7 +1,8 @@
 import { Observable, of } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { HttpResponse } from '@angular/common/http';
-import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
+import { CourseWideContext, DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
+import { metisCoursePosts, metisExercisePosts, metisLecturePosts, metisPostOrganization, metisPostRandom, metisPostTechSupport, metisTags } from '../../sample/metis-sample-data';
 
 export class MockPostService {
     create(courseId: number, post: Post): Observable<HttpResponse<Post>> {
@@ -21,11 +22,26 @@ export class MockPostService {
     }
 
     getPosts(courseId: number, postContextFilter: PostContextFilter): Observable<HttpResponse<Post[]>> {
-        // Todo: write if else logic and return posts that match all the filter options
-        return of({ body: [{ id: 1, course: { id: courseId } }] }) as Observable<HttpResponse<Post[]>>;
+        if (postContextFilter.courseWideContext === CourseWideContext.TECH_SUPPORT) {
+            return of({ body: [metisPostTechSupport] }) as Observable<HttpResponse<Post[]>>;
+        }
+        if (postContextFilter.courseWideContext === CourseWideContext.RANDOM) {
+            return of({ body: [metisPostRandom] }) as Observable<HttpResponse<Post[]>>;
+        }
+        if (postContextFilter.courseWideContext === CourseWideContext.ORGANIZATION) {
+            return of({ body: [metisPostOrganization] }) as Observable<HttpResponse<Post[]>>;
+        }
+        if (postContextFilter.exerciseId) {
+            return of({ body: metisExercisePosts }) as Observable<HttpResponse<Post[]>>;
+        }
+        if (postContextFilter.lectureId) {
+            return of({ body: metisLecturePosts }) as Observable<HttpResponse<Post[]>>;
+        } else {
+            return of({ body: metisCoursePosts }) as Observable<HttpResponse<Post[]>>;
+        }
     }
 
     getAllPostTagsByCourseId(courseId: number): Observable<HttpResponse<string[]>> {
-        return of({ body: ['mockTag1', 'mockTag2'] }) as Observable<HttpResponse<string[]>>;
+        return of({ body: metisTags }) as Observable<HttpResponse<string[]>>;
     }
 }

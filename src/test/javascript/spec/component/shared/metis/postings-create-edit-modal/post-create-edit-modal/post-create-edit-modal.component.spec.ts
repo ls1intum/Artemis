@@ -7,17 +7,14 @@ import * as sinon from 'sinon';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
-import { User } from 'app/core/user/user.model';
-import { Post } from 'app/entities/metis/post.model';
-import { ContextSelectorOption, PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
 import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-tag-selector.component';
 import { CourseWideContext, PageType } from 'app/shared/metis/metis.util';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { metisExercise, metisLecture, metisPostLectureUser1, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -26,12 +23,6 @@ describe('PostCreateEditModalComponent', () => {
     let component: PostCreateEditModalComponent;
     let fixture: ComponentFixture<PostCreateEditModalComponent>;
     let metisService: MetisService;
-    let post: Post;
-    let emptyPost: Post;
-    let tags: string[];
-    let exercise: Exercise;
-    let lecture: Lecture;
-    let currentContextSelectorOption: ContextSelectorOption;
     let metisServiceGetPageTypeStub: SinonStub;
     let metisServiceCreateSpy: SinonSpy;
     let metisServiceUpdateSpy: SinonSpy;
@@ -57,28 +48,6 @@ describe('PostCreateEditModalComponent', () => {
                 metisServiceGetPageTypeStub = stub(metisService, 'getPageType');
                 metisServiceCreateSpy = spy(metisService, 'createPost');
                 metisServiceUpdateSpy = spy(metisService, 'updatePost');
-
-                const user = { id: 1, name: 'username', login: 'login' } as User;
-                tags = ['tag1', 'tag2'];
-                // matches what is returned by mock metis service
-                exercise = { id: 1, type: ExerciseType.TEXT, title: 'default exercise' } as Exercise;
-                lecture = { id: 1, title: 'default lecture' } as Exercise;
-
-                emptyPost = new Post();
-
-                post = {
-                    id: 1,
-                    author: user,
-                    content: 'Post Content',
-                    lecture,
-                    tags,
-                } as Post;
-
-                currentContextSelectorOption = {
-                    courseWideContext: undefined,
-                    exercise: undefined,
-                    lecture: undefined,
-                } as ContextSelectorOption;
             });
     });
 
@@ -88,7 +57,7 @@ describe('PostCreateEditModalComponent', () => {
 
     it('should init modal with correct context, title and content for post without id', () => {
         metisServiceGetPageTypeStub.returns(PageType.OVERVIEW);
-        component.posting = { ...emptyPost, courseWideContext: CourseWideContext.TECH_SUPPORT };
+        component.posting = { ...metisPostToCreateUser1, courseWideContext: CourseWideContext.TECH_SUPPORT };
         component.ngOnInit();
         expect(component.pageType).to.be.equal(PageType.OVERVIEW);
         expect(component.modalTitle).to.be.equal('artemisApp.metis.createModalTitlePost');
@@ -99,24 +68,24 @@ describe('PostCreateEditModalComponent', () => {
         expect(component.exercises).to.have.length(1);
         // currently the default selection when opening the model in the overview for creating a new post is the course-wide context TECH_SUPPORT
         expect(component.currentContextSelectorOption).to.be.deep.equal({
-            ...currentContextSelectorOption,
             courseWideContext: CourseWideContext.TECH_SUPPORT,
+            exercise: undefined,
+            lecture: undefined,
         });
         expect(component.tags).to.be.deep.equal([]);
     });
 
     it('should invoke metis service with created post', fakeAsync(() => {
-        component.posting = { ...emptyPost, courseWideContext: CourseWideContext.TECH_SUPPORT };
+        component.posting = metisPostToCreateUser1;
         component.ngOnInit();
         // provide some input before creating the post
-        component.formGroup.controls.context.setValue({ ...currentContextSelectorOption, lecture });
         const newContent = 'New Content';
         const newTitle = 'New Title';
         const onCreateSpy = spy(component.onCreate, 'emit');
         component.formGroup.setValue({
             title: newTitle,
             content: newContent,
-            context: { ...currentContextSelectorOption, lecture },
+            context: { courseWideContext: undefined, exercise: undefined, metisLecture },
         });
         // trigger the method that is called on clicking the save button
         component.confirm();
@@ -126,7 +95,7 @@ describe('PostCreateEditModalComponent', () => {
             title: newTitle,
             courseWideContext: undefined,
             exercise: undefined,
-            lecture,
+            metisLecture,
         });
         expect(component.posting.creationDate).to.not.be.undefined;
         tick();
@@ -136,18 +105,17 @@ describe('PostCreateEditModalComponent', () => {
 
     it('should invoke metis service with updated post in page section', fakeAsync(() => {
         metisServiceGetPageTypeStub.returns(PageType.PAGE_SECTION);
-        component.posting = post;
+        component.posting = metisPostLectureUser1;
         component.ngOnInit();
         expect(component.pageType).to.be.equal(PageType.PAGE_SECTION);
         expect(component.modalTitle).to.be.equal('artemisApp.metis.editPosting');
         // provide some updated input before creating the post
-        component.formGroup.controls.context.setValue({ ...currentContextSelectorOption, lecture });
         const updatedContent = 'Updated Content';
         const updatedTitle = 'Updated Title';
         component.formGroup.setValue({
             content: updatedContent,
             title: updatedTitle,
-            context: { exerciseId: exercise.id },
+            context: { exerciseId: metisExercise.id },
         });
         component.confirm();
         expect(metisServiceUpdateSpy).to.be.have.been.calledWith({
