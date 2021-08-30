@@ -34,7 +34,8 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
             const courseId = parseInt(params['courseId'], 10);
             this.course = this.courseCalculationService.getCourse(courseId);
             if (this.course) {
-                this.initMetisService();
+                this.metisService.setCourse(this.course!);
+                this.metisService.setPageType(this.pageType);
             }
         });
         this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.sort(this.sectionSortFn))).subscribe((posts: Post[]) => {
@@ -64,7 +65,59 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * makes discussion expandable by configuring 'interact'
+     * sorts posts by following criteria
+     * 1. criterion: displayPriority is PINNED -> pinned posts come first
+     * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
+     * 3. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
+     * 4. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
+     * @return Post[] sorted array of posts
+     */
+    sectionSortFn(postA: Post, postB: Post): number {
+        if (postA.displayPriority === DisplayPriority.PINNED && postB.displayPriority !== DisplayPriority.PINNED) {
+            return -1;
+        }
+        if (postA.displayPriority !== DisplayPriority.PINNED && postB.displayPriority === DisplayPriority.PINNED) {
+            return 1;
+        }
+        if (postA.displayPriority === DisplayPriority.ARCHIVED && postB.displayPriority !== DisplayPriority.ARCHIVED) {
+            return 1;
+        }
+        if (postA.displayPriority !== DisplayPriority.ARCHIVED && postB.displayPriority === DisplayPriority.ARCHIVED) {
+            return -1;
+        }
+        const postAVoteEmojiCount = postA.reactions?.filter((reaction: Reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
+        const postBVoteEmojiCount = postB.reactions?.filter((reaction: Reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
+        if (postAVoteEmojiCount > postBVoteEmojiCount) {
+            return -1;
+        }
+        if (postAVoteEmojiCount < postBVoteEmojiCount) {
+            return 1;
+        }
+        if (Number(postA.creationDate) > Number(postB.creationDate)) {
+            return 1;
+        }
+        if (Number(postA.creationDate) < Number(postB.creationDate)) {
+            return -1;
+        }
+        return 0;
+    }
+
+    /**
+     * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
+     * @return Post created empty default post
+     */
+    createEmptyPost(): Post {
+        return this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture?.id);
+    }
+
+    /**
+     * defines a function that returns the post id as unique identifier,
+     * by this means, Angular determines which post in the collection of posts has to be reloaded/destroyed on changes
+     */
+    postsTrackByFn = (index: number, post: Post): number => post.id!;
+
+    /**
+     * makes discussion section expandable by configuring 'interact'
      */
     ngAfterViewInit(): void {
         interact('.expanded-discussion')
@@ -89,54 +142,5 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';
             });
-    }
-
-    /**
-     * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
-     * @return Post created empty default post
-     */
-    createEmptyPost(): Post {
-        return this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture?.id);
-    }
-
-    /**
-     * defines a function that returns the post id as unique identifier,
-     * by this means, Angular determines which post in the collection of posts has to be reloaded/destroyed on changes
-     */
-    postsTrackByFn = (index: number, post: Post): number => post.id!;
-
-    private initMetisService(): void {
-        this.metisService.setCourse(this.course!);
-        this.metisService.setPageType(this.pageType);
-    }
-
-    private sectionSortFn(postA: Post, postB: Post): number {
-        const postAVoteEmojiCount = postA.reactions?.filter((reaction: Reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
-        const postBVoteEmojiCount = postB.reactions?.filter((reaction: Reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
-        if (postA.displayPriority === DisplayPriority.PINNED && postB.displayPriority !== DisplayPriority.PINNED) {
-            return -1;
-        }
-        if (postA.displayPriority !== DisplayPriority.PINNED && postB.displayPriority === DisplayPriority.PINNED) {
-            return 1;
-        }
-        if (postA.displayPriority === DisplayPriority.ARCHIVED && postB.displayPriority !== DisplayPriority.ARCHIVED) {
-            return 1;
-        }
-        if (postA.displayPriority !== DisplayPriority.ARCHIVED && postB.displayPriority === DisplayPriority.ARCHIVED) {
-            return -1;
-        }
-        if (postAVoteEmojiCount > postBVoteEmojiCount) {
-            return -1;
-        }
-        if (postAVoteEmojiCount < postBVoteEmojiCount) {
-            return 1;
-        }
-        if (Number(postA.creationDate) > Number(postB.creationDate)) {
-            return 1;
-        }
-        if (Number(postA.creationDate) < Number(postB.creationDate)) {
-            return -1;
-        }
-        return 0;
     }
 }

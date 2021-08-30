@@ -66,7 +66,9 @@ export class CourseDiscussionComponent implements OnDestroy {
                 this.resetCurrentFilter();
                 this.createEmptyPost();
                 this.resetFormGroup();
-                this.initMetisService();
+                this.metisService.setCourse(this.course!);
+                this.metisService.setPageType(this.pageType);
+                this.metisService.getFilteredPosts({ courseId: this.course!.id });
             }
         });
         this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.filter(this.filterFn).sort(this.overviewSortFn))).subscribe((posts: Post[]) => {
@@ -183,12 +185,6 @@ export class CourseDiscussionComponent implements OnDestroy {
      * by this means, Angular determines which post in the collection of posts has to be reloaded/destroyed on changes
      */
     postsTrackByFn = (index: number, post: Post): number => post.id!;
-
-    private initMetisService(): void {
-        this.metisService.setCourse(this.course!);
-        this.metisService.setPageType(this.pageType);
-        this.metisService.getFilteredPosts({ courseId: this.course!.id });
-    }
 
     private setFilterAndSort() {
         this.currentPostContextFilter = {
