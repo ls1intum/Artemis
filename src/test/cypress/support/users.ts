@@ -35,6 +35,13 @@ export class CypressUserManagement {
     }
 
     /**
+     * @returns the fourth testing account with student rights.
+     */
+    public getStudentFour(): CypressCredentials {
+        return this.getUserWithId('110');
+    }
+
+    /**
      * @returns an instructor account.
      */
     public getInstructor(): CypressCredentials {
