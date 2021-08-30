@@ -13,7 +13,7 @@ export class ConsistencyCheckComponent implements OnInit {
     @Input() id: number;
     @Input() checkType: CheckType;
 
-    errors: ConsistencyCheckError[];
+    inconsistencies: ConsistencyCheckError[];
     courseId: number | undefined;
 
     constructor(private activeModal: NgbActiveModal, private consistencyCheckService: ConsistencyCheckService, private jhiAlertService: JhiAlertService) {}
@@ -21,10 +21,10 @@ export class ConsistencyCheckComponent implements OnInit {
     ngOnInit(): void {
         if (this.checkType === CheckType.PROGRAMMING_EXERCISE) {
             this.consistencyCheckService.checkConsistencyForProgrammingExercise(this.id).subscribe(
-                (errors) => {
-                    this.errors = errors;
-                    if (this.errors.length > 0) {
-                        this.courseId = getCourseId(this.errors[0].programmingExercise!);
+                (inconsistencies) => {
+                    this.inconsistencies = inconsistencies;
+                    if (this.inconsistencies.length > 0) {
+                        this.courseId = getCourseId(this.inconsistencies[0].programmingExercise!);
                     }
                 },
                 (err) => {
@@ -34,7 +34,7 @@ export class ConsistencyCheckComponent implements OnInit {
         } else if (this.checkType === CheckType.COURSE) {
             this.consistencyCheckService.checkConsistencyForCourse(this.id).subscribe(
                 (errors) => {
-                    this.errors = errors;
+                    this.inconsistencies = errors;
                 },
                 (err) => {
                     this.jhiAlertService.error(err);
@@ -47,7 +47,7 @@ export class ConsistencyCheckComponent implements OnInit {
     }
 
     isLoadingResults() {
-        return this.errors == undefined;
+        return this.inconsistencies == undefined;
     }
 
     closeModal() {

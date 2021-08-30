@@ -68,7 +68,7 @@ describe('ConsistencyCheckComponent', () => {
         // THEN
         expect(checkConsistencyForProgrammingExercise).to.have.been.called;
         expect(component.courseId).to.be.equal(programmingExercise.course!.id);
-        expect(component.errors).to.be.equal(consistencyErrors);
+        expect(component.inconsistencies).to.be.equal(consistencyErrors);
     });
 
     it('should call checks for course', () => {
@@ -83,6 +83,6 @@ describe('ConsistencyCheckComponent', () => {
         // THEN
         expect(checkConsistencyForProgrammingExercise).to.have.been.called;
         expect(component.courseId).to.be.equal(course.id);
-        expect(component.errors).to.be.equal(consistencyErrors);
+        expect(component.inconsistencies).to.be.equal(consistencyErrors);
     });
 });

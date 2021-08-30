@@ -5,7 +5,7 @@
             "title": "Konsistenzprüfung",
             "text": "Die Überprüfung der Programmieraufgaben wird durchgeführt. Gefundene Inkonsistenzen werden nachfolgend angezeigt.<br><small>Bei Kursen mit vielen Programmierübungen wird dies einige Zeit in Anspruch nehmen.</small>",
             "error": {
-                "type": "Fehler Typ",
+                "type": "Fehlertyp",
                 "TEMPLATE_REPO_MISSING": "Fehlendes Vorlagen-Repository",
                 "SOLUTION_REPO_MISSING": "Fehlendes Lösung-Repository",
                 "TEST_REPO_MISSING": "Fehlendes Test-Repository",

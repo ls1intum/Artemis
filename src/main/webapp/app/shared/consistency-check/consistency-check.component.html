@@ -22,7 +22,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let error of errors">
+                        <tr *ngFor="let error of inconsistencies">
                             <td *ngIf="checkType.localeCompare('COURSE') == 0">
                                 <a [routerLink]="['/course-management', courseId, 'programming-exercises', error.programmingExercise!.id]">
                                     <ngb-highlight [result]="error.programmingExercise!.title!"></ngb-highlight>
@@ -35,7 +35,7 @@
                         </tr>
                     </tbody>
                 </table>
-                <div *ngIf="errors != undefined && errors.length == 0" class="text-center">
+                <div *ngIf="inconsistencies != undefined && inconsistencies.length == 0" class="text-center">
                     <span class="h1 text-success"><fa-icon [icon]="'check'"></fa-icon></span>
                     <br />
                     <span jhiTranslate="artemisApp.consistencyCheck.noErrors">No errors found</span>
