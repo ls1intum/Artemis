@@ -1,4 +1,3 @@
-import day from 'dayjs';
 import { artemis } from 'src/test/cypress/support/ArtemisTesting';
 import { generateUUID } from 'src/test/cypress/support/utils';
 
@@ -23,6 +22,7 @@ const textFeedback = artemis.pageobjects.textExercise.feedback;
 const uid = generateUUID();
 const courseName = 'Cypress course' + uid;
 const courseShortName = 'cypress' + uid;
+const complaint = "That feedback wasn't very useful!";
 
 // This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
 Cypress.on('uncaught:exception', (err, runnable) => {
@@ -81,6 +81,7 @@ describe('Text exercise assessment', () => {
             exerciseResult.clickViewSubmission();
             textFeedback.shouldShowFeedback(feedbackPoints, tutorFeedback);
             textFeedback.shouldShowScore(feedbackPoints, 10, 40);
+            textFeedback.complain(complaint);
         });
     });
 
@@ -106,17 +107,21 @@ describe('Text exercise assessment', () => {
 
     function updateExerciseDueDate() {
         cy.login(admin);
-        courseManagement
-            .updateTextExerciseDueDate(exercise)
-            .its('body')
-            .then((newExercise) => {
-                // We need to save the returned dto. Otherwise we will overwrite the due date when we update the assessment date later.
-                exercise = newExercise;
-            });
+        cy.wait(1000).then(() => {
+            courseManagement
+                .updateTextExerciseDueDate(exercise)
+                .its('body')
+                .then((newExercise) => {
+                    // We need to save the returned dto. Otherwise we will overwrite the due date when we update the assessment date later.
+                    exercise = newExercise;
+                });
+        });
     }
 
     function updateExerciseAssessmentDueDate() {
         cy.login(admin);
-        courseManagement.updateTextExerciseAssessmentDueDate(exercise).wait(1000);
+        cy.wait(200).then(() => {
+            courseManagement.updateTextExerciseAssessmentDueDate(exercise);
+        });
     }
 });
