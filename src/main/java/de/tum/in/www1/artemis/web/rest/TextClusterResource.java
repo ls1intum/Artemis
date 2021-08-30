@@ -51,7 +51,7 @@ public class TextClusterResource {
      * @param exerciseId The id of the text exercise to fetch cluster statistics data from
      * @return The list of cluster ids adjacent to their respective sizes and automatically graded text blocks
      */
-    @GetMapping("courses/{courseId}/text-exercises/{exerciseId}/cluster-statistics")
+    @GetMapping("text-exercises/{exerciseId}/cluster-statistics")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<TextClusterStatisticsDTO>> getClusterStats(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         // Check if Instructor has permission to access the exercise with given exerciseId
