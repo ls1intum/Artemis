@@ -1,3 +1,4 @@
+import { ScaFeedbackModal } from './exercises/programming/ScaFeedbackModal';
 import { CodeAnalysisGradingPage } from './exercises/programming/CodeAnalysisGradingPage';
 import { ProgrammingExerciseCreationPage } from './ProgrammingExerciseCreationPage';
 import { ExamManagementPage } from './ExamManagementPage';
@@ -26,5 +27,6 @@ export class ArtemisPageobjects {
         editor: new OnlineEditorPage(),
         creation: new ProgrammingExerciseCreationPage(),
         scaConfiguration: new CodeAnalysisGradingPage(),
+        scaFeedback: new ScaFeedbackModal(),
     };
 }
