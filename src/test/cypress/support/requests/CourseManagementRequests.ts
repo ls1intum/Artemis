@@ -1,4 +1,4 @@
-import { BASE_API, DELETE, POST, PUT } from '../constants';
+import { BASE_API, DELETE, GET, POST, PUT } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import { dayjsToString, generateUUID } from '../utils';
@@ -9,9 +9,11 @@ import textExerciseTemplate from '../../fixtures/requests/textExercise_template.
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
 import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
+import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceSubmission_template.json';
 import dayjs from 'dayjs';
 
 const COURSE_BASE = BASE_API + 'courses/';
+const EXERCISE_BASE = BASE_API + 'exercises/';
 const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
 const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
 const oneDay = 24 * 60 * 60 * 1000;
@@ -225,6 +227,41 @@ export class CourseManagementRequests {
         return cy.request({
             url: QUIZ_EXERCISE_BASE + `${quizId}` + '/start-now',
             method: PUT,
+        });
+    }
+
+    /**
+     * Creates a submission for a Quiz with only one multiple-choice quiz question
+     * @param quizExercise the response body of a quiz exercise
+     * @param tickOptions a list describing which of the 0..n boxes are to be ticked in the submission
+     */
+    createMultipleChoiceSubmission(quizExercise: any, tickOptions: number[]) {
+        const multipleChoiceSubmission = {
+            ...multipleChoiceSubmissionTemplate,
+            submittedAnswers: [{
+                ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
+                quizQuestion: quizExercise.quizQuestions[0],
+                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option])
+            }]
+        };
+        return cy.request({
+            url: QUIZ_EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            method: POST,
+            body: multipleChoiceSubmission
+        });
+    }
+
+    getExerciseParticipation(exerciseId: number) {
+        return cy.request({
+            url: EXERCISE_BASE + exerciseId + '/participation',
+            method: GET
+        });
+    }
+
+    startExerciseParticipation(courseId: number, exerciseId: number) {
+        return cy.request({
+            url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/participations`,
+            method: POST,
         });
     }
 
