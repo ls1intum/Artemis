@@ -5,6 +5,8 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ExampleSubmissionImportComponent } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import.component';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
@@ -17,6 +19,7 @@ export class ExampleSubmissionsComponent implements OnInit {
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
         private courseService: CourseManagementService,
+        private modalService: NgbModal,
     ) {}
 
     /**
@@ -69,4 +72,20 @@ export class ExampleSubmissionsComponent implements OnInit {
             ];
         }
     }
+    openImportModal() {
+
+        const exampleSubmissionImportModalRef = this.modalService.open(ExampleSubmissionImportComponent, {
+            size: 'lg',
+            backdrop: 'static',
+        });
+        // textImportexampleSubmissionImportModalRef.result.then(
+        //     (result: TextExercise) => {
+        //         importBaseRoute.push(result.id);
+        //         this.router.navigate(importBaseRoute);
+        //     },
+        //     () => {},
+        // );
+
+    }
+
 }
