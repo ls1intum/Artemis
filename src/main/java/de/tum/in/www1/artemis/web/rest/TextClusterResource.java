@@ -45,15 +45,15 @@ public class TextClusterResource {
     }
 
     /**
-     * Get /text-exercises/{exerciseId}/cluster-statistics/
+     * Get text-exercises/{exerciseId}/cluster-statistics/
      * <p>
      * Get text cluster stats
      * @param exerciseId The id of the text exercise to fetch cluster statistics data from
      * @return The list of cluster ids adjacent to their respective sizes and automatically graded text blocks
      */
-    @GetMapping("/text-exercises/{exerciseId}/cluster-statistics")
+    @GetMapping("courses/{courseId}/text-exercises/{exerciseId}/cluster-statistics")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<TextClusterStatisticsDTO>> getClusterStats(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<TextClusterStatisticsDTO>> getClusterStats(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         // Check if Instructor has permission to access the exercise with given exerciseId
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -72,7 +72,7 @@ public class TextClusterResource {
     }
 
     /**
-     * Patch /text-clusters/{clusterId}
+     * Patch text-clusters/{clusterId}
      * <p>
      * Sets a text cluster's disabled boolean value
      *
@@ -80,7 +80,7 @@ public class TextClusterResource {
      * @param disabled The predicate value defining the disabled state of the cluster
      * @return The status whether the boolean value was set successfully or the setting failed.
      */
-    @PatchMapping("/text-clusters/{clusterId}")
+    @PatchMapping("text-clusters/{clusterId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> toggleClusterDisabledPredicate(@PathVariable Long clusterId, @RequestParam boolean disabled) {
         // Check if Instructor has permission to access the exercise that the cluster with id clusterId belongs to.
