@@ -29,7 +29,7 @@
                 "attachmentChanges": "Attachment Changes",
                 "newPostForLecture": "New Post for Lecture",
                 "newAnswerPostForLecture": "New Answer Post for Lecture",
-                "courseOrExamArchivingStarted": "Course & Exam Archiving Started"
+                "courseAndExamArchivingStarted": "Course & Exam Archiving Started"
             },
             "optionDescriptions": {
                 "getNotifiedIfANewExerciseHasBeenCreatedOrStarted": "Get notified when a (new) exercise has been created or started",

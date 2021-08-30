@@ -125,7 +125,6 @@ describe('User Settings Prototype Component', () => {
         });
 
         describe('test savingSettings', () => {
-            /*
             it('should call userSettingsService to save OptionsCores', () => {
                 // TODO once again after several hours I can not manage to correctly spy/stub/fake/mock changeDetection without breaking the execution chain
                 //stub(changeDetector.constructor.prototype, 'detectChanges');
@@ -152,12 +151,11 @@ describe('User Settings Prototype Component', () => {
                 component.saveOptions();
 
                 expect(changeDetectorDetectChangesStub).to.have.been.called;
-/*
+
                 expect(saveUserOptionCoresSuccessSpy).to.be.calledOnce;
                 expect(extractOptionCoresFromSettingsSpy).to.be.calledOnce;
                 expect(createApplyChangesEventSpy).to.be.calledOnce;
- */
-            //    });
+            });
         });
     });
 });

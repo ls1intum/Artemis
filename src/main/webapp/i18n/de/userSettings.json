@@ -29,7 +29,7 @@
                 "attachmentChanges": "Änderungen von Anhängen",
                 "newPostForLecture": "Neue Beiträge für Vorlesungen",
                 "newAnswerPostForLecture": "Neue Antworten für Vorlesungen",
-                "courseOrExamArchivingStarted": "Kurs oder Klausur Archivierungsstart"
+                "courseAndExamArchivingStarted": "Kurs und Klausur Archivierungsstart"
             },
             "optionDescriptions": {
                 "getNotifiedIfANewExerciseHasBeenCreatedOrStarted": "Erhalte eine Mitteilung wenn eine (neue) Aufgabe erstellt oder gestartet wurde",

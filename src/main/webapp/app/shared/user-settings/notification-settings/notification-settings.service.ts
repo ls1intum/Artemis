@@ -7,16 +7,16 @@ import { OptionSpecifier } from 'app/shared/constants/user-settings.constants';
 @Injectable({ providedIn: 'root' })
 export class NotificationSettingsService {
     /**
-     * Updates the provided map which indicates which OriginalNotificationTypes are (de)activated in the current notification settings
+     * Creates an updates map that indicates which OriginalNotificationTypes are (de)activated in the current notification settings
      * @param notificationOptionCores will be mapped to their respective OriginalNotificationTypes and create a new updated map
      * @return the updated map
      */
-    public updateOriginalNotificationTypeActivationMap(notificationOptionCores: NotificationOptionCore[]): Map<OriginalNotificationType, boolean> {
+    public createUpdatedOriginalNotificationTypeActivationMap(notificationOptionCores: NotificationOptionCore[]): Map<OriginalNotificationType, boolean> {
         const updatedMap: Map<OriginalNotificationType, boolean> = new Map<OriginalNotificationType, boolean>();
         let tmpOriginalNotificationTypes: OriginalNotificationType[];
 
         for (let i = 0; i < notificationOptionCores.length; i++) {
-            tmpOriginalNotificationTypes = this.findCorrespondingNotificationTypesForNotificationOptionCore(notificationOptionCores[i]);
+            tmpOriginalNotificationTypes = NotificationSettingsService.findCorrespondingNotificationTypesForNotificationOptionCore(notificationOptionCores[i]);
             tmpOriginalNotificationTypes.forEach((originalNotificationType) => {
                 updatedMap.set(originalNotificationType, notificationOptionCores[i].webapp);
             });
@@ -42,10 +42,10 @@ export class NotificationSettingsService {
     /**
      * This is the place where the mapping between NotificationOptionCores and NotificationTypes happens on the client side
      * Each NotificationOptionCore can be based on multiple different NotificationTypes
-     * @param NotificationOptionCore which corresponding NotificationTypes should be found
+     * @param notificationOptionCore which corresponding NotificationTypes should be found
      * @return the corresponding NotificationType(s)
      */
-    private findCorrespondingNotificationTypesForNotificationOptionCore(notificationOptionCore: NotificationOptionCore): OriginalNotificationType[] {
+    private static findCorrespondingNotificationTypesForNotificationOptionCore(notificationOptionCore: NotificationOptionCore): OriginalNotificationType[] {
         switch (notificationOptionCore.optionSpecifier) {
             case OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED: {
                 return [OriginalNotificationType.EXERCISE_CREATED];
