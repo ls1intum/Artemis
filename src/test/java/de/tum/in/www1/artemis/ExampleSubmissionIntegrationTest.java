@@ -302,14 +302,6 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void importExampleSubmissionWithStudentSubmission_badRequest() throws Exception {
-        Submission submission = new TextSubmission();
-        Long randomId = 1233L;
-        importExampleSubmission(HttpStatus.BAD_REQUEST, submission.getId(), randomId);
-    }
-
-    @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void importExampleSubmissionWithStudentSubmission_wrongExerciseId() throws Exception {
         Submission submission = new TextSubmission();
         submission.setId(12345L);
