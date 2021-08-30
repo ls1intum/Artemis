@@ -102,14 +102,25 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     addStudentToCourse(courseId: number, studentName: string) {
-        return cy.request({ url: COURSE_BASE + courseId + '/students/' + studentName, method: POST });
+        return this.addUserToCourse(courseId, studentName, 'students');
     }
 
     /**
      * Adds the specified user to the tutor group in the course
      */
     addTutorToCourse(course: any, user: CypressCredentials) {
-        return cy.request({ method: POST, url: COURSE_BASE + course.id + '/tutors/' + user.username });
+        return this.addUserToCourse(course.id, user.username, 'tutors');
+    }
+
+    /**
+     * Adds the specified user to the instructor group in the course
+     */
+    addInstructorToCourse(courseId: number, user: CypressCredentials) {
+        return this.addUserToCourse(courseId, user.username, 'instructors');
+    }
+
+    private addUserToCourse(courseId: number, username: string, roleIdentifier: string) {
+        return cy.request({ method: POST, url: `${COURSE_BASE}${courseId}/${roleIdentifier}/${username}` });
     }
 
     /**

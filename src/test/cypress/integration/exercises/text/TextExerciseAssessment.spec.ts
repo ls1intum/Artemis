@@ -6,6 +6,7 @@ const users = artemis.users;
 const student = users.getStudentOne();
 const tutor = users.getTutor();
 const admin = users.getAdmin();
+const instructor = users.getInstructor();
 
 // Requests
 const courseManagement = artemis.requests.courseManagement;
@@ -68,7 +69,7 @@ describe('Text exercise assessment', () => {
         textAssessment.submit();
     });
 
-    describe('Student feedback', () => {
+    describe('Feedback', () => {
         before(() => {
             updateExerciseAssessmentDueDate();
             cy.login(student, `/courses/${course.id}/exercises/${exercise.id}`);
@@ -83,6 +84,12 @@ describe('Text exercise assessment', () => {
             textFeedback.shouldShowScore(feedbackPoints, 10, 40);
             textFeedback.complain(complaint);
         });
+
+        it('Instructor can see complaint and reject it', () => {
+            cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
+            courseAssessment.openComplaints(course.id);
+            textAssessment.acceptComplaint('Makes sense').its('response.statusCode').should('eq', 200);
+        });
     });
 
     function createCourseWithTextExercise() {
@@ -91,6 +98,7 @@ describe('Text exercise assessment', () => {
             course = response.body;
             courseManagement.addStudentToCourse(course.id, student.username);
             courseManagement.addTutorToCourse(course, tutor);
+            courseManagement.addInstructorToCourse(course.id, instructor);
             courseManagement.createTextExercise({ course }).then((textResponse) => {
                 exercise = textResponse.body;
             });
