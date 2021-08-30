@@ -1,7 +1,6 @@
 
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.util.Optional;
@@ -164,10 +163,6 @@ public class ExampleSubmissionResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId, @RequestBody Long submissionId) {
         log.debug("REST request to import ExampleSubmission : {}", submissionId);
-        if (submissionId == null) {
-            log.debug("Submission id must be set for an import");
-            return badRequest();
-        }
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
