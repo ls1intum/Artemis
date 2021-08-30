@@ -50,10 +50,8 @@ describe('Text exercise management', () => {
         textCreation.checkAutomaticAssessmentSuggestions();
         const problemStatement = 'This is a problem statement';
         const exampleSolution = 'E = mc^2';
-        const assessmentInstructions = 'Albert Einstein';
         textCreation.typeProblemStatement(problemStatement);
         textCreation.typeExampleSolution(exampleSolution);
-        textCreation.typeAssessmentInstructions(assessmentInstructions);
         textCreation.create().its('response.statusCode').should('eq', 201);
 
         // Create an example submission
@@ -61,7 +59,6 @@ describe('Text exercise management', () => {
         cy.contains(exerciseTitle).should('be.visible');
         cy.contains(problemStatement).should('be.visible');
         cy.contains(exampleSolution).should('be.visible');
-        cy.contains(assessmentInstructions).should('be.visible');
         const submission = 'This is an\nexample\nsubmission';
         exampleSubmissionCreation.typeExampleSubmission(submission);
         exampleSubmissionCreation
