@@ -53,7 +53,7 @@ public class TextClusterResource {
      */
     @GetMapping("text-exercises/{exerciseId}/cluster-statistics")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<TextClusterStatisticsDTO>> getClusterStats(@PathVariable Long courseId, @PathVariable Long exerciseId) {
+    public ResponseEntity<List<TextClusterStatisticsDTO>> getClusterStats(@PathVariable Long exerciseId) {
         // Check if Instructor has permission to access the exercise with given exerciseId
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
