@@ -43,7 +43,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { getElement } from '../../../helpers/utils/general.utils';
+import { getElement, getElements } from '../../../helpers/utils/general.utils';
 import { PageDiscussionSectionComponent } from 'app/overview/page-discussion-section/page-discussion-section.component';
 
 chai.use(sinonChai);
@@ -178,6 +178,11 @@ describe('CourseDiscussionComponent', () => {
         expect(postCountInformation.innerHTML).to.not.be.empty;
     }));
 
+    it('should invoke metis service with foreReload false when search text changed', () => {
+        component.onSearch();
+        expect(metisServiceSpy).to.have.been.calledWith({ courseId: metisCourse.id, courseWideContext: undefined, exerciseId: undefined, lectureId: undefined }, false);
+    });
+
     it('should fetch new posts when context filter changes to course-wide-context', fakeAsync(() => {
         tick();
         fixture.detectChanges();
@@ -219,6 +224,20 @@ describe('CourseDiscussionComponent', () => {
         expect(metisServiceSpy).to.have.been.called;
         expect(component.posts).to.be.deep.equal(metisLecturePosts);
     }));
+
+    it('should invoke metis service foreReload false when sort criterion changed', () => {
+        fixture.detectChanges();
+        const sortByOptions = getElement(fixture.debugElement, 'select[name=sortBy]');
+        sortByOptions.dispatchEvent(new Event('change'));
+        expect(metisServiceSpy).to.have.been.calledWith({ courseId: metisCourse.id, courseWideContext: undefined, exerciseId: undefined, lectureId: undefined }, false);
+    });
+
+    it('should invoke metis service foreReload false when sort direction changed', () => {
+        fixture.detectChanges();
+        const sortByOptions = getElement(fixture.debugElement, 'select[name=sortDirection]');
+        sortByOptions.dispatchEvent(new Event('change'));
+        expect(metisServiceSpy).to.have.been.calledWith({ courseId: metisCourse.id, courseWideContext: undefined, exerciseId: undefined, lectureId: undefined }, false);
+    });
 
     it('should sort posts correctly by creation date desc', () => {
         component.currentSortCriterion = PostSortCriterion.CREATION_DATE;
@@ -266,5 +285,24 @@ describe('CourseDiscussionComponent', () => {
         posts = posts.sort(component.overviewSortFn);
         // pinned is first, archived is last independent of sort criterion
         expect(posts).to.be.deep.equal([post1, post2, post3, post4]);
+    });
+
+    it('should distinguish context filter options for properly show them in form', () => {
+        let result = component.compareContextFilterOptionFn({ courseId: metisCourse.id }, { courseId: metisCourse.id });
+        expect(result).to.be.equal(true);
+        result = component.compareContextFilterOptionFn({ courseId: metisCourse.id }, { courseId: 99 });
+        expect(result).to.be.equal(false);
+        result = component.compareContextFilterOptionFn({ lectureId: metisLecture.id }, { lectureId: metisLecture.id });
+        expect(result).to.be.equal(true);
+        result = component.compareContextFilterOptionFn({ lectureId: metisLecture.id }, { lectureId: 99 });
+        expect(result).to.be.equal(false);
+        result = component.compareContextFilterOptionFn({ exerciseId: metisExercise.id }, { exerciseId: metisExercise.id });
+        expect(result).to.be.equal(true);
+        result = component.compareContextFilterOptionFn({ exerciseId: metisExercise.id }, { exerciseId: 99 });
+        expect(result).to.be.equal(false);
+        result = component.compareContextFilterOptionFn({ courseWideContext: CourseWideContext.ORGANIZATION }, { courseWideContext: CourseWideContext.ORGANIZATION });
+        expect(result).to.be.equal(true);
+        result = component.compareContextFilterOptionFn({ courseWideContext: CourseWideContext.ORGANIZATION }, { courseWideContext: CourseWideContext.TECH_SUPPORT });
+        expect(result).to.be.equal(false);
     });
 });

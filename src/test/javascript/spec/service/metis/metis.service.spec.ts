@@ -154,14 +154,38 @@ describe('Metis Service', () => {
 
         it('should get posts for lecture filter', () => {
             const postServiceSpy = spy(postService, 'getPosts');
-            metisService.getFilteredPosts({ lectureId: metisLecture.id });
-            expect(postServiceSpy).to.have.been.called;
+            metisService.getFilteredPosts({ lectureId: metisLecture.id }, false);
+            expect(postServiceSpy).to.have.been.calledOnce;
+
+            // don't change filter
+            metisService.getFilteredPosts({ lectureId: metisLecture.id }, false);
+            expect(postServiceSpy).to.have.been.calledOnce;
+
+            // change filter
+            metisService.getFilteredPosts({ lectureId: undefined, exerciseId: metisExercise.id }, false);
+            expect(postServiceSpy).to.have.been.calledTwice;
+
+            // change filter
+            metisService.getFilteredPosts({ lectureId: undefined, exerciseId: undefined, courseId: metisCourse.id }, false);
+            expect(postServiceSpy).to.have.been.calledThrice;
         });
 
         it('should get posts for exercise filter', () => {
             const postServiceSpy = spy(postService, 'getPosts');
-            metisService.getFilteredPosts({ exerciseId: metisExercise.id });
+            metisService.getFilteredPosts({ exerciseId: metisExercise.id }, false);
             expect(postServiceSpy).to.have.been.called;
+
+            // don't change filter
+            metisService.getFilteredPosts({ exerciseId: metisExercise.id }, false);
+            expect(postServiceSpy).to.have.been.calledOnce;
+
+            // change filter
+            metisService.getFilteredPosts({ lectureId: metisLecture.id, exerciseId: undefined }, false);
+            expect(postServiceSpy).to.have.been.calledTwice;
+
+            // change filter
+            metisService.getFilteredPosts({ lectureId: undefined, exerciseId: undefined, courseWideContext: CourseWideContext.RANDOM }, false);
+            expect(postServiceSpy).to.have.been.calledThrice;
         });
 
         it('should get posts for course-context filter', () => {
@@ -267,5 +291,14 @@ describe('Metis Service', () => {
         const getCourseReturn = metisService.getCourse();
         expect(getCourseReturn).to.be.equal(course);
         expect(updateCoursePostTagsSpy).to.have.been.called;
+    });
+
+    it('should set course when current course has different id', () => {
+        metisService.setCourse(course);
+        const newCourse = new Course();
+        newCourse.id = 99;
+        metisService.setCourse(newCourse);
+        const getCourseReturn = metisService.getCourse();
+        expect(getCourseReturn).to.be.equal(newCourse);
     });
 });
