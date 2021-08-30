@@ -3,7 +3,7 @@ import { BASE_API, POST } from '../../constants';
  * Parent class for all exercise feedback pages (/course/./exercise/./participate/.)
  */
 export abstract class AbstractExerciseFeedback {
-    shouldShowFeedback(points: number, feedbackText: string) {
+    shouldShowAdditionalFeedback(points: number, feedbackText: string) {
         cy.get('.unreferencedFeedback').contains(`${points} Points: ${feedbackText}`).should('be.visible');
     }
 

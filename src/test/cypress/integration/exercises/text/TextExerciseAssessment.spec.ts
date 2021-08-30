@@ -23,7 +23,6 @@ const textFeedback = artemis.pageobjects.textExercise.feedback;
 const uid = generateUUID();
 const courseName = 'Cypress course' + uid;
 const courseShortName = 'cypress' + uid;
-const complaint = "That feedback wasn't very useful!";
 
 // This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
 Cypress.on('uncaught:exception', (err, runnable) => {
@@ -34,9 +33,12 @@ describe('Text exercise assessment', () => {
     let course: any;
     let exercise: any;
     const tutorFeedback = 'Try to use some newlines next time!';
-    const feedbackPoints = 4;
+    const tutorFeedbackPoints = 4;
+    const tutorTextFeedback = 'Nice ending of the sentence!';
+    const tutorTextFeedbackPoints = 2;
+    const complaint = "That feedback wasn't very useful!";
 
-    before(() => {
+    before('Creates a text exercise and makes a student submission', () => {
         createCourseWithTextExercise().then(() => {
             makeTextSubmissionAsStudent();
             updateExerciseDueDate();
@@ -65,7 +67,8 @@ describe('Text exercise assessment', () => {
         textAssessment.getInstructionsRootElement().contains(exercise.gradingInstructions).should('be.visible');
         cy.contains('Number of words: 100').should('be.visible');
         cy.contains('Number of characters: 591').should('be.visible');
-        textAssessment.addNewFeedback(feedbackPoints, tutorFeedback);
+        textAssessment.provideFeedbackOnTextSection('sed diam voluptua', tutorTextFeedbackPoints, tutorTextFeedback);
+        textAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
         textAssessment.submit();
     });
 
@@ -76,12 +79,15 @@ describe('Text exercise assessment', () => {
         });
 
         it('Student sees feedback after assessment due date and complains', () => {
+            const totalPoints = tutorFeedbackPoints + tutorTextFeedbackPoints;
+            const percentage = totalPoints * 10;
             exerciseResult.shouldShowExerciseTitle(exercise.title);
             exerciseResult.shouldShowProblemStatement(exercise.problemStatement);
-            exerciseResult.shouldShowScore(40);
+            exerciseResult.shouldShowScore(percentage);
             exerciseResult.clickViewSubmission();
-            textFeedback.shouldShowFeedback(feedbackPoints, tutorFeedback);
-            textFeedback.shouldShowScore(feedbackPoints, 10, 40);
+            textFeedback.shouldShowTextFeedback(tutorTextFeedback);
+            textFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
+            textFeedback.shouldShowScore(totalPoints, exercise.maxPoints, percentage);
             textFeedback.complain(complaint);
         });
 
