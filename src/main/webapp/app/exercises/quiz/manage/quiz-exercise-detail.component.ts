@@ -682,10 +682,14 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
                 if (mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect)) {
-                    return question.title && question.title !== '' && question.title.length < 255
-                        ? mcQuestion.answerOptions?.every((answerOption) => !answerOption.explanation || answerOption.explanation.length < 255) &&
-                              mcQuestion.answerOptions?.every((answerOption) => !answerOption.hint || answerOption.hint.length < 255)
-                        : false;
+                    return (
+                        question.title &&
+                        question.title !== '' &&
+                        question.title.length < 250 &&
+                        mcQuestion.answerOptions!.every(
+                            (answerOption) => (!answerOption.explanation || answerOption.explanation.length < 255) && (!answerOption.hint || answerOption.hint.length < 255),
+                        )
+                    );
                 }
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;

@@ -812,13 +812,13 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
     /**
      * Detect of text changes in the markdown editor
-     * 1. Notify the parent component to check the validity of the text
-     * 2. Parse the text in the editor to get the newest values
+     * 1. Parse the text in the editor to get the newest values
+     * 2. Notify the parent component to check the validity of the text
      */
     changesInMarkdown(): void {
+        this.prepareForSave();
         this.questionUpdated.emit();
         this.changeDetector.detectChanges();
-        this.prepareForSave();
     }
 
     /**
