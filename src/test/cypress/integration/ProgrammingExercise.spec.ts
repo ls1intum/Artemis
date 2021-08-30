@@ -10,7 +10,7 @@ const artemisRequests = artemis.requests;
 // PageObjects
 const courseManagementPage = artemis.pageobjects.courseManagement;
 const navigationBar = artemis.pageobjects.navigationBar;
-const programmingCreation = artemis.pageobjects.programmingExerciseCreation;
+const programmingCreation = artemis.pageobjects.programmingExercise.creation;
 
 // Common primitives
 let uid: string;

@@ -8,8 +8,9 @@ import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 
-const COURSE_BASE = BASE_API + 'courses/';
-const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
+export const COURSE_BASE = BASE_API + 'courses/';
+export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
+export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
 const oneDay = 24 * 60 * 60 * 1000;
 
 /**

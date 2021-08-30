@@ -1,3 +1,4 @@
+import { CodeAnalysisGradingPage } from './exercises/programming/CodeAnalysisGradingPage';
 import { ProgrammingExerciseCreationPage } from './ProgrammingExerciseCreationPage';
 import { ExamManagementPage } from './ExamManagementPage';
 import { ExamCreationPage } from './ExamCreationPage';
@@ -15,12 +16,15 @@ import { ExamStartEndPage } from './ExamStartEndPage';
 export class ArtemisPageobjects {
     courseManagement = new CourseManagementPage();
     navigationBar = new NavigationBar();
-    onlineEditor = new OnlineEditorPage();
     examCreation = new ExamCreationPage();
     examManagement = new ExamManagementPage();
-    programmingExerciseCreation = new ProgrammingExerciseCreationPage();
     createModelingExercise = new CreateModelingExercisePage();
     modelingExerciseAssessmentEditor = new ModelingExerciseAssessmentEditor();
     modelingEditor = new ModelingEditor();
     examStartEnd = new ExamStartEndPage();
+    programmingExercise = {
+        editor: new OnlineEditorPage(),
+        creation: new ProgrammingExerciseCreationPage(),
+        scaConfiguration: new CodeAnalysisGradingPage(),
+    };
 }

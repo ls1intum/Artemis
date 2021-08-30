@@ -1,4 +1,4 @@
-import { CypressCredentials } from './../support/users';
+import { CypressCredentials } from '../support/users';
 import { generateUUID } from '../support/utils';
 import allSuccessful from '../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import partiallySuccessful from '../fixtures/programming_exercise_submissions/partially_successful/submission.json';
@@ -9,10 +9,10 @@ import { ProgrammingExerciseSubmission } from '../support/pageobjects/OnlineEdit
 const users = artemis.users;
 
 // Requests
-const artemisRequests = artemis.requests;
+const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
-const editorPage = artemis.pageobjects.onlineEditor;
+const editorPage = artemis.pageobjects.programmingExercise.editor;
 
 // Container for a course dto
 let course: any;
@@ -34,25 +34,25 @@ describe('Programming exercise participations', () => {
         setupCourseAndProgrammingExercise();
     });
 
-    it('Makes a partially successful submission', function () {
+    it('Makes a failing submission', function () {
         startParticipationInProgrammingExercise(users.getStudentOne());
+        makeFailingSubmission();
+    });
+
+    it('Makes a partially successful submission', function () {
+        startParticipationInProgrammingExercise(users.getStudentTwo());
         makePartiallySuccessfulSubmission();
     });
 
     it('Makes a successful submission', function () {
-        startParticipationInProgrammingExercise(users.getStudentTwo());
-        makeSuccessfulSubmission();
-    });
-
-    it('Makes a failing submission', function () {
         startParticipationInProgrammingExercise(users.getStudentThree());
-        makeFailingSubmission();
+        makeSuccessfulSubmission();
     });
 
     after(() => {
         if (!!course) {
             cy.login(users.getAdmin());
-            artemisRequests.courseManagement.deleteCourse(course.id);
+            courseManagement.deleteCourse(course.id);
         }
     });
 });
@@ -62,12 +62,13 @@ describe('Programming exercise participations', () => {
  */
 function setupCourseAndProgrammingExercise() {
     cy.login(users.getAdmin(), '/');
-    artemisRequests.courseManagement.createCourse(courseName, courseShortName).then((response) => {
+    courseManagement.createCourse(courseName, courseShortName).then((response) => {
         course = response.body;
-        artemisRequests.courseManagement.addStudentToCourse(course.id, users.getStudentOne().username);
-        artemisRequests.courseManagement.addStudentToCourse(course.id, users.getStudentTwo().username);
-        artemisRequests.courseManagement.addStudentToCourse(course.id, users.getStudentThree().username);
-        artemisRequests.courseManagement.createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, { course });
+        courseManagement.addStudentToCourse(course.id, users.getStudentOne().username);
+        courseManagement.addStudentToCourse(course.id, users.getStudentTwo().username);
+        courseManagement.addStudentToCourse(course.id, users.getStudentThree().username);
+        courseManagement.addStudentToCourse(course.id, users.getStudentFour().username);
+        courseManagement.createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, { course });
     });
 }
 
@@ -121,7 +122,7 @@ function makeSuccessfulSubmission() {
 /**
  * General method for entering, submitting and verifying something in the online editor.
  */
-function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
+export function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
     // We create an empty file so that the file browser does not create an extra subfolder when all files are deleted
     editorPage.createFileInRootPackage('placeholderFile');
     // We delete all existing files, so we can create new files and don't have to delete their already existing content
@@ -136,7 +137,7 @@ function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmissio
 /**
  * Starts the participation in the test programming exercise.
  */
-function startParticipationInProgrammingExercise(credentials: CypressCredentials) {
+export function startParticipationInProgrammingExercise(credentials: CypressCredentials) {
     cy.login(credentials, '/');
     cy.url().should('include', '/courses');
     cy.log('Participating in the programming exercise as a student...');
