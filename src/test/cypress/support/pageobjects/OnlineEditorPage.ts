@@ -1,4 +1,9 @@
+import { COURSE_BASE } from './../requests/CourseManagementRequests';
+import { GET, BASE_API, POST } from './../constants';
+import { CypressCredentials } from '../users';
+
 const buildingAndTesting = 'Building and testing...';
+const exerciseRow = '.course-exercise-row';
 
 /**
  * A class which encapsulates UI selectors and actions for the Online Editor Page.
@@ -124,6 +129,39 @@ export class OnlineEditorPage {
     getBuildOutput() {
         return cy.get('#cardBuildOutput');
     }
+}
+
+/**
+ * General method for entering, submitting and verifying something in the online editor.
+ */
+export function makeSubmissionAndVerifyResults(editorPage: OnlineEditorPage, packageName: string, submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
+    // We create an empty file so that the file browser does not create an extra subfolder when all files are deleted
+    editorPage.createFileInRootPackage('placeholderFile');
+    // We delete all existing files, so we can create new files and don't have to delete their already existing content
+    editorPage.deleteFile('Client.java');
+    editorPage.deleteFile('BubbleSort.java');
+    editorPage.deleteFile('MergeSort.java');
+    editorPage.typeSubmission(submission, packageName);
+    editorPage.submit();
+    verifyOutput();
+}
+
+/**
+ * Starts the participation in the test programming exercise.
+ */
+export function startParticipationInProgrammingExercise(courseName: string, programmingExerciseName: string, credentials: CypressCredentials) {
+    cy.login(credentials, '/');
+    cy.url().should('include', '/courses');
+    cy.log('Participating in the programming exercise as a student...');
+    cy.contains(courseName).parents('.card-header').click();
+    cy.url().should('include', '/exercises');
+    cy.intercept(POST, COURSE_BASE + '*/exercises/*/participations').as('participateInExerciseQuery');
+    cy.get(exerciseRow).contains(programmingExerciseName).should('be.visible');
+    cy.get(exerciseRow).find('.start-exercise').click();
+    cy.wait('@participateInExerciseQuery');
+    cy.intercept(GET, BASE_API + 'programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
+    cy.get(exerciseRow).find('[buttonicon="folder-open"]').click();
+    cy.wait('@initialQuery').wait(2000);
 }
 
 /**

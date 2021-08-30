@@ -1,9 +1,8 @@
-import { CypressCredentials } from '../support/users';
 import { generateUUID } from '../support/utils';
 import allSuccessful from '../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import partiallySuccessful from '../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import { artemis } from '../support/ArtemisTesting';
-import { ProgrammingExerciseSubmission } from '../support/pageobjects/OnlineEditorPage';
+import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../support/pageobjects/OnlineEditorPage';
 
 // The user management object
 const users = artemis.users;
@@ -23,11 +22,7 @@ const courseName = 'Cypress course' + uid;
 const courseShortName = 'cypress' + uid;
 const programmingExerciseName = 'Cypress programming exercise ' + uid;
 const programmingExerciseShortName = courseShortName;
-const exercisePath = '/exercises';
 const packageName = 'de.test';
-
-// Selectors
-const exerciseRow = '.course-exercise-row';
 
 describe('Programming exercise participations', () => {
     before(() => {
@@ -35,17 +30,17 @@ describe('Programming exercise participations', () => {
     });
 
     it('Makes a failing submission', function () {
-        startParticipationInProgrammingExercise(users.getStudentOne());
+        startParticipationInProgrammingExercise(courseName, programmingExerciseName, users.getStudentOne());
         makeFailingSubmission();
     });
 
     it('Makes a partially successful submission', function () {
-        startParticipationInProgrammingExercise(users.getStudentTwo());
+        startParticipationInProgrammingExercise(courseName, programmingExerciseName, users.getStudentTwo());
         makePartiallySuccessfulSubmission();
     });
 
     it('Makes a successful submission', function () {
-        startParticipationInProgrammingExercise(users.getStudentThree());
+        startParticipationInProgrammingExercise(courseName, programmingExerciseName, users.getStudentThree());
         makeSuccessfulSubmission();
     });
 
@@ -67,7 +62,6 @@ function setupCourseAndProgrammingExercise() {
         courseManagement.addStudentToCourse(course.id, users.getStudentOne().username);
         courseManagement.addStudentToCourse(course.id, users.getStudentTwo().username);
         courseManagement.addStudentToCourse(course.id, users.getStudentThree().username);
-        courseManagement.addStudentToCourse(course.id, users.getStudentFour().username);
         courseManagement.createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, { course });
     });
 }
@@ -77,7 +71,7 @@ function setupCourseAndProgrammingExercise() {
  */
 function makeFailingSubmission() {
     const submission = { files: [{ name: 'BubbleSort.java', path: 'programming_exercise_submissions/build_error/BubbleSort.txt' }] };
-    makeSubmissionAndVerifyResults(submission, () => {
+    makeSubmissionAndVerifyResults(editorPage, packageName, submission, () => {
         editorPage.getResultPanel().contains('Build Failed').should('be.visible');
         editorPage.getResultPanel().contains('0%').should('be.visible');
         editorPage.getBuildOutput().contains('[ERROR] COMPILATION ERROR').should('be.visible');
@@ -91,7 +85,7 @@ function makeFailingSubmission() {
  * Makes a submission, which passes and fails some tests, and asserts the outcome in the UI.
  */
 function makePartiallySuccessfulSubmission() {
-    makeSubmissionAndVerifyResults(partiallySuccessful, () => {
+    makeSubmissionAndVerifyResults(editorPage, packageName, partiallySuccessful, () => {
         editorPage.getResultPanel().contains('46%').should('be.visible');
         editorPage.getResultPanel().contains('6 of 13 passed').should('be.visible');
         editorPage.getBuildOutput().contains('No build results available').should('be.visible');
@@ -109,7 +103,7 @@ function makePartiallySuccessfulSubmission() {
  * Makes a submission, which passes all tests, and asserts the outcome in the UI.
  */
 function makeSuccessfulSubmission() {
-    makeSubmissionAndVerifyResults(allSuccessful, () => {
+    makeSubmissionAndVerifyResults(editorPage, packageName, allSuccessful, () => {
         editorPage.getResultPanel().contains('100%').should('be.visible');
         editorPage.getResultPanel().contains('13 of 13 passed').should('be.visible');
         editorPage.getBuildOutput().contains('No build results available').should('be.visible');
@@ -117,37 +111,4 @@ function makeSuccessfulSubmission() {
             cy.wrap($el).find('[data-icon="check"]').should('be.visible');
         });
     });
-}
-
-/**
- * General method for entering, submitting and verifying something in the online editor.
- */
-export function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
-    // We create an empty file so that the file browser does not create an extra subfolder when all files are deleted
-    editorPage.createFileInRootPackage('placeholderFile');
-    // We delete all existing files, so we can create new files and don't have to delete their already existing content
-    editorPage.deleteFile('Client.java');
-    editorPage.deleteFile('BubbleSort.java');
-    editorPage.deleteFile('MergeSort.java');
-    editorPage.typeSubmission(submission, packageName);
-    editorPage.submit();
-    verifyOutput();
-}
-
-/**
- * Starts the participation in the test programming exercise.
- */
-export function startParticipationInProgrammingExercise(credentials: CypressCredentials) {
-    cy.login(credentials, '/');
-    cy.url().should('include', '/courses');
-    cy.log('Participating in the programming exercise as a student...');
-    cy.contains(courseName).parents('.card-header').click();
-    cy.url().should('include', exercisePath);
-    cy.intercept('POST', '/api/courses/*/exercises/*/participations').as('participateInExerciseQuery');
-    cy.get(exerciseRow).contains(programmingExerciseName).should('be.visible');
-    cy.get(exerciseRow).find('.start-exercise').click();
-    cy.wait('@participateInExerciseQuery');
-    cy.intercept('GET', '/api/programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
-    cy.get(exerciseRow).find('[buttonicon="folder-open"]').click();
-    cy.wait('@initialQuery').wait(2000);
 }
