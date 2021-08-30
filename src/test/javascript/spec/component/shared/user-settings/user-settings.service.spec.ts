@@ -1,7 +1,6 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { SERVER_API_URL } from 'app/app.constants';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import * as sinon from 'sinon';

@@ -44,21 +44,21 @@ describe('Notification Sidebar Component', () => {
     const notificationPast = { id: 2, notificationDate: moment().subtract(2, 'day') } as Notification;
     const notifications = [notificationNow, notificationPast] as Notification[];
 
-    let notificationOptionCoreA: NotificationOptionCore = {
+    const notificationOptionCoreA: NotificationOptionCore = {
         id: 42,
         webapp: true,
         email: false,
         changed: false,
         optionSpecifier: OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES,
     };
-    let notificationOptionCoreB: NotificationOptionCore = {
+    const notificationOptionCoreB: NotificationOptionCore = {
         id: 27,
         webapp: true,
         email: false,
         changed: false,
         optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED,
     };
-    let receivedNotificationOptionCores: NotificationOptionCore[] = [notificationOptionCoreA, notificationOptionCoreB];
+    const receivedNotificationOptionCores: NotificationOptionCore[] = [notificationOptionCoreA, notificationOptionCoreB];
 
     const generateQueryResponse = (ns: Notification[]) => {
         return {
@@ -295,16 +295,27 @@ describe('Notification Sidebar Component', () => {
             const errorMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.alert-danger');
             expect(errorMessage).to.be.not.null;
         });
+    });
 
-        describe('Reset Sidebar', () => {
-            it('should listen and catch notification settings change and reset side bar', () => {
-                const lastNotificationRead = moment();
-                const fake = sinon.fake.returns(of({ lastNotificationRead } as User));
-                sinon.replace(accountService, 'getAuthenticationState', fake);
-                notificationSidebarComponent.ngOnInit();
-                userSettingsService.sendApplyChangesEvent(reloadNotificationSideBarMessage);
-                expect(userSettingsService.loadUserOptions).to.have.been.calledTwice;
-            });
+    describe('Reset Sidebar', () => {
+        it('should listen and catch notification settings change and reset side bar', () => {
+            // preparation to test reloading
+            const lastNotificationRead = moment();
+            const fake = sinon.fake.returns(of({ lastNotificationRead } as User));
+            sinon.replace(accountService, 'getAuthenticationState', fake);
+            notificationSidebarComponent.ngOnInit();
+
+            // fake status before reloading the side bar
+            notificationSidebarComponent.notifications = notifications;
+            notificationSidebarComponent.totalNotifications = notifications.length;
+            const priorNumberOfNotifications = notifications.length;
+
+            // reload the side bar
+            userSettingsService.sendApplyChangesEvent(reloadNotificationSideBarMessage);
+
+            // test the reloading behavior
+            expect(userSettingsService.loadUserOptions).to.have.been.calledTwice;
+            expect(priorNumberOfNotifications).not.to.be.equal(notificationSidebarComponent.totalNotifications);
         });
     });
 });

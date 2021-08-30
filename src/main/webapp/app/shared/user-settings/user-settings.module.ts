@@ -5,7 +5,6 @@ import { NotificationSettingsComponent } from 'app/shared/user-settings/notifica
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterModule } from '@angular/router';
 import { userSettingsState } from 'app/shared/user-settings/user-settings.route';
-import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-settings-prototype/user-settings-prototype.component';
 
 @NgModule({
     imports: [RouterModule.forChild(userSettingsState), ArtemisSharedModule],

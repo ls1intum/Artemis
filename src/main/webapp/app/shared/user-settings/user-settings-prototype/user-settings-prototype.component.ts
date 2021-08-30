@@ -1,6 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { User } from 'app/core/user/user.model';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
@@ -61,7 +60,7 @@ export abstract class UserSettingsPrototypeComponent implements OnInit {
                 this.finishUpdate();
                 this.finishSaving();
             },
-            // (res: HttpErrorResponse) => (this.error = res.message), TODO
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
 
