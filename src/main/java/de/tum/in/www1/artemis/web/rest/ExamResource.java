@@ -742,7 +742,7 @@ public class ExamResource {
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam
-     * @return the ResponseEntity with status 200 (OK) and with the found exam as body or NotFound if it culd not be
+     * @return the ResponseEntity with status 200 (OK) and with the found exam as body or NotFound if it could not be
      * determined
      */
     @GetMapping("courses/{courseId}/exams/{examId}/latest-end-date")
