@@ -68,6 +68,7 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
      * sorts posts by following criteria
      * 1. criterion: displayPriority is PINNED -> pinned posts come first
      * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
+     * -- in between pinned and archived posts --
      * 3. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
      * 4. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      * @return Post[] sorted array of posts

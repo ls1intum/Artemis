@@ -130,8 +130,25 @@ export class CourseDiscussionComponent implements OnDestroy {
         return true;
     };
 
+    /**
+     * sorts posts by following criteria
+     * 1. criterion: displayPriority is PINNED -> pinned posts come first
+     * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
+     * -- in between pinned and archived posts --
+     * 3. criterion: currently selected criterion in combination with currently selected order
+     * @return Post[] sorted array of posts
+     */
     overviewSortFn = (postA: Post, postB: Post): number => {
-        // TODO: think about how to integrate pinned and archived posts
+        // TODO: think about how to visually separate pinned posts?
+        if (postA.displayPriority === DisplayPriority.PINNED && postB.displayPriority !== DisplayPriority.PINNED) {
+            return -1;
+        }
+        if (postA.displayPriority !== DisplayPriority.PINNED && postB.displayPriority === DisplayPriority.PINNED) {
+            return 1;
+        }
+        if (postA.displayPriority === DisplayPriority.ARCHIVED && postB.displayPriority !== DisplayPriority.ARCHIVED) {
+            return 1;
+        }
         if (postA.displayPriority !== DisplayPriority.ARCHIVED && postB.displayPriority === DisplayPriority.ARCHIVED) {
             return -1;
         }

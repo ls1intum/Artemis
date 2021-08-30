@@ -16,12 +16,12 @@ export const metisTutor = { id: 3, name: 'username3', login: 'login3', groups: [
 export const metisTags = ['Tag1', 'Tag2'];
 
 export const metisUpVoteReactionUser1 = { id: 1, user: metisUser1, emojiId: VOTE_EMOJI_ID } as Reaction;
-export const metisReactionUser2 = { id: 2, user: metisUser2, emojiId: 'smile' } as Reaction;
-export const metisReactionToCreate = { emojiId: 'cheerio' } as Reaction;
+export const metisReactionUser2 = { id: 2, user: metisUser2, emojiId: 'smile', creationDate: undefined } as Reaction;
+export const metisReactionToCreate = { emojiId: 'cheerio', creationDate: undefined } as Reaction;
 
 export const metisCourse = {
     id: 1,
-    title: 'Metis  Course',
+    title: 'Metis Course',
     exercises: [metisExercise],
     lectures: [metisLecture],
     postsEnabled: true,
