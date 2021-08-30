@@ -36,7 +36,6 @@ import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/asse
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
-import { MockTranslateValuesDirective } from '../course/course-scores/course-scores.component.spec';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
@@ -46,6 +45,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { JhiTranslateDirective } from 'ng-jhipster';
 import { NgModel } from '@angular/forms';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 
 describe('TextFeedbackConflictsComponent', () => {
     let component: TextFeedbackConflictsComponent;

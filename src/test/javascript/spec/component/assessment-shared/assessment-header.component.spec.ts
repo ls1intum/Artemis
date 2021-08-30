@@ -17,13 +17,13 @@ import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockTranslateValuesDirective } from '../course/course-scores/course-scores.component.spec';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { HttpResponse } from '@angular/common/http';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { of } from 'rxjs';
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
