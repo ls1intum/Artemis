@@ -17,7 +17,7 @@ export const metisTags = ['Tag1', 'Tag2'];
 
 export const metisUpVoteReactionUser1 = { id: 1, user: metisUser1, emojiId: VOTE_EMOJI_ID } as Reaction;
 export const metisReactionUser2 = { id: 2, user: metisUser2, emojiId: 'smile' } as Reaction;
-export const metisReactionToCreateUser1 = { user: metisUser1, emojiId: 'smile', creationDate: undefined } as Reaction;
+export const metisReactionToCreate = { emojiId: 'cheerio' } as Reaction;
 
 export const metisCourse = {
     id: 1,
@@ -40,10 +40,11 @@ export const metisPostTechSupport = {
 
 export const metisPostRandom = {
     id: 2,
+    author: metisUser1,
     courseWideContext: CourseWideContext.RANDOM,
     course: metisCourse,
     title: 'title',
-    content: 'metisPostRandomToday',
+    content: 'metisPostRandom',
     creationDate: undefined,
 } as Post;
 
@@ -102,35 +103,37 @@ export const metisLecturePosts = [metisPostLectureUser1, metisPostLectureUser2];
 export const metisCoursePosts = metisCoursePostsWithCourseWideContext.concat(metisExercisePosts, metisLecturePosts);
 
 export const metisPostToCreateUser1 = {
-    user: metisUser1,
+    author: metisUser1,
     content: 'metisAnswerToCreateUser1',
     creationDate: undefined,
 } as Post;
 
 export const metisAnswerPostUser1 = {
     id: 1,
-    user: metisUser1,
+    author: metisUser1,
     content: 'metisAnswerPostUser3',
     creationDate: undefined,
 } as AnswerPost;
 
 export const metisAnswerPostUser2 = {
     id: 2,
-    user: metisUser2,
+    author: metisUser2,
     content: 'metisAnswerPostUser3',
     creationDate: undefined,
 } as AnswerPost;
 
 export const metisApprovedAnswerPostTutor = {
     id: 3,
-    user: metisTutor,
+    author: metisTutor,
     content: 'metisApprovedAnswerPostTutor',
     tutorApproved: true,
     creationDate: undefined,
 } as AnswerPost;
 
 export const metisAnswerPostToCreateUser1 = {
-    user: metisUser1,
+    author: metisUser1,
     content: 'metisAnswerPostToCreateUser1',
     creationDate: undefined,
 } as AnswerPost;
+
+export const metisAnswerPosts = [metisAnswerPostUser1, metisAnswerPostUser2, metisApprovedAnswerPostTutor];

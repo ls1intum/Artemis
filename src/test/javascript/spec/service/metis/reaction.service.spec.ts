@@ -4,7 +4,7 @@ import * as chai from 'chai';
 import { take } from 'rxjs/operators';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
-import { metisReactionToCreateUser1, metisReactionUser2 } from '../../helpers/sample/metis-sample-data';
+import { metisReactionToCreate, metisReactionUser2 } from '../../helpers/sample/metis-sample-data';
 
 const expect = chai.expect;
 
@@ -24,7 +24,7 @@ describe('Reaction Service', () => {
 
     describe('Service methods', () => {
         it('should create a Reaction', fakeAsync(() => {
-            const returnedFromService = { ...metisReactionToCreateUser1 };
+            const returnedFromService = { ...metisReactionToCreate };
             const expected = { ...returnedFromService };
             service
                 .create(1, new Reaction())
