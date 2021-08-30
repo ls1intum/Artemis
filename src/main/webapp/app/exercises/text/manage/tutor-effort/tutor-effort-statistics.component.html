@@ -3,6 +3,18 @@
     <button class="btn btn-outline-primary" (click)="loadTutorEfforts()">
         <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.calculate"></span>
     </button>
-    <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.numberOfSubmissionsAssessed"></span>
-    ---: {{ tutorEfforts.length }}
+    <div *ngIf="tutorEfforts.length > 0">
+        <br />
+        <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.numberOfSubmissionsAssessed"></span>
+        :{{ numberOfSubmissions }}
+        <br />
+        <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.totalTimeSpent"></span>
+        :{{ totalTimeSpent }} minutes
+        <br />
+        <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.averageTime"></span>
+        :{{ averageTimeSpent }} submissions/minute
+    </div>
+    <div *ngIf="!tutorEfforts.length">
+        <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.noData"></span>
+    </div>
 </div>

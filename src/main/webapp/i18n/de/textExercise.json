@@ -33,7 +33,10 @@
             "tutorEffortStatistics": {
                 "title": "Tutor Effort Statistics",
                 "calculate": "Calculate",
-                "numberOfSubmissionsAssessed": "Number of total submissions assessed"
+                "numberOfSubmissionsAssessed": "Number of total submissions assessed",
+                "totalTimeSpent": "Total time spent grading",
+                "averageTime": "Average time taken per submission",
+                "noData": "No data found. Click to calculate."
             }
         }
     }
