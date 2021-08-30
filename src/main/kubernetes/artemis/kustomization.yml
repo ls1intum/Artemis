@@ -5,6 +5,7 @@ resources:
   - pvc/artemis-mysql.yml
   - pvc/artemis.yml
   #Secrets
+  - secrets/artemis-secrets.yml
   - secrets/jhipster-registry-secret.yml
   #ConfigMaps
   - configmap/application-configmap.yml

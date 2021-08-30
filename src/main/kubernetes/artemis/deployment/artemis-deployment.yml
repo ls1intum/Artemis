@@ -29,7 +29,9 @@ spec:
         - configMapRef:
             name: artemis-app
             optional: false
-        image: <DockerID>/artemis
+        - secretRef:
+            name: artemis-secrets
+        image: <DockerId>/artemis
         imagePullPolicy: Always
         name: artemis
         ports:
