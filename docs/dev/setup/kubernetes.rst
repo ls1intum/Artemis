@@ -246,6 +246,9 @@ Configure Artemis Resources
 ---------------------------
 To run Artemis, you need to configure the Artemis' User Management, Version Control and Continuous Integration. You can either run it with Jira, Bitbucket, Bamboo or Jenkins, Gitlab.
 Make sure to configure the ``src/main/resources/config/application-artemis.yml`` file with the proper configuration for User Management, Version Control and Continuous Integration.
+
+You should skip setting the passwords and token since the Docker image that we are going to build is going to include those secrets. You can refer to chapter ``Add/Edit Secrets`` for setting those values.
+
 If you want to configure Artemis with ``Bitbucket, Jira, Bamboo`` continue with ``Configure Bitbucket, Jira, Bamboo`` or if you want to configure Artemis with local user management and no programming exercise continue with ``Configure Local User Management``.
 
 Configure Bitbucket, Jira, Bamboo
@@ -257,7 +260,7 @@ To deploy Bitbucket, Jira, Bamboo on Kubernetes use the following documentation:
 Once you are done, continue with the next step ``Build Artemis``
 
 Configure Local User Management
-##############################
+###############################
 
 If you want to run with local user management and no programming exercises setup follow the steps: 
 
@@ -338,6 +341,34 @@ In the console, you will see that the resources are created. It will take a litt
 
 .. figure:: kubernetes/kubectl_kustomization.png
    :align: center
+
+Add/Edit Secrets
+----------------
+Once you have deployed Artemis you need to add/edit the secrets so that it can run successfully.
+
+Open Rancher using `<https://rancher.localhost/>`__ and navigate to your cluster.
+
+Then navigate to ``Secrets`` like shown below:
+
+.. figure:: kubernetes/rancher_secrets_menu.png
+   :align: center
+
+You will see list of all defined secret files
+
+.. figure:: kubernetes/rancher_secrets_list.png
+   :align: center
+
+Continue with ``artemis-secrets`` and you will see the values in the secret file. Then navigate to the edit page.
+
+.. figure:: kubernetes/rancher_secrets_edit.png
+   :align: center
+
+You can edit each secret you want or add more secrets. Once you select any value box the value itself will be shown and you can edit it.
+
+.. figure:: kubernetes/rancher_secrets_edit_page.png
+   :align: center
+
+After you are done you can save your changes and redeploy the Artemis workload. 
 
 Check the Deployments in Rancher
 --------------------------------
