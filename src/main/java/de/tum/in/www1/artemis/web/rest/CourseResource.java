@@ -1096,7 +1096,7 @@ public class CourseResource {
      * @param courseId the id of the course to get the categories from
      * @return the ResponseEntity with status 200 (OK) and the list of categories or with status 404 (Not Found)
      */
-    @GetMapping(value = "courses/{courseId}/categories")
+    @GetMapping(value = "/courses/{courseId}/categories")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Set<String>> getCategoriesInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get categories of Course : {}", courseId);
