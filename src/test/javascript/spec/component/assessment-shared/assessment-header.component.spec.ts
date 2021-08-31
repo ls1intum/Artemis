@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
@@ -46,7 +46,7 @@ describe('AssessmentHeaderComponent', () => {
         gradeName: 'C',
     };
 
-    beforeEach(async(() => {
+    beforeEach((() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule],
             declarations: [

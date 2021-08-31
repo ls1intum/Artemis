@@ -126,7 +126,7 @@ describe('AssessmentDashboardInformationComponent', () => {
         },
     } as any as ActivatedRoute;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterModule, TranslateModule.forRoot()],
             declarations: [

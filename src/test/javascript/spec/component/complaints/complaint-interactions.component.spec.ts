@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import * as chai from 'chai';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
@@ -35,7 +35,7 @@ describe('ComplaintInteractionsComponent', () => {
     let fixture: ComponentFixture<ComplaintInteractionsComponent>;
     let complaintService: ComplaintService;
 
-    beforeEach(async(() => {
+    beforeEach((() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule],
             declarations: [ComplaintInteractionsComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ComplaintsComponent)],
