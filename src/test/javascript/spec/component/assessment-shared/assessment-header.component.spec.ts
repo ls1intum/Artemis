@@ -46,7 +46,7 @@ describe('AssessmentHeaderComponent', () => {
         gradeName: 'C',
     };
 
-    beforeEach((() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule],
             declarations: [
@@ -88,7 +88,7 @@ describe('AssessmentHeaderComponent', () => {
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(AssessmentHeaderComponent);

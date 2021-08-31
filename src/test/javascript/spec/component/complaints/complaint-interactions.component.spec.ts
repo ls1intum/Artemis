@@ -35,7 +35,7 @@ describe('ComplaintInteractionsComponent', () => {
     let fixture: ComponentFixture<ComplaintInteractionsComponent>;
     let complaintService: ComplaintService;
 
-    beforeEach((() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule],
             declarations: [ComplaintInteractionsComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ComplaintsComponent)],
@@ -55,7 +55,7 @@ describe('ComplaintInteractionsComponent', () => {
                 component.participation = participation;
                 component.result = result;
             });
-    }));
+    });
 
     afterEach(() => {
         sinon.restore();
