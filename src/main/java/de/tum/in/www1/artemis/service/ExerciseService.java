@@ -426,7 +426,7 @@ public class ExerciseService {
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
 
         if (exercise.isExamExercise()) {
-            Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(exercise.getExerciseGroup().getExam().getId());
+            Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(exercise.getExerciseGroup().getExam().getId()).orElse(null);
             for (StudentExam studentExam : exam.getStudentExams()) {
                 if (studentExam.getExercises().contains(exercise)) {
                     // remove exercise reference from student exam

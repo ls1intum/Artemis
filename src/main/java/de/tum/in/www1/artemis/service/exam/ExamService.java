@@ -164,7 +164,7 @@ public class ExamService {
      */
     public void delete(@NotNull long examId) {
         User user = userRepository.getUser();
-        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
+        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExamsElseThrow(examId);
         log.info("User {} has requested to delete the exam {}", user.getLogin(), exam.getTitle());
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);

@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.conflict;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing ExerciseGroup.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ExerciseGroupResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseGroupResource.class);
@@ -64,7 +64,7 @@ public class ExerciseGroupResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/exerciseGroups : Create a new exercise group.
+     * POST courses/{courseId}/exams/{examId}/exerciseGroups : Create a new exercise group.
      *
      * @param courseId      the course to which the exercise group belongs to
      * @param examId        the exam to which the exercise group belongs to
@@ -73,7 +73,7 @@ public class ExerciseGroupResource {
      *         or with status 400 (Bad Request) if the exerciseGroup has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/courses/{courseId}/exams/{examId}/exerciseGroups")
+    @PostMapping("courses/{courseId}/exams/{examId}/exerciseGroups")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseGroup> createExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroup exerciseGroup)
             throws URISyntaxException {
@@ -83,11 +83,11 @@ public class ExerciseGroupResource {
         }
 
         if (exerciseGroup.getExam() == null) {
-            return conflict();
+            return badRequest("exam", "400", "The exam in the body isn't set!");
         }
 
         if (!exerciseGroup.getExam().getId().equals(examId)) {
-            return conflict();
+            return badRequest("examId", "400", "The examId in the path and the body do not match!");
         }
 
         examAccessService.checkCourseAndExamAccessForRoleElseThrow(Role.EDITOR, courseId, examId);
@@ -103,7 +103,7 @@ public class ExerciseGroupResource {
     }
 
     /**
-     * PUT /courses/{courseId}/exams/{examId}/exerciseGroups : Update an existing exercise group.
+     * PUT courses/{courseId}/exams/{examId}/exerciseGroups : Update an existing exercise group.
      *
      * @param courseId              the course to which the exercise group belongs to
      * @param examId                the exam to which the exercise group belongs to
@@ -111,7 +111,7 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with the body of the updated exercise group
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/courses/{courseId}/exams/{examId}/exerciseGroups")
+    @PutMapping("courses/{courseId}/exams/{examId}/exerciseGroups")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseGroup> updateExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroup updatedExerciseGroup)
             throws URISyntaxException {
@@ -121,7 +121,7 @@ public class ExerciseGroupResource {
         }
 
         if (updatedExerciseGroup.getExam() == null) {
-            return conflict();
+            return badRequest("Exam", "400", "The Exam in the RequestBody does not have an ID set!");
         }
 
         examAccessService.checkCourseAndExamAndExerciseGroupAccessForRoleElseThrow(Role.EDITOR, courseId, examId, updatedExerciseGroup);
@@ -131,14 +131,14 @@ public class ExerciseGroupResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId} : Find an exercise group by id.
+     * GET courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId} : Find an exercise group by id.
      *
      * @param courseId          the course to which the exercise group belongs to
      * @param examId            the exam to which the exercise group belongs to
      * @param exerciseGroupId   the id of the exercise group to find
      * @return the ResponseEntity with status 200 (OK) and with the found exercise group as body
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
+    @GetMapping("courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseGroup> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
@@ -165,7 +165,7 @@ public class ExerciseGroupResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId} : Delete the exercise group with the given id.
+     * DELETE courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId} : Delete the exercise group with the given id.
      *
      * @param courseId          the course to which the exercise group belongs to
      * @param examId            the exam to which the exercise group belongs to
@@ -174,7 +174,7 @@ public class ExerciseGroupResource {
      * @param deleteBaseReposBuildPlans boolean which states whether the corresponding base build plans should be deleted
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
+    @DeleteMapping("courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId,
             @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans, @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {

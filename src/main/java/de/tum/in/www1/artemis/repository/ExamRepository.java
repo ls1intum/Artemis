@@ -75,7 +75,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     // @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises", "studentExams.exercises.participations" })
 
     @Query("select distinct exam from Exam exam left join fetch exam.studentExams studentExams left join fetch exam.exerciseGroups exerciseGroups left join fetch exerciseGroups.exercises where (exam.id = :#{#examId})")
-    Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
+    Optional<Exam> findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
 
     /**
      * retrieves an exam with exercise groups and student exams
@@ -85,13 +85,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      */
     @NotNull
     default Exam findOneWithEagerExercisesGroupsAndStudentExamsElseThrow(Long examId) {
-        Exam exam = findOneWithEagerExercisesGroupsAndStudentExams(examId);
-        if (exam == null) {
-            throw new EntityNotFoundException("Exam", examId);
-        }
-        else {
-            return exam;
-        }
+        return findOneWithEagerExercisesGroupsAndStudentExams(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
     /**

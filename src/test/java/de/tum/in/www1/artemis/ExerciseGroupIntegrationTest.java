@@ -80,7 +80,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.BAD_REQUEST);
         exerciseGroup = ModelFactory.generateExerciseGroup(true, exam1);
         exerciseGroup.setExam(null);
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CONFLICT);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.BAD_REQUEST);
         exerciseGroup = ModelFactory.generateExerciseGroup(true, exam2);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CREATED);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForRoleElseThrow(Role.EDITOR, course1.getId(), exam2.getId());
@@ -91,7 +91,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     public void testUpdateExerciseGroup_asEditor() throws Exception {
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam1);
         exerciseGroup.setExam(null);
-        request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CONFLICT);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.BAD_REQUEST);
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup1, HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccessForRoleElseThrow(Role.EDITOR, course1.getId(), exam1.getId(), exerciseGroup1);
     }

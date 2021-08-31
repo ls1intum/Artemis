@@ -355,7 +355,7 @@ public class ExamResource {
     @GetMapping("courses/{courseId}/exams/{examId}/stats-for-exam-assessment-dashboard")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<StatsForDashboardDTO> getStatsForExamAssessmentDashboard(@PathVariable Long courseId, @PathVariable Long examId) {
-        log.debug("REST request courses/{courseId}/stats-for-exam-assessment-dashboard");
+        log.debug("REST request courses/{courseId}/exams/{examId}/stats-for-exam-assessment-dashboard");
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
@@ -806,11 +806,11 @@ public class ExamResource {
     }
 
     /**
-     * GET courses/{courseId}/exams/{examId}/download-archive : Downloads the zip file of the archived exam if it exists. Throws a 404 if the exam doesn't exist.
+     * GET courses/{courseId}/exams/{examId}/download-archive : Downloads the zip file of the archived exam if it exists.
      *
      * @param courseId The course id of the course
      * @param examId The id of the archived exam
-     * @return ResponseEntity with status
+     * @return ResponseEntity with status 200 and a zip-file if exam exists or 404 if it doesn't
      */
     @GetMapping("courses/{courseId}/exams/{examId}/download-archive")
     @PreAuthorize("hasRole('INSTRUCTOR')")

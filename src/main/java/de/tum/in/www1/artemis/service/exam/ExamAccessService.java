@@ -83,12 +83,12 @@ public class ExamAccessService {
     }
 
     /**
-     * Checks if the current user is allowed to manage exams of the given course, otherwise throws an AccessForbiddenException
+     * Checks if the current user is at least of role in the given course, otherwise throws an AccessForbiddenException
      *
      * @param role the role to check the access for in the course
      * @param courseId The id of the course
-     * @throws AccessForbiddenException if user isn't instructor in course
-     */
+     * @throws AccessForbiddenException if user isn't at least of role in course
+     * */
     public void checkCourseAccessForRoleElseThrow(Role role, Long courseId) throws AccessForbiddenException {
         Course course = courseRepository.findByIdElseThrow(courseId);
         switch (role) {
@@ -118,7 +118,7 @@ public class ExamAccessService {
      * @param role the role to check the access for in the course
      * @param courseId The id of the course
      * @param examId the id of the exam
-     * @throws AccessForbiddenException if user isn't instructor in course
+     * @throws AccessForbiddenException if user isn't at least of role in course
      */
     public void checkCourseAndExamAccessForRoleElseThrow(Role role, Long courseId, Long examId) {
         Exam exam = examRepository.findByIdElseThrow(examId);
@@ -136,7 +136,7 @@ public class ExamAccessService {
      * @param role the role to check the access for in the course
      * @param courseId The id of the course
      * @param exam the exam itself
-     * @throws AccessForbiddenException if user isn't instructor in course
+     * @throws AccessForbiddenException if user isn't at leat of role in course
      */
     public void checkCourseAndExamAccessForRoleElseThrow(Role role, Long courseId, Exam exam) {
         checkCourseAccessForRoleElseThrow(role, courseId);
