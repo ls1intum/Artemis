@@ -3,18 +3,26 @@
     <button class="btn btn-outline-primary" (click)="loadTutorEfforts()">
         <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.calculate"></span>
     </button>
-    <div *ngIf="tutorEfforts.length > 0">
-        <br />
-        <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.numberOfSubmissionsAssessed"></span>
-        :{{ numberOfSubmissions }}
-        <br />
-        <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.totalTimeSpent"></span>
-        :{{ totalTimeSpent }} minutes
-        <br />
-        <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.averageTime"></span>
-        :{{ averageTimeSpent }} submissions/minute
-    </div>
-    <div *ngIf="!tutorEfforts.length">
+    <table class="table">
+        <tr>
+            <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.numberOfSubmissionsAssessed"></span></th>
+            <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.totalTimeSpent"></span></th>
+            <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.averageTime"></span></th>
+        </tr>
+        <tr>
+            <td>{{ numberOfSubmissions }}</td>
+            <td>{{ totalTimeSpent }}</td>
+            <td>{{ averageTimeSpent }}</td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <div style="height: 50%" class="row justify-content-center">
+                    <canvas baseChart [datasets]="chartDataSets" [labels]="chartLabels" [chartType]="chartType" [options]="chartOptions" [legend]="false"></canvas>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <div *ngIf="!tutorEfforts || tutorEfforts.length == 0">
         <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.noData"></span>
     </div>
 </div>
