@@ -88,7 +88,7 @@ describe('Text exercise management', () => {
             courseManagement.createTextExercise({ course }, exerciseTitle).its('status').should('eq', 201);
         });
 
-        it('Deletes an existing text exercise', function () {
+        it('Deletes an existing text exercise', () => {
             cy.login(users.getAdmin(), '/');
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(courseName, courseShortName);
