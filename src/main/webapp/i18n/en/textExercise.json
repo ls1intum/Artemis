@@ -34,8 +34,8 @@
                 "title": "Tutor Effort Statistics",
                 "calculate": "Calculate",
                 "numberOfSubmissionsAssessed": "Number of total submissions involved",
-                "totalTimeSpent": "Total time spent grading",
-                "averageTime": "Average time taken per submission",
+                "totalTimeSpent": "Total time spent grading (Minutes)",
+                "averageTime": "Grading Pace (Submissions/Min)",
                 "noData": "No data found. Click to calculate.",
                 "minutes": "Minutes",
                 "tutors": "Tutors"

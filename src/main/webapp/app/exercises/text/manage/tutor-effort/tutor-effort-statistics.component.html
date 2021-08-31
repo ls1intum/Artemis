@@ -1,7 +1,7 @@
 <div>
     <h4 jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title"></h4>
-    <button class="btn btn-outline-primary" (click)="loadTutorEfforts()">
-        <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.calculate"></span>
+    <button *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']" class="btn btn-primary btn-sm float-end mb-2" (click)="loadTutorEfforts()">
+        <fa-icon [icon]="'sync'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'showStatistic.recalculateStatistics' | artemisTranslate }}
     </button>
     <table class="table">
         <tr>
@@ -10,19 +10,16 @@
             <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.averageTime"></span></th>
         </tr>
         <tr>
-            <td>{{ numberOfSubmissions }}</td>
-            <td>{{ totalTimeSpent }}</td>
-            <td>{{ averageTimeSpent }}</td>
+            <td>{{ numberOfSubmissions ? numberOfSubmissions : '0' }}</td>
+            <td>{{ totalTimeSpent ? totalTimeSpent : '0' }}</td>
+            <td>{{ averageTimeSpent ? averageTimeSpent : '0' }}</td>
         </tr>
         <tr>
             <td colspan="3">
-                <div style="height: 50%" class="row justify-content-center">
+                <div style="width: 60%" class="row justify-content-center">
                     <canvas baseChart [datasets]="chartDataSets" [labels]="chartLabels" [chartType]="chartType" [options]="chartOptions" [legend]="false"></canvas>
                 </div>
             </td>
         </tr>
     </table>
-    <div *ngIf="!tutorEfforts || tutorEfforts.length == 0">
-        <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.noData"></span>
-    </div>
 </div>

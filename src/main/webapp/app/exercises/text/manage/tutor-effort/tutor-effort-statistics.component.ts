@@ -54,6 +54,10 @@ export class TutorEffortStatisticsComponent implements OnInit {
      * Also, since values on the y-axis will always be integers, we set the step size to 1.
      */
     chartOptions: ChartOptions = {
+        title: {
+            display: true,
+            text: 'Tutor Effort Distribution',
+        },
         scales: {
             xAxes: [
                 {
