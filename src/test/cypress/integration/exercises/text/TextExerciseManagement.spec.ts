@@ -97,10 +97,10 @@ describe('Text exercise management', () => {
         });
     });
 
-    // after(() => {
-    //     if (!!course) {
-    //         cy.login(users.getAdmin());
-    //         courseManagement.deleteCourse(course.id);
-    //     }
-    // });
+    after(() => {
+        if (!!course) {
+            cy.login(users.getAdmin());
+            courseManagement.deleteCourse(course.id);
+        }
+    });
 });
