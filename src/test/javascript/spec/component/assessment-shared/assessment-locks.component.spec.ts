@@ -16,7 +16,7 @@ describe('AssessmentLocksComponent', () => {
     let component: AssessmentLocksComponent;
     let fixture: ComponentFixture<AssessmentLocksComponent>;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule],
             declarations: [
@@ -33,7 +33,7 @@ describe('AssessmentLocksComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(AssessmentLocksComponent);

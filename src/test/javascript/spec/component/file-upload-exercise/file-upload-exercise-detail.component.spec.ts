@@ -98,6 +98,10 @@ describe('FileUploadExercise Management Detail Component', () => {
         statisticsServiceStub = sinon.stub(statisticsService, 'getExerciseStatistics').returns(of(fileUploadExerciseStatistics));
     });
 
+    afterEach(() => {
+        sinon.restore();
+    });
+
     describe('Title should contain exercise id and description list', () => {
         it('Should call load all on init', fakeAsync(() => {
             const headers = new HttpHeaders().append('link', 'link;link');

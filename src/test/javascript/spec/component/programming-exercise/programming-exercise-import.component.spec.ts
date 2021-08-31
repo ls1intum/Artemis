@@ -6,7 +6,6 @@ import { DebugElement } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
-import { SinonStub, stub } from 'sinon';
 import { Subject } from 'rxjs';
 import { DifferencePipe } from 'ngx-moment';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
@@ -24,6 +23,7 @@ import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.
 import { NgModel } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
+import * as sinon from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -34,12 +34,12 @@ describe('ProgrammingExerciseImportComponent', () => {
     let debugElement: DebugElement;
     let pagingService: ProgrammingExercisePagingService;
 
-    let pagingStub: SinonStub;
+    let pagingStub: sinon.SinonStub;
 
     const basicCourse = { id: 12, title: 'Random course title' } as Course;
     const exercise = { id: 42, title: 'Exercise title', programmingLanguage: ProgrammingLanguage.JAVA, course: basicCourse } as ProgrammingExercise;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, FeatureToggleModule],
             declarations: [
@@ -70,12 +70,12 @@ describe('ProgrammingExerciseImportComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 pagingService = debugElement.injector.get(ProgrammingExercisePagingService);
-                pagingStub = stub(pagingService, 'searchForExercises');
+                pagingStub = sinon.stub(pagingService, 'searchForExercises');
             });
     });
 
     afterEach(() => {
-        pagingStub.restore();
+        sinon.restore();
     });
 
     it('should parse the pageable search result into the correct state', fakeAsync(() => {

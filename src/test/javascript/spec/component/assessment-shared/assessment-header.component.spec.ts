@@ -8,7 +8,7 @@ import { Result } from 'app/entities/result.model';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -53,8 +53,8 @@ describe('AssessmentHeaderComponent', () => {
                 AssessmentHeaderComponent,
                 AssessmentWarningComponent,
                 AlertComponent,
-                NgbAlert,
-                NgbTooltip,
+                MockComponent(NgbAlert),
+                MockDirective(NgbTooltip),
                 TranslateDirective,
                 ArtemisTranslatePipe,
                 MockTranslateValuesDirective,
