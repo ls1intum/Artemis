@@ -29,6 +29,10 @@
                         <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
                     </div>
                 </div>
+                <!-- loading posts -->
+                <div class="post-result-information row mt-2" *ngIf="isLoading">
+                    <div class="col-12">{{ 'artemisApp.metis.loadingPosts' | artemisTranslate }}</div>
+                </div>
                 <!-- no posts -->
                 <div class="post-result-information row mt-2" *ngIf="!posts || posts.length === 0">
                     <div class="col-12">{{ 'artemisApp.metis.noPosts' | artemisTranslate }}</div>

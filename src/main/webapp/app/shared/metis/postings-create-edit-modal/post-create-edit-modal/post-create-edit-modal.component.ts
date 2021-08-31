@@ -9,6 +9,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CourseWideContext, PageType, PostingEditType } from 'app/shared/metis/metis.util';
+import { TranslateService } from '@ngx-translate/core';
 
 const TITLE_MAX_LENGTH = 200;
 
@@ -30,11 +31,12 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     pageType: PageType;
     isAtLeastTutorInCourse: boolean;
     currentContextSelectorOption: ContextSelectorOption;
+    displayContextInEditMode: string;
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
     readonly EditType = PostingEditType;
 
-    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {
+    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder, private translateService: TranslateService) {
         super(metisService, modalService, formBuilder);
     }
 
@@ -45,11 +47,13 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         this.lectures = this.course.lectures;
         this.exercises = this.course.exercises;
         this.resetCurrentContextSelectorOption();
+        this.displayContextInEditMode = this.getDisplayContextInEditMode();
     }
 
     ngOnChanges() {
         super.ngOnChanges();
         this.resetCurrentContextSelectorOption();
+        this.displayContextInEditMode = this.getDisplayContextInEditMode();
     }
 
     /**
@@ -154,5 +158,15 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
             exercise: this.posting.exercise,
             courseWideContext: this.posting.courseWideContext,
         };
+    }
+
+    private getDisplayContextInEditMode(): string {
+        if (this.posting?.exercise) {
+            return this.posting.exercise.title!;
+        } else if (this.posting.lecture) {
+            return this.posting.lecture.title!;
+        } else {
+            return this.translateService.instant(this.posting.courseWideContext!.valueOf());
+        }
     }
 }

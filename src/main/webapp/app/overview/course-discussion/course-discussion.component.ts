@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CourseWideContext, DisplayPriority, PageType, PostSortCriterion, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { map, Subscription } from 'rxjs';
@@ -29,7 +29,7 @@ interface ContentFilterOption {
     styleUrls: ['./course-discussion.scss'],
     providers: [MetisService],
 })
-export class CourseDiscussionComponent implements OnDestroy {
+export class CourseDiscussionComponent implements OnInit, OnDestroy {
     course?: Course;
     exercises?: Exercise[];
     lectures?: Lecture[];
@@ -41,6 +41,7 @@ export class CourseDiscussionComponent implements OnDestroy {
     formGroup: FormGroup;
     createdPost: Post;
     posts: Post[];
+    isLoading = true;
     readonly CourseWideContext = CourseWideContext;
     readonly SortBy = PostSortCriterion;
     readonly SortDirection = SortDirection;
@@ -56,23 +57,30 @@ export class CourseDiscussionComponent implements OnDestroy {
         private activatedRoute: ActivatedRoute,
         private courseCalculationService: CourseScoreCalculationService,
         private formBuilder: FormBuilder,
-    ) {
+    ) {}
+
+    /**
+     * on initialization: initializes the metis service, fetches the posts for the course, resets all user inputs and selects to defaults,
+     * creates the subscription to posts to stay updated on any changes of posts in this course
+     */
+    ngOnInit(): void {
         this.paramSubscription = this.activatedRoute.parent!.params.subscribe((params) => {
             const courseId = parseInt(params['courseId'], 10);
             this.course = this.courseCalculationService.getCourse(courseId);
             if (this.course) {
                 this.lectures = this.course?.lectures;
                 this.exercises = this.course?.exercises;
-                this.resetCurrentFilter();
-                this.createEmptyPost();
-                this.resetFormGroup();
                 this.metisService.setCourse(this.course!);
                 this.metisService.setPageType(this.pageType);
                 this.metisService.getFilteredPosts({ courseId: this.course!.id });
+                this.resetCurrentFilter();
+                this.createEmptyPost();
+                this.resetFormGroup();
             }
         });
         this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.filter(this.filterFn).sort(this.overviewSortFn))).subscribe((posts: Post[]) => {
             this.posts = posts;
+            this.isLoading = false;
         });
     }
 
@@ -215,7 +223,7 @@ export class CourseDiscussionComponent implements OnDestroy {
 
     /**
      * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post,
-     * this post has a default course-wide context as well as the course set as context
+     * this empty post has a default course-wide context as well as the course set as context
      **/
     createEmptyPost(): void {
         this.createdPost = this.metisService.createEmptyPostForContext(

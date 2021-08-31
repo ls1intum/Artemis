@@ -43,7 +43,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { getElement, getElements } from '../../../helpers/utils/general.utils';
+import { getElement } from '../../../helpers/utils/general.utils';
 import { PageDiscussionSectionComponent } from 'app/overview/page-discussion-section/page-discussion-section.component';
 
 chai.use(sinonChai);
@@ -166,7 +166,7 @@ describe('CourseDiscussionComponent', () => {
         expect(contextOptions.textContent).contains(metisExercise.title);
         // course should be selected
         const selectedContextOption = getElement(fixture.debugElement, 'select[name=context]');
-        expect(selectedContextOption.value).to.be.equal(metisCourse.title);
+        expect(selectedContextOption.value).contains(metisCourse.title);
         // creation date should be selected as sort criterion
         const selectedSortByOption = getElement(fixture.debugElement, 'select[name=sortBy]');
         expect(selectedSortByOption.value).to.exist;

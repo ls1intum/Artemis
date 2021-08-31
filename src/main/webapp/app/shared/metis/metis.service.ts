@@ -1,6 +1,6 @@
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { BehaviorSubject, map, Observable, tap } from 'rxjs';
+import { BehaviorSubject, map, Observable, ReplaySubject, tap } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -18,13 +18,14 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 
 @Injectable()
 export class MetisService {
-    private posts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([]);
+    private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private currentPostContextFilter: PostContextFilter = {};
     private user: User;
     private pageType: PageType;
     private course: Course;
     private courseId: number;
+    private cachedPosts: Post[];
 
     constructor(
         protected postService: PostService,
@@ -112,11 +113,15 @@ export class MetisService {
             // if the context changed, we need to fetch posts before doing the content filtering and sorting
             this.currentPostContextFilter = postContextFilter;
             this.postService.getPosts(this.courseId, this.currentPostContextFilter).subscribe((res) => {
+                // cache the fetched posts, that can be emitted on next call of this `getFilteredPosts`
+                // that does not require to send a request to actually fetch posts from the DB
+                this.cachedPosts = res.body!;
                 this.posts$.next(res.body!);
             });
         } else {
-            // if the context did not change, we do not need to fetch posts again but only do the content filtering and sorting the current posts
-            this.posts$.next(this.posts$.getValue());
+            // if we do not require force update, e.g. because only the sorting criterion changed,
+            // we can emit the previously cached posts
+            this.posts$.next(this.cachedPosts);
         }
     }
 

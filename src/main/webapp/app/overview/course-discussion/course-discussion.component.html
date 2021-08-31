@@ -33,20 +33,22 @@
                         </div>
                         <div class="col-auto p-0">
                             <select formControlName="context" class="form-select" [compareWith]="compareContextFilterOptionFn" (change)="onSelectContext()" name="context">
-                                <option [ngValue]="{ courseId: course.id }">{{ course.title }}</option>
+                                <option [ngValue]="{ courseId: course.id }">
+                                    {{ course.title + ' ' + ('artemisApp.metis.overview.courseFilterExplanation' | artemisTranslate) }}
+                                </option>
                                 <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
                                     <option *ngFor="let context of CourseWideContext | keyvalue" [ngValue]="{ courseWideContext: context.value }">
                                         {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
                                     </option>
                                 </optgroup>
-                                <optgroup *ngIf="exercises !== undefined && exercises!.length > 0" [label]="'artemisApp.metis.post.exercises' | artemisTranslate">
-                                    <option *ngFor="let exercise of exercises" [ngValue]="{ exerciseId: exercise.id }">
-                                        {{ exercise.title }}
-                                    </option>
-                                </optgroup>
                                 <optgroup *ngIf="lectures !== undefined && lectures!.length > 0" [label]="'artemisApp.metis.post.lectures' | artemisTranslate">
                                     <option *ngFor="let lecture of lectures" [ngValue]="{ lectureId: lecture.id }">
                                         {{ lecture.title }}
+                                    </option>
+                                </optgroup>
+                                <optgroup *ngIf="exercises !== undefined && exercises!.length > 0" [label]="'artemisApp.metis.post.exercises' | artemisTranslate">
+                                    <option *ngFor="let exercise of exercises" [ngValue]="{ exerciseId: exercise.id }">
+                                        {{ exercise.title }}
                                     </option>
                                 </optgroup>
                             </select>
@@ -56,7 +58,7 @@
                 <!-- sort dropdown -->
                 <div class="col-auto p-0">
                     <div class="row">
-                        <div class="col-auto p-0 filter-sort-prefix">
+                        <div class="col-auto pe-0 filter-sort-prefix">
                             <span>{{ 'artemisApp.metis.overview.sortPostsBy' | artemisTranslate }}</span>
                         </div>
                         <div class="col-auto p-0">
@@ -80,9 +82,13 @@
     </div>
     <div class="bold-line row col-9 mt-1 mb-2"></div>
     <div class="class=row col-9">
-        <!-- information on posts found -->
-        <div class="col-12 post-result-information">
-            {{ posts?.length === 0 ? ('artemisApp.metis.noPosts' | artemisTranslate) : ('artemisApp.metis.postNumberInformation' | artemisTranslate: { number: posts.length }) }}
+        <!-- loading posts -->
+        <div *ngIf="isLoading" class="col-12 post-result-information">
+            {{ 'artemisApp.metis.loadingPosts' | artemisTranslate }}
+        </div>
+        <!-- information on loaded posts -->
+        <div *ngIf="!isLoading" class="col-12 post-result-information">
+            {{ posts.length === 0 ? ('artemisApp.metis.noPosts' | artemisTranslate) : ('artemisApp.metis.postNumberInformation' | artemisTranslate: { number: posts.length }) }}
         </div>
         <!-- list of posts -->
         <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post"></jhi-postings-thread>

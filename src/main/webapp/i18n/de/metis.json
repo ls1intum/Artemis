@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "metis": {
+            "loadingPosts": "Beiträge laden...",
             "noPosts": "Keine Beiträge gefunden.",
             "postNumberInformation": "{{ number }} Treffer",
             "addNewPost": "Neuer Beitrag",
@@ -36,6 +37,7 @@
                 "title": "Beiträge",
                 "searchBarDefault": "Tippe hier, um nach einem bestimmten Beitrag zu suchen...",
                 "postContextFilter": "Zeige Beiträge in:",
+                "courseFilterExplanation": "(Alle Beiträge)",
                 "sortPostsBy": "Sortiere nach:",
                 "DESC": "Absteigend",
                 "ASC": "Aufsteigend",
@@ -49,6 +51,7 @@
             "post": {
                 "context": "Kontext",
                 "contextTooltip": "Wähle den Kontext, in dem dein Beitrag veröffentlicht werden soll. Du kannst zwischen konkreten Übungen und Vorlesungen des Kurses wählen oder eines der kursweiten, allgemeineren Themen wählen. Wählst du eine Übung oder eine Vorlesung, wird der Beitrag im Diskussions Panel auf der Übungs- bzw. Vorlesungsseite angezeigt. Wählst du ein kursweites Thema, wird der Beitrag nur in der Übersicht (Diskussion Tab) gelistet.",
+                "fixedContextTooltip": "Der Kontext kann nach der Erstellung eines Posts nur von Tutor:innen geändet werden.",
                 "courseWideContext": "Kursweite Themen",
                 "exercises": "Übungen",
                 "lectures": "Vorlesungen",

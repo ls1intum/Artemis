@@ -32,13 +32,24 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
     private postsSubscription: Subscription;
     private paramSubscription: Subscription;
 
-    constructor(private metisService: MetisService, private activatedRoute: ActivatedRoute, private courseCalculationService: CourseScoreCalculationService) {
+    constructor(private metisService: MetisService, private activatedRoute: ActivatedRoute, private courseCalculationService: CourseScoreCalculationService) {}
+
+    /**
+     * on initialization: initializes the metis service, fetches the posts for the exercise or lecture the discussion section is placed at,
+     * creates the subscription to posts to stay updated on any changes of posts in this course
+     */
+    ngOnInit(): void {
         this.paramSubscription = this.activatedRoute.params.subscribe((params) => {
             const courseId = parseInt(params['courseId'], 10);
             this.course = this.courseCalculationService.getCourse(courseId);
             if (this.course) {
                 this.metisService.setCourse(this.course!);
                 this.metisService.setPageType(this.pageType);
+                this.metisService.getFilteredPosts({
+                    exerciseId: this.exercise?.id,
+                    lectureId: this.lecture?.id,
+                });
+                this.createEmptyPost();
             }
         });
         this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.sort(this.sectionSortFn))).subscribe((posts: Post[]) => {
@@ -48,27 +59,11 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * on initialization: fetches the posts for the exercise or lecture the discussion section is placed at,
-     * triggers the creation of an empty post
-     */
-    ngOnInit(): void {
-        this.metisService.getFilteredPosts({
-            exerciseId: this.exercise?.id,
-            lectureId: this.lecture?.id,
-        });
-        this.createdPost = this.createEmptyPost();
-    }
-
-    /**
      * on changes: fetches the posts for the exercise or lecture the discussion section is placed at,
      * triggers the creation of an empty post
      */
     ngOnChanges(): void {
-        this.metisService.getFilteredPosts({
-            exerciseId: this.exercise?.id,
-            lectureId: this.lecture?.id,
-        });
-        this.createdPost = this.createEmptyPost();
+        this.createEmptyPost();
     }
 
     /**
@@ -120,11 +115,11 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post
-     * @return Post created empty default post with either exercise or lecture set as context
+     * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post,
+     * this empty post has either exercise or lecture set as context, depending on if this component holds an exercise or a lecture reference
      */
-    createEmptyPost(): Post {
-        return this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture?.id);
+    createEmptyPost(): void {
+        this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture?.id);
     }
 
     /**
