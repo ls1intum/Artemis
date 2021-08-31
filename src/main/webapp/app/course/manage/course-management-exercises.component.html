@@ -1,3 +1,4 @@
+<jhi-alert></jhi-alert>
 <ng-container *ngIf="course">
     <h3>
         <span
@@ -5,8 +6,7 @@
             {{ 'artemisApp.course.exercises' | artemisTranslate }}</span
         >
     </h3>
-
-    <jhi-alert></jhi-alert>
+    <!--<jhi-alert></jhi-alert>-->
     <jhi-course-exercise-card headingJhiTranslate="artemisApp.course.programmingExercises">
         <jhi-programming-exercise
             *jhiExtensionPoint="overrideProgrammingExerciseCard; context: { embedded: true, course: course, exerciseCountCallback: setProgrammingExerciseCount.bind(this) }"

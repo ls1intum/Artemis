@@ -42,7 +42,9 @@ export abstract class UserSettingsPrototypeComponent implements OnInit {
         this.userSettingsService.loadUserOptions(this.userSettingsCategory).subscribe(
             (res: HttpResponse<OptionCore[]>) => {
                 this.userSettings = this.userSettingsService.loadUserOptionCoresSuccessAsSettings(res.body!, this.userSettingsCategory);
-                this.finishUpdate();
+                this.optionCores = this.userSettingsService.extractOptionCoresFromSettings(this.userSettings);
+                this.changeDetector.detectChanges();
+                this.alertService.clear();
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
@@ -57,8 +59,9 @@ export abstract class UserSettingsPrototypeComponent implements OnInit {
     public saveOptions() {
         this.userSettingsService.saveUserOptions(this.optionCores, this.userSettingsCategory).subscribe(
             (res: HttpResponse<OptionCore[]>) => {
+                debugger;
                 this.userSettings = this.userSettingsService.saveUserOptionsSuccess(res.body!, this.userSettingsCategory);
-                this.finishUpdate();
+                this.optionCores = this.userSettingsService.extractOptionCoresFromSettings(this.userSettings);
                 this.finishSaving();
             },
             (res: HttpErrorResponse) => this.onError(res),
@@ -73,7 +76,10 @@ export abstract class UserSettingsPrototypeComponent implements OnInit {
     protected finishSaving() {
         this.createApplyChangesEvent();
         this.optionsChanged = false;
+        debugger;
+        this.alertService.clear();
         this.alertService.success('artemisApp.userSettings.saveSettingsSuccessAlert');
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -85,14 +91,6 @@ export abstract class UserSettingsPrototypeComponent implements OnInit {
     }
 
     // auxiliary methods
-
-    /**
-     * Finalizes the loading or saving process by updating the optionCores (based on the newly updated settings) and the HTML template
-     */
-    protected finishUpdate(): void {
-        this.optionCores = this.userSettingsService.extractOptionCoresFromSettings(this.userSettings);
-        this.changeDetector.detectChanges();
-    }
 
     /**
      * Send out an error alert if an error occurred
