@@ -21,7 +21,7 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the content must include at least one non-whitespace character
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^.*\S+.*$/)]],
+            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
         });
     }
 
