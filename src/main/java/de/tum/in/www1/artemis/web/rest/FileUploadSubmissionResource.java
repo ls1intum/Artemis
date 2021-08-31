@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing FileUploadSubmission.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
