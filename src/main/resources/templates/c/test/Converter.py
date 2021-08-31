@@ -2,22 +2,26 @@
 import sys, getopt
 from xml.sax.saxutils import escape
 
+def usage():
+    print('python3 <script> -i <inputfile> -o <outputfile>')
+
 def main(argv):
     inputfile = ''
     outputfile = ''
     try:
         opts, args = getopt.getopt(argv,"hi:o:",["ifile=","ofile="])
-    except getopt.GetoptError:
-        print('python3 Converter.py -i <inputfile> -o <outputfile>')
+    except getopt.GetoptError as err:
+        print(err)
+        usage()
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print('python3 Converter.py -i <inputfile> -o <outputfile>')
-            sys.exit()
+            usage()
         elif opt in ("-i", "--ifile"):
             inputfile = arg
         elif opt in ("-o", "--ofile"):
             outputfile = arg
+
     print('Input file is:', inputfile)
     print('Output file is:', outputfile)
 
@@ -28,16 +32,17 @@ def main(argv):
 
     f.close()
 
-    xmlHeader = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
-    rootOpening = "<root>\n"
-    rootClosing = "</root>\n"
+    xml_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
+    root_opening = "<root>\n"
+    root_closing = "</root>\n"
 
     # Escape text so it will not cause issues with XML
-    escapedText = escape(data)
+    escaped_text = escape(data)
 
     out = open(outputfile, "w")
-    out.write(xmlHeader + rootOpening + escapedText + rootClosing)
+    out.write(xml_header + root_opening + escaped_text + root_closing)
     out.close()
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
