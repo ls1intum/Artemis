@@ -26,8 +26,8 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         this.tags = this.posting?.tags ?? [];
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the title and content must include at least one non-whitespace character
-            title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), Validators.pattern(/^.*\S+.*$/)]],
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^.*\S+.*$/)]],
+            title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
+            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
         });
     }
 
