@@ -16,19 +16,22 @@ import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-se
 import { JhiAlertService } from 'ng-jhipster';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
-import { stub } from 'sinon';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { SinonStub, stub } from 'sinon';
+import { MockProvider } from 'ng-mocks';
 
 /**
  * needed for testing the abstract UserSettingsPrototypeComponent
  */
 class UserSettingsPrototypeComponentMock extends UserSettingsPrototypeComponent {
     changeDetector: ChangeDetectorRef;
+    alertService: JhiAlertService;
 
     constructor(userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: JhiAlertService) {
         super(userSettingsService, alertService, changeDetector);
         this.changeDetector = changeDetector;
+        this.alertService = alertService;
     }
 }
 
@@ -36,19 +39,18 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('User Settings Prototype Component', () => {
-    // general & common
     let comp: UserSettingsPrototypeComponentMock;
     let fixture: ComponentFixture<UserSettingsPrototypeComponentMock>;
 
     let userSettingsService: UserSettingsService;
     let httpMock: HttpTestingController;
-    // let notificationService: NotificationService;
-    // let alertService: JhiAlertService;
+    let alertService: JhiAlertService;
     let changeDetector: ChangeDetectorRef;
+
+    let changeDetectorDetectChangesStub: SinonStub;
 
     const router = new MockRouter();
 
-    // notification settings specific
     const notificationOptionCoreA: NotificationOptionCore = {
         id: 1,
         optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
@@ -67,8 +69,7 @@ describe('User Settings Prototype Component', () => {
             imports: [HttpClientTestingModule, TranslateTestingModule],
             declarations: [UserSettingsPrototypeComponentMock],
             providers: [
-                //MockProvider(ChangeDetectorRef),
-                ChangeDetectorRef,
+                MockProvider(ChangeDetectorRef),
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useValue: router },
@@ -82,9 +83,12 @@ describe('User Settings Prototype Component', () => {
                 comp.userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
                 userSettingsService = TestBed.inject(UserSettingsService);
                 httpMock = TestBed.inject(HttpTestingController);
-                // notificationService = TestBed.inject(NotificationService);
-                // alertService = TestBed.inject(JhiAlertService);
+                comp.alertService = TestBed.inject(JhiAlertService);
                 comp.changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
+
+                changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
+                changeDetectorDetectChangesStub = stub(changeDetector.constructor.prototype, 'detectChanges');
+                alertService = fixture.debugElement.injector.get(JhiAlertService);
             });
     });
 
@@ -98,7 +102,6 @@ describe('User Settings Prototype Component', () => {
 
         describe('test loadSettings', () => {
             it('should call userSettingsService to load OptionsCores', () => {
-                stub(changeDetector.constructor.prototype, 'detectChanges');
                 stub(userSettingsService, 'loadUserOptions').returns(of(new HttpResponse({ body: notificationOptionCoresForTesting })));
                 const loadUserOptionCoresSuccessAsSettingsSpy = sinon.spy(userSettingsService, 'loadUserOptionCoresSuccessAsSettings');
                 const extractOptionCoresFromSettingsSpy = sinon.spy(userSettingsService, 'extractOptionCoresFromSettings');
@@ -107,57 +110,35 @@ describe('User Settings Prototype Component', () => {
 
                 expect(loadUserOptionCoresSuccessAsSettingsSpy).to.be.calledOnce;
                 expect(extractOptionCoresFromSettingsSpy).to.be.calledOnce;
+                expect(changeDetectorDetectChangesStub).to.have.been.called;
             });
-            /*
-            it('should handle error correctly when loading fails',() => {
-                // TODO error is registered an onError is called, but again problems with expect on the new spy
-                // I tried fixing this for hours  (I already copied several different similar assertions from
-                // the artemis code base, but with no success
 
-                const alertServiceSpy = sinon.spy(alertService, 'error');
+            it('should handle error correctly when loading fails', () => {
+                const alertServiceSpy = sinon.spy(comp.alertService, 'error');
                 const errorResponse = new HttpErrorResponse({ status: 403 });
                 stub(userSettingsService, 'loadUserOptions').returns(throwError(errorResponse));
 
-                component.ngOnInit();
-                //fixture.detectChanges();
+                comp.ngOnInit();
 
                 expect(alertServiceSpy).to.be.calledOnce;
-                //expect(alertService.error).to.have.been.called;
             });
- */
         });
 
         describe('test savingSettings', () => {
             it('should call userSettingsService to save OptionsCores', () => {
-                // TODO once again after several hours I can not manage to correctly spy/stub/fake/mock changeDetection without breaking the execution chain
-                //stub(changeDetector.constructor.prototype, 'detectChanges');
-                //sinon.spy(changeDetector.constructor.prototype, 'detectChanges');
-
-                //const changeDetectorRef = fixture.debugElement.injector.get(ChangeDetectorRef);
-                //const detectChangesSpy = spyOn(changeDetectorRef.constructor.prototype, 'detectChanges');
-
-                //const changeDetectorRef = fixture.debugElement.injector.get(ChangeDetectorRef);
-                //const detectChangesSpy = spyOn(changeDetectorRef.constructor.prototype, 'detectChanges');
-
-                changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
-                const changeDetectorDetectChangesStub = stub(changeDetector.constructor.prototype, 'detectChanges');
-
                 stub(userSettingsService, 'saveUserOptions').returns(of(new HttpResponse({ body: notificationOptionCoresForTesting })));
                 const saveUserOptionCoresSuccessSpy = sinon.spy(userSettingsService, 'saveUserOptionsSuccess');
                 const extractOptionCoresFromSettingsSpy = sinon.spy(userSettingsService, 'extractOptionCoresFromSettings');
                 const createApplyChangesEventSpy = sinon.spy(userSettingsService, 'sendApplyChangesEvent');
+                const alertServiceSuccessSpy = sinon.spy(alertService, 'success');
 
-                //component = fixture.componentInstance;
-                //const spy = spyOn((component as any).changeDetector, 'detectChanges');
-
-                //fixture.detectChanges();
                 comp.saveOptions();
 
                 expect(changeDetectorDetectChangesStub).to.have.been.called;
-
                 expect(saveUserOptionCoresSuccessSpy).to.be.calledOnce;
                 expect(extractOptionCoresFromSettingsSpy).to.be.calledOnce;
                 expect(createApplyChangesEventSpy).to.be.calledOnce;
+                expect(alertServiceSuccessSpy).to.have.been.called;
             });
         });
     });
