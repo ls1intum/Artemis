@@ -112,7 +112,7 @@ describe('StatisticsGraphComponent', () => {
         expect(component.currentSpan).to.equal(SpanType.DAY);
     });
 
-    it.skip('should switch time span', () => {
+    it('should switch time span', () => {
         component.graphType = Graphs.SUBMISSIONS;
         component.currentSpan = SpanType.WEEK;
         component.statisticsView = StatisticsView.ARTEMIS;
