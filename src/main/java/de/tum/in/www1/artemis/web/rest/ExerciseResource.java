@@ -88,7 +88,7 @@ public class ExerciseResource {
     /**
      * GET exercises/:exerciseId : get the "exerciseId" exercise.
      *
-     * @param exerciseId the exerciseId of the exercise to retrieve
+     * @param exerciseId of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping("exercises/{exerciseId}") // TODO: should be courses/{courseId}/exercises/{exerciseId}
@@ -129,7 +129,7 @@ public class ExerciseResource {
     /**
      * GET exercises/:exerciseId/for-assessment-dashboard : get the "exerciseId" exercise with data useful for tutors.
      *
-     * @param exerciseId the exerciseId of the exercise to retrieve
+     * @param exerciseId of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping("exercises/{exerciseId}/for-assessment-dashboard") // TODO: should be courses/{courseId}/exercises/{exerciseId}/for-assessment-dashboard
@@ -234,7 +234,7 @@ public class ExerciseResource {
      * Reset the exercise by deleting all its participations
      * This can be used by all exercise types, however they can also provide custom implementations
      *
-     * @param exerciseId exercise to delete
+     * @param exerciseId of the exercise which participations should be deleted
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("exercises/{exerciseId}/reset") // TODO: should be courses/{courseId}/exercises/{exerciseId}/reset
@@ -250,8 +250,8 @@ public class ExerciseResource {
     /**
      * DELETE exercises/:exerciseId/cleanup : delete all build plans (except BASE) of all participations belonging to this exercise. Optionally delete and archive all repositories
      *
-     * @param exerciseId         exercise to delete build plans for
-     * @param deleteRepositories whether repositories should be deleted or not
+     * @param exerciseId of the exercise to delete build plans for
+     * @param deleteRepositories boolean flag indicating whether repositories should be deleted or not
      * @return ResponseEntity with status
      */
     @DeleteMapping("exercises/{exerciseId}/cleanup") // TODO: should be courses/{courseId}/exercises/{exerciseId}/cleanup
@@ -269,7 +269,7 @@ public class ExerciseResource {
     /**
      * GET exercises/:exerciseId/details : sends exercise details including all results for the currently logged in user
      *
-     * @param exerciseId the exerciseId of the exercise to get the repos from
+     * @param exerciseId of the exercise to get the repositories from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping("exercises/{exerciseId}/details")// TODO: should be courses/{courseId}/exercises/{exerciseId}/details
@@ -320,7 +320,7 @@ public class ExerciseResource {
     /**
      * POST exercises/:exerciseId/toggle-second-correction
      *
-     * @param exerciseId the exerciseId of the exercise to get the repos from
+     * @param exerciseId of the exercise to get the repositories from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @PostMapping("exercises/{exerciseId}/toggle-second-correction")// TODO: should be courses/{courseId}/exercises/{exerciseId}/stats-for-assessment-dashboard

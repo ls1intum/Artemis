@@ -517,8 +517,8 @@ public class AuthorizationCheckService {
     /**
      * Wrapper for {@link #isAllowedToSeeExercise(Exercise, User)} that throws forbidden if false
      *
-     * @param exercise the exercise that needs to be checked
-     * @param user the user whose permissions should be checked
+     * @param exercise that needs to be checked
+     * @param user whose permissions should be checked
      * @throws AccessForbiddenException if active user isn't allowed to see the exercise
      */
     public void checkIsAllowedToSeeExerciseElseThrow(@NotNull Exercise exercise, @Nullable User user) {
