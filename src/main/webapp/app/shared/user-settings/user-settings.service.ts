@@ -60,15 +60,7 @@ export class UserSettingsService {
      * @return all option cores based on the updated settings
      */
     public loadUserOptionCoresSuccessAsOptionCores(receivedOptionCoresFromServer: OptionCore[], category: UserSettingsCategory): OptionCore[] {
-        let settingsResult: UserSettings<OptionCore>;
-        // load default settings as foundation
-        settingsResult = UserSettingsService.loadDefaultSettingsAsFoundation(category);
-
-        // if user already customized settings -> update loaded default settings with received data
-        if (!(receivedOptionCoresFromServer == undefined || receivedOptionCoresFromServer.length === 0)) {
-            this.updateSettings(receivedOptionCoresFromServer, settingsResult);
-        }
-        // else continue using default settings and return only option cores (e.g. used for filtering)
+        const settingsResult = this.loadUserOptionCoresSuccessAsSettings(receivedOptionCoresFromServer, category);
         return this.extractOptionCoresFromSettings(settingsResult);
     }
 

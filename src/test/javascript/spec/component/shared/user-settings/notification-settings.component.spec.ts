@@ -6,7 +6,6 @@ import { TextToLowerCamelCasePipe } from 'app/shared/pipes/text-to-lower-camel-c
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { MockPipe } from 'ng-mocks/cjs/lib/mock-pipe/mock-pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
@@ -54,12 +53,8 @@ describe('NotificationSettingsComponent', () => {
             });
     });
 
-    afterEach(() => {
-        sinon.restore();
-    });
-
-    it('should initialize', () => {
-        fixture.detectChanges();
+    it('should initialize component', () => {
+        comp.ngOnInit();
         expect(comp).to.be.ok;
     });
 

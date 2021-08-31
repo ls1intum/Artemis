@@ -7,12 +7,13 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { OptionSpecifier, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { OptionCore, UserSettings } from 'app/shared/user-settings/user-settings.model';
 import { defaultNotificationSettings, NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { notificationOptionCoresForTesting } from './user-settings-shared-constants';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -26,18 +27,6 @@ describe('User Settings Service', () => {
 
     // notification settings specific
     const notificationSettingsResourceUrl = SERVER_API_URL + 'api/notification-settings';
-    const notificationOptionCoreA: NotificationOptionCore = {
-        id: 1,
-        optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
-        webapp: false,
-        email: false,
-    };
-    const notificationOptionCoreB: NotificationOptionCore = {
-        id: 2,
-        optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES,
-        webapp: false,
-        email: false,
-    };
 
     /**
      * Updates the NotificationOptionCores of the provided NotificationSettings by using provided Cores
@@ -143,7 +132,6 @@ describe('User Settings Service', () => {
 
     describe('Service methods with Category Notification Settings', () => {
         userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
-        const notificationOptionCoresForTesting: NotificationOptionCore[] = [notificationOptionCoreA, notificationOptionCoreB];
 
         describe('test loading methods', () => {
             it('should call correct URL to fetch all option cores', () => {

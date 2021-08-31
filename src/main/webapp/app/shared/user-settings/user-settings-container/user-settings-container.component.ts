@@ -1,7 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import { User } from 'app/core/user/user.model';
+import { Component } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { Subscription, tap } from 'rxjs';
+import { AccountInformationComponent } from 'app/shared/user-settings/account-information/account-information.component';
 
 /**
  * UserSettingsContainerComponent serves as the common ground for different settings
@@ -11,17 +10,8 @@ import { Subscription, tap } from 'rxjs';
     templateUrl: 'user-settings-container.component.html',
     styleUrls: ['user-settings-container.component.scss'],
 })
-export class UserSettingsContainerComponent implements OnInit {
-    currentUser?: User;
-
-    private authStateSubscription: Subscription;
-
-    constructor(private accountService: AccountService) {}
-
-    ngOnInit() {
-        this.authStateSubscription = this.accountService
-            .getAuthenticationState()
-            .pipe(tap((user: User) => (this.currentUser = user)))
-            .subscribe();
+export class UserSettingsContainerComponent extends AccountInformationComponent {
+    constructor(accountService: AccountService) {
+        super(accountService);
     }
 }

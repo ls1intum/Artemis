@@ -2,11 +2,11 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
-import { OptionSpecifier } from 'app/shared/constants/user-settings.constants';
 import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { NotificationType, OriginalNotificationType } from 'app/entities/notification.model';
+import { notificationOptionCoreA, notificationOptionCoreB } from './user-settings-shared-constants';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -56,6 +56,7 @@ describe('User Settings Service', () => {
         });
 
         it('should update OriginalNotificationTypeActivationMap & map between NotificationType and OptionCore', () => {
+            /*
             const notificationOptionCoreA: NotificationOptionCore = {
                 id: 1,
                 optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
@@ -68,6 +69,7 @@ describe('User Settings Service', () => {
                 webapp: true,
                 email: false,
             };
+             */
 
             const notificationOptionCoresForTesting: NotificationOptionCore[] = [notificationOptionCoreA, notificationOptionCoreB];
 
