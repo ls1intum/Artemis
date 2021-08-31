@@ -14,7 +14,6 @@ import { NotificationOptionCore } from 'app/shared/user-settings/notification-se
 import { ChangeDetectorRef } from '@angular/core';
 import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-settings-prototype/user-settings-prototype.component';
 import { JhiAlertService } from 'ng-jhipster';
-import { MockProvider } from 'ng-mocks';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
@@ -25,8 +24,11 @@ import { stub } from 'sinon';
  * needed for testing the abstract UserSettingsPrototypeComponent
  */
 class UserSettingsPrototypeComponentMock extends UserSettingsPrototypeComponent {
+    changeDetector: ChangeDetectorRef;
+
     constructor(userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: JhiAlertService) {
         super(userSettingsService, alertService, changeDetector);
+        this.changeDetector = changeDetector;
     }
 }
 
@@ -35,7 +37,7 @@ const expect = chai.expect;
 
 describe('User Settings Prototype Component', () => {
     // general & common
-    let component: UserSettingsPrototypeComponentMock;
+    let comp: UserSettingsPrototypeComponentMock;
     let fixture: ComponentFixture<UserSettingsPrototypeComponentMock>;
 
     let userSettingsService: UserSettingsService;
@@ -65,7 +67,8 @@ describe('User Settings Prototype Component', () => {
             imports: [HttpClientTestingModule, TranslateTestingModule],
             declarations: [UserSettingsPrototypeComponentMock],
             providers: [
-                MockProvider(ChangeDetectorRef),
+                //MockProvider(ChangeDetectorRef),
+                ChangeDetectorRef,
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useValue: router },
@@ -74,14 +77,14 @@ describe('User Settings Prototype Component', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(UserSettingsPrototypeComponentMock);
-                component = fixture.componentInstance;
+                comp = fixture.componentInstance;
                 // can be any other category, it does not change the logic
-                component.userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
+                comp.userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
                 userSettingsService = TestBed.inject(UserSettingsService);
                 httpMock = TestBed.inject(HttpTestingController);
                 // notificationService = TestBed.inject(NotificationService);
                 // alertService = TestBed.inject(JhiAlertService);
-                changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
+                comp.changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
             });
     });
 
@@ -100,7 +103,7 @@ describe('User Settings Prototype Component', () => {
                 const loadUserOptionCoresSuccessAsSettingsSpy = sinon.spy(userSettingsService, 'loadUserOptionCoresSuccessAsSettings');
                 const extractOptionCoresFromSettingsSpy = sinon.spy(userSettingsService, 'extractOptionCoresFromSettings');
 
-                component.ngOnInit();
+                comp.ngOnInit();
 
                 expect(loadUserOptionCoresSuccessAsSettingsSpy).to.be.calledOnce;
                 expect(extractOptionCoresFromSettingsSpy).to.be.calledOnce;
@@ -148,7 +151,7 @@ describe('User Settings Prototype Component', () => {
                 //const spy = spyOn((component as any).changeDetector, 'detectChanges');
 
                 //fixture.detectChanges();
-                component.saveOptions();
+                comp.saveOptions();
 
                 expect(changeDetectorDetectChangesStub).to.have.been.called;
 

@@ -19,14 +19,6 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class SingleUserNotification extends Notification {
 
-    /**
-     * Specifies how this notification was created : NEW_ANSWER_POST_FOR_EXERCISE, NEW_ANSWER_POST_FOR_LECTURE, ...
-     * Otherwise this information is lost for the client-side
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "original_notification_type", columnDefinition = "enum default UNSPECIFIED")
-    private NotificationType originalNotificationType = NotificationType.UNSPECIFIED;
-
     @ManyToOne
     private User recipient;
 
@@ -40,19 +32,6 @@ public class SingleUserNotification extends Notification {
 
     public String getTopic() {
         return "/topic/user/" + getRecipient().getId() + "/notifications";
-    }
-
-    public void setOriginalNotificationType(NotificationType originalNotificationType) {
-        this.originalNotificationType = originalNotificationType;
-    }
-
-    public NotificationType getOriginalNotificationType() {
-        return this.originalNotificationType;
-    }
-
-    public SingleUserNotification originalNotificationType(NotificationType originalNotificationType) {
-        this.originalNotificationType = originalNotificationType;
-        return this;
     }
 
     public SingleUserNotification() {

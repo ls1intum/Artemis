@@ -27,14 +27,6 @@ public class GroupNotification extends Notification {
     @Column(name = "jhi_type")
     private GroupNotificationType type;
 
-    /**
-     * Specifies how this notification was created : ATTACHMENT_CHANGE, EXERCISE_CREATED, ...
-     * Otherwise this information is lost for the client-side
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "original_notification_type", columnDefinition = "enum default UNSPECIFIED")
-    private NotificationType originalNotificationType = NotificationType.UNSPECIFIED;
-
     @ManyToOne
     @JsonIgnoreProperties("groupNotifications")
     private Course course;
@@ -47,19 +39,6 @@ public class GroupNotification extends Notification {
 
     public GroupNotification type(GroupNotificationType type) {
         this.type = type;
-        return this;
-    }
-
-    public void setOriginalNotificationType(NotificationType originalNotificationType) {
-        this.originalNotificationType = originalNotificationType;
-    }
-
-    public NotificationType getOriginalNotificationType() {
-        return this.originalNotificationType;
-    }
-
-    public GroupNotification originalNotificationType(NotificationType originalNotificationType) {
-        this.originalNotificationType = originalNotificationType;
         return this;
     }
 

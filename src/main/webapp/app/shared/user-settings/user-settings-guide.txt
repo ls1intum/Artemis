@@ -28,3 +28,5 @@ Developer Guide/Readme for using and extending user settings
     Server Side :
         For every new child-settings you have to create a new table, rest controller (service) and repository due to the possibly big differences between the OptionCores.
             (Might change due to found similarities)
+
+For further reading see the original PR that introduces these settings : https://github.com/ls1intum/Artemis/pull/3922
