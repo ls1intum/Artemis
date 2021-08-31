@@ -60,7 +60,7 @@ import io.github.jhipster.web.util.ResponseUtil;
  * REST controller for managing Course.
  */
 @RestController
-@RequestMapping("api/")
+@RequestMapping("/api")
 @PreAuthorize("hasRole('ADMIN')")
 public class CourseResource {
 
@@ -157,13 +157,13 @@ public class CourseResource {
     }
 
     /**
-     * POST courses : create a new course.
+     * POST /courses : create a new course.
      *
      * @param course the course to create
      * @return the ResponseEntity with status 201 (Created) and with body the new course, or with status 400 (Bad Request) if the course has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("courses")
+    @PostMapping("/courses")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Course> createCourse(@RequestBody Course course) throws URISyntaxException {
         log.debug("REST request to save Course : {}", course);
@@ -241,13 +241,13 @@ public class CourseResource {
     }
 
     /**
-     * PUT courses : Updates an existing updatedCourse.
+     * PUT /courses : Updates an existing updatedCourse.
      *
      * @param updatedCourse the course to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated course
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("courses")
+    @PutMapping("/courses")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Course> updateCourse(@RequestBody Course updatedCourse) throws URISyntaxException {
         log.debug("REST request to update Course : {}", updatedCourse);
@@ -399,7 +399,7 @@ public class CourseResource {
      * @param courseId to find the course
      * @return response entity for user who has been registered to the course
      */
-    @PostMapping("courses/{courseId}/register")
+    @PostMapping("/courses/{courseId}/register")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
@@ -438,7 +438,7 @@ public class CourseResource {
      * @param onlyActive if true, only active courses will be considered in the result
      * @return the list of courses (the user has access to)
      */
-    @GetMapping("courses")
+    @GetMapping("/courses")
     @PreAuthorize("hasRole('TA')")
     public List<Course> getAllCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get all Courses the user has access to");
@@ -454,11 +454,11 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/courses-with-quiz : get all courses with quiz exercises for administration purposes.
+     * GET /courses/courses-with-quiz : get all courses with quiz exercises for administration purposes.
      *
      * @return the list of courses
      */
-    @GetMapping("courses/courses-with-quiz")
+    @GetMapping("/courses/courses-with-quiz")
     @PreAuthorize("hasRole('EDITOR')")
     public List<Course> getAllCoursesWithQuizExercises() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -472,12 +472,12 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/with-user-stats : get all courses for administration purposes with user stats.
+     * GET /courses/with-user-stats : get all courses for administration purposes with user stats.
      *
      * @param onlyActive if true, only active courses will be considered in the result
      * @return the list of courses (the user has access to)
      */
-    @GetMapping("courses/with-user-stats")
+    @GetMapping("/courses/with-user-stats")
     @PreAuthorize("hasRole('TA')")
     public List<Course> getAllCoursesWithUserStats(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("get courses with user stats, only active: {}", onlyActive);
@@ -495,23 +495,23 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/course-overview : get all courses for the management overview
+     * GET /courses/course-overview : get all courses for the management overview
      *
      * @param onlyActive if true, only active courses will be considered in the result
      * @return a list of courses (the user has access to)
      */
-    @GetMapping("courses/course-management-overview")
+    @GetMapping("/courses/course-management-overview")
     @PreAuthorize("hasRole('TA')")
     public List<Course> getAllCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         return courseService.getAllCoursesForManagementOverview(onlyActive);
     }
 
     /**
-     * GET courses/to-register : get all courses that the current user can register to. Decided by the start and end date and if the registrationEnabled flag is set correctly
+     * GET /courses/to-register : get all courses that the current user can register to. Decided by the start and end date and if the registrationEnabled flag is set correctly
      *
      * @return the list of courses which are active
      */
-    @GetMapping("courses/to-register")
+    @GetMapping("/courses/to-register")
     @PreAuthorize("hasRole('USER')")
     public List<Course> getAllCoursesToRegister() {
         log.debug("REST request to get all currently active Courses that are not online courses");
@@ -531,12 +531,12 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/{courseId}/for-dashboard
+     * GET /courses/{courseId}/for-dashboard
      *
      * @param courseId the courseId for which exercises and lectures should be fetched
      * @return a course wich all exercises and lectures visible to the student
      */
-    @GetMapping("courses/{courseId}/for-dashboard")
+    @GetMapping("/courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
     public Course getCourseForDashboard(@PathVariable long courseId) {
         long start = System.currentTimeMillis();
@@ -579,11 +579,11 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/for-dashboard
+     * GET /courses/for-dashboard
      *
      * @return the list of courses (the user has access to) including all exercises with participation and result for the user
      */
-    @GetMapping("courses/for-dashboard")
+    @GetMapping("/courses/for-dashboard")
     @PreAuthorize("hasRole('USER')")
     public List<Course> getAllCoursesForDashboard() {
         long start = System.currentTimeMillis();
@@ -597,11 +597,11 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/for-notifications
+     * GET /courses/for-notifications
      *
      * @return the list of courses (the user has access to)
      */
-    @GetMapping("courses/for-notifications")
+    @GetMapping("/courses/for-notifications")
     @PreAuthorize("hasRole('USER')")
     public List<Course> getAllCoursesForNotifications() {
         log.debug("REST request to get all Courses the user has access to");
@@ -611,12 +611,12 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/:courseId/for-assessment-dashboard
+     * GET /courses/:courseId/for-assessment-dashboard
      *
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    @GetMapping("courses/{courseId}/for-assessment-dashboard")
+    @GetMapping("/courses/{courseId}/for-assessment-dashboard")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Course> getCourseForAssessmentDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/for-assessment-dashboard");
@@ -632,7 +632,7 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/:courseId/stats-for-assessment-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course - number of
+     * GET /courses/:courseId/stats-for-assessment-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
      *
      * all timestamps were measured when calling this method from the PGdP assessment-dashboard
@@ -640,7 +640,7 @@ public class CourseResource {
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    @GetMapping("courses/{courseId}/stats-for-assessment-dashboard")
+    @GetMapping("/courses/{courseId}/stats-for-assessment-dashboard")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<StatsForDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
         long startRestCall = System.nanoTime();
@@ -722,12 +722,12 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/:courseId : get the "id" course.
+     * GET /courses/:courseId : get the "id" course.
      *
      * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("courses/{courseId}")
+    @GetMapping("/courses/{courseId}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
@@ -741,12 +741,12 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/:courseId : get the "id" course.
+     * GET /courses/:courseId : get the "id" course.
      *
      * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("courses/{courseId}/with-exercises")
+    @GetMapping("/courses/{courseId}/with-exercises")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
@@ -756,13 +756,13 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/:courseId/with-exercises-and-relevant-participations Get the "id" course, with text and modelling exercises and their participations It can be used only by
+     * GET /courses/:courseId/with-exercises-and-relevant-participations Get the "id" course, with text and modelling exercises and their participations It can be used only by
      * instructors for the instructor dashboard
      *
      * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("courses/{courseId}/with-exercises-and-relevant-participations")
+    @GetMapping("/courses/{courseId}/with-exercises-and-relevant-participations")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Course> getCourseWithExercisesAndRelevantParticipations(@PathVariable Long courseId) {
         log.debug("REST request to get Course with exercises and relevant participations : {}", courseId);
@@ -802,11 +802,11 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/:courseId/with-organizations Get a course by id with eagerly loaded organizations
+     * GET /courses/:courseId/with-organizations Get a course by id with eagerly loaded organizations
      * @param courseId the id of the course
      * @return the course with eagerly loaded organizations
      */
-    @GetMapping("courses/{courseId}/with-organizations")
+    @GetMapping("/courses/{courseId}/with-organizations")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Course> getCourseWithOrganizations(@PathVariable Long courseId) {
         log.debug("REST request to get a course with its organizations : {}", courseId);
@@ -816,12 +816,12 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/:courseId/lockedSubmissions Get locked submissions for course for user
+     * GET /courses/:courseId/lockedSubmissions Get locked submissions for course for user
      *
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("courses/{courseId}/lockedSubmissions")
+    @GetMapping("/courses/{courseId}/lockedSubmissions")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Submission>> getLockedSubmissionsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
@@ -842,7 +842,7 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/:courseId/stats-for-instructor-dashboard
+     * GET /courses/:courseId/stats-for-instructor-dashboard
      * <p>
      * A collection of useful statistics for the instructor course dashboard, including: - number of students - number of instructors - number of submissions - number of
      * assessments - number of complaints - number of open complaints - tutor leaderboard data
@@ -850,7 +850,7 @@ public class CourseResource {
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    @GetMapping("courses/{courseId}/stats-for-instructor-dashboard")
+    @GetMapping("/courses/{courseId}/stats-for-instructor-dashboard")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<StatsForDashboardDTO> getStatsForInstructorDashboard(@PathVariable Long courseId) {
         log.debug("REST request /courses/{courseId}/stats-for-instructor-dashboard");
@@ -942,14 +942,14 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/exercises-for-management-overview
+     * GET /courses/exercises-for-management-overview
      *
      * gets the courses with exercises for the user
      *
      * @param onlyActive if true, only active courses will be considered in the result
      * @return ResponseEntity with status, containing a list of courses
      */
-    @GetMapping("courses/exercises-for-management-overview")
+    @GetMapping("/courses/exercises-for-management-overview")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Course>> getExercisesForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         final List<Course> courses = new ArrayList<>();
@@ -962,7 +962,7 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/stats-for-management-overview
+     * GET /courses/stats-for-management-overview
      *
      * gets the statistics for the courses of the user
      * statistics for exercises with an assessment due date (or due date if there is no assessment due date)
@@ -971,7 +971,7 @@ public class CourseResource {
      * @param onlyActive if true, only active courses will be considered in the result
      * @return ResponseEntity with status, containing a list of <code>CourseManagementOverviewStatisticsDTO</code>
      */
-    @GetMapping("courses/stats-for-management-overview")
+    @GetMapping("/courses/stats-for-management-overview")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<CourseManagementOverviewStatisticsDTO>> getExerciseStatsForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         final List<CourseManagementOverviewStatisticsDTO> courseDTOs = new ArrayList<>();
@@ -993,12 +993,12 @@ public class CourseResource {
     }
 
     /**
-     * DELETE courses/:courseId : delete the "id" course.
+     * DELETE /courses/:courseId : delete the "id" course.
      *
      * @param courseId the id of the course to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("courses/{courseId}")
+    @DeleteMapping("/courses/{courseId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
@@ -1016,13 +1016,13 @@ public class CourseResource {
     }
 
     /**
-     * PUT courses/{courseId} : archive an existing course asynchronously. This method starts the process of archiving all course exercises, submissions and results in a large
+     * PUT /courses/{courseId} : archive an existing course asynchronously. This method starts the process of archiving all course exercises, submissions and results in a large
      * zip file. It immediately returns and runs this task asynchronously. When the task is done, the course is marked as archived, which means the zip file can be downloaded.
      *
      * @param courseId the id of the course
      * @return empty
      */
-    @PutMapping("courses/{courseId}/archive")
+    @PutMapping("/courses/{courseId}/archive")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> archiveCourse(@PathVariable Long courseId) {
         log.info("REST request to archive Course : {}", courseId);
@@ -1052,8 +1052,8 @@ public class CourseResource {
      * @param courseId The course id of the archived course
      * @return ResponseEntity with status
      */
-    @GetMapping("courses/{courseId}/download-archive")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @GetMapping("/courses/{courseId}/download-archive")
     public ResponseEntity<Resource> downloadCourseArchive(@PathVariable Long courseId) throws FileNotFoundException {
         log.info("REST request to download archive of Course : {}", courseId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
@@ -1071,12 +1071,12 @@ public class CourseResource {
     }
 
     /**
-     * DELETE courses/:course/cleanup : Cleans up a course by deleting all student submissions.
+     * DELETE /courses/:course/cleanup : Cleans up a course by deleting all student submissions.
      *
      * @param courseId Id of the course to clean up
      * @return ResponseEntity with status
      */
-    @DeleteMapping("courses/{courseId}/cleanup")
+    @DeleteMapping("/courses/{courseId}/cleanup")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Resource> cleanup(@PathVariable Long courseId) {
         log.info("REST request to cleanup the Course : {}", courseId);
@@ -1091,12 +1091,12 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/:courseId/categories : Returns all categories used in a course
+     * GET /courses/:courseId/categories : Returns all categories used in a course
      *
      * @param courseId the id of the course to get the categories from
      * @return the ResponseEntity with status 200 (OK) and the list of categories or with status 404 (Not Found)
      */
-    @GetMapping("courses/{courseId}/categories")
+    @GetMapping(value = "courses/{courseId}/categories")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Set<String>> getCategoriesInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get categories of Course : {}", courseId);
@@ -1106,12 +1106,12 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/:courseId/students : Returns all users that belong to the student group of the course
+     * GET /courses/:courseId/students : Returns all users that belong to the student group of the course
      *
      * @param courseId the id of the course
      * @return list of users with status 200 (OK)
      */
-    @GetMapping("courses/{courseId}/students")
+    @GetMapping(value = "/courses/{courseId}/students")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<User>> getAllStudentsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all students in course : {}", courseId);
@@ -1120,12 +1120,12 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/:courseId/tutors : Returns all users that belong to the tutor group of the course
+     * GET /courses/:courseId/tutors : Returns all users that belong to the tutor group of the course
      *
      * @param courseId the id of the course
      * @return list of users with status 200 (OK)
      */
-    @GetMapping("courses/{courseId}/tutors")
+    @GetMapping(value = "/courses/{courseId}/tutors")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<User>> getAllTutorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutors in course : {}", courseId);
@@ -1134,12 +1134,12 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/:courseId/editors : Returns all users that belong to the editor group of the course
+     * GET /courses/:courseId/editors : Returns all users that belong to the editor group of the course
      *
      * @param courseId the id of the course
      * @return list of users with status 200 (OK)
      */
-    @GetMapping("courses/{courseId}/editors")
+    @GetMapping(value = "/courses/{courseId}/editors")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<User>> getAllEditorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all editors in course : {}", courseId);
@@ -1148,12 +1148,12 @@ public class CourseResource {
     }
 
     /**
-     * GET /ourses/:courseId/instructors : Returns all users that belong to the instructor group of the course
+     * GET /courses/:courseId/instructors : Returns all users that belong to the instructor group of the course
      *
      * @param courseId the id of the course
      * @return list of users with status 200 (OK)
      */
-    @GetMapping("courses/{courseId}/instructors")
+    @GetMapping(value = "/courses/{courseId}/instructors")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<User>> getAllInstructorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all instructors in course : {}", courseId);
@@ -1162,12 +1162,12 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/:courseId/title : Returns the title of the course with the given id
+     * GET /courses/:courseId/title : Returns the title of the course with the given id
      *
      * @param courseId the id of the course
      * @return the title of the course wrapped in an ResponseEntity or 404 Not Found if no course with that id exists
      */
-    @GetMapping("courses/{courseId}/title")
+    @GetMapping(value = "/courses/{courseId}/title")
     @PreAuthorize("hasRole('USER')")
     @ResponseBody
     public ResponseEntity<String> getCourseTitle(@PathVariable Long courseId) {
@@ -1201,13 +1201,13 @@ public class CourseResource {
     }
 
     /**
-     * POST courses/:courseId/students/:studentLogin : Add the given user to the students of the course so that the student can access the course
+     * Post /courses/:courseId/students/:studentLogin : Add the given user to the students of the course so that the student can access the course
      *
      * @param courseId     the id of the course
      * @param studentLogin the login of the user who should get student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @PostMapping("courses/{courseId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    @PostMapping(value = "/courses/{courseId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> addStudentToCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to course : {}", studentLogin, courseId);
@@ -1216,13 +1216,13 @@ public class CourseResource {
     }
 
     /**
-     * POST courses/:courseId/tutors/:tutorLogin : Add the given user to the tutors of the course so that the student can access the course administration
+     * Post /courses/:courseId/tutors/:tutorLogin : Add the given user to the tutors of the course so that the student can access the course administration
      *
      * @param courseId   the id of the course
      * @param tutorLogin the login of the user who should get tutor access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @PostMapping("courses/{courseId}/tutors/{tutorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PostMapping(value = "/courses/{courseId}/tutors/{tutorLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> addTutorToCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to add {} as tutors to course : {}", tutorLogin, courseId);
@@ -1231,13 +1231,13 @@ public class CourseResource {
     }
 
     /**
-     * POST courses/:courseId/editors/:editorLogin : Add the given user to the editors of the course so that the student can access the course administration
+     * Post /courses/:courseId/editors/:editorLogin : Add the given user to the editors of the course so that the student can access the course administration
      *
      * @param courseId   the id of the course
      * @param editorLogin the login of the user who should get editor access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @PostMapping("courses/{courseId}/editors/{editorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PostMapping(value = "/courses/{courseId}/editors/{editorLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> addEditorToCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to add {} as editors to course : {}", editorLogin, courseId);
@@ -1270,13 +1270,13 @@ public class CourseResource {
     }
 
     /**
-     * POST courses/:courseId/instructors/:instructorLogin : Add the given user to the instructors of the course so that the student can access the course administration
+     * Post /courses/:courseId/instructors/:instructorLogin : Add the given user to the instructors of the course so that the student can access the course administration
      *
      * @param courseId        the id of the course
      * @param instructorLogin the login of the user who should get instructors access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @PostMapping("courses/{courseId}/instructors/{instructorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PostMapping(value = "/courses/{courseId}/instructors/{instructorLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> addInstructorToCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to add {} as instructors to course : {}", instructorLogin, courseId);
@@ -1309,13 +1309,13 @@ public class CourseResource {
     }
 
     /**
-     * DELETE courses/:courseId/students/:studentLogin : Remove the given user from the students of the course so that the student cannot access the course any more
+     * DELETE /courses/:courseId/students/:studentLogin : Remove the given user from the students of the course so that the student cannot access the course any more
      *
      * @param courseId     the id of the course
      * @param studentLogin the login of the user who should lose student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping("courses/{courseId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping(value = "/courses/{courseId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removeStudentFromCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to remove {} as student from course : {}", studentLogin, courseId);
@@ -1324,13 +1324,13 @@ public class CourseResource {
     }
 
     /**
-     * DELETE courses/:courseId/tutors/:tutorsLogin : Remove the given user from the tutors of the course so that the tutors cannot access the course administration any more
+     * DELETE /courses/:courseId/tutors/:tutorsLogin : Remove the given user from the tutors of the course so that the tutors cannot access the course administration any more
      *
      * @param courseId   the id of the course
      * @param tutorLogin the login of the user who should lose student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping("courses/{courseId}/tutors/{tutorLogin:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping(value = "/courses/{courseId}/tutors/{tutorLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removeTutorFromCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to remove {} as tutor from course : {}", tutorLogin, courseId);
@@ -1339,13 +1339,13 @@ public class CourseResource {
     }
 
     /**
-     * DELETE courses/:courseId/editors/:editorsLogin : Remove the given user from the editors of the course so that the editors cannot access the course administration any more
+     * DELETE /courses/:courseId/editors/:editorsLogin : Remove the given user from the editors of the course so that the editors cannot access the course administration any more
      *
      * @param courseId   the id of the course
      * @param editorLogin the login of the user who should lose student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping("courses/{courseId}/editors/{editorLogin:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping(value = "/courses/{courseId}/editors/{editorLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removeEditorFromCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to remove {} as editor from course : {}", editorLogin, courseId);
@@ -1354,13 +1354,13 @@ public class CourseResource {
     }
 
     /**
-     * DELETE courses/:courseId/instructors/:instructorLogin : Remove the given user from the instructors of the course so that the instructor cannot access the course administration any more
+     * DELETE /courses/:courseId/instructors/:instructorLogin : Remove the given user from the instructors of the course so that the instructor cannot access the course administration any more
      *
      * @param courseId        the id of the course
      * @param instructorLogin the login of the user who should lose student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping("courses/{courseId}/instructors/{instructorLogin:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping(value = "/courses/{courseId}/instructors/{instructorLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removeInstructorFromCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to remove {} as instructor from course : {}", instructorLogin, courseId);
@@ -1410,12 +1410,12 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/{courseId}/management-detail : Gets the data needed for the course management detail view
+     * GET /courses/{courseId}/management-detail : Gets the data needed for the course management detail view
      *
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and the body, or with status 404 (Not Found)
      */
-    @GetMapping("courses/{courseId}/management-detail")
+    @GetMapping("/courses/{courseId}/management-detail")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -1501,13 +1501,13 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/:courseId/statistics : Get the active students for this particular course
+     * GET /courses/:courseId/statistics : Get the active students for this particular course
      *
      * @param courseId the id of the course
      * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
-    @GetMapping("courses/{courseId}/statistics")
+    @GetMapping(value = "/courses/{courseId}/statistics")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Integer[]> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Integer periodIndex) {
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
