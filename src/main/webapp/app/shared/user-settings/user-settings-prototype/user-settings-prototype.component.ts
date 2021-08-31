@@ -29,6 +29,7 @@ export abstract class UserSettingsPrototypeComponent implements OnInit {
     protected constructor(protected userSettingsService: UserSettingsService, protected alertService: JhiAlertService, protected changeDetector: ChangeDetectorRef) {}
 
     ngOnInit(): void {
+        this.alertService.clear();
         this.loadSetting();
     }
 
@@ -72,8 +73,7 @@ export abstract class UserSettingsPrototypeComponent implements OnInit {
     protected finishSaving() {
         this.createApplyChangesEvent();
         this.optionsChanged = false;
-        // this.alertService.addAlert({ type: 'success', msg: 'studentExam.submitSuccessful', timeout: 20000 }, []); //TODO
-        this.alertService.success('artemisApp.userSettings.saveSettingsSuccessAlert'); // TODO not working ...
+        this.alertService.success('artemisApp.userSettings.saveSettingsSuccessAlert');
     }
 
     /**

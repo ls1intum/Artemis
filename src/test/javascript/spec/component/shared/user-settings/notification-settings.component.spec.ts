@@ -12,6 +12,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
+import { JhiAlertService } from 'ng-jhipster';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { MockComponent } from 'ng-mocks';
+import { OptionSpecifier } from 'app/shared/constants/user-settings.constants';
+import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -20,13 +25,16 @@ describe('NotificationSettingsComponent', () => {
     let comp: NotificationSettingsComponent;
     let fixture: ComponentFixture<NotificationSettingsComponent>;
 
-    // let notificationService: NotificationService;
-
-    // let userSettingsService: UserSettingsService;
-
     const imports = [ArtemisTestModule, TranslateTestingModule];
-    const declarations = [NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe), MockPipe(TextToLowerCamelCasePipe)];
+    const declarations = [
+        MockComponent(AlertComponent),
+        NotificationSettingsComponent,
+        MockHasAnyAuthorityDirective,
+        MockPipe(ArtemisTranslatePipe),
+        MockPipe(TextToLowerCamelCasePipe),
+    ];
     const providers = [
+        MockProvider(JhiAlertService),
         MockProvider(TextToLowerCamelCasePipe),
         { provide: LocalStorageService, useClass: MockSyncStorage },
         { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -43,9 +51,6 @@ describe('NotificationSettingsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(NotificationSettingsComponent);
                 comp = fixture.componentInstance;
-
-                // notificationService = TestBed.inject(NotificationService);
-                // userSettingsService = TestBed.inject(UserSettingsService);
             });
     });
 
@@ -56,5 +61,32 @@ describe('NotificationSettingsComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(comp).to.be.ok;
+    });
+
+    it('should toggle option', () => {
+        const optionId = OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES;
+        const webappStatus = true;
+        const notificationOptionCoreA: NotificationOptionCore = {
+            id: 42,
+            optionSpecifier: optionId,
+            webapp: webappStatus,
+            email: false,
+            changed: false,
+        };
+        comp.optionCores = [notificationOptionCoreA];
+        const event = {
+            currentTarget: {
+                id: optionId,
+            },
+        };
+
+        expect(comp.optionsChanged).to.be.false;
+        expect(notificationOptionCoreA.changed).to.be.false;
+
+        comp.toggleOption(event);
+
+        expect(notificationOptionCoreA.webapp).not.to.be.equal(webappStatus);
+        expect(notificationOptionCoreA.changed).to.be.true;
+        expect(comp.optionsChanged).to.be.true;
     });
 });
