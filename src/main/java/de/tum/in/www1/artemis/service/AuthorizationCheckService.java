@@ -651,7 +651,7 @@ public class AuthorizationCheckService {
      *
      * @param exercise Exercise of the submission
      * @param user User the requests the assessment
-     * @param resultId Id of the result he wants to assess
+     * @param resultId of the result the teaching assistant wants to assess
      * @return true if caller is allowed to assess submissions
      */
     public boolean isAllowedToAssessExercise(Exercise exercise, User user, Long resultId) {

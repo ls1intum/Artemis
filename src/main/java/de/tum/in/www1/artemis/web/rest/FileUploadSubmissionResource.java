@@ -70,8 +70,8 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     /**
      * POST exercises/{exerciseId}/file-upload-submissions : Create a new fileUploadSubmission
      *
-     * @param exerciseId the id of the exercise of the submission
-     * @param principal the user principal, i.e. the identity of the logged in user - provided by Spring
+     * @param exerciseId of the file upload exercise a submission should be created for
+     * @param principal, the identity of the logged in user - provided by Spring
      * @param fileUploadSubmission the fileUploadSubmission to create
      * @param file The uploaded file belonging to the submission
      *
@@ -148,13 +148,13 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * GET file-upload-submissions/:submissionId : get the fileUploadSubmissions by its id. Is used by tutor when assessing submissions.
+     * GET file-upload-submissions/:submissionId : get the fileUploadSubmissions by its id. Is used by tutors when assessing submissions.
      * In case an instructor calls, the resultId is used first. If the resultId is not set, the correctionRound is used.
      * If neither resultId nor correctionRound is set, the first correctionRound is used.
      *
-     * @param submissionId the id of the fileUploadSubmission to retrieve
-     * @param correctionRound the correctionRound of the result we want to receive
-     * @param resultId the resultId for which we want to get the submission
+     * @param submissionId of the fileUploadSubmission to retrieve
+     * @param correctionRound of the result we want to receive
+     * @param resultId for which we want to get the submission
      * @return the ResponseEntity with status 200 (OK) and with body the fileUploadSubmission, or with status 404 (Not Found)
      */
     @GetMapping("file-upload-submissions/{submissionId}")
@@ -221,8 +221,8 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     /**
      * GET exercises/:exerciseId/file-upload-submission-without-assessment : get one File Upload Submission without assessment.
      *
-     * @param exerciseId the id of the exercise
-     * @param correctionRound the correctionround for which we want to find the submission
+     * @param exerciseId of the exercise
+     * @param correctionRound for which we want to find the submission
      * @param lockSubmission specifies if the submission should be locked for assessor
      * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
      */
@@ -270,7 +270,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * GET participations/:participationId/file-upload-editor : Returns the data needed for the file upload editor, which includes the participation, fileUploadSubmission with answer if existing and the assessments if the submission
      * was already submitted.
      *
-     * @param participationId the participationId for which to find the data for the file upload editor
+     * @param participationId for which to find the data for the file upload editor
      * @return the ResponseEntity with the File Upload Submission as body
      */
     @GetMapping("participations/{participationId}/file-upload-editor")
