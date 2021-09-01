@@ -48,8 +48,6 @@ public class TutorParticipationService {
 
     private static final String ENTITY_NAME = "TutorParticipation";
 
-    private static final float scoreRangePercentage = 10;
-
     private final Logger log = LoggerFactory.getLogger(TutorParticipationService.class);
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
@@ -193,25 +191,6 @@ public class TutorParticipationService {
         throw new BadRequestAlertException("{\"errors\": [" + wrongFeedback + "]}", ENTITY_NAME, "invalid_assessment");
     }
 
-    private void validateTutorialExampleSubmissionUsingTotalScore(ExampleSubmission tutorExampleSubmission) {
-        // Retrieve the example feedback created by the instructor
-        List<Feedback> existingFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
-
-        float instructorScore = calculateTotalScore(existingFeedback);
-        float lowerInstructorScore = instructorScore - instructorScore / scoreRangePercentage;
-        float higherInstructorScore = instructorScore + instructorScore / scoreRangePercentage;
-
-        float tutorScore = calculateTotalScore(tutorExampleSubmission.getSubmission().getLatestResult().getFeedbacks());
-
-        if (lowerInstructorScore > tutorScore) {
-            throw new BadRequestAlertException("tooLow", ENTITY_NAME, "tooLow");
-        }
-
-        if (tutorScore > higherInstructorScore) {
-            throw new BadRequestAlertException("tooHigh", ENTITY_NAME, "tooHigh");
-        }
-    }
-
     /**
      * Given an exercise, it adds to the tutor participation of that exercise the example submission passed as argument.
      * If it is valid (e.g: if it is an example submission used for tutorial, we check the result is close enough to the one of the instructor)
@@ -305,9 +284,5 @@ public class TutorParticipationService {
                 tutorParticipationRepository.delete(tutorParticipation);
             }
         }
-    }
-
-    private float calculateTotalScore(List<Feedback> feedback) {
-        return (float) feedback.stream().mapToDouble(Feedback::getCredits).sum();
     }
 }

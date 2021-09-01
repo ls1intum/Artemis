@@ -8,7 +8,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
@@ -41,6 +41,7 @@ describe('TextblockFeedbackEditorComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ConfirmIconComponent),
                 MockComponent(FaIconComponent),
+                MockComponent(FaLayersComponent),
                 MockComponent(GradingInstructionLinkIconComponent),
                 MockDirective(JhiTranslateDirective),
                 MockDirective(NgbTooltip),
@@ -56,8 +57,8 @@ describe('TextblockFeedbackEditorComponent', () => {
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {
-                    declarations: [MockComponent(FaIconComponent)],
-                    exports: [MockComponent(FaIconComponent)],
+                    declarations: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
+                    exports: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
                 },
             })
             .compileComponents();
