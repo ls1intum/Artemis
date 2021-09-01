@@ -1,4 +1,4 @@
-import { BASE_API, DELETE, GET, POST, PUT } from '../constants';
+import { BASE_API, DELETE, GET, POST, PUT, EXERCISE_BASE } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import { dayjsToString, generateUUID } from '../utils';
@@ -13,7 +13,6 @@ import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtu
 import dayjs from 'dayjs';
 
 const COURSE_BASE = BASE_API + 'courses/';
-const EXERCISE_BASE = BASE_API + 'exercises/';
 const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
 const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
 const oneDay = 24 * 60 * 60 * 1000;
@@ -201,11 +200,18 @@ export class CourseManagementRequests {
         });
     }
 
-    createQuizExercise(body: { course: any } | { exerciseGroup: any }, title = 'Cypress Quiz', releaseDate = dayjs(), quizQuestions: any = [multipleChoiceTemplate]) {
+    createQuizExercise(
+        body: { course: any } | { exerciseGroup: any },
+        title = 'Cypress Quiz',
+        releaseDate = dayjs(),
+        duration = 600,
+        quizQuestions: any = [multipleChoiceTemplate]
+    ) {
         const quizExercise = {
             ...quizTemplate,
             title,
             releaseDate: dayjsToString(releaseDate),
+            duration,
             quizQuestions,
         };
         const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
@@ -245,7 +251,7 @@ export class CourseManagementRequests {
             }]
         };
         return cy.request({
-            url: QUIZ_EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
             method: POST,
             body: multipleChoiceSubmission
         });
