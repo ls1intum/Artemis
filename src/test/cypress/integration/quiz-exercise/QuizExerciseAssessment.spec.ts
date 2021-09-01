@@ -1,5 +1,6 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
+import shortAnswerQuizTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerQuiz_template.json';
 import dayjs from 'dayjs';
 
 // Accounts
@@ -15,10 +16,10 @@ let uid: string;
 let courseName: string;
 let courseShortName: string;
 let quizExerciseName: string;
+let course: any;
+let quizExercise: any;
 
 describe('Quiz Exercise Assessment', () => {
-    let course: any;
-
     before('Set up course', () => {
         uid = generateUUID();
         courseName = 'Cypress course' + uid;
@@ -36,19 +37,18 @@ describe('Quiz Exercise Assessment', () => {
         quizExerciseName = 'Cypress Quiz ' + uid;
     });
 
+    afterEach('Delete Quiz', () => {
+        deleteQuiz();
+    });
+
     after('Delete Course', () => {
         cy.login(admin);
         courseManagementRequest.deleteCourse(course.id);
     });
 
-    describe('Quiz assessment', () => {
-        let quizExercise: any;
+    describe('MC Quiz assessment', () => {
         before('Creates a quiz and a submission', () => {
-           courseManagementRequest.createQuizExercise({course}, 'Quiz', dayjs().subtract(1, 'hour'), 3).then((quizResponse) => {
-               quizExercise = quizResponse.body;
-               courseManagementRequest.setQuizVisible(quizExercise.id);
-               courseManagementRequest.startQuizNow(quizExercise.id);
-           });
+           createQuiz();
         });
 
         it('Assesses a mc quiz submission automatically', () => {
@@ -61,4 +61,31 @@ describe('Quiz Exercise Assessment', () => {
             cy.contains('Score');
         });
     });
+
+    describe('SA Quiz assessment', () => {
+        before('Creates a quiz and a submission', () => {
+            createQuiz([shortAnswerQuizTemplate]);
+        });
+
+        it('Assesses a sa quiz submission automatically', () => {
+            cy.login(student, '');
+            /*
+            cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
+            cy.contains(quizExercise.title);
+            cy.contains('Score');*/
+        });
+    });
 });
+
+function createQuiz(quizQuestions?: any) {
+    courseManagementRequest.createQuizExercise({course}, 'Quiz', dayjs().subtract(1, 'hour'), 1, quizQuestions).then((quizResponse) => {
+        quizExercise = quizResponse.body;
+        courseManagementRequest.setQuizVisible(quizExercise.id);
+        courseManagementRequest.startQuizNow(quizExercise.id);
+    });
+}
+
+function deleteQuiz() {
+    cy.login(admin);
+    courseManagementRequest.deleteQuizExercise(quizExercise.id);
+}
