@@ -79,7 +79,7 @@ describe('Quiz Exercise Management', () => {
         });
     });
 
-    describe.only('SA quiz participation', () => {
+    describe('SA quiz participation', () => {
         before('Create SA quiz', () => {
             createQuiz([shortAnswerQuizTemplate]).then(() => {
                 courseManagementRequest.setQuizVisible(quizExercise.id);
