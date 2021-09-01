@@ -5,8 +5,6 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { DebugElement } from '@angular/core';
 import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { SinonStub, spy, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

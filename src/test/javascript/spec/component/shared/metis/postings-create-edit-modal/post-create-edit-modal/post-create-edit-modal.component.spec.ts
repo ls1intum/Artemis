@@ -75,7 +75,8 @@ describe('PostCreateEditModalComponent', () => {
         expect(component.tags).to.be.deep.equal([]);
     });
 
-    it('should invoke metis service with created post', fakeAsync(() => {
+    it('should invoke metis service with created post in overview', fakeAsync(() => {
+        metisServiceGetPageTypeStub.returns(PageType.OVERVIEW);
         component.posting = metisPostToCreateUser1;
         component.ngOnInit();
         // provide some input before creating the post

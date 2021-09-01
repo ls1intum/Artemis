@@ -73,7 +73,7 @@ describe('PostFooterComponent', () => {
         component.posting = metisPostLectureUser1;
         component.ngOnInit();
         fixture.detectChanges();
-        const contextLink = getElement(fixture.debugElement, 'a.context-information');
+        const contextLink = getElement(fixture.debugElement, 'a.linked-context-information');
         expect(contextLink).to.not.exist;
         component.posting = metisPostOrganization;
         component.ngOnChanges();
@@ -114,7 +114,7 @@ describe('PostFooterComponent', () => {
         component.posting = metisPostLectureUser1;
         component.ngOnInit();
         fixture.detectChanges();
-        const contextLink = getElement(fixture.debugElement, 'a.context-information');
+        const contextLink = getElement(fixture.debugElement, 'a.linked-context-information');
         expect(component.contextNavigationComponents).to.include('lectures');
         expect(component.contextNavigationComponents).to.include(metisLecture.id);
         expect(component.associatedContextName).to.be.equal(metisLecture.title);

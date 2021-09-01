@@ -3,8 +3,11 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Post } from 'app/entities/metis/post.model';
 import * as sinon from 'sinon';
-import { SinonStub, stub } from 'sinon';
+import { stub } from 'sinon';
 import * as moment from 'moment';
+import { Observable, of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { Course } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -22,7 +25,8 @@ import { PageDiscussionSectionComponent } from 'app/overview/page-discussion-sec
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PostingsThreadComponent } from 'app/shared/metis/postings-thread/postings-thread.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { DisplayPriority } from 'app/shared/metis/metis.util';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import {
     metisCourse,
     metisExercise,
@@ -35,7 +39,6 @@ import {
     metisPostLectureUser2,
     metisUpVoteReactionUser1,
 } from '../../../helpers/sample/metis-sample-data';
-import { DisplayPriority } from 'app/shared/metis/metis.util';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,8 +46,7 @@ const expect = chai.expect;
 describe('PageDiscussionSectionComponent', () => {
     let component: PageDiscussionSectionComponent;
     let fixture: ComponentFixture<PageDiscussionSectionComponent>;
-    let courseScoreCalculationService: CourseScoreCalculationService;
-    let getCourseStub: SinonStub;
+    let courseManagementService: CourseManagementService;
     let post1: Post;
     let post2: Post;
     let post3: Post;
@@ -74,9 +76,8 @@ describe('PageDiscussionSectionComponent', () => {
             })
             .compileComponents()
             .then(() => {
-                courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
-                getCourseStub = stub(courseScoreCalculationService, 'getCourse');
-                getCourseStub.returns(metisCourse);
+                courseManagementService = TestBed.inject(CourseManagementService);
+                stub(courseManagementService, 'findOneForDashboard').returns(of({ body: metisCourse }) as Observable<HttpResponse<Course>>);
                 fixture = TestBed.createComponent(PageDiscussionSectionComponent);
                 component = fixture.componentInstance;
                 fixture.debugElement.injector.get(MetisService);
@@ -96,9 +97,9 @@ describe('PageDiscussionSectionComponent', () => {
         expect(component.posts).to.be.deep.equal(metisExercisePosts);
     }));
 
-    it('should set course and posts for lecture on changes', fakeAsync(() => {
+    it('should set course and posts for lecture on initialization', fakeAsync(() => {
         component.lecture = metisLecture;
-        component.ngOnChanges();
+        component.ngOnInit();
         tick();
         expect(component.createdPost).to.not.be.undefined;
         expect(component.posts).to.be.deep.equal(metisLecturePosts);
