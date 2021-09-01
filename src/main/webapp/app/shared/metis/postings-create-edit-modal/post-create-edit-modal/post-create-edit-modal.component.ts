@@ -39,17 +39,17 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     }
 
     ngOnInit() {
+        this.resetCurrentContextSelectorOption();
         super.ngOnInit();
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.course = this.metisService.getCourse();
         this.lectures = this.course.lectures;
         this.exercises = this.course.exercises;
-        this.resetCurrentContextSelectorOption();
     }
 
     ngOnChanges() {
-        super.ngOnChanges();
         this.resetCurrentContextSelectorOption();
+        super.ngOnChanges();
     }
 
     /**
