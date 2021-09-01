@@ -62,23 +62,25 @@ describe('Quiz Exercise Assessment', () => {
         });
     });
 
-    describe('SA Quiz assessment', () => {
+    describe.only('SA Quiz assessment', () => {
         before('Creates a quiz and a submission', () => {
             createQuiz([shortAnswerQuizTemplate]);
         });
 
         it('Assesses a sa quiz submission automatically', () => {
-            cy.login(student, '');
-            /*
+            cy.login(student);
+            courseManagementRequest.startExerciseParticipation(course.id, quizExercise.id);
+            courseManagementRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert', 'cry', 'goodbye']);
+            cy.wait(5000);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
             cy.contains(quizExercise.title);
-            cy.contains('Score');*/
+            cy.contains('Score');
         });
     });
 });
 
-function createQuiz(quizQuestions?: any) {
-    courseManagementRequest.createQuizExercise({course}, 'Quiz', dayjs().subtract(1, 'hour'), 1, quizQuestions).then((quizResponse) => {
+function createQuiz(quizQuestions?: any, duration = 1) {
+    courseManagementRequest.createQuizExercise({course}, 'Quiz', dayjs().subtract(1, 'minute'), duration, quizQuestions).then((quizResponse) => {
         quizExercise = quizResponse.body;
         courseManagementRequest.setQuizVisible(quizExercise.id);
         courseManagementRequest.startQuizNow(quizExercise.id);

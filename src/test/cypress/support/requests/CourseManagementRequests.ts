@@ -10,6 +10,7 @@ import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
 import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceSubmission_template.json';
+import shortAnswerSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerSubmission_template.json';
 import dayjs from 'dayjs';
 
 const COURSE_BASE = BASE_API + 'courses/';
@@ -254,6 +255,27 @@ export class CourseManagementRequests {
             url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
             method: POST,
             body: multipleChoiceSubmission
+        });
+    }
+
+    createShortAnswerSubmission(quizExercise: any, textAnswers: string[]) {
+        const shortAnswerSubmission = {
+            ...shortAnswerSubmissionTemplate,
+            submittedAnswers: [{
+                ...shortAnswerSubmissionTemplate.submittedAnswers[0],
+                quizQuestion: quizExercise.quizQuestions[0],
+                submittedTexts: textAnswers.map((answer, index) => {
+                    return {
+                        text: answer,
+                        spot: quizExercise.quizQuestions[0].spots[index]
+                    };
+                })
+            }]
+        };
+        return cy.request({
+            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            method: POST,
+            body: shortAnswerSubmission
         });
     }
 
