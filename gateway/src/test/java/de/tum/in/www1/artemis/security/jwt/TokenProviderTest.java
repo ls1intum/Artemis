@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.security.jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -109,7 +109,7 @@ class TokenProviderTest {
 
     private Authentication createAuthentication() {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(AuthoritiesConstants.ANONYMOUS));
+        authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS));
         return new UsernamePasswordAuthenticationToken("anonymous", "anonymous", authorities);
     }
 
