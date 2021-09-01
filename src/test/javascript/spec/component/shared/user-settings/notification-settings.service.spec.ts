@@ -71,23 +71,6 @@ describe('User Settings Service', () => {
         });
 
         it('should update OriginalNotificationTypeActivationMap & map between NotificationType and OptionCore', () => {
-            /*
-            const notificationOptionCoreA: NotificationOptionCore = {
-                id: 1,
-                optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
-                webapp: false,
-                email: false,
-            };
-            const notificationOptionCoreB: NotificationOptionCore = {
-                id: 2,
-                optionSpecifier: OptionSpecifier.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
-                webapp: true,
-                email: false,
-            };
-             */
-
-            const notificationOptionCoresForTesting: NotificationOptionCore[] = [notificationOptionCoreA, notificationOptionCoreB];
-
             const type1 = OriginalNotificationType.EXERCISE_PRACTICE;
             const type1ActivationStatus = notificationOptionCoreA.webapp;
             const type2 = OriginalNotificationType.EXAM_ARCHIVE_STARTED;
