@@ -1,5 +1,7 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
+import shortAnswerQuizTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerQuiz_template.json';
+import dayjs from 'dayjs';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -16,11 +18,10 @@ let uid: string;
 let courseName: string;
 let courseShortName: string;
 let quizExerciseName: string;
+let course: any;
+let quizExercise: any;
 
 describe('Quiz Exercise Management', () => {
-    let course: any;
-    let quizExercise: any;
-
     before('Set up course', () => {
         uid = generateUUID();
         courseName = 'Cypress course' + uid;
@@ -30,6 +31,11 @@ describe('Quiz Exercise Management', () => {
             course = response.body;
             courseManagementRequest.addStudentToCourse(course.id, student.username);
         });
+    });
+
+    beforeEach('Generate names', () => {
+        uid = generateUUID();
+        quizExerciseName = 'Cypress Quiz ' + uid;
     });
 
     afterEach('Delete Quiz', () => {
@@ -44,12 +50,7 @@ describe('Quiz Exercise Management', () => {
 
     describe('Quiz exercise participation', () => {
         beforeEach('Create quiz exercise', () => {
-            uid = generateUUID();
-            quizExerciseName = 'Cypress Quiz ' + uid;
-            cy.login(admin);
-            courseManagementRequest.createQuizExercise({ course }, quizExerciseName).then((quizResponse) => {
-                quizExercise = quizResponse.body;
-            });
+            createQuiz();
         });
 
         it('Student cannot see hidden quiz', () => {
@@ -77,4 +78,33 @@ describe('Quiz Exercise Management', () => {
             cy.get('[jhitranslate="artemisApp.quizExercise.successfullySubmittedText"]').should('be.visible');
         });
     });
+
+    describe.only('SA quiz participation', () => {
+        before('Create SA quiz', () => {
+            createQuiz([shortAnswerQuizTemplate]).then(() => {
+                courseManagementRequest.setQuizVisible(quizExercise.id);
+                courseManagementRequest.startQuizNow(quizExercise.id);
+            });
+        });
+
+        it('Student can participate in SA quiz', () => {
+            cy.login(student, '/courses/' + course.id);
+            cy.contains(quizExercise.title).should('be.visible').click();
+            cy.get('.btn').contains('Start quiz').click();
+            cy.get('.short-answer-question-container__input').eq(0).type('give');
+            cy.get('.short-answer-question-container__input').eq(1).type('let');
+            cy.get('.short-answer-question-container__input').eq(2).type('run');
+            cy.get('.short-answer-question-container__input').eq(3).type('desert');
+            cy.get('.short-answer-question-container__input').eq(4).type('cry');
+            cy.get('.short-answer-question-container__input').eq(5).type('goodbye');
+            cy.get('.jhi-btn').click();
+        });
+    });
 });
+
+function createQuiz(quizQuestions?: any) {
+    cy.login(admin);
+    return courseManagementRequest.createQuizExercise({ course }, 'Quiz', dayjs().subtract(1, 'minute'), quizQuestions).then((quizResponse) => {
+            quizExercise = quizResponse.body;
+    });
+}
