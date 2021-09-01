@@ -1342,6 +1342,72 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/lorem-ipsum", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testMultipleChoiceQuizExplanationLength_Valid() throws Exception {
+        int validityThreshold = 1000;
+
+        QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.setExplanation("0".repeat(validityThreshold));
+
+        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testMultipleChoiceQuizExplanationLength_Invalid() throws Exception {
+        int validityThreshold = 1000;
+
+        QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.setExplanation("0".repeat(validityThreshold + 1));
+
+        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testMultipleChoiceQuizOptionExplanationLength_Valid() throws Exception {
+        int validityThreshold = 1000;
+
+        QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold));
+
+        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testMultipleChoiceQuizOptionExplanationLength_Inalid() throws Exception {
+        int validityThreshold = 1000;
+
+        QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold + 1));
+
+        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private QuizExercise createMultipleChoiceQuizExerciseDummy() {
+        Course course = database.createCourse();
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusHours(5), null, course);
+
+        mc.setScoringType(ScoringType.ALL_OR_NOTHING);
+        mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
+        mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        mc.setExplanation("Explanation");
+        mc.copyQuestionId();
+
+        quizExercise.addQuestions(mc);
+        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
+        quizExercise.setGradingInstructions(null);
+
+        return quizExercise;
+    }
+
     /**
      * Check that the general information of two exercises is equal.
      */
