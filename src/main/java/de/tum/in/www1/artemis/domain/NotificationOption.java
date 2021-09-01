@@ -21,10 +21,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class NotificationOption extends DomainObject {
 
-    @Id
-    @Column(name = "id")
-    private long id;
-
     @Column(name = "option_specifier", nullable = false)
     private String optionSpecifier;
 
@@ -42,28 +38,11 @@ public class NotificationOption extends DomainObject {
         // Default empty constructor
     }
 
-    // option state before saving, i.e. no information about user yet
-    public NotificationOption(boolean webapp, boolean email, String optionSpecifier) {
-        setWebapp(webapp);
-        setEmail(email);
-        setOptionSpecifier(optionSpecifier);
-    }
-
-    // full information provided besides id (will be set by auto increment)
     public NotificationOption(User user, boolean webapp, boolean email, String optionSpecifier) {
-        setUser(user);
-        setWebapp(webapp);
-        setEmail(email);
-        setOptionSpecifier(optionSpecifier);
-    }
-
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
+        this.setUser(user);
+        this.setWebapp(webapp);
+        this.setEmail(email);
+        this.setOptionSpecifier(optionSpecifier);
     }
 
     public String getOptionSpecifier() {
@@ -100,45 +79,11 @@ public class NotificationOption extends DomainObject {
 
     @Override
     public String toString() {
-        return "NotificationOption{" + "id=" + id + ", optionSpecifier='" + optionSpecifier + '\'' + ", webapp=" + webapp + ", email=" + email + ", user=" + user + '}';
+        return "NotificationOption{" + ", optionSpecifier='" + optionSpecifier + '\'' + ", webapp=" + webapp + ", email=" + email + ", user=" + user + '}';
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getOptionSpecifier(), getUser(), isWebapp(), isEmail());
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof NotificationOption)) {
-            return false;
-        }
-
-        long thisId = this.id;
-        NotificationOption option = (NotificationOption) object;
-        long optionId = option.id;
-
-        if (thisId > 0) {
-            if (thisId != optionId) {
-                return false;
-            }
-        }
-
-        // default id 0 (or no id -> id = 0) && thisId == 0
-
-        // might be null if the option was not yet saved
-        if (this.user != null) {
-            if (!this.user.equals(option.user)) {
-                return false;
-            }
-        }
-
-        if (this.optionSpecifier != null) {
-            if (!this.optionSpecifier.equals(option.optionSpecifier)) {
-                return false;
-            }
-        }
-
-        return this.webapp == option.webapp && this.email == option.email;
+        return Objects.hash(getOptionSpecifier(), getUser(), isWebapp(), isEmail());
     }
 }

@@ -42,11 +42,11 @@ public class NotificationSettingsServiceTest {
         student1 = new User();
         student1.setId(555L);
 
-        unsavedNotificationOptionA = new NotificationOption(false, false, "notification.exercise-notification.exercise-open-for-practice");
+        unsavedNotificationOptionA = new NotificationOption(student1, false, false, "notification.exercise-notification.exercise-open-for-practice");
 
-        unsavedNotificationOptionB = new NotificationOption(true, false, "notification.lecture-notification.attachment-changes");
+        unsavedNotificationOptionB = new NotificationOption(student1, true, false, "notification.lecture-notification.attachment-changes");
 
-        unsavedNotificationOptionC = new NotificationOption(false, false, "notification.instructor-exclusive-notification.course-and-exam-archiving-started");
+        unsavedNotificationOptionC = new NotificationOption(student1, false, false, "notification.instructor-exclusive-notification.course-and-exam-archiving-started");
 
         unsavedNotificationOptions = new NotificationOption[] { unsavedNotificationOptionA, unsavedNotificationOptionB, unsavedNotificationOptionC };
         /*

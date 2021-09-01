@@ -64,9 +64,6 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
 
         List<NotificationOption> notificationOptions = request.getList("/api/notification-settings/fetch-options", HttpStatus.OK, NotificationOption.class);
 
-        // due to auto increment the ids change
-        notificationOptions.get(0).setId(0);
-        notificationOptions.get(1).setId(0);
         assertThat(notificationOptions).as("NotificationOption A with recipient equal to current user is returned").contains(optionA);
         assertThat(notificationOptions).as("NotificationOption B with recipient equal to current user is returned").contains(optionB);
     }
@@ -84,8 +81,6 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
                 NotificationOption[].class, HttpStatus.OK);
 
         // due to auto increment the ids change
-        notificationOptionsResponse[0].setId(0);
-        notificationOptionsResponse[1].setId(0);
         assertThat(notificationOptionsResponse).as("NotificationOption A succesfully saved").contains(optionA);
         assertThat(notificationOptionsResponse).as("NotificationOption B succesfully saved").contains(optionB);
     }
