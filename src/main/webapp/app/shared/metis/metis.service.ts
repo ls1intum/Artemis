@@ -15,6 +15,7 @@ import { CourseWideContext, DisplayPriority, PageType, PostContextFilter } from 
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { Params } from '@angular/router';
 
 @Injectable()
 export class MetisService {
@@ -282,5 +283,27 @@ export class MetisService {
             emptyPost.courseWideContext = CourseWideContext.TECH_SUPPORT as CourseWideContext;
         }
         return emptyPost;
+    }
+
+    getLinkForPost(posting: Post) {
+        if (posting.courseWideContext) {
+            return ['/courses', this.courseId, 'discussion'];
+        }
+        if (posting.lecture) {
+            return ['/courses', this.courseId, 'lectures', posting.lecture.id!];
+        }
+        if (posting.exercise) {
+            return ['/courses', this.courseId, 'exercises', posting.exercise.id!];
+        }
+    }
+
+    getQueryParamsForPost(posting: Post): Params {
+        const params: Params = {};
+        if (posting.courseWideContext) {
+            params.searchText = `#${posting.id}`;
+        } else {
+            params.postId = posting.id;
+        }
+        return params;
     }
 }

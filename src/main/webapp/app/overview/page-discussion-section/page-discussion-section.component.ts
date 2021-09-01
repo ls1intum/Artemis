@@ -4,8 +4,8 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { DisplayPriority, PageType, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { Course } from 'app/entities/course.model';
-import { ActivatedRoute } from '@angular/router';
-import { map, Subscription } from 'rxjs';
+import { ActivatedRoute, Params, Router } from '@angular/router';
+import { combineLatest, map, Subscription } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
@@ -28,20 +28,27 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
     createdPost: Post;
     posts: Post[];
     isLoading = true;
+    currentPostId?: number;
+    currentPost?: Post;
     readonly pageType = PageType.PAGE_SECTION;
 
     private postsSubscription: Subscription;
     private paramSubscription: Subscription;
 
-    constructor(private metisService: MetisService, private activatedRoute: ActivatedRoute, private courseManagementService: CourseManagementService) {}
+    constructor(private metisService: MetisService, private activatedRoute: ActivatedRoute, private courseManagementService: CourseManagementService, private router: Router) {}
 
     /**
      * on initialization: initializes the metis service, fetches the posts for the exercise or lecture the discussion section is placed at,
      * creates the subscription to posts to stay updated on any changes of posts in this course
      */
     ngOnInit(): void {
-        this.paramSubscription = this.activatedRoute.params.subscribe((params) => {
-            const courseId = parseInt(params['courseId'], 10);
+        this.paramSubscription = combineLatest(this.activatedRoute.params, this.activatedRoute.queryParams, (params: Params, queryParams: Params) => ({
+            params,
+            queryParams,
+        })).subscribe((routeParams: { params: Params; queryParams: Params }) => {
+            const { params, queryParams } = routeParams;
+            const courseId = params.courseId;
+            this.currentPostId = +queryParams.postId;
             this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
                 if (res.body !== undefined) {
                     this.course = res.body!;
@@ -58,6 +65,9 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
         this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.sort(this.sectionSortFn))).subscribe((posts: Post[]) => {
             this.posts = posts;
             this.isLoading = false;
+            if (this.currentPostId && this.posts.length > 0) {
+                this.currentPost = this.posts.find((post) => post.id === this.currentPostId);
+            }
         });
     }
 
@@ -157,5 +167,16 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';
             });
+    }
+
+    resetCurrentPost() {
+        this.currentPost = undefined;
+        this.currentPostId = undefined;
+        this.router.navigate([], {
+            queryParams: {
+                postId: this.currentPostId,
+            },
+            queryParamsHandling: 'merge',
+        });
     }
 }

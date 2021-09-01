@@ -18,7 +18,13 @@
             </div>
             <!-- body -->
             <div class="card-body pt-0">
-                <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post"> </jhi-postings-thread>
+                <div *ngIf="currentPost !== undefined; else threadView">
+                    <fa-icon [icon]="'arrow-left'" (click)="resetCurrentPost()" class="back-button me-2"></fa-icon>
+                    <jhi-postings-thread [post]="currentPost" [showAnswers]="true"></jhi-postings-thread>
+                </div>
+                <ng-template #threadView>
+                    <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1"></jhi-postings-thread>
+                </ng-template>
                 <!-- new post button -->
                 <div class="row mt-2" *ngIf="createdPost">
                     <div class="col-12">
