@@ -6,11 +6,12 @@ import { DisplayPriority, PageType, VOTE_EMOJI_ID } from 'app/shared/metis/metis
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { map, Subscription } from 'rxjs';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-page-discussion-section',
@@ -32,7 +33,7 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
     private postsSubscription: Subscription;
     private paramSubscription: Subscription;
 
-    constructor(private metisService: MetisService, private activatedRoute: ActivatedRoute, private courseCalculationService: CourseScoreCalculationService) {}
+    constructor(private metisService: MetisService, private activatedRoute: ActivatedRoute, private courseManagementService: CourseManagementService) {}
 
     /**
      * on initialization: initializes the metis service, fetches the posts for the exercise or lecture the discussion section is placed at,
@@ -41,16 +42,18 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
     ngOnInit(): void {
         this.paramSubscription = this.activatedRoute.params.subscribe((params) => {
             const courseId = parseInt(params['courseId'], 10);
-            this.course = this.courseCalculationService.getCourse(courseId);
-            if (this.course) {
-                this.metisService.setCourse(this.course!);
-                this.metisService.setPageType(this.pageType);
-                this.metisService.getFilteredPosts({
-                    exerciseId: this.exercise?.id,
-                    lectureId: this.lecture?.id,
-                });
-                this.createEmptyPost();
-            }
+            this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
+                if (res.body !== undefined) {
+                    this.course = res.body!;
+                    this.metisService.setCourse(this.course!);
+                    this.metisService.setPageType(this.pageType);
+                    this.metisService.getFilteredPosts({
+                        exerciseId: this.exercise?.id,
+                        lectureId: this.lecture?.id,
+                    });
+                    this.createEmptyPost();
+                }
+            });
         });
         this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.sort(this.sectionSortFn))).subscribe((posts: Post[]) => {
             this.posts = posts;

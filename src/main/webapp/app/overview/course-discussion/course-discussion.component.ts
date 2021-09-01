@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CourseWideContext, DisplayPriority, PageType, PostSortCriterion, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { map, Subscription } from 'rxjs';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -11,6 +10,8 @@ import { Post } from 'app/entities/metis/post.model';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ButtonType } from 'app/shared/components/button.component';
+import { HttpResponse } from '@angular/common/http';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 interface ContextFilterOption {
     courseId?: number;
@@ -55,7 +56,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     constructor(
         protected metisService: MetisService,
         private activatedRoute: ActivatedRoute,
-        private courseCalculationService: CourseScoreCalculationService,
+        private courseManagementService: CourseManagementService,
         private formBuilder: FormBuilder,
     ) {}
 
@@ -66,17 +67,19 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.paramSubscription = this.activatedRoute.parent!.params.subscribe((params) => {
             const courseId = parseInt(params['courseId'], 10);
-            this.course = this.courseCalculationService.getCourse(courseId);
-            if (this.course) {
-                this.lectures = this.course?.lectures;
-                this.exercises = this.course?.exercises;
-                this.metisService.setCourse(this.course!);
-                this.metisService.setPageType(this.pageType);
-                this.metisService.getFilteredPosts({ courseId: this.course!.id });
-                this.resetCurrentFilter();
-                this.createEmptyPost();
-                this.resetFormGroup();
-            }
+            this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
+                if (res.body !== undefined) {
+                    this.course = res.body!;
+                    this.lectures = this.course?.lectures;
+                    this.exercises = this.course?.exercises;
+                    this.metisService.setCourse(this.course!);
+                    this.metisService.setPageType(this.pageType);
+                    this.metisService.getFilteredPosts({ courseId: this.course!.id });
+                    this.resetCurrentFilter();
+                    this.createEmptyPost();
+                    this.resetFormGroup();
+                }
+            });
         });
         this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.filter(this.filterFn).sort(this.overviewSortFn))).subscribe((posts: Post[]) => {
             this.posts = posts;

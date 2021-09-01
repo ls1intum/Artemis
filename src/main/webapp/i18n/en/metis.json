@@ -50,8 +50,8 @@
             },
             "post": {
                 "context": "Context",
-                "contextTooltip": "Choose the context in which you want your post to be published. You can choose between specific exercises and lectures of the course or choose one of the course-wide, more general topics. If you choose an exercise or a lecture, the post will appear in the discussion panel on the exercise or lecture page. If you choose a course-wide topic, the post will only be listed in the overview (discussion tab).",
-                "fixedContextTooltip": "The context of a post can only be changed by a tutor once the post was created.",
+                "contextTutorTooltip": "Choose the context in which you want this post to be published after it is modified. You can choose a specific exercise or lecture or one of the course-wide, more general topics. If you choose an exercise or a lecture, the post will be displayed in the discussion section of the respective page. If you choose a course-wide topic, the post will only be listed in the overview (discussion tab).",
+                "courseWideTopicTooltip": "Choose one of the course-wide, more general topics as the context for your post. Posts concerning specific exercises or lectures must be created on the appropriate page.",
                 "courseWideContext": "Course-wide Topics",
                 "exercises": "Exercises",
                 "lectures": "Lectures",
