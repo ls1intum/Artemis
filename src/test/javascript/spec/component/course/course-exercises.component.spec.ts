@@ -31,10 +31,10 @@ import { stub } from 'sinon';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
-import { MockTranslateValuesDirective } from './course-scores/course-scores.component.spec';
 import { By } from '@angular/platform-browser';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
