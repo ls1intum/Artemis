@@ -256,8 +256,8 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         NotificationType allowedType = NotificationType.ATTACHMENT_CHANGE;
         NotificationType blockedType = NotificationType.EXERCISE_PRACTICE;
 
-        NotificationOption allowedOption = new NotificationOption(27L, users.get(0), true, false, "notification.lecture-notification.attachment-changes");
-        NotificationOption blockedOption = new NotificationOption(42L, users.get(0), false, false, "notification.exercise-notification.exercise-open-for-practice");
+        NotificationOption allowedOption = new NotificationOption(users.get(0), true, false, "notification.lecture-notification.attachment-changes");
+        NotificationOption blockedOption = new NotificationOption(users.get(0), false, false, "notification.exercise-notification.exercise-open-for-practice");
 
         notificationOptionRepository.save(allowedOption);
         notificationOptionRepository.save(blockedOption);

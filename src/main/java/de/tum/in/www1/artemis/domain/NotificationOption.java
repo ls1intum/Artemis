@@ -40,23 +40,17 @@ public class NotificationOption extends DomainObject {
 
     public NotificationOption() {
         // Default empty constructor
-    };
+    }
 
+    // option state before saving, i.e. no information about user yet
     public NotificationOption(boolean webapp, boolean email, String optionSpecifier) {
         setWebapp(webapp);
         setEmail(email);
         setOptionSpecifier(optionSpecifier);
     }
 
+    // full information provided besides id (will be set by auto increment)
     public NotificationOption(User user, boolean webapp, boolean email, String optionSpecifier) {
-        setUser(user);
-        setWebapp(webapp);
-        setEmail(email);
-        setOptionSpecifier(optionSpecifier);
-    }
-
-    public NotificationOption(Long id, User user, boolean webapp, boolean email, String optionSpecifier) {
-        setId(id);
         setUser(user);
         setWebapp(webapp);
         setEmail(email);
@@ -112,5 +106,23 @@ public class NotificationOption extends DomainObject {
     @Override
     public int hashCode() {
         return Objects.hash(getId(), getOptionSpecifier(), getUser(), isWebapp(), isEmail());
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (!(object instanceof NotificationOption)) {
+            return false;
+        }
+
+        long thisId = this.id;
+        NotificationOption option = (NotificationOption) object;
+        long optionId = option.id;
+
+        if (thisId > 0) {
+            return thisId == optionId;
+        }
+
+        // default id 0 (or no id -> id = 0) && thisId == 0
+        return Objects.deepEquals(this, option);
     }
 }
