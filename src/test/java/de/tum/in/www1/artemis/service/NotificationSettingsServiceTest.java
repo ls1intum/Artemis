@@ -49,11 +49,7 @@ public class NotificationSettingsServiceTest {
         unsavedNotificationOptionC = new NotificationOption(student1, false, false, "notification.instructor-exclusive-notification.course-and-exam-archiving-started");
 
         unsavedNotificationOptions = new NotificationOption[] { unsavedNotificationOptionA, unsavedNotificationOptionB, unsavedNotificationOptionC };
-        /*
-         * completeNotificationOptionA = new NotificationOption(13L, student1, false, false, "notification.exercise-notification.exercise-open-for-practice");
-         * completeNotificationOptionB = new NotificationOption(27L, student1, true, false, "notification.lecture-notification.attachment-changes"); completeNotificationOptionC =
-         * new NotificationOption(42L, student1, false, false, "notification.instructor-exclusive-notification.course-and-exam-archiving-started");
-         */
+
         completeNotificationOptionA = new NotificationOption(student1, false, false, "notification.exercise-notification.exercise-open-for-practice");
 
         completeNotificationOptionB = new NotificationOption(student1, true, false, "notification.lecture-notification.attachment-changes");

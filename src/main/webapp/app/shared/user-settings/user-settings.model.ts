@@ -41,7 +41,6 @@ export interface Option<T> {
  * Correspond to UserOptions (Server)
  */
 export abstract class OptionCore {
-    id?: number;
     optionSpecifier: OptionSpecifier;
     changed?: boolean;
 }

@@ -74,15 +74,23 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testSaveNotificationOptionsForCurrentUser_OK() throws Exception {
-        // NotificationOption[] newlyChangedOptionsToSave = new NotificationOption[] { optionA, optionB };
         NotificationOption[] newlyChangedOptionsToSave = { optionA, optionB };
 
         NotificationOption[] notificationOptionsResponse = request.postWithResponseBody("/api/notification-settings/save-options", newlyChangedOptionsToSave,
                 NotificationOption[].class, HttpStatus.OK);
 
-        // due to auto increment the ids change
-        assertThat(notificationOptionsResponse).as("NotificationOption A succesfully saved").contains(optionA);
-        assertThat(notificationOptionsResponse).as("NotificationOption B succesfully saved").contains(optionB);
+        boolean foundA = false;
+        boolean foundB = false;
+        for (NotificationOption option : notificationOptionsResponse) {
+            if (option.getOptionSpecifier().equals(optionA.getOptionSpecifier())) {
+                foundA = true;
+            }
+            if (option.getOptionSpecifier().equals(optionA.getOptionSpecifier())) {
+                foundB = true;
+            }
+        }
+
+        assertThat(foundA && foundB).as("Saved and received Notification Options A & B correctly").isTrue();
     }
 
     /**

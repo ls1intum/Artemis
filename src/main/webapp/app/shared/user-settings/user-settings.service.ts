@@ -106,9 +106,6 @@ export class UserSettingsService {
         settings.groups.forEach((group: OptionGroup<OptionCore>) => {
             group.options.forEach((option: Option<OptionCore>) => {
                 const optionCore: OptionCore = option.optionCore;
-                if (optionCore.id == undefined) {
-                    optionCore.id = -1; // is used to mark cores which have never been saved to the database
-                }
                 // sets changed flag to false after update
                 optionCore.changed = false;
                 optionCoreAccumulator.push(optionCore);
