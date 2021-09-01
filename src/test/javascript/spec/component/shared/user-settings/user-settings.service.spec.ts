@@ -13,7 +13,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { OptionCore, UserSettings } from 'app/shared/user-settings/user-settings.model';
 import { defaultNotificationSettings, NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
-import { notificationOptionCoresForTesting } from './user-settings-shared-constants';
+import { notificationOptionCoresForTesting } from './notification-settings.service.spec';
 
 chai.use(sinonChai);
 const expect = chai.expect;
