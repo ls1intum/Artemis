@@ -45,14 +45,12 @@ describe('Notification Sidebar Component', () => {
     const notifications = [notificationNow, notificationPast] as Notification[];
 
     const notificationOptionCoreA: NotificationOptionCore = {
-        id: 42,
         webapp: true,
         email: false,
         changed: false,
         optionSpecifier: OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES,
     };
     const notificationOptionCoreB: NotificationOptionCore = {
-        id: 27,
         webapp: true,
         email: false,
         changed: false,
