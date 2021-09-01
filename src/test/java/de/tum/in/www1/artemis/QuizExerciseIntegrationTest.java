@@ -1342,6 +1342,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/lorem-ipsum", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * test that a quiz question with an explanation within valid length can be created
+     */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testMultipleChoiceQuizExplanationLength_Valid() throws Exception {
@@ -1354,6 +1357,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
     }
 
+    /**
+     * test that a quiz question with an explanation without valid length can't be created
+     */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testMultipleChoiceQuizExplanationLength_Invalid() throws Exception {
@@ -1366,6 +1372,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    /**
+     * test that a quiz question with an option with an explanation with valid length can be created
+     */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testMultipleChoiceQuizOptionExplanationLength_Valid() throws Exception {
@@ -1378,6 +1387,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
     }
 
+
+    /**
+     * test that a quiz question with an option with an explanation without valid length can't be created
+     */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testMultipleChoiceQuizOptionExplanationLength_Inalid() throws Exception {
