@@ -119,22 +119,26 @@ public class NotificationOption extends DomainObject {
         long optionId = option.id;
 
         if (thisId > 0) {
-            if (thisId != optionId)
+            if (thisId != optionId) {
                 return false;
+            }
         }
 
         // default id 0 (or no id -> id = 0) && thisId == 0
 
         // might be null if the option was not yet saved
         if (this.user != null) {
-            if (!this.user.equals(option.user))
+            if (!this.user.equals(option.user)) {
                 return false;
+            }
         }
 
-        boolean emailEq = this.email == option.email;
-        boolean webappEq = this.webapp == option.webapp;
-        boolean specifierEq = this.optionSpecifier.equals(option.optionSpecifier);
+        if (this.optionSpecifier != null) {
+            if (!this.optionSpecifier.equals(option.optionSpecifier)) {
+                return false;
+            }
+        }
 
-        return emailEq && webappEq && specifierEq;
+        return this.webapp == option.webapp && this.email == option.email;
     }
 }
