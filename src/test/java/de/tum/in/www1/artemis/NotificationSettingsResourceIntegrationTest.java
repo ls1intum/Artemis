@@ -25,6 +25,10 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
 
     private List<User> users;
 
+    private NotificationOption optionA;
+
+    private NotificationOption optionB;
+
     @BeforeEach
     public void initTestCase() {
         users = database.addUsers(2, 1, 1, 1);
@@ -32,6 +36,9 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
         User student1 = users.get(0);
         users.set(0, student1);
         userRepository.save(student1);
+
+        optionA = new NotificationOption(student1, true, false, "notification.lecture-notification.attachment-changes");
+        optionB = new NotificationOption(student1, false, false, "notification.exercise-notification.exercise-open-for-practice");
     }
 
     @AfterEach
@@ -42,32 +49,37 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetNotificationOptions() throws Exception {
-        User recipient = userRepository.getUser();
+    public void testGetNotificationOptionsForCurrentUser() throws Exception {
+        notificationOptionRepository.save(optionA);
+        notificationOptionRepository.save(optionB);
 
-        NotificationOption notificationOption1 = new NotificationOption();
-        notificationOption1.setId(1);
-        notificationOption1.setUser(recipient);
-        notificationOption1.setWebapp(false);
-        notificationOption1.setEmail(false);
-        notificationOption1.setOptionSpecifier("notification.exercise-notification.exercise-open-for-practice");
-        notificationOptionRepository.save(notificationOption1);
-
-        NotificationOption notificationOption2 = new NotificationOption();
-        notificationOption2.setId(2);
-        notificationOption2.setUser(recipient);
-        notificationOption2.setWebapp(true);
-        notificationOption2.setEmail(false);
-        notificationOption2.setOptionSpecifier("notification.lecture-notification.attachment-changes");
-        notificationOptionRepository.save(notificationOption2);
-
-        // List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
         List<NotificationOption> notificationOptions = request.getList("/api/notification-settings/fetch-options", HttpStatus.OK, NotificationOption.class);
-        // assertThat(notificationOptions).as("NotificationOptions with recipient equal to current user is returned").contains(notification1);
-        // assertThat(notificationOptions).as("Notification with recipient not equal to current user is not returned").doesNotContain(notification2);
 
-        assertThat(notificationOptions).as("NotificationOptions with recipient equal to current user is returned").contains(notificationOption1);
-
+        // due to auto increment the ids change
+        notificationOptions.get(0).setId(0);
+        notificationOptions.get(1).setId(0);
+        assertThat(notificationOptions).as("NotificationOption A with recipient equal to current user is returned").contains(optionA);
+        assertThat(notificationOptions).as("NotificationOption B with recipient equal to current user is returned").contains(optionB);
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSaveNotificationOptionsForCurrentUser_OK() throws Exception {
+        NotificationOption[] newlyChangedOptionsToSave = new NotificationOption[] { optionA, optionB };
+
+        NotificationOption[] notificationOptionsResponse = request.postWithResponseBody("/api/notification-settings/save-options", newlyChangedOptionsToSave,
+                NotificationOption[].class, HttpStatus.OK);
+
+        // due to auto increment the ids change
+        notificationOptionsResponse[0].setId(0);
+        notificationOptionsResponse[1].setId(0);
+        assertThat(notificationOptionsResponse).as("NotificationOption A succesfully saved").contains(optionA);
+        assertThat(notificationOptionsResponse).as("NotificationOption B succesfully saved").contains(optionB);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSaveNotificationOptionsForCurrentUser_BAD_REQUEST() throws Exception {
+        request.postWithResponseBody("/api/notification-settings/save-options", null, NotificationOption[].class, HttpStatus.BAD_REQUEST);
+    }
 }

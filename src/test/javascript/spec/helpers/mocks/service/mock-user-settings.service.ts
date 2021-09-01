@@ -5,7 +5,11 @@ export class MockUserSettingsService {
     private applyNewChangesSource = new Subject<string>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
 
-    loadUserOptions = (category: UserSettingsCategory) => {};
+    loadUserOptions = () => {};
+    loadUserOptionCoresSuccessAsSettings = () => {};
+    saveUserOptions = () => {};
+    saveUserOptionsSuccess = () => {};
+    extractOptionCoresFromSettings = () => {};
 
     sendApplyChangesEvent(message: string): void {
         this.applyNewChangesSource.next(message);

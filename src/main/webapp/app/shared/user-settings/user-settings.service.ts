@@ -84,16 +84,14 @@ export class UserSettingsService {
 
     /**
      * Is called after a successful server call to save changed user options
-     * The fetched option cores are used to update the given settings (for validation)
+     * The fetched option cores are used to update the given (current) settings (for validation)
+     * @param settingsToUpdate (usually the current settings prior to saving)
      * @param receivedOptionCoresFromServer were loaded from the server to update provided settings
-     * @param category decided what default settings to use as the base
      * @return updated UserSettings based on loaded option cores
      */
-    public saveUserOptionsSuccess(receivedOptionCoresFromServer: OptionCore[], category: UserSettingsCategory): UserSettings<OptionCore> {
-        let settingsResult: UserSettings<OptionCore>;
-        settingsResult = UserSettingsService.loadDefaultSettingsAsFoundation(category);
-        this.updateSettings(receivedOptionCoresFromServer, settingsResult);
-        return settingsResult;
+    public saveUserOptionsSuccess(settingsToUpdate: UserSettings<OptionCore>, receivedOptionCoresFromServer: OptionCore[]): UserSettings<OptionCore> {
+        this.updateSettings(receivedOptionCoresFromServer, settingsToUpdate);
+        return settingsToUpdate;
     }
 
     // auxiliary methods

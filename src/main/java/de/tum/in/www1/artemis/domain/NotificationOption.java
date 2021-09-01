@@ -48,6 +48,13 @@ public class NotificationOption extends DomainObject {
         setOptionSpecifier(optionSpecifier);
     }
 
+    public NotificationOption(User user, boolean webapp, boolean email, String optionSpecifier) {
+        setUser(user);
+        setWebapp(webapp);
+        setEmail(email);
+        setOptionSpecifier(optionSpecifier);
+    }
+
     public NotificationOption(Long id, User user, boolean webapp, boolean email, String optionSpecifier) {
         setId(id);
         setUser(user);

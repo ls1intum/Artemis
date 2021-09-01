@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.NotificationSettingsService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -42,9 +41,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     private NotificationOptionRepository notificationOptionRepository;
-
-    @Autowired
-    private NotificationSettingsService notificationSettingsService;
 
     private Exercise exercise;
 

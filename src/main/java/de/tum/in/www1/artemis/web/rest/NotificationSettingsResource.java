@@ -76,7 +76,7 @@ public class NotificationSettingsResource {
      * Saves the provided NotificationOptions to the server.
      * @param notificationOptions which should be saved to the notificationOption database.
      *
-     * @return all available UserOptions for the current user as array (including the newly saved ones)
+     * @return the UserOptions that just got saved for the current user as array
      * 200 for a successful execution, 400 if the user provided empty options to save, 500 if the save call returns empty options
      */
     @PostMapping("/notification-settings/save-options")

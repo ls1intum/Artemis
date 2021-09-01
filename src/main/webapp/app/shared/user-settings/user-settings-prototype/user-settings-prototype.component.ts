@@ -59,7 +59,7 @@ export abstract class UserSettingsPrototypeComponent implements OnInit {
     public saveOptions() {
         this.userSettingsService.saveUserOptions(this.optionCores, this.userSettingsCategory).subscribe(
             (res: HttpResponse<OptionCore[]>) => {
-                this.userSettings = this.userSettingsService.saveUserOptionsSuccess(res.body!, this.userSettingsCategory);
+                this.userSettings = this.userSettingsService.saveUserOptionsSuccess(this.userSettings, res.body!);
                 this.optionCores = this.userSettingsService.extractOptionCoresFromSettings(this.userSettings);
                 this.finishSaving();
             },
@@ -77,7 +77,6 @@ export abstract class UserSettingsPrototypeComponent implements OnInit {
         this.optionsChanged = false;
         this.alertService.clear();
         this.alertService.success('artemisApp.userSettings.saveSettingsSuccessAlert');
-        this.changeDetector.detectChanges();
     }
 
     /**

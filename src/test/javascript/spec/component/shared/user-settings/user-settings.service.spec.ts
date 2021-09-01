@@ -191,7 +191,7 @@ describe('User Settings Service', () => {
             it('should correctly update and return settings based on received option cores', () => {
                 const expectedUserSettings: UserSettings<NotificationOptionCore> = defaultNotificationSettings;
                 updateNotificationSettingsByProvidedNotificationOptionCores(expectedUserSettings, notificationOptionCoresForTesting);
-                resultingUserSettings = userSettingsService.saveUserOptionsSuccess(notificationOptionCoresForTesting, userSettingsCategory);
+                resultingUserSettings = userSettingsService.saveUserOptionsSuccess(expectedUserSettings, notificationOptionCoresForTesting);
                 compareSettings(expectedUserSettings, resultingUserSettings);
             });
         });

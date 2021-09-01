@@ -20,6 +20,7 @@ import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { SinonStub, stub } from 'sinon';
 import { MockProvider } from 'ng-mocks';
+import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
 
 /**
  * needed for testing the abstract UserSettingsPrototypeComponent
@@ -72,6 +73,7 @@ describe('User Settings Prototype Component', () => {
                 MockProvider(ChangeDetectorRef),
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: UserSettingsService, useClass: MockUserSettingsService },
                 { provide: Router, useValue: router },
             ],
         })
@@ -84,11 +86,10 @@ describe('User Settings Prototype Component', () => {
                 userSettingsService = TestBed.inject(UserSettingsService);
                 httpMock = TestBed.inject(HttpTestingController);
                 comp.alertService = TestBed.inject(JhiAlertService);
+                alertService = comp.alertService;
                 comp.changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
-
-                changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
+                changeDetector = comp.changeDetector;
                 changeDetectorDetectChangesStub = stub(changeDetector.constructor.prototype, 'detectChanges');
-                alertService = fixture.debugElement.injector.get(JhiAlertService);
             });
     });
 
@@ -134,7 +135,6 @@ describe('User Settings Prototype Component', () => {
 
                 comp.saveOptions();
 
-                expect(changeDetectorDetectChangesStub).to.have.been.called;
                 expect(saveUserOptionCoresSuccessSpy).to.be.calledOnce;
                 expect(extractOptionCoresFromSettingsSpy).to.be.calledOnce;
                 expect(createApplyChangesEventSpy).to.be.calledOnce;
