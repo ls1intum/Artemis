@@ -51,7 +51,7 @@ describe('Quiz Exercise Assessment', () => {
            });
         });
 
-        it('Assess a quiz submission', () => {
+        it('Assesses a mc quiz submission automatically', () => {
             cy.login(student);
             courseManagementRequest.startExerciseParticipation(course.id, quizExercise.id);
             courseManagementRequest.createMultipleChoiceSubmission(quizExercise, [0, 2]);
