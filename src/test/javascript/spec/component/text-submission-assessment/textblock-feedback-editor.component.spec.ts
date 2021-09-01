@@ -37,7 +37,6 @@ describe('TextblockFeedbackEditorComponent', () => {
             declarations: [
                 TextblockFeedbackEditorComponent,
                 AssessmentCorrectionRoundBadgeComponent,
-
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ConfirmIconComponent),
                 MockComponent(FaIconComponent),
