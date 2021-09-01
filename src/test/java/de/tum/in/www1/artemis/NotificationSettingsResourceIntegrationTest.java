@@ -29,6 +29,9 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
 
     private NotificationOption optionB;
 
+    /**
+     * Prepares the common variables and data for testing
+     */
     @BeforeEach
     public void initTestCase() {
         users = database.addUsers(2, 1, 1, 1);
@@ -41,12 +44,18 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
         optionB = new NotificationOption(student1, false, false, "notification.exercise-notification.exercise-open-for-practice");
     }
 
+    /**
+     * Cleans the test environment to make sure different test do not influence each other
+     */
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
         notificationOptionRepository.deleteAll();
     }
 
+    /**
+     * Tests the getNotificationOptionsForCurrentUser method
+     */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetNotificationOptionsForCurrentUser() throws Exception {
@@ -62,10 +71,14 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
         assertThat(notificationOptions).as("NotificationOption B with recipient equal to current user is returned").contains(optionB);
     }
 
+    /**
+     * Tests the saveNotificationOptionsForCurrentUser method under normal (successful) conditions
+     */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testSaveNotificationOptionsForCurrentUser_OK() throws Exception {
-        NotificationOption[] newlyChangedOptionsToSave = new NotificationOption[] { optionA, optionB };
+        // NotificationOption[] newlyChangedOptionsToSave = new NotificationOption[] { optionA, optionB };
+        NotificationOption[] newlyChangedOptionsToSave = { optionA, optionB };
 
         NotificationOption[] notificationOptionsResponse = request.postWithResponseBody("/api/notification-settings/save-options", newlyChangedOptionsToSave,
                 NotificationOption[].class, HttpStatus.OK);
@@ -77,6 +90,9 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
         assertThat(notificationOptionsResponse).as("NotificationOption B succesfully saved").contains(optionB);
     }
 
+    /**
+     * Tests the saveNotificationOptionsForCurrentUser method if a bad request occurs
+     */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testSaveNotificationOptionsForCurrentUser_BAD_REQUEST() throws Exception {
