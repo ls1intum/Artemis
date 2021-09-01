@@ -18,6 +18,8 @@ public class SpaWebFilter implements WebFilter {
         if (
             !path.startsWith("/api") &&
             !path.startsWith("/management") &&
+            !path.startsWith("/time") &&
+            !path.startsWith("/websocket") &&
             !path.startsWith("/services") &&
             !path.startsWith("/swagger") &&
             !path.startsWith("/v2/api-docs") &&

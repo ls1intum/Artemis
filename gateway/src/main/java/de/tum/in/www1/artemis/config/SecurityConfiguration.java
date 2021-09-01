@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.config;
 
 import static org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers.pathMatchers;
 
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.web.filter.SpaWebFilter;
@@ -84,15 +84,23 @@ public class SecurityConfiguration {
             .pathMatchers("/api/account/reset-password/init").permitAll()
             .pathMatchers("/api/account/reset-password/finish").permitAll()
             .pathMatchers("/api/auth-info").permitAll()
-            .pathMatchers("/api/admin/**").hasAuthority(AuthoritiesConstants.ADMIN)
+            .pathMatchers("/api/admin/**").hasAuthority(Role.ADMIN.getAuthority())
+            .pathMatchers("/api/files/attachments/lecture/**").permitAll()
+            .pathMatchers("/api/files/attachments/attachment-unit/**").permitAll()
+            .pathMatchers("/api/files/file-upload-exercises/**").permitAll()
+            .pathMatchers("/api/files/markdown/**").permitAll()
             .pathMatchers("/api/**").authenticated()
+            .pathMatchers("/websocket/tracker").hasAuthority(Role.ADMIN.getAuthority())
+            .pathMatchers("/websocket/**").permitAll()
             .pathMatchers("/services/artemis/api/authenticate").permitAll()
-            .pathMatchers("/services/**").permitAll()
+            .pathMatchers("/services/artemis/time").permitAll()
+            .pathMatchers("/services/**").authenticated()
             .pathMatchers("/management/health").permitAll()
             .pathMatchers("/management/health/**").permitAll()
             .pathMatchers("/management/info").permitAll()
             .pathMatchers("/management/prometheus").permitAll()
-            .pathMatchers("/management/**").hasAuthority(AuthoritiesConstants.ADMIN);
+            .pathMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
+            .pathMatchers("/time").permitAll();
         // @formatter:on
         return http.build();
     }

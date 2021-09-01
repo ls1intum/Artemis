@@ -61,7 +61,7 @@ public final class SecurityUtils {
             .getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getAuthorities)
-            .map(authorities -> authorities.stream().map(GrantedAuthority::getAuthority).noneMatch(AuthoritiesConstants.ANONYMOUS::equals));
+            .map(authorities -> authorities.stream().map(GrantedAuthority::getAuthority).noneMatch(Role.ANONYMOUS::equals));
     }
 
     /**

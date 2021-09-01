@@ -30,6 +30,7 @@ eureka:
     lease-expiration-duration-in-seconds: 10
     status-page-url-path: ${management.endpoints.web.base-path}/info
     health-check-url-path: ${management.endpoints.web.base-path}/health
+    preferIpAddress: true
     metadata-map:
       zone: primary # This is needed for the load balancer
       profile: ${spring.profiles.active}
@@ -54,7 +55,7 @@ management:
       base-path: /management
       exposure:
         include:
-          ['configprops', 'env', 'gateway', 'health', 'info', 'jhimetrics', 'logfile', 'loggers', 'prometheus', 'threaddump']
+          ['configprops', 'env', 'gateway', 'health', 'info', 'jhimetrics', 'logfile', 'loggers', 'prometheus', 'threaddump', 'hystrix.stream']
   endpoint:
     health:
       show-details: when_authorized
@@ -122,25 +123,17 @@ spring:
                 regexp: "'/services/' + serviceId.toLowerCase() + '/(?<remaining>.*)'"
                 replacement: "'/${remaining}'"
       routes:
-        - id: artemis_api_route
+        - id: artemis-api-route
           uri: lb://artemis
           predicates:
-            - Path=/api/**
-        - id: websocket-sockjs-route
-          uri: lb://artemis
-          predicates:
-            - Path=/websocket/tracker/info
+          - Path=/api/**,/time,/websocket/tracker/info,/websocket/tracker/info/**,/management/**
+        # Normal Websocket route
         - id: websocket_route
           uri: lb:ws://artemis
           predicates:
-            - Path=/websocket/**
-#          filters:
-#            - RewritePath=/api(?<segment>/?.*), /api/$\{segment}
-#      routes:
-#        - id: artemis
-#          uri: lb://api
-#          predicates:
-#            - Path=/services/artemis/**
+          - Path=/websocket/**
+
+
       httpclient:
         pool:
           max-connections: 1000

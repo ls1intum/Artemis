@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.web.rest.vm.RouteVM;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +38,7 @@ public class GatewayResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the list of routes.
      */
     @GetMapping("/routes")
-    @Secured(AuthoritiesConstants.ADMIN)
+    @Secured("ROLE_ADMIN")
     public ResponseEntity<List<RouteVM>> activeRoutes() {
         Flux<Route> routes = routeLocator.getRoutes();
         List<RouteVM> routeVMs = new ArrayList<>();
