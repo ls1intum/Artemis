@@ -107,7 +107,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(gradeStepsDTO.gradeType).isEqualTo(GradeType.GRADE);
         assertThat(gradeStepsDTO.title).isEqualTo(course.getTitle());
 
-        assertThat(gradeStepsDTO.gradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeStepsDTO.gradeSteps);
+        assertThat(gradeStepsDTO.gradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeSteps);
     }
 
     private void createGradeScale() {
