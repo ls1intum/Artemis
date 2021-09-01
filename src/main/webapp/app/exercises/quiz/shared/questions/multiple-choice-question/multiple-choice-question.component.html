@@ -20,7 +20,7 @@
         <ng-template #renderedExplanation>
             <div [innerHTML]="renderedQuestion.explanation"></div>
         </ng-template>
-        <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
+        <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="auto" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
             <fa-icon [icon]="'exclamation-circle'"></fa-icon>
             <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
         </span>
