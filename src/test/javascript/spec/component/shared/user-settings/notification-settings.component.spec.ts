@@ -62,7 +62,6 @@ describe('NotificationSettingsComponent', () => {
         const optionId = OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES;
         const webappStatus = true;
         const notificationOptionCoreA: NotificationOptionCore = {
-            id: 42,
             optionSpecifier: optionId,
             webapp: webappStatus,
             email: false,
