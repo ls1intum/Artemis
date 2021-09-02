@@ -33,8 +33,7 @@ describe('Quiz Exercise Management', () => {
     });
 
     beforeEach('New UID', () => {
-        uid = generateUUID();
-        quizExerciseName = 'Cypress Quiz ' + uid;
+        quizExerciseName = 'Cypress Quiz ' + generateUUID();
     });
 
     after('Delete Course', () => {
