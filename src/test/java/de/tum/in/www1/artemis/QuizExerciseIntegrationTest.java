@@ -1387,7 +1387,6 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
     }
 
-
     /**
      * test that a quiz question with an option with an explanation without valid length can't be created
      */
