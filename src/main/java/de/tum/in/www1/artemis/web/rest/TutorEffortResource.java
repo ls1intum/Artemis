@@ -38,7 +38,7 @@ public class TutorEffortResource {
 
     private final TextAssessmentEventRepository textAssessmentEventRepository;
 
-    private final int thresholdMinutes = 5;
+    private static final int thresholdMinutes = 5;
 
     public TutorEffortResource(AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository,
             TextAssessmentEventRepository textAssessmentEventRepository) {
