@@ -37,7 +37,7 @@ export class StatisticsGraphComponent implements OnChanges {
     chartTime: any;
     // Data
     barChartLabels: Label[] = [];
-    chartData: ChartDataSets[] = [];
+    chartData: ChartDataSets[] = [{ data: [] }];
     dataForSpanType: number[];
 
     // Left arrow -> decrease, right arrow -> increase
