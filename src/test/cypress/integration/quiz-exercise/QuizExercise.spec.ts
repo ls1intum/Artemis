@@ -47,8 +47,15 @@ describe('Quiz Exercise Management', () => {
             courseManagementRequest.deleteQuizExercise(quizExercise.id);
         });
 
+        beforeEach(() => {
+            cy.login(admin, '/');
+            navigationBar.openCourseManagement();
+            courseManagement.openExercisesOfCourse(courseName, courseShortName);
+            cy.get('#create-quiz-button').should('be.visible').click();
+            quizCreation.setTitle(quizExerciseName);
+        });
+
         it('Creates a Quiz with Multiple Choice', () => {
-            beginQuizCreation();
             quizCreation.addMultipleChoiceQuestion('MC Quiz' + uid);
             quizCreation.saveQuiz().then((quizResponse) => {
                 quizExercise = quizResponse.response?.body;
@@ -58,7 +65,6 @@ describe('Quiz Exercise Management', () => {
         });
 
         it('Creates a Quiz with Short Answer', () => {
-            beginQuizCreation();
             quizCreation.addShortAnswerQuestion('SA Quiz' + uid);
             quizCreation.saveQuiz().then((quizResponse) => {
                 quizExercise = quizResponse.response?.body;
@@ -91,11 +97,3 @@ describe('Quiz Exercise Management', () => {
         });
     });
 });
-
-function beginQuizCreation() {
-    cy.login(admin, '/');
-    navigationBar.openCourseManagement();
-    courseManagement.openExercisesOfCourse(courseName, courseShortName);
-    cy.get('#create-quiz-button').should('be.visible').click();
-    quizCreation.setTitle(quizExerciseName);
-}
