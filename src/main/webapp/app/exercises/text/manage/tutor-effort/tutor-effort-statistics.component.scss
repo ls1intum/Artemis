@@ -1,5 +1,10 @@
 .table {
-    text-align: center;
+    td {
+        text-align: center;
+    }
+    tr {
+        text-align: start;
+    }
 }
 
 .table td {

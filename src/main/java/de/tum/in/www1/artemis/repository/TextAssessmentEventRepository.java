@@ -29,6 +29,14 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
     List<TextAssessmentEvent> findAllByCourseId(Long courseId);
 
     @Query("""
+            SELECT COUNT(DISTINCT textAssessmentEvent.userId)
+            FROM TextAssessmentEvent textAssessmentEvent
+            WHERE textAssessmentEvent.courseId = :#{#courseId} AND
+                textAssessmentEvent.textExerciseId = :#{#exerciseId}
+            """)
+    Integer countDistinctUserIdByCourseIdAndTextExerciseId(Long courseId, Long exerciseId);
+
+    @Query("""
             SELECT textAssessmentEvent
             FROM TextAssessmentEvent textAssessmentEvent
             WHERE textAssessmentEvent.userId IS NOT NULL AND

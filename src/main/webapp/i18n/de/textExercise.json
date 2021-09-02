@@ -31,14 +31,14 @@
             "saveSuccessful": "Dein Antwort wurde erfolgreich gespeichert!",
             "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
             "tutorEffortStatistics": {
-                "title": "Tutor Effort Statistics",
-                "calculate": "Calculate",
-                "numberOfSubmissionsAssessed": "Number of total submissions assessed involved",
-                "totalTimeSpent": "Total time spent grading (Minutes)",
-                "averageTime": "Grading Pace (Submissions/Min)",
-                "noData": "No data found. Click to calculate.",
-                "minutes": "Minutes",
-                "tutors": "Tutors"
+                "title": "Tutor Aufwand Statistik",
+                "numberOfSubmissionsAssessed": "Anzahl der insgesamt bewerteten Einreichungen beteiligt",
+                "totalTimeSpent": "Gesamtdauer der Benotung (in Minuten)",
+                "averageTime": "Benotungsrhythmus (Submissions/Min)",
+                "noData": "Keine Daten gefunden. Klicken Sie zum Berechnen.",
+                "minutes": "Minuten",
+                "tutors": "Tutoren",
+                "numberOfTutorsInvolved": "Anzahl der beteiligten Tutoren"
             }
         }
     }

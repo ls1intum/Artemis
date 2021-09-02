@@ -69,6 +69,15 @@ export class TextAssessmentService {
     }
 
     /**
+     * Submits an assessment event to the artemis analytics for text exercises.
+     * @param courseId the id of the respective assessment event course id
+     * @param exerciseId the id of the respective assessment event exercise id
+     */
+    public getNumberOfTutorsInvolvedInAssessment(courseId: number, exerciseId: number): Observable<number> {
+        return this.http.get<number>(`/analytics/text-assessment/events/courses/${courseId}/exercises/${exerciseId}`);
+    }
+
+    /**
      * Updates an assessment after a complaint.
      * @param feedbacks list of feedback made during assessment of type {Feedback[]}
      * @param textBlocks list of text blocks of type {TextBlock[]}

@@ -6,6 +6,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 
 @Component({
     selector: 'jhi-text-exercise-tutor-effort-statistics',
@@ -13,33 +14,32 @@ import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
     styleUrls: ['./tutor-effort-statistics.component.scss'],
 })
 export class TutorEffortStatisticsComponent implements OnInit {
-    tutorEfforts: TutorEffort[];
+    tutorEfforts: TutorEffort[] = [];
     numberOfSubmissions: number;
     totalTimeSpent: number;
     averageTimeSpent: number;
     currentExerciseId: number;
     currentCourseId: number;
+    numberOfTutorsInvolvedInCourse: number;
     effortDistribution = new Array<number>(10).fill(0);
 
     /**
      * Directive to manage the canvas element that renders the chart.
      */
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
-    // datasets: DataSet[] = [];
+
     /**
-     * The labels of the chart are fixed and represent the 10 intervals we group the similarities into.
+     * The labels of the chart are fixed and represent the 13 intervals we group the tutors into.
      */
     chartLabels: Label[] = ['0-10', '10-20', '20-30', '30-40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100-110', '110-120', '120+'];
 
     /**
-     * The similarity distribution is visualized in a bar chart.
+     * The type of the chart.
      */
     chartType: ChartType = 'bar';
 
     /**
      * Array of datasets to plot.
-     *
-     * Only one dataset is necessary to display the similarity distribution.
      */
     chartDataSets: ChartDataSets[] = [
         {
@@ -49,10 +49,6 @@ export class TutorEffortStatisticsComponent implements OnInit {
         },
     ];
 
-    /**
-     * When visualizing the similarity distribution, we always want the y-axis to begin at zero.
-     * Also, since values on the y-axis will always be integers, we set the step size to 1.
-     */
     chartOptions: ChartOptions = {
         title: {
             display: true,
@@ -82,7 +78,7 @@ export class TutorEffortStatisticsComponent implements OnInit {
         },
     };
 
-    constructor(private textExerciseService: TextExerciseService, private route: ActivatedRoute) {}
+    constructor(private textExerciseService: TextExerciseService, private textAssessmentService: TextAssessmentService, private route: ActivatedRoute) {}
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
@@ -95,7 +91,6 @@ export class TutorEffortStatisticsComponent implements OnInit {
         this.textExerciseService.calculateTutorEffort(this.currentCourseId, this.currentExerciseId).subscribe(
             (res: TutorEffort[]) => {
                 this.tutorEfforts = res!;
-                console.log('test', this.tutorEfforts);
                 if (!this.tutorEfforts) {
                     return;
                 }
@@ -110,6 +105,20 @@ export class TutorEffortStatisticsComponent implements OnInit {
             },
             (error) => {
                 console.error('Error while retrieving tutor effort statistics:', error);
+            },
+        );
+        this.loadNumberOfTutorsInvolved();
+    }
+
+    loadNumberOfTutorsInvolved() {
+        this.textAssessmentService.getNumberOfTutorsInvolvedInAssessment(this.currentCourseId, this.currentExerciseId).subscribe(
+            (res: number) => {
+                if (res) {
+                    this.numberOfTutorsInvolvedInCourse = res!;
+                }
+            },
+            (error) => {
+                console.error('Error while retrieving number of tutors involved:', error);
             },
         );
     }

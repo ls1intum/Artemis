@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 /**
@@ -87,6 +88,17 @@ public class TextAssessmentEventResource {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.badRequest().build();
+    }
+
+    @GetMapping("/events/courses/{courseId}/exercises/{exerciseId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Integer> getNumberOfTutorsInvolved(@PathVariable Long courseId, @PathVariable Long exerciseId) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        Integer numberOfTutors = textAssessmentEventRepository.countDistinctUserIdByCourseIdAndTextExerciseId(courseId, exerciseId);
+        log.debug("REST request to get number of tutors involved : {}", numberOfTutors);
+        return ResponseEntity.ok().body(numberOfTutors);
     }
 
     /**

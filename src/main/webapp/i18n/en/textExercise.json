@@ -32,13 +32,13 @@
             "error": "An error occurred. Please try again later.",
             "tutorEffortStatistics": {
                 "title": "Tutor Effort Statistics",
-                "calculate": "Calculate",
                 "numberOfSubmissionsAssessed": "Number of total submissions involved",
                 "totalTimeSpent": "Total time spent grading (Minutes)",
                 "averageTime": "Grading Pace (Submissions/Min)",
                 "noData": "No data found. Click to calculate.",
                 "minutes": "Minutes",
-                "tutors": "Tutors"
+                "tutors": "Tutors",
+                "numberOfTutorsInvolved": "Number of tutors involved"
             }
         }
     }
