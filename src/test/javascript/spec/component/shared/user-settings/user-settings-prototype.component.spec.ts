@@ -53,13 +53,11 @@ describe('User Settings Prototype Component', () => {
     const router = new MockRouter();
 
     const notificationOptionCoreA: NotificationOptionCore = {
-        id: 1,
         optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
         webapp: false,
         email: false,
     };
     const notificationOptionCoreB: NotificationOptionCore = {
-        id: 2,
         optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES,
         webapp: false,
         email: false,
