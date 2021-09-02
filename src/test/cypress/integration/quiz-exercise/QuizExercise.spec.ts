@@ -1,5 +1,6 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
+import { BASE_API } from '../../support/constants';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -89,7 +90,7 @@ describe('Quiz Exercise Management', () => {
             courseManagement.openExercisesOfCourse(courseName, courseShortName);
             cy.get('#delete-quiz-' + quizExercise.id).click();
             cy.get('.form-control').type(quizExercise.title);
-            cy.intercept('DELETE', '/api/quiz-exercises/*').as('deleteQuizQuery');
+            cy.intercept('DELETE', BASE_API + 'quiz-exercises/*').as('deleteQuizQuery');
             cy.get('.modal-footer').contains('Delete').click();
             cy.wait('@deleteQuizQuery').then((deleteResponse) => {
                 expect(deleteResponse.response?.statusCode).to.eq(200);
