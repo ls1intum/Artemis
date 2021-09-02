@@ -1,6 +1,5 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
-import { POST } from '../../support/constants';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -35,7 +34,6 @@ describe('Quiz Exercise Management', () => {
     beforeEach('New UID', () => {
         uid = generateUUID();
         quizExerciseName = 'Cypress Quiz ' + uid;
-        cy.intercept(POST, '/api/quiz-exercises').as('createQuizExercise');
     });
 
     after('Delete Course', () => {
@@ -52,9 +50,8 @@ describe('Quiz Exercise Management', () => {
         it('Creates a Quiz with Multiple Choice', () => {
             beginQuizCreation();
             quizCreation.addMultipleChoiceQuestion('MC Quiz' + uid);
-            quizCreation.saveQuiz();
-            cy.wait('@createQuizExercise').then((quizResponse) => {
-                quizExercise = quizResponse?.response?.body;
+            quizCreation.saveQuiz().then((quizResponse) => {
+                quizExercise = quizResponse.response?.body;
                 cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
                 cy.contains('MC Quiz' + uid).should('be.visible');
             });
@@ -63,9 +60,8 @@ describe('Quiz Exercise Management', () => {
         it('Creates a Quiz with Short Answer', () => {
             beginQuizCreation();
             quizCreation.addShortAnswerQuestion('SA Quiz' + uid);
-            quizCreation.saveQuiz();
-            cy.wait('@createQuizExercise').then((quizResponse) => {
-                quizExercise = quizResponse?.response?.body;
+            quizCreation.saveQuiz().then((quizResponse) => {
+                quizExercise = quizResponse.response?.body;
                 cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
                 cy.contains('SA Quiz' + uid).should('be.visible');
             });
