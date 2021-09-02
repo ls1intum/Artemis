@@ -31,6 +31,16 @@ public class TutorParticipationService {
         INCORRECT_SCORE, UNNECESSARY_FEEDBACK, MISSING_GRADING_INSTRUCTION, INCORRECT_GRADING_INSTRUCTION,
     }
 
+    private static final String ENTITY_NAME = "TutorParticipation";
+
+    private final Logger log = LoggerFactory.getLogger(TutorParticipationService.class);
+
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
+
+    private final TutorParticipationRepository tutorParticipationRepository;
+
+    private final ExampleSubmissionService exampleSubmissionService;
+
     /**
      * Wraps the information of tutor feedback validation (during tutor training).
      */
@@ -45,16 +55,6 @@ public class TutorParticipationService {
             this.type = type;
         }
     }
-
-    private static final String ENTITY_NAME = "TutorParticipation";
-
-    private final Logger log = LoggerFactory.getLogger(TutorParticipationService.class);
-
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
-
-    private final TutorParticipationRepository tutorParticipationRepository;
-
-    private final ExampleSubmissionService exampleSubmissionService;
 
     public TutorParticipationService(TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             ExampleSubmissionService exampleSubmissionService) {
