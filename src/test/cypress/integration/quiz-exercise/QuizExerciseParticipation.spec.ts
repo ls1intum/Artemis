@@ -12,6 +12,7 @@ const courseManagementRequest = artemis.requests.courseManagement;
 
 // Page objects
 const multipleChoiceQuiz = artemis.pageobjects.multipleChoiceQuiz;
+const shortAnswerQuiz = artemis.pageobjects.shortAnswerQuiz;
 
 // Common primitives
 let uid: string;
@@ -61,7 +62,7 @@ describe('Quiz Exercise Management', () => {
         it('Student can see a visible quiz', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
-            cy.contains(quizExercise.title).should('be.visible').click();
+            cy.contains(quizExercise.title).scrollIntoView().click();
             cy.get('.btn').contains('Open quiz').click();
             cy.get('.quiz-waiting-for-start-overlay > span').should('contain.text', 'This page will refresh automatically, when the quiz starts.');
         });
@@ -70,7 +71,7 @@ describe('Quiz Exercise Management', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             courseManagementRequest.startQuizNow(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
-            cy.contains(quizExercise.title).should('be.visible').click();
+            cy.contains(quizExercise.title).scrollIntoView().click();
             cy.get('.btn').contains('Start quiz').click();
             multipleChoiceQuiz.tickAnswerOption(0);
             multipleChoiceQuiz.tickAnswerOption(2);
@@ -89,22 +90,22 @@ describe('Quiz Exercise Management', () => {
 
         it('Student can participate in SA quiz', () => {
             cy.login(student, '/courses/' + course.id);
-            cy.contains(quizExercise.title).should('be.visible').click();
+            cy.contains(quizExercise.title).scrollIntoView().click();
             cy.get('.btn').contains('Start quiz').click();
-            cy.get('.short-answer-question-container__input').eq(0).type('give');
-            cy.get('.short-answer-question-container__input').eq(1).type('let');
-            cy.get('.short-answer-question-container__input').eq(2).type('run');
-            cy.get('.short-answer-question-container__input').eq(3).type('desert');
-            cy.get('.short-answer-question-container__input').eq(4).type('cry');
-            cy.get('.short-answer-question-container__input').eq(5).type('goodbye');
-            cy.get('.jhi-btn').click();
+            shortAnswerQuiz.typeAnswer( 0, 'give');
+            shortAnswerQuiz.typeAnswer( 1, 'let');
+            shortAnswerQuiz.typeAnswer( 2, 'run');
+            shortAnswerQuiz.typeAnswer( 3, 'desert');
+            shortAnswerQuiz.typeAnswer( 4, 'cry');
+            shortAnswerQuiz.typeAnswer( 5, 'goodbye');
+            shortAnswerQuiz.submit();
         });
     });
 });
 
 function createQuiz(quizQuestions?: any) {
     cy.login(admin);
-    return courseManagementRequest.createQuizExercise({ course }, 'Quiz', dayjs().subtract(1, 'minute'), quizQuestions).then((quizResponse) => {
+    return courseManagementRequest.createQuizExercise({ course }, quizExerciseName, dayjs().subtract(1, 'minute'), quizQuestions).then((quizResponse) => {
             quizExercise = quizResponse.body;
     });
 }

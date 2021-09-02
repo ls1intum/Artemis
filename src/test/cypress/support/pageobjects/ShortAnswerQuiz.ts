@@ -1,14 +1,12 @@
 import { POST } from '../constants';
 
-export class MultipleChoiceQuiz {
+export class ShortAnswerQuiz {
     getQuizBody() {
-        return cy.get('.mc-question');
+        return cy.get('.sa-question');
     }
 
-    tickAnswerOption(optionNumber: number) {
-        this.getQuizBody()
-            .get('#answer-option-' + optionNumber + ' > .selection > .ng-fa-icon > .svg-inline--fa')
-            .click();
+    typeAnswer(optionNumber: number, answer: string) {
+        this.getQuizBody().get('.short-answer-question-container__input').eq(optionNumber).type(answer);
     }
 
     submit() {
