@@ -94,7 +94,7 @@ export class TutorEffortStatisticsComponent implements OnInit {
                 }
                 this.numberOfSubmissions = this.tutorEfforts.reduce((n, { numberOfSubmissionsAssessed }) => n + numberOfSubmissionsAssessed, 0);
                 this.totalTimeSpent = this.tutorEfforts.reduce((n, { totalTimeSpentMinutes }) => n + totalTimeSpentMinutes, 0);
-                const avgTemp = this.numberOfSubmissions / this.totalTimeSpent;
+                const avgTemp = this.totalTimeSpent === 0 ? 0 : this.numberOfSubmissions / this.totalTimeSpent;
                 if (avgTemp) {
                     this.averageTimeSpent = Math.round((avgTemp + Number.EPSILON) * 100) / 100;
                 }
