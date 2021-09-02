@@ -177,10 +177,10 @@
                 "quizTitleLength": "Quiz: Der Titel ist länger als 250 Zeichen. Bitte kürzen!",
                 "explanationIsMissing": "Frage {{index}}: Nicht jede Antwortmöglichkeit enthält eine Erklärung.",
                 "questionHasInvalidFlaggedElements": "<strong>Frage {{index}} </strong>: Diese Frage wurde zuvor als ungültig markiert oder enthält ungültige Elemente. Diese werden nach dem Speichern zurückgesetzt.",
-                "questionExplanationLength": "Frage {{index}}: Die beigefügte Erklärung ist zu lang. Bitte kürze sie auf unter 255 Zeichen!",
-                "questionHintLength": "Frage {{index}}: Der beigefügte Hinweis ist zu lang. Bitte kürze ihn auf unter 255 Zeichen!",
-                "answerExplanationLength": "Frage {{index}}: Die Erklärung mindestens einer Antwortmöglichkeit ist zu lang. Bitte kürze sie auf unter 255 Zeichen!",
-                "answerHintLength": "Frage {{index}}: Der Hinweis mindestens einer Antwortmöglichkeit ist zu lang. Bitte kürze ihn auf unter 255 Zeichen!"
+                "questionExplanationLength": "Frage {{index}}: Die beigefügte Erklärung ist zu lang. Bitte kürze sie auf 1000 Zeichen!",
+                "questionHintLength": "Frage {{index}}: Der beigefügte Hinweis ist zu lang. Bitte kürze ihn auf unter 256 Zeichen!",
+                "answerExplanationLength": "Frage {{index}}: Die Erklärung mindestens einer Antwortmöglichkeit ist zu lang. Bitte kürze sie auf 1000 Zeichen!",
+                "answerHintLength": "Frage {{index}}: Der Hinweis mindestens einer Antwortmöglichkeit ist zu lang. Bitte kürze ihn auf unter 256 Zeichen!"
             },
             "scoringType": {
                 "all_or_nothing": "Alles-oder-Nichts",
