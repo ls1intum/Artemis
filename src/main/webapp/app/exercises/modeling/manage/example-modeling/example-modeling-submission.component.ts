@@ -20,6 +20,7 @@ import { concatMap, tap } from 'rxjs/operators';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 import { onError } from 'app/shared/util/global.utils';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -57,17 +58,18 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     legend = [
         {
             text: 'artemisApp.exampleSubmission.legend.positiveScore',
-            icon: 'check',
+            icon: 'check' as IconProp,
             color: 'green',
         },
         {
             text: 'artemisApp.exampleSubmission.legend.negativeScore',
-            icon: 'times',
+            icon: 'times' as IconProp,
             color: 'red',
         },
         {
             text: 'artemisApp.exampleSubmission.legend.incorrectAssessment',
-            icon: 'exclamation-triangle',
+            icon: 'exclamation-triangle' as IconProp,
+            color: 'yellow',
         },
     ];
 
