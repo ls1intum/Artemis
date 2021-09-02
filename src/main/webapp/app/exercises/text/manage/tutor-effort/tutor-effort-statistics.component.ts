@@ -1,9 +1,7 @@
-import { Component, OnInit, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { TutorEffort } from 'app/entities/tutor-effort.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { ActivatedRoute } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';

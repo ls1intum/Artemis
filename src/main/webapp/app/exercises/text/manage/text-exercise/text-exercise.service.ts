@@ -146,6 +146,11 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
         );
     }
 
+    /**
+     * Retrieves the tutor effort in assessing a specific text exercise
+     * @param exerciseId the id of the exercise to check for
+     * @param courseId the id of the course to check for
+     */
     public calculateTutorEffort(exerciseId: number, courseId: number): Observable<TutorEffort[]> {
         return this.http.post<TutorEffort[]>(`api/courses/${courseId}/exercises/${exerciseId}/tutor-effort`, {}, { params: { exerciseId, courseId } });
     }

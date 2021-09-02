@@ -50,6 +50,12 @@ public class TutorEffortResource {
         this.textAssessmentEventRepository = textAssessmentEventRepository;
     }
 
+    /**
+     * Calculates and retrieves tutor effort and returns a list for the respective course and exercise
+     * @param courseId the id of the course to query for
+     * @param exerciseId the id of the exercise to query for
+     * @return list of TutorEffort objects
+     */
     @PostMapping(value = "/courses/{courseId}/exercises/{exerciseId}/tutor-effort")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<TutorEffort>> calculateTutorEfforts(@PathVariable Long courseId, @PathVariable Long exerciseId) {
@@ -78,6 +84,13 @@ public class TutorEffortResource {
         return ResponseEntity.ok().body(tutorEffortList);
     }
 
+    /**
+     * Takes in parameters and sets respective properties on a new TutorEffort object
+     * @param userId the id of the user to set
+     * @param events the events of the respective user
+     * @param submissions the number of submissions the tutor assessed
+     * @return a TutorEffort object with all the data set
+     */
     private TutorEffort setTutorEffortInformation(Long userId, List<TextAssessmentEvent> events, int submissions) {
         TutorEffort effort = new TutorEffort();
         effort.setUserId(userId);
@@ -112,6 +125,11 @@ public class TutorEffortResource {
         return timeSeconds / 60;
     }
 
+    /**
+     * Groups assessment events by user id into a map
+     * @param events the events to query from
+     * @return a map with key representing user id and value representing respective list of events for the user
+     */
     private Map<Long, List<TextAssessmentEvent>> groupByUserId(List<TextAssessmentEvent> events) {
         Map<Long, List<TextAssessmentEvent>> map = new HashMap<>();
 
@@ -129,6 +147,12 @@ public class TutorEffortResource {
         return map;
     }
 
+    /**
+     * Takes in two dates and returns difference between them in seconds
+     * @param first first date to compare
+     * @param second second date to compare
+     * @return difference in seconds
+     */
     public int getDateDiffInSeconds(Date first, Date second) {
         long diffInMilliseconds = Math.abs(first.getTime() - second.getTime());
         try {

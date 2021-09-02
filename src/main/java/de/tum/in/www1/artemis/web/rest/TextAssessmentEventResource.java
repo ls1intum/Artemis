@@ -90,13 +90,19 @@ public class TextAssessmentEventResource {
         return ResponseEntity.badRequest().build();
     }
 
+    /**
+     * Finds the number of the tutors involved in the list of events
+     * @param courseId the id of the course to query events for
+     * @param exerciseId the id of the exercise to query events for
+     * @return an integer representing the number of tutors involved for the respective course and exercise
+     */
     @GetMapping("/events/courses/{courseId}/exercises/{exerciseId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Integer> getNumberOfTutorsInvolved(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-        Integer numberOfTutors = textAssessmentEventRepository.countDistinctUserIdByCourseIdAndTextExerciseId(courseId, exerciseId);
+        Integer numberOfTutors = textAssessmentEventRepository.getNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId(courseId, exerciseId);
         log.debug("REST request to get number of tutors involved : {}", numberOfTutors);
         return ResponseEntity.ok().body(numberOfTutors);
     }

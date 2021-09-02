@@ -34,8 +34,15 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
             WHERE textAssessmentEvent.courseId = :#{#courseId} AND
                 textAssessmentEvent.textExerciseId = :#{#exerciseId}
             """)
-    Integer countDistinctUserIdByCourseIdAndTextExerciseId(Long courseId, Long exerciseId);
+    Integer getNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId(Long courseId, Long exerciseId);
 
+    /**
+     * Query and find all events which do not have the respective fields empty. This fields are specifically needed non-empty
+     * for the tutor effort estimation process
+     * @param courseId the id of the course to check for
+     * @param textExerciseId the id of the text exercise to check for
+     * @return a list of text assessment events
+     */
     @Query("""
             SELECT textAssessmentEvent
             FROM TextAssessmentEvent textAssessmentEvent
@@ -48,6 +55,12 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
             """)
     List<TextAssessmentEvent> findAllNonEmptyEvents(Long courseId, Long textExerciseId);
 
+    /**
+     * Finds the number of submissions assessed for each tutor listed in the assessment event list
+     * @param courseId the id of the course to check for
+     * @param textExerciseId the id of the text exercise to check for
+     * @return a TutorAssessedSubmissionsCount interface representing user id and number of submissions involved
+     */
     @Query("""
                 SELECT textAssessmentEvent.userId AS tutorId, COUNT(DISTINCT textAssessmentEvent.submissionId) AS submissionsInvolved
                 FROM TextAssessmentEvent textAssessmentEvent
@@ -60,6 +73,10 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
             """)
     List<TutorAssessedSubmissionsCount> findNumberOfSubmissionsAssessedForTutor(Long courseId, Long textExerciseId);
 
+    /**
+     * An interface representing an intermediate form fitting the JPA query syntax.
+     * It is used to make converting to a Map easier through the `getAssessedSubmissionCountPerTutor` function
+     */
     interface TutorAssessedSubmissionsCount {
 
         Long getTutorId();
