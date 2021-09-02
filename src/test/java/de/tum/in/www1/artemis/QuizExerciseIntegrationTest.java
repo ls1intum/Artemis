@@ -1351,8 +1351,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         int validityThreshold = 1000;
 
         QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
-        mc.setExplanation("0".repeat(validityThreshold));
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        question.setExplanation("0".repeat(validityThreshold));
 
         request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
     }
@@ -1366,8 +1366,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         int validityThreshold = 1000;
 
         QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
-        mc.setExplanation("0".repeat(validityThreshold + 1));
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        question.setExplanation("0".repeat(validityThreshold + 1));
 
         request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -1381,8 +1381,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         int validityThreshold = 1000;
 
         QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
-        mc.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold));
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold));
 
         request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
     }
@@ -1397,24 +1397,24 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         int validityThreshold = 1000;
 
         QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
-        mc.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold + 1));
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold + 1));
 
         request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private QuizExercise createMultipleChoiceQuizExerciseDummy() {
         Course course = database.createCourse();
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusHours(5), null, course);
 
-        mc.setScoringType(ScoringType.ALL_OR_NOTHING);
-        mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
-        mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
-        mc.setExplanation("Explanation");
-        mc.copyQuestionId();
+        question.setScoringType(ScoringType.ALL_OR_NOTHING);
+        question.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
+        question.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        question.setExplanation("Explanation");
+        question.copyQuestionId();
 
-        quizExercise.addQuestions(mc);
+        quizExercise.addQuestions(question);
         quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.setGradingInstructions(null);
 
