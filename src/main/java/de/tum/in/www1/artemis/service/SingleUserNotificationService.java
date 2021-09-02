@@ -17,9 +17,13 @@ public class SingleUserNotificationService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, SimpMessageSendingOperations messagingTemplate) {
+    private MailService mailService;
+
+    public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, SimpMessageSendingOperations messagingTemplate,
+            MailService mailService) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.messagingTemplate = messagingTemplate;
+        this.mailService = mailService;
     }
 
     /**
@@ -42,12 +46,12 @@ public class SingleUserNotificationService {
 
     /**
      * Saves the given notification in database and sends it to the client via websocket.
-     *
+     * Also creates and sends an email.
      * @param notification that should be saved and sent
      */
     private void saveAndSend(SingleUserNotification notification) {
         singleUserNotificationRepository.save(notification);
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
-
+        mailService.sendNotificationEmail(notification, notification.getRecipient());
     }
 }

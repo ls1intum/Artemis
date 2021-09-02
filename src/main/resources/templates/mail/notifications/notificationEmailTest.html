@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title th:text="#{email.activation.title}">Artemis activation</title>
+    <!--<title th:text="#{email.notification.dummy}">Notification Title</title>-->
+    <title th:text="${notificationTitle}">Notification Title</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{|${baseUrl}/favicon.svg|}" />
 </head>
@@ -9,12 +10,14 @@
 <p th:text="#{email.activation.greeting(${user.login})}">
     Dear
 </p>
-<p th:text="#{email.activation.text1}">
-    Your Artemis account has been created, please click on the URL below to activate it:
+<p th:text="${notificationText}">
+    Notification Text
 </p>
+<!--
 <p>
     <a th:with="url=(@{|${baseUrl}/account/activate?key=${user.activationKey}|})" th:href="${url}" th:text="${url}">Activation link</a>
 </p>
+-->
 <p>
     <span th:text="#{email.activation.text2}">Regards, </span>
     <br />

@@ -18,6 +18,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.notification.Notification;
 import io.github.jhipster.config.JHipsterProperties;
 
 /**
@@ -33,6 +34,10 @@ public class MailService {
     private static final String USER = "user";
 
     private static final String BASE_URL = "baseUrl";
+
+    private static final String NOTIFICATION_TITLE = "notificationTitle";
+
+    private static final String NOTIFICATION_TEXT = "notificationText";
 
     private final JHipsterProperties jHipsterProperties;
 
@@ -88,13 +93,18 @@ public class MailService {
      */
     @Async
     public void sendEmailFromTemplate(User user, String templateName, String titleKey) {
+        Context context = this.prepareContext(user);
+        String content = templateEngine.process(templateName, context);
+        String subject = messageSource.getMessage(titleKey, null, context.getLocale());
+        sendEmail(user.getEmail(), subject, content, false, true);
+    }
+
+    private Context prepareContext(User user) {
         Locale locale = Locale.forLanguageTag(user.getLangKey());
         Context context = new Context(locale);
         context.setVariable(USER, user);
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
-        String content = templateEngine.process(templateName, context);
-        String subject = messageSource.getMessage(titleKey, null, locale);
-        sendEmail(user.getEmail(), subject, content, false, true);
+        return context;
     }
 
     @Async
@@ -123,9 +133,16 @@ public class MailService {
 
     // notification related
     @Async
-    public void sendNotificationEmail(User user) {
-        // log.debug("Sending notification email to '{}'", user.getEmail());
+    public void sendNotificationEmail(Notification notification, User user) {
         log.debug("Sending notification email to '{}'", user.getEmail());
-        sendEmailFromTemplate(user, "mail/creationEmail", "email.activation.title");
+        String templateName = "mail/notifications/notificationEmailTest";
+        Context context = this.prepareContext(user);
+        context.setVariable(NOTIFICATION_TITLE, notification.getTitle());
+        context.setVariable(NOTIFICATION_TEXT, notification.getText());
+        String content = templateEngine.process(templateName, context);
+        // String subject = messageSource.getMessage("email.notification.dummy", null, locale);
+        // String subject = messageSource.getMessage(notification.getTitle(), null, locale);
+        String subject = notification.getTitle();
+        sendEmail(user.getEmail(), subject, content, false, true);
     }
 }
