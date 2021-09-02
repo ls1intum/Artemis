@@ -30,8 +30,6 @@ public class TutorEffortResource {
 
     private final Logger log = LoggerFactory.getLogger(TutorEffortResource.class);
 
-    private static final String ENTITY_NAME = "tutorParticipation";
-
     private final ExerciseRepository exerciseRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
@@ -40,7 +38,7 @@ public class TutorEffortResource {
 
     private final TextAssessmentEventRepository textAssessmentEventRepository;
 
-    private final int THRESHOLD_MINUTES = 5;
+    private final int thresholdMinutes = 5;
 
     public TutorEffortResource(AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository,
             TextAssessmentEventRepository textAssessmentEventRepository) {
@@ -56,7 +54,7 @@ public class TutorEffortResource {
      * @param exerciseId the id of the exercise to query for
      * @return list of TutorEffort objects
      */
-    @PostMapping(value = "/courses/{courseId}/exercises/{exerciseId}/tutor-effort")
+    @PostMapping("/courses/{courseId}/exercises/{exerciseId}/tutor-effort")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<TutorEffort>> calculateTutorEfforts(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         log.debug("tutor-effort with argument[s] course = {}, exercise = {}", courseId, exerciseId);
@@ -73,14 +71,12 @@ public class TutorEffortResource {
         if (newMap.isEmpty()) {
             return ResponseEntity.ok().build();
         }
-        for (var entry : newMap.entrySet()) {
-            Long currentUserId = entry.getKey();
-            List<TextAssessmentEvent> currentUserEvents = entry.getValue();
+        newMap.forEach((currentUserId, currentUserEvents) -> {
             if (currentUserEvents != null) {
-                TutorEffort effort = setTutorEffortInformation(currentUserId, currentUserEvents, submissionsPerTutor.get(currentUserId));
+                TutorEffort effort = createTutorEffortWithInformation(currentUserId, currentUserEvents, submissionsPerTutor.get(currentUserId));
                 tutorEffortList.add(effort);
             }
-        }
+        });
         return ResponseEntity.ok().body(tutorEffortList);
     }
 
@@ -91,7 +87,7 @@ public class TutorEffortResource {
      * @param submissions the number of submissions the tutor assessed
      * @return a TutorEffort object with all the data set
      */
-    private TutorEffort setTutorEffortInformation(Long userId, List<TextAssessmentEvent> events, int submissions) {
+    private TutorEffort createTutorEffortWithInformation(Long userId, List<TextAssessmentEvent> events, int submissions) {
         TutorEffort effort = new TutorEffort();
         effort.setUserId(userId);
         effort.setCourseId(events.get(0).getCourseId());
@@ -115,7 +111,7 @@ public class TutorEffortResource {
                 // access next element & catch out of bounds if end of the list.
                 TextAssessmentEvent next = tutorEvents.get(i + 1);
                 int diffInSeconds = getDateDiffInSeconds(Date.from(current.getTimestamp()), Date.from(next.getTimestamp()));
-                if (diffInSeconds <= THRESHOLD_MINUTES * 60) {
+                if (diffInSeconds <= thresholdMinutes * 60) {
                     timeSeconds += diffInSeconds;
                 }
             }
@@ -158,9 +154,9 @@ public class TutorEffortResource {
         try {
             return toIntExact(TimeUnit.SECONDS.convert(diffInMilliseconds, TimeUnit.MILLISECONDS));
         }
-        catch (Exception exception) {
+        catch (ArithmeticException exception) {
             // discard if faulty date found. Treat as outlier
-            return THRESHOLD_MINUTES * 60 + 1;
+            return thresholdMinutes * 60 + 1;
         }
     }
 }
