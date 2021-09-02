@@ -79,7 +79,7 @@ describe('Quiz Exercise Management', () => {
 
         beforeEach('Create Quiz Exercise', () => {
             courseManagementRequest.createQuizExercise({ course }, quizExerciseName).then((quizResponse) => {
-                quizExercise = quizResponse?.body;
+                quizExercise = quizResponse.body;
             });
         });
 
@@ -92,7 +92,7 @@ describe('Quiz Exercise Management', () => {
             cy.intercept('DELETE', '/api/quiz-exercises/*').as('deleteQuizQuery');
             cy.get('.modal-footer').contains('Delete').click();
             cy.wait('@deleteQuizQuery').then((deleteResponse) => {
-                expect(deleteResponse?.response?.statusCode).to.eq(200);
+                expect(deleteResponse.response?.statusCode).to.eq(200);
             });
         });
     });
