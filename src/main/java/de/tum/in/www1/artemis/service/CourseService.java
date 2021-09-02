@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
@@ -286,6 +287,69 @@ public class CourseService {
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has successfully registered for course {}", user.getLogin(), course.getTitle());
+    }
+
+    /**
+     * Add multiple users to the students of the course so that they can access the course
+     * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
+     * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
+     * <p>
+     * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
+     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
+     *
+     * @param courseId      the id of the course
+     * @param studentDTOs   the list of students (with at least registration number) who should get access to the exam
+     * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     */
+    public List<StudentDTO> registerStudentsForCourse(Long courseId, List<StudentDTO> studentDTOs) {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
+        for (var studentDto : studentDTOs) {
+            var registrationNumber = studentDto.getRegistrationNumber();
+            var login = studentDto.getLogin();
+            try {
+                // 1) we use the registration number and try to find the student in the Artemis user database
+                var optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+                if (optionalStudent.isPresent()) {
+                    var student = optionalStudent.get();
+                    // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the
+                    // course)
+                    if (!student.getGroups().contains(course.getStudentGroupName())) {
+                        userService.addUserToGroup(student, course.getStudentGroupName());
+                    }
+                    continue;
+                }
+
+                // 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a
+                // potential
+                // external user management system
+                optionalStudent = userService.createUserFromLdap(registrationNumber);
+                if (optionalStudent.isPresent()) {
+                    var student = optionalStudent.get();
+                    // the newly created student needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
+                    userService.addUserToGroup(student, course.getStudentGroupName());
+                    continue;
+                }
+
+                // 3) if we cannot find the user in the (TUM) LDAP or the registration number was not set properly, try again using the login
+                optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
+                if (optionalStudent.isPresent()) {
+                    var student = optionalStudent.get();
+                    // the newly created student needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
+                    userService.addUserToGroup(student, course.getStudentGroupName());
+                    continue;
+                }
+
+                log.warn("User with registration number '{}' and login '{}' not found in Artemis user database nor found in (TUM) LDAP", registrationNumber, login);
+            }
+            catch (Exception ex) {
+                log.warn("Error while processing user with registration number " + registrationNumber, ex);
+            }
+
+            notFoundStudentsDTOs.add(studentDto);
+        }
+
+        return notFoundStudentsDTOs;
     }
 
     /**

@@ -4,6 +4,7 @@
         <span *ngIf="filteredUsersSize < allCourseGroupUsers.length"> {{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf">out of</span> </span>
         {{ allCourseGroupUsers.length }} <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName">{{ capitalize(courseGroupEntityName) }}</span>
         <span class="text-muted">({{ courseGroupName }})</span>
+        <jhi-students-import-button *ngIf="courseGroupEntityName == 'students'" class="ms-4" [courseId]="course.id!" (finish)="loadAll()"></jhi-students-import-button>
     </h2>
     <jhi-alert></jhi-alert>
     <jhi-data-table
