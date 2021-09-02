@@ -48,5 +48,6 @@ public class SingleUserNotificationService {
     private void saveAndSend(SingleUserNotification notification) {
         singleUserNotificationRepository.save(notification);
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
+
     }
 }

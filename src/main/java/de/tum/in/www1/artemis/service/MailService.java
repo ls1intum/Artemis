@@ -120,4 +120,12 @@ public class MailService {
         log.debug("Sending SAML2 set password email to '{}'", user.getEmail());
         sendEmailFromTemplate(user, "mail/samlSetPasswordEmail", "email.saml.title");
     }
+
+    // notification related
+    @Async
+    public void sendNotificationEmail(User user) {
+        // log.debug("Sending notification email to '{}'", user.getEmail());
+        log.debug("Sending notification email to '{}'", user.getEmail());
+        sendEmailFromTemplate(user, "mail/creationEmail", "email.activation.title");
+    }
 }
