@@ -160,9 +160,4 @@ public class TextAssessmentEventResource {
         // check if ids of the event ids match with the actual datas id in the repository.
         return fetchedCourseId.equals(event.getCourseId()) && fetchedExerciseId.equals(event.getTextExerciseId()) && fetchedParticipationId.equals(event.getParticipationId());
     }
-
-    private void filterEvents() {
-        List<TextAssessmentEvent> events = textAssessmentEventRepository.findAll();
-
-    }
 }

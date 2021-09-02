@@ -1,18 +1,14 @@
 .table {
-    td {
-        text-align: center;
-    }
     tr {
         text-align: start;
     }
-}
-
-.table td {
-    font-size: x-large;
-    font-weight: bolder;
-}
-
-.table th {
-    font-size: small;
-    font-weight: normal;
+    td {
+        text-align: center;
+        font-size: x-large;
+        font-weight: bolder;
+    }
+    th {
+        font-size: small;
+        font-weight: normal;
+    }
 }
