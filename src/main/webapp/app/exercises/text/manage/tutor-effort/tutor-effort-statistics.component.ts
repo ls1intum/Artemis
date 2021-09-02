@@ -86,7 +86,7 @@ export class TutorEffortStatisticsComponent implements OnInit {
     }
 
     loadTutorEfforts() {
-        this.textExerciseService.calculateTutorEffort(this.currentCourseId, this.currentExerciseId).subscribe(
+        this.textExerciseService.calculateTutorEffort(this.currentExerciseId, this.currentCourseId).subscribe(
             (res: TutorEffort[]) => {
                 this.tutorEfforts = res!;
                 if (!this.tutorEfforts) {
