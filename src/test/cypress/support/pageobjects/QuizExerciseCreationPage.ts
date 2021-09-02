@@ -24,7 +24,7 @@ export class QuizExerciseCreationPage {
 
     saveQuiz() {
         cy.intercept(POST, '/api/quiz-exercises').as('createQuizExercise');
-        cy.contains('Save').click();
+        cy.get('#quiz-save').click();
         return cy.wait('@createQuizExercise');
     }
 }
