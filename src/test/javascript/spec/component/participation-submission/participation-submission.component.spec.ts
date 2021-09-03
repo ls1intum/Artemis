@@ -43,7 +43,6 @@ import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/fi
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { Result } from 'app/entities/result.model';
-import { MockTranslateValuesDirective } from '../course/course-scores/course-scores.component.spec';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
@@ -54,6 +53,7 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
