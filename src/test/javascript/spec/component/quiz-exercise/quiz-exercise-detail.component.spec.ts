@@ -921,6 +921,86 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(comp.quizIsValid).toEqual(false);
             });
 
+            it('should be valid if MC question hint is <= 255 characters', () => {
+                const { question } = createValidMCQuestion();
+                question.hint = 'This is an example hint';
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).to.equal(true);
+            });
+
+            it('should be valid if MC question explanation is <= 1000 characters', () => {
+                const { question } = createValidMCQuestion();
+                question.explanation = 'This is an example explanation';
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).to.equal(true);
+            });
+
+            it('should be valid if MC question hint has exactly 255 characters', () => {
+                const { question } = createValidMCQuestion();
+                question.hint = new Array(256).join('f');
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).to.equal(true);
+            });
+
+            it('should be valid if MC question explanation has exactly 1000 characters', () => {
+                const { question } = createValidMCQuestion();
+                question.explanation = new Array(1001).join('f');
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).to.equal(true);
+            });
+
+            it('should not be valid if MC question hint has more than 255 characters', () => {
+                const { question } = createValidMCQuestion();
+                question.hint = new Array(257).join('f');
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).to.equal(false);
+            });
+
+            it('should not be valid if MC question explanation has more than 1000 characters', () => {
+                const { question } = createValidMCQuestion();
+                question.explanation = new Array(1002).join('f');
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).to.equal(false);
+            });
+
+            it('should be valid if MC answer option hint has exactly 255 characters', () => {
+                const { question } = createValidMCQuestion();
+                question.answerOptions![0]!.hint = new Array(256).join('f');
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).to.equal(true);
+            });
+
+            it('should be valid if MC answer option explanation has exactly 1000 characters', () => {
+                const { question } = createValidMCQuestion();
+                question.answerOptions![0]!.explanation = new Array(1001).join('f');
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).to.equal(true);
+            });
+
+            it('should not be valid if MC answer option hint has more than 255 characters', () => {
+                const { question } = createValidMCQuestion();
+                question.answerOptions![0]!.hint = new Array(257).join('f');
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).to.equal(false);
+            });
+
+            it('should not be valid if MC answer option explanation has more than 1000 characters', () => {
+                const { question } = createValidMCQuestion();
+                question.answerOptions![0]!.explanation = new Array(1002).join('f');
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).to.equal(false);
+            });
+
             it('should be valid with valid DnD question', () => {
                 const { question } = createValidDnDQuestion();
                 comp.quizExercise.quizQuestions = [question];
@@ -936,6 +1016,38 @@ describe('QuizExercise Management Detail Component', () => {
             it('should not be valid if DnD question has no correct mapping', () => {
                 const { question } = createValidDnDQuestion();
                 removeCorrectMappingsAndExpectInvalidQuiz(question);
+            });
+
+            it('should be valid if DnD question hint has exactly 255 characters', () => {
+                const { question } = createValidDnDQuestion();
+                question.hint = new Array(256).join('f');
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).to.equal(true);
+            });
+
+            it('should be valid if DnD question explanation has exactly 1000 characters', () => {
+                const { question } = createValidDnDQuestion();
+                question.explanation = new Array(1001).join('f');
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).to.equal(true);
+            });
+
+            it('should not be valid if DnD question hint has more than 255 characters', () => {
+                const { question } = createValidDnDQuestion();
+                question.hint = new Array(257).join('f');
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).to.equal(false);
+            });
+
+            it('should not be valid if DnD question explanation has more than 1000 characters', () => {
+                const { question } = createValidDnDQuestion();
+                question.explanation = new Array(1002).join('f');
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).to.equal(false);
             });
 
             it('should be valid with valid SA question', () => {
@@ -1392,6 +1504,44 @@ describe('QuizExercise Management Detail Component', () => {
                     answerOption1.invalid = true;
                     checkForInvalidFlaggedQuestionAndReason();
                 });
+
+                it('should put reason if question explanation is too long', () => {
+                    question.explanation = new Array(1002).join('f');
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionExplanationLength');
+                });
+
+                it('should put reason if question hint is too long', () => {
+                    question.hint = new Array(257).join('f');
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionHintLength');
+                });
+
+                it('should put reason if answer option explanation is too long', () => {
+                    answerOption1.explanation = new Array(1002).join('f');
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.answerExplanationLength');
+                });
+
+                it('should put reason if answer option hint is too long', () => {
+                    answerOption1.hint = new Array(257).join('f');
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.answerHintLength');
+                });
+
+                it('should put reason exactly once if more than one answer option explanation is too long', () => {
+                    answerOption1.explanation = new Array(1002).join('f');
+                    answerOption2.explanation = new Array(1002).join('f');
+                    const invalidReasonsAnswerOptions = comp
+                        .computeInvalidReasons()
+                        .filter((reason) => reason.translateKey === 'artemisApp.quizExercise.invalidReasons.answerExplanationLength');
+                    expect(invalidReasonsAnswerOptions.length).to.be.equal(1);
+                });
+
+                it('should put reason exactly once if more than one answer option hint is too long', () => {
+                    answerOption1.hint = new Array(257).join('f');
+                    answerOption2.hint = new Array(257).join('f');
+                    const invalidReasonsAnswerOptions = comp
+                        .computeInvalidReasons()
+                        .filter((reason) => reason.translateKey === 'artemisApp.quizExercise.invalidReasons.answerHintLength');
+                    expect(invalidReasonsAnswerOptions.length).to.be.equal(1);
+                });
             });
 
             describe('should include right reasons in reasons array for DnD', () => {
@@ -1443,6 +1593,16 @@ describe('QuizExercise Management Detail Component', () => {
                 it('should put reason and flag as invalid if a drop location is invalid', () => {
                     dropLocation.invalid = true;
                     checkForInvalidFlaggedQuestionAndReason();
+                });
+
+                it('should put reason if question explanation is too long', () => {
+                    question.explanation = new Array(1002).join('f');
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionExplanationLength');
+                });
+
+                it('should put reason if question hint is too long', () => {
+                    question.hint = new Array(257).join('f');
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionHintLength');
                 });
             });
 
