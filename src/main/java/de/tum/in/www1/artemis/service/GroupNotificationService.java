@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createNotification;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -28,10 +29,14 @@ public class GroupNotificationService {
 
     private final UserRepository userRepository;
 
-    public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository) {
+    private MailService mailService;
+
+    public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
+            MailService mailService) {
         this.groupNotificationRepository = groupNotificationRepository;
         this.messagingTemplate = messagingTemplate;
         this.userRepository = userRepository;
+        this.mailService = mailService;
     }
 
     /**
@@ -198,5 +203,32 @@ public class GroupNotificationService {
     private void saveAndSend(GroupNotification notification) {
         groupNotificationRepository.save(notification);
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
+        prepareSendingGroupEmail(notification);
     }
+
+    private void prepareSendingGroupEmail(GroupNotification notification) {
+        Course course = notification.getCourse();
+        GroupNotificationType groupType = notification.getType();
+        List<User> foundUsers = new ArrayList<>();
+        switch (groupType) {
+            case STUDENT -> {
+                foundUsers = userRepository.getStudents(course);
+                break;
+            }
+            case INSTRUCTOR -> {
+                foundUsers = userRepository.getInstructors(course);
+                break;
+            }
+            case EDITOR -> {
+                foundUsers = userRepository.getEditors(course);
+                break;
+            }
+            case TA -> {
+                foundUsers = userRepository.getTutors(course);
+                break;
+            }
+        }
+        mailService.sendGroupNotificationEmail(notification, foundUsers);
+    }
+
 }

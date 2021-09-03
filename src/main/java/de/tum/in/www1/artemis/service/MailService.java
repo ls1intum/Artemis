@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Locale;
 
 import javax.mail.MessagingException;
@@ -19,6 +20,8 @@ import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import io.github.jhipster.config.JHipsterProperties;
 
 /**
@@ -47,12 +50,16 @@ public class MailService {
 
     private final SpringTemplateEngine templateEngine;
 
-    public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine) {
+    private final UserRepository userRepository;
 
+    public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine,
+            UserRepository userRepository) {
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
         this.messageSource = messageSource;
         this.templateEngine = templateEngine;
+
+        this.userRepository = userRepository;
     }
 
     /**
@@ -133,7 +140,8 @@ public class MailService {
 
     // notification related
     @Async
-    public void sendNotificationEmail(Notification notification, User user) {
+    public void sendSingleUserNotificationEmail(SingleUserNotification notification) {
+        User user = notification.getRecipient();
         log.debug("Sending notification email to '{}'", user.getEmail());
         String templateName = "mail/notifications/notificationEmailTest";
         Context context = this.prepareContext(user);
@@ -144,5 +152,49 @@ public class MailService {
         // String subject = messageSource.getMessage(notification.getTitle(), null, locale);
         String subject = notification.getTitle();
         sendEmail(user.getEmail(), subject, content, false, true);
+    }
+
+    @Async
+    public void sendGroupNotificationEmail(Notification notification, List<User> userList) {
+        log.debug("Sending group notification email");
+        // TODO change templateName to group notification
+
+        Locale localeTest = Locale.forLanguageTag(userList.get(0).getLangKey());
+
+        String templateName = "mail/notifications/notificationEmailTest";
+        // Context context = this.prepareContext(user);
+        Locale locale = Locale.forLanguageTag("en");
+        Context context = new Context(locale);
+        // context.setVariable(USER, user);
+        context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
+        context.setVariable(NOTIFICATION_TITLE, notification.getTitle());
+        context.setVariable(NOTIFICATION_TEXT, notification.getText());
+        String content = templateEngine.process(templateName, context);
+        // String subject = messageSource.getMessage("email.notification.dummy", null, locale);
+        // String subject = messageSource.getMessage(notification.getTitle(), null, locale);
+        String subject = notification.getTitle();
+
+        // TODO add filter by settings here
+
+        String[] bcc = userList.stream().map(User::getEmail).toArray(String[]::new);
+
+        // Prepare message using a Spring helper
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+        try {
+            MimeMessageHelper message = new MimeMessageHelper(mimeMessage, false, StandardCharsets.UTF_8.name());
+            // message.setTo(to);
+            message.setFrom(jHipsterProperties.getMail().getFrom());
+            message.setSubject(subject);
+            // message.setText(content, isHtml);
+            message.setText(content, true);
+
+            message.setBcc(bcc);
+
+            javaMailSender.send(mimeMessage);
+            log.info("Sent email with subject '{}'", subject);
+        }
+        catch (MailException | MessagingException e) {
+            log.warn("Email could not be sent", e);
+        }
     }
 }

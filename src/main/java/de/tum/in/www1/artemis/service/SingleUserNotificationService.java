@@ -52,6 +52,6 @@ public class SingleUserNotificationService {
     private void saveAndSend(SingleUserNotification notification) {
         singleUserNotificationRepository.save(notification);
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
-        mailService.sendNotificationEmail(notification, notification.getRecipient());
+        mailService.sendSingleUserNotificationEmail(notification);
     }
 }
