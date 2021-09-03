@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -19,7 +20,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import io.github.jhipster.config.JHipsterProperties;
@@ -36,11 +37,16 @@ public class MailService {
 
     private static final String USER = "user";
 
+    private static final String GROUP = "group";
+
     private static final String BASE_URL = "baseUrl";
 
-    private static final String NOTIFICATION_TITLE = "notificationTitle";
+    /*
+     * private static final String COURSE = "course"; private static final String NOTIFICATION_TITLE = "notificationTitle"; private static final String NOTIFICATION_TEXT =
+     * "notificationText";
+     */
 
-    private static final String NOTIFICATION_TEXT = "notificationText";
+    private static final String GROUP_NOTIFICATION = "groupNotification";
 
     private final JHipsterProperties jHipsterProperties;
 
@@ -65,29 +71,36 @@ public class MailService {
     /**
      * Sends an e-mail to the specified sender
      *
-     * @param to The receiver address
+     * @param isGroupEmail indicates if the email will be send to an individual or a group
+     * @param users who should be contacted.
      * @param subject The mail subject
      * @param content The content of the mail. Can be enriched with HTML tags
      * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
      * @param isHtml Whether the mail should support HTML tags
      */
     @Async
-    public void sendEmail(String to, String subject, String content, boolean isMultipart, boolean isHtml) {
-        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}' and content={}", isMultipart, isHtml, to, subject, content);
+    public void sendEmail(boolean isGroupEmail, List<User> users, String subject, String content, boolean isMultipart, boolean isHtml) {
+        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}' and content={}", isMultipart, isHtml, users, subject, content);
 
         // Prepare message using a Spring helper
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         try {
             MimeMessageHelper message = new MimeMessageHelper(mimeMessage, isMultipart, StandardCharsets.UTF_8.name());
-            message.setTo(to);
+            if (!isGroupEmail) {
+                message.setTo(users.get(0).getEmail());
+            }
+            else {
+                String[] bcc = users.stream().map(User::getEmail).toArray(String[]::new);
+                message.setBcc(bcc);
+            }
             message.setFrom(jHipsterProperties.getMail().getFrom());
             message.setSubject(subject);
             message.setText(content, isHtml);
             javaMailSender.send(mimeMessage);
-            log.info("Sent email with subject '{}' to User '{}'", subject, to);
+            log.info("Sent email with subject '{}' to User '{}'", subject, users);
         }
         catch (MailException | MessagingException e) {
-            log.warn("Email could not be sent to user '{}'", to, e);
+            log.warn("Email could not be sent to user '{}'", users, e);
         }
     }
 
@@ -103,7 +116,7 @@ public class MailService {
         Context context = this.prepareContext(user);
         String content = templateEngine.process(templateName, context);
         String subject = messageSource.getMessage(titleKey, null, context.getLocale());
-        sendEmail(user.getEmail(), subject, content, false, true);
+        sendEmail(false, Collections.singletonList(user), subject, content, false, true);
     }
 
     private Context prepareContext(User user) {
@@ -139,62 +152,45 @@ public class MailService {
     }
 
     // notification related
+
+    /**
+     * Creates and sends an email to a single user based on a SingleUserNotification
+     * @param notification which information should also be propagated via email
+     */
     @Async
     public void sendSingleUserNotificationEmail(SingleUserNotification notification) {
         User user = notification.getRecipient();
         log.debug("Sending notification email to '{}'", user.getEmail());
-        String templateName = "mail/notifications/notificationEmailTest";
+
         Context context = this.prepareContext(user);
-        context.setVariable(NOTIFICATION_TITLE, notification.getTitle());
-        context.setVariable(NOTIFICATION_TEXT, notification.getText());
-        String content = templateEngine.process(templateName, context);
-        // String subject = messageSource.getMessage("email.notification.dummy", null, locale);
-        // String subject = messageSource.getMessage(notification.getTitle(), null, locale);
+        context.setVariable(GROUP_NOTIFICATION, notification);
+
+        String content = templateEngine.process("mail/notifications/notificationEmailTest", context);
         String subject = notification.getTitle();
-        sendEmail(user.getEmail(), subject, content, false, true);
+
+        sendEmail(false, Collections.singletonList(user), subject, content, false, true);
     }
 
+    /**
+     * Creates and sends an email to a group of users based on a GroupNotification
+     * @param notification which information should also be propagated via email
+     * @param userList with the users that should receive an email (via bcc) (i.e. only one email is created)
+     */
     @Async
-    public void sendGroupNotificationEmail(Notification notification, List<User> userList) {
+    public void sendGroupNotificationEmail(GroupNotification notification, List<User> userList) {
         log.debug("Sending group notification email");
-        // TODO change templateName to group notification
 
-        Locale localeTest = Locale.forLanguageTag(userList.get(0).getLangKey());
-
-        String templateName = "mail/notifications/notificationEmailTest";
-        // Context context = this.prepareContext(user);
         Locale locale = Locale.forLanguageTag("en");
         Context context = new Context(locale);
-        // context.setVariable(USER, user);
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
-        context.setVariable(NOTIFICATION_TITLE, notification.getTitle());
-        context.setVariable(NOTIFICATION_TEXT, notification.getText());
-        String content = templateEngine.process(templateName, context);
-        // String subject = messageSource.getMessage("email.notification.dummy", null, locale);
-        // String subject = messageSource.getMessage(notification.getTitle(), null, locale);
+        context.setVariable(GROUP_NOTIFICATION, notification);
+
+        // TODO remove just for testing
+
+        String content = templateEngine.process("mail/notifications/groupNotificationEmailTests", context);
         String subject = notification.getTitle();
 
-        // TODO add filter by settings here
-
-        String[] bcc = userList.stream().map(User::getEmail).toArray(String[]::new);
-
-        // Prepare message using a Spring helper
-        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-        try {
-            MimeMessageHelper message = new MimeMessageHelper(mimeMessage, false, StandardCharsets.UTF_8.name());
-            // message.setTo(to);
-            message.setFrom(jHipsterProperties.getMail().getFrom());
-            message.setSubject(subject);
-            // message.setText(content, isHtml);
-            message.setText(content, true);
-
-            message.setBcc(bcc);
-
-            javaMailSender.send(mimeMessage);
-            log.info("Sent email with subject '{}'", subject);
-        }
-        catch (MailException | MessagingException e) {
-            log.warn("Email could not be sent", e);
-        }
+        sendEmail(true, userList, subject, content, false, true);
     }
+
 }

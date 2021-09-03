@@ -197,6 +197,7 @@ public class GroupNotificationService {
 
     /**
      * Saves the given notification in database and sends it to the client via websocket.
+     * Also starts the process of sending the information contained in the notification via email.
      *
      * @param notification that should be saved and sent
      */
@@ -206,6 +207,10 @@ public class GroupNotificationService {
         prepareSendingGroupEmail(notification);
     }
 
+    /**
+     * Prepares sending an email based on a GroupNotification by finding the relevant users
+     * @param notification which information should also be propagated via email
+     */
     private void prepareSendingGroupEmail(GroupNotification notification) {
         Course course = notification.getCourse();
         GroupNotificationType groupType = notification.getType();
@@ -228,6 +233,7 @@ public class GroupNotificationService {
                 break;
             }
         }
+        // TODO add filter by notification settings here
         mailService.sendGroupNotificationEmail(notification, foundUsers);
     }
 
