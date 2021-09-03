@@ -20,7 +20,6 @@ import { SortService } from 'app/shared/service/sort.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { JhiSortDirective } from 'ng-jhipster';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -29,6 +28,7 @@ import { MockRouterLinkDirective } from '../../lecture-unit/lecture-unit-managem
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -58,7 +58,7 @@ describe('Exam Management Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockRouterLinkDirective,
-                MockDirective(JhiSortDirective),
+                MockDirective(SortDirective),
                 MockComponent(AlertComponent),
                 MockPipe(DurationPipe),
                 MockDirective(DeleteButtonDirective),

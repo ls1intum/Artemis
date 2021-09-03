@@ -39,12 +39,12 @@ import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { JhiSortDirective } from 'ng-jhipster';
 import { NgModel } from '@angular/forms';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -141,7 +141,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(FaIconComponent),
                 MockComponent(AlertComponent),
-                MockDirective(JhiSortDirective),
+                MockDirective(SortDirective),
                 MockDirective(NgModel),
                 MockDirective(NgbTooltip),
                 MockComponent(NotReleasedTagComponent),

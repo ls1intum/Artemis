@@ -42,10 +42,10 @@ import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instr
 import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { NgModel } from '@angular/forms';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TextFeedbackConflictsComponent', () => {
     let component: TextFeedbackConflictsComponent;
@@ -180,7 +180,7 @@ describe('TextFeedbackConflictsComponent', () => {
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockDirective(NgbTooltip),
                 MockComponent(ConfirmIconComponent),
                 MockDirective(NgModel),

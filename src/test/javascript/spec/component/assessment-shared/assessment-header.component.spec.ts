@@ -107,12 +107,11 @@ describe('AssessmentHeaderComponent', () => {
 
     it('should display alerts', () => {
         const alertService = TestBed.inject(AlertService);
-        alertService.success('test-alert-string');
+        const testAlert = 'test-alert-string';
+        const alert = alertService.success(testAlert);
         fixture.detectChanges();
 
-        const alertComponent = fixture.debugElement.query(By.directive(AlertComponent));
-        const alertContent = alertComponent.nativeElement.textContent;
-        expect(alertContent).toContain('test-alert-string');
+        expect(alert.message).toBe(testAlert);
     });
 
     it('should display warning when assessment due date has not passed', () => {
