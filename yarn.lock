@@ -1108,6 +1108,13 @@
     exec-sh "^0.3.2"
     minimist "^1.2.0"
 
+"@ctrl/ngx-emoji-mart@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@ctrl/ngx-emoji-mart/-/ngx-emoji-mart-6.0.0.tgz#5e8e2fe532ebed3236865ce27f0c06e6e0c7f2ad"
+  integrity sha512-+6n3SVZGanmsntUjCG3ED/We3FH9gJ0l4BEsT5BnhC9SDc4YiBGq9UfiqJwG2eKJSseSTVGKn6vh+DsoVnec0w==
+  dependencies:
+    tslib "^2.1.0"
+
 "@cypress/request@^2.88.5":
   version "2.88.5"
   resolved "https://registry.yarnpkg.com/@cypress/request/-/request-2.88.5.tgz#8d7ecd17b53a849cfd5ab06d5abe7d84976375d7"
@@ -1880,7 +1887,7 @@
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.2.21.tgz#9f35a5643129df132cf3b5c1ec64046ea1af0650"
   integrity sha512-yd+9qKmJxm496BOV9CMNaey8TWsikaZOwMRwPHQIjcOJM9oV+fi9ZMNw3JsVnbEEbo2gRTDnGEBv8pjyn67hNg==
 
-"@types/chart.js@^2.9.24":
+"@types/chart.js@^2.7.48":
   version "2.9.34"
   resolved "https://registry.yarnpkg.com/@types/chart.js/-/chart.js-2.9.34.tgz#d41fb6b74b72a56bac70255bb4ed087386b66ed6"
   integrity sha512-CtZVk+kh1IN67dv+fB0CWmCLCRrDJgqOj15qPic2B1VCMovNO6B7Vhf/TgPpNscjhAL1j+qUntDMWb9A4ZmPTg==
@@ -8292,14 +8299,14 @@ ng2-ace-editor@0.3.9:
     ace-builds "^1.4.2"
     brace "^0.11.1"
 
-ng2-charts@2.4.3:
-  version "2.4.3"
-  resolved "https://registry.yarnpkg.com/ng2-charts/-/ng2-charts-2.4.3.tgz#e1de6cb55fe04248a5f92d342cf6423507fa532d"
-  integrity sha512-tPrhHSS2DfVyipXQ0gykOPc8zFNnj2b7sAebUVty392vHnEGYCwsP6YbFfpr1iXu4yBSRm4Gt5lffR5w0uyYSw==
+ng2-charts@2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/ng2-charts/-/ng2-charts-2.3.0.tgz#e4dd1f7fe12dc2635d5e8c4f101a8d4c4f433754"
+  integrity sha512-D5K7OqF0m5lOBYvNOsraoEo4OPHja9zfGNj+HWy2nUcP0LP2s+Y/QaQlkG/1rHlwXq9HPm8rLxzSutA0eLHxGQ==
   dependencies:
-    "@types/chart.js" "^2.9.24"
-    lodash-es "^4.17.15"
-    tslib "^2.0.0"
+    "@types/chart.js" "^2.7.48"
+    lodash "^4.17.11"
+    tslib "^1.9.0"
 
 ng2-dnd@5.0.2:
   version "5.0.2"
@@ -11402,7 +11409,7 @@ tslib@2.2.0:
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.2.0.tgz#fb2c475977e35e241311ede2693cee1ec6698f5c"
   integrity sha512-gS9GVHRU+RGn5KQM2rllAlR3dU6m7AcpJKdtH8gFvQiC4Otgk98XnmMU+nZenHt/+VhnBPWwgrJsyrdcw6i23w==
 
-tslib@2.3.0, tslib@^2.0.0, tslib@^2.0.1, tslib@^2.0.3, tslib@^2.2.0:
+tslib@2.3.0, tslib@^2.0.0, tslib@^2.0.1, tslib@^2.0.3, tslib@^2.1.0, tslib@^2.2.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.3.0.tgz#803b8cdab3e12ba581a4ca41c8839bbb0dacb09e"
   integrity sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg==

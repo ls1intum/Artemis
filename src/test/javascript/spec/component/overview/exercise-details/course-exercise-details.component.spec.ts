@@ -20,7 +20,6 @@ import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
-import { BuildPlanButtonDirective } from 'app/exercises/programming/shared/utils/build-plan-button.directive';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -106,7 +105,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(HtmlForMarkdownPipe),
-                MockDirective(BuildPlanButtonDirective),
                 MockDirective(RouterOutlet),
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),

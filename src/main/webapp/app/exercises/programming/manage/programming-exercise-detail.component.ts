@@ -23,6 +23,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Submission } from 'app/entities/submission.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -97,6 +98,26 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 }
                 this.loadingTemplateParticipationResults = false;
                 this.loadingSolutionParticipationResults = false;
+
+                this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                    if (profileInfo) {
+                        if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation && this.programmingExercise.templateParticipation.buildPlanId) {
+                            this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
+                                profileInfo.buildPlanURLTemplate,
+                                this.programmingExercise.projectKey,
+                                this.programmingExercise.templateParticipation.buildPlanId,
+                            );
+                        }
+                        if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation && this.programmingExercise.solutionParticipation.buildPlanId) {
+                            this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
+                                profileInfo.buildPlanURLTemplate,
+                                this.programmingExercise.projectKey,
+                                this.programmingExercise.solutionParticipation.buildPlanId,
+                            );
+                        }
+                        this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
+                    }
+                });
             });
 
             this.statisticsService.getExerciseStatistics(programmingExercise.id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
@@ -110,12 +131,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
                     `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/programming-exercises/${this.programmingExercise.id}/`;
                 this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
-            }
-        });
-
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
             }
         });
     }

@@ -2,11 +2,13 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
-import { MockPipe } from 'ng-mocks';
-import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { getElement } from '../../../../helpers/utils/general.utils';
+import { AnswerPostHeaderComponent } from 'app/shared/metis/postings-header/answer-post-header/answer-post-header.component';
+import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -23,12 +25,9 @@ describe('AnswerPostComponent', () => {
         tutorApproved: false,
     } as AnswerPost;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
-            declarations: [AnswerPostComponent, MockPipe(HtmlForMarkdownPipe)],
-            schemas: [NO_ERRORS_SCHEMA],
-            providers: [],
+            declarations: [AnswerPostComponent, MockPipe(HtmlForMarkdownPipe), MockComponent(AnswerPostHeaderComponent), MockComponent(AnswerPostFooterComponent)],
         })
             .compileComponents()
             .then(() => {

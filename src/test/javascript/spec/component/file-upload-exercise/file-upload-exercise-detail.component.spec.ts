@@ -11,17 +11,12 @@ import * as chai from 'chai';
 import { fileUploadExercise, MockFileUploadExerciseService } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
-import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
-import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Course } from 'app/entities/course.model';
@@ -31,6 +26,10 @@ import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import * as sinon from 'sinon';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
+import { ExerciseDetailsComponent } from 'app/exercises/shared/exercise/exercise-details/exercise-details.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -71,16 +70,16 @@ describe('FileUploadExercise Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                ArtemisSharedModule,
-                ArtemisAssessmentSharedModule,
-                RouterTestingModule,
-                TranslateModule.forRoot(),
-                AssessmentInstructionsModule,
-                ExerciseDetailsModule,
+            imports: [ArtemisTestModule, RouterTestingModule],
+            declarations: [
+                FileUploadExerciseDetailComponent,
+                MockPipe(HtmlForMarkdownPipe),
+                MockComponent(NonProgrammingExerciseDetailCommonActionsComponent),
+                MockComponent(AlertComponent),
+                MockComponent(AlertErrorComponent),
+                MockComponent(ExerciseDetailStatisticsComponent),
+                MockComponent(ExerciseDetailsComponent),
             ],
-            declarations: [FileUploadExerciseDetailComponent, MockPipe(HtmlForMarkdownPipe), MockComponent(NonProgrammingExerciseDetailCommonActionsComponent)],
             providers: [
                 JhiLanguageHelper,
                 AlertService,
@@ -90,15 +89,17 @@ describe('FileUploadExercise Management Detail Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: CookieService, useClass: MockCookieService },
             ],
-        })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
-            .compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
         comp = fixture.componentInstance;
         service = fixture.debugElement.injector.get(FileUploadExerciseService);
         statisticsService = fixture.debugElement.injector.get(StatisticsService);
         debugElement = fixture.debugElement;
         statisticsServiceStub = sinon.stub(statisticsService, 'getExerciseStatistics').returns(of(fileUploadExerciseStatistics));
+    });
+
+    afterEach(() => {
+        sinon.restore();
     });
 
     describe('Title should contain exercise id and description list', () => {

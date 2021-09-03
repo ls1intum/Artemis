@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { SlideToggleComponent } from 'app/exercises/shared/slide-toggle/slide-toggle.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ChartComponent } from 'app/shared/chart/chart.component';
 import { CircularProgressBarComponent } from 'app/shared/circular-progress-bar/circular-progress-bar.component';
@@ -39,7 +38,6 @@ import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
         DeleteDialogComponent,
         ResizeableContainerComponent,
         SecureLinkDirective,
-        SlideToggleComponent,
         JhiConnectionStatusComponent,
         ChartComponent,
         OrganizationSelectorComponent,
@@ -68,7 +66,6 @@ import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
         DeleteDialogComponent,
         ResizeableContainerComponent,
         SecureLinkDirective,
-        SlideToggleComponent,
         JhiConnectionStatusComponent,
         ChartComponent,
         OrganizationSelectorComponent,

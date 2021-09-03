@@ -14,7 +14,6 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
 import { ProgrammingExerciseInstructorStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-status.component';
-import { BuildPlanLinkDirective } from 'app/exercises/programming/shared/utils/build-plan-link.directive';
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -66,7 +65,6 @@ describe('Exercise Groups Component', () => {
                 ProgrammingExerciseInstructorStatusComponent,
                 MockComponent(AlertComponent),
                 MockComponent(AlertErrorComponent),
-                MockComponent(BuildPlanLinkDirective),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(NgbTooltip),

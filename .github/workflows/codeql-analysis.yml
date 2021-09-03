@@ -40,17 +40,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Install Java 16
-    - name: Setup Node.js
-      uses: actions/setup-node@v2.3.0
-      with:
-        node-version: '${{ env.node }}'
-    - name: Setup Java
-      uses: actions/setup-java@v2.1.0
-      with:
-        distribution: 'zulu'
-        java-version: '${{ env.java }}'
-
     - name: Checkout repository
       uses: actions/checkout@v2
       with:
@@ -62,6 +51,19 @@ jobs:
     # the head of the pull request instead of the merge commit.
     - run: git checkout HEAD^2
       if: ${{ github.event_name == 'pull_request' }}
+
+    # Install Java 16
+    - name: Setup Node.js
+      uses: actions/setup-node@v2.4.0
+      with:
+        node-version: '${{ env.node }}'
+        cache: 'yarn'
+    - name: Setup Java
+      uses: actions/setup-java@v2.3.0
+      with:
+        distribution: 'zulu'
+        java-version: '${{ env.java }}'
+        cache: 'gradle'
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL

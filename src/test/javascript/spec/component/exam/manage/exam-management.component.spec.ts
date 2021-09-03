@@ -16,13 +16,19 @@ import { ExamManagementComponent } from 'app/exam/manage/exam-management.compone
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { RouterTestingModule } from '@angular/router/testing';
-import { examManagementRoute } from 'app/exam/manage/exam-management.route';
 import { SortService } from 'app/shared/service/sort.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { JhiSortDirective } from 'ng-jhipster';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { MockRouterLinkDirective } from '../../lecture-unit/lecture-unit-management.component.spec';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -45,8 +51,18 @@ describe('Exam Management Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, RouterTestingModule.withRoutes([examManagementRoute[0]])],
-            declarations: [ExamManagementComponent],
+            imports: [ArtemisTestModule],
+            declarations: [
+                ExamManagementComponent,
+                MockDirective(HasAnyAuthorityDirective),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockRouterLinkDirective,
+                MockDirective(JhiSortDirective),
+                MockComponent(AlertComponent),
+                MockPipe(DurationPipe),
+                MockDirective(DeleteButtonDirective),
+            ],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -54,9 +70,7 @@ describe('Exam Management Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 EventManager,
             ],
-        })
-            .overrideTemplate(ExamManagementComponent, '')
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(ExamManagementComponent);
         comp = fixture.componentInstance;

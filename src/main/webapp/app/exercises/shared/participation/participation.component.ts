@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute } from '@angular/router';
@@ -7,7 +7,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise-utils';
@@ -21,6 +20,9 @@ import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 
 enum FilterProp {
     ALL = 'all',
@@ -70,6 +72,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private exerciseService: ExerciseService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private accountService: AccountService,
+        private profileService: ProfileService,
     ) {
         this.participationCriteria = {
             filterProp: FilterProp.ALL,
@@ -101,6 +104,14 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 this.exercise = exerciseResponse.body!;
                 this.participationService.findAllParticipationsByExercise(params['exerciseId'], true).subscribe((participationsResponse) => {
                     this.participations = participationsResponse.body!;
+                    if (this.exercise.type === ExerciseType.PROGRAMMING) {
+                        const programmingExercise = this.exercise as ProgrammingExercise;
+                        if (programmingExercise.projectKey) {
+                            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                                setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, (this.exercise as ProgrammingExercise).projectKey);
+                            });
+                        }
+                    }
                     this.isLoading = false;
                 });
                 if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -223,6 +234,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
+
     /**
      * Cleans programming exercise participation
      * @param programmingExerciseParticipation the id of the participation that we want to delete

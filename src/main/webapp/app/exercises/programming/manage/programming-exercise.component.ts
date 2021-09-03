@@ -21,6 +21,8 @@ import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/pr
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -39,6 +41,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     @ContentChild('overrideGenerateAndImportButton') overrideGenerateAndImportButton: TemplateRef<any>;
     @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
     @ContentChild('overrideButtons') overrideButtons: TemplateRef<any>;
+    private buildPlanLinkTemplate: string;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -50,6 +53,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private router: Router,
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private sortService: SortService,
+        private profileService: ProfileService,
         courseService: CourseManagementService,
         translateService: TranslateService,
         eventManager: EventManager,
@@ -68,12 +72,31 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId).subscribe(
             (res: HttpResponse<ProgrammingExercise[]>) => {
                 this.programmingExercises = res.body!;
+                this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                    this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
+                });
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {
                     exercise.course = this.course;
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(getCourseFromExercise(exercise));
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(getCourseFromExercise(exercise));
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(getCourseFromExercise(exercise));
+                    if (exercise.projectKey) {
+                        if (exercise.solutionParticipation!.buildPlanId) {
+                            exercise.solutionParticipation!.buildPlanUrl = createBuildPlanUrl(
+                                this.buildPlanLinkTemplate,
+                                exercise.projectKey,
+                                exercise.solutionParticipation!.buildPlanId,
+                            );
+                        }
+                        if (exercise.templateParticipation!.buildPlanId) {
+                            exercise.templateParticipation!.buildPlanUrl = createBuildPlanUrl(
+                                this.buildPlanLinkTemplate,
+                                exercise.projectKey,
+                                exercise.templateParticipation!.buildPlanId,
+                            );
+                        }
+                    }
                 });
                 this.emitExerciseCount(this.programmingExercises.length);
             },

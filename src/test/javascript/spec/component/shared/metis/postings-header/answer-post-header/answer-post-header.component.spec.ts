@@ -3,22 +3,26 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
-import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import * as sinon from 'sinon';
 import { SinonStub, spy, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { User } from 'app/core/user/user.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { getElement } from '../../../../../helpers/utils/general.utils';
 import { AnswerPostHeaderComponent } from 'app/shared/metis/postings-header/answer-post-header/answer-post-header.component';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
+import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -33,7 +37,7 @@ describe('AnswerPostHeaderComponent', () => {
     let metisServiceDeletePostStub: SinonStub;
     let modal: MockNgbModalService;
 
-    const user = { id: 1, name: 'usersame', login: 'login' } as User;
+    const user = { id: 1, name: 'username', login: 'login' } as User;
 
     const yesterday: Moment = moment().subtract(1, 'day');
 
@@ -44,9 +48,9 @@ describe('AnswerPostHeaderComponent', () => {
         content: 'Answer Post Content',
     } as AnswerPost;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             providers: [
                 FormBuilder,
                 { provide: MetisService, useClass: MockMetisService },
@@ -55,8 +59,17 @@ describe('AnswerPostHeaderComponent', () => {
                     useClass: MockNgbModalService,
                 },
             ],
-            declarations: [AnswerPostHeaderComponent, AnswerPostCreateEditModalComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
-            schemas: [NO_ERRORS_SCHEMA],
+            declarations: [
+                AnswerPostHeaderComponent,
+                AnswerPostCreateEditModalComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockDirective(NgbTooltip),
+                MockComponent(PostingsMarkdownEditorComponent),
+                MockComponent(PostingsButtonComponent),
+                MockComponent(FaIconComponent),
+                MockComponent(ConfirmIconComponent),
+            ],
         })
             .compileComponents()
             .then(() => {

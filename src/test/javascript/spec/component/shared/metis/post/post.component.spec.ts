@@ -1,12 +1,14 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe } from 'ng-mocks';
-import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { Post } from 'app/entities/metis/post.model';
 import { getElement } from '../../../../helpers/utils/general.utils';
+import { PostFooterComponent } from 'app/shared/metis/postings-footer/post-footer/post-footer.component';
+import { PostHeaderComponent } from 'app/shared/metis/postings-header/post-header/post-header.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -24,12 +26,9 @@ describe('PostComponent', () => {
         tags: ['tag'],
     } as Post;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
-            declarations: [PostComponent, MockPipe(HtmlForMarkdownPipe)],
-            schemas: [NO_ERRORS_SCHEMA],
-            providers: [],
+            declarations: [PostComponent, MockPipe(HtmlForMarkdownPipe), MockComponent(PostHeaderComponent), MockComponent(PostFooterComponent)],
         })
             .compileComponents()
             .then(() => {
