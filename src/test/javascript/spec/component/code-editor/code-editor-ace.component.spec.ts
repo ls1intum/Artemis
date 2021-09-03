@@ -3,6 +3,7 @@ import { By } from '@angular/platform-browser';
 import { DebugElement, EventEmitter } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
+import * as sinon from 'sinon';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { SinonStub, spy, stub } from 'sinon';
 import { Subject } from 'rxjs';
@@ -50,7 +51,7 @@ describe('CodeEditorAceComponent', () => {
     });
 
     afterEach(() => {
-        loadRepositoryFileStub.restore();
+        sinon.restore();
     });
 
     it('without any inputs, should still render correctly without ace, showing a placeholder', () => {
