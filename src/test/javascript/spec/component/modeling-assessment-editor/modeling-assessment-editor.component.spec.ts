@@ -482,7 +482,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             submitted: true,
             type: 'MANUAL',
             text: 'Test\n\nTest\n\nTest',
-        } as unknown as ModelingSubmission;
+        } as ModelingSubmission;
 
         const importStub = sinon.stub(exampleSubmissionService, 'import');
         importStub.returns(of(new HttpResponse({ body: new ExampleSubmission() })));
@@ -490,6 +490,6 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.importStudentSubmissionAsExampleSubmission();
 
         expect(importStub).to.have.calledOnce;
-        expect(importStub).to.have.been.calledWith(component.submission, component.modelingExercise!.id);
+        expect(importStub).to.have.been.calledWith(component.submission.id, component.modelingExercise!.id);
     });
 });

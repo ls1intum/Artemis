@@ -133,7 +133,7 @@ describe('Example Submission Service', () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
             service
-                .import(studentSubmission, exerciseId)
+                .import(studentSubmission.id!, exerciseId)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'POST' });

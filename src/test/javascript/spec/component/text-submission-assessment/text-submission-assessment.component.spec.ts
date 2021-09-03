@@ -297,6 +297,6 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.importStudentSubmissionAsExampleSubmission();
 
         expect(importStub).to.have.calledOnce;
-        expect(importStub).to.have.been.calledWith(submission, exercise.id);
+        expect(importStub).to.have.been.calledWith(submission.id, exercise.id);
     });
 });

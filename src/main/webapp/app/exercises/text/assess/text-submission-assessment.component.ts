@@ -466,7 +466,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     importStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.exercise) {
-            this.exampleSubmissionService.import(this.submission, this.exercise.id!).subscribe(
+            this.exampleSubmissionService.import(this.submission.id!, this.exercise.id!).subscribe(
                 () => this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful'),
                 (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
