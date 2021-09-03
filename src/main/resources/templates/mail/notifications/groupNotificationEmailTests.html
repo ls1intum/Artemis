@@ -7,26 +7,26 @@
 </head>
 <body>
 
-<span th:text="#{email.greeting.plural}">
+<span th:utext="#{email.greeting.plural}">
     Dear
 </span>
 
 <th:block th:switch="${groupNotification.type.toString()}">
-    <div th:case="'STUDENT'">
-        <span th:text="#{email.notification.group.students}"/>
-    </div>
-    <div th:case="'INSTRUCTOR'">
-        <span th:text="#{email.notification.group.instructors}"/>
-    </div>
-    <div th:case="'EDITOR'">
-        <span th:text="#{email.notification.group.editors}"/>
-    </div>
-    <div th:case="'TA'">
-        <span th:text="#{email.notification.group.tutors}"/>
-    </div>
+    <th:block th:case="'STUDENT'">
+        <span th:utext="#{email.notification.group.students}"/>
+    </th:block>
+    <th:block th:case="'INSTRUCTOR'">
+        <span th:utext="#{email.notification.group.instructors}"/>
+    </th:block>
+    <th:block th:case="'EDITOR'">
+        <span th:utext="#{email.notification.group.editors}"/>
+    </th:block>
+    <th:block th:case="'TA'">
+        <span th:utext="#{email.notification.group.tutors}"/>
+    </th:block>
 </th:block>
 
-<span th:text="#{email.notification.group.from(${groupNotification.course.title})}">
+<span th:utext="#{email.notification.group.from(${groupNotification.course.title})}">
     Course Title
 </span>
 
