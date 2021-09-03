@@ -66,35 +66,21 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                 const linkToReference = referencedPostInLoadedPosts
                     ? this.metisService.getLinkForPost(referencedPostInLoadedPosts)
                     : ['/courses', this.metisService.getCourse().id!, 'discussion'];
-                const queryParams = referencedPostInLoadedPosts
-                    ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts)
-                    : ({ searchText: `#${referencedId}` } as Params);
-                if (index === 0) {
-                    const endIndex = referenceIndicesArray[index + 1][0];
-                    const contentPart: PostingContentPart = {
-                        contentBeforeLink: this.content!.substring(0, referenceIndices[0]),
-                        linkToReference,
-                        queryParams,
-                        referenceStr,
-                        contentAfterLink: this.content!.substring(referenceIndices[1], endIndex),
-                    };
-                    this.postingContentParts.push(contentPart);
+                const queryParams = referencedPostInLoadedPosts ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts) : ({ searchText: referenceStr } as Params);
+                let endIndex;
+                if (index < referenceIndicesArray.length - 1) {
+                    endIndex = referenceIndicesArray[index + 1][0];
                 } else {
-                    let endIndex;
-                    if (!referenceIndicesArray[index + 1]) {
-                        endIndex = this.content!.length;
-                    } else {
-                        endIndex = referenceIndicesArray[index + 1][0];
-                    }
-                    const contentPart: PostingContentPart = {
-                        contentBeforeLink: undefined,
-                        linkToReference,
-                        queryParams,
-                        referenceStr,
-                        contentAfterLink: this.content!.substring(referenceIndices[1], endIndex),
-                    };
-                    this.postingContentParts.push(contentPart);
+                    endIndex = this.content!.length;
                 }
+                const contentPart: PostingContentPart = {
+                    contentBeforeLink: index === 0 ? this.content!.substring(0, referenceIndices[0]) : undefined,
+                    linkToReference,
+                    queryParams,
+                    referenceStr,
+                    contentAfterLink: this.content!.substring(referenceIndices[1], endIndex),
+                };
+                this.postingContentParts.push(contentPart);
             });
         } else {
             const contentLink: PostingContentPart = {
