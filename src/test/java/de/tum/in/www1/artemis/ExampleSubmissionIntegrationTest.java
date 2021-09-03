@@ -20,9 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
@@ -37,6 +35,9 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private ExerciseRepository exerciseRepository;
 
     private ModelingExercise modelingExercise;
 
@@ -320,6 +321,33 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         course.setInstructorGroupName("test");
         courseRepository.save(course);
         importExampleSubmission(textExercise.getId(), submission.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importExampleSubmissionWithTextSubmission_exerciseIdNotMatched() throws Exception {
+        Submission submission = ModelFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
+        submission = database.saveTextSubmission(textExercise, (TextSubmission) submission, "student1");
+
+        Exercise textExerciseToBeConflicted = new TextExercise();
+        textExerciseToBeConflicted.setCourse(course);
+        Exercise exercise = exerciseRepository.save(textExerciseToBeConflicted);
+
+        importExampleSubmission(exercise.getId(), submission.getId(), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importExampleSubmissionWithModelingSubmission_exerciseIdNotMatched() throws Exception {
+        Submission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = database.addModelingSubmission(modelingExercise, (ModelingSubmission) submission, "student1");
+
+        Exercise modelingExerciseToBeConflicted = new ModelingExercise();
+        modelingExerciseToBeConflicted.setCourse(course);
+        Exercise exercise = exerciseRepository.save(modelingExerciseToBeConflicted);
+
+        importExampleSubmission(exercise.getId(), submission.getId(), HttpStatus.BAD_REQUEST);
+
     }
 
 }
