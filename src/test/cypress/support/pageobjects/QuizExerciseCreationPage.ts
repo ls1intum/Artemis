@@ -25,7 +25,23 @@ export class QuizExerciseCreationPage {
     addDragAndDropQuestion(title: string) {
         cy.get('#quiz-add-dnd-question').click();
         cy.get('.question-title > .form-control').type(title);
-        this.uploadDragAndDropBackground();
+        this.uploadDragAndDropBackground().then(() => {
+            cy.wait(2000);
+            cy.get('.click-layer')
+                .trigger('mousedown', { x: 50, y: 50 })
+                .trigger('mousemove', { x: 500, y: 300 })
+                .trigger('mouseup');
+        });
+        this.createDragAndDropItem('Rick Astley');
+        cy.get('.drag-item').drag('.drop-location');
+        cy.fixture('quiz_exercise_fixtures/dragAndDropQuiz.txt').then((fileContent) => {
+            cy.get('.ace_text-input').focus().clear().type(fileContent);
+        });
+    }
+
+    createDragAndDropItem(text: string) {
+        cy.get('[jhitranslate="artemisApp.dragAndDropQuestion.addDragItemText"]').click();
+        cy.get('.drag-item').find('textarea').clear().type(text);
     }
 
     uploadDragAndDropBackground() {

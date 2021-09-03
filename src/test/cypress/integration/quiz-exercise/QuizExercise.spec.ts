@@ -44,7 +44,7 @@ describe('Quiz Exercise Management', () => {
         let quizExercise: any;
 
         afterEach('Delete Quiz', () => {
-            courseManagementRequest.deleteQuizExercise(quizExercise.id);
+           courseManagementRequest.deleteQuizExercise(quizExercise.id);
         });
 
         beforeEach(() => {
@@ -75,12 +75,11 @@ describe('Quiz Exercise Management', () => {
 
         it('Creates a Quiz with Drag and Drop', () => {
             quizCreation.addDragAndDropQuestion('DnD Quiz' + uid);
-            cy.wait(5000);
-            /*quizCreation.saveQuiz().then((quizResponse) => {
+            quizCreation.saveQuiz().then((quizResponse) => {
                 quizExercise = quizResponse.response?.body;
                 cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
-                cy.contains('SA Quiz' + uid).should('be.visible');
-            }); */
+                cy.contains('DnD Quiz' + uid).should('be.visible');
+            });
         });
     });
 
