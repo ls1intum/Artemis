@@ -14,6 +14,7 @@ import { HttpResponse } from '@angular/common/http';
 import * as chai from 'chai';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
 
 const expect = chai.expect;
 
@@ -101,19 +102,27 @@ describe('TextExercise Service', () => {
             expect(requestResult.status).to.equal(200);
         });
 
-        it('should retrieve TextExercise cluster statistics', fakeAsync(() => {
+        it('should retrieve TextExercise cluster statistics', () => {
             service.getClusterStats(1).subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'GET' });
-            req.flush({ status: 200 });
-            expect(requestResult.status).to.equal(200);
-        }));
+            const returnedFromService: TextExerciseClusterStatistics[] = [
+                {
+                    clusterId: 1,
+                    clusterSize: 1,
+                    numberOfAutomaticFeedbacks: 3,
+                    disabled: true,
+                },
+            ];
+            req.flush(returnedFromService);
+            expect(requestResult.body).to.equal(returnedFromService);
+        });
 
-        it('should set TextExercise cluster disabled predicate', fakeAsync(() => {
+        it('should set TextExercise cluster disabled predicate', () => {
             service.setClusterDisabledPredicate(1, true).subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'PATCH' });
-            req.flush({ status: 200 });
-            expect(requestResult.status).to.equal(200);
-        }));
+            req.flush({});
+            expect(requestResult).to.deep.equal({});
+        });
     });
 
     afterEach(() => {
