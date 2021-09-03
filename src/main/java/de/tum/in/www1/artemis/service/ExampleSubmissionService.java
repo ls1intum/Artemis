@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -13,9 +14,12 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class ExampleSubmissionService {
+
+    private static final String ENTITY_NAME = "exampleSubmission";
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
@@ -98,16 +102,32 @@ public class ExampleSubmissionService {
 
         if (exercise instanceof ModelingExercise) {
             ModelingSubmission modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+            checkGivenExerciseIdSameForSubmissionParticipation(exercise.getId(), modelingSubmission.getParticipation().getExercise().getId());
             // example submission does need participation
             modelingSubmission.setParticipation(null);
             newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(modelingSubmission));
         }
         if (exercise instanceof TextExercise) {
             TextSubmission textSubmission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksByIdElseThrow(submissionId);
+            checkGivenExerciseIdSameForSubmissionParticipation(exercise.getId(), textSubmission.getParticipation().getExercise().getId());
             // example submission does need participation
             textSubmission.setParticipation(null);
             newExampleSubmission.setSubmission(textExerciseImportService.copySubmission(textSubmission));
         }
         return exampleSubmissionRepository.save(newExampleSubmission);
     }
+
+    /**
+     * Checks the original exercise id is matched with the exercise id in the submission participation
+     *
+     * @param originalExerciseId        given exercise id in the request
+     * @param exerciseIdInSubmission    exercise id in submission participation
+     * @throws BadRequestAlertException
+     */
+    public void checkGivenExerciseIdSameForSubmissionParticipation(long originalExerciseId, long exerciseIdInSubmission) {
+        if (!Objects.equals(originalExerciseId, exerciseIdInSubmission)) {
+            throw new BadRequestAlertException("ExerciseId does not match with the exerciseId in submission participation", ENTITY_NAME, "idNotMatched");
+        }
+    }
+
 }

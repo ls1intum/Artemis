@@ -20,9 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
@@ -37,6 +35,9 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private ExerciseRepository exerciseRepository;
 
     private ModelingExercise modelingExercise;
 
@@ -250,7 +251,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         assertThat(exampleSubmissionRepo.findBySubmissionId(randomId)).isEmpty();
     }
 
-    private ExampleSubmission importExampleSubmission(HttpStatus expectedStatus, Long submissionId, Long exerciseId) throws Exception {
+    private ExampleSubmission importExampleSubmission(Long exerciseId, Long submissionId, HttpStatus expectedStatus) throws Exception {
         return request.postWithResponseBody("/api/exercises/" + exerciseId + "/example-submissions/import/" + submissionId, null, ExampleSubmission.class, expectedStatus);
     }
 
@@ -279,7 +280,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         feedback.setReference(textBlocks.get(0).getId());
         database.addFeedbackToResult(feedback, submission.getLatestResult());
 
-        ExampleSubmission exampleSubmission = importExampleSubmission(HttpStatus.OK, submission.getId(), textExercise.getId());
+        ExampleSubmission exampleSubmission = importExampleSubmission(textExercise.getId(), submission.getId(), HttpStatus.OK);
         List<TextBlock> copiedTextBlocks = new ArrayList<>(((TextSubmission) exampleSubmission.getSubmission()).getBlocks());
         assertThat(exampleSubmission.getId()).isNotNull();
         assertThat(((TextSubmission) exampleSubmission.getSubmission()).getText()).isEqualTo(((TextSubmission) submission).getText());
@@ -297,7 +298,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         submission = database.addModelingSubmission(modelingExercise, (ModelingSubmission) submission, "student1");
         database.addResultToSubmission(submission, AssessmentType.MANUAL);
 
-        ExampleSubmission exampleSubmission = importExampleSubmission(HttpStatus.OK, submission.getId(), modelingExercise.getId());
+        ExampleSubmission exampleSubmission = importExampleSubmission(modelingExercise.getId(), submission.getId(), HttpStatus.OK);
         assertThat(exampleSubmission.getId()).isNotNull();
         assertThat(((ModelingSubmission) exampleSubmission.getSubmission()).getModel()).isEqualTo(((ModelingSubmission) submission).getModel());
         assertThat(exampleSubmission.getSubmission().getLatestResult().getScore()).isEqualTo(submission.getLatestResult().getScore());
@@ -309,7 +310,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         Submission submission = new TextSubmission();
         submission.setId(12345L);
         Long randomId = 1233L;
-        importExampleSubmission(HttpStatus.NOT_FOUND, submission.getId(), randomId);
+        importExampleSubmission(randomId, submission.getId(), HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -319,7 +320,34 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         submission.setId(12345L);
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        importExampleSubmission(HttpStatus.FORBIDDEN, submission.getId(), textExercise.getId());
+        importExampleSubmission(textExercise.getId(), submission.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importExampleSubmissionWithTextSubmission_exerciseIdNotMatched() throws Exception {
+        Submission submission = ModelFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
+        submission = database.saveTextSubmission(textExercise, (TextSubmission) submission, "student1");
+
+        Exercise textExerciseToBeConflicted = new TextExercise();
+        textExerciseToBeConflicted.setCourse(course);
+        Exercise exercise = exerciseRepository.save(textExerciseToBeConflicted);
+
+        importExampleSubmission(exercise.getId(), submission.getId(), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importExampleSubmissionWithModelingSubmission_exerciseIdNotMatched() throws Exception {
+        Submission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = database.addModelingSubmission(modelingExercise, (ModelingSubmission) submission, "student1");
+
+        Exercise modelingExerciseToBeConflicted = new ModelingExercise();
+        modelingExerciseToBeConflicted.setCourse(course);
+        Exercise exercise = exerciseRepository.save(modelingExerciseToBeConflicted);
+
+        importExampleSubmission(exercise.getId(), submission.getId(), HttpStatus.BAD_REQUEST);
+
     }
 
 }
