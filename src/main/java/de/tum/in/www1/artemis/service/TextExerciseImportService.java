@@ -150,8 +150,8 @@ public class TextExerciseImportService extends ExerciseImportService {
      * @param newSubmission      The submission which has newly created text blocks
      */
     private void updateFeedbackReferencesWithNewTextBlockIds(Set<TextBlock> originalTextBlocks, TextSubmission newSubmission) {
-        Result result = newSubmission.getLatestResult();
-        List<Feedback> newFeedbackList = result.getFeedbacks();
+        Result newResult = newSubmission.getLatestResult();
+        List<Feedback> newFeedbackList = newResult.getFeedbacks();
         Set<TextBlock> newSubmissionTextBlocks = newSubmission.getBlocks();
 
         // first collect original text blocks as <startIndex, TextBlock> map, startIndex will help to match newly created text block with original text block
@@ -172,7 +172,7 @@ public class TextExerciseImportService extends ExerciseImportService {
 
         // save the feedback (that is not yet in the database) to prevent null index exception
         List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(newFeedbackList);
-        result.updateAllFeedbackItems(savedFeedback, false);
-        resultRepository.save(result);
+        newResult.updateAllFeedbackItems(savedFeedback, false);
+        resultRepository.save(newResult);
     }
 }
