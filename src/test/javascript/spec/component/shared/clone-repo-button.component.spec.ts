@@ -64,7 +64,13 @@ describe('JhiCloneRepoButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbModule, FeatureToggleModule, ClipboardModule],
+            imports: [ArtemisTestModule, ClipboardModule, NgbPopoverModule],
+            declarations: [CloneRepoButtonComponent,
+                MockComponent(ExerciseActionButtonComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(SafeUrlPipe),
+                MockDirective(FeatureToggleDirective),
+            ]
             declarations: [CloneRepoButtonComponent, MockComponent(ExerciseActionButtonComponent), MockPipe(ArtemisTranslatePipe), MockPipe(SafeUrlPipe)],
             providers: [
                 { provide: JhiAlertService, useClass: MockAlertService },
