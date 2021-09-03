@@ -251,7 +251,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
     }
 
     private ExampleSubmission importExampleSubmission(HttpStatus expectedStatus, Long submissionId, Long exerciseId) throws Exception {
-        return request.postWithResponseBody("/api/exercises/" + exerciseId + "/example-submissions/import", submissionId, ExampleSubmission.class, expectedStatus);
+        return request.postWithResponseBody("/api/exercises/" + exerciseId + "/example-submissions/import/" + submissionId, null, ExampleSubmission.class, expectedStatus);
     }
 
     @Test
@@ -272,19 +272,21 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         // add one feedback for the created text block
         List<TextBlock> textBlocks = new ArrayList<>(((TextSubmission) submission).getBlocks());
         Feedback feedback = new Feedback();
-        if (!textBlocks.isEmpty()) {
-            feedback.setCredits(1.0);
-            feedback.setReference(textBlocks.get(0).getId());
-        }
 
+        assertThat(textBlocks).isNotEmpty();
+
+        feedback.setCredits(1.0);
+        feedback.setReference(textBlocks.get(0).getId());
         database.addFeedbackToResult(feedback, submission.getLatestResult());
 
         ExampleSubmission exampleSubmission = importExampleSubmission(HttpStatus.OK, submission.getId(), textExercise.getId());
         List<TextBlock> copiedTextBlocks = new ArrayList<>(((TextSubmission) exampleSubmission.getSubmission()).getBlocks());
         assertThat(exampleSubmission.getId()).isNotNull();
         assertThat(((TextSubmission) exampleSubmission.getSubmission()).getText()).isEqualTo(((TextSubmission) submission).getText());
-        assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks().size()).isEqualTo(1);
-        assertThat(copiedTextBlocks.size()).isEqualTo(1);
+        assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks()).isNotEmpty();
+        assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks().get(0).getCredits()).isEqualTo(feedback.getCredits());
+        assertThat(copiedTextBlocks).isNotEmpty();
+        assertThat(copiedTextBlocks.get(0).getText()).isEqualTo(textBlock.getText());
         assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks().get(0).getReference()).isEqualTo(copiedTextBlocks.get(0).getId());
     }
 
@@ -297,6 +299,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
 
         ExampleSubmission exampleSubmission = importExampleSubmission(HttpStatus.OK, submission.getId(), modelingExercise.getId());
         assertThat(exampleSubmission.getId()).isNotNull();
+        assertThat(((ModelingSubmission) exampleSubmission.getSubmission()).getModel()).isEqualTo(((ModelingSubmission) submission).getModel());
         assertThat(exampleSubmission.getSubmission().getLatestResult().getScore()).isEqualTo(submission.getLatestResult().getScore());
     }
 

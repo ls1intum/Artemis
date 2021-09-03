@@ -151,7 +151,7 @@ public class TextExerciseImportService extends ExerciseImportService {
      */
     private void updateFeedbackReferencesWithNewTextBlockIds(Set<TextBlock> originalTextBlocks, TextSubmission newSubmission) {
         Result result = newSubmission.getLatestResult();
-        List<Feedback> feedbackList = result.getFeedbacks();
+        List<Feedback> newFeedbackList = result.getFeedbacks();
         Set<TextBlock> newSubmissionTextBlocks = newSubmission.getBlocks();
 
         // first collect original text blocks as <startIndex, TextBlock> map, startIndex will help to match newly created text block with original text block
@@ -166,12 +166,12 @@ public class TextExerciseImportService extends ExerciseImportService {
         });
 
         // for each feedback in result, update the reference with new text block id
-        for (Feedback feedback : feedbackList) {
+        for (Feedback feedback : newFeedbackList) {
             feedback.setReference(textBlockIdPair.get(feedback.getReference()));
         }
 
         // save the feedback (that is not yet in the database) to prevent null index exception
-        List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(feedbackList);
+        List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(newFeedbackList);
         result.updateAllFeedbackItems(savedFeedback, false);
         resultRepository.save(result);
     }

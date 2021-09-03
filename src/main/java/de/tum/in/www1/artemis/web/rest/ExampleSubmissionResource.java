@@ -153,22 +153,22 @@ public class ExampleSubmissionResource {
     }
 
     /**
-     * POST exercises/:exerciseId/example-submissions/import : Import exampleSubmission.
+     * POST exercises/:exerciseId/example-submissions/import/:sourceSubmissionId : Imports an existing student submission as an example submission.
      *
-     * @param exerciseId        the id of the corresponding exercise
-     * @param submissionId        the submission id to be imported as an example submission
+     * @param exerciseId                the id of the corresponding exercise
+     * @param sourceSubmissionId        the submission id to be imported as an example submission
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("exercises/{exerciseId}/example-submissions/import")
+    @PostMapping("exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId, @RequestBody Long submissionId) {
-        log.debug("REST request to import ExampleSubmission : {}", submissionId);
+    public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId, @PathVariable Long sourceSubmissionId) {
+        log.debug("REST request to import Student Submission as ExampleSubmission : {}", sourceSubmissionId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
-        ExampleSubmission exampleSubmission = exampleSubmissionService.importStudentSubmissionAsExampleSubmission(submissionId, exercise);
+        ExampleSubmission exampleSubmission = exampleSubmissionService.importStudentSubmissionAsExampleSubmission(sourceSubmissionId, exercise);
 
         return ResponseEntity.ok(exampleSubmission);
     }
