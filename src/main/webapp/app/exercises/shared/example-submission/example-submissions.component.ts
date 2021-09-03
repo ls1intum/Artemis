@@ -78,6 +78,7 @@ export class ExampleSubmissionsComponent implements OnInit {
             size: 'lg',
             backdrop: 'static',
         });
+        exampleSubmissionImportModalRef.componentInstance.exercise = this.exercise;
         // textImportexampleSubmissionImportModalRef.result.then(
         //     (result: TextExercise) => {
         //         importBaseRoute.push(result.id);

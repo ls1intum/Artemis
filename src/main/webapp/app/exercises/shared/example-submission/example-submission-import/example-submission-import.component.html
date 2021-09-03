@@ -1,1 +1,48 @@
-<p>example-submission-import works!</p>
+<form>
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="artemisApp.exampleSubmission.importExampleSubmissionLabel">Import an Example Submission</h4>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <table class="table table-striped">
+            <thead class="thead-dark">
+            <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" [callback]="sortRows.bind(this)">
+                <th jhiSortBy="{{ column.ID }}">
+                    <span>#</span>
+                    <fa-icon [icon]="'sort'"></fa-icon>
+                </th>
+                <th jhiSortBy="{{ column.STUDENT_NAME }}">
+                    <span jhiTranslate="artemisApp.exercise.studentName">Student Name</span>
+                    <fa-icon [icon]="'sort'"></fa-icon>
+                </th>
+                <th jhiSortBy="{{ column.SUBMISSION_DATE }}">
+                    <span jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission Date</span>
+                    <fa-icon [icon]="'sort'"></fa-icon>
+                </th>
+                <th>
+                    <span jhiTranslate="artemisApp.assessment.dashboard.columns.result">Latest Result</span>
+                </th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let submission of content.resultsOnPage; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ submission.participation?.participantName }}</td>
+                <td>{{ submission.submissionDate | artemisDate }}</td>
+                <td>
+                    <jhi-result [participation]="submission.participation!"></jhi-result>
+                </td>
+                <td>
+                    <jhi-button (click)="openImport(submission)" [title]="'artemisApp.exercise.import.table.doImport'"> </jhi-button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="d-flex justify-content-between p-2">
+            <ngb-pagination [maxSize]="10" [rotate]="true" [collectionSize]="total" [(page)]="state.page" [pageSize]="state.pageSize" (pageChange)="onPageChange($event)">
+            </ngb-pagination>
+        </div>
+    </div>
+</form>

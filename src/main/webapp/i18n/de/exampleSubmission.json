@@ -34,7 +34,9 @@
             "assessmentInstruction": "Doppelklicke auf ein Element im Modell, um dessen Bewertung zu öffnen und zu bearbeiten.",
             "deleted": "Beispielabgabe gelöscht",
             "assessmentExplanation": "Erklärung",
-            "assessmentExplanationInfo": "Zusätzliche Erklärung zu dieser Beispielbewertung"
+            "assessmentExplanationInfo": "Zusätzliche Erklärung zu dieser Beispielbewertung",
+            "importExampleSubmission": "Import Example Submission",
+            "importExampleSubmissionLabel": "Import an Example Submission"
         },
         "tutorParticipation": {
             "deleted": "Die Tutorteilnahme wurde erfolgreich gelöscht"
