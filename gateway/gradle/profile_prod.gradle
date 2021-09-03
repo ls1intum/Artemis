@@ -50,7 +50,6 @@ processResources {
     }
 }
 
-test.dependsOn webpack_test
 tasks.copyClientBuildFiles.dependsOn webpack
 processResources.dependsOn tasks.copyClientBuildFiles
 bootJar.dependsOn processResources
