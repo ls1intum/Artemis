@@ -8,7 +8,7 @@ export interface PostingContentPart {
     contentBeforeLink?: string;
     linkToReference?: (string | number)[];
     queryParams?: Params;
-    linkContent?: string;
+    referenceStr?: string;
     contentAfterLink?: string;
 }
 
@@ -18,7 +18,7 @@ export interface PostingContentPart {
 })
 export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() content?: string;
-    currentlyLoadedPosts?: Post[];
+    currentlyLoadedPosts: Post[];
     postingContentParts: PostingContentPart[];
 
     private postsSubscription: Subscription;
@@ -45,43 +45,63 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
 
     private computePostingContentParts(): void {
         this.postingContentParts = [];
-        const regexp = /([^#]*)(#\d+)([^#]*)/g;
-        const splitArray = [...this.content!.matchAll(regexp)];
-        if (splitArray && splitArray.length > 0) {
-            for (const array of splitArray) {
-                const referencedId = Number(array[2].substring(1));
-                if (this.currentlyLoadedPosts) {
-                    const referencedIndexInLoadedPosts = this.currentlyLoadedPosts.findIndex((post: Post) => post.id === referencedId);
-                    // referenced post is in currently loaded posts
-                    if (referencedIndexInLoadedPosts > -1) {
-                        const referencedPost = this.currentlyLoadedPosts[referencedIndexInLoadedPosts];
-                        const contentPart: PostingContentPart = {
-                            contentBeforeLink: array[1],
-                            linkToReference: this.metisService.getLinkForPost(referencedPost),
-                            queryParams: this.metisService.getQueryParamsForPost(referencedPost),
-                            linkContent: array[2],
-                            contentAfterLink: array[3],
-                        };
-                        this.postingContentParts.push(contentPart);
-                        // references post is not in currently loaded posts -> navigate to course discussion overview with query param of referenced id
-                    } else {
-                        const contentLink: PostingContentPart = {
-                            contentBeforeLink: array[1],
-                            linkToReference: ['/courses', this.metisService.getCourse().id!, 'discussion'],
-                            queryParams: { searchText: `#${referencedId}` } as Params,
-                            linkContent: array[2],
-                            contentAfterLink: array[3],
-                        };
-                        this.postingContentParts.push(contentLink);
-                    }
-                }
+        const pattern = /(#\d+)/gim;
+        const referenceIndicesArray: number[][] = [];
+
+        // find start and end index of referenced posts in content, for each reference save [startIndexOfReference, endIndexOfReference] in the referenceIndicesArray
+        while (true) {
+            const match = pattern.exec(this.content!);
+            if (!match) {
+                break;
             }
+            referenceIndicesArray.push([match.index, pattern.lastIndex]);
+        }
+
+        // TODO: add comments, test
+        if (referenceIndicesArray && referenceIndicesArray.length > 0) {
+            referenceIndicesArray.forEach((referenceIndices: number[], index: number) => {
+                const referencedId = this.content!.substring(referenceIndices[0] + 1, referenceIndices[1]);
+                const referenceStr = this.content!.substring(referenceIndices[0], referenceIndices[1]);
+                const referencedPostInLoadedPosts = this.currentlyLoadedPosts.find((post: Post) => post.id! === +referencedId);
+                const linkToReference = referencedPostInLoadedPosts
+                    ? this.metisService.getLinkForPost(referencedPostInLoadedPosts)
+                    : ['/courses', this.metisService.getCourse().id!, 'discussion'];
+                const queryParams = referencedPostInLoadedPosts
+                    ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts)
+                    : ({ searchText: `#${referencedId}` } as Params);
+                if (index === 0) {
+                    const endIndex = referenceIndicesArray[index + 1][0];
+                    const contentPart: PostingContentPart = {
+                        contentBeforeLink: this.content!.substring(0, referenceIndices[0]),
+                        linkToReference,
+                        queryParams,
+                        referenceStr,
+                        contentAfterLink: this.content!.substring(referenceIndices[1], endIndex),
+                    };
+                    this.postingContentParts.push(contentPart);
+                } else {
+                    let endIndex;
+                    if (!referenceIndicesArray[index + 1]) {
+                        endIndex = this.content!.length;
+                    } else {
+                        endIndex = referenceIndicesArray[index + 1][0];
+                    }
+                    const contentPart: PostingContentPart = {
+                        contentBeforeLink: undefined,
+                        linkToReference,
+                        queryParams,
+                        referenceStr,
+                        contentAfterLink: this.content!.substring(referenceIndices[1], endIndex),
+                    };
+                    this.postingContentParts.push(contentPart);
+                }
+            });
         } else {
             const contentLink: PostingContentPart = {
                 contentBeforeLink: this.content,
                 linkToReference: undefined,
                 queryParams: undefined,
-                linkContent: undefined,
+                referenceStr: undefined,
                 contentAfterLink: undefined,
             };
             this.postingContentParts.push(contentLink);
