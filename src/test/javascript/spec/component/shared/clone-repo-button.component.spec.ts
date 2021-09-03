@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
@@ -11,7 +11,7 @@ import * as sinon from 'sinon';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { ClipboardModule } from 'ngx-clipboard';
 import { JhiAlertService } from 'ng-jhipster';
 import { of, BehaviorSubject, Subject } from 'rxjs';
@@ -21,13 +21,13 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
 import { ArtemisTestModule } from '../../test.module';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -65,13 +65,13 @@ describe('JhiCloneRepoButtonComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ClipboardModule, NgbPopoverModule],
-            declarations: [CloneRepoButtonComponent,
+            declarations: [
+                CloneRepoButtonComponent,
                 MockComponent(ExerciseActionButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(SafeUrlPipe),
                 MockDirective(FeatureToggleDirective),
-            ]
-            declarations: [CloneRepoButtonComponent, MockComponent(ExerciseActionButtonComponent), MockPipe(ArtemisTranslatePipe), MockPipe(SafeUrlPipe)],
+            ],
             providers: [
                 { provide: JhiAlertService, useClass: MockAlertService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
