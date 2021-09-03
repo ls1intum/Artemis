@@ -801,11 +801,18 @@ Course Info Bar
     img {
         max-width: 100%;
     }
+
+    &.manipulate-p {
+        p {
+            margin-bottom: 0 !important;
+            display: inline;
+        }
+    }
 }
 
 ngb-tooltip-window {
     padding: 0;
-    width: 200px !important;
+    // width: 200px !important;
 
     > div {
         margin: auto !important;

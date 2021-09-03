@@ -1,6 +1,10 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+$metis-light-gray: #979797;
+
 .post-separation-line {
     width: auto;
     height: 1px;
-    background: #979797;
+    background: $metis-light-gray;
     content: ' ';
 }

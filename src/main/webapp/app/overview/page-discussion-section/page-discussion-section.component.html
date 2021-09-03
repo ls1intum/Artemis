@@ -18,8 +18,9 @@
             </div>
             <!-- body -->
             <div class="card-body pt-0">
-                <div *ngIf="currentPost !== undefined; else threadView">
-                    <fa-icon [icon]="'arrow-left'" (click)="resetCurrentPost()" class="back-button me-2"></fa-icon>
+                <div class="my-2" *ngIf="currentPost !== undefined; else threadView">
+                    <fa-icon [icon]="'arrow-left'" (click)="resetCurrentPost()" class="back-button me-2 clickable"> </fa-icon>
+                    <span class="back-instruction">{{ 'artemisApp.metis.post.backToAllPosts' | artemisTranslate }}</span>
                     <jhi-postings-thread [post]="currentPost" [showAnswers]="true"></jhi-postings-thread>
                 </div>
                 <ng-template #threadView>
