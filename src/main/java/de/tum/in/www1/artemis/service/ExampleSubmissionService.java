@@ -103,14 +103,14 @@ public class ExampleSubmissionService {
         if (exercise instanceof ModelingExercise) {
             ModelingSubmission modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
             checkGivenExerciseIdSameForSubmissionParticipation(exercise.getId(), modelingSubmission.getParticipation().getExercise().getId());
-            // example submission does need participation
+            // example submission does not need participation
             modelingSubmission.setParticipation(null);
             newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(modelingSubmission));
         }
         if (exercise instanceof TextExercise) {
             TextSubmission textSubmission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksByIdElseThrow(submissionId);
             checkGivenExerciseIdSameForSubmissionParticipation(exercise.getId(), textSubmission.getParticipation().getExercise().getId());
-            // example submission does need participation
+            // example submission does not need participation
             textSubmission.setParticipation(null);
             newExampleSubmission.setSubmission(textExerciseImportService.copySubmission(textSubmission));
         }
