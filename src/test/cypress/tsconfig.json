@@ -3,6 +3,6 @@
     "include": ["**/**/**/*.ts"],
     "compilerOptions": {
         "sourceMap": false,
-        "types": ["cypress", "@4tw/cypress-drag-drop"]
+        "types": ["cypress", "@4tw/cypress-drag-drop", "cypress-file-upload"]
     }
 }

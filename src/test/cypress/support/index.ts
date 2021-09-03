@@ -19,6 +19,8 @@ import './commands';
 import '@4tw/cypress-drag-drop';
 // Imports utility functions
 import './utils';
+// Imports file upload capabilities
+import 'cypress-file-upload';
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
