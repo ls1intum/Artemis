@@ -26,7 +26,15 @@
             max-width: 50px;
             vertical-align: middle;
             background-color: #353D47;
-            padding: 10xp;
+            padding: 10px;
+        }
+
+        .notification-text-header {
+            padding-top: 10px;
+        }
+
+        #notification-text {
+            font-style: italic;
         }
 
         .button {
@@ -69,7 +77,7 @@
 <body>
 
 <header>
-    <img id="logo" src="https://artemis.ase.in.tum.de/public/images/logo.png"/>
+    <img id="logo" src="https://artemis.ase.in.tum.de/public/images/logo.png" alt="artemis logo"/>
 </header>
 
 <div id="message-body">
@@ -77,27 +85,34 @@
     <span th:utext="#{email.greeting.plural}">
     Dear
 </span>
+    <span th:utext="${groupNotification.course.title}">
+        Course Title
+    </span>
     <th:block th:switch="${groupNotification.type.toString()}">
-    <th:block th:case="'STUDENT'">
-        <span th:utext="#{email.notification.group.students}"/>
+        <th:block th:case="'STUDENT'">
+            <span th:utext="#{email.notification.group.students}"/>
+        </th:block>
+        <th:block th:case="'INSTRUCTOR'">
+            <span th:utext="#{email.notification.group.instructors}"/>
+        </th:block>
+        <th:block th:case="'EDITOR'">
+            <span th:utext="#{email.notification.group.editors}"/>
+        </th:block>
+        <th:block th:case="'TA'">
+            <span th:utext="#{email.notification.group.tutors}"/>
+        </th:block>
     </th:block>
-    <th:block th:case="'INSTRUCTOR'">
-        <span th:utext="#{email.notification.group.instructors}"/>
-    </th:block>
-    <th:block th:case="'EDITOR'">
-        <span th:utext="#{email.notification.group.editors}"/>
-    </th:block>
-    <th:block th:case="'TA'">
-        <span th:utext="#{email.notification.group.tutors}"/>
-    </th:block>
-</th:block>
-    <span th:utext="#{email.notification.group.from(${groupNotification.course.title})}">
-    Course Title
-</span>
     <!-- Greetings End -->
     <br>
     <!-- Notification Content -->
-    <p th:text="${groupNotification.text}">
+    <th:block th:switch="${groupNotification.originalNotificationType.toString()}">
+        <th:block th:case="'ATTACHMENT_CHANGE'">
+            <span th:text="#{email.notification.group.original.attachment}"/>
+            <p class="notification-text-header" th:text="#{email.notification.aux.notification.text.header.change.message}"/>
+        </th:block>
+    </th:block>
+
+    <p id="notification-text" th:text="${groupNotification.text}">
     Notification Text
 </p>
 
