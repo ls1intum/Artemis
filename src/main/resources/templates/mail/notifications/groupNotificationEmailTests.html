@@ -4,14 +4,83 @@
     <title th:text="${groupNotification.title}">Notification Title</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{|${baseUrl}/favicon.svg|}" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@500&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            border: 0;
+
+            text-align: center;
+        }
+
+        body {
+            font-family: "Raleway", sans-serif;
+            background-color: #d8dada;
+            font-size: 19px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 3%;
+        }
+
+        #logo {
+            max-width: 50px;
+            vertical-align: middle;
+            background-color: #353D47;
+            padding: 10xp;
+        }
+
+        .button {
+            margin: 0 2% 4% 0;
+            background-color: #5B9CD4;
+            color: white;
+            font-weight: 800;
+            padding: 8px 12px;
+            border-radius: 8px;
+            letter-spacing: 2px;
+            text-decoration: none;
+        }
+
+        .button-wrapper {
+            padding: 25px;
+        }
+
+        header {
+            background-color: #353D47;
+            font-style: italic;
+            color: white;
+            font-size: smaller;
+            padding: 10px;
+        }
+
+        #message-body {
+            background-color: white;
+            padding: 10px;
+        }
+
+        footer {
+            background-color: #353D47;
+            font-style: italic;
+            color: white;
+            font-size: smaller;
+            padding: 5px;
+        }
+
+    </style>
 </head>
 <body>
 
-<span th:utext="#{email.greeting.plural}">
+<header>
+    <img id="logo" src="https://artemis.ase.in.tum.de/public/images/logo.png"/>
+</header>
+
+<div id="message-body">
+    <span th:utext="#{email.greeting.plural}">
     Dear
 </span>
 
-<th:block th:switch="${groupNotification.type.toString()}">
+    <th:block th:switch="${groupNotification.type.toString()}">
     <th:block th:case="'STUDENT'">
         <span th:utext="#{email.notification.group.students}"/>
     </th:block>
@@ -26,22 +95,45 @@
     </th:block>
 </th:block>
 
-<span th:utext="#{email.notification.group.from(${groupNotification.course.title})}">
+    <span th:utext="#{email.notification.group.from(${groupNotification.course.title})}">
     Course Title
 </span>
 
-<p th:text="${groupNotification.text}">
+    <br>
+
+    <p th:text="${groupNotification.text}">
     Notification Text
 </p>
+
+    <!-- todo change link -->
+    <div class="button-wrapper">
+        <a href="https://artemistest.ase.in.tum.de/courses" class="button">
+            Open in Artemis
+        </a>
+    </div>
+
+    <br>
 <!--
 <p>
     <a th:with="url=(@{|${baseUrl}/account/activate?key=${user.activationKey}|})" th:href="${url}" th:text="${url}">Activation link</a>
 </p>
 -->
-<p>
+    <p>
     <span th:text="#{email.activation.text2}">Regards, </span>
     <br />
     <em th:text="#{email.signature}">The Artemis team.</em>
 </p>
+</div>
+
+<footer>
+    <p>
+        You can (un)subscribe to similar emails in your notification settings in
+        <!--todo change link -->
+        <a href="https://artemistest.ase.in.tum.de/courses">
+            Artemis
+        </a>
+    </p>
+</footer>
+
 </body>
 </html>
