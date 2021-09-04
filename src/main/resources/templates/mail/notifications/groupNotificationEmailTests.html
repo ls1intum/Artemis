@@ -19,9 +19,7 @@
             font-family: "Raleway", sans-serif;
             background-color: #d8dada;
             font-size: 19px;
-            max-width: 800px;
             margin: 0 auto;
-            padding: 3%;
         }
 
         #logo {
@@ -32,7 +30,6 @@
         }
 
         .button {
-            margin: 0 2% 4% 0;
             background-color: #5B9CD4;
             color: white;
             font-weight: 800;
@@ -76,10 +73,10 @@
 </header>
 
 <div id="message-body">
+    <!-- Greetings -->
     <span th:utext="#{email.greeting.plural}">
     Dear
 </span>
-
     <th:block th:switch="${groupNotification.type.toString()}">
     <th:block th:case="'STUDENT'">
         <span th:utext="#{email.notification.group.students}"/>
@@ -94,17 +91,17 @@
         <span th:utext="#{email.notification.group.tutors}"/>
     </th:block>
 </th:block>
-
     <span th:utext="#{email.notification.group.from(${groupNotification.course.title})}">
     Course Title
 </span>
-
+    <!-- Greetings End -->
     <br>
-
+    <!-- Notification Content -->
     <p th:text="${groupNotification.text}">
     Notification Text
 </p>
 
+    <!-- Button/Link that navigates to the respective page in Artemis -->
     <!-- todo change link -->
     <div class="button-wrapper">
         <a href="https://artemistest.ase.in.tum.de/courses" class="button">
@@ -118,13 +115,15 @@
     <a th:with="url=(@{|${baseUrl}/account/activate?key=${user.activationKey}|})" th:href="${url}" th:text="${url}">Activation link</a>
 </p>
 -->
+    <!-- Farwell -->
     <p>
-    <span th:text="#{email.activation.text2}">Regards, </span>
-    <br />
-    <em th:text="#{email.signature}">The Artemis team.</em>
-</p>
+        <span th:text="#{email.activation.text2}">Regards, </span>
+        <br/>
+        <em th:text="#{email.signature}">The Artemis team.</em>
+    </p>
 </div>
-
+<!-- Message Body End -->
+<!-- Additional Information -->
 <footer>
     <p>
         You can (un)subscribe to similar emails in your notification settings in
