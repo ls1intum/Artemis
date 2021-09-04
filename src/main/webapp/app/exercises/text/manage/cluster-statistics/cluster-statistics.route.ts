@@ -9,7 +9,7 @@ export const clusterStatisticsRoute: Routes = [
         component: ClusterStatisticsComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.textExercise.clusterStatistics',
+            pageTitle: 'artemisApp.textExercise.clusterStatistics.title',
         },
         canActivate: [UserRouteAccessService],
     },
