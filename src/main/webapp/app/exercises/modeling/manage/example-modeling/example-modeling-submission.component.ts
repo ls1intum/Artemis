@@ -57,19 +57,28 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
     legend = [
         {
+            text: 'artemisApp.exampleSubmission.legend.feedbackWithoutScore',
+            icon: 'exclamation' as IconProp,
+            color: 'blue',
+            size: '1.66em',
+        },
+        {
             text: 'artemisApp.exampleSubmission.legend.positiveScore',
             icon: 'check' as IconProp,
             color: 'green',
+            size: '2em',
         },
         {
             text: 'artemisApp.exampleSubmission.legend.negativeScore',
             icon: 'times' as IconProp,
             color: 'red',
+            size: '2em',
         },
         {
             text: 'artemisApp.exampleSubmission.legend.incorrectAssessment',
             icon: 'exclamation-triangle' as IconProp,
             color: 'yellow',
+            size: '2em',
         },
     ];
 

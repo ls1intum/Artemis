@@ -8,7 +8,8 @@
             "legend": {
                 "positiveScore": "Positive Punktzahl",
                 "negativeScore": "Negative Punktzahl",
-                "incorrectAssessment": "Falsche Beurteilung"
+                "incorrectAssessment": "Falsche Beurteilung",
+                "feedbackWithoutScore": "Feedback ohne Punktzahl"
             },
             "feedback": {
                 "CORRECT": "Richtiges Feedback 👍",

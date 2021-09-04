@@ -8,7 +8,8 @@
             "legend": {
                 "positiveScore": "Positive score",
                 "negativeScore": "Negative score",
-                "incorrectAssessment": "Incorrect assessment️"
+                "incorrectAssessment": "Incorrect assessment️",
+                "feedbackWithoutScore": "Feedback without score"
             },
             "feedback": {
                 "CORRECT": "Correct assessment 👍",
