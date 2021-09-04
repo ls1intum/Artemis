@@ -19,7 +19,7 @@ export class TutorEffortStatisticsComponent implements OnInit {
     currentExerciseId: number;
     currentCourseId: number;
     numberOfTutorsInvolvedInCourse: number;
-    effortDistribution = new Array<number>(10).fill(0);
+    effortDistribution: number[];
 
     /**
      * Directive to manage the canvas element that renders the chart.
@@ -83,6 +83,7 @@ export class TutorEffortStatisticsComponent implements OnInit {
             this.currentExerciseId = Number(params['exerciseId']);
             this.currentCourseId = Number(params['courseId']);
         });
+        this.loadTutorEfforts();
     }
 
     loadTutorEfforts() {
@@ -122,9 +123,10 @@ export class TutorEffortStatisticsComponent implements OnInit {
     }
 
     distributeEffortToSets() {
+        this.effortDistribution = new Array<number>(13).fill(0);
         this.tutorEfforts.forEach((effort) => {
             const time = Math.floor(effort.totalTimeSpentMinutes / 10);
-            if (time > -1 && time < 6) {
+            if (time > -1 && time < 11) {
                 this.effortDistribution[time]++;
             } else if (time >= 12) {
                 this.effortDistribution[12]++;

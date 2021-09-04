@@ -35,7 +35,7 @@
                 "numberOfSubmissionsAssessed": "Anzahl der insgesamt bewerteten Einreichungen beteiligt",
                 "totalTimeSpent": "Gesamtdauer der Benotung (in Minuten)",
                 "averageTime": "Benotungsrhythmus (Submissions/Min)",
-                "noData": "Keine Daten gefunden. Klicken Sie zum Berechnen.",
+                "noData": "Für diese Übung sind derzeit keine Datensätze vorhanden. Später erneut versuchen",
                 "minutes": "Minuten",
                 "tutors": "Tutoren",
                 "numberOfTutorsInvolved": "Anzahl der beteiligten Tutoren"

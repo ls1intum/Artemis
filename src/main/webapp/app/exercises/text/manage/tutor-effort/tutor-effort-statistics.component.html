@@ -26,10 +26,7 @@
             </tr>
         </table>
     </div>
-    <div *ngIf="tutorEfforts && tutorEfforts.length == 0">
+    <div *ngIf="(tutorEfforts && tutorEfforts.length == 0) || !tutorEfforts">
         <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.noData"></span>
-    </div>
-    <div *ngIf="!tutorEfforts">
-        <span>Nothing found</span>
     </div>
 </div>
