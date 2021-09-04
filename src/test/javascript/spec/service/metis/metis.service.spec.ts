@@ -24,8 +24,11 @@ import { TranslateService } from '@ngx-translate/core';
 import {
     metisAnswerPostUser1,
     metisCourse,
+    metisCoursePostsWithCourseWideContext,
     metisExercise,
+    metisExercisePosts,
     metisLecture,
+    metisLecturePosts,
     metisPostExerciseUser1,
     metisReactionUser2,
     metisUser1,
@@ -300,5 +303,47 @@ describe('Metis Service', () => {
         metisService.setCourse(newCourse);
         const getCourseReturn = metisService.getCourse();
         expect(getCourseReturn).to.be.equal(newCourse);
+    });
+
+    it('should determine the link components for a reference to a post with course-wide context', () => {
+        metisService.setCourse(course);
+        const referenceLinkComponents = metisService.getLinkForPost(metisCoursePostsWithCourseWideContext[0]);
+        expect(referenceLinkComponents).to.be.deep.equal(['/courses', metisCourse.id, 'discussion']);
+    });
+
+    it('should determine the link components for a reference to a post with exercise context', () => {
+        metisService.setCourse(course);
+        const referenceLinkComponents = metisService.getLinkForPost(metisExercisePosts[0]);
+        expect(referenceLinkComponents).to.be.deep.equal(['/courses', metisCourse.id, 'exercises', metisExercise.id]);
+    });
+
+    it('should determine the link components for a reference to a post with lecture context', () => {
+        metisService.setCourse(course);
+        const referenceLinkComponents = metisService.getLinkForPost(metisLecturePosts[0]);
+        expect(referenceLinkComponents).to.be.deep.equal(['/courses', metisCourse.id, 'lectures', metisLecture.id]);
+    });
+
+    it('should determine the query param for a reference to a post with course-wide context', () => {
+        metisService.setCourse(course);
+        const referenceLinkComponents = metisService.getQueryParamsForPost(metisCoursePostsWithCourseWideContext[0]);
+        expect(referenceLinkComponents).to.be.deep.equal({
+            searchText: `#${metisCoursePostsWithCourseWideContext[0].id}`,
+        });
+    });
+
+    it('should determine the query param for a reference to a post with exercise context', () => {
+        metisService.setCourse(course);
+        const referenceLinkComponents = metisService.getQueryParamsForPost(metisExercisePosts[0]);
+        expect(referenceLinkComponents).to.be.deep.equal({
+            postId: metisExercisePosts[0].id,
+        });
+    });
+
+    it('should determine the query param for a reference to a post with lecture context', () => {
+        metisService.setCourse(course);
+        const referenceLinkComponents = metisService.getQueryParamsForPost(metisLecturePosts[0]);
+        expect(referenceLinkComponents).to.be.deep.equal({
+            postId: metisLecturePosts[0].id,
+        });
     });
 });

@@ -9,6 +9,7 @@ import { getElement } from '../../../../helpers/utils/general.utils';
 import { AnswerPostHeaderComponent } from 'app/shared/metis/postings-header/answer-post-header/answer-post-header.component';
 import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
 import { metisAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
+import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -20,7 +21,13 @@ describe('AnswerPostComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            declarations: [AnswerPostComponent, MockPipe(HtmlForMarkdownPipe), MockComponent(AnswerPostHeaderComponent), MockComponent(AnswerPostFooterComponent)],
+            declarations: [
+                AnswerPostComponent,
+                MockPipe(HtmlForMarkdownPipe),
+                MockComponent(AnswerPostHeaderComponent),
+                MockComponent(PostingContentComponent),
+                MockComponent(AnswerPostFooterComponent),
+            ],
         })
             .compileComponents()
             .then(() => {
