@@ -100,7 +100,6 @@ describe('CourseDiscussionComponent', () => {
                 stub(courseManagementService, 'findOneForDashboard').returns(of({ body: metisCourse }) as Observable<HttpResponse<Course>>);
                 fixture = TestBed.createComponent(CourseDiscussionComponent);
                 component = fixture.componentInstance;
-                component = fixture.componentInstance;
                 metisService = fixture.debugElement.injector.get(MetisService);
                 metisServiceSpy = spy(metisService, 'getFilteredPosts');
             });
@@ -110,7 +109,7 @@ describe('CourseDiscussionComponent', () => {
         sinon.restore();
     });
 
-    it('should set course and posts for ocurse on initialization', fakeAsync(() => {
+    it('should set course and posts for course on initialization', fakeAsync(() => {
         component.ngOnInit();
         tick();
         expect(component.course).to.deep.equal(metisCourse);

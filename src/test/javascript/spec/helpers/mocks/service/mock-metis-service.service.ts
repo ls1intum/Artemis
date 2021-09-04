@@ -6,13 +6,18 @@ import { User } from 'app/core/user/user.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PageType, PostContextFilter } from 'app/shared/metis/metis.util';
 import { Course } from 'app/entities/course.model';
-import { metisCourse, metisTags, metisUser1 } from '../../sample/metis-sample-data';
+import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
+import { Params } from '@angular/router';
 
 let pageType: PageType;
 
 export class MockMetisService {
     get tags(): Observable<string[]> {
         return of(metisTags);
+    }
+
+    get posts(): Observable<Post[]> {
+        return of(metisCoursePosts);
     }
 
     getUser(): User {
@@ -56,4 +61,26 @@ export class MockMetisService {
     }
 
     getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {}
+
+    getLinkForPost(posting: Post) {
+        if (posting.courseWideContext) {
+            return ['/courses', metisCourse.id, 'discussion'];
+        }
+        if (posting.lecture) {
+            return ['/courses', metisCourse.id, 'lectures', posting.lecture.id!];
+        }
+        if (posting.exercise) {
+            return ['/courses', metisCourse.id, 'exercises', posting.exercise.id!];
+        }
+    }
+
+    getQueryParamsForPost(posting: Post): Params {
+        const params: Params = {};
+        if (posting.courseWideContext) {
+            params.searchText = `#${posting.id}`;
+        } else {
+            params.postId = posting.id;
+        }
+        return params;
+    }
 }

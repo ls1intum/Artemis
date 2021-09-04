@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { PostingContentPart } from 'app/shared/metis/posting-content/posting-content.components';
+import { PostingContentPart } from '../../metis.util';
 
 @Component({
     selector: 'jhi-posting-content-part',
