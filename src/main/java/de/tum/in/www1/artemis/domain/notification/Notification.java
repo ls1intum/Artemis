@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 
 /**
  * A Notification.
@@ -52,6 +53,14 @@ public abstract class Notification extends DomainObject {
 
     @Column(name = "outdated", columnDefinition = "boolean default false")
     private boolean outdated = false;
+
+    /**
+     * Specifies how this notification was created : ATTACHMENT_CHANGE, EXERCISE_CREATED, ...
+     * Otherwise this information is lost for the client-side
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "original_notification_type", columnDefinition = "varchar(255) default 'UNSPECIFIED'")
+    private NotificationType originalNotificationType = NotificationType.UNSPECIFIED;
 
     @ManyToOne
     private User author;
@@ -147,9 +156,17 @@ public abstract class Notification extends DomainObject {
         this.author = user;
     }
 
+    public void setOriginalNotificationType(NotificationType originalNotificationType) {
+        this.originalNotificationType = originalNotificationType;
+    }
+
+    public NotificationType getOriginalNotificationType() {
+        return this.originalNotificationType;
+    }
+
     @Override
     public String toString() {
-        return "Notification{" + "id=" + getId() + ", title='" + title + '\'' + ", text='" + text + '\'' + ", notificationDate=" + notificationDate + ", target='" + target + '\''
-                + ", priority=" + priority + ", outdated=" + outdated + ", author=" + author + '}';
+        return "Notification{" + "title='" + title + '\'' + ", text='" + text + '\'' + ", notificationDate=" + notificationDate + ", target='" + target + '\'' + ", priority="
+                + priority + ", outdated=" + outdated + ", originalNotificationType=" + originalNotificationType + ", author=" + author + '}';
     }
 }

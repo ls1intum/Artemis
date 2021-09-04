@@ -1,0 +1,43 @@
+<jhi-alert></jhi-alert>
+<div class="d-flex justify-content-between">
+    <h1>
+        <!--UserSettingsCategory-->
+        {{ 'artemisApp.userSettings.categories.' + (userSettingsCategory | lowerCamelCase) | artemisTranslate }}
+    </h1>
+    <button type="button" class="btn btn-primary" *ngIf="optionsChanged" id="apply-changes-button" (click)="this.saveOptions()">
+        <fa-icon [icon]="'save'"></fa-icon>
+        {{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}
+    </button>
+</div>
+<div class="list-group d-block" *ngIf="userSettings">
+    <div *ngFor="let optionGroup of userSettings.groups">
+        <div *jhiHasAnyAuthority="[optionGroup.restrictionLevel]" class="list-group-item">
+            <h3>
+                <!--GroupName-->
+                {{ 'artemisApp.userSettings.optionGroupNames.' + (optionGroup.name | lowerCamelCase) | artemisTranslate }}
+            </h3>
+            <div *ngFor="let option of optionGroup.options">
+                <dt>
+                    <!--OptionName-->
+                    {{ 'artemisApp.userSettings.optionNames.' + (option.name | lowerCamelCase) | artemisTranslate }}
+                </dt>
+                <span>
+                    <!--OptionDescription-->
+                    {{ 'artemisApp.userSettings.optionDescriptions.' + (option.description | lowerCamelCase) | artemisTranslate }}
+                </span>
+                <!--OptionCore-->
+                <div class="form-check border-bottom">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        [checked]="option.optionCore.webapp"
+                        id="{{ option.optionCore.optionSpecifier }}"
+                        value="{{ option.optionCore.webapp }}"
+                        (click)="toggleOption($event)"
+                    />
+                    <label class="form-check-label" for="{{ option.optionCore.optionSpecifier }}">WebApp</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
