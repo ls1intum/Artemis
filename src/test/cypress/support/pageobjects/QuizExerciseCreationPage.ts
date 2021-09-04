@@ -1,7 +1,7 @@
 import { BASE_API, POST } from '../constants';
 
 export class QuizExerciseCreationPage {
-    setTitle(title: string) {
+    setTitle(title = 'Cypress Quiz') {
         cy.get('#quiz-title').type(title);
     }
 

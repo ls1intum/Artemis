@@ -13,6 +13,8 @@ const courseManagementRequest = artemis.requests.courseManagement;
 // Page objects
 const multipleChoiceQuiz = artemis.pageobjects.multipleChoiceQuiz;
 const shortAnswerQuiz = artemis.pageobjects.shortAnswerQuiz;
+const quizCreation = artemis.pageobjects.quizExerciseCreation;
+const dragAndDropQuiz = artemis.pageobjects.dragAndDropQuiz;
 
 // Common primitives
 let uid: string;
@@ -62,8 +64,8 @@ describe('Quiz Exercise Management', () => {
         it('Student can see a visible quiz', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
-            cy.contains(quizExercise.title).scrollIntoView().click();
-            cy.get('.btn').contains('Open quiz').click();
+            cy.contains(quizExercise.title);
+            cy.get('[jhi-exercise-action-button]').eq(0).click();
             cy.get('.quiz-waiting-for-start-overlay > span').should('contain.text', 'This page will refresh automatically, when the quiz starts.');
         });
 
@@ -71,8 +73,8 @@ describe('Quiz Exercise Management', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             courseManagementRequest.startQuizNow(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
-            cy.contains(quizExercise.title).scrollIntoView().click();
-            cy.get('.btn').contains('Start quiz').click();
+            cy.contains(quizExercise.title);
+            cy.get('[jhi-exercise-action-button]').eq(0).click();
             multipleChoiceQuiz.tickAnswerOption(0);
             multipleChoiceQuiz.tickAnswerOption(2);
             multipleChoiceQuiz.submit();
@@ -90,8 +92,8 @@ describe('Quiz Exercise Management', () => {
 
         it('Student can participate in SA quiz', () => {
             cy.login(student, '/courses/' + course.id);
-            cy.contains(quizExercise.title).scrollIntoView().click();
-            cy.get('.btn').contains('Start quiz').click();
+            cy.contains(quizExercise.title);
+            cy.get('[jhi-exercise-action-button]').eq(0).click();
             shortAnswerQuiz.typeAnswer( 0, 'give');
             shortAnswerQuiz.typeAnswer( 1, 'let');
             shortAnswerQuiz.typeAnswer( 2, 'run');
@@ -99,6 +101,29 @@ describe('Quiz Exercise Management', () => {
             shortAnswerQuiz.typeAnswer( 4, 'cry');
             shortAnswerQuiz.typeAnswer( 5, 'goodbye');
             shortAnswerQuiz.submit();
+        });
+    });
+
+    describe('DnD Quiz participation', () => {
+        before('Create DND quiz', () => {
+            // TODO: it would be great to create the quiz via request. Once the file upload request works it should be easy
+            cy.login(admin, '/course-management/' + course.id + '/exercises');
+            cy.get('#create-quiz-button').should('be.visible').click();
+            quizCreation.setTitle(quizExerciseName);
+            quizCreation.addDragAndDropQuestion('DnD Quiz' + uid);
+            quizCreation.saveQuiz().then((quizResponse) => {
+                quizExercise = quizResponse.response?.body;
+                courseManagementRequest.setQuizVisible(quizExercise.id);
+                courseManagementRequest.startQuizNow(quizExercise.id);
+            });
+        });
+
+        it('Student can participate in DnD Quiz', () => {
+            cy.login(student, '/courses/' + course.id);
+            cy.contains(quizExercise.title);
+            cy.get('[jhi-exercise-action-button]').eq(0).click();
+            dragAndDropQuiz.dragItemIntoDragArea();
+            dragAndDropQuiz.submit();
         });
     });
 });
