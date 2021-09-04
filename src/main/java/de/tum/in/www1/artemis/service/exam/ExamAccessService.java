@@ -91,25 +91,7 @@ public class ExamAccessService {
      * */
     public void checkCourseAccessForRoleElseThrow(Role role, Long courseId) throws AccessForbiddenException {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        switch (role) {
-            case ADMIN:
-                authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.ADMIN, course, null);
-                break;
-            case INSTRUCTOR:
-                authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-                break;
-            case EDITOR:
-                authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-                break;
-            case TEACHING_ASSISTANT:
-                authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-                break;
-            case STUDENT:
-                authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-                break;
-            default:
-                break;
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
     }
 
     /**
@@ -146,7 +128,7 @@ public class ExamAccessService {
     }
 
     /**
-     * Checks if the current user is allowed to manage exams of the given course, that the exam exists,
+     * Checks if the current user is of role in given course, that the exam exists,
      * that the exam belongs to the given course and the exercise group belongs to the given exam.
      *
      * @param role            The role of the callee
@@ -155,14 +137,7 @@ public class ExamAccessService {
      * @param exerciseGroup   The exercise group
      */
     public void checkCourseAndExamAndExerciseGroupAccessForRoleElseThrow(Role role, Long courseId, Long examId, ExerciseGroup exerciseGroup) {
-        switch (role) {
-            case ADMIN -> checkCourseAndExamAccessForRoleElseThrow(Role.ADMIN, courseId, examId);
-            case INSTRUCTOR -> checkCourseAndExamAccessForRoleElseThrow(Role.INSTRUCTOR, courseId, examId);
-            case EDITOR -> checkCourseAndExamAccessForRoleElseThrow(Role.EDITOR, courseId, examId);
-            case TEACHING_ASSISTANT -> checkCourseAndExamAccessForRoleElseThrow(Role.TEACHING_ASSISTANT, courseId, examId);
-            case STUDENT -> checkCourseAndExamAccessForRoleElseThrow(Role.STUDENT, courseId, examId);
-            case ANONYMOUS -> checkCourseAndExamAccessForRoleElseThrow(Role.ANONYMOUS, courseId, examId);
-        }
+        checkCourseAndExamAccessForRoleElseThrow(role, courseId, examId);
         Exam exam = exerciseGroup.getExam();
         if (exam == null || !exam.getId().equals(examId) || !exam.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("exam", "400", "The exam in the path doesnt match the Exam to the ExerciseGroup in the body!");

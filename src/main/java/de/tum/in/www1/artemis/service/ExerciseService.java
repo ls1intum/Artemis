@@ -427,13 +427,15 @@ public class ExerciseService {
 
         if (exercise.isExamExercise()) {
             Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(exercise.getExerciseGroup().getExam().getId()).orElse(null);
-            for (StudentExam studentExam : exam.getStudentExams()) {
-                if (studentExam.getExercises().contains(exercise)) {
-                    // remove exercise reference from student exam
-                    List<Exercise> exerciseList = studentExam.getExercises();
-                    exerciseList.remove(exercise);
-                    studentExam.setExercises(exerciseList);
-                    studentExamRepository.save(studentExam);
+            if (exam != null) {
+                for (StudentExam studentExam : exam.getStudentExams()) {
+                    if (studentExam.getExercises().contains(exercise)) {
+                        // remove exercise reference from student exam
+                        List<Exercise> exerciseList = studentExam.getExercises();
+                        exerciseList.remove(exercise);
+                        studentExam.setExercises(exerciseList);
+                        studentExamRepository.save(studentExam);
+                    }
                 }
             }
         }
