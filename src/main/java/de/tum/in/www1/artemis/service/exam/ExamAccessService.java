@@ -91,7 +91,7 @@ public class ExamAccessService {
      * */
     public void checkCourseAccessForRoleElseThrow(Role role, Long courseId) throws AccessForbiddenException {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
     }
 
     /**
