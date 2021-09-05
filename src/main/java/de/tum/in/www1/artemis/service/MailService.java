@@ -21,6 +21,7 @@ import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import io.github.jhipster.config.JHipsterProperties;
@@ -41,10 +42,7 @@ public class MailService {
 
     private static final String BASE_URL = "baseUrl";
 
-    /*
-     * private static final String COURSE = "course"; private static final String NOTIFICATION_TITLE = "notificationTitle"; private static final String NOTIFICATION_TEXT =
-     * "notificationText";
-     */
+    private static final String NOTIFICATION_URL = "notificationUrl";
 
     private static final String GROUP_NOTIFICATION = "groupNotification";
 
@@ -184,8 +182,7 @@ public class MailService {
         Context context = new Context(locale);
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
         context.setVariable(GROUP_NOTIFICATION, notification);
-
-        // TODO remove just for testing
+        context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification));
 
         String content = templateEngine.process("mail/notifications/groupNotificationEmailTests", context);
         String subject = notification.getTitle();

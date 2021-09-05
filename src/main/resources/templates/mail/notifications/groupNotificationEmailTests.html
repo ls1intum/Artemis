@@ -11,7 +11,6 @@
             margin: 0;
             padding: 0;
             border: 0;
-
             text-align: center;
         }
 
@@ -71,7 +70,6 @@
             font-size: smaller;
             padding: 5px;
         }
-
     </style>
 </head>
 <body>
@@ -82,12 +80,8 @@
 
 <div id="message-body">
     <!-- Greetings -->
-    <span th:utext="#{email.greeting.plural}">
-    Dear
-</span>
-    <span th:utext="${groupNotification.course.title}">
-        Course Title
-    </span>
+    <span th:utext="#{email.greeting.plural}">Dear</span>
+    <span th:utext="${groupNotification.course.title}">Course Title</span>
     <th:block th:switch="${groupNotification.type.toString()}">
         <th:block th:case="'STUDENT'">
             <span th:utext="#{email.notification.group.students}"/>
@@ -111,25 +105,12 @@
             <p class="notification-text-header" th:text="#{email.notification.aux.notification.text.header.change.message}"/>
         </th:block>
     </th:block>
-
-    <p id="notification-text" th:text="${groupNotification.text}">
-    Notification Text
-</p>
-
+    <p id="notification-text" th:text="${groupNotification.text}">Notification Text</p>
     <!-- Button/Link that navigates to the respective page in Artemis -->
-    <!-- todo change link -->
     <div class="button-wrapper">
-        <a href="https://artemistest.ase.in.tum.de/courses" class="button">
-            Open in Artemis
-        </a>
+        <a class="button" th:href="@{${notificationUrl}}">Open in Artemis</a>
     </div>
-
     <br>
-<!--
-<p>
-    <a th:with="url=(@{|${baseUrl}/account/activate?key=${user.activationKey}|})" th:href="${url}" th:text="${url}">Activation link</a>
-</p>
--->
     <!-- Farwell -->
     <p>
         <span th:text="#{email.activation.text2}">Regards, </span>
@@ -140,13 +121,8 @@
 <!-- Message Body End -->
 <!-- Additional Information -->
 <footer>
-    <p>
-        You can (un)subscribe to similar emails in your notification settings in
-        <!--todo change link -->
-        <a href="https://artemistest.ase.in.tum.de/courses">
-            Artemis
-        </a>
-    </p>
+    You can (un)subscribe to similar emails in your notification settings in
+    <a th:href="@{|${baseUrl}/user-settings/notifications|}">Artemis</a>
 </footer>
 
 </body>
