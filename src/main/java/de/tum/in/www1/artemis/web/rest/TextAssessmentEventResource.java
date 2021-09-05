@@ -83,6 +83,10 @@ public class TextAssessmentEventResource {
 
         // Check if the text assessment analytics feature is enabled
         // Save the event if it is valid. All other requests are considered bad requests.
+
+        var enabled = isTextAssessmentAnalyticsEnabled();
+        var validated = validateEvent(event);
+
         if (isTextAssessmentAnalyticsEnabled() && validateEvent(event)) {
             textAssessmentEventRepository.save(event);
             return ResponseEntity.ok().build();

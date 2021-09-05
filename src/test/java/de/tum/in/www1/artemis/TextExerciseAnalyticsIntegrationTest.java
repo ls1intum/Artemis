@@ -32,6 +32,9 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
     @Autowired
     private TextAssessmentEventResource textAssessmentEventResource;
 
+    @Autowired
+    private TextAssessmentEventRepository textAssessmentEventRepository;
+
     private Course course;
 
     private User tutor;
@@ -133,5 +136,28 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
         ResponseEntity<List<TextAssessmentEvent>> responseFindEvents = textAssessmentEventResource.getEventsByCourseId(course.getId());
         assertThat(responseFindEvents.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(responseFindEvents.getBody()).isEqualTo(List.of(event));
+    }
+
+    /**
+     * Tests the get events endpoint with admin role
+     */
+    @Test
+    @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
+    public void testGetNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId() throws Exception {
+        User user = new User();
+        user.setLogin("instructor");
+        user.setGroups(Set.of(course.getInstructorGroupName()));
+        userRepository.save(user);
+
+        TextAssessmentEvent event1 = database.createSingleTextAssessmentEvent(course.getId(), 0L, exercise.getId(), studentParticipation.getId(), textSubmission.getId());
+        TextAssessmentEvent event2 = database.createSingleTextAssessmentEvent(course.getId(), 1L, exercise.getId(), studentParticipation.getId(), textSubmission.getId());
+
+        // Add two events with two different tutor ids
+        textAssessmentEventRepository.saveAll(List.of(event1, event2));
+
+        int numberOfTutorsInvolved = request.get("/analytics/text-assessment/events/courses/" + course.getId() + "/exercises/" + exercise.getId(), HttpStatus.OK, Integer.class);
+
+        assertThat(numberOfTutorsInvolved).isNotNull();
+        assertThat(numberOfTutorsInvolved).isEqualTo(2);
     }
 }

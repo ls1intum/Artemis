@@ -54,7 +54,7 @@ public class TutorEffortResource {
      * @param exerciseId the id of the exercise to query for
      * @return list of TutorEffort objects
      */
-    @PostMapping("/courses/{courseId}/exercises/{exerciseId}/tutor-effort")
+    @GetMapping("/courses/{courseId}/exercises/{exerciseId}/tutor-effort")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<TutorEffort>> calculateTutorEfforts(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         log.debug("tutor-effort with argument[s] course = {}, exercise = {}", courseId, exerciseId);
