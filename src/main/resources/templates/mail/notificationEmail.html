@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title th:text="${groupNotification.title}">Notification Title</title>
+    <title th:text="${notification.title}">Notification Title</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{|${baseUrl}/favicon.svg|}" />
     <style>
@@ -80,9 +80,11 @@
 
 <div id="message-body">
     <!-- Greetings -->
-    <span th:utext="#{email.greeting.plural}">Dear</span>
-    <span th:utext="${groupNotification.course.title}">Course Title</span>
-    <th:block th:switch="${groupNotification.type.toString()}">
+    <th:block th:if="${isGroupNotification}">
+        <!--GROUP-->
+        <span th:utext="#{email.greeting.plural}">Dear</span>
+        <span th:utext="${notification.course.title}">Course Title</span>
+        <th:block th:switch="${notification.type.toString()}">
         <th:block th:case="'STUDENT'">
             <span th:utext="#{email.notification.group.students}"/>
         </th:block>
@@ -96,16 +98,21 @@
             <span th:utext="#{email.notification.group.tutors}"/>
         </th:block>
     </th:block>
+    </th:block>
+    <th:block th:unless="${isGroupNotification}">
+        <!--SINGLE-->
+        <p th:text="#{email.activation.greeting(${user.getName()})}">Dear</p>
+    </th:block>
     <!-- Greetings End -->
     <br>
     <!-- Notification Content -->
-    <th:block th:switch="${groupNotification.originalNotificationType.toString()}">
+    <th:block th:switch="${notification.originalNotificationType.toString()}">
         <th:block th:case="'ATTACHMENT_CHANGE'">
             <span th:text="#{email.notification.group.original.attachment}"/>
             <p class="notification-text-header" th:text="#{email.notification.aux.notification.text.header.change.message}"/>
         </th:block>
     </th:block>
-    <p id="notification-text" th:text="${groupNotification.text}">Notification Text</p>
+    <p id="notification-text" th:text="${notification.text}">Notification Text</p>
     <!-- Button/Link that navigates to the respective page in Artemis -->
     <div class="button-wrapper">
         <a class="button" th:href="@{${notificationUrl}}">Open in Artemis</a>

@@ -44,7 +44,9 @@ public class MailService {
 
     private static final String NOTIFICATION_URL = "notificationUrl";
 
-    private static final String GROUP_NOTIFICATION = "groupNotification";
+    private static final String NOTIFICATION = "notification";
+
+    private static final String IS_GROUP_NOTIFICATION = "isGroupNotification";
 
     private final JHipsterProperties jHipsterProperties;
 
@@ -161,9 +163,9 @@ public class MailService {
         log.debug("Sending notification email to '{}'", user.getEmail());
 
         Context context = this.prepareContext(user);
-        context.setVariable(GROUP_NOTIFICATION, notification);
+        context.setVariable(NOTIFICATION, notification);
 
-        String content = templateEngine.process("mail/notifications/notificationEmailTest", context);
+        String content = templateEngine.process("mail/notificationEmail", context);
         String subject = notification.getTitle();
 
         sendEmail(false, Collections.singletonList(user), subject, content, false, true);
@@ -171,21 +173,22 @@ public class MailService {
 
     /**
      * Creates and sends an email to a group of users based on a GroupNotification
-     * @param notification which information should also be propagated via email
+     * @param groupNotification which information should also be propagated via email
      * @param userList with the users that should receive an email (via bcc) (i.e. only one email is created)
      */
     @Async
-    public void sendGroupNotificationEmail(GroupNotification notification, List<User> userList) {
+    public void sendGroupNotificationEmail(GroupNotification groupNotification, List<User> userList) {
         log.debug("Sending group notification email");
 
         Locale locale = Locale.forLanguageTag("en");
         Context context = new Context(locale);
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
-        context.setVariable(GROUP_NOTIFICATION, notification);
-        context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification));
+        context.setVariable(NOTIFICATION, groupNotification);
+        context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(groupNotification));
+        context.setVariable(IS_GROUP_NOTIFICATION, true);
 
-        String content = templateEngine.process("mail/notifications/groupNotificationEmailTests", context);
-        String subject = notification.getTitle();
+        String content = templateEngine.process("mail/notificationEmail", context);
+        String subject = groupNotification.getTitle();
 
         sendEmail(true, userList, subject, content, false, true);
     }
