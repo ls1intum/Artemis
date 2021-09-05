@@ -21,6 +21,7 @@ import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -42,12 +43,6 @@ public class MailService {
 
     private static final String BASE_URL = "baseUrl";
 
-    private static final String NOTIFICATION_URL = "notificationUrl";
-
-    private static final String NOTIFICATION = "notification";
-
-    private static final String IS_GROUP_NOTIFICATION = "isGroupNotification";
-
     private final JHipsterProperties jHipsterProperties;
 
     private final JavaMailSender javaMailSender;
@@ -57,6 +52,16 @@ public class MailService {
     private final SpringTemplateEngine templateEngine;
 
     private final UserRepository userRepository;
+
+    // notification related variables
+
+    private static final String NOTIFICATION = "notification";
+
+    private static final String NOTIFICATION_SUBJECT = "notificationSubject";
+
+    private static final String NOTIFICATION_URL = "notificationUrl";
+
+    private static final String IS_GROUP_NOTIFICATION = "isGroupNotification";
 
     public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine,
             UserRepository userRepository) {
@@ -182,8 +187,10 @@ public class MailService {
 
         Locale locale = Locale.forLanguageTag("en");
         Context context = new Context(locale);
+        // TODO look for more similarities between group and single and create common method (e.g. to set context)
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
         context.setVariable(NOTIFICATION, groupNotification);
+        context.setVariable(NOTIFICATION_SUBJECT, findNotificationSubject(groupNotification));
         context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(groupNotification));
         context.setVariable(IS_GROUP_NOTIFICATION, true);
 
@@ -191,6 +198,11 @@ public class MailService {
         String subject = groupNotification.getTitle();
 
         sendEmail(true, userList, subject, content, false, true);
+    }
+
+    private String findNotificationSubject(Notification notification) {
+        String text = notification.getText();
+        return text.substring(text.indexOf('"') + 1, text.lastIndexOf('"'));
     }
 
 }

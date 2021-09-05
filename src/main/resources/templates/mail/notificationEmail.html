@@ -107,13 +107,19 @@
     <br>
     <!-- Notification Content -->
     <th:block th:switch="${notification.originalNotificationType.toString()}">
-        <!--Only types that can have a custom text-->
         <th:block th:case="'ATTACHMENT_CHANGE'">
             <span th:text="#{email.notification.group.original.attachment}"/>
             <p class="notification-text-header" th:text="#{email.notification.aux.notification.text.header.change.message}"/>
+            <th:block th:fragment="notificationText">
+                <p id="notification-text" th:text="${notification.text}">Notification Text</p>
+            </th:block>
+        </th:block>
+        <th:block th:case="'EXERCISE_CREATED'">
+            <span th:text="#{email.notification.group.original.exercise.created(${notificationSubject})}"/>
         </th:block>
     </th:block>
-    <p id="notification-text" th:text="${notification.text}">Notification Text</p>
+
+
     <!-- Button/Link that navigates to the respective page in Artemis -->
     <div class="button-wrapper">
         <a class="button" th:href="@{${notificationUrl}}">Open in Artemis</a>
