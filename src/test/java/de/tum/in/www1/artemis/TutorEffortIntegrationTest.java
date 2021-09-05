@@ -54,7 +54,7 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
         course = database.createCourseWithTutor("tutor1");
         exercise = course.getExercises().iterator().next();
         studentParticipation = studentParticipationRepository.findAll().get(0);
-        textSubmission = (TextSubmission) textSubmissionRepository.findAll().get(0);
+        textSubmission = textSubmissionRepository.findAll().get(0);
         User user = new User();
         user.setLogin("instructor");
         user.setGroups(Set.of(course.getInstructorGroupName()));
@@ -66,38 +66,50 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
         database.resetDatabase();
     }
 
+    /**
+     * Tests the TutorEffortResource.calculateTutorEffort method with a scenario involving 10 minutes
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
-    public void testCalculateTutorEfforts() throws Exception {
-        List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(11, 1);
+    public void testCalculateTutorEfforts0Minutes() throws Exception {
+        List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(1, 1);
 
         textAssessmentEventRepository.saveAll(events);
 
         List<TutorEffort> tutorEfforts = request.getList("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK, TutorEffort.class);
 
-        TutorEffort effortExpected = createTutorEffortObject(1L, 10, 1);
+        TutorEffort effortExpected = createTutorEffortObject(0);
 
         assertThat(tutorEfforts).isNotNull();
         assertThat(tutorEfforts.size()).isEqualTo(1);
         assertThat(tutorEfforts.get(0)).usingRecursiveComparison().isEqualTo(effortExpected);
     }
 
+    /**
+     * Tests the TutorEffortResource.calculateTutorEffort method with a scenario involving 20 minutes
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
     public void testCalculateTutorEffortsDistance5Minutes() throws Exception {
-        List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(5, 5);
+        List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(6, 5);
 
         textAssessmentEventRepository.saveAll(events);
 
         List<TutorEffort> tutorEfforts = request.getList("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK, TutorEffort.class);
 
-        TutorEffort effortExpected = createTutorEffortObject(1L, 20, 1);
+        TutorEffort effortExpected = createTutorEffortObject(5);
 
         assertThat(tutorEfforts).isNotNull();
         assertThat(tutorEfforts.size()).isEqualTo(1);
         assertThat(tutorEfforts.get(0)).usingRecursiveComparison().isEqualTo(effortExpected);
     }
 
+    /**
+     * Tests the TutorEffortResource.calculateTutorEffort method with a scenario involving 20 minutes
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
     public void testCalculateTutorEffortsDistance10Minutes() throws Exception {
@@ -106,20 +118,20 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
 
         List<TutorEffort> tutorEfforts = request.getList("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK, TutorEffort.class);
 
-        TutorEffort effortExpected = createTutorEffortObject(1L, 0, 1);
+        TutorEffort effortExpected = createTutorEffortObject(10);
 
         assertThat(tutorEfforts).isNotNull();
         assertThat(tutorEfforts.size()).isEqualTo(1);
         assertThat(tutorEfforts.get(0)).usingRecursiveComparison().isEqualTo(effortExpected);
     }
 
-    TutorEffort createTutorEffortObject(long userId, int minutes, int numSubmissions) {
+    TutorEffort createTutorEffortObject(int minutes) {
         TutorEffort tutorEffort = new TutorEffort();
-        tutorEffort.setUserId(userId);
+        tutorEffort.setUserId(1L);
+        tutorEffort.setNumberOfSubmissionsAssessed(1);
         tutorEffort.setExerciseId(exercise.getId());
         tutorEffort.setCourseId(course.getId());
         tutorEffort.setTotalTimeSpentMinutes(minutes);
-        tutorEffort.setNumberOfSubmissionsAssessed(numSubmissions);
         return tutorEffort;
     }
 

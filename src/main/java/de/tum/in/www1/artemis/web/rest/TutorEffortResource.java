@@ -38,7 +38,7 @@ public class TutorEffortResource {
 
     private final TextAssessmentEventRepository textAssessmentEventRepository;
 
-    private static final int thresholdMinutes = 5;
+    private static final int THRESHOLD_MINUTES = 5;
 
     public TutorEffortResource(AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository,
             TextAssessmentEventRepository textAssessmentEventRepository) {
@@ -105,18 +105,20 @@ public class TutorEffortResource {
      */
     private int calculateTutorOverallTimeSpent(List<TextAssessmentEvent> tutorEvents) {
         int timeSeconds = 0;
-        for (int i = 0; i < tutorEvents.size(); i++) {
+        int i = 0;
+        while (i < tutorEvents.size()) {
             TextAssessmentEvent current = tutorEvents.get(i);
             try {
                 // access next element & catch out of bounds if end of the list.
                 TextAssessmentEvent next = tutorEvents.get(i + 1);
                 int diffInSeconds = getDateDiffInSeconds(Date.from(current.getTimestamp()), Date.from(next.getTimestamp()));
-                if (diffInSeconds <= thresholdMinutes * 60) {
+                if (diffInSeconds <= THRESHOLD_MINUTES * 60) {
                     timeSeconds += diffInSeconds;
                 }
             }
             catch (IndexOutOfBoundsException ignored) {
             }
+            i++;
         }
         return timeSeconds / 60;
     }
@@ -156,7 +158,7 @@ public class TutorEffortResource {
         }
         catch (ArithmeticException exception) {
             // discard if faulty date found. Treat as outlier
-            return thresholdMinutes * 60 + 1;
+            return THRESHOLD_MINUTES * 60 + 1;
         }
     }
 }
