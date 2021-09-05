@@ -57,12 +57,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
     legend = [
         {
-            text: 'artemisApp.exampleSubmission.legend.feedbackWithoutScore',
-            icon: 'exclamation' as IconProp,
-            color: 'blue',
-            size: '1.66em',
-        },
-        {
             text: 'artemisApp.exampleSubmission.legend.positiveScore',
             icon: 'check' as IconProp,
             color: 'green',
@@ -73,6 +67,12 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             icon: 'times' as IconProp,
             color: 'red',
             size: '2em',
+        },
+        {
+            text: 'artemisApp.exampleSubmission.legend.feedbackWithoutScore',
+            icon: 'exclamation' as IconProp,
+            color: 'blue',
+            size: '1.66em',
         },
         {
             text: 'artemisApp.exampleSubmission.legend.incorrectAssessment',
@@ -427,9 +427,9 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
                     this.assessmentEditor.resultFeedbacks = this.feedbacks;
 
-                    const msg =
+                    const errorMessage =
                         correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
-                    this.jhiAlertService.error(msg, { mistakeCount: correctionErrors.length });
+                    this.jhiAlertService.error(errorMessage, { mistakeCount: correctionErrors.length });
                 } else {
                     onError(this.jhiAlertService, error);
                 }

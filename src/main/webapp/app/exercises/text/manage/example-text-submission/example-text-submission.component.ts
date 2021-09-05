@@ -279,9 +279,9 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                         }
                     });
 
-                    const msg =
+                    const errorMessage =
                         correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
-                    this.jhiAlertService.error(msg, { mistakeCount: correctionErrors.length });
+                    this.jhiAlertService.error(errorMessage, { mistakeCount: correctionErrors.length });
                 } else {
                     onError(this.jhiAlertService, error);
                 }
