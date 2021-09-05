@@ -1,9 +1,10 @@
-import { GET, BASE_API } from './../../support/constants';
+import { GET, BASE_API } from '../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
 import dayjs from 'dayjs';
 import submission from '../../fixtures/programming_exercise_submissions/all_successful/submission.json';
+import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_template.json';
 
 // Requests
 const courseRequests = artemis.requests.courseManagement;
@@ -19,6 +20,7 @@ const courseOverview = artemis.pageobjects.courseOverview;
 const examStartEnd = artemis.pageobjects.examStartEnd;
 const examNavigation = artemis.pageobjects.examNavigationBar;
 const onlineEditor = artemis.pageobjects.onlineEditor;
+const modelingEditor = artemis.pageobjects.modelingEditor;
 
 // Common primitives
 const uid = generateUUID();
@@ -44,8 +46,8 @@ describe('Exam participation', () => {
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(2, 'days'))
                 .endDate(dayjs().add(3, 'days'))
-                .maxPoints(20)
-                .numberOfExercises(2)
+                .maxPoints(30)
+                .numberOfExercises(3)
                 .build();
             courseRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
@@ -55,6 +57,9 @@ describe('Exam participation', () => {
                 });
                 examRequests.addExerciseGroup(course, exam, 'group 2', true).then((groupResponse) => {
                     courseRequests.createProgrammingExercise(programmingExerciseTitle, programmingShortName, packageName, { exerciseGroup: groupResponse.body });
+                });
+                examRequests.addExerciseGroup(course, exam, 'group 3', true).then((groupResponse) => {
+                    courseRequests.createModelingExercise(modelingExerciseTemplate, { exerciseGroup: groupResponse.body });
                 });
                 examRequests.generateMissingIndividualExams(course, exam);
                 examRequests.prepareExerciseStart(course, exam);
@@ -67,6 +72,8 @@ describe('Exam participation', () => {
         openTextExercise();
         makeTextExerciseSubmission();
         makeProgrammingExerciseSubmission();
+        openModelingExercise();
+        makeModelingExerciseSubmission();
         handInEarly();
         verifyFinalPage();
     });
@@ -82,6 +89,10 @@ describe('Exam participation', () => {
 
     function openTextExercise() {
         examNavigation.openExerciseAtIndex(0);
+    }
+
+    function openModelingExercise() {
+        examNavigation.openExerciseAtIndex(2);
     }
 
     function makeTextExerciseSubmission() {
@@ -106,6 +117,15 @@ describe('Exam participation', () => {
         onlineEditor.getInstructionSymbols().each(($el) => {
             cy.wrap($el).find('[data-icon="check"]').should('be.visible');
         });
+    }
+
+    function makeModelingExerciseSubmission() {
+        modelingEditor.addComponentToModel(1);
+        modelingEditor.addComponentToModel(2);
+        modelingEditor.addComponentToModel(3);
+        cy.intercept('PUT', '/api/exercises/*/modeling-submissions').as('createModelingSubmission');
+        cy.contains('Save').click();
+        cy.wait('@createModelingSubmission');
     }
 
     function handInEarly() {
