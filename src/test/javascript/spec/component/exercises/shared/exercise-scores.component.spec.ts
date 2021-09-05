@@ -27,7 +27,6 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
-import { MockTranslateValuesDirective } from '../../course/course-scores/course-scores.component.spec';
 import { DifferencePipe } from 'ngx-moment';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -39,6 +38,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { Team } from 'app/entities/team.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -102,9 +102,9 @@ describe('Exercise Scores Component', () => {
                 MockComponent(SubmissionExportButtonComponent),
                 MockComponent(DataTableComponent),
                 MockComponent(ResultComponent),
-                MockDirective(MockHasAnyAuthorityDirective),
                 MockDirective(FeatureToggleLinkDirective),
-                MockDirective(MockTranslateValuesDirective),
+                MockTranslateValuesDirective,
+                MockHasAnyAuthorityDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
             ],

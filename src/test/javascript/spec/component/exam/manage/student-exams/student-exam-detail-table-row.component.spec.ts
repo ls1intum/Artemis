@@ -12,7 +12,6 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MockTranslateValuesDirective } from '../../../course/course-scores/course-scores.component.spec';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -26,6 +25,7 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
