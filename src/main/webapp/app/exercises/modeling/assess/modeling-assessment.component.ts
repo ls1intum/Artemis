@@ -173,7 +173,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * Returns an array containing all feedback entries from the mapping.
      */
     private generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
-        let newElementFeedback = new Map();
+        const newElementFeedback = new Map();
         for (const assessment of assessments) {
             let feedback = this.elementFeedback.get(assessment.modelElementId);
             if (feedback) {
@@ -352,7 +352,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         let correctionStatusDescription = feedback.correctionStatus
             ? this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus)
             : feedback.correctionStatus;
-        if (feedback.correctionStatus && feedback.correctionStatus != 'CORRECT') {
+        if (feedback.correctionStatus && feedback.correctionStatus !== 'CORRECT') {
             correctionStatusDescription += ' ⚠️';
         }
         let correctionStatus: 'CORRECT' | 'INCORRECT' | 'NOT_VALIDATED';
