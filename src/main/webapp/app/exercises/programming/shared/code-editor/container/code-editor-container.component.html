@@ -2,7 +2,7 @@
     <div editorNavbar class="d-flex align-items-center">
         <h4><ng-content select="[editorTitle]"></ng-content></h4>
         <ng-content select="[editorTitleActions]"></ng-content>
-        <div class="d-flex align-items-center ms-auto">
+        <div class="d-flex flex-wrap align-items-center ms-auto">
             <ng-content select="[editorToolbar]"></ng-content>
             <jhi-code-editor-actions
                 *ngIf="!isTutorAssessment || commitState === CommitState.CONFLICT"

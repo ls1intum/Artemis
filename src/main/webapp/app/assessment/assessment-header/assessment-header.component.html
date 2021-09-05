@@ -1,5 +1,5 @@
 <jhi-alert></jhi-alert>
-<h3 class="top-container">
+<h3 class="top-container flex-lg-wrap">
     <!--back button only used in assessment dashboard-->
     <div class="row-container me-2">
         <span *ngIf="!isTestRun" jhiTranslate="artemisApp.assessment.assessment">Assessment</span>
@@ -17,7 +17,7 @@
     >
         Assessment Due Date is over, the assessment will be published immediately after submitting
     </ngb-alert>
-    <div class="row-container" *ngIf="!isLoading">
+    <div class="row-container flex-sm-wrap" *ngIf="!isLoading">
         <span
             id="assessmentLocked"
             *ngIf="!isAssessor && !hasComplaint"
