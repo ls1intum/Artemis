@@ -107,6 +107,7 @@
     <br>
     <!-- Notification Content -->
     <th:block th:switch="${notification.originalNotificationType.toString()}">
+        <!--Only types that can have a custom text-->
         <th:block th:case="'ATTACHMENT_CHANGE'">
             <span th:text="#{email.notification.group.original.attachment}"/>
             <p class="notification-text-header" th:text="#{email.notification.aux.notification.text.header.change.message}"/>
