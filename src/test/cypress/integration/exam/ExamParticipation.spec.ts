@@ -21,6 +21,7 @@ const examStartEnd = artemis.pageobjects.examStartEnd;
 const examNavigation = artemis.pageobjects.examNavigationBar;
 const onlineEditor = artemis.pageobjects.onlineEditor;
 const modelingEditor = artemis.pageobjects.modelingEditor;
+const multipleChoiceQuiz = artemis.pageobjects.multipleChoiceQuiz;
 
 // Common primitives
 const uid = generateUUID();
@@ -46,8 +47,8 @@ describe('Exam participation', () => {
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(2, 'days'))
                 .endDate(dayjs().add(3, 'days'))
-                .maxPoints(30)
-                .numberOfExercises(3)
+                .maxPoints(40)
+                .numberOfExercises(4)
                 .build();
             courseRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
@@ -60,6 +61,9 @@ describe('Exam participation', () => {
                 });
                 examRequests.addExerciseGroup(course, exam, 'group 3', true).then((groupResponse) => {
                     courseRequests.createModelingExercise(modelingExerciseTemplate, { exerciseGroup: groupResponse.body });
+                });
+                examRequests.addExerciseGroup(course, exam, 'group 4', true).then((groupResponse) => {
+                    courseRequests.createQuizExercise({ exerciseGroup: groupResponse.body });
                 });
                 examRequests.generateMissingIndividualExams(course, exam);
                 examRequests.prepareExerciseStart(course, exam);
@@ -74,6 +78,8 @@ describe('Exam participation', () => {
         makeProgrammingExerciseSubmission();
         openModelingExercise();
         makeModelingExerciseSubmission();
+        openQuizExercise();
+        makeQuizExerciseSubmission();
         handInEarly();
         verifyFinalPage();
     });
@@ -93,6 +99,10 @@ describe('Exam participation', () => {
 
     function openModelingExercise() {
         examNavigation.openExerciseAtIndex(2);
+    }
+
+    function openQuizExercise() {
+        examNavigation.openExerciseAtIndex(3);
     }
 
     function makeTextExerciseSubmission() {
@@ -123,9 +133,12 @@ describe('Exam participation', () => {
         modelingEditor.addComponentToModel(1);
         modelingEditor.addComponentToModel(2);
         modelingEditor.addComponentToModel(3);
-        cy.intercept('PUT', '/api/exercises/*/modeling-submissions').as('createModelingSubmission');
-        cy.contains('Save').click();
-        cy.wait('@createModelingSubmission');
+        modelingEditor.submit();
+    }
+
+    function makeQuizExerciseSubmission() {
+        multipleChoiceQuiz.tickAnswerOption(0);
+        multipleChoiceQuiz.tickAnswerOption(2);
     }
 
     function handInEarly() {

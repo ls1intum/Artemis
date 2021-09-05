@@ -14,4 +14,10 @@ export class ModelingEditor {
             force: true,
         });
     }
+
+    submit() {
+        cy.intercept('PUT', '/api/exercises/*/modeling-submissions').as('createModelingSubmission');
+        cy.contains('Save').click();
+        cy.wait('@createModelingSubmission');
+    }
 }
