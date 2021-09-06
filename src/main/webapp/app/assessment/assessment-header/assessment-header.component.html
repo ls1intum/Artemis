@@ -1,5 +1,5 @@
 <jhi-alert></jhi-alert>
-<h3 class="top-container flex-wrap flex-lg-nowrap">
+<h3 class="top-container flex-wrap">
     <!--back button only used in assessment dashboard-->
     <div class="row-container me-2">
         <span *ngIf="!isTestRun" jhiTranslate="artemisApp.assessment.assessment">Assessment</span>
@@ -21,7 +21,7 @@
         <span
             id="assessmentLocked"
             *ngIf="!isAssessor && !hasComplaint"
-            class="text-danger ms-3"
+            class="text-danger m-2"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentLocked"
             [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
@@ -31,7 +31,7 @@
         <span
             id="moreFeedbackRequest"
             *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && hasMoreFeedbackRequest && !complaintHandled"
-            class="ms-3"
+            class="m-2"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.moreFeedbackRequest"
         >
@@ -40,7 +40,7 @@
         <span
             id="assessmentReadOnlyUnhandledComplaint"
             *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && !hasMoreFeedbackRequest && !complaintHandled"
-            class="ms-3"
+            class="m-2"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentReadOnlyUnhandledComplaint"
         >
@@ -49,7 +49,7 @@
         <span
             id="assessmentReadOnlyHandled"
             *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && complaintHandled"
-            class="ms-3"
+            class="m-2"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentReadOnlyHandledComplaint"
         >
@@ -58,7 +58,7 @@
         <span
             id="assessmentLockedCurrentUser"
             *ngIf="isAssessor && (!hasComplaint || isAtLeastInstructor)"
-            class="text-danger ms-3"
+            class="text-danger m-2"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"
         >
