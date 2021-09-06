@@ -1,4 +1,5 @@
 import { generateUUID } from '../support/utils';
+import { CypressCredentials } from '../support/users';
 import allSuccessful from '../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import partiallySuccessful from '../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import { artemis } from '../support/ArtemisTesting';
@@ -23,8 +24,11 @@ const courseShortName = 'cypress' + uid;
 const programmingExerciseName = 'Cypress programming exercise ' + uid;
 const programmingExerciseShortName = courseShortName;
 const packageName = 'de.test';
+const exercisePath = '/exercises';
 
 describe('Programming exercise participations', () => {
+    let programmingExercise: any;
+
     before(() => {
         setupCourseAndProgrammingExercise();
     });
@@ -50,7 +54,6 @@ describe('Programming exercise participations', () => {
             courseManagement.deleteCourse(course.id);
         }
     });
-});
 
 /**
  * Creates a course and a programming exercise inside that course.
