@@ -1,19 +1,7 @@
 [
     {
-        "fileName": "src/de/test/SortStrategy.java",
-        "fileContent": "package de.test;\n\nimport java.util.Date;\nimport java.util.List;\n\npublic interface SortStrategy {\n    /**\n     * Sorts a list of Dates.\n     *\n     * @param input list of Dates\n     */\n    void performSort(List<Date> input);\n}\n"
-    },
-    {
-        "fileName": "src/de/test/Policy.java",
-        "fileContent": "package de.test;\n\npublic class Policy {\n\n    private static final int DATES_SIZE_THRESHOLD = 10;\n    \n    private Context context;\n\n    public Policy(Context context) {\n        this.context = context;\n    }\n\n    /**\n     * Chooses a strategy depending on the number of date objects.\n     */\n    public void configure() {\n        if (this.context.getDates().size() > DATES_SIZE_THRESHOLD) {\n            System.out.println(\"More than \" + DATES_SIZE_THRESHOLD + \" dates, choosing merge sort!\");\n            this.context.setSortAlgorithm(new MergeSort());\n        } else {\n            System.out.println(\"Less or equal than \" + DATES_SIZE_THRESHOLD + \" dates. choosing quick sort!\");\n            this.context.setSortAlgorithm(new BubbleSort());\n        }\n    }\n}\n"
-    },
-    {
         "fileName": "src/de/test/MergeSort.java",
         "fileContent": "package de.test;\n\nimport java.util.*;\n\npublic class MergeSort implements SortStrategy {\n    \n    /**\n     * Wrapper method for the real MergeSort algorithm.\n     *\n     * @param input the List of Dates to be sorted\n     */\n    public void performSort(List<Date> input) {\n        mergesort(input, 0, input.size() - 1);\n    }\n\n    // Recursive merge sort method\n    private void mergesort(List<Date> input, int low, int high) {\n        if (high - low < 1) {\n            return;\n        }\n        int mid = (low + high) / 2;\n        mergesort(input, low, mid);\n        mergesort(input, mid + 1, high);\n        merge(input, low, mid, high);\n    }\n\n    // Merge method\n    private void merge(List<Date> input, int low, int middle, int high) {\n\n        Date[] temp = new Date[high - low + 1];\n        int leftIndex = low;\n        int rightIndex = middle + 1;\n        int wholeIndex = 0;\n        while (leftIndex <= middle && rightIndex <= high) {\n            if (input.get(leftIndex).compareTo(input.get(rightIndex)) <= 0) {\n                temp[wholeIndex] = input.get(leftIndex++);\n            }\n            else {\n                temp[wholeIndex] = input.get(rightIndex++);\n            }\n            wholeIndex++;\n        }\n        if (leftIndex <= middle && rightIndex > high) {\n            while (leftIndex <= middle) {\n                temp[wholeIndex++] = input.get(leftIndex++);\n            }\n        }\n        else {\n            while (rightIndex <= high) {\n                temp[wholeIndex++] = input.get(rightIndex++);\n            }\n        }\n        for (wholeIndex = 0; wholeIndex < temp.length; wholeIndex++) {\n            input.set(wholeIndex + low, temp[wholeIndex]);\n        }\n    }\n}\n"
-    },
-    {
-        "fileName": "src/de/test/Context.java",
-        "fileContent": "package de.test;\n\nimport java.util.*;\n\npublic class Context {\n    private SortStrategy sortAlgorithm;\n    \n    private List<Date> dates;\n\n    public List<Date> getDates() {\n        return dates;\n    }\n\n    public void setDates(List<Date> dates) {\n        this.dates = dates;\n    }\n\n    public void setSortAlgorithm(SortStrategy sa) {\n        sortAlgorithm = sa;\n    }\n\n    public SortStrategy getSortAlgorithm() {\n        return sortAlgorithm;\n    }\n\n    /**\n     * Runs the configured sort algorithm.\n     */\n    public void sort() {\n        if (sortAlgorithm != null) {\n            sortAlgorithm.performSort(this.dates);\n        }\n    }\n}\n"
     },
     {
         "fileName": "src/de/test/Client.java",
@@ -21,6 +9,6 @@
     },
     {
         "fileName": "src/de/test/BubbleSort.java",
-        "fileContent": "package de.test;\n\nimport java.util.*;\n\npublic class BubbleSort implements SortStrategy {\n    /**\n     * Sorts dates with BubbleSort.\n     *\n     * @param input the List of Dates to be sorted\n     */\n    public void performSort(List<Date> input) {\n        for (int i = input.size() - 1; i >= 0; i--) {\n            for (int j = 0; j < i; j++) {\n                if (input.get(j).compareTo(input.get(j + 1)) > 0) {\n                    Date temp = input.get(j);\n                    input.set(j, input.get(j + 1));\n                    input.set(j + 1, temp);\n                }\n            }\n        }\n\n    }\n}\n"
+        "fileContent": "package de.test;\n\nimport java.util.*;\n\npublic class BubbleSort implements SortStrategy {\n    /**\n     * Sorts dates with BubbleSort.\n     *\n     */\n    public void performSort(List<Date> input) {\n        for (int i = input.size() - 1; i >= 0; i--) {\n            for (int j = 0; j < i; j++) {\n                if (input.get(j).compareTo(input.get(j + 1)) > 0) {\n                    Date temp = input.get(j);\n                    input.set(j, input.get(j + 1));\n                    input.set(j + 1, temp);\n                }\n            }\n        }\n\n    }\n}\n"
     }
 ]
