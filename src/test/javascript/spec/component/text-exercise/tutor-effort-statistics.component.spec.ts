@@ -16,6 +16,26 @@ describe('TutorEffortStatisticsComponent', () => {
     let component: TutorEffortStatisticsComponent;
     let httpMock: HttpTestingController;
     let compiled: any;
+    const tutorEffortsMocked = [
+        {
+            courseId: 1,
+            exerciseId: 1,
+            numberOfSubmissionsAssessed: 1,
+            totalTimeSpentMinutes: 1,
+        },
+        {
+            courseId: 1,
+            exerciseId: 1,
+            numberOfSubmissionsAssessed: 1,
+            totalTimeSpentMinutes: 20,
+        },
+        {
+            courseId: 1,
+            exerciseId: 1,
+            numberOfSubmissionsAssessed: 1,
+            totalTimeSpentMinutes: 30,
+        },
+    ];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -58,26 +78,7 @@ describe('TutorEffortStatisticsComponent', () => {
 
     it('should call distributeEffortToSets', () => {
         component.currentExerciseId = 1;
-        component.tutorEfforts = [
-            {
-                courseId: 1,
-                exerciseId: 1,
-                numberOfSubmissionsAssessed: 1,
-                totalTimeSpentMinutes: 1,
-            },
-            {
-                courseId: 1,
-                exerciseId: 1,
-                numberOfSubmissionsAssessed: 1,
-                totalTimeSpentMinutes: 20,
-            },
-            {
-                courseId: 1,
-                exerciseId: 1,
-                numberOfSubmissionsAssessed: 1,
-                totalTimeSpentMinutes: 30,
-            },
-        ];
+        component.tutorEfforts = tutorEffortsMocked;
         const expected = new Array<number>(13).fill(0);
         expected[0] = 1;
         expected[2] = 1;
@@ -87,26 +88,7 @@ describe('TutorEffortStatisticsComponent', () => {
     });
 
     it('should show the table headers if tutor efforts list is not empty', () => {
-        component.tutorEfforts = [
-            {
-                courseId: 1,
-                exerciseId: 1,
-                numberOfSubmissionsAssessed: 1,
-                totalTimeSpentMinutes: 1,
-            },
-            {
-                courseId: 1,
-                exerciseId: 1,
-                numberOfSubmissionsAssessed: 1,
-                totalTimeSpentMinutes: 20,
-            },
-            {
-                courseId: 1,
-                exerciseId: 1,
-                numberOfSubmissionsAssessed: 1,
-                totalTimeSpentMinutes: 30,
-            },
-        ];
+        component.tutorEfforts = tutorEffortsMocked;
         fixture.detectChanges();
         const numberOfSubmissionsAssessed = compiled.querySelector('[jhiTranslate$=numberOfSubmissionsAssessed]');
         const totalTimeSpent = compiled.querySelector('[jhiTranslate$=totalTimeSpent]');
@@ -123,13 +105,7 @@ describe('TutorEffortStatisticsComponent', () => {
         fixture.detectChanges();
         const noData = compiled.querySelector('[jhiTranslate$=noData]');
         const numberOfSubmissionsAssessed = compiled.querySelector('[jhiTranslate$=numberOfSubmissionsAssessed]');
-        const totalTimeSpent = compiled.querySelector('[jhiTranslate$=totalTimeSpent]');
-        const averageTime = compiled.querySelector('[jhiTranslate$=averageTime]');
-        const numberOfTutorsInvolved = compiled.querySelector('[jhiTranslate$=numberOfTutorsInvolved]');
         expect(noData).toBeTruthy();
         expect(numberOfSubmissionsAssessed).toBeFalsy();
-        expect(totalTimeSpent).toBeFalsy();
-        expect(averageTime).toBeFalsy();
-        expect(numberOfTutorsInvolved).toBeFalsy();
     });
 });
