@@ -7,6 +7,8 @@ import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExampleSubmissionImportComponent } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import.component';
+import { Submission } from 'app/entities/submission.model';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
@@ -73,20 +75,22 @@ export class ExampleSubmissionsComponent implements OnInit {
         }
     }
     openImportModal() {
-
         const exampleSubmissionImportModalRef = this.modalService.open(ExampleSubmissionImportComponent, {
             size: 'lg',
             backdrop: 'static',
         });
         exampleSubmissionImportModalRef.componentInstance.exercise = this.exercise;
-        // textImportexampleSubmissionImportModalRef.result.then(
-        //     (result: TextExercise) => {
-        //         importBaseRoute.push(result.id);
-        //         this.router.navigate(importBaseRoute);
-        //     },
-        //     () => {},
-        // );
-
+        exampleSubmissionImportModalRef.result.then(
+            (result: Submission) => {
+                this.exampleSubmissionService.import(result.id!, this.exercise.id!).subscribe(
+                    () => {
+                        this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
+                        location.reload();
+                    },
+                    (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                );
+            },
+            () => {},
+        );
     }
-
 }

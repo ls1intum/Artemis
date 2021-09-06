@@ -9,23 +9,22 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('ExampleSubmissionImportComponent', () => {
-  let component: ExampleSubmissionImportComponent;
-  let fixture: ComponentFixture<ExampleSubmissionImportComponent>;
+    let component: ExampleSubmissionImportComponent;
+    let fixture: ComponentFixture<ExampleSubmissionImportComponent>;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [ ExampleSubmissionImportComponent ]
-    })
-    .compileComponents();
-  });
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            declarations: [ExampleSubmissionImportComponent],
+        }).compileComponents();
+    });
 
-  beforeEach(() => {
-    fixture = TestBed.createComponent(ExampleSubmissionImportComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
+    beforeEach(() => {
+        fixture = TestBed.createComponent(ExampleSubmissionImportComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+    });
 
-  it('should create', () => {
-    expect(component).to.be.ok;
-  });
+    it('should create', () => {
+        expect(component).to.be.ok;
+    });
 });

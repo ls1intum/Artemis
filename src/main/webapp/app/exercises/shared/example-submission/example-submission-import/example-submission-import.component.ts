@@ -3,12 +3,14 @@ import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pag
 import { SortService } from 'app/shared/service/sort.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Submission } from 'app/entities/submission.model';
+import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { onError } from 'app/shared/util/global.utils';
 import { JhiAlertService } from 'ng-jhipster';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise.model';
+import { ExampleSubmissionImportPagingService } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import-paging.service';
 
 enum TableColumn {
     ID = 'ID',
@@ -17,8 +19,8 @@ enum TableColumn {
 }
 
 @Component({
-  selector: 'jhi-example-submission-import',
-  templateUrl: './example-submission-import.component.html',
+    selector: 'jhi-example-submission-import',
+    templateUrl: './example-submission-import.component.html',
 })
 export class ExampleSubmissionImportComponent implements OnInit {
     exercise: Exercise;
@@ -40,15 +42,34 @@ export class ExampleSubmissionImportComponent implements OnInit {
         sortedColumn: TableColumn.ID,
     };
 
-  constructor(
-      private sortService: SortService,
-      private activeModal: NgbActiveModal,
-      protected jhiAlertService: JhiAlertService,
-      private exampleSubmissionService: ExampleSubmissionService,) { }
+    constructor(
+        private sortService: SortService,
+        private activeModal: NgbActiveModal,
+        protected jhiAlertService: JhiAlertService,
+        private exampleSubmissionService: ExampleSubmissionService,
+        private pagingService: ExampleSubmissionImportPagingService,
+    ) {}
 
-  ngOnInit(): void {
-      this.content = { resultsOnPage: [], numberOfPages: 0 };
-  }
+    ngOnInit(): void {
+        this.content = { resultsOnPage: [], numberOfPages: 0 };
+
+        this.performSearch(this.sort, 0);
+        this.performSearch(this.search, 300);
+    }
+
+    private performSearch(searchSubject: Subject<void>, debounce: number) {
+        searchSubject
+            .pipe(
+                debounceTime(debounce),
+                tap(() => (this.loading = true)),
+                switchMap(() => this.pagingService.searchForSubmissions(this.state, this.exercise.id!)),
+            )
+            .subscribe((resp) => {
+                this.content = resp;
+                this.loading = false;
+                this.total = resp.numberOfPages * this.state.pageSize;
+            });
+    }
 
     /**
      * Closes the modal in which the import component is opened by dismissing it
@@ -63,11 +84,7 @@ export class ExampleSubmissionImportComponent implements OnInit {
      * @param submission The submission which was selected by the user for the import.
      */
     openImport(submission: Submission) {
-        this.activeModal.close();
-        this.exampleSubmissionService.import(submission, this.exercise.id!).subscribe(
-            () => this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful'),
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
-        );
+        this.activeModal.close(submission);
     }
 
     set page(page: number) {
@@ -108,6 +125,15 @@ export class ExampleSubmissionImportComponent implements OnInit {
         return this.state.sortingOrder === SortingOrder.ASCENDING;
     }
 
+    set searchTerm(searchTerm: string) {
+        this.state.searchTerm = searchTerm;
+        this.search.next();
+    }
+
+    get searchTerm(): string {
+        return this.state.searchTerm;
+    }
+
     /** Callback function when the user navigates through the page results
      *
      * @param pagenumber The current page number
@@ -117,5 +143,4 @@ export class ExampleSubmissionImportComponent implements OnInit {
             this.page = pagenumber;
         }
     }
-
 }

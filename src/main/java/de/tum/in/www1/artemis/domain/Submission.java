@@ -324,4 +324,23 @@ public abstract class Submission extends DomainObject {
     public Result getResultWithComplaint() {
         return results.stream().filter(result -> Boolean.TRUE.equals(result.hasComplaint())).findFirst().orElse(null);
     }
+
+    /**
+     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.ExampleSubmissionService#getSubmissionsOnPageWithSize(PageableSearchDTO, Long)}}
+     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
+     */
+    public enum SubmissionSearchColumn {
+
+        ID("id"), STUDENT_NAME("participation.name"), SUBMISSION_DATE("submission_date"), COURSE_TITLE("course.title");
+
+        private final String mappedColumnName;
+
+        SubmissionSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
+    }
 }

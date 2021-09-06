@@ -11,18 +11,21 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -640,5 +643,29 @@ public class SubmissionService {
         StudentParticipation submissionsParticipation = (StudentParticipation) submission.getParticipation();
         submissionsParticipation.setParticipant(null);
         submissionsParticipation.setExercise(null);
+    }
+
+    public SearchResultPageDTO<Submission> getSubmissionsOnPageWithSize(final PageableSearchDTO<String> search, long exerciseId) {
+        var sorting = Sort.by(Submission.SubmissionSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
+        sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
+        final var sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
+        final var searchTerm = search.getSearchTerm();
+
+        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(exerciseId, searchTerm);
+
+        List<Submission> submissions = new ArrayList<>();
+
+        for (StudentParticipation participation : participations) {
+            Optional<Submission> optionalSubmission = participation.findLatestSubmission();
+
+            if (optionalSubmission.isEmpty()) {
+                continue;
+            }
+            submissions.add(optionalSubmission.get());
+        }
+
+        final Page<Submission> submissionPage = new PageImpl<>(submissions, sorted, submissions.size());
+
+        return new SearchResultPageDTO<>(submissionPage.getContent(), submissionPage.getTotalPages());
     }
 }
