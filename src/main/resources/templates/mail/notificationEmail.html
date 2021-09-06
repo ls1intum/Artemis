@@ -134,6 +134,32 @@
                 <span th:utext="#{email.notification.original.answer.exercise.single}"/>
             </th:block>
         </th:block>
+        <th:block th:case="'NEW_ANSWER_POST_FOR_LECTURE'">
+            <th:block th:if="${isGroupNotification}">
+                <!--GROUP-->
+                <span th:utext="#{email.notification.original.answer.lecture.group(${notificationSubject})}"/>
+            </th:block>
+            <th:block th:unless="${isGroupNotification}">
+                <!--SINGLE-->
+                <span th:utext="#{email.notification.original.answer.lecture.single}"/>
+            </th:block>
+        </th:block>
+        <th:block th:case="'NEW_POST_FOR_EXERCISE'">
+            <span th:utext="#{email.notification.original.post.exercise(${notificationSubject})}"/>
+        </th:block>
+        <th:block th:case="'NEW_POST_FOR_LECTURE'">
+            <span th:utext="#{email.notification.original.post.lecture(${notificationSubject})}"/>
+        </th:block>
+        <!-- difficult to test -->
+        <th:block th:case="'COURSE_ARCHIVE_FAILED'">
+            <span th:utext="#{email.notification.original.archive.failed.course}"/>
+        </th:block>
+        <th:block th:case="'DUPLICATE_TEST_CASE'">
+            <span th:utext="#{email.notification.original.duplicate}"/>
+        </th:block>
+        <th:block th:case="'ILLEGAL_SUBMISSION'">
+            <span th:utext="#{email.notification.original.illegal.submission}"/>
+        </th:block>
     </th:block>
 
 
