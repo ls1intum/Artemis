@@ -1129,3 +1129,9 @@ ngb-tooltip-window {
 .col {
     width: auto !important;
 }
+
+.accordion-body {
+    background: white;
+    max-height: 50vh;
+    overflow: scroll;
+}

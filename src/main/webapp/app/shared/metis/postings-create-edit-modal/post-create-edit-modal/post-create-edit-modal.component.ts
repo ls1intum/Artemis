@@ -9,6 +9,8 @@ import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CourseWideContext, PageType, PostingEditType } from 'app/shared/metis/metis.util';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { Router } from '@angular/router';
 
 const TITLE_MAX_LENGTH = 200;
 
@@ -30,21 +32,29 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     pageType: PageType;
     isAtLeastTutorInCourse: boolean;
     currentContextSelectorOption: ContextSelectorOption;
+    similarPosts: Post[];
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
     readonly EditType = PostingEditType;
 
-    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {
+    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder, private router: Router) {
         super(metisService, modalService, formBuilder);
     }
 
     ngOnInit() {
         this.resetCurrentContextSelectorOption();
         super.ngOnInit();
+        this.similarPosts = [];
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.course = this.metisService.getCourse();
         this.lectures = this.course.lectures;
         this.exercises = this.course.exercises;
+        this.formGroup.controls['title'].valueChanges.pipe(debounceTime(800), distinctUntilChanged()).subscribe((title: string) => {
+            this.metisService.getSimilarPosts(title).subscribe((similarPosts: Post[]) => {
+                this.similarPosts = similarPosts;
+                console.log(this.similarPosts);
+            });
+        });
     }
 
     ngOnChanges() {
@@ -154,5 +164,12 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
             exercise: this.posting.exercise,
             courseWideContext: this.posting.courseWideContext,
         };
+    }
+
+    routeToPost(post: Post) {
+        this.modalRef?.dismiss();
+        this.router.navigate(this.metisService.getLinkForPost(post), {
+            queryParams: this.metisService.getQueryParamsForPost(post),
+        });
     }
 }

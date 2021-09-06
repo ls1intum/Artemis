@@ -11,11 +11,12 @@ import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
-import { CourseWideContext, DisplayPriority, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
+import { ContextInformation, CourseWideContext, DisplayPriority, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Params } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable()
 export class MetisService {
@@ -34,6 +35,7 @@ export class MetisService {
         protected reactionService: ReactionService,
         protected accountService: AccountService,
         protected exerciseService: ExerciseService,
+        private translateService: TranslateService,
     ) {
         this.accountService.identity().then((user: User) => {
             this.user = user!;
@@ -285,25 +287,64 @@ export class MetisService {
         return emptyPost;
     }
 
-    getLinkForPost(posting: Post) {
-        if (posting.courseWideContext) {
-            return ['/courses', this.courseId, 'discussion'];
+    /**
+     * Determines the router link components required for navigating to the detail view of the given post
+     * @param post to be navigated to
+     * @return [] array of router link components
+     */
+    getLinkForPost(post: Post): (string | number)[] {
+        if (post.lecture) {
+            return ['/courses', this.courseId, 'lectures', post.lecture.id!];
         }
-        if (posting.lecture) {
-            return ['/courses', this.courseId, 'lectures', posting.lecture.id!];
+        if (post.exercise) {
+            return ['/courses', this.courseId, 'exercises', post.exercise.id!];
         }
-        if (posting.exercise) {
-            return ['/courses', this.courseId, 'exercises', posting.exercise.id!];
-        }
+        return ['/courses', this.courseId, 'discussion'];
     }
 
-    getQueryParamsForPost(posting: Post): Params {
+    /**
+     * Determines the routing params required for navigating to the detail view of the given post
+     * @param post to be navigated to
+     * @return Params required parameter key-value pair
+     */
+    getQueryParamsForPost(post: Post): Params {
         const params: Params = {};
-        if (posting.courseWideContext) {
-            params.searchText = `#${posting.id}`;
+        if (post.courseWideContext) {
+            params.searchText = `#${post.id}`;
         } else {
-            params.postId = posting.id;
+            params.postId = post.id;
         }
         return params;
+    }
+
+    /**
+     * Creates an object to be used when a post context should be displayed and linked (for exercise and lecture)
+     * @param post for which the contect is displayed and linked
+     * @return ContextInformation object containing the required router link components as well as the context display name
+     */
+    getContextInformation(post: Post): ContextInformation {
+        let routerLinkComponents = undefined;
+        let displayName;
+        if (post.exercise) {
+            displayName = post.exercise.title!;
+            routerLinkComponents = ['/courses', this.courseId, 'exercises', post.exercise.id!];
+        } else if (post.lecture) {
+            displayName = post.lecture.title!;
+            routerLinkComponents = ['/courses', this.courseId, 'lectures', post.lecture.id!];
+            // course-wide topics are not linked
+        } else {
+            displayName = this.translateService.instant('artemisApp.metis.overview.' + post.courseWideContext);
+        }
+        return { routerLinkComponents, displayName };
+    }
+
+    /**
+     * Invokes the post service to get a top-k-list of course posts with high similarity scores when compared with the given title
+     * @param title currently written title that is compared against existing course posts
+     */
+    getSimilarPosts(title: string): Observable<Post[]> {
+        const tempPost: Post = new Post();
+        tempPost.title = title;
+        return this.postService.computeSimilarityScoresWitCoursePosts(tempPost, this.courseId).pipe(map((res: HttpResponse<Post[]>) => res.body!));
     }
 }

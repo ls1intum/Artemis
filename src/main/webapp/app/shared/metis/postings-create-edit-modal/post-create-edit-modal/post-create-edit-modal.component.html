@@ -59,6 +59,28 @@
                     <jhi-post-tag-selector [(postTags)]="tags"></jhi-post-tag-selector>
                 </div>
             </div>
+            <div *ngIf="similarPosts.length > 0" class="mb-3">
+                <ngb-accordion #a="ngbAccordion" activeIds="custom-panel-1">
+                    <ngb-panel id="custom-panel-1" class="similar-post-list">
+                        <ng-template ngbPanelHeader let-opened="opened">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <p class="my-2 ps-1">
+                                    Similar Posts
+                                    <jhi-help-icon placement="top auto" text="artemisApp.metis.post.tagsTooltip"></jhi-help-icon>
+                                </p>
+                                <button ngbPanelToggle class="btn pe-3">
+                                    <fa-icon [icon]="opened ? 'angle-up' : 'angle-down'"></fa-icon>
+                                </button>
+                            </div>
+                        </ng-template>
+                        <ng-template ngbPanelContent class="overflow-auto">
+                            <div class="row" *ngFor="let post of similarPosts">
+                                <jhi-post-preview [post]="post" [ref]="modalRef"> </jhi-post-preview>
+                            </div>
+                        </ng-template>
+                    </ngb-panel>
+                </ngb-accordion>
+            </div>
             <div class="position-relative mb-1">
                 <div>
                     <label class="mb-1" jhiTranslate="artemisApp.metis.post.content">Content</label>

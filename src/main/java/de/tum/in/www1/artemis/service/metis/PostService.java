@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+
+import com.google.common.collect.Lists;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -21,6 +23,8 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.metis.similarity.PostContentCompareStrategy;
+import de.tum.in.www1.artemis.service.metis.similarity.SimilarityScore;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
@@ -34,12 +38,16 @@ public class PostService extends PostingService {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final PostContentCompareStrategy postContentCompareStrategy;
+
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
-            ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService) {
+            ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
+            PostContentCompareStrategy postContentCompareStrategy) {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.groupNotificationService = groupNotificationService;
+        this.postContentCompareStrategy = postContentCompareStrategy;
     }
 
     /**
@@ -376,5 +384,20 @@ public class PostService extends PostingService {
      */
     public Post findById(Long postId) {
         return postRepository.findByIdElseThrow(postId);
+    }
+
+    public List<Post> getSimilarPosts(Long courseId, Post post) {
+        List<Post> coursePosts = this.getAllCoursePosts(courseId);
+        Map<SimilarityScore, Double> map = new HashMap<>();
+
+        coursePosts.forEach(coursePost -> {
+            Double score = postContentCompareStrategy.performSimilarityCheck(post, coursePost);
+            map.put(new SimilarityScore(coursePost, score), score);
+        });
+        List<SimilarityScore> result = new ArrayList<>();
+        map.entrySet().stream().sorted(Map.Entry.comparingByValue()).forEach((entry) -> result.add(entry.getKey()));
+
+        // return top K posts
+        return Lists.reverse(result).stream().limit(5).map(SimilarityScore::getPost).collect(Collectors.toList());
     }
 }

@@ -127,4 +127,19 @@ public class PostResource {
         postService.deletePostById(courseId, postId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, postService.getEntityName(), postId.toString())).build();
     }
+
+    /**
+     * POST /courses/{courseId}/posts/similarity-check : Create a new post
+     *
+     * @param courseId id of the course the post belongs to
+     * @param post     post to create
+     * @return ResponseEntity with status 201 (Created) containing the created post in the response body,
+     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     */
+    @PostMapping("courses/{courseId}/posts/similarity-check")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<Post>> computeSimilarityScoresWitCoursePosts(@PathVariable Long courseId, @RequestBody Post post) throws URISyntaxException {
+        List<Post> similarPosts = postService.getSimilarPosts(courseId, post);
+        return ResponseEntity.ok().body(similarPosts);
+    }
 }
