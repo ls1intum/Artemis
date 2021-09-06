@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/
 import { orderBy as _orderBy } from 'lodash';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { RepositoryService } from 'app/exercises/shared/result/repository.service';
 import * as moment from 'moment';
@@ -37,10 +38,15 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
     result?: Result;
     isBuilding: boolean;
+    missingResultInfo?: { message: string; tooltip: string };
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
-    constructor(private participationWebsocketService: ParticipationWebsocketService, private submissionService: ProgrammingSubmissionService) {}
+    constructor(
+        private participationWebsocketService: ParticipationWebsocketService,
+        private submissionService: ProgrammingSubmissionService,
+        private translate: TranslateService,
+    ) {}
 
     /**
      * If there are changes, reorders the participation results and subscribes for new participation results.
@@ -56,6 +62,8 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             const latestResult = this.participation.results && this.participation.results.find(({ rated }) => this.showUngradedResults || rated === true);
             // Make sure that the participation result is connected to the newest result.
             this.result = latestResult ? { ...latestResult, participation: this.participation } : undefined;
+            // TODO: how to determine that here?
+            this.missingResultInfo = undefined;
 
             this.subscribeForNewResults();
             // Currently submissions are only used for programming exercises to visualize the build process.
@@ -94,7 +102,11 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 // Ignore ungraded results if ungraded results are supposed to be ignored.
                 filter((result: Result) => this.showUngradedResults || result.rated === true),
                 map((result) => ({ ...result, completionDate: result.completionDate ? moment(result.completionDate) : undefined, participation: this.participation })),
-                tap((result) => (this.result = result)),
+                tap((result) => {
+                    this.result = result;
+                    // we have a new result, so it can not be missing
+                    this.missingResultInfo = undefined;
+                }),
             )
             .subscribe();
     }
@@ -123,6 +135,16 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 ),
                 tap(({ submissionState }) => {
                     this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
+                    if (submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION) {
+                        // TODO: translate
+                        this.missingResultInfo = {
+                            message: 'No latest result available.',
+                            tooltip: 'Please check your submission manually as far as possible. No result was found / could be generated.',
+                        };
+                    } else {
+                        // everything ok
+                        this.missingResultInfo = undefined;
+                    }
                 }),
             )
             .subscribe();
