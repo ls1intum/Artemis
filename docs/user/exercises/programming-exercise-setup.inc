@@ -474,7 +474,7 @@ Exercise Creation
 |                 |                                        +--------------------------+                       |                       |
 |                 |                                        | PMD Code Style           |                       |                       |
 +-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
-| Potential Bugs  | Coding mistakes, error-prone           | Spotbugs CORRECTNESS     |                       |                       |
+| Potential Bugs  | Coding mistakes, error-prone           | Spotbugs CORRECTNESS     |                       | GCC Memory            |
 |                 | code or threading errors               +--------------------------+-----------------------+                       |
 |                 |                                        | Spotbugs MT_CORRECTNESS  |                       |                       |
 |                 |                                        +--------------------------+-----------------------+                       |
@@ -516,9 +516,6 @@ Exercise Creation
 |                 |                                        +--------------------------+-----------------------+                       |
 |                 |                                        | Checkstyle whitespace    |                       |                       |
 +-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
-| Memory          |                                        |                          |                       | GCC Memory            |
-| Management      |                                        |                          |                       |                       |
-+-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
 | Miscellaneous   | Uncategorized rules                    | Checkstyle miscellaneous |                       | GCC Misc              |
 +-----------------+----------------------------------------+--------------------------+-----------------------+-----------------------+
 
@@ -526,7 +523,7 @@ Exercise Creation
     For Swift, only the category Code Style can contain code quality issues currently. All other categories displayed on the grading page are dummies.
 
   .. note::
-    The GCC SCA option for C does not offer categories by default. The issues were categorized during parsing with respect to the :ref:`rules <c_sca_default_config>` below .
+    The GCC SCA option for C does not offer categories by default. The issues were categorized during parsing with respect to the :ref:`rules <c_sca_default_config>`.
 
   - On the left side of the page, instructors can configure the static code analysis categories.
 

@@ -272,7 +272,7 @@ For readability reasons the rule/warning prefix ``-Wanalyzer-`` is omitted.
 | Category (Tool/Artemis)       | Rule                                        |
 +===============================+=============================================+
 | Memory Management             | free-of-non-heap                            |
-|                               +---------------------------------------------+
+| / Potential Bugs              +---------------------------------------------+
 |                               | malloc-leak                                 |
 |                               +---------------------------------------------+
 |                               | file-leak                                   |
@@ -280,7 +280,7 @@ For readability reasons the rule/warning prefix ``-Wanalyzer-`` is omitted.
 |                               | mismatching-deallocation                    |
 +-------------------------------+---------------------------------------------+
 | Undefined Behavior            | double-free                                 |
-| (Potential Bugs)              +---------------------------------------------+
+| / Potential Bugs              +---------------------------------------------+
 |                               | null-argument                               |
 |                               +---------------------------------------------+
 |                               | use-after-free                              |
@@ -295,13 +295,13 @@ For readability reasons the rule/warning prefix ``-Wanalyzer-`` is omitted.
 |                               +---------------------------------------------+
 |                               | possible-null-dereference                   |
 +-------------------------------+---------------------------------------------+
-| Bad Practice                  | double-fclose                               |
+| Bad Practice/Bad Practice     | double-fclose                               |
 |                               +---------------------------------------------+
 |                               | too-complex                                 |
 |                               +---------------------------------------------+
 |                               | stale-setjmp-buffer                         |
 +-------------------------------+---------------------------------------------+
-| Security                      | exposure-through-output-file                |
+| Security/Security             | exposure-through-output-file                |
 |                               +---------------------------------------------+
 |                               | unsafe-call-within-signal-handler           |
 |                               +---------------------------------------------+
@@ -309,3 +309,5 @@ For readability reasons the rule/warning prefix ``-Wanalyzer-`` is omitted.
 |                               +---------------------------------------------+
 |                               | tainted-array-index                         |
 +-------------------------------+---------------------------------------------+
+| Miscellaneous/Miscellaneous   | Rules not matching to above categories      |
++-----------------------------------------------------------------------------+
