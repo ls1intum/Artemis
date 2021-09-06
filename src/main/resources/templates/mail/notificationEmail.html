@@ -101,21 +101,38 @@
     </th:block>
     <th:block th:unless="${isGroupNotification}">
         <!--SINGLE-->
-        <p th:text="#{email.activation.greeting(${user.getName()})}">Dear</p>
+        <span th:text="#{email.activation.greeting(${user.getName()})}">Dear</span>
     </th:block>
     <!-- Greetings End -->
     <br>
     <!-- Notification Content -->
     <th:block th:switch="${notification.originalNotificationType.toString()}">
         <th:block th:case="'ATTACHMENT_CHANGE'">
-            <span th:text="#{email.notification.group.original.attachment}"/>
-            <p class="notification-text-header" th:text="#{email.notification.aux.notification.text.header.change.message}"/>
+            <span th:text="#{email.notification.original.attachment}"/>
             <th:block th:fragment="notificationText">
+                <p class="notification-text-header" th:text="#{email.notification.aux.notification.text.header.change.message}"/>
                 <p id="notification-text" th:text="${notification.text}">Notification Text</p>
             </th:block>
         </th:block>
         <th:block th:case="'EXERCISE_CREATED'">
-            <span th:text="#{email.notification.group.original.exercise.created(${notificationSubject})}"/>
+            <span th:text="#{email.notification.original.exercise.created(${notificationSubject})}"/>
+        </th:block>
+        <th:block th:case="'EXERCISE_PRACTICE'">
+            <span th:text="#{email.notification.original.exercise.practice(${notificationSubject})}"/>
+        </th:block>
+        <th:block th:case="'EXERCISE_UPDATED'">
+            <span th:text="#{email.notification.original.exercise.updated}"/>
+            <th:block th:replace="mail/notificationEmail :: notificationText"/>
+        </th:block>
+        <th:block th:case="'NEW_ANSWER_POST_FOR_EXERCISE'">
+            <th:block th:if="${isGroupNotification}">
+                <!--GROUP-->
+                <span th:utext="#{email.notification.original.answer.exercise.group(${notificationSubject})}"/>
+            </th:block>
+            <th:block th:unless="${isGroupNotification}">
+                <!--SINGLE-->
+                <span th:utext="#{email.notification.original.answer.exercise.single}"/>
+            </th:block>
         </th:block>
     </th:block>
 

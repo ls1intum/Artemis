@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
-import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import io.github.jhipster.config.JHipsterProperties;
 
@@ -118,18 +117,14 @@ public class MailService {
      */
     @Async
     public void sendEmailFromTemplate(User user, String templateName, String titleKey) {
-        Context context = this.prepareContext(user);
-        String content = templateEngine.process(templateName, context);
-        String subject = messageSource.getMessage(titleKey, null, context.getLocale());
-        sendEmail(false, Collections.singletonList(user), subject, content, false, true);
-    }
-
-    private Context prepareContext(User user) {
         Locale locale = Locale.forLanguageTag(user.getLangKey());
         Context context = new Context(locale);
         context.setVariable(USER, user);
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
-        return context;
+
+        String content = templateEngine.process(templateName, context);
+        String subject = messageSource.getMessage(titleKey, null, context.getLocale());
+        sendEmail(false, Collections.singletonList(user), subject, content, false, true);
     }
 
     @Async
@@ -158,51 +153,44 @@ public class MailService {
 
     // notification related
 
-    /**
-     * Creates and sends an email to a single user based on a SingleUserNotification
-     * @param notification which information should also be propagated via email
-     */
     @Async
-    public void sendSingleUserNotificationEmail(SingleUserNotification notification) {
-        User user = notification.getRecipient();
-        log.debug("Sending notification email to '{}'", user.getEmail());
+    public void sendNotificationEmail(Notification notification, List<User> users) {
+        boolean isGroup = notification instanceof GroupNotification;
+        User user = users.get(0);
+        log.debug(isGroup ? "Sending group notification email" : "Sending notification email to '{}'", user.getEmail());
 
-        Context context = this.prepareContext(user);
+        Locale locale = Locale.forLanguageTag(isGroup ? "en" : user.getLangKey());
+        Context context = new Context(locale);
+
+        if (!isGroup) {
+            context.setVariable(USER, user);
+        }
+
         context.setVariable(NOTIFICATION, notification);
+        context.setVariable(NOTIFICATION_SUBJECT, findNotificationSubject(notification));
+        context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification));
+        context.setVariable(IS_GROUP_NOTIFICATION, isGroup);
+        context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
 
         String content = templateEngine.process("mail/notificationEmail", context);
         String subject = notification.getTitle();
 
-        sendEmail(false, Collections.singletonList(user), subject, content, false, true);
+        sendEmail(isGroup, users, subject, content, false, true);
     }
 
     /**
-     * Creates and sends an email to a group of users based on a GroupNotification
-     * @param groupNotification which information should also be propagated via email
-     * @param userList with the users that should receive an email (via bcc) (i.e. only one email is created)
+     * Finds the most important part (the "subject") of the notification text property
+     * E.g. notification (original type = EXERCISE_CREATED) -> "subject" = name of the exercise (this information is part of the text property)
+     * @param notification which "subject" should be extracted
+     * @return the "subject" of the notification (text property)
      */
-    @Async
-    public void sendGroupNotificationEmail(GroupNotification groupNotification, List<User> userList) {
-        log.debug("Sending group notification email");
-
-        Locale locale = Locale.forLanguageTag("en");
-        Context context = new Context(locale);
-        // TODO look for more similarities between group and single and create common method (e.g. to set context)
-        context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
-        context.setVariable(NOTIFICATION, groupNotification);
-        context.setVariable(NOTIFICATION_SUBJECT, findNotificationSubject(groupNotification));
-        context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(groupNotification));
-        context.setVariable(IS_GROUP_NOTIFICATION, true);
-
-        String content = templateEngine.process("mail/notificationEmail", context);
-        String subject = groupNotification.getTitle();
-
-        sendEmail(true, userList, subject, content, false, true);
-    }
-
     private String findNotificationSubject(Notification notification) {
         String text = notification.getText();
+        // some notification texts can be customized (e.g. by an instructor) -> usually no [..."subject"...] structure anymore
+        boolean isCustomSubject = text.indexOf('"') == -1;
+        if (isCustomSubject) {
+            return text;
+        }
         return text.substring(text.indexOf('"') + 1, text.lastIndexOf('"'));
     }
-
 }

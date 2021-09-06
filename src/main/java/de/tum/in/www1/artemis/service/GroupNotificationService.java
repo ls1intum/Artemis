@@ -234,7 +234,7 @@ public class GroupNotificationService {
             }
         }
         // TODO add filter by notification settings here
-        mailService.sendGroupNotificationEmail(notification, foundUsers);
+        mailService.sendNotificationEmail(notification, foundUsers);
     }
 
 }
