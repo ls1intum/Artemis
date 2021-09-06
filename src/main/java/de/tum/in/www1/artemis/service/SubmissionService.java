@@ -650,7 +650,8 @@ public class SubmissionService {
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of submissions if there are that many in Artemis.
      *
-     * @param search The search query defining the search term and the size of the returned page
+     * @param search     The search query defining the search term and the size of the returned page
+     * @param exerciseId exerciseId which submissions belongs to
      * @return A wrapper object containing a list of all found submissions and the total number of pages
      */
     public SearchResultPageDTO<Submission> getSubmissionsOnPageWithSize(final PageableSearchDTO<String> search, long exerciseId) {
