@@ -21,7 +21,8 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     }
 
     submit() {
-        super.submit();
+        const request = super.submit();
         cy.contains('Your assessment was submitted successfully!').should('be.visible');
+        return request;
     }
 }

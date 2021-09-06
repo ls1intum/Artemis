@@ -71,34 +71,34 @@ describe('Programming exercise assessment', () => {
         // Make sure that the tutor sees the build output
         // The student submission was just a few seconds ago, so the CI has to build it and only then the tutor gets the build result
         onlineEditor.getBuildOutput().contains('[ERROR] COMPILATION ERROR', { timeout: 60000 }).should('be.visible');
-        programmingAssessment.submit();
+        programmingAssessment.submit().its('response.statusCode').should('eq', 201);
     });
 
-    describe('Feedback', () => {
-        before(() => {
-            updateExerciseAssessmentDueDate();
-            cy.login(student, `/courses/${course.id}/exercises/${exercise.id}`);
-        });
+    // describe('Feedback', () => {
+    //     before(() => {
+    //         updateExerciseAssessmentDueDate();
+    //         cy.login(student, `/courses/${course.id}/exercises/${exercise.id}`);
+    //     });
 
-        it('Student sees feedback after assessment due date and complains', () => {
-            const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
-            const percentage = totalPoints * 10;
-            exerciseResult.shouldShowExerciseTitle(exercise.title);
-            exerciseResult.shouldShowProblemStatement(exercise.problemStatement);
-            exerciseResult.shouldShowScore(percentage);
-            exerciseResult.clickViewSubmission();
-            textFeedback.shouldShowTextFeedback(tutorCodeFeedback);
-            textFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
-            textFeedback.shouldShowScore(totalPoints, exercise.maxPoints, percentage);
-            textFeedback.complain(complaint);
-        });
+    //     it('Student sees feedback after assessment due date and complains', () => {
+    //         const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
+    //         const percentage = totalPoints * 10;
+    //         exerciseResult.shouldShowExerciseTitle(exercise.title);
+    //         exerciseResult.shouldShowProblemStatement(exercise.problemStatement);
+    //         exerciseResult.shouldShowScore(percentage);
+    //         exerciseResult.clickViewSubmission();
+    //         textFeedback.shouldShowTextFeedback(tutorCodeFeedback);
+    //         textFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
+    //         textFeedback.shouldShowScore(totalPoints, exercise.maxPoints, percentage);
+    //         textFeedback.complain(complaint);
+    //     });
 
-        it('Instructor can see complaint and reject it', () => {
-            cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
-            courseAssessment.openComplaints(course.id);
-            programmingAssessment.acceptComplaint('Makes sense').its('response.statusCode').should('eq', 200);
-        });
-    });
+    //     it('Instructor can see complaint and reject it', () => {
+    //         cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
+    //         courseAssessment.openComplaints(course.id);
+    //         programmingAssessment.acceptComplaint('Makes sense').its('response.statusCode').should('eq', 200);
+    //     });
+    // });
 
     function createCourseWithProgrammingExercise() {
         cy.login(admin);
@@ -108,7 +108,16 @@ describe('Programming exercise assessment', () => {
             courseManagement.addTutorToCourse(course, tutor);
             courseManagement.addInstructorToCourse(course.id, instructor);
             courseManagement
-                .createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, { course }, undefined, undefined, CypressAssessmentType.MANUAL)
+                .createProgrammingExercise(
+                    programmingExerciseName,
+                    programmingExerciseShortName,
+                    packageName,
+                    { course },
+                    undefined,
+                    undefined,
+                    undefined,
+                    CypressAssessmentType.SEMI_AUTOMATIC,
+                )
                 .then((response) => {
                     exercise = response.body;
                 });

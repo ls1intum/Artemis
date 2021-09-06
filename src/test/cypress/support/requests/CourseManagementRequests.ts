@@ -70,16 +70,17 @@ export class CourseManagementRequests {
         programmingShortName: string,
         packageName: string,
         body: { course: any } | { exerciseGroup: any },
-        releaseDate = new Date(),
-        dueDate = new Date(Date.now() + oneDay),
+        releaseDate = day(),
+        dueDate = day().add(1, 'day'),
+        assessmentDueDate = day().add(2, 'days'),
         assessmentType = CypressAssessmentType.AUTOMATIC,
     ) {
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
-        const template = { ...programmingExerciseTemplate, title, shortName: programmingShortName, packageName, assessmentType };
+        const template = { ...programmingExerciseTemplate, title, shortName: programmingShortName, packageName, assessmentType: assessmentType.toString(), assessmentDueDate };
         const exercise: any = Object.assign({}, template, body);
         if (!isExamExercise) {
-            exercise.releaseDate = releaseDate.toISOString();
-            exercise.dueDate = dueDate.toISOString();
+            exercise.releaseDate = dayjsToString(releaseDate);
+            exercise.dueDate = dayjsToString(dueDate);
         } else {
             exercise.allowComplaintsForAutomaticAssessments = true;
         }

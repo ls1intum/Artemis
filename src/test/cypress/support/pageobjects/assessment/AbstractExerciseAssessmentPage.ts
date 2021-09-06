@@ -16,7 +16,9 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     submit() {
+        cy.intercept(PUT, BASE_API + 'participations/*/manual-results?submit=true').as('submitFeedback');
         cy.get('[jhitranslate="entity.action.submit"]').click();
+        return cy.wait('@submitFeedback');
     }
 
     rejectComplaint(response: string) {
