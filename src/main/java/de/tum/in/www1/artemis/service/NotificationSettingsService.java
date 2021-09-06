@@ -7,17 +7,59 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.NotificationOption;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.repository.NotificationOptionRepository;
 
 @Service
 public class NotificationSettingsService {
 
+    private NotificationOptionRepository notificationOptionRepository;
+
+    private Set<NotificationType> notificationTypesWithNoEmailSupport = Set.of(NotificationType.COURSE_ARCHIVE_STARTED, NotificationType.COURSE_ARCHIVE_FINISHED,
+            NotificationType.EXAM_ARCHIVE_STARTED, NotificationType.EXAM_ARCHIVE_FINISHED, NotificationType.UNSPECIFIED);
+
+    public NotificationSettingsService(NotificationOptionRepository notificationOptionRepository) {
+        this.notificationOptionRepository = notificationOptionRepository;
+    }
+
+    /**
+     * Checks if the (original) notification type has email support
+     * For some types there is no need for email support and they will be filtered out here.
+     * @param type of the notification
+     * @return true if the type has email support else false
+     */
+    public boolean checkNotificationTypeForEmailSupport(NotificationType type) {
+        return !notificationTypesWithNoEmailSupport.contains(type);
+    }
+
+    /**
+     * Checks if a notification (i.e. its type) is allowed by the respective notification settings of the provided user
+     * @param notification which type should be checked
+     * @param user whose notification settings will be used for checking
+     * @return true if the type is allowed else false
+     */
+    public boolean checkIfNotificationEmailIsAllowedBySettingsForGivenUser(Notification notification, User user) {
+        NotificationType type = notification.getOriginalNotificationType();
+
+        Set<NotificationOption> notificationOptions = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(user.getId());
+
+        Set<NotificationType> deactivatedTypes = findDeactivatedNotificationTypes(false, notificationOptions);
+
+        if (deactivatedTypes.isEmpty()) {
+            return true;
+        }
+        return !deactivatedTypes.contains(type);
+    }
+
     /**
      * Finds the deactivated NotificationTypes based on the user's NotificationOptions
+     * @param checkForWebapp indicates if the status for the webapp (true) or for email (false) should be used/checked
      * @param notificationOptions which should be mapped to their respective NotificationTypes and filtered by activation status
      * @return a set of NotificationTypes which are deactivated by the current user's notification settings
      */
-    public Set<NotificationType> findDeactivatedNotificationTypes(Set<NotificationOption> notificationOptions) {
-        Map<NotificationType, Boolean> notificationOptionWitchActivationStatusMap = convertNotificationOptionsToNotificationTypesWithActivationStatus(notificationOptions);
+    public Set<NotificationType> findDeactivatedNotificationTypes(boolean checkForWebapp, Set<NotificationOption> notificationOptions) {
+        Map<NotificationType, Boolean> notificationOptionWitchActivationStatusMap = convertNotificationOptionsToNotificationTypesWithActivationStatus(checkForWebapp,
+                notificationOptions);
         Set<NotificationType> deactivatedNotificationTypes = new HashSet<>();
         notificationOptionWitchActivationStatusMap.forEach((notificationType, isActivated) -> {
             if (!isActivated) {
@@ -29,16 +71,17 @@ public class NotificationSettingsService {
 
     /**
      * Converts the provided NotificationOptions to a map of corresponding NotificationTypes and activation status.
+     * @param checkForWebapp indicates if the status for the webapp (true) or for email (false) should be used/checked
      * @param notificationOptions which will be mapped to their respective NotificationTypes with respect to their activation status
      * @return a map with key of NotificationType and value Boolean indicating which types are (de)activated by the user's notification settings
      */
-    private Map<NotificationType, Boolean> convertNotificationOptionsToNotificationTypesWithActivationStatus(Set<NotificationOption> notificationOptions) {
+    private Map<NotificationType, Boolean> convertNotificationOptionsToNotificationTypesWithActivationStatus(boolean checkForWebapp, Set<NotificationOption> notificationOptions) {
         Map<NotificationType, Boolean> resultingMap = new HashMap<>();
         NotificationType[] tmpNotificationTypes;
         for (NotificationOption option : notificationOptions) {
             tmpNotificationTypes = this.findCorrespondingNotificationTypesForNotificationOption(option);
             for (NotificationType type : tmpNotificationTypes) {
-                resultingMap.put(type, option.isWebapp());
+                resultingMap.put(type, checkForWebapp ? option.isWebapp() : option.isEmail());
             }
         }
         return resultingMap;

@@ -31,12 +31,15 @@ public class GroupNotificationService {
 
     private MailService mailService;
 
+    private NotificationSettingsService notificationSettingsService;
+
     public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
-            MailService mailService) {
+            MailService mailService, NotificationSettingsService notificationSettingsService) {
         this.groupNotificationRepository = groupNotificationRepository;
         this.messagingTemplate = messagingTemplate;
         this.userRepository = userRepository;
         this.mailService = mailService;
+        this.notificationSettingsService = notificationSettingsService;
     }
 
     /**
@@ -204,7 +207,11 @@ public class GroupNotificationService {
     private void saveAndSend(GroupNotification notification) {
         groupNotificationRepository.save(notification);
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
-        prepareSendingGroupEmail(notification);
+
+        boolean hasEmailSupport = notificationSettingsService.checkNotificationTypeForEmailSupport(notification.getOriginalNotificationType());
+        if (hasEmailSupport) {
+            prepareSendingGroupEmail(notification);
+        }
     }
 
     /**
@@ -233,8 +240,7 @@ public class GroupNotificationService {
                 break;
             }
         }
-        // TODO add filter by notification settings here
-        mailService.sendNotificationEmail(notification, foundUsers);
+        mailService.prepareGroupNotificationEmail(notification, foundUsers);
     }
 
 }

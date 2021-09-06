@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import io.github.jhipster.config.JHipsterProperties;
 
@@ -54,6 +56,8 @@ public class MailService {
 
     // notification related variables
 
+    private NotificationSettingsService notificationSettingsService;
+
     private static final String NOTIFICATION = "notification";
 
     private static final String NOTIFICATION_SUBJECT = "notificationSubject";
@@ -63,13 +67,13 @@ public class MailService {
     private static final String IS_GROUP_NOTIFICATION = "isGroupNotification";
 
     public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine,
-            UserRepository userRepository) {
+            UserRepository userRepository, NotificationSettingsService notificationSettingsService) {
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
         this.messageSource = messageSource;
         this.templateEngine = templateEngine;
-
         this.userRepository = userRepository;
+        this.notificationSettingsService = notificationSettingsService;
     }
 
     /**
@@ -152,6 +156,35 @@ public class MailService {
     }
 
     // notification related
+
+    /**
+     * Checks if an email should be created based on the provided notification, user, notification settings and type for SingleUserNotifications
+     * If the checks are successful creates and sends a corresponding email
+     * @param notification that should be checked
+     */
+    public void prepareSingleUserNotificationEmail(SingleUserNotification notification) {
+        boolean hasEmailSupport = notificationSettingsService.checkNotificationTypeForEmailSupport(notification.getOriginalNotificationType());
+        if (hasEmailSupport) {
+            boolean isAllowedBySettings = notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient());
+            if (isAllowedBySettings) {
+                // method works with single and group notifications therefore using a list of users
+                sendNotificationEmail(notification, Collections.singletonList(notification.getRecipient()));
+            }
+        }
+    }
+
+    /**
+     * Checks if an email should be created based on the provided notification, users, notification settings and type for GroupNotifications
+     * If the checks are successful creates and sends a corresponding email
+     * @param notification that should be checked
+     */
+    public void prepareGroupNotificationEmail(GroupNotification notification, List<User> users) {
+        users.stream().filter(user -> notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, user)).collect(Collectors.toSet());
+
+        if (users.size() > 0) {
+            sendNotificationEmail(notification, users);
+        }
+    }
 
     @Async
     public void sendNotificationEmail(Notification notification, List<User> users) {

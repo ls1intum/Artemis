@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 
-import java.util.Collections;
-
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -21,11 +19,14 @@ public class SingleUserNotificationService {
 
     private MailService mailService;
 
-    public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, SimpMessageSendingOperations messagingTemplate,
-            MailService mailService) {
+    private NotificationSettingsService notificationSettingsService;
+
+    public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, SimpMessageSendingOperations messagingTemplate, MailService mailService,
+            NotificationSettingsService notificationSettingsService) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.messagingTemplate = messagingTemplate;
         this.mailService = mailService;
+        this.notificationSettingsService = notificationSettingsService;
     }
 
     /**
@@ -54,7 +55,6 @@ public class SingleUserNotificationService {
     private void saveAndSend(SingleUserNotification notification) {
         singleUserNotificationRepository.save(notification);
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
-        // method works with single and group notifications therefore using a list of users
-        mailService.sendNotificationEmail(notification, Collections.singletonList(notification.getRecipient()));
+        mailService.prepareSingleUserNotificationEmail(notification);
     }
 }
