@@ -52,7 +52,6 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         this.formGroup.controls['title'].valueChanges.pipe(debounceTime(800), distinctUntilChanged()).subscribe((title: string) => {
             this.metisService.getSimilarPosts(title).subscribe((similarPosts: Post[]) => {
                 this.similarPosts = similarPosts;
-                console.log(this.similarPosts);
             });
         });
     }
@@ -60,6 +59,13 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     ngOnChanges() {
         this.resetCurrentContextSelectorOption();
         super.ngOnChanges();
+        this.similarPosts = [];
+        this.formGroup.controls['title'].valueChanges.pipe(debounceTime(800), distinctUntilChanged()).subscribe((title: string) => {
+            this.metisService.getSimilarPosts(title).subscribe((similarPosts: Post[]) => {
+                this.similarPosts = similarPosts;
+                console.log(this.similarPosts);
+            });
+        });
     }
 
     /**

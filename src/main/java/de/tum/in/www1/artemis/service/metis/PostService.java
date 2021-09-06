@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.metis;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import com.google.common.collect.Lists;
@@ -24,13 +25,14 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.metis.similarity.PostContentCompareStrategy;
-import de.tum.in.www1.artemis.service.metis.similarity.SimilarityScore;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class PostService extends PostingService {
 
     private static final String METIS_POST_ENTITY_NAME = "metis.post";
+
+    public static final int TOP_K_SIMILARITY_RESULTS = 5;
 
     private final UserRepository userRepository;
 
@@ -398,6 +400,31 @@ public class PostService extends PostingService {
         map.entrySet().stream().sorted(Map.Entry.comparingByValue()).forEach((entry) -> result.add(entry.getKey()));
 
         // return top K posts
-        return Lists.reverse(result).stream().limit(5).map(SimilarityScore::getPost).collect(Collectors.toList());
+        return Lists.reverse(result).stream().limit(TOP_K_SIMILARITY_RESULTS).map(SimilarityScore::getPost).collect(Collectors.toList());
     }
+
+    /**
+     * Wraps the resulting similarity score together with the post
+     */
+    class SimilarityScore implements Comparable<SimilarityScore> {
+
+        private final Post post;
+
+        public Post getPost() {
+            return post;
+        }
+
+        private final Double score;
+
+        public SimilarityScore(Post post, Double score) {
+            this.post = post;
+            this.score = score;
+        }
+
+        @Override
+        public int compareTo(@NotNull SimilarityScore similarityScore) {
+            return (int) (this.score - similarityScore.score);
+        }
+    }
+
 }
