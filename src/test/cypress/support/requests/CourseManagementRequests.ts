@@ -1,4 +1,4 @@
-import { BASE_API, DELETE, POST } from '../constants';
+import { BASE_API, DELETE, POST, EXERCISE_BASE } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import { dayjsToString, generateUUID } from '../utils';
@@ -7,9 +7,14 @@ import day from 'dayjs';
 import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
+import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
+import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
+import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceSubmission_template.json';
+import dayjs from 'dayjs';
 
 const COURSE_BASE = BASE_API + 'courses/';
 const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
+const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
 const oneDay = 24 * 60 * 60 * 1000;
 
 /**
@@ -185,6 +190,44 @@ export class CourseManagementRequests {
         return cy.request({
             url: `/api/modeling-exercises/${exerciseID}`,
             method: 'DELETE',
+        });
+    }
+
+    createQuizExercise(
+        body: { course: any } | { exerciseGroup: any },
+        title = 'Cypress Quiz',
+        releaseDate = dayjs(),
+        duration = 600,
+        quizQuestions: any = [multipleChoiceTemplate]
+    ) {
+    const quizExercise = {
+        ...quizTemplate,
+        title,
+        releaseDate: dayjsToString(releaseDate),
+        duration,
+        quizQuestions,
+    };
+    const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
+    return cy.request({
+                          url: QUIZ_EXERCISE_BASE,
+                          method: POST,
+                          body: newQuizExercise,
+                      });
+    }
+
+    createMultipleChoiceSubmission(quizExercise: any, tickOptions: number[]) {
+        const multipleChoiceSubmission = {
+            ...multipleChoiceSubmissionTemplate,
+            submittedAnswers: [{
+                ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
+                quizQuestion: quizExercise.quizQuestions[0],
+                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option])
+            }]
+        };
+        return cy.request({
+            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            method: POST,
+            body: multipleChoiceSubmission
         });
     }
 

@@ -111,6 +111,25 @@ describe('Exam Assessment', () => {
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
             cy.get('.question-options').contains('7 of 10 points').should('be.visible');
         });
+
+        it.only('Assess a quiz exercise submission', () => {
+            courseManagementRequests.createQuizExercise({exerciseGroup}, 'Cypress Quiz', dayjs(), 30).then((quizResponse) => {
+                courseManagementRequests.generateMissingIndividualExams(course, exam);
+                courseManagementRequests.prepareExerciseStartForExam(course, exam);
+                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                examStartEnd.startExam();
+                // courseManagementRequests.createMultipleChoiceSubmission(quizResponse.body, [0, 2]);
+                cy.contains('Cypress Quiz').click();
+                cy.get('#answer-option-0 > .selection > .ng-fa-icon > .svg-inline--fa').click();
+                cy.get('#answer-option-2 > .selection > .ng-fa-icon > .svg-inline--fa').click();
+                cy.get('#exam-navigation-bar').find('.btn-danger').click();
+                examStartEnd.finishExam();
+                cy.login(tutor, '/course-management/' + course.id + '/exams');
+                cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
+                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                cy.get('.question-options').contains('points').should('be.visible');
+            });
+        });
     });
 
     describe('Exam Programming Exercise Assessment', () => {
