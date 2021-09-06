@@ -1527,9 +1527,9 @@ public class CourseResource {
      * @param studentDtos   the list of students (with at least registration number) who should get access to the exam
      * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
-    @PostMapping("courses/{courseId}/students")
+    @PostMapping("courses/{courseId}/{courseGroup}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<StudentDTO>> addStudentsToExam(@PathVariable Long courseId, @RequestBody List<StudentDTO> studentDtos) {
+    public ResponseEntity<List<StudentDTO>> addStudentsToExam(@PathVariable Long courseId, @PathVariable String courseGroup, @RequestBody List<StudentDTO> studentDtos) {
         log.debug("REST request to add {} as students to course {}", studentDtos);
 
         List<StudentDTO> notFoundStudentsDtos = courseService.registerStudentsForCourse(courseId, studentDtos);

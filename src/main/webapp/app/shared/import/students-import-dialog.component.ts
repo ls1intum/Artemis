@@ -40,6 +40,7 @@ export class StudentsImportDialogComponent implements OnDestroy {
     @ViewChild('importForm', { static: false }) importForm: NgForm;
 
     @Input() courseId: number;
+    @Input() courseGroup: String;
 
     studentsToImport: StudentDTO[] = [];
     notFoundStudents: StudentDTO[] = [];
@@ -178,7 +179,7 @@ export class StudentsImportDialogComponent implements OnDestroy {
      */
     importStudents() {
         this.isImporting = true;
-        this.courseManagementService.addStudentsToCourse(this.courseId, this.studentsToImport).subscribe(
+        this.courseManagementService.addStudentsToGroupInCourse(this.courseId, this.studentsToImport, this.courseGroup).subscribe(
             (res) => this.onSaveSuccess(res),
             () => this.onSaveError(),
         );
