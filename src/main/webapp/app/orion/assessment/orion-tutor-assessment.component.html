@@ -1,7 +1,7 @@
 <jhi-code-editor-tutor-assessment (onFeedbackLoaded)="initializeFeedback()" [overrideNextSubmission]="openNextSubmission.bind(this)">
     <ng-template #overrideCodeEditor let-title="title" let-toolbar="toolbar" let-exercise="exercise" let-participation="participation" let-feedback="feedback">
-        <div class="d-flex flex-wrap align-items-center m2">
-            <h4><ng-container *ngTemplateOutlet="title"></ng-container></h4>
+        <div class="d-flex flex-wrap align-items-center m-2">
+            <h4 class="me-auto"><ng-container *ngTemplateOutlet="title"></ng-container></h4>
             <ng-container *ngTemplateOutlet="toolbar"></ng-container>
         </div>
         <jhi-orion-assessment-instructions
