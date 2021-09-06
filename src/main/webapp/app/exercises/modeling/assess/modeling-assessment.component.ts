@@ -353,6 +353,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             ? this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus)
             : feedback.correctionStatus;
         if (feedback.correctionStatus && feedback.correctionStatus !== 'CORRECT') {
+            // Adding a missing warning icon to the translation strings of incorrect feedbacks.
             correctionStatusDescription += ' ⚠️';
         }
         let correctionStatus: 'CORRECT' | 'INCORRECT' | 'NOT_VALIDATED';

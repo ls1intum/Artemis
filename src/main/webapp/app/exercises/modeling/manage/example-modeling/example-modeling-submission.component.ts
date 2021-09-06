@@ -21,13 +21,14 @@ import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entiti
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 import { onError } from 'app/shared/util/global.utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
     templateUrl: './example-modeling-submission.component.html',
     styleUrls: ['./example-modeling-submission.component.scss'],
 })
-export class ExampleModelingSubmissionComponent implements OnInit {
+export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarker {
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
     @ViewChild(ModelingAssessmentComponent, { static: false })
@@ -405,41 +406,23 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         delete result.submission;
         getLatestSubmissionResult(exampleSubmission.submission)!.feedbacks = this.feedbacks;
 
-        this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
-            () => {
-                this.markAllFeedbackToCorrect();
-                this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success');
-            },
-            (error: HttpErrorResponse) => {
-                const errorType = error.headers.get('x-artemisapp-error');
-
-                if (errorType === 'error.invalid_assessment') {
-                    this.markAllFeedbackToCorrect();
-
-                    // Mark all wrongly made feedbacks accordingly.
-                    const correctionErrors: FeedbackCorrectionError[] = JSON.parse(error['error']['title'])['errors'];
-                    correctionErrors.forEach((res) => {
-                        const validatedFeedback = this.feedbacks.find((feedback) => feedback.reference === res.reference);
-                        if (validatedFeedback != undefined) {
-                            validatedFeedback.correctionStatus = res.type;
-                        }
-                    });
-
-                    this.assessmentEditor.resultFeedbacks = this.feedbacks;
-
-                    const errorMessage =
-                        correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
-                    this.jhiAlertService.error(errorMessage, { mistakeCount: correctionErrors.length });
-                } else {
-                    onError(this.jhiAlertService, error);
-                }
-            },
-        );
+        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.jhiAlertService, this);
+        command.assessExampleSubmission(exampleSubmission, this.exerciseId);
     }
 
     markAllFeedbackToCorrect() {
         this.feedbacks.forEach((feedback) => {
             feedback.correctionStatus = 'CORRECT';
+        });
+        this.assessmentEditor.resultFeedbacks = this.feedbacks;
+    }
+
+    markWrongFeedback(correctionErrors: FeedbackCorrectionError[]) {
+        correctionErrors.forEach((correctionError) => {
+            const validatedFeedback = this.feedbacks.find((feedback) => feedback.reference === correctionError.reference);
+            if (validatedFeedback != undefined) {
+                validatedFeedback.correctionStatus = correctionError.type;
+            }
         });
         this.assessmentEditor.resultFeedbacks = this.feedbacks;
     }

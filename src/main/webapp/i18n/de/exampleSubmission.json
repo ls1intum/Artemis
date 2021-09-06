@@ -6,6 +6,7 @@
                 "editor": "Beispielabgabe-Editor"
             },
             "legend": {
+                "title": "Legende",
                 "positiveScore": "Positive Punktzahl",
                 "negativeScore": "Negative Punktzahl",
                 "incorrectAssessment": "Falsche Beurteilung",

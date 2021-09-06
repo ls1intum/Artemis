@@ -41,7 +41,7 @@
 
     <div class="row">
         <div class="col-9">
-            <span class="pe-2" style="font-weight: bolder">Legend: </span>
+            <span class="pe-2" style="font-weight: bolder">{{ 'artemisApp.exampleSubmission.legend.title' | artemisTranslate }}: </span>
             <div *ngFor="let legendElement of legend.slice(0, 3)" class="pe-5" style="display: inline-block">
                 <span>{{ legendElement.text | artemisTranslate }}</span>
                 <fa-layers>

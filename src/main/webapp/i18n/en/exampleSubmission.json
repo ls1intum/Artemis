@@ -6,6 +6,7 @@
                 "editor": "Example Submission Editor"
             },
             "legend": {
+                "title": "Legend",
                 "positiveScore": "Positive score",
                 "negativeScore": "Negative score",
                 "incorrectAssessment": "Incorrect assessment️",
