@@ -85,15 +85,15 @@
             >
         </button>
         <br />
-        <div class="d-flex flex-nowrap">
+        <div class="d-flex flex-wrap">
             <ng-container *ngIf="!result?.completionDate">
-                <button class="btn ms-2 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">
+                <button class="btn m-1 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">
                     <fa-icon *ngIf="saveBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                     <fa-icon [icon]="'save'"></fa-icon>
                     <span jhiTranslate="entity.action.save">Save</span>
                 </button>
                 <button
-                    class="btn ms-2 btn-success"
+                    class="btn m-1 btn-success"
                     (click)="submit.emit(); sendSubmitAssessmentEventToAnalytics()"
                     [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy"
                 >
@@ -102,7 +102,7 @@
                 </button>
                 <button
                     *ngIf="!isTestRun"
-                    class="btn ms-2 btn-danger"
+                    class="btn m-1 btn-danger"
                     (click)="cancel.emit()"
                     [disabled]="!(isAtLeastInstructor || isAssessor) || saveBusy || submitBusy || cancelBusy"
                 >
@@ -110,12 +110,12 @@
                     <span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
             </ng-container>
-            <button class="btn ms-2 btn-danger" *ngIf="result?.completionDate && canOverride" (click)="submit.emit()" [disabled]="!assessmentsAreValid || submitBusy">
+            <button class="btn m-1 btn-danger" *ngIf="result?.completionDate && canOverride" (click)="submit.emit()" [disabled]="!assessmentsAreValid || submitBusy">
                 <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
             </button>
             <button
-                class="btn ms-2 btn-success"
+                class="btn m-1 btn-success"
                 id="assessNextButton"
                 *ngIf="result?.completionDate && (isAssessor || isAtLeastInstructor) && !hasComplaint && !isTeamMode && !isTestRun"
                 [disabled]="nextSubmissionBusy || submitBusy"
@@ -134,7 +134,7 @@
             <span jhiTranslate="artemisApp.assessment.button.importExampleSubmission">Import as Example Submission</span>
         </button>
 
-            <a [routerLink]="exerciseDashboardLink" class="btn ms-2 btn-info">
+            <a [routerLink]="exerciseDashboardLink" class="btn m-1 btn-info">
                 <span jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
             </a>
         </div>
