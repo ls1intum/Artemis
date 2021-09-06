@@ -85,7 +85,7 @@
             >
         </button>
         <br />
-        <ng-container *ngIf="!result?.completionDate">
+        <div class="d-flex flex-nowrap" *ngIf="!result?.completionDate">
             <button class="btn ms-2 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">
                 <fa-icon *ngIf="saveBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <fa-icon [icon]="'save'"></fa-icon>
@@ -108,7 +108,7 @@
                 <fa-icon *ngIf="cancelBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
-        </ng-container>
+        </div>
         <button class="btn ms-2 btn-danger" *ngIf="result?.completionDate && canOverride" (click)="submit.emit()" [disabled]="!assessmentsAreValid || submitBusy">
             <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
