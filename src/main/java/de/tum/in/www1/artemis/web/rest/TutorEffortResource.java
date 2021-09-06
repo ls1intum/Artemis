@@ -105,12 +105,12 @@ public class TutorEffortResource {
      */
     private int calculateTutorOverallTimeSpent(List<TextAssessmentEvent> tutorEvents) {
         int timeSeconds = 0;
-        int i = 0;
-        while (i < tutorEvents.size()) {
-            TextAssessmentEvent current = tutorEvents.get(i);
+        int index = 0;
+        while (index < tutorEvents.size()) {
+            TextAssessmentEvent current = tutorEvents.get(index);
             try {
                 // access next element & catch out of bounds if end of the list.
-                TextAssessmentEvent next = tutorEvents.get(i + 1);
+                TextAssessmentEvent next = tutorEvents.get(index + 1);
                 int diffInSeconds = getDateDiffInSeconds(Date.from(current.getTimestamp()), Date.from(next.getTimestamp()));
                 if (diffInSeconds <= THRESHOLD_MINUTES * 60) {
                     timeSeconds += diffInSeconds;
@@ -118,7 +118,7 @@ public class TutorEffortResource {
             }
             catch (IndexOutOfBoundsException ignored) {
             }
-            i++;
+            index++;
         }
         return timeSeconds / 60;
     }
