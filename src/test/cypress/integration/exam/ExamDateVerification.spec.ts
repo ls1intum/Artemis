@@ -1,4 +1,5 @@
 import { PUT } from './../../support/constants';
+import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
