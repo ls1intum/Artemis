@@ -1,5 +1,5 @@
-import { artemis } from '../support/ArtemisTesting';
-import { generateUUID } from '../support/utils';
+import { artemis } from '../../../support/ArtemisTesting';
+import { generateUUID } from '../../../support/utils';
 
 //  Admin account
 const admin = artemis.users.getAdmin();
