@@ -37,7 +37,10 @@
     >
         <span class="answer-count"
             >{{ numberOfAnswerPosts }}
-            <fa-icon [icon]="'comments'" class="icon" [ngStyle]="{ color: showAnswers ? '#6a737d' : '#353d47' }"> </fa-icon>
+            <span *ngIf="numberOfAnswerPosts > 0 && hasApprovedAnswers">
+                (<fa-icon [icon]="'check-double'" class="icon" [ngStyle]="{ color: 'green', fontSize: 'smaller' }"> </fa-icon>)
+            </span>
+            <fa-icon [icon]="'comments'" class="icon" [ngStyle]="{ color: showAnswers ? '#6a737d' : '#353d47' }"></fa-icon>
         </span>
     </div>
 </div>

@@ -1,10 +1,23 @@
-<span class="posting-header header-author-date">
-    {{ post.author!.name }}
-    •
-    <span ngbTooltip="{{ post.creationDate | artemisDate: 'time' }}">
-        {{ post.creationDate | artemisDate: 'short-date' }}
-    </span>
-</span>
+<div class="row justify-content-between my-2 me-0">
+    <div class="col-auto pe-0">
+        <span class="posting-header header-author-date">
+            {{ post.author!.name }}
+            •
+            <span>
+                {{ post.creationDate | artemisDate: 'short-date' }}
+            </span>
+        </span>
+    </div>
+    <div class="col-auto ps-0 pe-1 toggle-answer-element">
+        <span class="answer-count">
+            {{ numberOfAnswerPosts }}
+            <span *ngIf="numberOfAnswerPosts > 0 && hasApprovedAnswers">
+                (<fa-icon [icon]="'check-double'" class="icon" [ngStyle]="{ color: 'green', fontSize: 'smaller' }"> </fa-icon>)
+            </span>
+            <fa-icon [icon]="'comments'" class="icon" [ngStyle]="{ color: '#353d47' }"></fa-icon>
+        </span>
+    </div>
+</div>
 <div class="row align-items-center">
     <div class="col">
         <div class="row">

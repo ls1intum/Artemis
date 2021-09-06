@@ -269,6 +269,26 @@ export class MetisService {
     }
 
     /**
+     * counts the answer posts of a post, 0 if none exist
+     * @return number number of answer posts
+     */
+    getNumberOfAnswerPosts(post: Post): number {
+        return <number>post.answers?.length! ? post.answers?.length! : 0;
+    }
+
+    /**
+     * determines if there are approved answers among the answers of a post
+     * @return boolean flag that indicates if the post has approved answers
+     */
+    checkForApprovedAnswers(post: Post): boolean {
+        if (this.getNumberOfAnswerPosts(post) > 0) {
+            return post.answers!.filter((answer: AnswerPost) => answer.tutorApproved === true).length > 0;
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
      */
     createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lectureId?: number): Post {

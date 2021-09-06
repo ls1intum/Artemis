@@ -14,14 +14,18 @@ export class PostPreviewComponent implements OnInit {
     @Input() post: Post;
     @Input() ref?: NgbModalRef;
     contextInformation: ContextInformation;
+    hasApprovedAnswers: boolean;
+    numberOfAnswerPosts: number;
 
     constructor(public metisService: MetisService, private router: Router) {}
 
     /**
-     * on initialization: updates the post tags and the context information
+     * on initialization: updates the post tags and the context information, and answer post information
      */
     ngOnInit(): void {
         this.contextInformation = this.metisService.getContextInformation(this.post);
+        this.hasApprovedAnswers = this.metisService.checkForApprovedAnswers(this.post);
+        this.numberOfAnswerPosts = this.metisService.getNumberOfAnswerPosts(this.post);
     }
 
     routeToPost() {
