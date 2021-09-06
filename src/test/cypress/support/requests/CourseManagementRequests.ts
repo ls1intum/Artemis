@@ -7,6 +7,7 @@ import day from 'dayjs';
 import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
+import assessment_submission from '../../fixtures/programming_exercise_submissions/assessment/submission.json';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
@@ -58,10 +59,11 @@ export class CourseManagementRequests {
      * @param title the title of the programming exercise
      * @param programmingShortName the short name of the programming exercise
      * @param packageName the package name of the programming exercise
+     * @param body an object containing either the course or exercise group the exercise will be added to
      * @param releaseDate when the programming exercise should be available (default is now)
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
-     * @param body an object containing either the course or exercise group the exercise will be added to
-     * @returns <Chainable> request response
+     * @param assessmentType the assessment type of the exercise (default is AUTOMATIC)
+     * @returns <Chainable> request
      */
     createProgrammingExercise(
         title: string,
@@ -70,17 +72,16 @@ export class CourseManagementRequests {
         body: { course: any } | { exerciseGroup: any },
         releaseDate = new Date(),
         dueDate = new Date(Date.now() + oneDay),
+        assessmentType = CypressAssessmentType.AUTOMATIC,
     ) {
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
-        const programmingTemplate: any = this.getCourseOrExamExercise(programmingExerciseTemplate, body);
-        programmingTemplate.title = title;
-        programmingTemplate.shortName = programmingShortName;
-        programmingTemplate.packageName = packageName;
+        const template = { ...programmingExerciseTemplate, title, shortName: programmingShortName, packageName, assessmentType };
+        const exercise: any = Object.assign({}, template, body);
         if (!isExamExercise) {
-            programmingTemplate.releaseDate = releaseDate.toISOString();
-            programmingTemplate.dueDate = dueDate.toISOString();
+            exercise.releaseDate = releaseDate.toISOString();
+            exercise.dueDate = dueDate.toISOString();
         } else {
-            programmingTemplate.allowComplaintsForAutomaticAssessments = true;
+            exercise.allowComplaintsForAutomaticAssessments = true;
         }
 
         const runsOnBamboo: boolean = Cypress.env('isBamboo');
@@ -91,7 +92,52 @@ export class CourseManagementRequests {
         return cy.request({
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
             method: POST,
-            body: programmingTemplate,
+            body: exercise,
+        });
+    }
+
+    /**
+     * Submits the example submission to the specified repository.
+     * @param repositoryId the repository id. The repository id is equal to the participation id.
+     * @returns <Chainable> request
+     */
+    makeProgrammingExerciseSubmission(repositoryId: number) {
+        // TODO: For now it is enough to submit the one prepared json file, but in the future this method should support different package names and submissions.
+        return cy.request({
+            url: `${BASE_API}repository/${repositoryId}/files?commit=yes`,
+            method: PUT,
+            body: assessment_submission,
+        });
+    }
+
+    updateProgrammingExerciseDueDate(exercise: any, due = day()) {
+        exercise.dueDate = dayjsToString(due);
+        return this.updateExercise(exercise, CypressExerciseType.PROGRAMMING);
+    }
+
+    updateProgrammingExerciseAssessmentDueDate(exercise: any, due = day()) {
+        exercise.assessmentDueDate = dayjsToString(due);
+        return this.updateExercise(exercise, CypressExerciseType.PROGRAMMING);
+    }
+
+    private updateExercise(exercise: any, type: CypressExerciseType) {
+        let url: string;
+        switch (type) {
+            case CypressExerciseType.PROGRAMMING:
+                url = PROGRAMMING_EXERCISE_BASE;
+                break;
+            case CypressExerciseType.TEXT:
+                url = TEXT_EXERCISE_BASE;
+                break;
+            case CypressExerciseType.MODELING:
+            case CypressExerciseType.QUIZ:
+            default:
+                throw new Error(`Exercise type '${type}' is not supported yet!`);
+        }
+        return cy.request({
+            url,
+            method: PUT,
+            body: exercise,
         });
     }
 
@@ -227,20 +273,12 @@ export class CourseManagementRequests {
 
     updateTextExerciseDueDate(exercise: any, due = day()) {
         exercise.dueDate = dayjsToString(due);
-        return this.updateTextExercise(exercise);
+        return this.updateExercise(exercise, CypressExerciseType.TEXT);
     }
 
     updateTextExerciseAssessmentDueDate(exercise: any, due = day()) {
         exercise.assessmentDueDate = dayjsToString(due);
-        return this.updateTextExercise(exercise);
-    }
-
-    private updateTextExercise(exercise: any) {
-        return cy.request({
-            url: TEXT_EXERCISE_BASE,
-            method: PUT,
-            body: exercise,
-        });
+        return this.updateExercise(exercise, CypressExerciseType.TEXT);
     }
 
     /**
@@ -367,4 +405,17 @@ export class CypressExamBuilder {
     build() {
         return this.template;
     }
+}
+
+export enum CypressAssessmentType {
+    AUTOMATIC,
+    SEMI_AUTOMATIC,
+    MANUAL,
+}
+
+export enum CypressExerciseType {
+    PROGRAMMING,
+    MODELING,
+    TEXT,
+    QUIZ,
 }
