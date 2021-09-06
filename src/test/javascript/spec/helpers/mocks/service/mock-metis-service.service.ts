@@ -4,7 +4,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { User } from 'app/core/user/user.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { PageType, PostContextFilter } from 'app/shared/metis/metis.util';
+import { ContextInformation, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
 import { Course } from 'app/entities/course.model';
 import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
 import { Params } from '@angular/router';
@@ -62,25 +62,45 @@ export class MockMetisService {
 
     getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {}
 
-    getLinkForPost(posting: Post) {
-        if (posting.courseWideContext) {
+    getContextInformation(post: Post): ContextInformation {
+        let routerLinkComponents = undefined;
+        let displayName;
+        if (post.exercise) {
+            displayName = post.exercise.title!;
+            routerLinkComponents = ['/courses', metisCourse.id!, 'exercises', post.exercise.id!];
+        } else if (post.lecture) {
+            displayName = post.lecture.title!;
+            routerLinkComponents = ['/courses', metisCourse.id!, 'lectures', post.lecture.id!];
+            // course-wide topics are not linked
+        } else {
+            displayName = 'some context';
+        }
+        return { routerLinkComponents, displayName };
+    }
+
+    getLinkForPost(post: Post) {
+        if (post.courseWideContext) {
             return ['/courses', metisCourse.id, 'discussion'];
         }
-        if (posting.lecture) {
-            return ['/courses', metisCourse.id, 'lectures', posting.lecture.id!];
+        if (post.lecture) {
+            return ['/courses', metisCourse.id, 'lectures', post.lecture.id!];
         }
-        if (posting.exercise) {
-            return ['/courses', metisCourse.id, 'exercises', posting.exercise.id!];
+        if (post.exercise) {
+            return ['/courses', metisCourse.id, 'exercises', post.exercise.id!];
         }
     }
 
-    getQueryParamsForPost(posting: Post): Params {
+    getQueryParamsForPost(post: Post): Params {
         const params: Params = {};
-        if (posting.courseWideContext) {
-            params.searchText = `#${posting.id}`;
+        if (post.courseWideContext) {
+            params.searchText = `#${post.id}`;
         } else {
-            params.postId = posting.id;
+            params.postId = post.id;
         }
         return params;
+    }
+
+    getSimilarPosts(title: string): Observable<Post[]> {
+        return of(metisCoursePosts.slice(0, 5));
     }
 }

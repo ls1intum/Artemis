@@ -14,7 +14,11 @@ import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postin
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-tag-selector.component';
 import { CourseWideContext, PageType } from 'app/shared/metis/metis.util';
-import { metisExercise, metisLecture, metisPostLectureUser1, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisCoursePosts, metisExercise, metisLecture, metisPostLectureUser1, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { NgbAccordion, NgbPanel } from '@ng-bootstrap/ng-bootstrap';
+import { PostPreviewComponent } from 'app/shared/metis/post-preview/post-preview.compontent';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { ArtemisTestModule } from '../../../../../test.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -29,15 +33,18 @@ describe('PostCreateEditModalComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [ArtemisTestModule, HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 PostCreateEditModalComponent,
                 MockPipe(ArtemisTranslatePipe),
+                MockComponent(PostPreviewComponent),
                 MockComponent(PostingsMarkdownEditorComponent),
                 MockComponent(PostingsButtonComponent),
                 MockComponent(HelpIconComponent),
                 MockComponent(PostTagSelectorComponent),
+                MockComponent(NgbAccordion),
+                MockComponent(NgbPanel),
             ],
         })
             .compileComponents()
@@ -66,6 +73,7 @@ describe('PostCreateEditModalComponent', () => {
         expect(component.course).to.not.be.undefined;
         expect(component.lectures).to.have.length(1);
         expect(component.exercises).to.have.length(1);
+        expect(component.similarPosts).to.have.length(0);
         // currently the default selection when opening the model in the overview for creating a new post is the course-wide context TECH_SUPPORT
         expect(component.currentContextSelectorOption).to.be.deep.equal({
             courseWideContext: CourseWideContext.TECH_SUPPORT,
@@ -88,6 +96,9 @@ describe('PostCreateEditModalComponent', () => {
             content: newContent,
             context: { courseWideContext: undefined, exercise: undefined, metisLecture },
         });
+        // debounce time of title input field
+        tick(800);
+        expect(component.similarPosts).to.be.deep.equal(metisCoursePosts.slice(0, 5));
         // trigger the method that is called on clicking the save button
         component.confirm();
         expect(metisServiceCreateSpy).to.be.have.been.calledWith({
@@ -118,6 +129,8 @@ describe('PostCreateEditModalComponent', () => {
             title: updatedTitle,
             context: { exerciseId: metisExercise.id },
         });
+        // debounce time of title input field
+        tick(800);
         component.confirm();
         expect(metisServiceUpdateSpy).to.be.have.been.calledWith({
             ...component.posting,

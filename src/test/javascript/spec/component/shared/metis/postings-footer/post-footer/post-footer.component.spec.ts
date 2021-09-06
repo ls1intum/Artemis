@@ -10,8 +10,6 @@ import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { SinonStub, stub } from 'sinon';
-import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 import { PageType } from 'app/shared/metis/metis.util';
 import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
 import {
@@ -37,13 +35,7 @@ describe('PostFooterComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(ArtemisCoursesRoutingModule)],
-            providers: [
-                { provide: MetisService, useClass: MockMetisService },
-                {
-                    provide: TranslateService,
-                    useClass: MockTranslateService,
-                },
-            ],
+            providers: [{ provide: MetisService, useClass: MockMetisService }],
             declarations: [PostFooterComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(PostReactionsBarComponent)],
         })
             .compileComponents()
@@ -106,7 +98,7 @@ describe('PostFooterComponent', () => {
         fixture.detectChanges();
         const context = getElement(fixture.debugElement, 'div.context-information');
         expect(context).to.exist;
-        expect(component.contextNavigationComponents).to.be.equal(undefined);
+        expect(component.contextInformation.routerLinkComponents).to.be.equal(undefined);
     });
 
     it('should have a lecture context information shown in form of a link if shown in course discussion overview', () => {
@@ -115,9 +107,9 @@ describe('PostFooterComponent', () => {
         component.ngOnInit();
         fixture.detectChanges();
         const contextLink = getElement(fixture.debugElement, 'a.linked-context-information');
-        expect(component.contextNavigationComponents).to.include('lectures');
-        expect(component.contextNavigationComponents).to.include(metisLecture.id);
-        expect(component.associatedContextName).to.be.equal(metisLecture.title);
+        expect(component.contextInformation.routerLinkComponents).to.include('lectures');
+        expect(component.contextInformation.routerLinkComponents).to.include(metisLecture.id);
+        expect(component.contextInformation.displayName).to.be.equal(metisLecture.title);
         expect(contextLink).to.exist;
     });
 });

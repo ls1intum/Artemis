@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.metis;
 
+import static de.tum.in.www1.artemis.service.metis.PostService.TOP_K_SIMILARITY_RESULTS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZoneId;
@@ -89,7 +90,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.resetDatabase();
     }
 
-    // CREATE
+    // POST
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
@@ -191,6 +192,16 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         constraintViolations = validator.validate(invalidPost);
         assertThat(constraintViolations.size()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSimilarityCheck() throws Exception {
+        Post postToCheck = new Post();
+        postToCheck.setTitle("Title Post");
+
+        List<Post> similarPosts = request.postWithResponseBody("/api/courses/" + courseId + "/posts/similarity-check", postToCheck, List.class, HttpStatus.OK);
+        assertThat(similarPosts).size().isEqualTo(TOP_K_SIMILARITY_RESULTS);
     }
 
     // UPDATE
