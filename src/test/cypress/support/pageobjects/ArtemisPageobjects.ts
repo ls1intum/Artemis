@@ -1,3 +1,4 @@
+import { ProgrammingExerciseAssessmentPage } from './assessment/ProgrammingExerciseAssessmentPage';
 import { ExerciseResultPage } from './exercises/ExerciseResultPage';
 import { ExerciseAssessmentDashboardPage } from './assessment/ExerciseAssessmentDashboardPage';
 import { CourseAssessmentDashboardPage } from './assessment/CourseAssessmentDashboardPage';
@@ -45,6 +46,7 @@ export class ArtemisPageobjects {
         course: new CourseAssessmentDashboardPage(),
         exercise: new ExerciseAssessmentDashboardPage(),
         text: new TextExerciseAssessmentPage(),
+        programming: new ProgrammingExerciseAssessmentPage(),
     };
     exerciseResult = new ExerciseResultPage();
 }

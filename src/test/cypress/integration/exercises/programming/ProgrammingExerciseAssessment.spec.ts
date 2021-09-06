@@ -16,9 +16,10 @@ const courseManagement = artemis.requests.courseManagement;
 const coursesPage = artemis.pageobjects.courseManagement;
 const courseAssessment = artemis.pageobjects.assessment.course;
 const exerciseAssessment = artemis.pageobjects.assessment.exercise;
-const textAssessment = artemis.pageobjects.assessment.text;
+const programmingAssessment = artemis.pageobjects.assessment.programming;
 const exerciseResult = artemis.pageobjects.exerciseResult;
 const textFeedback = artemis.pageobjects.textExercise.feedback;
+const onlineEditor = artemis.pageobjects.onlineEditor;
 
 // Common primitives
 const uid = generateUUID();
@@ -31,10 +32,10 @@ const packageName = 'de.test';
 describe('Programming exercise assessment', () => {
     let course: any;
     let exercise: any;
-    const tutorFeedback = 'Try to use some newlines next time!';
-    const tutorFeedbackPoints = 4;
-    const tutorTextFeedback = 'Nice ending of the sentence!';
-    const tutorTextFeedbackPoints = 2;
+    const tutorFeedback = 'You are missing some classes! The classes, which you implemented look good though.';
+    const tutorFeedbackPoints = 5;
+    const tutorCodeFeedback = 'The input parameter should be mentioned in javadoc!';
+    const tutorCodeFeedbackPoints = -2;
     const complaint = "That feedback wasn't very useful!";
 
     before('Creates a programming exercise and makes a student submission', () => {
@@ -56,19 +57,21 @@ describe('Programming exercise assessment', () => {
         coursesPage.openAssessmentDashboardOfCourseWithId(course.id);
         courseAssessment.checkShowFinishedExercises();
         courseAssessment.clickExerciseDashboardButton();
+        // Programming exercises seem to be a bit slow
+        cy.wait(5000);
         exerciseAssessment.clickHaveReadInstructionsButton();
         cy.contains('There are no complaints at the moment').should('be.visible');
         cy.contains('There are no requests at the moment.').should('be.visible');
         exerciseAssessment.clickStartNewAssessment();
-        textAssessment.getInstructionsRootElement().contains(exercise.title).should('be.visible');
-        textAssessment.getInstructionsRootElement().contains(exercise.problemStatement).should('be.visible');
-        textAssessment.getInstructionsRootElement().contains(exercise.sampleSolution).should('be.visible');
-        textAssessment.getInstructionsRootElement().contains(exercise.gradingInstructions).should('be.visible');
-        cy.contains('Number of words: 100').should('be.visible');
-        cy.contains('Number of characters: 591').should('be.visible');
-        textAssessment.provideFeedbackOnTextSection('sed diam voluptua', tutorTextFeedbackPoints, tutorTextFeedback);
-        textAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
-        textAssessment.submit();
+        programmingAssessment.getInstructionsRootElement().contains(exercise.title).should('be.visible');
+        programmingAssessment.getInstructionsRootElement().find('[jhitranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution"]').should('be.visible');
+        onlineEditor.openFileWithName('BubbleSort.java');
+        programmingAssessment.provideFeedbackOnCodeLine(9, tutorCodeFeedbackPoints, tutorCodeFeedback);
+        programmingAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
+        // Make sure that the tutor sees the build output
+        // The student submission was just a few seconds ago, so the CI has to build it and only then the tutor gets the build result
+        onlineEditor.getBuildOutput().contains('[ERROR] COMPILATION ERROR', { timeout: 60000 }).should('be.visible');
+        programmingAssessment.submit();
     });
 
     describe('Feedback', () => {
@@ -78,13 +81,13 @@ describe('Programming exercise assessment', () => {
         });
 
         it('Student sees feedback after assessment due date and complains', () => {
-            const totalPoints = tutorFeedbackPoints + tutorTextFeedbackPoints;
+            const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
             const percentage = totalPoints * 10;
             exerciseResult.shouldShowExerciseTitle(exercise.title);
             exerciseResult.shouldShowProblemStatement(exercise.problemStatement);
             exerciseResult.shouldShowScore(percentage);
             exerciseResult.clickViewSubmission();
-            textFeedback.shouldShowTextFeedback(tutorTextFeedback);
+            textFeedback.shouldShowTextFeedback(tutorCodeFeedback);
             textFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
             textFeedback.shouldShowScore(totalPoints, exercise.maxPoints, percentage);
             textFeedback.complain(complaint);
@@ -93,7 +96,7 @@ describe('Programming exercise assessment', () => {
         it('Instructor can see complaint and reject it', () => {
             cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
             courseAssessment.openComplaints(course.id);
-            textAssessment.acceptComplaint('Makes sense').its('response.statusCode').should('eq', 200);
+            programmingAssessment.acceptComplaint('Makes sense').its('response.statusCode').should('eq', 200);
         });
     });
 
@@ -125,12 +128,7 @@ describe('Programming exercise assessment', () => {
     function updateExerciseDueDate() {
         cy.login(admin);
         cy.wait(1000).then(() => {
-            courseManagement
-                .updateProgrammingExerciseDueDate(exercise)
-                .its('body')
-                .then((newExercise) => {
-                    exercise = newExercise;
-                });
+            courseManagement.updateProgrammingExerciseDueDate(exercise);
         });
     }
 

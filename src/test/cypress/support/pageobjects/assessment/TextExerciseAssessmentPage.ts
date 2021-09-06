@@ -19,4 +19,9 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     private typePointsIntoFeedbackEditor(points: number) {
         cy.get(this.feedbackEditorSelector).find('[type="number"]').clear().type(points.toString());
     }
+
+    submit() {
+        super.submit();
+        cy.contains('Your assessment was submitted successfully!').should('be.visible');
+    }
 }

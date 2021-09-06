@@ -4,7 +4,7 @@ import { PUT, BASE_API } from './../../constants';
  */
 export abstract class AbstractExerciseAssessmentPage {
     getInstructionsRootElement() {
-        return cy.get('[jhitranslate="artemisApp.textAssessment.instructions"]').parents('.card');
+        return cy.get('[jhitranslate="artemisApp.exercise.instructions"]').parents('.card');
     }
 
     addNewFeedback(points: number, feedback?: string) {
@@ -17,7 +17,6 @@ export abstract class AbstractExerciseAssessmentPage {
 
     submit() {
         cy.get('[jhitranslate="entity.action.submit"]').click();
-        cy.contains('Your assessment was submitted successfully!').should('be.visible');
     }
 
     rejectComplaint(response: string) {
