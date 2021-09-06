@@ -227,26 +227,6 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * GET /modeling-exercises/:id/statistics : get the "id" modelingExercise statistics.
-     *
-     * @param exerciseId the id of the modelingExercise for which the statistics should be retrieved
-     * @return the json encoded modelingExercise statistics
-     */
-    @GetMapping(value = "/modeling-exercises/{exerciseId}/statistics")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<String> getModelingExerciseStatistics(@PathVariable Long exerciseId) {
-        log.debug("REST request to get ModelingExercise Statistics for Exercise: {}", exerciseId);
-        var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
-        // if (compassService.isSupported(modelingExercise)) {
-        // return ResponseEntity.ok(compassService.getStatistics(exerciseId).toString());
-        // }
-        // else {
-        return notFound();
-        // }
-    }
-
-    /**
      * Prints the Compass statistic regarding the automatic assessment of the modeling exercise with the given id.
      *
      * @param exerciseId the id of the modeling exercise for which we want to get the Compass statistic

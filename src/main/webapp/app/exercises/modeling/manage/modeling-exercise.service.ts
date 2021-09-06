@@ -52,10 +52,6 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
         );
     }
 
-    getStatistics(modelingExerciseId: number): Observable<HttpResponse<ModelingStatistic>> {
-        return this.http.get<ModelingStatistic>(`${this.resourceUrl}/${modelingExerciseId}/statistics`, { observe: 'response' });
-    }
-
     delete(modelingExerciseId: number): Observable<HttpResponse<{}>> {
         return this.http.delete(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' });
     }

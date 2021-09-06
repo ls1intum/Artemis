@@ -152,24 +152,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetModelingExerciseStatistics_asTA() throws Exception {
-        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
-        // request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.OK, String.class);
-        request.get("/api/modeling-exercises/" + classExercise.getId() + 1 + "/statistics", HttpStatus.NOT_FOUND, String.class);
-
-        classExercise.setDiagramType(CommunicationDiagram);
-        exerciseRepo.save(classExercise);
-        request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.NOT_FOUND, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
-    public void testGetModelingExerciseStatistics_tutorNotInCourse() throws Exception {
-        request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.FORBIDDEN, String.class);
-    }
-
-    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
