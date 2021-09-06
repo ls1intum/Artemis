@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-text-exercise-tutor-effort-statistics',
@@ -87,9 +88,9 @@ export class TutorEffortStatisticsComponent implements OnInit {
     }
 
     loadTutorEfforts() {
-        this.textExerciseService.calculateTutorEffort(this.currentExerciseId, this.currentCourseId).subscribe(
-            (res: TutorEffort[]) => {
-                this.tutorEfforts = res!;
+        this.textExerciseService.calculateTutorEffort(this.currentExerciseId, this.currentCourseId).subscribe({
+            next: (res: HttpResponse<TutorEffort[]>) => {
+                this.tutorEfforts = res.body!;
                 if (!this.tutorEfforts) {
                     return;
                 }
@@ -102,10 +103,10 @@ export class TutorEffortStatisticsComponent implements OnInit {
                 this.distributeEffortToSets();
                 this.chartDataSets[0].data = this.effortDistribution;
             },
-            (error) => {
+            error: (error: HttpErrorResponse) => {
                 console.error('Error while retrieving tutor effort statistics:', error);
             },
-        );
+        });
         this.loadNumberOfTutorsInvolved();
     }
 

@@ -193,6 +193,21 @@ describe('TextAssessment Service', () => {
         tick();
     }));
 
+    it('should get number of tutors involved in assessment', fakeAsync(() => {
+        const responseNumberOfTutors = 5;
+        service
+            .getNumberOfTutorsInvolvedInAssessment(1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toEqual(responseNumberOfTutors));
+
+        const req = httpMock.expectOne({
+            url: `/analytics/text-assessment/events/courses/1/exercises/1`,
+            method: 'GET',
+        });
+        req.flush(responseNumberOfTutors);
+        tick();
+    }));
+
     afterEach(() => {
         httpMock.verify();
     });
