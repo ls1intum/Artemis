@@ -153,6 +153,14 @@ public class SubmissionResource {
         return ResponseEntity.ok(submissionWithComplaintDTOs);
     }
 
+    /**
+     * Search for all submissions by participant name. The result is pageable since there
+     * might be hundreds of submissions in the DB.
+     *
+     * @param exerciseId exerciseId which submissions belongs to
+     * @param search     the pageable search containing the page size and query string
+     * @return The desired page, sorted and matching the given query
+     */
     @GetMapping("exercises/{exerciseId}/submissions-for-import")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<SearchResultPageDTO<Submission>> getAllExercisesOnPage(@PathVariable Long exerciseId, PageableSearchDTO<String> search) {

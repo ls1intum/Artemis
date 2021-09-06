@@ -6,9 +6,7 @@ import { Submission } from 'app/entities/submission.model';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { onError } from 'app/shared/util/global.utils';
 import { JhiAlertService } from 'ng-jhipster';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExampleSubmissionImportPagingService } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import-paging.service';
 
@@ -112,7 +110,8 @@ export class ExampleSubmissionImportComponent implements OnInit {
         return this.state.sortedColumn;
     }
 
-    /** Set the list sorting direction
+    /**
+     * Set the list sorting direction
      *
      * @param ascending {boolean} Ascending order set
      */
@@ -134,13 +133,14 @@ export class ExampleSubmissionImportComponent implements OnInit {
         return this.state.searchTerm;
     }
 
-    /** Callback function when the user navigates through the page results
+    /**
+     * Callback function when the user navigates through the page results
      *
-     * @param pagenumber The current page number
+     * @param pageNumber The current page number
      */
-    onPageChange(pagenumber: number) {
-        if (pagenumber) {
-            this.page = pagenumber;
+    onPageChange(pageNumber: number) {
+        if (pageNumber) {
+            this.page = pageNumber;
         }
     }
 }

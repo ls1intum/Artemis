@@ -74,6 +74,11 @@ export class ExampleSubmissionsComponent implements OnInit {
             ];
         }
     }
+
+    /**
+     * Opens the import module for example submission
+     * Then invokes import api for selected submission submission
+     */
     openImportModal() {
         const exampleSubmissionImportModalRef = this.modalService.open(ExampleSubmissionImportComponent, {
             size: 'lg',
@@ -81,8 +86,8 @@ export class ExampleSubmissionsComponent implements OnInit {
         });
         exampleSubmissionImportModalRef.componentInstance.exercise = this.exercise;
         exampleSubmissionImportModalRef.result.then(
-            (result: Submission) => {
-                this.exampleSubmissionService.import(result.id!, this.exercise.id!).subscribe(
+            (selectedSubmission: Submission) => {
+                this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise.id!).subscribe(
                     () => {
                         this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
                         location.reload();

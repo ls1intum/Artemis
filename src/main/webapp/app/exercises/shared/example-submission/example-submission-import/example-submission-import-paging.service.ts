@@ -11,6 +11,11 @@ type EntityResponseType = SearchResult<Submission>;
 export class ExampleSubmissionImportPagingService {
     constructor(private http: HttpClient) {}
 
+    /**
+     * Gets all submissions with exerciseId
+     * @param pageable   pageable search containing the page size and query string
+     * @param exerciseId id of exercise which submissions belongs to
+     */
     searchForSubmissions(pageable: PageableSearch, exerciseId: number): Observable<EntityResponseType> {
         const params = new HttpParams()
             .set('pageSize', String(pageable.pageSize))

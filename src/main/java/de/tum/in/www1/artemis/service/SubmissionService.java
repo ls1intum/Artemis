@@ -645,6 +645,14 @@ public class SubmissionService {
         submissionsParticipation.setExercise(null);
     }
 
+    /**
+     * Search for all submissions fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
+     * have to send hundreds/thousands of submissions if there are that many in Artemis.
+     *
+     * @param search The search query defining the search term and the size of the returned page
+     * @return A wrapper object containing a list of all found submissions and the total number of pages
+     */
     public SearchResultPageDTO<Submission> getSubmissionsOnPageWithSize(final PageableSearchDTO<String> search, long exerciseId) {
         var sorting = Sort.by(Submission.SubmissionSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
         sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
@@ -658,10 +666,9 @@ public class SubmissionService {
         for (StudentParticipation participation : participations) {
             Optional<Submission> optionalSubmission = participation.findLatestSubmission();
 
-            if (optionalSubmission.isEmpty()) {
-                continue;
+            if (!optionalSubmission.isEmpty()) {
+                submissions.add(optionalSubmission.get());
             }
-            submissions.add(optionalSubmission.get());
         }
 
         final Page<Submission> submissionPage = new PageImpl<>(submissions, sorted, submissions.size());

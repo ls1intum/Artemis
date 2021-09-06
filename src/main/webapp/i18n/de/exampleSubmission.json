@@ -35,8 +35,8 @@
             "deleted": "Beispielabgabe gelöscht",
             "assessmentExplanation": "Erklärung",
             "assessmentExplanationInfo": "Zusätzliche Erklärung zu dieser Beispielbewertung",
-            "importExampleSubmission": "Import Example Submission",
-            "importExampleSubmissionLabel": "Import an Example Submission"
+            "importExampleSubmission": "Beispielabgabe importieren",
+            "importExampleSubmissionLabel": "Beispielabgabe importieren"
         },
         "tutorParticipation": {
             "deleted": "Die Tutorteilnahme wurde erfolgreich gelöscht"
