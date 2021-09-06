@@ -1,3 +1,4 @@
+import { CypressExerciseType } from '../../requests/CourseManagementRequests';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 
 /**
@@ -28,5 +29,13 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
 
     private shouldShowEditButtonForCreatedFeedback() {
         cy.get(this.feedbackEditorSelector).find('[jhitranslate="entity.action.edit"]').should('be.visible');
+    }
+
+    rejectComplaint(response: string) {
+        return super.rejectComplaint(response, CypressExerciseType.PROGRAMMING);
+    }
+
+    acceptComplaint(response: string) {
+        return super.acceptComplaint(response, CypressExerciseType.PROGRAMMING);
     }
 }

@@ -1,3 +1,4 @@
+import { CypressExerciseType } from '../../requests/CourseManagementRequests';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 
 /**
@@ -24,5 +25,13 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
         const request = super.submit();
         cy.contains('Your assessment was submitted successfully!').should('be.visible');
         return request;
+    }
+
+    rejectComplaint(response: string) {
+        return super.rejectComplaint(response, CypressExerciseType.TEXT);
+    }
+
+    acceptComplaint(response: string) {
+        return super.acceptComplaint(response, CypressExerciseType.TEXT);
     }
 }

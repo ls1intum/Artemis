@@ -17,4 +17,8 @@ export class ExerciseResultPage {
     clickViewSubmission() {
         cy.contains('View submission').click();
     }
+
+    clickOpenCodeEditor() {
+        cy.contains('Open code editor').click();
+    }
 }

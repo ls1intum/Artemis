@@ -1,10 +1,12 @@
+import { CypressExerciseType } from './../../requests/CourseManagementRequests';
 import { PUT, BASE_API } from './../../constants';
 /**
  * Parent class for all exercise assessment pages.
  */
 export abstract class AbstractExerciseAssessmentPage {
     getInstructionsRootElement() {
-        return cy.get('[jhitranslate="artemisApp.exercise.instructions"]').parents('.card');
+        cy.url().should('contain', '/assessment');
+        return cy.contains('Instructions');
     }
 
     addNewFeedback(points: number, feedback?: string) {
@@ -21,18 +23,28 @@ export abstract class AbstractExerciseAssessmentPage {
         return cy.wait('@submitFeedback');
     }
 
-    rejectComplaint(response: string) {
-        return this.handleComplaint(response, false);
+    rejectComplaint(response: string, exerciseType: CypressExerciseType) {
+        return this.handleComplaint(response, false, exerciseType);
     }
 
-    acceptComplaint(response: string) {
-        return this.handleComplaint(response, true);
+    acceptComplaint(response: string, exerciseType: CypressExerciseType) {
+        return this.handleComplaint(response, true, exerciseType);
     }
 
-    private handleComplaint(response: string, accept: boolean) {
+    private handleComplaint(response: string, accept: boolean, exerciseType: CypressExerciseType) {
         cy.get('tr > .text-center >').click();
         cy.get('#responseTextArea').type(response, { parseSpecialCharSequences: false });
-        cy.intercept(PUT, BASE_API + 'participations/*/submissions/*/text-assessment-after-complaint').as('complaintAnswer');
+        switch (exerciseType) {
+            case CypressExerciseType.PROGRAMMING:
+                cy.intercept(PUT, BASE_API + 'programming-submissions/*/assessment-after-complaint').as('complaintAnswer');
+                break;
+            case CypressExerciseType.TEXT:
+                cy.intercept(PUT, BASE_API + 'participations/*/submissions/*/text-assessment-after-complaint').as('complaintAnswer');
+                break;
+            default:
+                throw new Error(`Exercise type '${exerciseType}' is not supported yet!`);
+        }
+
         if (accept) {
             cy.get('#acceptComplaintButton').click();
         } else {

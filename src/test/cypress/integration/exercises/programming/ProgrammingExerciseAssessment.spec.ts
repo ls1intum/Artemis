@@ -18,7 +18,7 @@ const courseAssessment = artemis.pageobjects.assessment.course;
 const exerciseAssessment = artemis.pageobjects.assessment.exercise;
 const programmingAssessment = artemis.pageobjects.assessment.programming;
 const exerciseResult = artemis.pageobjects.exerciseResult;
-const textFeedback = artemis.pageobjects.textExercise.feedback;
+const programmingFeedback = artemis.pageobjects.programmingExercise.feedback;
 const onlineEditor = artemis.pageobjects.onlineEditor;
 
 // Common primitives
@@ -68,37 +68,35 @@ describe('Programming exercise assessment', () => {
         onlineEditor.openFileWithName('BubbleSort.java');
         programmingAssessment.provideFeedbackOnCodeLine(9, tutorCodeFeedbackPoints, tutorCodeFeedback);
         programmingAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
-        // Make sure that the tutor sees the build output
-        // The student submission was just a few seconds ago, so the CI has to build it and only then the tutor gets the build result
-        onlineEditor.getBuildOutput().contains('[ERROR] COMPILATION ERROR', { timeout: 60000 }).should('be.visible');
-        programmingAssessment.submit().its('response.statusCode').should('eq', 201);
+        programmingAssessment.submit().its('response.statusCode').should('eq', 200);
     });
 
-    // describe('Feedback', () => {
-    //     before(() => {
-    //         updateExerciseAssessmentDueDate();
-    //         cy.login(student, `/courses/${course.id}/exercises/${exercise.id}`);
-    //     });
+    describe('Feedback', () => {
+        before(() => {
+            updateExerciseAssessmentDueDate();
+            cy.login(student, `/courses/${course.id}/exercises/${exercise.id}`);
+        });
 
-    //     it('Student sees feedback after assessment due date and complains', () => {
-    //         const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
-    //         const percentage = totalPoints * 10;
-    //         exerciseResult.shouldShowExerciseTitle(exercise.title);
-    //         exerciseResult.shouldShowProblemStatement(exercise.problemStatement);
-    //         exerciseResult.shouldShowScore(percentage);
-    //         exerciseResult.clickViewSubmission();
-    //         textFeedback.shouldShowTextFeedback(tutorCodeFeedback);
-    //         textFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
-    //         textFeedback.shouldShowScore(totalPoints, exercise.maxPoints, percentage);
-    //         textFeedback.complain(complaint);
-    //     });
+        it('Student sees feedback after assessment due date and complains', () => {
+            const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
+            const percentage = totalPoints * 10;
+            exerciseResult.shouldShowExerciseTitle(exercise.title);
+            exerciseResult.clickOpenCodeEditor();
+            programmingFeedback.shouldShowRepositoryLockedWarning();
+            programmingFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
+            programmingFeedback.shouldShowScore(totalPoints, exercise.maxPoints, percentage);
+            programmingFeedback.shouldShowCodeFeedback('BubbleSort.java', tutorCodeFeedback, '-2', onlineEditor);
+            // The complaint feature is located on the result screen for programming exercises...
+            cy.go('back');
+            programmingFeedback.complain(complaint);
+        });
 
-    //     it('Instructor can see complaint and reject it', () => {
-    //         cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
-    //         courseAssessment.openComplaints(course.id);
-    //         programmingAssessment.acceptComplaint('Makes sense').its('response.statusCode').should('eq', 200);
-    //     });
-    // });
+        it('Instructor can see complaint and reject it', () => {
+            cy.login(instructor, `/course-management/${course.id}/assessment-dashboard`);
+            courseAssessment.openComplaints(course.id);
+            programmingAssessment.acceptComplaint('Makes sense').its('response.statusCode').should('eq', 200);
+        });
+    });
 
     function createCourseWithProgrammingExercise() {
         cy.login(admin);

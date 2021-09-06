@@ -1,3 +1,4 @@
+import { ProgrammingExerciseFeedbackPage } from './exercises/programming/ProgrammingExerciseFeedbackPage';
 import { ProgrammingExerciseAssessmentPage } from './assessment/ProgrammingExerciseAssessmentPage';
 import { ExerciseResultPage } from './exercises/ExerciseResultPage';
 import { ExerciseAssessmentDashboardPage } from './assessment/ExerciseAssessmentDashboardPage';
@@ -35,6 +36,9 @@ export class ArtemisPageobjects {
     modelingExerciseAssessmentEditor = new ModelingExerciseAssessmentEditor();
     modelingEditor = new ModelingEditor();
     examStartEnd = new ExamStartEndPage();
+    programmingExercise = {
+        feedback: new ProgrammingExerciseFeedbackPage(),
+    };
     textExercise = {
         creation: new TextExerciseCreationPage(),
         exampleSubmissions: new TextExerciseExampleSubmissionsPage(),
