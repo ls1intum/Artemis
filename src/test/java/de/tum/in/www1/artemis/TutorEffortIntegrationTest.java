@@ -67,12 +67,13 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     /**
-     * Tests the TutorEffortResource.calculateTutorEffort method with a scenario involving 10 minutes
+     * Tests the TutorEffortResource.calculateTutorEffort method with a scenario involving a distance between
+     * timestamps of 1 minute but
      * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
-    public void testCalculateTutorEfforts0Minutes() throws Exception {
+    public void testCalculateTutorEfforts0MinutesOneTimestamp() throws Exception {
         List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(1, 1);
 
         textAssessmentEventRepository.saveAll(events);
@@ -87,7 +88,8 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     /**
-     * Tests the TutorEffortResource.calculateTutorEffort method with a scenario involving 20 minutes
+     * Tests the TutorEffortResource.calculateTutorEffort method with a scenario involving a distance
+     * between timestamps of 5 minutes.
      * @throws Exception
      */
     @Test
@@ -99,7 +101,7 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
 
         List<TutorEffort> tutorEfforts = request.getList("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK, TutorEffort.class);
 
-        TutorEffort effortExpected = createTutorEffortObject(5);
+        TutorEffort effortExpected = createTutorEffortObject(25);
 
         assertThat(tutorEfforts).isNotNull();
         assertThat(tutorEfforts.size()).isEqualTo(1);
@@ -107,7 +109,9 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     /**
-     * Tests the TutorEffortResource.calculateTutorEffort method with a scenario involving 20 minutes
+     * Tests the TutorEffortResource.calculateTutorEffort method with a scenario involving 10 minutes
+     * of distance between timestamps. In this case time difference between timestamps is not calculated
+     * as it is referred as a period of inactivity
      * @throws Exception
      */
     @Test
@@ -118,7 +122,7 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
 
         List<TutorEffort> tutorEfforts = request.getList("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK, TutorEffort.class);
 
-        TutorEffort effortExpected = createTutorEffortObject(10);
+        TutorEffort effortExpected = createTutorEffortObject(0);
 
         assertThat(tutorEfforts).isNotNull();
         assertThat(tutorEfforts.size()).isEqualTo(1);
