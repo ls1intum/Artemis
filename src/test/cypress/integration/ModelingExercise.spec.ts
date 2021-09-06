@@ -1,5 +1,5 @@
 import { POST, BASE_API } from './../support/constants';
-import { dayjsToString, generateUUID } from '../support/utils';
+import { dayjsToString } from '../support/utils';
 import { artemis } from '../support/ArtemisTesting';
 
 // https://day.js.org/docs is a tool for date/time
@@ -21,6 +21,8 @@ const instructor = userManagement.getInstructor();
 
 let testCourse: any;
 let modelingExercise: any;
+
+const modelingExerciseTitle = 'Cypress Modeling Exercise';
 
 describe('Modeling Exercise Spec', () => {
     before('Log in as admin and create a course', () => {
@@ -52,7 +54,7 @@ describe('Modeling Exercise Spec', () => {
         it('Create a new modeling exercise', () => {
             cy.visit(`/course-management/${testCourse.id}/exercises`);
             cy.get('#modeling-exercise-create-button').click();
-            createModelingExercise.setTitle('Cypress Modeling Exercise');
+            createModelingExercise.setTitle(modelingExerciseTitle);
             createModelingExercise.addCategories(['e2e-testing', 'test2']);
             createModelingExercise.setPoints(10);
             createModelingExercise
@@ -61,12 +63,12 @@ describe('Modeling Exercise Spec', () => {
                 .then((body) => {
                     modelingExercise = body;
                 });
-            cy.contains('Cypress Modeling Exercise').should('exist');
+            cy.contains(modelingExerciseTitle).should('exist');
         });
 
         it('Create Example Solution', () => {
             cy.visit(`/course-management/${testCourse.id}/exercises`);
-            cy.contains('Cypress Modeling Exercise').click();
+            cy.contains(modelingExerciseTitle).click();
             cy.get('.card-body').contains('Edit').click();
             modelingEditor.addComponentToModel(1);
             createModelingExercise.save();
@@ -94,23 +96,25 @@ describe('Modeling Exercise Spec', () => {
 
         it('Edit Existing Modeling Exercise', () => {
             cy.visit(`/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
-            createModelingExercise.setTitle('Cypress EDITED ME');
+            const newTitle = 'Cypress EDITED ME';
+            const points = 100;
+            createModelingExercise.setTitle(newTitle);
             createModelingExercise.pickDifficulty({ hard: true });
             createModelingExercise.setReleaseDate(dayjsToString(dayjs().add(1, 'day')));
             createModelingExercise.setDueDate(dayjsToString(dayjs().add(2, 'day')));
             createModelingExercise.setAssessmentDueDate(dayjsToString(dayjs().add(3, 'day')));
             createModelingExercise.includeInOverallScore();
-            createModelingExercise.setPoints(100);
+            createModelingExercise.setPoints(points);
             createModelingExercise.save();
             cy.visit(`/course-management/${testCourse.id}/exercises`);
-            cy.get('tbody > tr > :nth-child(2)').should('contain.text', 'Cypress EDITED ME');
-            cy.get('tbody > tr > :nth-child(6)').should('contain.text', '100');
+            cy.get('tbody > tr > :nth-child(2)').should('contain.text', newTitle);
+            cy.get('tbody > tr > :nth-child(6)').should('contain.text', points.toString());
         });
     });
 
     describe('Modeling Exercise Flow', () => {
         before('Create Modeling Exercise with future release date', () => {
-            courseManagementRequests.createModelingExercise({ course: testCourse }, 'Cypress modeling exercise ' + generateUUID(), dayjs().add(1, 'hour')).then((resp) => {
+            courseManagementRequests.createModelingExercise({ course: testCourse }, modelingExerciseTitle, dayjs().add(1, 'hour')).then((resp) => {
                 modelingExercise = resp.body;
             });
         });
@@ -128,19 +132,18 @@ describe('Modeling Exercise Spec', () => {
         });
 
         it('Student can start and submit their model', () => {
-            cy.intercept('/api/courses/*/exercises/*/participations').as('createModelingParticipation');
+            cy.intercept(BASE_API + 'courses/*/exercises/*/participations').as('createModelingParticipation');
             cy.login(student, `/courses/${testCourse.id}`);
             cy.get('.col-lg-8').contains(modelingExercise.title).click();
-            cy.get('jhi-exercise-details-student-actions.col > >').contains('Start exercise').click();
+            cy.contains('Start exercise').click();
             cy.wait('@createModelingParticipation');
-            cy.get('.btn').should('contain.text', 'Open modelling editor');
-            cy.get('.btn').click();
+            cy.get('.btn').should('contain.text', 'Open modelling editor').click();
             modelingEditor.addComponentToModel(1);
             modelingEditor.addComponentToModel(2);
             modelingEditor.addComponentToModel(3);
-            cy.get('.jhi-btn').click();
+            cy.get('.submission-button').click();
             cy.get('.alerts').should('contain.text', 'Your submission was successful! You can change your submission or wait for your feedback.');
-            cy.get('.col-auto').should('contain.text', 'No graded result');
+            cy.contains('No graded result').should('be.visible');
         });
 
         it('Close exercise for submissions', () => {
