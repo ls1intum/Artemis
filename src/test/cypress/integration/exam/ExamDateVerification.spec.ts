@@ -1,3 +1,4 @@
+import { PUT } from './../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs';
 import { artemis } from '../../support/ArtemisTesting';
@@ -9,18 +10,13 @@ const courseManagementRequests = artemis.requests.courseManagement;
 // page objects
 const examStartEnd = artemis.pageobjects.examStartEnd;
 
-// Common primitives
-const uid = generateUUID();
-const courseName = 'Cypress course' + uid;
-const courseShortName = 'cypress' + uid;
-
 describe('Exam management', () => {
     let course: any;
     let examTitle: string;
 
     before(() => {
         cy.login(artemis.users.getAdmin());
-        courseManagementRequests.createCourse(courseName, courseShortName).then((response) => {
+        courseManagementRequests.createCourse().then((response) => {
             course = response.body;
             courseManagementRequests.addStudentToCourse(course.id, artemis.users.getStudentOne().username);
         });
@@ -59,7 +55,7 @@ describe('Exam management', () => {
                 .build();
             courseManagementRequests.createExam(examContent).then((response) => {
                 exam = response.body;
-                courseManagementRequests.registerStudentForExam(course, exam, artemis.users.getStudentOne());
+                courseManagementRequests.registerStudentForExam(exam, artemis.users.getStudentOne());
                 cy.login(artemis.users.getStudentOne(), `/courses/${course.id}`);
                 cy.url().should('contain', `${course.id}`);
                 cy.contains('Exams').click();
@@ -81,26 +77,24 @@ describe('Exam management', () => {
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                courseManagementRequests.registerStudentForExam(course, exam, student);
-                courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
+                courseManagementRequests.registerStudentForExam(exam, student);
+                courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.createTextExercise('Text exercise 1', { exerciseGroup }).then((exerciseResponse) => {
+                    courseManagementRequests.createAndAddTextExerciseToExam(exerciseGroup).then((exerciseResponse) => {
                         textExercise = exerciseResponse.body;
-                        courseManagementRequests.generateMissingIndividualExams(course, exam);
-                        courseManagementRequests.prepareExerciseStartForExam(course, exam);
+                        courseManagementRequests.generateMissingIndividualExams(exam);
+                        courseManagementRequests.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
                         cy.contains(exam.title).click();
                         cy.url().should('contain', `/exams/${exam.id}`);
                         cy.contains('Welcome to ' + exam.title).should('be.visible');
-                        examStartEnd.setConfirmCheckmark();
-                        examStartEnd.enterFirstnameLastname();
-                        examStartEnd.pressStart();
+                        examStartEnd.startExam();
                         cy.contains('Exam Overview').should('exist');
-                        cy.contains('Text exercise 1').should('be.visible').click();
+                        cy.contains(textExercise.title).should('be.visible').click();
                         cy.get('#text-editor-tab').type(
                             'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                         );
-                        cy.intercept('PUT', `/api/exercises/${textExercise.id}/text-submissions`).as('savedSubmission');
+                        cy.intercept(PUT, `/api/exercises/${textExercise.id}/text-submissions`).as('savedSubmission');
                         cy.contains('Save').click();
                         cy.wait('@savedSubmission');
                     });
@@ -119,19 +113,18 @@ describe('Exam management', () => {
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                courseManagementRequests.registerStudentForExam(course, exam, student);
-                courseManagementRequests.addExerciseGroupForExam(course, exam, 'group 1', true).then((groupResponse) => {
+                courseManagementRequests.registerStudentForExam(exam, student);
+                courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.createTextExercise('Text exercise 1', { exerciseGroup }).then(() => {
-                        courseManagementRequests.generateMissingIndividualExams(course, exam);
-                        courseManagementRequests.prepareExerciseStartForExam(course, exam);
+                    courseManagementRequests.createAndAddTextExerciseToExam(exerciseGroup).then((response) => {
+                        const textExercise = response.body;
+                        courseManagementRequests.generateMissingIndividualExams(exam);
+                        courseManagementRequests.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
                         cy.contains(exam.title).click();
                         cy.contains('Welcome to ' + exam.title).should('be.visible');
-                        examStartEnd.setConfirmCheckmark();
-                        examStartEnd.enterFirstnameLastname();
-                        examStartEnd.pressStart();
-                        cy.contains('Text exercise 1').should('be.visible').click();
+                        examStartEnd.startExam();
+                        cy.contains(textExercise.title).should('be.visible').click();
                         cy.get('#text-editor-tab').type(
                             'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                         );
@@ -148,7 +141,7 @@ describe('Exam management', () => {
 
         afterEach(() => {
             cy.login(artemis.users.getAdmin());
-            courseManagementRequests.deleteExam(course, exam);
+            courseManagementRequests.deleteExam(exam);
         });
     });
 
