@@ -181,17 +181,17 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
                         Optional.ofNullable(throwable.getCause()).filter(cause -> isCausalChainsEnabled()).map(this::toProblem).orElse(null)
                     );
             }
-            if (throwable instanceof DataAccessException) {
-                return Problem
-                    .builder()
-                    .withType(type)
-                    .withTitle(status.getReasonPhrase())
-                    .withStatus(status)
-                    .withDetail("Failure during data access")
-                    .withCause(
-                        Optional.ofNullable(throwable.getCause()).filter(cause -> isCausalChainsEnabled()).map(this::toProblem).orElse(null)
-                    );
-            }
+//            if (throwable instanceof DataAccessException) {
+//                return Problem
+//                    .builder()
+//                    .withType(type)
+//                    .withTitle(status.getReasonPhrase())
+//                    .withStatus(status)
+//                    .withDetail("Failure during data access")
+//                    .withCause(
+//                        Optional.ofNullable(throwable.getCause()).filter(cause -> isCausalChainsEnabled()).map(this::toProblem).orElse(null)
+//                    );
+//            }
             if (containsPackageName(throwable.getMessage())) {
                 return Problem
                     .builder()

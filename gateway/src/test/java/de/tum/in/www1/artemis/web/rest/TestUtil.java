@@ -11,11 +11,6 @@ import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -169,22 +164,6 @@ public final class TestUtil {
         assertThat(domainObject1).isNotEqualTo(domainObject2);
         // HashCodes are equals because the objects are not persisted yet
         assertThat(domainObject1).hasSameHashCodeAs(domainObject2);
-    }
-
-    /**
-     * Makes a an executes a query to the EntityManager finding all stored objects.
-     * @param <T> The type of objects to be searched
-     * @param em The instance of the EntityManager
-     * @param clss The class type to be searched
-     * @return A list of all found objects
-     */
-    public static <T> List<T> findAll(EntityManager em, Class<T> clss) {
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<T> cq = cb.createQuery(clss);
-        Root<T> rootEntry = cq.from(clss);
-        CriteriaQuery<T> all = cq.select(rootEntry);
-        TypedQuery<T> allQuery = em.createQuery(all);
-        return allQuery.getResultList();
     }
 
     private TestUtil() {}

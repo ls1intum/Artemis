@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.security.jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import java.util.Collections;
@@ -41,7 +41,7 @@ class JWTFilterTest {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
             "test-user",
             "test-password",
-            Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))
+            Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()))
         );
         String jwt = tokenProvider.createToken(authentication, false);
         MockServerHttpRequest.BaseBuilder request = MockServerHttpRequest
@@ -127,7 +127,7 @@ class JWTFilterTest {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
             "test-user",
             "test-password",
-            Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))
+            Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()))
         );
         String jwt = tokenProvider.createToken(authentication, false);
         MockServerHttpRequest.BaseBuilder request = MockServerHttpRequest

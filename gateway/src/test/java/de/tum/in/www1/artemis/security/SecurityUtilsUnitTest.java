@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import de.tum.in.www1.artemis.security.Role;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,7 +49,7 @@ class SecurityUtilsUnitTest {
     @Test
     void testAnonymousIsNotAuthenticated() {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(AuthoritiesConstants.ANONYMOUS));
+        authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
         Boolean isAuthenticated = SecurityUtils
             .isAuthenticated()
             .subscriberContext(
@@ -61,18 +62,18 @@ class SecurityUtilsUnitTest {
     @Test
     void testHasCurrentUserThisAuthority() {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(AuthoritiesConstants.USER));
+        authorities.add(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
         Context context = ReactiveSecurityContextHolder.withAuthentication(
             new UsernamePasswordAuthenticationToken("admin", "admin", authorities)
         );
         Boolean hasCurrentUserThisAuthority = SecurityUtils
-            .hasCurrentUserThisAuthority(AuthoritiesConstants.USER)
+            .hasCurrentUserThisAuthority(Role.STUDENT.getAuthority())
             .subscriberContext(context)
             .block();
         assertThat(hasCurrentUserThisAuthority).isTrue();
 
         hasCurrentUserThisAuthority =
-            SecurityUtils.hasCurrentUserThisAuthority(AuthoritiesConstants.ADMIN).subscriberContext(context).block();
+            SecurityUtils.hasCurrentUserThisAuthority(Role.ADMIN.getAuthority()).subscriberContext(context).block();
         assertThat(hasCurrentUserThisAuthority).isFalse();
     }
 }
