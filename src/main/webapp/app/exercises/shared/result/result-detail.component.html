@@ -4,6 +4,14 @@
 </div>
 <div class="modal-body" id="result-detail-body" style="position: relative">
     <!--
+    Show and link to the commit hash in case of programming exercise results
+ -->
+    <p *ngIf="exerciseType === ExerciseType.PROGRAMMING && result.submission">
+        <span>{{ 'artemisApp.result.linkedCommit' | artemisTranslate }}</span>
+        <a *ngIf="getCommitUrl(); else commitWithoutLink" href="{{ getCommitUrl() }}" target="_blank" rel="noopener noreferrer">{{ getCommitHash().substr(0, 11) }}</a>
+        <ng-template #commitWithoutLink>{{ getCommitHash().substr(0, 11) }}</ng-template>
+    </p>
+    <!--
     Loading state
 -->
     <div *ngIf="isLoading; else feedbackContainer" class="text-muted d-flex justify-content-center" id="result-detail-spinner">

@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap, take } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
@@ -15,12 +15,15 @@ import { ScoreChartPreset } from 'app/shared/chart/presets/scoreChartPreset';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import {
+    createCommitUrl,
     isProgrammingExerciseParticipation,
     isProgrammingExerciseStudentParticipation,
     isResultPreliminary,
 } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { round } from 'app/shared/util/utils';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 export enum FeedbackItemType {
     Issue,
@@ -47,6 +50,7 @@ export class FeedbackItem {
 export class ResultDetailComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
+    readonly ExerciseType = ExerciseType;
     readonly round = round;
 
     @Input() result: Result;
@@ -65,7 +69,9 @@ export class ResultDetailComponent implements OnInit {
     scoreChartPreset: ScoreChartPreset;
     showScoreChartTooltip = false;
 
-    constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private buildLogService: BuildLogService, translateService: TranslateService) {
+    commitHashURLTemplate?: string;
+
+    constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private buildLogService: BuildLogService, translateService: TranslateService, private profileService: ProfileService) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
         const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
         this.scoreChartPreset = new ScoreChartPreset([pointsLabel, deductionsLabel]);
@@ -121,6 +127,15 @@ export class ResultDetailComponent implements OnInit {
             .subscribe(() => {
                 this.isLoading = false;
             });
+
+        // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
+        this.profileService
+            .getProfileInfo()
+            .pipe(
+                take(1),
+                tap((info: ProfileInfo) => (this.commitHashURLTemplate = info?.commitHashURLTemplate)),
+            )
+            .subscribe();
     }
 
     /**
@@ -348,5 +363,15 @@ export class ResultDetailComponent implements OnInit {
             isProgrammingExerciseStudentParticipation(this.result.participation) &&
             isResultPreliminary(this.result!, this.result.participation.exercise as ProgrammingExercise)
         );
+    }
+
+    getCommitHash(): string {
+        return (this.result?.submission as ProgrammingSubmission)?.commitHash ?? 'n.a.';
+    }
+
+    getCommitUrl(): string {
+        const projectKey = (this.result?.participation?.exercise as ProgrammingExercise)?.projectKey;
+        const programmingSubmission = (this.result?.submission as ProgrammingSubmission);
+        return createCommitUrl(this.commitHashURLTemplate, projectKey, this.result?.participation, programmingSubmission);
     }
 }
