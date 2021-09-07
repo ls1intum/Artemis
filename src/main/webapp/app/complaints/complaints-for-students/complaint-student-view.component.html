@@ -1,47 +1,41 @@
-<div *ngIf='showComplaintsSection'>
-    <div class='mt-4' *ngIf='result?.completionDate && isCurrentUserSubmissionAuthor && complaint'>
+<div *ngIf="showComplaintsSection">
+    <div class="mt-4" *ngIf="result?.completionDate && isCurrentUserSubmissionAuthor && complaint">
         <button
-            *ngIf='isExamMode || (course?.maxComplaints && course!.maxComplaints! > 0)'
-            class='btn btn-primary'
-            [class.not-allowed]='(!isExamMode && numberOfAllowedComplaints == 0) || !timeOfComplaintValid'
-            (click)='formComplaintType = ComplaintType.COMPLAINT'
-            [disabled]='(!isExamMode && numberOfAllowedComplaints == 0) || !timeOfComplaintValid'
+            *ngIf="isExamMode || (course?.maxComplaints && course!.maxComplaints! > 0)"
+            class="btn btn-primary"
+            [class.not-allowed]="(!isExamMode && numberOfAllowedComplaints == 0) || !timeOfComplaintValid"
+            (click)="formComplaintType = ComplaintType.COMPLAINT"
+            [disabled]="(!isExamMode && numberOfAllowedComplaints == 0) || !timeOfComplaintValid"
             title="{{ (!isExamMode && numberOfAllowedComplaints == 0) || !timeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | artemisTranslate) : '' }}"
         >
             {{ 'artemisApp.complaint.moreInfo' | artemisTranslate }}
         </button>
         <button
-            *ngIf='!isExamMode && course?.requestMoreFeedbackEnabled'
-            class='btn btn-primary ms-1'
-            [class.not-allowed]='!timeOfFeedbackRequestValid'
-            (click)='formComplaintType = ComplaintType.MORE_FEEDBACK'
-            [disabled]='!timeOfFeedbackRequestValid'
+            *ngIf="!isExamMode && course?.requestMoreFeedbackEnabled"
+            class="btn btn-primary ms-1"
+            [class.not-allowed]="!timeOfFeedbackRequestValid"
+            (click)="formComplaintType = ComplaintType.MORE_FEEDBACK"
+            [disabled]="!timeOfFeedbackRequestValid"
             title="{{ !timeOfFeedbackRequestValid ? ('artemisApp.moreFeedback.notAllowedTooltip' | artemisTranslate) : '' }}"
         >
             {{ 'artemisApp.moreFeedback.button' | artemisTranslate }}
         </button>
     </div>
 
-    <div class='row' *ngIf='!complaint && result && formComplaintType'>
+    <div class="row" *ngIf="!complaint && result && formComplaintType">
         <jhi-complaint-form
-            class='flex-grow-1'
-            [exercise]='exercise'
-            [resultId]='result.id!'
-            [examId]='exam?.id!'
-            [allowedComplaints]='numberOfAllowedComplaints'
-            [complaintType]='formComplaintType'
-            [isCurrentUserSubmissionAuthor]='isCurrentUserSubmissionAuthor'
-            (submit)='loadPotentialComplaint()'
+            class="flex-grow-1"
+            [exercise]="exercise"
+            [resultId]="result.id!"
+            [examId]="exam?.id!"
+            [allowedComplaints]="numberOfAllowedComplaints"
+            [complaintType]="formComplaintType"
+            [isCurrentUserSubmissionAuthor]="isCurrentUserSubmissionAuthor"
+            (submit)="loadPotentialComplaint()"
         ></jhi-complaint-form>
     </div>
-    <div class='row' *ngIf='complaint'>
-        <jhi-complaint-request
-            class='col-12 col-md-6'
-            [complaint]='complaint'
-        ></jhi-complaint-request>
-        <jhi-complaint-response
-            class='col-12 col-md-6'
-            [complaint]='complaint'
-        ></jhi-complaint-response>
+    <div class="row" *ngIf="complaint">
+        <jhi-complaint-request class="col-12 col-md-6" [complaint]="complaint"></jhi-complaint-request>
+        <jhi-complaint-response class="col-12 col-md-6" [complaint]="complaint"></jhi-complaint-response>
     </div>
 </div>

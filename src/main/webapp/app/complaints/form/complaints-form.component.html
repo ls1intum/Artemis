@@ -1,4 +1,4 @@
-<div class="col-12 mt-4" *ngIf='isCurrentUserSubmissionAuthor'>
+<div class="col-12 mt-4" *ngIf="isCurrentUserSubmissionAuthor">
     <jhi-alert *ngIf="!examId"></jhi-alert>
     <div class="row">
         <div class="col-12">
@@ -31,9 +31,9 @@
             <p>
                 <span *ngIf="exercise.teamMode">
                     {{
-                    complaintType === ComplaintType.MORE_FEEDBACK
-                        ? ('artemisApp.moreFeedback.beDescriptiveTeam' | artemisTranslate)
-                        : ('artemisApp.complaint.beDescriptiveTeam' | artemisTranslate)
+                        complaintType === ComplaintType.MORE_FEEDBACK
+                            ? ('artemisApp.moreFeedback.beDescriptiveTeam' | artemisTranslate)
+                            : ('artemisApp.complaint.beDescriptiveTeam' | artemisTranslate)
                     }}
                 </span>
                 <span *ngIf="!exercise.teamMode">
@@ -44,26 +44,16 @@
                     }}
                 </span>
             </p>
-            <p *ngIf='!examId'>
-                {{ ('artemisApp.complaint.exclusivityDisclaimer' | artemisTranslate) }}
+            <p *ngIf="!examId">
+                {{ 'artemisApp.complaint.exclusivityDisclaimer' | artemisTranslate }}
             </p>
 
-            <textarea
-                id="complainTextArea"
-                class="col-12 px-1"
-                rows="4"
-                maxLength="2000"
-                [(ngModel)]="complaintText"
-            ></textarea>
+            <textarea id="complainTextArea" class="col-12 px-1" rows="4" maxLength="2000" [(ngModel)]="complaintText"></textarea>
 
             <div class="row">
                 <div class="col-6">
                     <button class="btn btn-primary" [disabled]="!complaintText" (click)="createComplaint()">
-                        {{
-                            complaintType === ComplaintType.COMPLAINT
-                                ? ('artemisApp.complaint.submit' | artemisTranslate)
-                                : ('artemisApp.moreFeedback.button' | artemisTranslate)
-                        }}
+                        {{ complaintType === ComplaintType.COMPLAINT ? ('artemisApp.complaint.submit' | artemisTranslate) : ('artemisApp.moreFeedback.button' | artemisTranslate) }}
                     </button>
                 </div>
             </div>
