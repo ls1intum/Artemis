@@ -32,6 +32,8 @@ import { MockPostService } from '../../../helpers/mocks/service/mock-post.servic
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import {
     metisAnswerPostUser1,
     metisCourse,
@@ -80,6 +82,7 @@ describe('CourseDiscussionComponent', () => {
                 { provide: PostService, useClass: MockPostService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
             declarations: [
                 CourseDiscussionComponent,

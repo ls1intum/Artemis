@@ -64,6 +64,11 @@ describe('PostHeaderComponent', () => {
         sinon.restore();
     });
 
+    it('should have information on answers after init', () => {
+        expect(component.numberOfAnswerPosts).to.not.be.undefined;
+        expect(component.hasApprovedAnswers).to.not.be.undefined;
+    });
+
     it('should set date information correctly for post of today', () => {
         fixture.detectChanges();
         expect(getElement(debugElement, '.today-flag')).to.exist;

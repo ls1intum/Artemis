@@ -60,6 +60,18 @@ export class MockMetisService {
         return true;
     }
 
+    getNumberOfAnswerPosts(post: Post): number {
+        return <number>post.answers?.length! ? post.answers?.length! : 0;
+    }
+
+    checkForApprovedAnswers(post: Post): boolean {
+        if (this.getNumberOfAnswerPosts(post) > 0) {
+            return post.answers!.filter((answer: AnswerPost) => answer.tutorApproved === true).length > 0;
+        } else {
+            return false;
+        }
+    }
+
     getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {}
 
     getContextInformation(post: Post): ContextInformation {

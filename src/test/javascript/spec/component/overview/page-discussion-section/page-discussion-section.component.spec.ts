@@ -27,6 +27,8 @@ import { PostingsThreadComponent } from 'app/shared/metis/postings-thread/postin
 import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 import {
     metisCourse,
     metisExercise,
@@ -60,6 +62,7 @@ describe('PageDiscussionSectionComponent', () => {
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: PostService, useClass: MockPostService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
             declarations: [
                 PageDiscussionSectionComponent,

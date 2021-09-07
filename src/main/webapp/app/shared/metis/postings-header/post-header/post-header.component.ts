@@ -24,6 +24,7 @@ export class PostHeaderComponent extends PostingsHeaderDirective<Post> implement
      * on initialization: updates answer post information
      */
     ngOnInit(): void {
+        super.ngOnInit();
         this.numberOfAnswerPosts = this.metisService.getNumberOfAnswerPosts(this.posting);
         this.hasApprovedAnswers = this.metisService.checkForApprovedAnswers(this.posting);
     }
@@ -32,6 +33,7 @@ export class PostHeaderComponent extends PostingsHeaderDirective<Post> implement
      * on initialization: updates answer post information
      */
     ngOnChanges(): void {
+        super.ngOnInit();
         this.numberOfAnswerPosts = this.metisService.getNumberOfAnswerPosts(this.posting);
         this.hasApprovedAnswers = this.metisService.checkForApprovedAnswers(this.posting);
     }
