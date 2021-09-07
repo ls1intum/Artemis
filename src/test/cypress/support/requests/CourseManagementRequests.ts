@@ -11,7 +11,7 @@ import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
 export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
-export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
+export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises/';
 
 /**
  * A class which encapsulates all cypress requests related to course management.
