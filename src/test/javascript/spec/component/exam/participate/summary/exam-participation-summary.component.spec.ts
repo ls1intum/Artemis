@@ -37,7 +37,7 @@ import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { ComplaintStudentViewComponent } from 'app/complaints/complaints-for-students/complaint-student-view.component';
+import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { of } from 'rxjs';
@@ -108,7 +108,7 @@ function sharedSetup(url: string[]) {
                 MockComponent(ModelingExamSummaryComponent),
                 MockComponent(TextExamSummaryComponent),
                 MockComponent(FileUploadExamSummaryComponent),
-                MockComponent(ComplaintStudentViewComponent),
+                MockComponent(ComplaintsStudentViewComponent),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),

@@ -41,7 +41,7 @@ import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { NgModel } from '@angular/forms';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ComplaintStudentViewComponent } from 'app/complaints/complaints-for-students/complaint-student-view.component';
+import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 
 describe('TextEditorComponent', () => {
     // needed to make sure ace is defined
@@ -76,7 +76,7 @@ describe('TextEditorComponent', () => {
                 MockComponent(ButtonComponent),
                 MockComponent(TextResultComponent),
                 MockComponent(ComplaintsFormComponent),
-                MockComponent(ComplaintStudentViewComponent),
+                MockComponent(ComplaintsStudentViewComponent),
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(HeaderParticipationPageComponent),

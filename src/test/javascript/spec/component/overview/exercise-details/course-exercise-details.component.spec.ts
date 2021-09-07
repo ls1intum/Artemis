@@ -58,7 +58,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ComplaintStudentViewComponent } from 'app/complaints/complaints-for-students/complaint-student-view.component';
+import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -113,7 +113,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ProgrammingExerciseInstructionComponent),
                 MockComponent(ResultHistoryComponent),
                 MockComponent(ResultComponent),
-                MockComponent(ComplaintStudentViewComponent),
+                MockComponent(ComplaintsStudentViewComponent),
                 MockComponent(RatingComponent),
                 RouterLinkSpy,
                 MockComponent(AlertComponent),
