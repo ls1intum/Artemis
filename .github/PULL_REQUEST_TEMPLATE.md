@@ -3,22 +3,22 @@
 
 ### Checklist
 #### General
-<!-- If testing it locally is acceptable, you may remove the first checkmark. If you are unsure, please test on the test servers -->
+<!-- If testing it locally is acceptable, you may remove the first checkmark. If you are unsure, please test on the test servers. -->
 - [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server.
 - [ ] I tested **all** changes and their related features with **all** corresponding user types locally. I used a local CI setup if necessary.
 - [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://docs.artemis.ase.in.tum.de/dev/guidelines/language-guidelines/).
 #### Server
 - [ ] I followed the [coding and design guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/server/).
-- [ ] I added multiple integration tests (Spring) related to the features (with a high test coverage)
-- [ ] I added `@PreAuthorize` and check the course groups for all new REST Calls (security)
-- [ ] I implemented the changes with a good performance and prevented too many database calls
+- [ ] I added multiple integration tests (Spring) related to the features (with a high test coverage).
+- [ ] I added `@PreAuthorize` and check the course groups for all new REST Calls (security).
+- [ ] I implemented the changes with a good performance and prevented too many database calls.
 - [ ] I documented the Java code using JavaDoc style.
 #### Client
 - [ ] I followed the [coding and design guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/client/).
 - [ ] I added multiple integration tests (Jest) related to the features (with a high test coverage), while following the [test guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/client-testing/).
-- [ ] I added `authorities` to all new routes and check the course groups for displaying navigation elements (links, buttons)
+- [ ] I added `authorities` to all new routes and check the course groups for displaying navigation elements (links, buttons).
 - [ ] I documented the TypeScript code using JSDoc style.
-- [ ] I added multiple screenshots/screencasts of my UI changes
+- [ ] I added multiple screenshots/screencasts of my UI changes.
 - [ ] I translated all newly inserted strings into English and German.
 
 ### Motivation and Context
