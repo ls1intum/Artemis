@@ -170,7 +170,8 @@ public class MailService {
 
         context.setVariable(NOTIFICATION, notification);
         context.setVariable(NOTIFICATION_SUBJECT, findNotificationSubject(notification));
-        context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification));
+        // replace with (e.g.) "http://localhost:9000" for local testing
+        context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, BASE_URL));
         context.setVariable(IS_GROUP_NOTIFICATION, isGroup);
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
 
