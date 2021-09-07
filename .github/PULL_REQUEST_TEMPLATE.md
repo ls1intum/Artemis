@@ -4,8 +4,8 @@
 ### Checklist
 #### General
 <!-- If testing it locally is acceptable, you may remove the first checkmark. If you are unsure, please test on the test servers -->
-- [ ] I tested **all** changes and their related features with the corresponding users (student, tutor, editor, instructor, admin) on a test server.
-- [ ] I tested **all** changes and their related features with the corresponding users (student, tutor, editor, instructor, admin) locally. I used a local CI setup if necessary.
+- [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server.
+- [ ] I tested **all** changes and their related features with **all** corresponding user types locally. I used a local CI setup if necessary.
 - [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://docs.artemis.ase.in.tum.de/dev/guidelines/language-guidelines/).
 #### Server
 - [ ] I followed the [coding and design guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/server/).
