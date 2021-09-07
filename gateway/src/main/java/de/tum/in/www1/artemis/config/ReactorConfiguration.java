@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+
 import reactor.core.publisher.Hooks;
 import tech.jhipster.config.JHipsterConstants;
 

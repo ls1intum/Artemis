@@ -1,14 +1,15 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.config.KafkaProperties;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
+
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
+
+import de.tum.in.www1.artemis.config.KafkaProperties;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.kafka.receiver.KafkaReceiver;
@@ -25,6 +26,7 @@ public class GatewayKafkaResource {
     private final Logger log = LoggerFactory.getLogger(GatewayKafkaResource.class);
 
     private final KafkaProperties kafkaProperties;
+
     private KafkaSender<String, String> sender;
 
     public GatewayKafkaResource(KafkaProperties kafkaProperties) {
@@ -33,21 +35,10 @@ public class GatewayKafkaResource {
     }
 
     @PostMapping("/publish/{topic}")
-    public Mono<PublishResult> publish(
-        @PathVariable String topic,
-        @RequestParam String message,
-        @RequestParam(required = false) String key
-    ) {
+    public Mono<PublishResult> publish(@PathVariable String topic, @RequestParam String message, @RequestParam(required = false) String key) {
         log.debug("REST request to send to Kafka topic {} with key {} the message : {}", topic, key, message);
-        return Mono
-            .just(SenderRecord.create(topic, null, null, key, message, null))
-            .as(sender::send)
-            .next()
-            .map(SenderResult::recordMetadata)
-            .map(
-                metadata ->
-                    new PublishResult(metadata.topic(), metadata.partition(), metadata.offset(), Instant.ofEpochMilli(metadata.timestamp()))
-            );
+        return Mono.just(SenderRecord.create(topic, null, null, key, message, null)).as(sender::send).next().map(SenderResult::recordMetadata)
+                .map(metadata -> new PublishResult(metadata.topic(), metadata.partition(), metadata.offset(), Instant.ofEpochMilli(metadata.timestamp())));
     }
 
     @GetMapping("/consume")
@@ -64,8 +55,11 @@ public class GatewayKafkaResource {
     private static class PublishResult {
 
         public final String topic;
+
         public final int partition;
+
         public final long offset;
+
         public final Instant timestamp;
 
         private PublishResult(String topic, int partition, long offset, Instant timestamp) {

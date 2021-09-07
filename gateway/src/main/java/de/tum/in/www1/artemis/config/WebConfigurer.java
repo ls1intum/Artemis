@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.web.reactive.ResourceHandlerRegistrationCustomizer;
@@ -20,6 +20,9 @@ import org.springframework.web.reactive.result.method.HandlerMethodArgumentResol
 import org.springframework.web.server.WebExceptionHandler;
 import org.zalando.problem.spring.webflux.advice.ProblemExceptionHandler;
 import org.zalando.problem.spring.webflux.advice.ProblemHandling;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.web.filter.reactive.CachingHttpHeadersFilter;

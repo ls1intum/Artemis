@@ -2,17 +2,20 @@ package de.tum.in.www1.artemis.config;
 
 import static tech.jhipster.config.logging.LoggingUtils.*;
 
-import ch.qos.logback.classic.LoggerContext;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Configuration;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import ch.qos.logback.classic.LoggerContext;
 import tech.jhipster.config.JHipsterProperties;
 
 /*
@@ -22,13 +25,8 @@ import tech.jhipster.config.JHipsterProperties;
 @RefreshScope
 public class LoggingConfiguration {
 
-    public LoggingConfiguration(
-        @Value("${spring.application.name}") String appName,
-        @Value("${server.port}") String serverPort,
-        JHipsterProperties jHipsterProperties,
-        ObjectProvider<BuildProperties> buildProperties,
-        ObjectMapper mapper
-    ) throws JsonProcessingException {
+    public LoggingConfiguration(@Value("${spring.application.name}") String appName, @Value("${server.port}") String serverPort, JHipsterProperties jHipsterProperties,
+            ObjectProvider<BuildProperties> buildProperties, ObjectMapper mapper) throws JsonProcessingException {
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 
         Map<String, String> map = new HashMap<>();

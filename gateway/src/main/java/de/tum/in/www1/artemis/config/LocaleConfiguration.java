@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.config;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.TimeZone;
+
 import javax.annotation.Nonnull;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration;
@@ -64,6 +66,7 @@ public class LocaleConfiguration {
         public LocaleContext resolveLocaleContext(@Nonnull ServerWebExchange exchange) {
             parseLocaleCookieIfNecessary(exchange);
             return new TimeZoneAwareLocaleContext() {
+
                 @Override
                 public Locale getLocale() {
                     return (Locale) exchange.getAttribute(LOCALE_REQUEST_ATTRIBUTE_NAME);
@@ -87,19 +90,16 @@ public class LocaleConfiguration {
                 if (localeContext instanceof TimeZoneAwareLocaleContext) {
                     timeZone = ((TimeZoneAwareLocaleContext) localeContext).getTimeZone();
                 }
-                addCookie(
-                    exchange.getResponse(),
-                    QUOTE + (locale != null ? locale.toString() : "-") + (timeZone != null ? ' ' + timeZone.getID() : "") + QUOTE
-                );
-            } else {
+                addCookie(exchange.getResponse(), QUOTE + (locale != null ? locale.toString() : "-") + (timeZone != null ? ' ' + timeZone.getID() : "") + QUOTE);
+            }
+            else {
                 removeCookie(exchange.getResponse());
             }
-            exchange
-                .getAttributes()
-                .put(LOCALE_REQUEST_ATTRIBUTE_NAME, (locale != null ? locale : LocaleContextHolder.getLocale(exchange.getLocaleContext())));
+            exchange.getAttributes().put(LOCALE_REQUEST_ATTRIBUTE_NAME, (locale != null ? locale : LocaleContextHolder.getLocale(exchange.getLocaleContext())));
             if (timeZone != null) {
                 exchange.getAttributes().put(TIME_ZONE_REQUEST_ATTRIBUTE_NAME, timeZone);
-            } else {
+            }
+            else {
                 exchange.getAttributes().remove(TIME_ZONE_REQUEST_ATTRIBUTE_NAME);
             }
         }
@@ -146,22 +146,15 @@ public class LocaleConfiguration {
                         timeZone = StringUtils.parseTimeZoneString(timeZonePart);
                     }
                     if (logger.isTraceEnabled()) {
-                        logger.trace(
-                            "Parsed cookie value [" +
-                            cookie.getValue() +
-                            "] into locale '" +
-                            locale +
-                            "'" +
-                            (timeZone != null ? " and time zone '" + timeZone.getID() + "'" : "")
-                        );
+                        logger.trace("Parsed cookie value [" + cookie.getValue() + "] into locale '" + locale + "'"
+                                + (timeZone != null ? " and time zone '" + timeZone.getID() + "'" : ""));
                     }
                 }
-                exchange
-                    .getAttributes()
-                    .put(LOCALE_REQUEST_ATTRIBUTE_NAME, locale != null ? locale : exchange.getLocaleContext().getLocale());
+                exchange.getAttributes().put(LOCALE_REQUEST_ATTRIBUTE_NAME, locale != null ? locale : exchange.getLocaleContext().getLocale());
                 if (timeZone != null) {
                     exchange.getAttributes().put(TIME_ZONE_REQUEST_ATTRIBUTE_NAME, timeZone);
-                } else {
+                }
+                else {
                     exchange.getAttributes().remove(TIME_ZONE_REQUEST_ATTRIBUTE_NAME);
                 }
             }
