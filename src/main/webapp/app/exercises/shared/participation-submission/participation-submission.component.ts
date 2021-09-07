@@ -27,6 +27,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { createCommitUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -174,27 +175,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     getCommitUrl(submission: ProgrammingSubmission): string | undefined {
-        const projectKey = (this.exercise as ProgrammingExercise)?.projectKey!.toLowerCase();
-        let repoSlug: string | undefined = undefined;
-        if (this.participation?.type === ParticipationType.PROGRAMMING) {
-            const studentParticipation = this.participation as ProgrammingExerciseStudentParticipation;
-            if (studentParticipation.repositoryUrl) {
-                repoSlug = projectKey + '-' + studentParticipation.participantIdentifier;
-            }
-        } else if (this.participation?.type === ParticipationType.TEMPLATE) {
-            // In case of a test submisson, we need to use the test repository
-            repoSlug = projectKey + (submission?.type === SubmissionType.TEST ? '-tests' : '-exercise');
-        } else if (this.participation?.type === ParticipationType.SOLUTION) {
-            // In case of a test submisson, we need to use the test repository
-            repoSlug = projectKey + (submission?.type === SubmissionType.TEST ? '-tests' : '-solution');
-        }
-        if (repoSlug && this.commitHashURLTemplate) {
-            return this.commitHashURLTemplate
-                .replace('{projectKey}', projectKey)
-                .replace('{repoSlug}', repoSlug)
-                .replace('{commitHash}', submission.commitHash ?? '');
-        }
-        return '';
+        return createCommitUrl(this.commitHashURLTemplate, (this.exercise as ProgrammingExercise)?.projectKey, this.participation, submission);
     }
 
     /**

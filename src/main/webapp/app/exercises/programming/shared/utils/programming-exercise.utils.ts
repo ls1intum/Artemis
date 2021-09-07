@@ -7,6 +7,9 @@ import * as moment from 'moment';
 import { isMoment } from 'moment';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { SubmissionType } from 'app/entities/submission.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
@@ -23,6 +26,30 @@ export const createBuildPlanUrl = (template: string, projectKey: string, buildPl
     if (template && projectKey && buildPlanId) {
         return template.replace('{buildPlanId}', buildPlanId).replace('{projectKey}', projectKey);
     }
+};
+
+export const createCommitUrl = (template: string | undefined, projectKey: string | undefined, participation: Participation | undefined, submission: ProgrammingSubmission): string => {
+    const projectKeyLowerCase = projectKey!.toLowerCase();
+    let repoSlug: string | undefined = undefined;
+    if (participation?.type === ParticipationType.PROGRAMMING) {
+        const studentParticipation = participation as ProgrammingExerciseStudentParticipation;
+        if (studentParticipation.repositoryUrl) {
+            repoSlug = projectKeyLowerCase + '-' + studentParticipation.participantIdentifier;
+        }
+    } else if (participation?.type === ParticipationType.TEMPLATE) {
+        // In case of a test submisson, we need to use the test repository
+        repoSlug = projectKeyLowerCase + (submission?.type === SubmissionType.TEST ? '-tests' : '-exercise');
+    } else if (participation?.type === ParticipationType.SOLUTION) {
+        // In case of a test submisson, we need to use the test repository
+        repoSlug = projectKeyLowerCase + (submission?.type === SubmissionType.TEST ? '-tests' : '-solution');
+    }
+    if (repoSlug && template) {
+        return template
+            .replace('{projectKey}', projectKeyLowerCase)
+            .replace('{repoSlug}', repoSlug)
+            .replace('{commitHash}', submission.commitHash ?? '');
+    }
+    return '';
 };
 
 /**
