@@ -9,7 +9,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { MockComponent, MockDirective, MockProvider, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockProvider, MockModule, MockPipe } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FormsModule } from '@angular/forms';
