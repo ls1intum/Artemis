@@ -1,0 +1,72 @@
+<div class="col-12 mt-4" *ngIf='isCurrentUserSubmissionAuthor'>
+    <jhi-alert *ngIf="!examId"></jhi-alert>
+    <div class="row">
+        <div class="col-12">
+            <h3>{{ complaintType === ComplaintType.COMPLAINT ? ('artemisApp.complaint.title' | artemisTranslate) : ('artemisApp.moreFeedback.title' | artemisTranslate) }}</h3>
+            <p *ngIf="complaintType === ComplaintType.COMPLAINT; else moreFeedbackDescription">
+                <span
+                    *ngIf="!examId && allowedComplaints === undefined"
+                    [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeam' : 'description')"
+                    [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse }"
+                ></span>
+                <span
+                    *ngIf="!examId && allowedComplaints >= 0"
+                    [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
+                    [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse, allowedComplaints: allowedComplaints }"
+                ></span>
+                <span *ngIf="examId" [jhiTranslate]="'artemisApp.complaint.descriptionExam'"></span>
+                <fa-icon *ngIf="!examId" [icon]="'info-circle'" title="{{ 'artemisApp.complaint.info' | artemisTranslate }}" class="info-icon"></fa-icon>
+            </p>
+            <ng-template #moreFeedbackDescription>
+                <p>
+                    {{ 'artemisApp.moreFeedback.' + (exercise.teamMode ? 'descriptionTeam' : 'description') | artemisTranslate }}
+                    <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.moreFeedback.info' | artemisTranslate }}" class="info-icon"></fa-icon>
+                </p>
+            </ng-template>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-md-6">
+            <p>
+                <span *ngIf="exercise.teamMode">
+                    {{
+                    complaintType === ComplaintType.MORE_FEEDBACK
+                        ? ('artemisApp.moreFeedback.beDescriptiveTeam' | artemisTranslate)
+                        : ('artemisApp.complaint.beDescriptiveTeam' | artemisTranslate)
+                    }}
+                </span>
+                <span *ngIf="!exercise.teamMode">
+                    {{
+                        complaintType === ComplaintType.MORE_FEEDBACK
+                            ? ('artemisApp.moreFeedback.beDescriptive' | artemisTranslate)
+                            : ('artemisApp.complaint.beDescriptive' | artemisTranslate)
+                    }}
+                </span>
+            </p>
+            <p *ngIf='!examId'>
+                {{ ('artemisApp.complaint.exclusivityDisclaimer' | artemisTranslate) }}
+            </p>
+
+            <textarea
+                id="complainTextArea"
+                class="col-12 px-1"
+                rows="4"
+                maxLength="2000"
+                [(ngModel)]="complaintText"
+            ></textarea>
+
+            <div class="row">
+                <div class="col-6">
+                    <button class="btn btn-primary" [disabled]="!complaintText" (click)="createComplaint()">
+                        {{
+                            complaintType === ComplaintType.COMPLAINT
+                                ? ('artemisApp.complaint.submit' | artemisTranslate)
+                                : ('artemisApp.moreFeedback.button' | artemisTranslate)
+                        }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

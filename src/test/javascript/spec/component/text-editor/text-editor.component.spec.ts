@@ -22,7 +22,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
-import { ComplaintsComponent } from 'app/complaints/complaints.component';
+import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text-submission.service';
@@ -75,7 +75,7 @@ describe('TextEditorComponent', () => {
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ButtonComponent),
                 MockComponent(TextResultComponent),
-                MockComponent(ComplaintsComponent),
+                MockComponent(ComplaintsFormComponent),
                 MockComponent(ComplaintInteractionsComponent),
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisTranslatePipe),
