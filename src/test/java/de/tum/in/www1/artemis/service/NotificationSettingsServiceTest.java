@@ -120,6 +120,10 @@ public class NotificationSettingsServiceTest {
         assertThat(!resultingTypeSet.contains(NotificationType.ATTACHMENT_CHANGE));
     }
 
+    /**
+     * Tests the method checkIfNotificationEmailIsAllowedBySettingsForGivenUser
+     * I.e. tests if the email notification settings correctly block/allow the creation of emails based on notification (type)
+     */
     @Test
     public void testCheckIfNotificationEmailIsAllowedBySettingsForGivenUser() {
         NotificationType allowedType = NotificationType.EXERCISE_PRACTICE;

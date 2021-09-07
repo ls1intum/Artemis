@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import io.github.jhipster.config.JHipsterProperties;
 
 /**
@@ -38,8 +37,6 @@ public class MailService {
 
     private static final String USER = "user";
 
-    private static final String GROUP = "group";
-
     private static final String BASE_URL = "baseUrl";
 
     private final JHipsterProperties jHipsterProperties;
@@ -50,11 +47,7 @@ public class MailService {
 
     private final SpringTemplateEngine templateEngine;
 
-    private final UserRepository userRepository;
-
     // notification related variables
-
-    private NotificationSettingsService notificationSettingsService;
 
     private static final String NOTIFICATION = "notification";
 
@@ -64,14 +57,11 @@ public class MailService {
 
     private static final String IS_GROUP_NOTIFICATION = "isGroupNotification";
 
-    public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine,
-            UserRepository userRepository, NotificationSettingsService notificationSettingsService) {
+    public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine) {
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
         this.messageSource = messageSource;
         this.templateEngine = templateEngine;
-        this.userRepository = userRepository;
-        this.notificationSettingsService = notificationSettingsService;
     }
 
     /**
@@ -155,6 +145,11 @@ public class MailService {
 
     // notification related
 
+    /**
+     * Sends a notification based Email to one user or to multiple via BCC (i.e. only one email is created)
+     * @param notification which properties are used to create the email
+     * @param users that should be contacted (might be only one user)
+     */
     @Async
     public void sendNotificationEmail(Notification notification, List<User> users) {
         boolean isGroup = notification instanceof GroupNotification;

@@ -253,7 +253,7 @@ public class GroupNotificationService {
         List<User> usersThatShouldReceiveAnEmail = users.stream()
                 .filter(user -> notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, user)).collect(Collectors.toList());
 
-        if (usersThatShouldReceiveAnEmail.size() > 0) {
+        if (!usersThatShouldReceiveAnEmail.isEmpty()) {
             mailService.sendNotificationEmail(notification, usersThatShouldReceiveAnEmail);
         }
     }

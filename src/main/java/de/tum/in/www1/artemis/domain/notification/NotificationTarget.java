@@ -8,22 +8,16 @@ import com.google.gson.Gson;
  */
 public class NotificationTarget {
 
-    private String message;
-
     private int id;
 
     private String entity;
 
     private int course;
 
-    private String mainPage;
-
     public NotificationTarget(String message, int id, String entity, int course, String mainPage) {
-        this.message = message;
         this.id = id;
         this.entity = entity;
         this.course = course;
-        this.mainPage = mainPage;
     }
 
     /**
