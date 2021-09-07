@@ -85,7 +85,7 @@
             >
         </button>
         <br />
-        <div class="d-flex flex-wrap">
+        <div class="d-flex flex-wrap flex-lg-nowrap">
             <ng-container *ngIf="!result?.completionDate">
                 <button class="btn m-1 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">
                     <fa-icon *ngIf="saveBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
