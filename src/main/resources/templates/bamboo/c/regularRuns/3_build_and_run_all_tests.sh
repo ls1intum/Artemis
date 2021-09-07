@@ -8,7 +8,7 @@
 sudo gcc -c -Wall assignment/*.c || error=true
 if [ ! $error ]
 then
-    cd tests || exit
+    cd tests || exit 0
     python3 Tests.py
     exit 0
 else
