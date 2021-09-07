@@ -94,7 +94,6 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
                     description: 'Receive a notification when the process of archiving a course or exam has been started',
                     optionCore: {
                         webapp: true,
-                        email: false,
                         optionSpecifier: OptionSpecifier.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
                     },
                 },

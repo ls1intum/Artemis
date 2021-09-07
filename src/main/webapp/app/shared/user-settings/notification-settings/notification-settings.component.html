@@ -25,17 +25,30 @@
                     <!--OptionDescription-->
                     {{ 'artemisApp.userSettings.optionDescriptions.' + (option.description | lowerCamelCase) | artemisTranslate }}
                 </span>
-                <!--OptionCore-->
-                <div class="form-check border-bottom">
-                    <input
-                        type="checkbox"
-                        class="form-check-input"
-                        [checked]="option.optionCore.webapp"
-                        id="{{ option.optionCore.optionSpecifier }}"
-                        value="{{ option.optionCore.webapp }}"
-                        (click)="toggleOption($event)"
-                    />
-                    <label class="form-check-label" for="{{ option.optionCore.optionSpecifier }}">WebApp</label>
+                <!--OptionCores-->
+                <div class="d-flex border-bottom">
+                    <div class="form-check pe-3">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            [checked]="option.optionCore.webapp"
+                            id="{{ option.optionCore.optionSpecifier }} webapp"
+                            value="{{ option.optionCore.webapp }}"
+                            (click)="toggleOption($event, true)"
+                        />
+                        <label class="form-check-label" for="{{ option.optionCore.optionSpecifier }} webapp">WebApp</label>
+                    </div>
+                    <div *ngIf="option.optionCore.email != undefined" class="form-check">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            [checked]="option.optionCore.email"
+                            id="{{ option.optionCore.optionSpecifier }} email"
+                            value="{{ option.optionCore.email }}"
+                            (click)="toggleOption($event, false)"
+                        />
+                        <label class="form-check-label" for="{{ option.optionCore.optionSpecifier }} email">Email</label>
+                    </div>
                 </div>
             </div>
         </div>

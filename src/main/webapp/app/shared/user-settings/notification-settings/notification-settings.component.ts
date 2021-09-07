@@ -31,14 +31,19 @@ export class NotificationSettingsComponent extends UserSettingsPrototypeComponen
      * Catches the toggle event from an user click
      * Toggles the respective option and mark it as changed (only changed option cores will be send to the server for saving)
      */
-    toggleOption(event: any) {
+    toggleOption(event: any, webApp: boolean) {
         this.optionsChanged = true;
-        const optionId = event.currentTarget.id;
+        let optionId = event.currentTarget.id;
+        optionId = optionId.substr(0, optionId.indexOf(' '));
         const foundOptionCore = this.optionCores.find((core) => core.optionSpecifier === optionId);
         if (!foundOptionCore) {
             return;
         }
-        foundOptionCore!.webapp = !foundOptionCore!.webapp;
+        if (webApp) {
+            foundOptionCore!.webapp = !foundOptionCore!.webapp;
+        } else {
+            foundOptionCore!.email = !foundOptionCore!.email;
+        }
         foundOptionCore.changed = true;
     }
 }

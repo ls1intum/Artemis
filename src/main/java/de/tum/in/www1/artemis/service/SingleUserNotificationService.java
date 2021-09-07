@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 
+import java.util.Collections;
+
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -55,6 +57,22 @@ public class SingleUserNotificationService {
     private void saveAndSend(SingleUserNotification notification) {
         singleUserNotificationRepository.save(notification);
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
-        mailService.prepareSingleUserNotificationEmail(notification);
+        prepareSingleUserNotificationEmail(notification);
+    }
+
+    /**
+     * Checks if an email should be created based on the provided notification, user, notification settings and type for SingleUserNotifications
+     * If the checks are successful creates and sends a corresponding email
+     * @param notification that should be checked
+     */
+    private void prepareSingleUserNotificationEmail(SingleUserNotification notification) {
+        boolean hasEmailSupport = notificationSettingsService.checkNotificationTypeForEmailSupport(notification.getOriginalNotificationType());
+        if (hasEmailSupport) {
+            boolean isAllowedBySettings = notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient());
+            if (isAllowedBySettings) {
+                // method works with single and group notifications therefore using a list of users
+                mailService.sendNotificationEmail(notification, Collections.singletonList(notification.getRecipient()));
+            }
+        }
     }
 }

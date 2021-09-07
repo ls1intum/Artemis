@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactor
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -240,7 +241,20 @@ public class GroupNotificationService {
                 break;
             }
         }
-        mailService.prepareGroupNotificationEmail(notification, foundUsers);
+        prepareGroupNotificationEmail(notification, foundUsers);
     }
 
+    /**
+     * Checks if an email should be created based on the provided notification, users, notification settings and type for GroupNotifications
+     * If the checks are successful creates and sends a corresponding email
+     * @param notification that should be checked
+     */
+    public void prepareGroupNotificationEmail(GroupNotification notification, List<User> users) {
+        List<User> usersThatShouldReceiveAnEmail = users.stream()
+                .filter(user -> notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, user)).collect(Collectors.toList());
+
+        if (usersThatShouldReceiveAnEmail.size() > 0) {
+            mailService.sendNotificationEmail(notification, usersThatShouldReceiveAnEmail);
+        }
+    }
 }
