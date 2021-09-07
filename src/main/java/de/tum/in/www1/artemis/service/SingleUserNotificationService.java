@@ -63,13 +63,18 @@ public class SingleUserNotificationService {
     /**
      * Checks if an email should be created based on the provided notification, user, notification settings and type for SingleUserNotifications
      * If the checks are successful creates and sends a corresponding email
+     * If the notification type indicates an urgent (critical) email it will be send regardless of settings
      * @param notification that should be checked
      */
     private void prepareSingleUserNotificationEmail(SingleUserNotification notification) {
         boolean hasEmailSupport = notificationSettingsService.checkNotificationTypeForEmailSupport(notification.getOriginalNotificationType());
         if (hasEmailSupport) {
-            boolean isAllowedBySettings = notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient());
-            if (isAllowedBySettings) {
+            boolean isAllowedBySettings = false;
+            boolean isUrgentEmail = notificationSettingsService.checkNotificationTypeForEmailUrgency(notification.getOriginalNotificationType());
+            if (!isUrgentEmail) {
+                isAllowedBySettings = notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient());
+            }
+            if (isUrgentEmail || isAllowedBySettings) {
                 // method works with single and group notifications therefore using a list of users
                 mailService.sendNotificationEmail(notification, Collections.singletonList(notification.getRecipient()));
             }

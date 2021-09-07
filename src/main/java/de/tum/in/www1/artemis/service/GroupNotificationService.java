@@ -247,10 +247,17 @@ public class GroupNotificationService {
     /**
      * Checks if an email should be created based on the provided notification, users, notification settings and type for GroupNotifications
      * If the checks are successful creates and sends a corresponding email
+     * If the notification type indicates an urgent (critical) email it will be send to all users (regardless of settings)
      * @param notification that should be checked
      * @param users which will be filtered based on their notification (email) settings
      */
     public void prepareGroupNotificationEmail(GroupNotification notification, List<User> users) {
+        boolean isUrgentEmail = notificationSettingsService.checkNotificationTypeForEmailUrgency(notification.getOriginalNotificationType());
+        if (isUrgentEmail) {
+            mailService.sendNotificationEmail(notification, users);
+            return;
+        }
+
         List<User> usersThatShouldReceiveAnEmail = users.stream()
                 .filter(user -> notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, user)).collect(Collectors.toList());
 

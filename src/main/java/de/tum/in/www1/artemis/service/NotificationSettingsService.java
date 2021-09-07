@@ -18,6 +18,8 @@ public class NotificationSettingsService {
     private Set<NotificationType> notificationTypesWithNoEmailSupport = Set.of(NotificationType.COURSE_ARCHIVE_STARTED, NotificationType.COURSE_ARCHIVE_FINISHED,
             NotificationType.EXAM_ARCHIVE_STARTED, NotificationType.EXAM_ARCHIVE_FINISHED, NotificationType.UNSPECIFIED);
 
+    private Set<NotificationType> urgendEmailNotificationTypes = Set.of(NotificationType.DUPLICATE_TEST_CASE, NotificationType.ILLEGAL_SUBMISSION);
+
     public NotificationSettingsService(NotificationOptionRepository notificationOptionRepository) {
         this.notificationOptionRepository = notificationOptionRepository;
     }
@@ -30,6 +32,16 @@ public class NotificationSettingsService {
      */
     public boolean checkNotificationTypeForEmailSupport(NotificationType type) {
         return !notificationTypesWithNoEmailSupport.contains(type);
+    }
+
+    /**
+     * Checks if the (original) notification type indicates an urgent email
+     * i.e. an email should always be send (e.g. ILLEGAL_SUBMISSION) (users can not deactivate it via settings)
+     * @param type of the notification
+     * @return true if the type indicated an urgent case else false
+     */
+    public boolean checkNotificationTypeForEmailUrgency(NotificationType type) {
+        return urgendEmailNotificationTypes.contains(type);
     }
 
     /**
