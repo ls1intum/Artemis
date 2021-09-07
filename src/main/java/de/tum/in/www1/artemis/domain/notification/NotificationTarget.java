@@ -14,7 +14,8 @@ public class NotificationTarget {
 
     private int course;
 
-    public NotificationTarget(String message, int id, String entity, int course, String mainPage) {
+    // public NotificationTarget(String message, int id, String entity, int course, String mainPage) {
+    public NotificationTarget(int id, String entity, int course) {
         this.id = id;
         this.entity = entity;
         this.course = course;

@@ -35,7 +35,7 @@ export class NotificationSettingsComponent extends UserSettingsPrototypeComponen
         this.optionsChanged = true;
         let optionId = event.currentTarget.id;
         // optionId String could have an appended (e.g.( " email" or " webapp" to specify which option to toggle
-        if (optionId.indexOf(' ') != -1) {
+        if (optionId.indexOf(' ') !== -1) {
             optionId = optionId.substr(0, optionId.indexOf(' '));
         }
         const foundOptionCore = this.optionCores.find((core) => core.optionSpecifier === optionId);

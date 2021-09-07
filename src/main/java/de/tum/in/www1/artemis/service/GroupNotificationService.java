@@ -248,6 +248,7 @@ public class GroupNotificationService {
      * Checks if an email should be created based on the provided notification, users, notification settings and type for GroupNotifications
      * If the checks are successful creates and sends a corresponding email
      * @param notification that should be checked
+     * @param users which will be filtered based on their notification (email) settings
      */
     public void prepareGroupNotificationEmail(GroupNotification notification, List<User> users) {
         List<User> usersThatShouldReceiveAnEmail = users.stream()
