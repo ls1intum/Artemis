@@ -151,7 +151,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         // Students have more options to check their code if the offline IDE is activated, so we suggest different actions
         const missingResultInfo = {
             message: this.translate.instant('artemisApp.result.missing.programmingFailedSubmission.message'),
-        }
+        };
         if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
             return { ...missingResultInfo, tooltip: this.translate.instant('artemisApp.result.missing.programmingFailedSubmission.tooltipOfflineIde') };
         }
