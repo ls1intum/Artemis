@@ -54,7 +54,7 @@ describe('Programming exercise participations', () => {
             courseManagement.addStudentToCourse(course.id, users.getStudentTwo().username);
             courseManagement.addStudentToCourse(course.id, users.getStudentThree().username);
             courseManagement.createProgrammingExercise({ course }).then((exerciseResponse) => {
-                exercise = exerciseResponse;
+                exercise = exerciseResponse.body;
             });
         });
     }
