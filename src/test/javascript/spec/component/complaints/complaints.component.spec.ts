@@ -12,7 +12,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Exercise } from 'app/entities/exercise.model';
 
 const expect = chai.expect;
-describe('ComplaintsComponent', () => {
+xdescribe('ComplaintsComponent', () => {
     const exercise: Exercise = { id: 1, teamMode: false } as Exercise;
     let comp: ComplaintsFormComponent;
     let fixture: ComponentFixture<ComplaintsFormComponent>;
