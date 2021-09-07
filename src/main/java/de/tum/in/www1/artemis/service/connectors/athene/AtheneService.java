@@ -225,6 +225,8 @@ public class AtheneService {
             newBlock.setStartIndex(segment.getStartIndex());
             newBlock.setEndIndex(segment.getEndIndex());
             newBlock.automatic();
+
+            // Set TextBlock knowledge
             newBlock.setKnowledge(textAssessmentKnowledge);
 
             // take the corresponding TextSubmission and add the text blocks.
