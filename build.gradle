@@ -113,7 +113,7 @@ private excludedClassFilesForReport(classDirectories) {
 
 jacocoTestReport {
     reports {
-        xml.enabled true
+        xml.required = true
     }
     // we want to ignore some generated files in the domain folders
     afterEvaluate {
