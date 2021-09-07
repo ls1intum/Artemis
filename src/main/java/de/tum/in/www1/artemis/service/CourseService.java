@@ -303,6 +303,7 @@ public class CourseService {
      */
     public List<StudentDTO> registerUsersForCourseGroup(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
         var course = courseRepository.findByIdElseThrow(courseId);
+        String courseGroupName = defineCourseGroupName(course, courseGroup);
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         for (var studentDto : studentDTOs) {
             var registrationNumber = studentDto.getRegistrationNumber();
@@ -314,8 +315,8 @@ public class CourseService {
                     var student = optionalStudent.get();
                     // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the
                     // course)
-                    if (!student.getGroups().contains(courseGroup)) {
-                        userService.addUserToGroup(student, courseGroup);
+                    if (!student.getGroups().contains(courseGroupName)) {
+                        userService.addUserToGroup(student, courseGroupName);
                     }
                     continue;
                 }
@@ -327,7 +328,7 @@ public class CourseService {
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
                     // the newly created user needs to get the rights to access the course
-                    userService.addUserToGroup(student, courseGroup);
+                    userService.addUserToGroup(student, courseGroupName);
                     continue;
                 }
 
@@ -336,7 +337,7 @@ public class CourseService {
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
                     // the newly created user needs to get the rights to access the course
-                    userService.addUserToGroup(student, courseGroup);
+                    userService.addUserToGroup(student, courseGroupName);
                     continue;
                 }
 
@@ -350,6 +351,27 @@ public class CourseService {
         }
 
         return notFoundStudentsDTOs;
+    }
+
+    /**
+     * We want to add users to a group, however different courses might have different courseGroupNames, therefore we
+     * use this method to return the customized courseGroup name
+     *
+     * @param course the course we want to add a user to
+     * @param courseGroup the courseGroup we want to add the user to
+     *
+     * @return the customized userGroupName
+     */
+
+    private String defineCourseGroupName(Course course, String courseGroup) {
+        String properCourseGroupName = switch (courseGroup) {
+            case "students" -> course.getStudentGroupName();
+            case "tutors" -> course.getTeachingAssistantGroupName();
+            case "instructors" -> course.getInstructorGroupName();
+            case "editors" -> course.getEditorGroupName();
+            default -> "";
+        };
+        return properCourseGroupName;
     }
 
     /**
