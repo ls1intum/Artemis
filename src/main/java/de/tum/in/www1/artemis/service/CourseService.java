@@ -301,7 +301,7 @@ public class CourseService {
      * @param studentDTOs   the list of students (with at least registration number) who should get access to the exam
      * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
-    public List<StudentDTO> registerStudentsForCourse(Long courseId, List<StudentDTO> studentDTOs) {
+    public List<StudentDTO> registerUsersForCourseGroup(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
         var course = courseRepository.findByIdElseThrow(courseId);
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         for (var studentDto : studentDTOs) {
@@ -314,8 +314,8 @@ public class CourseService {
                     var student = optionalStudent.get();
                     // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the
                     // course)
-                    if (!student.getGroups().contains(course.getStudentGroupName())) {
-                        userService.addUserToGroup(student, course.getStudentGroupName());
+                    if (!student.getGroups().contains(courseGroup)) {
+                        userService.addUserToGroup(student, courseGroup);
                     }
                     continue;
                 }
@@ -326,8 +326,8 @@ public class CourseService {
                 optionalStudent = userService.createUserFromLdap(registrationNumber);
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
-                    // the newly created student needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
-                    userService.addUserToGroup(student, course.getStudentGroupName());
+                    // the newly created user needs to get the rights to access the course
+                    userService.addUserToGroup(student, courseGroup);
                     continue;
                 }
 
@@ -335,8 +335,8 @@ public class CourseService {
                 optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
                 if (optionalStudent.isPresent()) {
                     var student = optionalStudent.get();
-                    // the newly created student needs to get the rights to access the course, otherwise the student cannot access the exam (within the course)
-                    userService.addUserToGroup(student, course.getStudentGroupName());
+                    // the newly created user needs to get the rights to access the course
+                    userService.addUserToGroup(student, courseGroup);
                     continue;
                 }
 
