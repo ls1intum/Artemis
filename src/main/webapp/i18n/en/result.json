@@ -60,6 +60,14 @@
                 "points": "Points",
                 "deductions": "Deductions",
                 "tooltip": "Your deductions are limited in order to soften the effect of repeating issues. Be aware that you might have to solve multiple code issues to increase your score."
+            },
+            "missing": {
+                "viewPrevious": "View Last Result",
+                "programmingFailedSubmission": {
+                    "message": "No corresponding result available.",
+                    "tooltipOfflineIde": "No result was found / could be generated in time for your most recent submission. Please check your code manually in your IDE, e.g. check that your code compiles locally and works correctly.",
+                    "tooltipOnlineIde": "No result was found / could be generated in time for your most recent submission. Please check your code manually as far as possible."
+                }
             }
         }
     }

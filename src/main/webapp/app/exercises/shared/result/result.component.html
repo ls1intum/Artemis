@@ -70,7 +70,7 @@
         <span class="text-danger">
             <fa-icon [icon]="['fas', 'exclamation-circle']" size="lg"></fa-icon>&nbsp;
             <span [ngbTooltip]="missingResultInfo!.tooltip">{{ missingResultInfo!.message }}</span>
-            <span *ngIf="result && hasFeedback">, <span (click)="showDetails(result)">previous result</span></span>
+            <span *ngIf="result && hasFeedback" class="result" (click)="showDetails(result)">{{ 'artemisApp.result.missing.viewPrevious' | artemisTranslate }}</span>
         </span>
     </ng-container>
     <ng-container *ngSwitchDefault>

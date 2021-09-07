@@ -8,6 +8,7 @@ import { RepositoryService } from 'app/exercises/shared/result/repository.servic
 import * as moment from 'moment';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -136,11 +137,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 tap(({ submissionState }) => {
                     this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
                     if (submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION) {
-                        // TODO: translate
-                        this.missingResultInfo = {
-                            message: 'No latest result available.',
-                            tooltip: 'Please check your submission manually as far as possible. No result was found / could be generated.',
-                        };
+                        this.missingResultInfo = this.generateMissingResultInfoForFailedProgrammingExerciseSubmission();
                     } else {
                         // everything ok
                         this.missingResultInfo = undefined;
@@ -148,5 +145,16 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 }),
             )
             .subscribe();
+    }
+
+    private generateMissingResultInfoForFailedProgrammingExerciseSubmission() {
+        // Students have more options to check their code if the offline IDE is activated, so we suggest different actions
+        const missingResultInfo = {
+            message: this.translate.instant('artemisApp.result.missing.programmingFailedSubmission.message'),
+        }
+        if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
+            return { ...missingResultInfo, tooltip: this.translate.instant('artemisApp.result.missing.programmingFailedSubmission.tooltipOfflineIde') };
+        }
+        return { ...missingResultInfo, tooltip: this.translate.instant('artemisApp.result.missing.programmingFailedSubmission.tooltipOnlineIde') };
     }
 }
