@@ -68,12 +68,11 @@ export class CourseManagementRequests {
     createProgrammingExercise(
         body: { course: any } | { exerciseGroup: any },
         scaMaxPenalty?: number,
-        releaseDate = new Date(),
-        dueDate = new Date(Date.now() + oneDay),
+        releaseDate = day(),
+        dueDate = day().add(1, 'day'),
         title = 'Cypress programming exercise ' + generateUUID(),
         programmingShortName = 'cypress' + generateUUID(),
         packageName = 'de.test',
-        releaseDate = day(),
     ) {
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
         const programmingTemplate: any = this.getCourseOrExamExercise(programmingExerciseTemplate, body);
@@ -81,8 +80,8 @@ export class CourseManagementRequests {
         programmingTemplate.shortName = programmingShortName;
         programmingTemplate.packageName = packageName;
         if (!isExamExercise) {
-            programmingTemplate.releaseDate = releaseDate.toISOString();
-            programmingTemplate.dueDate = dueDate.toISOString();
+            programmingTemplate.releaseDate = dayjsToString(releaseDate);
+            programmingTemplate.dueDate = dayjsToString(dueDate);
         } else {
             programmingTemplate.allowComplaintsForAutomaticAssessments = true;
         }

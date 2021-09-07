@@ -1,4 +1,3 @@
-import { generateUUID } from '../support/utils';
 import scaSubmission from '../fixtures/programming_exercise_submissions/static_code_analysis/submission.json';
 import { artemis } from '../support/ArtemisTesting';
 import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../support/pageobjects/OnlineEditorPage';
@@ -13,14 +12,6 @@ const courseManagement = artemis.requests.courseManagement;
 const editorPage = artemis.pageobjects.programmingExercise.editor;
 const scaConfig = artemis.pageobjects.programmingExercise.scaConfiguration;
 const scaFeedback = artemis.pageobjects.programmingExercise.scaFeedback;
-
-// Common primitives
-const uid = generateUUID();
-const courseName = 'Cypress course' + uid;
-const courseShortName = 'cypress' + uid;
-const programmingExerciseName = 'Cypress programming exercise ' + uid;
-const programmingExerciseShortName = courseShortName;
-const packageName = 'de.test';
 
 describe('Static code analysis tests', () => {
     let course: any;
@@ -38,7 +29,7 @@ describe('Static code analysis tests', () => {
     });
 
     it('Makes successful submission with SCA errors', function () {
-        startParticipationInProgrammingExercise(courseName, programmingExerciseName, users.getStudentOne());
+        startParticipationInProgrammingExercise(course.title, exercise.title, users.getStudentOne());
         makeSuccessfulSubmissionWithScaErrors();
     });
 
@@ -54,11 +45,11 @@ describe('Static code analysis tests', () => {
      */
     function setupCourseAndProgrammingExercise() {
         cy.login(users.getAdmin());
-        courseManagement.createCourse(courseName, courseShortName).then((response) => {
+        courseManagement.createCourse().then((response) => {
             course = response.body;
             courseManagement.addStudentToCourse(course.id, users.getStudentOne().username);
             courseManagement
-                .createProgrammingExercise(programmingExerciseName, programmingExerciseShortName, packageName, { course }, 50)
+                .createProgrammingExercise({ course }, 50)
                 .its('body')
                 .then((dto) => {
                     exercise = dto;
@@ -70,7 +61,7 @@ describe('Static code analysis tests', () => {
      * Makes a submission, which passes all tests, but has some static code analysis issues.
      */
     function makeSuccessfulSubmissionWithScaErrors() {
-        makeSubmissionAndVerifyResults(editorPage, packageName, scaSubmission, () => {
+        makeSubmissionAndVerifyResults(editorPage, exercise.packageName, scaSubmission, () => {
             editorPage.getResultPanel().contains('50%').should('be.visible');
             editorPage.getResultPanel().contains('13 of 13 passed').click();
             scaFeedback.shouldShowPointChart();
