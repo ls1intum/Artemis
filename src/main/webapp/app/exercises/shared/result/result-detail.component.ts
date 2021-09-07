@@ -71,7 +71,13 @@ export class ResultDetailComponent implements OnInit {
 
     commitHashURLTemplate?: string;
 
-    constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private buildLogService: BuildLogService, translateService: TranslateService, private profileService: ProfileService) {
+    constructor(
+        public activeModal: NgbActiveModal,
+        private resultService: ResultService,
+        private buildLogService: BuildLogService,
+        translateService: TranslateService,
+        private profileService: ProfileService,
+    ) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
         const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
         this.scoreChartPreset = new ScoreChartPreset([pointsLabel, deductionsLabel]);
@@ -371,7 +377,7 @@ export class ResultDetailComponent implements OnInit {
 
     getCommitUrl(): string {
         const projectKey = (this.result?.participation?.exercise as ProgrammingExercise)?.projectKey;
-        const programmingSubmission = (this.result?.submission as ProgrammingSubmission);
+        const programmingSubmission = this.result?.submission as ProgrammingSubmission;
         return createCommitUrl(this.commitHashURLTemplate, projectKey, this.result?.participation, programmingSubmission);
     }
 }

@@ -28,7 +28,12 @@ export const createBuildPlanUrl = (template: string, projectKey: string, buildPl
     }
 };
 
-export const createCommitUrl = (template: string | undefined, projectKey: string | undefined, participation: Participation | undefined, submission: ProgrammingSubmission): string => {
+export const createCommitUrl = (
+    template: string | undefined,
+    projectKey: string | undefined,
+    participation: Participation | undefined,
+    submission: ProgrammingSubmission,
+): string => {
     const projectKeyLowerCase = projectKey!.toLowerCase();
     let repoSlug: string | undefined = undefined;
     if (participation?.type === ParticipationType.PROGRAMMING) {
