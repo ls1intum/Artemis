@@ -97,7 +97,7 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit {
      * @return the HTML representation as string with markdown intact.
      */
     diffPrettyHtml = function (diffs: Diff[]): string {
-        var html = [];
+        const html = [];
         for (let x = 0; x < diffs.length; x++) {
             const op = diffs[x][0]; // Operation (insert, delete, equal)
             const text = diffs[x][1]; // Text of change.
