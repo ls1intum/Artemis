@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -32,7 +33,10 @@ public class StaticCodeAnalysisConfigurer {
     private void init() {
         languageToDefaultCategories = Map.of(ProgrammingLanguage.JAVA, createDefaultCategoriesForJava(), ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift(),
                 ProgrammingLanguage.C, createDefaultCategoriesForC());
-        log.debug("Initialized default static code analysis categories for JAVA, SWIFT and C");
+
+        List<ProgrammingLanguage> supportedLanguages = new LinkedList<>(languageToDefaultCategories.keySet());
+
+        log.debug("Initialized default static code analysis categories for: " + supportedLanguages);
     }
 
     /**

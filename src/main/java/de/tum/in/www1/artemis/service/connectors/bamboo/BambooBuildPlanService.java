@@ -219,7 +219,10 @@ public class BambooBuildPlanService {
 
                 // Do not remove target, so the report can be sent to Artemis
                 final ScriptTask cleanupTask;
-                cleanupTask = new ScriptTask().description("cleanup").inlineBody("sudo rm -rf tests/\nsudo rm -rf assignment/\nsudo rm -rf test-reports/");
+                cleanupTask = new ScriptTask().description("cleanup").inlineBody("""
+                        sudo rm -rf tests/
+                        sudo rm -rf assignment/
+                        sudo rm -rf test-reports/""");
                 defaultJob.finalTasks(cleanupTask);
                 defaultStage.jobs(defaultJob);
 
