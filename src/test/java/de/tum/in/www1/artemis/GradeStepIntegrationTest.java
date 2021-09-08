@@ -13,14 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.GradeStep;
-import de.tum.in.www1.artemis.domain.GradeType;
-import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradeStepRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.GradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.GradeStepsDTO;
 
@@ -34,6 +33,9 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private Course course;
 
@@ -51,6 +53,11 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
     @BeforeEach
     public void init() {
         database.addUsers(1, 0, 0, 1);
+
+        // Student not belonging to any course
+        User student = ModelFactory.generateActivatedUser("student2");
+        userRepository.save(student);
+
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);
         courseGradingScale = new GradingScale();
@@ -78,6 +85,13 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStepsDTO.class);
     }
 
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    public void testGetAllGradeStepsForCourseStudentNotInCourse() throws Exception {
+        createGradeScale();
+        request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.FORBIDDEN, GradeStepsDTO.class);
+    }
+
     /**
      * Test get request for all grade steps
      *
@@ -86,6 +100,17 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetAllGradeStepsForCourse() throws Exception {
+        createGradeScale();
+
+        GradeStepsDTO gradeStepsDTO = request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStepsDTO.class);
+
+        assertThat(gradeStepsDTO.gradeType).isEqualTo(GradeType.GRADE);
+        assertThat(gradeStepsDTO.title).isEqualTo(course.getTitle());
+
+        assertThat(gradeStepsDTO.gradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeSteps);
+    }
+
+    private void createGradeScale() {
         GradeStep gradeStep1 = new GradeStep();
         GradeStep gradeStep2 = new GradeStep();
         gradeStep1.setGradeName("Name1");
@@ -101,16 +126,6 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         gradeSteps = Set.of(gradeStep1, gradeStep2);
         courseGradingScale.setGradeSteps(gradeSteps);
         gradingScaleRepository.save(courseGradingScale);
-
-        GradeStepsDTO gradeStepsDTO = request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStepsDTO.class);
-
-        assertThat(gradeStepsDTO.gradeType).isEqualTo(GradeType.GRADE);
-        assertThat(gradeStepsDTO.title).isEqualTo(course.getTitle());
-
-        GradeStep[] gradeStepArray = new GradeStep[gradeSteps.size()];
-        gradeSteps.toArray(gradeStepArray);
-
-        assertThat(gradeStepsDTO.gradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeStepArray);
     }
 
     /**
@@ -169,10 +184,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(gradeStepsDTO.gradeType).isEqualTo(GradeType.BONUS);
         assertThat(gradeStepsDTO.title).isEqualTo(exam.getTitle());
 
-        GradeStep[] gradeStepArray = new GradeStep[gradeSteps.size()];
-        gradeSteps.toArray(gradeStepArray);
-
-        assertThat(gradeStepsDTO.gradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeStepArray);
+        assertThat(gradeStepsDTO.gradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeSteps);
     }
 
     /**

@@ -1,6 +1,12 @@
 const esModules = ['ngx-treeview', 'lodash-es'].join('|');
+
 module.exports = {
     globals: {
+        //TODO: this is copied from webpack/environment.ts --> would be better, if we could reuse it
+        __TIMESTAMP__: String(new Date().getTime()),
+        __VERSION__: process.env.hasOwnProperty('APP_VERSION') ? process.env.APP_VERSION : 'DEV',
+        __DEBUG_INFO_ENABLED__: false,
+        __SERVER_API_URL__: '',
         'ts-jest': {
             tsconfig: '<rootDir>/tsconfig.spec.json',
             stringifyContentPathRegex: '\\.html$',
@@ -13,10 +19,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should be increase to at least 80%
-            statements: 77.2,
-            branches: 58.2,
-            functions: 66.7,
-            lines: 76.6,
+            statements: 77.4,
+            branches: 58.7,
+            functions: 67.1,
+            lines: 76.9,
         },
     },
     preset: 'jest-preset-angular',

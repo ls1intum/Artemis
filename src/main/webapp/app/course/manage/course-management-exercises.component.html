@@ -8,22 +8,27 @@
 
     <jhi-alert></jhi-alert>
     <jhi-course-exercise-card headingJhiTranslate="artemisApp.course.programmingExercises">
-        <jhi-programming-exercise [embedded]="true" [course]="course" (exerciseCount)="programmingExercisesCount = $event"></jhi-programming-exercise>
+        <jhi-programming-exercise
+            *jhiExtensionPoint="overrideProgrammingExerciseCard; context: { embedded: true, course: course, exerciseCountCallback: setProgrammingExerciseCount.bind(this) }"
+            [embedded]="true"
+            [course]="course"
+            (exerciseCount)="programmingExercisesCount = $event"
+        ></jhi-programming-exercise>
     </jhi-course-exercise-card>
 
-    <jhi-course-exercise-card jhiOrionFilter [showInOrionWindow]="false" headingJhiTranslate="artemisApp.course.quizExercises">
+    <jhi-course-exercise-card *jhiExtensionPoint="overrideNonProgrammingExerciseCard" headingJhiTranslate="artemisApp.course.quizExercises">
         <jhi-quiz-exercise [embedded]="true" [course]="course" (exerciseCount)="quizExercisesCount = $event"></jhi-quiz-exercise>
     </jhi-course-exercise-card>
 
-    <jhi-course-exercise-card jhiOrionFilter [showInOrionWindow]="false" headingJhiTranslate="artemisApp.course.modelingExercises">
+    <jhi-course-exercise-card *jhiExtensionPoint="overrideNonProgrammingExerciseCard" headingJhiTranslate="artemisApp.course.modelingExercises">
         <jhi-modeling-exercise [embedded]="true" [course]="course" (exerciseCount)="modelingExercisesCount = $event"></jhi-modeling-exercise>
     </jhi-course-exercise-card>
 
-    <jhi-course-exercise-card jhiOrionFilter [showInOrionWindow]="false" headingJhiTranslate="artemisApp.course.textExercises">
+    <jhi-course-exercise-card *jhiExtensionPoint="overrideNonProgrammingExerciseCard" headingJhiTranslate="artemisApp.course.textExercises">
         <jhi-text-exercise [embedded]="true" [course]="course" (exerciseCount)="textExercisesCount = $event"></jhi-text-exercise>
     </jhi-course-exercise-card>
 
-    <jhi-course-exercise-card jhiOrionFilter [showInOrionWindow]="false" headingJhiTranslate="artemisApp.course.fileUploadExercises">
+    <jhi-course-exercise-card *jhiExtensionPoint="overrideNonProgrammingExerciseCard" headingJhiTranslate="artemisApp.course.fileUploadExercises">
         <jhi-file-upload-exercise [embedded]="true" [course]="course" (exerciseCount)="fileUploadExercisesCount = $event"></jhi-file-upload-exercise>
     </jhi-course-exercise-card>
 </ng-container>

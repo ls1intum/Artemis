@@ -35,12 +35,5 @@ describe('Authentication tests', () => {
         cy.get('.alert').should('exist').and('have.text', 'Failed to sign in! Please check your username and password and try again.');
         cy.get('.btn').click();
         cy.get('.btn').click();
-        cy.get('.alert-info')
-            .should('exist')
-            .and(
-                'have.text',
-                '\n                                Seems like you are having issues signing in :-(' +
-                    'Please go to JIRA and try to sign in there.After that, try again here.\n                            ',
-            );
     });
 });

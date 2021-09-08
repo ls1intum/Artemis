@@ -49,7 +49,6 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     interval: number;
     waitingForExamStart = false;
     timeUntilStart = '0';
-    formattedStartDate = '';
 
     accountName = '';
     enteredName = '';
@@ -78,7 +77,6 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         if (this.startView) {
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
-            this.formattedStartDate = this.exam.startDate ? this.exam.startDate.format('LT') : '';
         } else {
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);

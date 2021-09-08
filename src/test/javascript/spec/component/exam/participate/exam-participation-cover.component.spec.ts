@@ -33,6 +33,7 @@ import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -62,6 +63,7 @@ describe('ExamParticipationCoverComponent', () => {
                 MockComponent(ExamTimerComponent),
                 MockComponent(ExamInformationComponent),
                 MockDirective(JhiTranslateDirective),
+                MockPipe(ArtemisDatePipe),
             ],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -110,7 +112,6 @@ describe('ExamParticipationCoverComponent', () => {
         component.startView = true;
         component.exam.startDate = now;
         component.ngOnInit();
-        expect(component.formattedStartDate).to.deep.equal(now.format('LT'));
 
         now = moment();
         component.studentExam.workingTime = 1;

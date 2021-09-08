@@ -64,7 +64,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         // get all answerPosts
         existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).collect(Collectors.toList());
 
-        courseId = existingPostsWithAnswers.get(0).getCourse().getId();
+        courseId = existingPostsWithAnswers.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
     }
 
     @AfterEach
@@ -142,19 +142,6 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdSecondReaction);
         assertThat(answerPostReactedOn.getReactions().size() + 2).isEqualTo(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size());
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testCreatePostWithWrongCourseIdReaction_badRequest() throws Exception {
-        Course dummyCourse = database.createCourse();
-        Post postToReactOn = existingPostsWithAnswers.get(0);
-        Reaction reactionToSaveOnPost = createReactionOnPost(postToReactOn);
-
-        Reaction createdReaction = request.postWithResponseBody("/api/courses/" + dummyCourse.getId() + "/postings/reactions", reactionToSaveOnPost, Reaction.class,
-                HttpStatus.BAD_REQUEST);
-        assertThat(createdReaction).isNull();
-        assertThat(postToReactOn.getReactions().size()).isEqualTo(postRepository.findById(postToReactOn.getId()).get().getReactions().size());
     }
 
     @Test
