@@ -18,7 +18,6 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
     interactResizable: Interactable;
-
     collapsed = false;
 
     constructor() {}

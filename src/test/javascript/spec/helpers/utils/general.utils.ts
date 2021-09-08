@@ -14,6 +14,11 @@ export const getElement = (debugElement: DebugElement, identifier: string) => {
     return element ? element.nativeElement : null;
 };
 
+export const getElements = (debugElement: DebugElement, identifier: string) => {
+    const elements = debugElement.queryAll(By.css(identifier));
+    return elements ? elements.map((element) => element.nativeElement) : null;
+};
+
 export const expectElementToBeEnabled = (element: null | any) => {
     expect(element).to.exist;
     expect(element.disabled).to.be.false;

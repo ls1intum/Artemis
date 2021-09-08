@@ -307,7 +307,7 @@ public class AssessmentService {
     @Transactional // NOTE: As we use delete methods with underscores, we need a transactional context here!
     public void deleteAssessment(Submission submission, Result result) {
 
-        if (complaintRepository.findByResult_Id(result.getId()).isPresent()) {
+        if (complaintRepository.findByResultId(result.getId()).isPresent()) {
             throw new BadRequestAlertException("Result has a complaint", "result", "hasComplaint");
         }
         submission.getResults().remove(result);

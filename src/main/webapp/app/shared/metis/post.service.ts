@@ -47,23 +47,12 @@ export class PostService extends PostingsService<Post> {
     }
 
     /**
-     * updates the votes of a post
-     * @param {number} courseId
-     * @param {number} postId
-     * @param {number} voteChange
-     * @return {Observable<EntityResponseType>}
-     */
-    updateVotes(courseId: number, postId: number, voteChange: number): Observable<EntityResponseType> {
-        return this.http.put(`${this.resourceUrl}${courseId}/posts/${postId}/votes`, voteChange, { observe: 'response' }).pipe(map(this.convertDateFromServer));
-    }
-
-    /**
      * gets all posts for course by its id
      * @param {number} courseId
      * @return {Observable<EntityArrayResponseType>}
      */
     getAllPostsByCourseId(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<Post[]>(`api/courses/${courseId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
+        return this.http.get<Post[]>(`${this.resourceUrl}${courseId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
     }
 
     /**
@@ -73,7 +62,7 @@ export class PostService extends PostingsService<Post> {
      * @return {Observable<EntityArrayResponseType>}
      */
     getAllPostsByLectureId(courseId: number, lectureId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<Post[]>(`api/courses/${courseId}/lectures/${lectureId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
+        return this.http.get<Post[]>(`${this.resourceUrl}${courseId}/lectures/${lectureId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
     }
 
     /**
@@ -83,17 +72,17 @@ export class PostService extends PostingsService<Post> {
      * @return {Observable<EntityArrayResponseType>}
      */
     getAllPostsByExerciseId(courseId: number, exerciserId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<Post[]>(`api/courses/${courseId}/exercises/${exerciserId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
+        return this.http.get<Post[]>(`${this.resourceUrl}${courseId}/exercises/${exerciserId}/posts`, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
     }
 
     /**
      * deletes a post
      * @param {number} courseId
      * @param {Post} post
-     * @return {Observable<HttpResponse<any>>}
+     * @return {Observable<HttpResponse<void>>}
      */
-    delete(courseId: number, post: Post): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}${courseId}/posts/${post.id}`, { observe: 'response' });
+    delete(courseId: number, post: Post): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}${courseId}/posts/${post.id}`, { observe: 'response' });
     }
 
     /**
@@ -102,6 +91,6 @@ export class PostService extends PostingsService<Post> {
      * @return {Observable<string[]>}
      */
     getAllPostTagsByCourseId(courseId: number): Observable<HttpResponse<string[]>> {
-        return this.http.get<string[]>(`api/courses/${courseId}/posts/tags`, { observe: 'response' });
+        return this.http.get<string[]>(`${this.resourceUrl}${courseId}/posts/tags`, { observe: 'response' });
     }
 }
