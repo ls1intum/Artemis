@@ -34,7 +34,7 @@ export const createCommitUrl = (
     participation: Participation | undefined,
     submission: ProgrammingSubmission,
 ): string => {
-    const projectKeyLowerCase = projectKey!.toLowerCase();
+    const projectKeyLowerCase = projectKey?.toLowerCase();
     let repoSlug: string | undefined = undefined;
     if (participation?.type === ParticipationType.PROGRAMMING) {
         const studentParticipation = participation as ProgrammingExerciseStudentParticipation;
@@ -48,7 +48,7 @@ export const createCommitUrl = (
         // In case of a test submisson, we need to use the test repository
         repoSlug = projectKeyLowerCase + (submission?.type === SubmissionType.TEST ? '-tests' : '-solution');
     }
-    if (repoSlug && template) {
+    if (repoSlug && template && projectKeyLowerCase) {
         return template
             .replace('{projectKey}', projectKeyLowerCase)
             .replace('{repoSlug}', repoSlug)
