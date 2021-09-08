@@ -230,9 +230,9 @@ export class DragAndDropQuestionComponent implements OnChanges {
      * (Only possible if this.question.correctMappings is available)
      *
      * @param dropLocation {object} the drop location to check for correctness
-     * @return {boolean} true, if the drop location is correct, otherwise false
+     * @return {boolean | undefined} true, if the drop location is correct, false if not and undefined if the location is correctly left blank
      */
-    isLocationCorrect(dropLocation: DropLocation): boolean {
+    isLocationCorrect(dropLocation: DropLocation): boolean | undefined {
         if (!this.question.correctMappings) {
             return false;
         }
@@ -246,12 +246,27 @@ export class DragAndDropQuestionComponent implements OnChanges {
         const selectedItem = this.dragItemForDropLocation(dropLocation);
 
         if (selectedItem === null) {
-            return validDragItems.length === 0;
+            return validDragItems.length === 0 ? undefined : false;
         } else {
             return validDragItems.some(function (dragItem) {
                 return this.dragAndDropQuestionUtil.isSameDragItem(dragItem, selectedItem);
             }, this);
         }
+    }
+
+    /**
+     * Check if there is a drag item assigned to the given location in the solution of the question
+     * (Only possible if this.question.correctMappings is available)
+     *
+     * @param dropLocation {object} the drop location to check for mapping
+     * @return {boolean} true, if the drop location is part of a mapping, otherwise false.
+     */
+
+    isAssignedLocation(dropLocation: DropLocation): boolean {
+        if (!this.question.correctMappings) {
+            return false;
+        }
+        return this.question.correctMappings.some((mapping) => this.dragAndDropQuestionUtil.isSameDropLocation(dropLocation, mapping.dropLocation));
     }
 
     /**
@@ -285,8 +300,22 @@ export class DragAndDropQuestionComponent implements OnChanges {
 
     /**
      * counts the amount of right mappings for a question by using the isLocationCorrect Method
+     * drop locations that are correctly left blank are excluded because they are excluded from grading as well
      */
     countCorrectMappings(): void {
         this.correctAnswer = this.question.dropLocations!.filter((dropLocation) => this.isLocationCorrect(dropLocation)).length;
+    }
+
+    /**
+     * counts the amount of incorrect mappings for a question by using the isLocationCorrect Method
+     */
+    countIncorrectMappings(): number {
+        return this.question.dropLocations!.filter((dropLocation) => this.isLocationCorrect(dropLocation) === false).length;
+    }
+    /**
+     * counts the amount of drop locations participating in at least one mapping for a question by using the isAssignedLocation Method
+     */
+    countAssignedLocations(): number {
+        return this.question.dropLocations!.filter((dropLocation) => this.isAssignedLocation(dropLocation)).length;
     }
 }
