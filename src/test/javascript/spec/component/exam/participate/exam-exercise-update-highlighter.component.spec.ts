@@ -24,7 +24,7 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
     const updatedProblemStatement = 'new updated ProblemStatement';
     const exerciseDummy = { id: 42, problemStatement: oldProblemStatement } as Exercise;
 
-    beforeEach(() => {
+    beforeAll(() => {
         return TestBed.configureTestingModule({
             declarations: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
             providers: [{ provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService }],
@@ -55,11 +55,15 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
         expect(result).to.equal(component.updatedProblemStatementWithHighlightedDifferences);
     });
 
-    it('should display different problem statement after button was clicked', () => {
-        const button = fixture.debugElement.nativeElement.querySelector('#highlightDiffButton');
-        button.click();
-        const result = component.exercise.problemStatement;
-        expect(result).to.equal(updatedProblemStatement);
-        expect(result).not.to.equal(component.updatedProblemStatementWithHighlightedDifferences);
+    it('should display different problem statement after toggle method is called', () => {
+        const problemStatementBeforeClick = component.exercise.problemStatement;
+        expect(problemStatementBeforeClick).to.equal(component.updatedProblemStatementWithHighlightedDifferences);
+
+        component.toggleHighlightedProblemStatement();
+
+        const problemStatementAfterClick = component.exercise.problemStatement;
+        expect(problemStatementAfterClick).to.equal(updatedProblemStatement);
+        expect(problemStatementAfterClick).not.to.equal(component.updatedProblemStatementWithHighlightedDifferences);
+        expect(problemStatementAfterClick).not.to.equal(problemStatementBeforeClick);
     });
 });
