@@ -105,8 +105,6 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 map((result) => ({ ...result, completionDate: result.completionDate ? moment(result.completionDate) : undefined, participation: this.participation })),
                 tap((result) => {
                     this.result = result;
-                    // we have a new result, so it can not be missing
-                    this.missingResultInfo = undefined;
                 }),
             )
             .subscribe();
@@ -136,10 +134,11 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 ),
                 tap(({ submissionState }) => {
                     this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
+
                     if (submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION) {
                         this.missingResultInfo = this.generateMissingResultInfoForFailedProgrammingExerciseSubmission();
                     } else {
-                        // everything ok
+                        // everything ok, remove the warning
                         this.missingResultInfo = undefined;
                     }
                 }),
