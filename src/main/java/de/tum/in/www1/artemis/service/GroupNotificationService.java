@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -196,7 +197,24 @@ public class GroupNotificationService {
      * @param notification that should be saved and sent
      */
     private void saveAndSend(GroupNotification notification) {
-        groupNotificationRepository.save(notification);
+        if (Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
+            saveExamNotification(notification);
+        }
+        else {
+            groupNotificationRepository.save(notification);
+        }
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
+    }
+
+    /**
+     * Saves an exam notification by removing the problem statement message
+     * @param notification that should be saved (without the problem statement)
+     */
+    private void saveExamNotification(GroupNotification notification) {
+        String originalTarget = notification.getTarget();
+        String targetWithoutProblemStatement = "{" + originalTarget.substring(originalTarget.indexOf("\"exercise\":"));
+        notification.setTarget(targetWithoutProblemStatement);
+        groupNotificationRepository.save(notification);
+        notification.setTarget(originalTarget);
     }
 }

@@ -77,8 +77,8 @@
                 "cannotRegisterInstructor": "You cannot register instructors or administrators for exams."
             },
             "problemStatementUpdate": {
-                "showDiff": "show difference",
-                "showNew": "only show new version"
+                "showDiff": "Show Difference",
+                "showNew": "Only show new Version"
             }
         },
         "examScores": {
