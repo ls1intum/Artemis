@@ -96,13 +96,18 @@ export class ParticipationSubmissionComponent implements OnInit {
                     this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
                     const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
                     const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
+
                     // Check if requested participationId belongs to the template or solution participation
                     if (this.participationId === templateParticipation?.id) {
                         this.participation = templateParticipation;
                         this.submissions = templateParticipation.submissions!;
+                        // This is needed to access the exercise in the result details
+                        templateParticipation.programmingExercise = this.exercise;
                     } else if (this.participationId === solutionParticipation?.id) {
                         this.participation = solutionParticipation;
                         this.submissions = solutionParticipation.submissions!;
+                        // This is needed to access the exercise in the result details
+                        solutionParticipation.programmingExercise = this.exercise;
                     } else {
                         // Should not happen
                         alert(this.translate.instant('artemisApp.participation.noParticipation'));
