@@ -6,7 +6,8 @@ import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { getExercise } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -70,6 +71,10 @@ export class ResultDetailComponent implements OnInit {
     showScoreChartTooltip = false;
 
     commitHashURLTemplate?: string;
+
+    get exercise(): Exercise | undefined {
+        return getExercise(this.result.participation);
+    }
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -314,7 +319,7 @@ export class ResultDetailComponent implements OnInit {
      * @private
      */
     private updateChart(feedbackList: FeedbackItem[]) {
-        if (!this.result.participation?.exercise || feedbackList.length === 0) {
+        if (!this.exercise || feedbackList.length === 0) {
             this.showScoreChart = false;
             return;
         }
@@ -329,19 +334,17 @@ export class ResultDetailComponent implements OnInit {
         const codeIssuePenalties = -feedbackList.filter((item) => item.type === FeedbackItemType.Issue).reduce(sumCredits, 0);
         const negativeCredits = -feedbackList.filter((item) => item.type !== FeedbackItemType.Issue && item.credits && item.credits < 0).reduce(sumCredits, 0);
 
-        const exercise = this.result.participation.exercise;
-
         // cap test points
-        const maxPoints = exercise.maxPoints!;
-        const maxPointsWithBonus = maxPoints + (exercise.bonusPoints || 0);
+        const maxPoints = this.exercise.maxPoints!;
+        const maxPointsWithBonus = maxPoints + (this.exercise.bonusPoints || 0);
 
         if (testCaseCredits > maxPointsWithBonus) {
             testCaseCredits = maxPointsWithBonus;
         }
 
         // cap sca penalty points
-        if (exercise.type === ExerciseType.PROGRAMMING) {
-            const programmingExercise = exercise as ProgrammingExercise;
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            const programmingExercise = this.exercise as ProgrammingExercise;
             if (programmingExercise.staticCodeAnalysisEnabled && programmingExercise.maxStaticCodeAnalysisPenalty != undefined) {
                 const maxPenaltyCredits = (maxPoints * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
                 codeIssueCredits = Math.min(codeIssueCredits, maxPenaltyCredits);
@@ -367,7 +370,7 @@ export class ResultDetailComponent implements OnInit {
         return (
             this.result.participation &&
             isProgrammingExerciseStudentParticipation(this.result.participation) &&
-            isResultPreliminary(this.result!, this.result.participation.exercise as ProgrammingExercise)
+            isResultPreliminary(this.result!, this.exercise as ProgrammingExercise)
         );
     }
 
@@ -376,8 +379,8 @@ export class ResultDetailComponent implements OnInit {
     }
 
     getCommitUrl(): string {
-        const projectKey = (this.result?.participation?.exercise as ProgrammingExercise)?.projectKey;
-        const programmingSubmission = this.result?.submission as ProgrammingSubmission;
-        return createCommitUrl(this.commitHashURLTemplate, projectKey, this.result?.participation, programmingSubmission);
+        const projectKey = (this.exercise as ProgrammingExercise)?.projectKey;
+        const programmingSubmission = this.result.submission as ProgrammingSubmission;
+        return createCommitUrl(this.commitHashURLTemplate, projectKey, this.result.participation, programmingSubmission);
     }
 }
