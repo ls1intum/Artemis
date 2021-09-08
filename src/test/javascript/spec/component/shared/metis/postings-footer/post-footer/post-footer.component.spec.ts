@@ -2,9 +2,12 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Post } from 'app/entities/metis/post.model';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { PostFooterComponent } from 'app/shared/metis/postings-footer/post-footer/post-footer.component';
 import { By } from '@angular/platform-browser';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { PostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -21,12 +24,9 @@ describe('PostFooterComponent', () => {
         tags: initialTags,
     } as Post;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
-            providers: [],
-            declarations: [PostFooterComponent],
-            schemas: [NO_ERRORS_SCHEMA],
+            declarations: [PostFooterComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(PostReactionsBarComponent)],
         })
             .compileComponents()
             .then(() => {
