@@ -151,11 +151,10 @@ export class CourseManagementRequests {
      * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
      * */
-    createAndAddTextExerciseToExam(group: any, title = 'Text exercise ' + generateUUID()) {
-        const textExercise: any = { ...textExerciseTemplate, exerciseGroup: group };
-        textExercise.exerciseGroup = group;
-        textExercise.title = title;
-        return cy.request({ method: POST, url: TEXT_EXERCISE_BASE, body: textExercise });
+    createTextExercise(body: { course: any } | { exerciseGroup: any }, title = 'Text exercise ' + generateUUID()) {
+        const template: any = { ...textExerciseTemplate, title };
+        const templateWithBody = Object.assign({}, template, body);
+        return cy.request({ method: POST, url: TEXT_EXERCISE_BASE, body: templateWithBody });
     }
 
     /**

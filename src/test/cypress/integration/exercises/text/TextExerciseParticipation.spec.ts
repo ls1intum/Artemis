@@ -10,19 +10,13 @@ const courseManagement = artemis.requests.courseManagement;
 // PageObjects
 const textEditor = artemis.pageobjects.textExercise.editor;
 
-// Container for a course dto
-let course: any;
-
-// Common primitives
-const uid = generateUUID();
-const courseName = 'Cypress course' + uid;
-const courseShortName = 'cypress' + uid;
-const exerciseTitle = 'Text exercise ' + uid;
-
 describe('Text exercise participation', () => {
+    let course: any;
+    const exerciseTitle = 'Text exercise ' + generateUUID();
+
     before(() => {
         cy.login(users.getAdmin());
-        courseManagement.createCourse(courseName, courseShortName).then((response) => {
+        courseManagement.createCourse().then((response) => {
             course = response.body;
             courseManagement.addStudentToCourse(course.id, users.getStudentOne().username);
             courseManagement.createTextExercise({ course }, exerciseTitle);
