@@ -6,6 +6,9 @@ import org.junit.jupiter.api.Test;
 
 public class ExamNotificationTargetWithoutProblemStatementTest {
 
+    /**
+     * Tests the method getTargetWithoutProblemStatement() if it correctly extracts the target without the problem statement
+     */
     @Test
     public void getTargetWithoutProblemStatement() {
         String originalTargetWithProblemStatement = "{\"problemStatement\":\"PROBLEM STATEMENT\",\"exercise\":3,\"exam\":1,\"entity\":\"exams\",\"course\":1,\"mainPage\":\"courses\"}";
