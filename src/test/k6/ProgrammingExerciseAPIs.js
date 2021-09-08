@@ -78,7 +78,7 @@ export function setup() {
 
             // Configure SCA categories
             configureScaCategories(artemis, exerciseId, scaCategories, programmingLanguage);
-            sleep(2);
+            sleep(20);
         }
 
         return { exerciseId: exerciseId, courseId: course.id };
