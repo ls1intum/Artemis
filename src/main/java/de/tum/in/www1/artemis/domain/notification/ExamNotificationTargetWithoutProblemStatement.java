@@ -30,6 +30,8 @@ public class ExamNotificationTargetWithoutProblemStatement {
     }
 
     /**
+     * Extracts the target from an exam notification without the problem statement
+     * @param target of the original exam notification with problem statement
      * @return the target of the exam notification without the problem statement (for saving)
      */
     public static String getTargetWithoutProblemStatement(String target) {
