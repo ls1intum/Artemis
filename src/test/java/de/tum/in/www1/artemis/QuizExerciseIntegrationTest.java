@@ -1348,7 +1348,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testMultipleChoiceQuizExplanationLength_Valid() throws Exception {
-        int validityThreshold = 1000;
+        int validityThreshold = 500;
 
         QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
@@ -1363,7 +1363,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testMultipleChoiceQuizExplanationLength_Invalid() throws Exception {
-        int validityThreshold = 1000;
+        int validityThreshold = 500;
 
         QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
@@ -1378,7 +1378,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testMultipleChoiceQuizOptionExplanationLength_Valid() throws Exception {
-        int validityThreshold = 1000;
+        int validityThreshold = 500;
 
         QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
@@ -1393,7 +1393,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testMultipleChoiceQuizOptionExplanationLength_Inalid() throws Exception {
-        int validityThreshold = 1000;
+        int validityThreshold = 500;
 
         QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);

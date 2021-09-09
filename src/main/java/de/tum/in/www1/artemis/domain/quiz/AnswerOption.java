@@ -29,7 +29,7 @@ public class AnswerOption extends DomainObject {
     @JsonView(QuizView.Before.class)
     private String hint;
 
-    @Column(name = "explanation", length = 1000)
+    @Column(name = "explanation", length = 500)
     @JsonView(QuizView.After.class)
     private String explanation;
 

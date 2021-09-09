@@ -671,8 +671,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             if (question.points == undefined || question.points < 1) {
                 return false;
             }
-
-            if (question.explanation && question.explanation.length > 1000) {
+            if (question.explanation && question.explanation.length > 500) {
                 return false;
             }
             if (question.hint && question.hint.length > 255) {
@@ -687,7 +686,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                         question.title !== '' &&
                         question.title.length < 250 &&
                         mcQuestion.answerOptions!.every(
-                            (answerOption) => (!answerOption.explanation || answerOption.explanation.length <= 1000) && (!answerOption.hint || answerOption.hint.length <= 255),
+                            (answerOption) => (!answerOption.explanation || answerOption.explanation.length <= 500) && (!answerOption.hint || answerOption.hint.length <= 255),
                         )
                     );
                 }
@@ -919,13 +918,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.explanation && answerOption.explanation.length > 1000)) {
+                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.explanation && answerOption.explanation.length > 500)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.answerExplanationLength',
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.hint && answerOption.hint.length >= 256)) {
+                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.hint && answerOption.hint.length > 255)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.answerHintLength',
                         translateValues: { index: index + 1 },
@@ -938,13 +937,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     translateValues: { index: index + 1 },
                 });
             }
-            if (question.explanation && question.explanation.length > 1000) {
+            if (question.explanation && question.explanation.length > 500) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionExplanationLength',
                     translateValues: { index: index + 1 },
                 });
             }
-            if (question.hint && question.hint.length >= 256) {
+            if (question.hint && question.hint.length > 255) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionHintLength',
                     translateValues: { index: index + 1 },

@@ -177,10 +177,10 @@
                 "quizTitleLength": "Quiz: The title is too long. Please shorten it to fewer than 250 characters.",
                 "explanationIsMissing": "Question {{index}}: Not every answer option contains an explanation. Please add an explanation!",
                 "questionHasInvalidFlaggedElements": "<strong>Question {{index}} </strong>: This question has been previously marked as invalid or contains invalid elements.",
-                "questionExplanationLength": "Question {{index}}: The provided explanation is too long. Please shorten it to 1000 characters.",
-                "questionHintLength": "Question {{index}}: The provided hint is too long. Please shorten it to fewer than 256 characters.",
-                "answerExplanationLength": "Question {{index}}: The explanation of at least one answer option is too long. Please shorten it to 1000 characters.",
-                "answerHintLength": "Question {{index}}: The hint of at least one answer option is too long. Please shorten it to fewer than 256 characters."
+                "questionExplanationLength": "Question {{index}}: The provided explanation is too long. Please shorten it to 500 characters.",
+                "questionHintLength": "Question {{index}}: The provided hint is too long. Please shorten it to 255 characters.",
+                "answerExplanationLength": "Question {{index}}: The explanation of at least one answer option is too long. Please shorten it to 500 characters.",
+                "answerHintLength": "Question {{index}}: The hint of at least one answer option is too long. Please shorten it to 255 characters."
             },
             "scoringType": {
                 "all_or_nothing": "All or Nothing",
