@@ -24,10 +24,12 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { getFirstResultWithComplaint, getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
+import { getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -84,6 +86,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         private complaintService: ComplaintService,
         private structuredGradingCriterionService: StructuredGradingCriterionService,
         private submissionService: SubmissionService,
+        private exampleSubmissionService: ExampleSubmissionService,
     ) {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -197,11 +200,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private getComplaint(): void {
-        const resultWithComplaint = getFirstResultWithComplaint(this.submission);
-        if (!resultWithComplaint) {
+        if (!this.submission) {
             return;
         }
-        this.complaintService.findByResultId(resultWithComplaint.id!).subscribe(
+        this.complaintService.findBySubmissionId(this.submission.id!).subscribe(
             (res) => {
                 if (!res.body) {
                     return;
@@ -529,6 +531,18 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         // Do not allow negative score
         if (this.totalScore < 0) {
             this.totalScore = 0;
+        }
+    }
+
+    /**
+     * Invokes exampleSubmissionService when importExampleSubmission is emitted in assessment-layout
+     */
+    importStudentSubmissionAsExampleSubmission(): void {
+        if (this.submission && this.modelingExercise) {
+            this.exampleSubmissionService.import(this.submission.id!, this.modelingExercise.id!).subscribe(
+                () => this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful'),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            );
         }
     }
 }

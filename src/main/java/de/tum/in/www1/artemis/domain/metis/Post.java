@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 
 /**
  * A Post, i.e. start of a Metis thread.
@@ -68,6 +69,10 @@ public class Post extends Posting {
     @Enumerated(EnumType.STRING)
     @Column(name = "course_wide_context")
     private CourseWideContext courseWideContext;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "display_priority")
+    private DisplayPriority displayPriority;
 
     public String getTitle() {
         return title;
@@ -164,9 +169,17 @@ public class Post extends Posting {
         this.courseWideContext = courseWideContext;
     }
 
+    public DisplayPriority getDisplayPriority() {
+        return displayPriority;
+    }
+
+    public void setDisplayPriority(DisplayPriority displayPriority) {
+        this.displayPriority = displayPriority;
+    }
+
     @Override
     public String toString() {
         return "Post{" + "id=" + getId() + ", content='" + getContent() + "'" + ", creationDate='" + getCreationDate() + "'" + ", visibleForStudents='" + isVisibleForStudents()
-                + "'" + ", votes='" + getVotes() + "'" + "}";
+                + "'" + ", displayPriority='" + getDisplayPriority() + "'" + "}";
     }
 }

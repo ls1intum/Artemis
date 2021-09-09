@@ -249,7 +249,7 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id);
+        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id, comp.result.id);
         expect(comp.buildLogs).to.deep.equal([]);
         expect(comp.isLoading).to.be.false;
     });
@@ -260,7 +260,7 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id);
+        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id, comp.result.id);
         expect(comp.buildLogs).to.deep.equal([]);
         expect(comp.isLoading).to.be.false;
     });
@@ -294,7 +294,7 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id);
+        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id, comp.result.id);
         expect(comp.loadingFailed).to.be.false;
         expect(comp.isLoading).to.be.false;
     });
@@ -306,7 +306,7 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id);
+        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id, comp.result.id);
         expect(comp.loadingFailed).to.be.true;
         expect(comp.isLoading).to.be.false;
     });
