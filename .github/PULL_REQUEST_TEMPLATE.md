@@ -8,8 +8,8 @@
 <!-- The check items for the local setups are only relevant for PRs that require programming exercises for testing -->
 - [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server.
 - [ ] I tested **all** changes and their related features with **all** corresponding user types locally.
-- [ ] I tested **all** changes and their related features with **all** corresponding user types locally. I used a local setup with the Atlassian Suite.
-- [ ] I tested **all** changes and their related features with **all** corresponding user types locally. I used a local setup with the Jenkins and Gitlab.
+- [ ] I tested **all** changes and their related features with **all** corresponding user types locally (+ Atlassian Suite).
+- [ ] I tested **all** changes and their related features with **all** corresponding user types locally (+ Jenkins and Gitlab).
 - [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://docs.artemis.ase.in.tum.de/dev/guidelines/language-guidelines/).
 #### Server
 - [ ] I followed the [coding and design guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/server/).
