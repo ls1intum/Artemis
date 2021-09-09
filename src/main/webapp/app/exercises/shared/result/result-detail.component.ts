@@ -140,13 +140,9 @@ export class ResultDetailComponent implements OnInit {
             });
 
         // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
-        this.profileService
-            .getProfileInfo()
-            .pipe(
-                take(1),
-                tap((info: ProfileInfo) => (this.commitHashURLTemplate = info?.commitHashURLTemplate)),
-            )
-            .subscribe();
+        this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
+            this.commitHashURLTemplate = info?.commitHashURLTemplate;
+        });
     }
 
     /**
