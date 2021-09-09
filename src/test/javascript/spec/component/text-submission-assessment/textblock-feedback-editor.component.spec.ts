@@ -20,9 +20,9 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;
@@ -42,7 +42,7 @@ describe('TextblockFeedbackEditorComponent', () => {
                 MockComponent(ConfirmIconComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(GradingInstructionLinkIconComponent),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockDirective(NgbTooltip),
                 MockDirective(NgModel),
             ],
