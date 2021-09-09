@@ -1,3 +1,5 @@
+import { MODELING_EXERCISE_BASE } from '../requests/CourseManagementRequests';
+
 /**
  * A class which encapsulates UI selectors and actions for the Modeling Exercise Creation Page.
  * Path: /course-management/{courseID}/modeling-exercises/{exerciseID}
@@ -20,8 +22,10 @@ export class CreateModelingExercisePage {
         cy.get('#field_points').clear().type(points.toString());
     }
 
-    save(): any {
-        cy.contains('Save').click();
+    save() {
+        cy.intercept(MODELING_EXERCISE_BASE).as('createModelingExercise');
+        cy.get('[jhitranslate="entity.action.save"]').click();
+        return cy.wait('@createModelingExercise');
     }
 
     /**
