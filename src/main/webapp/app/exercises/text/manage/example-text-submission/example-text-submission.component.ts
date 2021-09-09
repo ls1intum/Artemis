@@ -12,7 +12,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -260,23 +260,42 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             return;
         }
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId).subscribe(
-            () => this.alertService.success('artemisApp.exampleSubmission.assessScore.success'),
+            () => {
+                this.markAllFeedbackToCorrect();
+                this.alertService.success('artemisApp.exampleSubmission.assessScore.success');
+            },
             (error: HttpErrorResponse) => {
                 const errorType = error.headers.get('x-artemisapp-error');
 
-                switch (errorType) {
-                    case 'error.tooLow':
-                        this.alertService.error('artemisApp.exampleSubmission.assessScore.tooLow');
-                        break;
-                    case 'error.tooHigh':
-                        this.alertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
-                        break;
-                    default:
-                        onError(this.alertService, error);
-                        break;
+                if (errorType === 'error.invalid_assessment') {
+                    this.markAllFeedbackToCorrect();
+
+                    // Mark all wrongly made feedbacks accordingly.
+                    const correctionErrors: FeedbackCorrectionError[] = JSON.parse(error['error']['title'])['errors'];
+                    correctionErrors.forEach((res) => {
+                        const textBlockRef = this.textBlockRefs.find((ref) => ref.feedback?.reference === res.reference);
+                        if (textBlockRef != undefined && textBlockRef.feedback != undefined) {
+                            textBlockRef.feedback.correctionStatus = res.type;
+                        }
+                    });
+
+                    const msg =
+                        correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
+                    this.alertService.error(msg, { mistakeCount: correctionErrors.length });
+                } else {
+                    onError(this.alertService, error);
                 }
             },
         );
+    }
+
+    private markAllFeedbackToCorrect() {
+        this.textBlockRefs
+            .map((ref) => ref.feedback)
+            .filter((feedback) => feedback != undefined)
+            .forEach((feedback) => {
+                feedback!.correctionStatus = 'CORRECT';
+            });
     }
 
     private exampleSubmissionForNetwork() {

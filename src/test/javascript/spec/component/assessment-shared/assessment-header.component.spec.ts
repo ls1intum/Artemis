@@ -219,11 +219,14 @@ describe('AssessmentHeaderComponent', () => {
         expect(component.submit.emit).toHaveBeenCalledTimes(1);
     });
 
-    it('should show next submission if assessor or instructur, result is present and no complaint', () => {
+    it('should show next submission if assessor or instructor, result is present and no complaint', () => {
         spyOn(component.nextSubmission, 'emit');
         component.isLoading = false;
         component.isAssessor = false;
         component.hasComplaint = false;
+        component.exercise = {
+            id: 1,
+        } as Exercise;
         fixture.detectChanges();
 
         let nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));

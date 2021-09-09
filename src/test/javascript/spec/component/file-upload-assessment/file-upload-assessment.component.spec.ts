@@ -190,7 +190,7 @@ describe('FileUploadAssessmentComponent', () => {
             complaint.id = 0;
             complaint.complaintText = 'complaint';
             stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-            stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
+            stub(complaintService, 'findBySubmissionId').returns(of({ body: complaint } as EntityResponseType));
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, result);
             const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
@@ -577,15 +577,16 @@ describe('FileUploadAssessmentComponent', () => {
             comp.submission = submissionWithResultsAndComplaint;
             comp.result = resultWithComplaint;
             const complaint = resultWithComplaint.complaint;
-            stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
+            stub(complaintService, 'findBySubmissionId').returns(of({ body: complaint } as EntityResponseType));
             expect(comp.complaint).to.be.undefined;
             comp.getComplaint();
             expect(comp.complaint).to.be.equal(complaint);
         });
 
         it('should get empty Complaint', () => {
+            comp.submission = submissionWithResultsAndComplaint;
             comp.result = createResult(comp.submission);
-            stub(complaintService, 'findByResultId').returns(of({} as EntityResponseType));
+            stub(complaintService, 'findBySubmissionId').returns(of({} as EntityResponseType));
             expect(comp.complaint).to.be.undefined;
             comp.getComplaint();
             expect(comp.complaint).to.be.undefined;
@@ -595,7 +596,7 @@ describe('FileUploadAssessmentComponent', () => {
             comp.result = resultWithComplaint;
             const alertServiceSpy = sinon.spy(alertService, 'error');
             const errorResponse = new HttpErrorResponse({ error: { message: 'Forbidden' }, status: 403 });
-            stub(complaintService, 'findByResultId').returns(throwError(errorResponse));
+            stub(complaintService, 'findBySubmissionId').returns(throwError(errorResponse));
             comp.getComplaint();
             expect(alertServiceSpy).to.have.been.called;
         });

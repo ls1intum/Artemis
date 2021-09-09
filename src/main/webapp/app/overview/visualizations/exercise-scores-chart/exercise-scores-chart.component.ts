@@ -173,7 +173,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
     ];
     public labels: Label[] = this.exerciseScores.map((exerciseScoreDTO) => exerciseScoreDTO.exerciseTitle!);
     public chartOptions: ChartOptions = {
-        // we show the a pointer to indicate to the user that a data point is clickable (navigation to exercise)
+        // we show the pointer to indicate to the user that a data point is clickable (navigation to exercise)
         onHover: (event: any, chartElement) => {
             event.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
         },

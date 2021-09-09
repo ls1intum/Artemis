@@ -38,7 +38,7 @@ export class ExerciseDetailsStudentActionsComponent {
 
     @Input() examMode: boolean;
 
-    // extension point, see shared/extension-point
+    // extension points, see shared/extension-point
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
 
     constructor(private alertService: AlertService, private courseExerciseService: CourseExerciseService, private httpClient: HttpClient, private router: Router) {}

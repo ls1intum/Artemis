@@ -21,7 +21,6 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess/text-submission-a
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import {
-    getFirstResultWithComplaint,
     getLatestSubmissionResult,
     getSubmissionResultByCorrectionRound,
     getSubmissionResultById,
@@ -32,6 +31,8 @@ import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-asse
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -100,6 +101,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         translateService: TranslateService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
         private submissionService: SubmissionService,
+        private exampleSubmissionService: ExampleSubmissionService,
     ) {
         super(alertService, accountService, assessmentsService, structuredGradingCriterionService);
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -401,13 +403,12 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     private getComplaint(): void {
-        const resultWithComplaint = getFirstResultWithComplaint(this.submission);
-        if (!resultWithComplaint) {
+        if (!this.submission) {
             return;
         }
 
         this.isLoading = true;
-        this.complaintService.findByResultId(resultWithComplaint.id!).subscribe(
+        this.complaintService.findBySubmissionId(this.submission.id!).subscribe(
             (res) => {
                 if (!res.body) {
                     return;
@@ -456,5 +457,17 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     protected handleError(error: HttpErrorResponse): void {
         super.handleError(error);
         this.saveBusy = this.submitBusy = false;
+    }
+
+    /**
+     * Invokes exampleSubmissionService when importExampleSubmission is emitted in assessment-layout
+     */
+    importStudentSubmissionAsExampleSubmission(): void {
+        if (this.submission && this.exercise) {
+            this.exampleSubmissionService.import(this.submission.id!, this.exercise.id!).subscribe(
+                () => this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful'),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            );
+        }
     }
 }
