@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ModelAssessmentKnowledge;
@@ -11,6 +13,8 @@ import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 
 @Service
 public class ModelAssessmentKnowledgeService {
+
+    private final Logger log = LoggerFactory.getLogger(ExerciseService.class);
 
     private final ModelAssesmentKnowledgeRepository modelAssesmentKnowledgeRepository;
 

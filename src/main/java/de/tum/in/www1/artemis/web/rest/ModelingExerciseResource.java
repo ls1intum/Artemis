@@ -129,6 +129,7 @@ public class ModelingExerciseResource {
         // validates general settings: points, dates
         exerciseService.validateGeneralSettings(modelingExercise);
 
+        // if exercise is created from scratch we create a new knowledge instance
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);

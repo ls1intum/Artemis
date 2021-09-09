@@ -454,14 +454,10 @@ public class ExerciseService {
             exerciseRepository.delete(exercise);
             // delete text assessment knowledge if exercise is of type TextExercise and if no other exercise uses same knowledge
             if (exercise instanceof TextExercise) {
-                log.info("Deleting knowledge of exercise");
-
                 textAssessmentKnowledgeService.deleteKnowledge(((TextExercise) exercise).getKnowledge().getId());
             }
             // delete model assessment knowledge if exercise is of type ModelExercise and if no other exercise uses same knowledge
-            if (exercise instanceof ModelingExercise) {
-                log.info("Deleting knowledge of exercise");
-
+            else if (exercise instanceof ModelingExercise) {
                 modelAssessmentKnowledgeService.deleteKnowledge(((ModelingExercise) exercise).getKnowledge().getId());
             }
         }

@@ -162,6 +162,7 @@ public class TextExerciseResource {
             return forbidden();
         }
 
+        // if exercise is created from scratch we create a new knowledge instance
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
 
         TextExercise result = textExerciseRepository.save(textExercise);
