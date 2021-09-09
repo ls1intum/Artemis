@@ -24,7 +24,7 @@ describe('PostComponent', () => {
         tags: ['tag'],
     } as Post;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [],
             declarations: [PostComponent, MockPipe(HtmlForMarkdownPipe)],
