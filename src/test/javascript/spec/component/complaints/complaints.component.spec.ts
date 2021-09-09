@@ -55,7 +55,7 @@ describe('ComplaintsComponent', () => {
     }));
 
     it('should show accepted message when complaint is accepted', () => {
-        comp.resultId = 111;
+        comp.submissionId = 111;
         comp.ngOnInit();
         fixture.detectChanges();
         expect(comp.alreadySubmitted).to.be.true;
