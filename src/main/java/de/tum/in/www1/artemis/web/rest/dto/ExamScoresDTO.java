@@ -66,15 +66,18 @@ public class ExamScoresDTO {
 
             public Long numberOfParticipants;
 
+            public String exerciseType;
+
             public ExerciseInfo() {
                 // default constructor for our beloved Jackson :-*
             }
 
-            public ExerciseInfo(Long exerciseId, String title, Double maxPoints, Long numberOfParticipants) {
+            public ExerciseInfo(Long exerciseId, String title, Double maxPoints, Long numberOfParticipants, String exerciseType) {
                 this.exerciseId = exerciseId;
                 this.title = title;
                 this.maxPoints = maxPoints;
                 this.numberOfParticipants = numberOfParticipants;
+                this.exerciseType = exerciseType;
             }
         }
     }
@@ -98,6 +101,8 @@ public class ExamScoresDTO {
         public Double overallScoreAchieved = null;
 
         public String overallGrade = null;
+
+        public String overallGradeInFirstCorrection = null;
 
         public Boolean hasPassed = null;
 

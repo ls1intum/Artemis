@@ -1,3 +1,4 @@
+<jhi-alert></jhi-alert>
 <h3 class="top-container">
     <!--back button only used in assessment dashboard-->
     <div class="row-container me-2">
@@ -7,7 +8,6 @@
             Warning: You are viewing an illegal submission.
         </span>
     </div>
-    <jhi-alert></jhi-alert>
     <ngb-alert
         *ngIf="hasAssessmentDueDatePassed && !result?.completionDate"
         [style.fontSize]="'65%'"
@@ -47,7 +47,7 @@
             There is a complaint for this assessment. Another tutor must respond.
         </span>
         <span
-            id="assessmentReadOnlyhandled"
+            id="assessmentReadOnlyHandled"
             *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && complaintHandled"
             class="ms-3"
             style="font-size: 65%"

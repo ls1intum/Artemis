@@ -24,7 +24,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { getFirstResultWithComplaint, getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
+import { getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
@@ -200,11 +200,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private getComplaint(): void {
-        const resultWithComplaint = getFirstResultWithComplaint(this.submission);
-        if (!resultWithComplaint) {
+        if (!this.submission) {
             return;
         }
-        this.complaintService.findByResultId(resultWithComplaint.id!).subscribe(
+        this.complaintService.findBySubmissionId(this.submission.id!).subscribe(
             (res) => {
                 if (!res.body) {
                     return;

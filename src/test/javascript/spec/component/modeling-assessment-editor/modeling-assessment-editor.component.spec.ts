@@ -105,7 +105,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     describe('ngOnInit tests', () => {
         it('ngOnInit', fakeAsync(() => {
             modelingSubmissionStub = stub(modelingSubmissionService, 'getSubmission');
-            complaintStub = stub(complaintService, 'findByResultId');
+            complaintStub = stub(complaintService, 'findBySubmissionId');
             const submission = {
                 id: 1,
                 submitted: true,
