@@ -13,17 +13,21 @@ const TITLE_MAX_LENGTH = 200;
     templateUrl: './post-create-edit-modal.component.html',
 })
 export class PostCreateEditModalComponent extends PostingsCreateEditModalDirective<Post> {
+    tags: string[];
+
     constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {
         super(metisService, modalService, formBuilder);
     }
 
     /**
-     * resets the post title and post content
+     * resets the post title, post content, and post tags
      */
     resetFormGroup(): void {
+        this.tags = this.posting?.tags ?? [];
         this.formGroup = this.formBuilder.group({
-            title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH)]],
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength)]],
+            // the pattern ensures that the title and content must include at least one non-whitespace character
+            title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
+            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
         });
     }
 
@@ -34,6 +38,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
     createPosting(): void {
         this.posting.title = this.formGroup.get('title')?.value;
         this.posting.creationDate = moment();
+        this.posting.tags = this.tags;
         this.metisService.createPost(this.posting).subscribe({
             next: (post: Post) => {
                 this.isLoading = false;
@@ -52,6 +57,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
      */
     updatePosting(): void {
         this.posting.title = this.formGroup.get('title')?.value;
+        this.posting.tags = this.tags;
         this.metisService.updatePost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
