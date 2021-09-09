@@ -73,6 +73,7 @@ import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { AceEditorComponent } from 'ng2-ace-editor';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -191,6 +192,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
+                ExtensionPointDirective,
             ],
             providers: [
                 ProgrammingAssessmentManualResultService,

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ContentChild, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import * as moment from 'moment';
 import { now } from 'moment';
@@ -99,6 +99,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     templateParticipation: TemplateProgrammingExerciseParticipation;
     templateFileSession: { [fileName: string]: string } = {};
+
+    // extension points, see shared/extension-point
+    @ContentChild('overrideCodeEditor') overrideCodeEditor: TemplateRef<any>;
+    @ContentChild('overrideExportGoToRepository') overrideExportGoToRepository: TemplateRef<any>;
+    // listener, will get notified upon loading of feedback
+    @Output() onFeedbackLoaded = new EventEmitter();
+    // function override, if set will be executed instead of going to the next submission page
+    @Input() overrideNextSubmission?: (submissionId: number) => {} = undefined;
 
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
@@ -287,11 +295,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     save(): void {
         this.saveBusy = true;
-        this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, undefined).subscribe(
-            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
-            (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
-        );
+        this.handleSaveOrSubmit(undefined, 'artemisApp.textAssessment.saveSuccessful');
     }
 
     /**
@@ -299,9 +303,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     submit(): void {
         this.submitBusy = true;
+        this.handleSaveOrSubmit(true, 'artemisApp.textAssessment.submitSuccessful');
+    }
+
+    /**
+     * Shared functionality for save and submit
+     *
+     * @param submit true if it is a submit, undefined if save
+     * @param translationKey key for the alert to be shown on success
+     */
+    private handleSaveOrSubmit(submit: boolean | undefined, translationKey: string) {
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, true).subscribe(
-            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
+        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, submit).subscribe(
+            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, translationKey),
             (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );
     }
@@ -328,19 +342,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             (response: ProgrammingSubmission) => {
                 this.loadingParticipation = false;
 
+                // if override set, skip navigation
+                if (this.overrideNextSubmission) {
+                    this.overrideNextSubmission(response.id!);
+                    return;
+                }
+
                 // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.onSameUrlNavigation = 'reload';
-                let participationId;
-                if (response.participation !== undefined) {
-                    participationId = response.participation!.id;
-                } else {
-                    participationId = undefined;
-                }
                 const url = getLinkToSubmissionAssessment(
                     ExerciseType.PROGRAMMING,
                     this.courseId,
                     this.exerciseId,
-                    participationId,
+                    response.participation?.id,
                     response.id!,
                     this.examId,
                     this.exerciseGroupId,
@@ -517,6 +531,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
+        this.onFeedbackLoaded.emit();
         this.validateFeedback();
     }
 
