@@ -1,7 +1,8 @@
-<ng-template #postingEditor let-c="close">
+<ng-template #postingEditor let-d="dismiss">
     <form [formGroup]="formGroup" (ngSubmit)="confirm()">
         <div class="modal-header">
             <h4 class="modal-title">{{ modalTitle | artemisTranslate }}</h4>
+            <button type="button" class="btn-close" aria-label="Close" (click)="d('Cross click')"></button>
         </div>
         <div class="modal-body">
             <div class="row mb-2">
@@ -17,9 +18,6 @@
                 class="btn btn-sm btn-outline-secondary"
                 type="submit"
             ></button>
-            <button class="btn btn-sm me-1 btn-outline-secondary" type="button" (click)="c()">
-                {{ 'artemisApp.metis.cancel' | artemisTranslate }}
-            </button>
         </div>
     </form>
 </ng-template>
