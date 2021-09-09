@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.domain.NotificationOption;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.repository.NotificationOptionRepository;
 
 @Service
@@ -16,7 +17,7 @@ public class NotificationSettingsService {
     private NotificationOptionRepository notificationOptionRepository;
 
     private Set<NotificationType> notificationTypesWithNoEmailSupport = Set.of(NotificationType.COURSE_ARCHIVE_STARTED, NotificationType.COURSE_ARCHIVE_FINISHED,
-            NotificationType.EXAM_ARCHIVE_STARTED, NotificationType.EXAM_ARCHIVE_FINISHED, NotificationType.UNSPECIFIED);
+            NotificationType.EXAM_ARCHIVE_STARTED, NotificationType.EXAM_ARCHIVE_FINISHED);
 
     private Set<NotificationType> urgendEmailNotificationTypes = Set.of(NotificationType.DUPLICATE_TEST_CASE, NotificationType.ILLEGAL_SUBMISSION);
 
@@ -25,7 +26,7 @@ public class NotificationSettingsService {
     }
 
     /**
-     * Checks if the (original) notification type has email support
+     * Checks if the notification type has email support
      * For some types there is no need for email support and they will be filtered out here.
      * @param type of the notification
      * @return true if the type has email support else false
@@ -35,7 +36,7 @@ public class NotificationSettingsService {
     }
 
     /**
-     * Checks if the (original) notification type indicates an urgent email
+     * Checks if the notification type indicates an urgent email
      * i.e. an email should always be send (e.g. ILLEGAL_SUBMISSION) (users can not deactivate it via settings)
      * @param type of the notification
      * @return true if the type indicated an urgent case else false
@@ -45,13 +46,13 @@ public class NotificationSettingsService {
     }
 
     /**
-     * Checks if a notification (i.e. its type) is allowed by the respective notification settings of the provided user
-     * @param notification which type should be checked
+     * Checks if a notification (i.e. its type based on title) is allowed by the respective notification settings of the provided user
+     * @param notification which type (based on title) should be checked
      * @param user whose notification settings will be used for checking
      * @return true if the type is allowed else false
      */
     public boolean checkIfNotificationEmailIsAllowedBySettingsForGivenUser(Notification notification, User user) {
-        NotificationType type = notification.getOriginalNotificationType();
+        NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
 
         Set<NotificationOption> notificationOptions = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(user.getId());
 

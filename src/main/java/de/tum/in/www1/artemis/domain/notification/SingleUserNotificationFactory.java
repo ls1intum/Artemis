@@ -19,7 +19,7 @@ public class SingleUserNotificationFactory {
             User author = answerPost.getAuthor();
             String title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_EXERCISE_TITLE;
             String text = "Your post got replied.";
-            SingleUserNotification notification = new SingleUserNotification(recipient, author, title, text, notificationType);
+            SingleUserNotification notification = new SingleUserNotification(recipient, author, title, text);
             if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE) {
                 notification.setTarget(notification.answerPostTargetForExercise(answerPost));
             }

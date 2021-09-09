@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 
@@ -67,10 +68,11 @@ public class SingleUserNotificationService {
      * @param notification that should be checked
      */
     private void prepareSingleUserNotificationEmail(SingleUserNotification notification) {
-        boolean hasEmailSupport = notificationSettingsService.checkNotificationTypeForEmailSupport(notification.getOriginalNotificationType());
+        NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
+        boolean hasEmailSupport = notificationSettingsService.checkNotificationTypeForEmailSupport(type);
         if (hasEmailSupport) {
             boolean isAllowedBySettings = false;
-            boolean isUrgentEmail = notificationSettingsService.checkNotificationTypeForEmailUrgency(notification.getOriginalNotificationType());
+            boolean isUrgentEmail = notificationSettingsService.checkNotificationTypeForEmailUrgency(type);
             if (!isUrgentEmail) {
                 isAllowedBySettings = notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient());
             }

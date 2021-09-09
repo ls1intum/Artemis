@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -209,7 +210,8 @@ public class GroupNotificationService {
         groupNotificationRepository.save(notification);
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
 
-        boolean hasEmailSupport = notificationSettingsService.checkNotificationTypeForEmailSupport(notification.getOriginalNotificationType());
+        NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
+        boolean hasEmailSupport = notificationSettingsService.checkNotificationTypeForEmailSupport(type);
         if (hasEmailSupport) {
             prepareSendingGroupEmail(notification);
         }
@@ -252,7 +254,8 @@ public class GroupNotificationService {
      * @param users which will be filtered based on their notification (email) settings
      */
     public void prepareGroupNotificationEmail(GroupNotification notification, List<User> users) {
-        boolean isUrgentEmail = notificationSettingsService.checkNotificationTypeForEmailUrgency(notification.getOriginalNotificationType());
+        NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
+        boolean isUrgentEmail = notificationSettingsService.checkNotificationTypeForEmailUrgency(type);
         if (isUrgentEmail) {
             mailService.sendNotificationEmail(notification, users);
             return;
