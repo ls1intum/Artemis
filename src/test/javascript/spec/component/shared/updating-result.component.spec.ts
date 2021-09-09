@@ -186,7 +186,7 @@ describe('UpdatingResultComponent', () => {
         expect(comp.missingResultInfo).to.equal(undefined);
     });
 
-    it('should set missingResultInfo attribute if the exerciseType is PROGRAMMING and the latest submission failed', () => {
+    it('should set missingResultInfo attribute if the exerciseType is PROGRAMMING and the latest submission failed (offline IDE)', () => {
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING, allowOfflineIde: true } as ProgrammingExercise;
         comp.isBuilding = true;
         getLatestPendingSubmissionStub.returns(of({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 3 }));
@@ -196,6 +196,17 @@ describe('UpdatingResultComponent', () => {
         expect(comp.missingResultInfo).to.deep.equal({
             message: 'artemisApp.result.missing.programmingFailedSubmission.message',
             tooltip: 'artemisApp.result.missing.programmingFailedSubmission.tooltipOfflineIde',
+        });
+    });
+
+    it('should set missingResultInfo attribute if the exerciseType is PROGRAMMING and the latest submission failed (online IDE)', () => {
+        comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING, allowOfflineIde: false } as ProgrammingExercise;
+        getLatestPendingSubmissionStub.returns(of({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 3 }));
+        cleanInitializeGraded();
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
+        expect(comp.missingResultInfo).to.deep.equal({
+            message: 'artemisApp.result.missing.programmingFailedSubmission.message',
+            tooltip: 'artemisApp.result.missing.programmingFailedSubmission.tooltipOnlineIde',
         });
     });
 
