@@ -4,6 +4,10 @@
 </div>
 <div class="modal-body" id="result-detail-body" style="position: relative">
     <!--
+    Message, if defined
+ -->
+    <div *ngIf="messageKey" class="mb-3" [innerHTML]="messageKey | artemisTranslate"></div>
+    <!--
     Loading state
 -->
     <div *ngIf="isLoading; else feedbackContainer" class="text-muted d-flex justify-content-center" id="result-detail-spinner">
