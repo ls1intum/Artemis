@@ -5,12 +5,6 @@ import { Course } from 'app/entities/course.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { CourseWideContext, DisplayPriority } from 'app/shared/metis/metis.util';
 
-export enum DisplayPriority {
-    PINNED = 'PINNED',
-    ARCHIVED = 'ARCHIVED',
-    NONE = 'NONE',
-}
-
 export class Post extends Posting {
     public title?: string;
     public visibleForStudents?: boolean;

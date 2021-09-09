@@ -104,7 +104,7 @@ describe('Post Service', () => {
             tick();
         }));
 
-        it('should return all student posts for a course wide context', fakeAsync(() => {
+        it('should return all student posts for a course-wide context', fakeAsync(() => {
             const returnedFromService = [metisCoursePostsWithCourseWideContext.filter((post) => post.courseWideContext === CourseWideContext.RANDOM)];
             const expected = returnedFromService;
             service
