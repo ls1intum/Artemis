@@ -122,9 +122,9 @@ public class PostService extends PostingService {
     /**
      * Invokes the updatePost method to persist the change of displayPriority
      *
-     * @param courseId        id of the course the post belongs to
-     * @param postId          id of the post to change the pin state for
-     * @param displayPriority new displayPriority
+     * @param courseId          id of the course the post belongs to
+     * @param postId            id of the post to change the pin state for
+     * @param displayPriority   new displayPriority
      * @return updated post that was persisted
      */
     public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {

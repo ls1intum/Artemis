@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseExerciseService, CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -133,7 +133,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
      */
     hasVisibleExams(): boolean {
         for (const exam of this.course?.exams!) {
-            if (moment(exam.visibleDate).isBefore(this.serverDateService.now())) {
+            if (exam.visibleDate && moment(exam.visibleDate).isBefore(this.serverDateService.now())) {
                 return true;
             }
         }

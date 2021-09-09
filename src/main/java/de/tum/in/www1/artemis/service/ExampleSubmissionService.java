@@ -1,20 +1,25 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.ExampleSubmission;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class ExampleSubmissionService {
+
+    private static final String ENTITY_NAME = "exampleSubmission";
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
@@ -22,10 +27,20 @@ public class ExampleSubmissionService {
 
     private final ExerciseRepository exerciseRepository;
 
-    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository) {
+    private final TextExerciseImportService textExerciseImportService;
+
+    private final ModelingExerciseImportService modelingExerciseImportService;
+
+    private final TextSubmissionRepository textSubmissionRepository;
+
+    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository,
+            TextExerciseImportService textExerciseImportService, ModelingExerciseImportService modelingExerciseImportService, TextSubmissionRepository textSubmissionRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.exerciseRepository = exerciseRepository;
+        this.modelingExerciseImportService = modelingExerciseImportService;
+        this.textExerciseImportService = textExerciseImportService;
+        this.textSubmissionRepository = textSubmissionRepository;
     }
 
     /**
@@ -72,4 +87,47 @@ public class ExampleSubmissionService {
             exampleSubmissionRepository.delete(exampleSubmission);
         }
     }
+
+    /**
+     * Creates new example submission by copying the student submission with its assessments
+     * calls copySubmission of required service depending on type of exercise
+     *
+     * @param submissionId The original student submission id to be copied
+     * @param exercise   The exercise to which the example submission belongs
+     * @return the exampleSubmission entity
+     */
+    public ExampleSubmission importStudentSubmissionAsExampleSubmission(Long submissionId, Exercise exercise) {
+        ExampleSubmission newExampleSubmission = new ExampleSubmission();
+        newExampleSubmission.setExercise(exercise);
+
+        if (exercise instanceof ModelingExercise) {
+            ModelingSubmission modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+            checkGivenExerciseIdSameForSubmissionParticipation(exercise.getId(), modelingSubmission.getParticipation().getExercise().getId());
+            // example submission does not need participation
+            modelingSubmission.setParticipation(null);
+            newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(modelingSubmission));
+        }
+        if (exercise instanceof TextExercise) {
+            TextSubmission textSubmission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksByIdElseThrow(submissionId);
+            checkGivenExerciseIdSameForSubmissionParticipation(exercise.getId(), textSubmission.getParticipation().getExercise().getId());
+            // example submission does not need participation
+            textSubmission.setParticipation(null);
+            newExampleSubmission.setSubmission(textExerciseImportService.copySubmission(textSubmission));
+        }
+        return exampleSubmissionRepository.save(newExampleSubmission);
+    }
+
+    /**
+     * Checks the original exercise id is matched with the exercise id in the submission participation
+     *
+     * @param originalExerciseId        given exercise id in the request
+     * @param exerciseIdInSubmission    exercise id in submission participation
+     * @throws BadRequestAlertException
+     */
+    public void checkGivenExerciseIdSameForSubmissionParticipation(long originalExerciseId, long exerciseIdInSubmission) {
+        if (!Objects.equals(originalExerciseId, exerciseIdInSubmission)) {
+            throw new BadRequestAlertException("ExerciseId does not match with the exerciseId in submission participation", ENTITY_NAME, "idNotMatched");
+        }
+    }
+
 }
