@@ -6,12 +6,13 @@ import examTemplate from '../../fixtures/requests/exam_template.json';
 import day from 'dayjs';
 import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
+import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_template.json';
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
-export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises/';
 export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
+export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 
 /**
  * A class which encapsulates all cypress requests related to course management.
@@ -173,8 +174,21 @@ export class CourseManagementRequests {
         return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
     }
 
-    createModelingExercise(modelingExercise: any, body: { course: any } | { exerciseGroup: any }) {
-        const newModelingExercise = this.getCourseOrExamExercise(modelingExercise, body);
+    createModelingExercise(
+        body: { course: any } | { exerciseGroup: any },
+        title = 'Cypress modeling exercise ' + generateUUID(),
+        releaseDate = day(),
+        dueDate = day().add(1, 'days'),
+        assessmentDueDate = day().add(2, 'days'),
+    ) {
+        const templateCopy = {
+            ...modelingExerciseTemplate,
+            title,
+            releaseDate: dayjsToString(releaseDate),
+            dueDate: dayjsToString(dueDate),
+            assessmentDueDate: dayjsToString(assessmentDueDate),
+        };
+        const newModelingExercise = Object.assign({}, templateCopy, body);
         return cy.request({
             url: MODELING_EXERCISE_BASE,
             method: POST,
@@ -184,7 +198,7 @@ export class CourseManagementRequests {
 
     deleteModelingExercise(exerciseID: number) {
         return cy.request({
-            url: MODELING_EXERCISE_BASE + exerciseID,
+            url: `${MODELING_EXERCISE_BASE}/${exerciseID}`,
             method: DELETE,
         });
     }

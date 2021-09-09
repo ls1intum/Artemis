@@ -611,11 +611,6 @@ public class StudentExamResource {
                 latestResult.setSubmission(lastSubmission);
                 // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
                 // lastResult -> lastSubmission
-                var resultWithComplaint = lastSubmission.getResultWithComplaint();
-                if (resultWithComplaint != null) {
-                    latestResult.setHasComplaint(true);
-                    latestResult.setId(resultWithComplaint.getId());
-                }
                 participation.setResults(Set.of(latestResult));
             }
             lastSubmission.setResults(null);
