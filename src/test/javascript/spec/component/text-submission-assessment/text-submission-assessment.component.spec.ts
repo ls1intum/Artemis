@@ -1,20 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/text-submission-assessment.component';
-import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
+import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import { HttpResponse } from '@angular/common/http';
+import * as chai from 'chai';
+import * as sinonChai from 'sinon-chai';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
-import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
-import { TranslateModule } from '@ngx-translate/core';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -25,10 +23,9 @@ import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
+import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { Course } from 'app/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
-import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TextBlock } from 'app/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
@@ -36,15 +33,29 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { RouterTestingModule } from '@angular/router/testing';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
+import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { HttpResponse } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+
+chai.use(sinonChai);
+const expect = chai.expect;
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
     let fixture: ComponentFixture<TextSubmissionAssessmentComponent>;
     let textAssessmentService: TextAssessmentService;
     let submissionService: SubmissionService;
+    let exampleSubmissionService: ExampleSubmissionService;
 
     const exercise = {
         id: 20,
@@ -121,30 +132,30 @@ describe('TextSubmissionAssessmentComponent', () => {
             studentParticipation: participation,
         }),
     } as unknown as ActivatedRoute;
-    beforeEach(async () => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                ArtemisSharedModule,
-                ArtemisAssessmentSharedModule,
-                AssessmentInstructionsModule,
-                TranslateModule.forRoot(),
-                ArtemisConfirmIconModule,
-                TextSharedModule,
-                RouterTestingModule,
-                ArtemisGradingInstructionLinkIconModule,
-            ],
+            imports: [ArtemisTestModule, RouterTestingModule],
             declarations: [
                 TextSubmissionAssessmentComponent,
                 TextAssessmentAreaComponent,
-                TextblockAssessmentCardComponent,
-                TextblockFeedbackEditorComponent,
-                ManualTextblockSelectionComponent,
+                MockComponent(TextblockAssessmentCardComponent),
+                MockComponent(TextblockFeedbackEditorComponent),
+                MockComponent(ManualTextblockSelectionComponent),
+                MockComponent(GradingInstructionLinkIconComponent),
+                MockComponent(ConfirmIconComponent),
+                MockComponent(AssessmentLayoutComponent),
+                MockComponent(ScoreDisplayComponent),
+                MockComponent(FaIconComponent),
+                MockComponent(AssessmentInstructionsComponent),
+                MockComponent(ResizeableContainerComponent),
+                MockComponent(UnreferencedFeedbackComponent),
+                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .overrideModule(ArtemisTestModule, {
@@ -160,12 +171,17 @@ describe('TextSubmissionAssessmentComponent', () => {
         fixture = TestBed.createComponent(TextSubmissionAssessmentComponent);
         component = fixture.componentInstance;
         submissionService = TestBed.inject(SubmissionService);
+        exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
 
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        sinon.restore();
+    });
+
     it('should create', () => {
-        expect(component).toBeTruthy();
+        expect(component).to.be.ok;
     });
 
     it('should show jhi-text-assessment-area', () => {
@@ -173,12 +189,12 @@ describe('TextSubmissionAssessmentComponent', () => {
         fixture.detectChanges();
 
         const textAssessmentArea = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
-        expect(textAssessmentArea).toBeTruthy();
+        expect(textAssessmentArea).to.be.ok;
     });
 
     it('should use jhi-assessment-layout', () => {
         const sharedLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
-        expect(sharedLayout).toBeTruthy();
+        expect(sharedLayout).to.be.ok;
     });
 
     it('should update score', () => {
@@ -191,7 +207,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         textBlockRef.feedback!.credits = 42;
         textAssessmentAreaComponent.textBlockRefsChangeEmit();
 
-        expect(component.totalScore).toBe(42);
+        expect(component.totalScore).to.equal(42);
     });
 
     it('should save the assessment with correct parameters', function () {
@@ -207,33 +223,28 @@ describe('TextSubmissionAssessmentComponent', () => {
         textBlockRef.feedback!.detailText = 'my feedback';
         textBlockRef.feedback!.credits = 42;
 
-        spyOn(textAssessmentService, 'save').and.returnValue(
-            of(
-                new HttpResponse({
-                    body: result,
-                }),
-            ),
-        );
+        const saveStub = sinon.stub(textAssessmentService, 'save');
+        saveStub.returns(of(new HttpResponse({ body: result })));
 
         component.validateFeedback();
         component.save();
-        expect(textAssessmentService.save).toHaveBeenCalledWith(
+        expect(saveStub).to.have.been.calledWith(
             result?.participation?.id,
             result!.id!,
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
             [component.textBlockRefs[0].block!, textBlockRef.block!],
         );
-        expect(handleFeedbackStub).toHaveBeenCalled();
+        expect(handleFeedbackStub).to.have.been.called;
     });
 
     it('should display error when complaint resolved but assessment invalid', () => {
         // would be called on receive of event
         const complaintResponse = new ComplaintResponse();
         const alertService = fixture.debugElement.injector.get(JhiAlertService);
-        spyOn(alertService, 'error');
+        const errorStub = stub(alertService, 'error');
 
         component.updateAssessmentAfterComplaint(complaintResponse);
-        expect(alertService.error).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
+        expect(errorStub).to.have.been.calledWith('artemisApp.textAssessment.error.invalidAssessments');
     });
 
     it('should send update when complaint resolved and assessments are valid', () => {
@@ -244,18 +255,14 @@ describe('TextSubmissionAssessmentComponent', () => {
         unreferencedFeedback.id = 1;
         component.unreferencedFeedback = [unreferencedFeedback];
         textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
-        spyOn(textAssessmentService, 'updateAssessmentAfterComplaint').and.returnValue(
-            of(
-                new HttpResponse({
-                    body: new Result(),
-                }),
-            ),
-        );
+
+        const updateAssessmentAfterComplaintStub = sinon.stub(textAssessmentService, 'updateAssessmentAfterComplaint');
+        updateAssessmentAfterComplaintStub.returns(of(new HttpResponse({ body: new Result() })));
 
         // would be called on receive of event
         const complaintResponse = new ComplaintResponse();
         component.updateAssessmentAfterComplaint(complaintResponse);
-        expect(textAssessmentService.updateAssessmentAfterComplaint).toHaveBeenCalled();
+        expect(updateAssessmentAfterComplaintStub).to.have.been.called;
     });
     it('should submit the assessment with correct parameters', function () {
         textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
@@ -268,21 +275,28 @@ describe('TextSubmissionAssessmentComponent', () => {
         textBlockRef.feedback!.detailText = 'my feedback';
         textBlockRef.feedback!.credits = 42;
 
-        spyOn(textAssessmentService, 'submit').and.returnValue(
-            of(
-                new HttpResponse({
-                    body: result,
-                }),
-            ),
-        );
+        const submitStub = sinon.stub(textAssessmentService, 'submit');
+        submitStub.returns(of(new HttpResponse({ body: result })));
 
         component.validateFeedback();
         component.submit();
-        expect(textAssessmentService.submit).toHaveBeenCalledWith(
+        expect(submitStub).to.have.been.calledWith(
             participation.id!,
             result!.id!,
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
             [component.textBlockRefs[0].block!, textBlockRef.block!],
         );
+    });
+    it('should invoke import example submission', () => {
+        component.submission = submission;
+        component.exercise = exercise;
+
+        const importStub = sinon.stub(exampleSubmissionService, 'import');
+        importStub.returns(of(new HttpResponse({ body: new ExampleSubmission() })));
+
+        component.importStudentSubmissionAsExampleSubmission();
+
+        expect(importStub).to.have.calledOnce;
+        expect(importStub).to.have.been.calledWith(submission.id, exercise.id);
     });
 });
