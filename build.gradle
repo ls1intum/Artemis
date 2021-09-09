@@ -225,7 +225,7 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.4"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
-    implementation "io.netty:netty-all:4.1.67.Final"
+    implementation "io.netty:netty-all:4.1.68.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.0.10"
     implementation "org.springframework:spring-messaging:5.3.9"
 
