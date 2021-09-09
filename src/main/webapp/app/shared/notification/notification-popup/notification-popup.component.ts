@@ -20,6 +20,8 @@ export class NotificationPopupComponent implements OnInit {
 
     LiveExamExerciseUpdateNotificationTitleHtmlConst = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
 
+    private studentExamExerciseIds: number[];
+
     constructor(
         private accountService: AccountService,
         private notificationService: NotificationService,
@@ -146,17 +148,21 @@ export class NotificationPopupComponent implements OnInit {
             return;
         }
         const target = JSON.parse(notification.target);
-        const courseId = target.course;
-        const examId = target.exam;
         const exerciseId = target.exercise;
 
-        this.examParticipationService.loadStudentExamExerciseIds(courseId, examId).subscribe((exerciseIds: number[]) => {
-            const updatedExerciseIsPartOfStudentExam = exerciseIds?.find((exerciseIdentifier) => exerciseIdentifier === exerciseId);
-            if (updatedExerciseIsPartOfStudentExam != undefined) {
-                this.addExamUpdateNotification(notification);
-                this.setRemovalTimeout(notification);
+        if (!this.studentExamExerciseIds) {
+            this.studentExamExerciseIds = this.examParticipationService.getExamExerciseIds();
+            if (!this.studentExamExerciseIds) {
+                // exercises were not loaded yet for current user -> exam update will be loaded when user starts/loads the exam
+                return;
             }
-        });
+        }
+
+        const updatedExerciseIsPartOfStudentExam = this.studentExamExerciseIds?.find((exerciseIdentifier) => exerciseIdentifier === exerciseId);
+        if (updatedExerciseIsPartOfStudentExam) {
+            this.addExamUpdateNotification(notification);
+            this.setRemovalTimeout(notification);
+        }
     }
 
     private setRemovalTimeout(notification: Notification): void {

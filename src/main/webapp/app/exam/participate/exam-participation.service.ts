@@ -19,6 +19,8 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 export class ExamParticipationService {
     public currentlyLoadedStudentExam = new Subject<StudentExam>();
 
+    private examExerciseIds: number[];
+
     public getResourceURL(courseId: number, examId: number): string {
         return `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}`;
     }
@@ -283,5 +285,13 @@ export class ExamParticipationService {
         } else {
             return 'notSavedOrSubmitted';
         }
+    }
+
+    public getExamExerciseIds(): number[] {
+        return this.examExerciseIds;
+    }
+
+    public setExamExerciseIds(examExerciseIds: number[]) {
+        this.examExerciseIds = examExerciseIds;
     }
 }
