@@ -99,7 +99,7 @@ public class PostResource {
      * GET /courses/{courseId}/posts : Get all posts for a course by its id
      *
      * @param courseId          id of the course the fetch posts for
-     * @param courseWideContext optional request param if a course wide topic is the targeted context
+     * @param courseWideContext optional request param if a course-wide topic is the targeted context
      * @param exerciseId        optional request param if a certain exercise is the targeted context
      * @param lectureId         optional request param if a certain lecture is the targeted context
      * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context

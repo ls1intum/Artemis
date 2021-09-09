@@ -15,14 +15,14 @@
                             {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
                         </option>
                     </optgroup>
-                    <optgroup *ngIf="exercises !== undefined && exercises!.length > 0" [label]="'artemisApp.metis.post.exercises' | artemisTranslate">
-                        <option *ngFor="let exercise of exercises" [ngValue]="{ exercise: exercise }">
-                            {{ exercise.title }}
-                        </option>
-                    </optgroup>
                     <optgroup *ngIf="lectures !== undefined && lectures!.length > 0" [label]="'artemisApp.metis.post.lectures' | artemisTranslate">
                         <option *ngFor="let lecture of lectures" [ngValue]="{ lecture: lecture }">
                             {{ lecture.title }}
+                        </option>
+                    </optgroup>
+                    <optgroup *ngIf="exercises !== undefined && exercises!.length > 0" [label]="'artemisApp.metis.post.exercises' | artemisTranslate">
+                        <option *ngFor="let exercise of exercises" [ngValue]="{ exercise: exercise }">
+                            {{ exercise.title }}
                         </option>
                     </optgroup>
                 </select>

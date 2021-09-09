@@ -122,9 +122,9 @@ public class PostService extends PostingService {
     /**
      * Invokes the updatePost method to persist the change of displayPriority
      *
-     * @param courseId        id of the course the post belongs to
-     * @param postId          id of the post to change the pin state for
-     * @param displayPriority new displayPriority
+     * @param courseId          id of the course the post belongs to
+     * @param postId            id of the post to change the pin state for
+     * @param displayPriority   new displayPriority
      * @return updated post that was persisted
      */
     public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
@@ -147,7 +147,7 @@ public class PostService extends PostingService {
 
     /**
      * @param courseId          id of the course the fetch posts for
-     * @param courseWideContext course wide context for which the posts should be fetched
+     * @param courseWideContext course-wide context for which the posts should be fetched
      * @param exerciseId        id of the exercise for which the posts should be fetched
      * @param lectureId         id of the lecture for which the posts should be fetched
      * @return list of posts that match the given context
@@ -157,16 +157,16 @@ public class PostService extends PostingService {
         if (courseWideContext == null && exerciseId == null && lectureId == null) {
             return this.getAllCoursePosts(courseId);
         }
-        // filter by course wide context
-        if (courseWideContext != null && exerciseId == null && lectureId == null) {
+        // filter by course-wide context
+        else if (courseWideContext != null && exerciseId == null && lectureId == null) {
             return this.getAllPostsByCourseWideContext(courseId, courseWideContext);
         }
         // filter by exercise
-        if (courseWideContext == null && exerciseId != null && lectureId == null) {
+        else if (courseWideContext == null && exerciseId != null && lectureId == null) {
             return this.getAllExercisePosts(courseId, exerciseId);
         }
         // filter by lecture
-        if (courseWideContext == null && exerciseId == null && lectureId != null) {
+        else if (courseWideContext == null && exerciseId == null && lectureId != null) {
             return this.getAllLecturePosts(courseId, lectureId);
         }
         else {
@@ -199,12 +199,12 @@ public class PostService extends PostingService {
 
     /**
      * Checks course, user and post validity,
-     * retrieves all posts with a certain course wide context by course id
+     * retrieves all posts with a certain course-wide context by course id
      * and ensures that sensitive information is filtered out
      *
      * @param courseId          id of the course the post belongs to
-     * @param courseWideContext specific course wide context to filter course get posts for
-     * @return list of posts for a cretain course wide contex
+     * @param courseWideContext specific course-wide context to filter course get posts for
+     * @return list of posts for a cretain course-wide contex
      */
     public List<Post> getAllPostsByCourseWideContext(Long courseId, CourseWideContext courseWideContext) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
