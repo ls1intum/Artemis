@@ -529,13 +529,4 @@ public class StudentExamService {
         studentExamRepository.deleteById(testRunId);
         return testRun;
     }
-
-    /**
-     * Extracts the exercise ids from the given studentExam
-     * @param studentExam which exercise ids should be extracted
-     * @return Long[] of the extracted exercise ids
-     */
-    public Long[] extractStudentExamExerciseIds(StudentExam studentExam) {
-        return studentExam.getExercises().stream().map(Exercise::getId).toArray(Long[]::new);
-    }
 }

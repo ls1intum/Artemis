@@ -1,4 +1,4 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import * as moment from 'moment';
@@ -65,22 +65,6 @@ describe('Exam Participation Service', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
-    it('should load exerciseIds of a student exam', fakeAsync(() => {
-        const exerciseIds = [0, 1, 2];
-        const returnedFromService = Object.assign({}, exerciseIds);
-        service
-            .loadStudentExamExerciseIds(1, 1)
-            .pipe(take(1))
-            .subscribe((resp) => {
-                const responseNumberArray = Object.keys(resp).map(function (key) {
-                    return resp[key];
-                });
-                expect(responseNumberArray).toEqual(exerciseIds);
-            });
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-        tick();
-    }));
     it('should load a StudentExam', async () => {
         const sendExam = Object.assign(
             {

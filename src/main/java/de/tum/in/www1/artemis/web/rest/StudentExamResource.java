@@ -304,39 +304,6 @@ public class StudentExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/student-exams/exercise-ids : Find the exercise ids for the current user exam.
-     * Currently this is used for exam notification problem statement updates as an auxiliary method.
-     *
-     * @param courseId  the course to which the student exam belongs to
-     * @param examId    the exam to which the student exam belongs to
-     * @return the ResponseEntity of type Long[] corresponding to an array of the found exercise ids
-     */
-    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/exercise-ids")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Long[]> getStudentExamExerciseIds(@PathVariable Long courseId, @PathVariable Long examId) {
-        long start = System.currentTimeMillis();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get the student exam exercise ids of user {} for exam {}", user.getLogin(), examId);
-
-        // 1st: load the studentExam with all associated exercises
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId);
-        if (optionalStudentExam.isEmpty()) {
-            return notFound();
-        }
-        var studentExam = optionalStudentExam.get();
-
-        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, user, studentExam.isTestRun());
-        if (courseAndExamAccessFailure.isPresent()) {
-            return forbidden();
-        }
-
-        Long[] exerciseIds = studentExamService.extractStudentExamExerciseIds(studentExam);
-
-        log.info("getStudentExamExerciseIds done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
-        return ResponseEntity.ok(exerciseIds);
-    }
-
-    /**
      * GET /courses/{courseId}/exams/{examId}/student-exams/summary : Find a student exam for the summary.
      * This will be used to display the summary of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.
