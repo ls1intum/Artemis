@@ -31,6 +31,8 @@ import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-asse
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -99,6 +101,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         translateService: TranslateService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
         private submissionService: SubmissionService,
+        private exampleSubmissionService: ExampleSubmissionService,
     ) {
         super(jhiAlertService, accountService, assessmentsService, structuredGradingCriterionService);
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -454,5 +457,17 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     protected handleError(error: HttpErrorResponse): void {
         super.handleError(error);
         this.saveBusy = this.submitBusy = false;
+    }
+
+    /**
+     * Invokes exampleSubmissionService when importExampleSubmission is emitted in assessment-layout
+     */
+    importStudentSubmissionAsExampleSubmission(): void {
+        if (this.submission && this.exercise) {
+            this.exampleSubmissionService.import(this.submission.id!, this.exercise.id!).subscribe(
+                () => this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful'),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            );
+        }
     }
 }

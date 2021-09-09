@@ -45,6 +45,8 @@ import { MockComponent } from 'ng-mocks';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
+import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { ExampleSubmission } from 'app/entities/example-submission.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -60,6 +62,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     let complaintStub: SinonStub;
     let router: any;
     let submissionService: SubmissionService;
+    let exampleSubmissionService: ExampleSubmissionService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -89,6 +92,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 router = TestBed.inject(Router);
                 submissionService = TestBed.inject(SubmissionService);
                 mockAuth = fixture.debugElement.injector.get(AccountService) as any as MockAccountService;
+                exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
                 mockAuth.hasAnyAuthorityDirect([]);
                 mockAuth.identity();
                 fixture.detectChanges();
@@ -468,5 +472,24 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.assessNext();
             expect(fake).to.have.been.calledOnce;
         }));
+    });
+    it('should invoke import example submission', () => {
+        const course = new Course();
+        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+        component.modelingExercise.id = 1;
+        component.submission = {
+            id: 2,
+            submitted: true,
+            type: 'MANUAL',
+            text: 'Test\n\nTest\n\nTest',
+        } as ModelingSubmission;
+
+        const importStub = sinon.stub(exampleSubmissionService, 'import');
+        importStub.returns(of(new HttpResponse({ body: new ExampleSubmission() })));
+
+        component.importStudentSubmissionAsExampleSubmission();
+
+        expect(importStub).to.have.calledOnce;
+        expect(importStub).to.have.been.calledWith(component.submission.id, component.modelingExercise!.id);
     });
 });
