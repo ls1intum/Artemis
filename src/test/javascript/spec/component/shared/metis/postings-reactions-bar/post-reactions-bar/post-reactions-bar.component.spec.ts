@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, getTestBed, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement } from '@angular/core';
-import { DisplayPriority, Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/entities/metis/post.model';
 import * as sinon from 'sinon';
 import { SinonSpy, SinonStub, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
