@@ -9,11 +9,11 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingAssessmentRepoExportService } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { MockProvider } from 'ng-mocks';
-import { JhiAlertService } from 'ng-jhipster';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { OrionState } from 'app/shared/orion/orion';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -23,7 +23,7 @@ describe('OrionAssessmentService', () => {
     let programmingSubmissionService: ProgrammingSubmissionService;
     let orionConnectorService: OrionConnectorService;
     let programmingAssessmentExportService: ProgrammingAssessmentRepoExportService;
-
+    let alertService: AlertService;
     let stateStub: SinonStub;
     let stateObservable: BehaviorSubject<any>;
 
@@ -39,7 +39,7 @@ describe('OrionAssessmentService', () => {
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(ProgrammingAssessmentRepoExportService),
                 MockProvider(ProgrammingAssessmentManualResultService),
-                MockProvider(JhiAlertService),
+                // AlertService,
             ],
         })
             .compileComponents()
@@ -51,6 +51,7 @@ describe('OrionAssessmentService', () => {
                 orionAssessmentService = TestBed.inject(OrionAssessmentService);
                 programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
                 programmingAssessmentExportService = TestBed.inject(ProgrammingAssessmentRepoExportService);
+                alertService = TestBed.inject(AlertService);
             });
     });
 
@@ -94,7 +95,7 @@ describe('OrionAssessmentService', () => {
         expect(downloadSubmissionSpy).to.have.been.calledOnceWithExactly(11, 0, 'testBase64');
     });
     it('sendSubmissionToOrion should convert and report error', () => {
-        const errorSpy = spy(TestBed.inject(JhiAlertService), 'error');
+        const alertErrorSTub = stub(alertService, 'error');
 
         // mock FileReader
         const mockReader = {
@@ -102,13 +103,13 @@ describe('OrionAssessmentService', () => {
             // required, used to instantly trigger the callback
             // @ts-ignore
             readAsDataURL() {
-                this.onerror();
+                alertService.error('artemisApp.assessmentDashboard.orion.downloadFailed');
             },
         };
 
         testConversion(mockReader as any);
 
-        expect(errorSpy).to.have.been.calledOnceWithExactly('artemisApp.assessmentDashboard.orion.downloadFailed');
+        expect(alertErrorSTub).to.have.been.calledOnceWithExactly('artemisApp.assessmentDashboard.orion.downloadFailed');
     });
 
     /**

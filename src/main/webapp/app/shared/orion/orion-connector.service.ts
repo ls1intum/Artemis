@@ -8,7 +8,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 
 /**
  * Return the global native browser window object with any type to prevent type errors
@@ -39,7 +39,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
 
     activeAssessmentComponent: OrionTutorAssessmentComponent | undefined = undefined;
 
-    constructor(private injector: Injector, private jhiAlertService: JhiAlertService) {}
+    constructor(private injector: Injector, private alertService: AlertService) {}
 
     static initConnector(connector: OrionConnectorService) {
         theWindow().artemisClientConnector = connector;
@@ -209,7 +209,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
             const feedbackAsArray = JSON.parse(feedback) as Feedback[];
             this.activeAssessmentComponent!.updateFeedback(submissionId, feedbackAsArray);
         } else {
-            this.jhiAlertService.error('artemisApp.orion.assessment.updateFailed');
+            this.alertService.error('artemisApp.orion.assessment.updateFailed');
         }
     }
 

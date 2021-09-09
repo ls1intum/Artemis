@@ -540,8 +540,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     importStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.modelingExercise) {
             this.exampleSubmissionService.import(this.submission.id!, this.modelingExercise.id!).subscribe(
-                () => this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful'),
-                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
+                (error: HttpErrorResponse) => onError(this.alertService, error),
             );
         }
     }

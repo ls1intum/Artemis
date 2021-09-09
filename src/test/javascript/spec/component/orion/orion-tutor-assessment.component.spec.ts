@@ -5,7 +5,6 @@ import * as sinonChai from 'sinon-chai';
 import { spy } from 'sinon';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -13,6 +12,7 @@ import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.se
 import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { OrionAssessmentInstructionsComponent } from 'app/orion/assessment/orion-assessment-instructions.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -34,7 +34,7 @@ describe('OrionTutorAssessmentComponent', () => {
             providers: [
                 MockProvider(OrionConnectorService),
                 MockProvider(OrionAssessmentService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(TranslateService),
                 MockProvider(CodeEditorTutorAssessmentContainerComponent),
             ],
@@ -70,7 +70,7 @@ describe('OrionTutorAssessmentComponent', () => {
         expect(updateFeedbackSpy).to.have.been.calledOnceWithExactly([{ id: 1 }]);
     });
     it('updateFeedback should throw error', () => {
-        const errorSpy = spy(TestBed.inject(JhiAlertService), 'error');
+        const errorSpy = spy(TestBed.inject(AlertService), 'error');
 
         comp.updateFeedback(10, [{ id: 1 }]);
 
