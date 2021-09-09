@@ -63,7 +63,7 @@ describe('ComplaintInteractionsComponent', () => {
 
     it('should initialize in exam mode', () => {
         component.exam = exam;
-        const complaintResultStub = sinon.stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
+        const complaintResultStub = sinon.stub(complaintService, 'findBySubmissionId').returns(of({ body: complaint } as EntityResponseType));
 
         fixture.detectChanges();
 
@@ -74,7 +74,7 @@ describe('ComplaintInteractionsComponent', () => {
 
     it('should initialize in not-exam mode', () => {
         const numberOfAllowedComplaints = 10;
-        const complaintResultStub = sinon.stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
+        const complaintResultStub = sinon.stub(complaintService, 'findBySubmissionId').returns(of({ body: complaint } as EntityResponseType));
         const complaintsStub = sinon.stub(complaintService, 'getNumberOfAllowedComplaintsInCourse').returns(of(numberOfAllowedComplaints));
 
         fixture.detectChanges();
