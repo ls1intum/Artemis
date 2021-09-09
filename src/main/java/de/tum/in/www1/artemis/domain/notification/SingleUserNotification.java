@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 
 /**
@@ -37,13 +36,12 @@ public class SingleUserNotification extends Notification {
     public SingleUserNotification() {
     }
 
-    public SingleUserNotification(User recipient, User author, String title, String text, NotificationType originalNotificationType) {
+    public SingleUserNotification(User recipient, User author, String title, String text) {
         this.setRecipient(recipient);
         this.setAuthor(author);
         this.setNotificationDate(ZonedDateTime.now());
         this.setTitle(title);
         this.setText(text);
-        this.setOriginalNotificationType(originalNotificationType);
     }
 
     /**
@@ -80,6 +78,6 @@ public class SingleUserNotification extends Notification {
 
     @Override
     public String toString() {
-        return "SingleUserNotification{" + "id=" + getId() + ", originalNotificationType='" + getOriginalNotificationType() + "}";
+        return "SingleUserNotification{" + "id=" + getId() + "}";
     }
 }

@@ -5,7 +5,7 @@ import { UserService } from 'app/core/user/user.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { GroupNotification } from 'app/entities/group-notification.model';
-import { Notification, OriginalNotificationType } from 'app/entities/notification.model';
+import { Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE } from 'app/shared/notification/notification.constants';
@@ -40,7 +40,7 @@ export class NotificationSidebarComponent implements OnInit {
 
     // notification settings related
     notificationOptionCores: NotificationOptionCore[] = [];
-    originalNotificationTypesActivationMap: Map<OriginalNotificationType, boolean> = new Map<OriginalNotificationType, boolean>();
+    notificationTitleActivationMap: Map<string, boolean> = new Map<string, boolean>();
     subscriptionToNotificationSettingsChanges: Subscription;
 
     constructor(
@@ -136,19 +136,21 @@ export class NotificationSidebarComponent implements OnInit {
 
     private loadNotificationsSuccess(notifications: Notification[], headers: HttpHeaders): void {
         this.totalNotifications = Number(headers.get('X-Total-Count')!);
-        this.addNotifications(this.filterLoadedNotifiactions(notifications));
+        this.addNotifications(this.filterLoadedNotifications(notifications));
         this.page += 1;
         this.loading = false;
     }
 
     // filter out every exam related notification
-    private filterLoadedNotifiactions(notifications: Notification[]): Notification[] {
+    private filterLoadedNotifications(notifications: Notification[]): Notification[] {
         return notifications.filter((notification) => notification.title !== LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE);
     }
 
     private subscribeToNotificationUpdates(): void {
         this.notificationService.subscribeToNotificationUpdates().subscribe((notification: Notification) => {
-            if (this.notificationSettingsService.isNotificationAllowedBySettings(notification, this.originalNotificationTypesActivationMap)) {
+            debugger;
+            if (this.notificationSettingsService.isNotificationAllowedBySettings(notification, this.notificationTitleActivationMap)) {
+                debugger;
                 // ignores live exam notifications because the sidebar is not visible during the exam mode
                 if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
                     return;
@@ -200,7 +202,7 @@ export class NotificationSidebarComponent implements OnInit {
     private resetNotificationSidebars(): void {
         // reset notification settings
         this.notificationOptionCores = [];
-        this.originalNotificationTypesActivationMap = new Map<OriginalNotificationType, boolean>();
+        this.notificationTitleActivationMap = new Map<string, boolean>();
         this.loadNotificationSetting();
 
         // reset notifications
@@ -224,7 +226,7 @@ export class NotificationSidebarComponent implements OnInit {
                     res.body!,
                     UserSettingsCategory.NOTIFICATION_SETTINGS,
                 ) as NotificationOptionCore[];
-                this.originalNotificationTypesActivationMap = this.notificationSettingsService.createUpdatedOriginalNotificationTypeActivationMap(this.notificationOptionCores);
+                this.notificationTitleActivationMap = this.notificationSettingsService.createUpdatedNotificationTitleActivationMap(this.notificationOptionCores);
             },
             (res: HttpErrorResponse) => (this.error = res.message),
         );

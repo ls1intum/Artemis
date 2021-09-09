@@ -10,7 +10,6 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
-import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 
 /**
  * A GroupNotification.
@@ -58,10 +57,9 @@ public class GroupNotification extends Notification {
     public GroupNotification() {
     }
 
-    public GroupNotification(Course course, String title, String notificationText, User user, GroupNotificationType type, NotificationType originalNotificationType) {
+    public GroupNotification(Course course, String title, String notificationText, User user, GroupNotificationType type) {
         this.setCourse(course);
         this.setType(type);
-        this.setOriginalNotificationType(originalNotificationType);
         this.setNotificationDate(ZonedDateTime.now());
         this.setTitle(title);
         this.setText(notificationText);
@@ -191,6 +189,6 @@ public class GroupNotification extends Notification {
 
     @Override
     public String toString() {
-        return "GroupNotification{" + "id=" + getId() + ", type='" + getType() + ", originalNotificationType='" + getOriginalNotificationType() + "'" + "}";
+        return "GroupNotification{" + "id=" + getId() + ", type='" + getType() + "'" + "}";
     }
 }

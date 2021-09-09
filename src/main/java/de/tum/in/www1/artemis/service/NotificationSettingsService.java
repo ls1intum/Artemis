@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.NotificationOption;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 
 @Service
 public class NotificationSettingsService {
@@ -25,6 +27,15 @@ public class NotificationSettingsService {
             }
         });
         return deactivatedNotificationTypes;
+    }
+
+    /**
+     * Converts the provided NotificationType Set to a String Set (representing the titles from NotificationTitleTypeConstants)
+     * @param types Set that should be converted to String
+     * @return the converted String Set
+     */
+    public Set<String> convertNotificationTypesToTitles(Set<NotificationType> types) {
+        return types.stream().map(type -> NotificationTitleTypeConstants.findCorrespondingNotificationTitle(type)).collect(Collectors.toSet());
     }
 
     /**
@@ -85,7 +96,7 @@ public class NotificationSettingsService {
     /**
      * Updates the notificationOptions by setting the current user
      * @param notificationOptions which might be saved the very first time and have no user set yet
-     * @param currentUser
+     * @param currentUser who should be set
      */
     public void setCurrentUser(NotificationOption[] notificationOptions, User currentUser) {
         for (NotificationOption notificationOption : notificationOptions) {

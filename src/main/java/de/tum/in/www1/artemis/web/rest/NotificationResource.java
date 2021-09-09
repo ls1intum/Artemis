@@ -115,8 +115,9 @@ public class NotificationResource {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         Set<NotificationOption> notificationOptions = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
         Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(notificationOptions);
+        Set<String> deactivatedTitles = notificationSettingsService.convertNotificationTypesToTitles(deactivatedTypes);
         final Page<Notification> page = notificationRepository.findAllNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(),
-                deactivatedTypes, pageable);
+                deactivatedTitles, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

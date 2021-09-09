@@ -1,5 +1,17 @@
 import { Injectable } from '@angular/core';
-import { Notification, NotificationType, OriginalNotificationType } from 'app/entities/notification.model';
+import {
+    ATTACHMENT_CHANGE_TITLE,
+    COURSE_ARCHIVE_STARTED_TITLE,
+    EXAM_ARCHIVE_STARTED_TITLE,
+    EXERCISE_CREATED_TITLE,
+    EXERCISE_PRACTICE_TITLE,
+    NEW_ANSWER_POST_FOR_EXERCISE_TITLE,
+    NEW_ANSWER_POST_FOR_LECTURE_TITLE,
+    NEW_POST_FOR_EXERCISE_TITLE,
+    NEW_POST_FOR_LECTURE_TITLE,
+    Notification,
+    NotificationType,
+} from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { OptionSpecifier } from 'app/shared/constants/user-settings.constants';
@@ -7,33 +19,34 @@ import { OptionSpecifier } from 'app/shared/constants/user-settings.constants';
 @Injectable({ providedIn: 'root' })
 export class NotificationSettingsService {
     /**
-     * Creates an updates map that indicates which OriginalNotificationTypes are (de)activated in the current notification settings
-     * @param notificationOptionCores will be mapped to their respective OriginalNotificationTypes and create a new updated map
+     * Creates an updates map that indicates which notifications (titles) are (de)activated in the current notification settings
+     * @param notificationOptionCores will be mapped to their respective title and create a new updated map
      * @return the updated map
      */
-    public createUpdatedOriginalNotificationTypeActivationMap(notificationOptionCores: NotificationOptionCore[]): Map<OriginalNotificationType, boolean> {
-        const updatedMap: Map<OriginalNotificationType, boolean> = new Map<OriginalNotificationType, boolean>();
-        let tmpOriginalNotificationTypes: OriginalNotificationType[];
+    public createUpdatedNotificationTitleActivationMap(notificationOptionCores: NotificationOptionCore[]): Map<string, boolean> {
+        const updatedMap: Map<string, boolean> = new Map<string, boolean>();
+        let tmpNotificationTitles: string[];
 
         for (let i = 0; i < notificationOptionCores.length; i++) {
-            tmpOriginalNotificationTypes = NotificationSettingsService.findCorrespondingNotificationTypesForNotificationOptionCore(notificationOptionCores[i]);
-            tmpOriginalNotificationTypes.forEach((originalNotificationType) => {
-                updatedMap.set(originalNotificationType, notificationOptionCores[i].webapp);
+            tmpNotificationTitles = NotificationSettingsService.findCorrespondingNotificationTypesForNotificationOptionCore(notificationOptionCores[i]);
+            tmpNotificationTitles.forEach((tmpNotificationTitle) => {
+                updatedMap.set(tmpNotificationTitle, notificationOptionCores[i].webapp);
             });
         }
         return updatedMap;
     }
 
     /**
-     * Checks if the notification (i.e. its OriginalNotificationType (only for Group/Single-User Notifications)) is activated in the notification settings
+     * Checks if the notification (i.e. its title (only for Group/Single-User Notifications)) is activated in the notification settings
      * @param notification which should be checked if it is activated in the notification settings of the current user
-     * @param originalNotificationTypeActivationMap hold the information of the saved notification settings and their status
-     * @return true if this OriginalNotificationType is activated in the settings, else return false
+     * @param notificationTitleActivationMap hold the information of the saved notification settings and their status
+     * @return true if this notification (title) is activated in the settings, else return false
      */
-    public isNotificationAllowedBySettings(notification: Notification, originalNotificationTypeActivationMap: Map<OriginalNotificationType, boolean>): boolean {
+    public isNotificationAllowedBySettings(notification: Notification, notificationTitleActivationMap: Map<string, boolean>): boolean {
+        debugger;
         if (notification instanceof GroupNotification || notification.notificationType === NotificationType.GROUP || notification.notificationType === NotificationType.SINGLE) {
-            if (notification.originalNotificationType) {
-                return originalNotificationTypeActivationMap.get(notification.originalNotificationType) ?? true;
+            if (notification.title) {
+                return notificationTitleActivationMap.get(notification.title) ?? true;
             }
         }
         return true;
@@ -45,31 +58,31 @@ export class NotificationSettingsService {
      * @param notificationOptionCore which corresponding NotificationTypes should be found
      * @return the corresponding NotificationType(s)
      */
-    private static findCorrespondingNotificationTypesForNotificationOptionCore(notificationOptionCore: NotificationOptionCore): OriginalNotificationType[] {
+    private static findCorrespondingNotificationTypesForNotificationOptionCore(notificationOptionCore: NotificationOptionCore): string[] {
         switch (notificationOptionCore.optionSpecifier) {
             case OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED: {
-                return [OriginalNotificationType.EXERCISE_CREATED];
+                return [EXERCISE_CREATED_TITLE];
             }
             case OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE: {
-                return [OriginalNotificationType.EXERCISE_PRACTICE];
+                return [EXERCISE_PRACTICE_TITLE];
             }
             case OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_POST_EXERCISES: {
-                return [OriginalNotificationType.NEW_POST_FOR_EXERCISE];
+                return [NEW_POST_FOR_EXERCISE_TITLE];
             }
             case OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES: {
-                return [OriginalNotificationType.NEW_ANSWER_POST_FOR_EXERCISE];
+                return [NEW_ANSWER_POST_FOR_EXERCISE_TITLE];
             }
             case OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES: {
-                return [OriginalNotificationType.ATTACHMENT_CHANGE];
+                return [ATTACHMENT_CHANGE_TITLE];
             }
             case OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__NEW_POST_FOR_LECTURE: {
-                return [OriginalNotificationType.NEW_POST_FOR_LECTURE];
+                return [NEW_POST_FOR_LECTURE_TITLE];
             }
             case OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE: {
-                return [OriginalNotificationType.NEW_ANSWER_POST_FOR_LECTURE];
+                return [NEW_ANSWER_POST_FOR_LECTURE_TITLE];
             }
             case OptionSpecifier.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED: {
-                return [OriginalNotificationType.EXAM_ARCHIVE_STARTED, OriginalNotificationType.COURSE_ARCHIVE_STARTED];
+                return [EXAM_ARCHIVE_STARTED_TITLE, COURSE_ARCHIVE_STARTED_TITLE];
             }
             default: {
                 return [];
