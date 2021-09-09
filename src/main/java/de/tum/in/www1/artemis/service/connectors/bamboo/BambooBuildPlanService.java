@@ -222,7 +222,7 @@ public class BambooBuildPlanService {
                 var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/tests.xml");
                 if (isXcodeProject) {
                     testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/report.junit");
-                    replacements = Map.of("${shortName}", shortName);
+                    replacements = Map.of("${appName}", packageName);
                 }
                 var tasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, sequentialBuildRuns, false, replacements);
                 tasks.add(0, checkoutTask);
