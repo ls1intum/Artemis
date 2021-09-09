@@ -1120,7 +1120,7 @@
   dependencies:
     "@cspotcode/source-map-consumer" "0.8.0"
 
-"@ctrl/ngx-emoji-mart@^6.0.1":
+"@ctrl/ngx-emoji-mart@6.0.1":
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/@ctrl/ngx-emoji-mart/-/ngx-emoji-mart-6.0.1.tgz#66432181cde359447275409d50a325c48edd2cb6"
   integrity sha512-HL+IOBj4E8bFBUUf4Pqq7T2I1DmDDx0ZmMFD0WwUKa61nlhUsC2KJ2ROAWRE2l7PE+tt5aYAbUhrPeGlbYnKSA==

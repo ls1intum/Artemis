@@ -14,7 +14,6 @@ import { root } from './utils';
 module.exports = (options: any) => merge(commonConfig({ env: '"development"' }), {
     devtool: 'eval-source-map',
     devServer: {
-        contentBase: './build/resources/main/static/',
         proxy: [{
             context: [
                 '/',
@@ -30,12 +29,17 @@ module.exports = (options: any) => merge(commonConfig({ env: '"development"' }),
             target: 'ws://127.0.0.1:8080',
             ws: true
         }],
-        stats: options.stats,
-        watchOptions: {
-            ignored: 'node_modules/**'
+        devMiddleware: {
+            stats: options.stats,
         },
         https: options.tls,
-        historyApiFallback: true
+        historyApiFallback: true,
+        static: {
+            directory: './build/resources/main/static/',
+            watch: {
+                ignored: 'node_modules/**',
+            },
+        },
     },
     entry: {
         global: './src/main/webapp/content/scss/global.scss',
