@@ -615,7 +615,7 @@ public class ProgrammingExerciseService {
             replacements.put("${packageName}", programmingExercise.getPackageName());
         }
         else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT && programmingExercise.getProjectType() == ProjectType.XCODE) {
-            replacements.put("${shortName}", programmingExercise.getShortName());
+            replacements.put("${appName}", programmingExercise.getPackageName());
         }
         // there is no need in python to replace package names
 

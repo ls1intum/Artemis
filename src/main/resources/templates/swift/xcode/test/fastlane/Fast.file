@@ -2,10 +2,10 @@ default_platform(:ios)
 
 desc "Build only"
 lane :build do
-    # Build the ${shortName} application without tests
-    xcodebuild(workspace: "${shortName}Test.xcworkspace",
+    # Build the ${appName} application without tests
+    xcodebuild(workspace: "${appName}Test.xcworkspace",
                derived_data_path: "DerivedData",
-               scheme: "${shortName}",
+               scheme: "${appName}",
                configuration: "Debug",
                clean: true,
                build: true,
@@ -20,27 +20,27 @@ end
 desc "Run All Tests"
 lane :test do
     # Run UI and Unit Tests
-    run_tests(workspace: "${shortName}Test.xcworkspace",
+    run_tests(workspace: "${appName}Test.xcworkspace",
       		  derived_data_path: "DerivedData",
       		  clean: true,
-       		  scheme: "${shortName}")
+       		  scheme: "${appName}")
 end
 
     
 desc "Run Unit Tests only"
 lane :unittest do
     # Run Unit Tests
-    run_tests(workspace: "${shortName}Test.xcworkspace",
+    run_tests(workspace: "${appName}Test.xcworkspace",
       		  derived_data_path: "DerivedData",
       		  clean: true,
-       		  scheme: "${shortName}Test")
+       		  scheme: "${appName}Test")
 end
 
 desc "Run UI Tests only"
 lane :uitest do
     # Run UI Tests
-    run_tests(workspace: "${shortName}Test.xcworkspace",
+    run_tests(workspace: "${appName}Test.xcworkspace",
       		  derived_data_path: "DerivedData",
       		  clean: true,
-       		  scheme: "${shortName}UITest")
+       		  scheme: "${appName}UITest")
 end
