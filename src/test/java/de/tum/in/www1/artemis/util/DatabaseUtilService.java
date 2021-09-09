@@ -386,7 +386,11 @@ public class DatabaseUtilService {
     }
 
     public Course createCourse() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        return createCourse(null);
+    }
+
+    public Course createCourse(Long id) {
+        Course course = ModelFactory.generateCourse(id, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         return courseRepo.save(course);
     }
 
@@ -735,7 +739,6 @@ public class DatabaseUtilService {
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setLecture(lectureContext);
-            postToAdd.setCourse(lectureContext.getCourse());
             postRepository.save(postToAdd);
             posts.add(postToAdd);
         }
@@ -747,7 +750,6 @@ public class DatabaseUtilService {
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setExercise(exerciseContext);
-            postToAdd.setCourse(exerciseContext.getCourseViaExerciseGroupOrCourseMember());
             postRepository.save(postToAdd);
             posts.add(postToAdd);
         }
@@ -771,6 +773,7 @@ public class DatabaseUtilService {
         post.setTitle(String.format("Title Post %s", (i + 1)));
         post.setContent(String.format("Content Post %s", (i + 1)));
         post.setVisibleForStudents(true);
+        post.setDisplayPriority(DisplayPriority.NONE);
         post.setAuthor(getUserByLoginWithoutAuthorities(String.format("student%s", (i + 1))));
         post.setCreationDate(ZonedDateTime.of(2015, 11, 28, 23, 45, 59, 1234, ZoneId.of("UTC")));
         String tag = String.format("Tag %s", (i + 1));
@@ -2950,6 +2953,7 @@ public class DatabaseUtilService {
         }
         else {
             submission = ModelFactory.generateTextSubmission(modelOrText, Language.ENGLISH, false);
+            saveSubmissionToRepo(submission);
         }
         submission.setExampleSubmission(flagAsExampleSubmission);
         return ModelFactory.generateExampleSubmission(submission, exercise, usedForTutorial);

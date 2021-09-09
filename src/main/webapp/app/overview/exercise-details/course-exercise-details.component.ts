@@ -40,6 +40,7 @@ import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -162,6 +163,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     loadExercise() {
         this.exercise = undefined;
         this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
+        this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.studentParticipation?.results);
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
             this.getLatestRatedResult();
@@ -185,6 +187,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
+            if (this.exercise?.studentParticipations && programmingExercise.projectKey) {
+                this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                    setBuildPlanUrlForProgrammingParticipations(profileInfo, this.exercise?.studentParticipations!, (this.exercise as ProgrammingExercise).projectKey);
+                });
+            }
         }
 
         // This is only needed in the local environment
@@ -370,24 +377,20 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * For other exercise types it returns a rated result.
      */
     getLatestRatedResult() {
-        if (!this.studentParticipation || !this.hasResults) {
-            return undefined;
+        if (!this.studentParticipation?.submissions || !this.studentParticipation!.submissions![0] || !this.hasResults) {
+            return;
         }
-        const resultWithComplaint = getFirstResultWithComplaintFromResults(this.studentParticipation?.results);
-        if (resultWithComplaint) {
-            this.complaintService.findByResultId(resultWithComplaint.id!).subscribe(
-                (res) => {
-                    if (!res.body) {
-                        return;
-                    }
-                    this.complaint = res.body;
-                },
-                (err: HttpErrorResponse) => {
-                    this.onError(err.message);
-                },
-            );
-        }
-        this.resultWithComplaint = resultWithComplaint;
+        this.complaintService.findBySubmissionId(this.studentParticipation!.submissions![0].id!).subscribe(
+            (res) => {
+                if (!res.body) {
+                    return;
+                }
+                this.complaint = res.body;
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err.message);
+            },
+        );
 
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
             return this.studentParticipation?.results?.find((result: Result) => !!result.completionDate) || undefined;
@@ -414,6 +417,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.exercise.studentParticipations.length > 0 &&
             this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE
         );
+    }
+
+    buildPlanUrl(participation: StudentParticipation) {
+        return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
     }
 
     projectKey(): string {

@@ -20,7 +20,6 @@ import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
-import { BuildPlanButtonDirective } from 'app/exercises/programming/shared/utils/build-plan-button.directive';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -53,7 +52,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
 
@@ -90,6 +89,7 @@ describe('CourseExerciseDetailsComponent', () => {
     let getTeamPayloadStub: SinonStub;
     let mergeStudentParticipationStub: SinonStub;
     let subscribeForParticipationChangesStub: SinonStub;
+    let complaintService: ComplaintService;
     const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [] } as unknown as Exercise;
     const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
@@ -101,7 +101,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(HtmlForMarkdownPipe),
-                MockDirective(BuildPlanButtonDirective),
                 MockDirective(RouterOutlet),
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
@@ -168,6 +167,8 @@ describe('CourseExerciseDetailsComponent', () => {
                 participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
                 subscribeForParticipationChangesStub = stub(participationWebsocketService, 'subscribeForParticipationChanges');
                 subscribeForParticipationChangesStub.returns(new BehaviorSubject<Participation | undefined>(undefined));
+
+                complaintService = TestBed.inject(ComplaintService);
             });
     }));
 
@@ -202,6 +203,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
         // return initial participation for websocketService
         stub(participationWebsocketService, 'getParticipationForExercise').returns(studentParticipation);
+        stub(complaintService, 'findBySubmissionId').returns(of({} as EntityResponseType));
 
         mergeStudentParticipationStub.returns(studentParticipation);
         const changedParticipation = cloneDeep(studentParticipation);
