@@ -61,7 +61,6 @@ import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programmi
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { MockTranslateValuesDirective } from '../course/course-scores/course-scores.component.spec';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
@@ -69,6 +68,7 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
