@@ -2,12 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Moment } from 'moment';
+import * as dayjs from 'dayjs';
 
 export type RepositoryExportOptions = {
     exportAllParticipants: boolean;
     filterLateSubmissions: boolean;
-    filterLateSubmissionsDate?: Moment;
+    filterLateSubmissionsDate?: dayjs.Dayjs;
     addParticipantName: boolean;
     combineStudentCommits: boolean;
     anonymizeStudentCommits: boolean;

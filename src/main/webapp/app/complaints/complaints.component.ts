@@ -3,7 +3,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Result } from 'app/entities/result.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Moment } from 'moment';
+import * as dayjs from 'dayjs';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { filter } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
@@ -29,7 +29,7 @@ export class ComplaintsComponent implements OnInit {
     @Output() submit: EventEmitter<void> = new EventEmitter();
     complaintText?: string;
     alreadySubmitted = false;
-    submittedDate: Moment;
+    submittedDate: dayjs.Dayjs;
     accepted?: boolean;
     handled: boolean;
     complaintResponse: ComplaintResponse;

@@ -1,7 +1,7 @@
 import { User } from 'app/core/user/user.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Moment } from 'moment';
+import * as dayjs from 'dayjs';
 export enum TeamImportStrategyType {
     PURGE_EXISTING = 'PURGE_EXISTING',
     CREATE_ONLY = 'CREATE_ONLY',
@@ -9,8 +9,8 @@ export enum TeamImportStrategyType {
 
 export class OnlineTeamStudent {
     public login: string;
-    public lastTypingDate: Moment;
-    public lastActionDate: Moment;
+    public lastTypingDate: dayjs.Dayjs;
+    public lastActionDate: dayjs.Dayjs;
 }
 
 export class TeamAssignmentPayload {
@@ -28,9 +28,9 @@ export class Team implements BaseEntity {
     public owner?: User;
 
     public createdBy?: string;
-    public createdDate?: Moment;
+    public createdDate?: dayjs.Dayjs;
     public lastModifiedBy?: string;
-    public lastModifiedDate?: Moment;
+    public lastModifiedDate?: dayjs.Dayjs;
 
     constructor() {
         this.students = []; // default value

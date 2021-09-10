@@ -5,7 +5,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import * as chai from 'chai';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

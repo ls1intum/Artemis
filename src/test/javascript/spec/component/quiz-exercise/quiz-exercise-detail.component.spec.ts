@@ -30,12 +30,12 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import * as chai from 'chai';
 import { advanceTo } from 'jest-date-mock';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -351,7 +351,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.onDurationChange();
 
                 // compare duration with quizExercise.duration
-                const durationAsSeconds = moment.duration(comp.duration).asSeconds();
+                const durationAsSeconds = dayjs.duration(comp.duration).asSeconds();
                 expect(durationAsSeconds).to.equal(comp.quizExercise.duration);
             });
 
@@ -373,8 +373,8 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('Should set duration to due date release date difference', () => {
                 comp.isExamMode = true;
-                comp.quizExercise.releaseDate = moment();
-                comp.quizExercise.dueDate = moment().add(1530, 's');
+                comp.quizExercise.releaseDate = dayjs();
+                comp.quizExercise.dueDate = dayjs().add(1530, 's');
                 comp.onDurationChange();
                 expect(comp.quizExercise.duration).to.equal(1530);
                 comp.isExamMode = false;
@@ -429,13 +429,13 @@ describe('QuizExercise Management Detail Component', () => {
             });
             it('should return if end of exercise is in the past', () => {
                 resetQuizExerciseAndSet();
-                comp.quizExercise.releaseDate = moment().subtract(20, 's');
+                comp.quizExercise.releaseDate = dayjs().subtract(20, 's');
                 comp.quizExercise.duration = 10;
                 expect(comp.showDropdown).to.equal('isOpenForPractice');
             });
             it('should return if end of exercise is in the future but release date is in the past', () => {
                 resetQuizExerciseAndSet();
-                comp.quizExercise.releaseDate = moment().subtract(20, 's');
+                comp.quizExercise.releaseDate = dayjs().subtract(20, 's');
                 comp.quizExercise.duration = 50;
                 expect(comp.showDropdown).to.equal('active');
             });
@@ -467,7 +467,7 @@ describe('QuizExercise Management Detail Component', () => {
             beforeEach(() => {
                 tomorrow = new NgbDate(2020, 11, 16);
                 // advanceTo 2020 11 15
-                // moment adds one month
+                // dayjs adds one month
                 advanceTo(new Date(2020, 10, 15, 0, 0, 0));
             });
             it('should return true if given month is before month we are in', () => {
@@ -1080,12 +1080,12 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(comp.quizExercise.duration).to.equal(10);
             });
 
-            it('should set release date to moment release date if exam mode', () => {
+            it('should set release date to dayjs release date if exam mode', () => {
                 comp.isExamMode = true;
-                const now = moment();
+                const now = dayjs();
                 comp.quizExercise.releaseDate = now;
                 comp.prepareEntity(comp.quizExercise);
-                expect(comp.quizExercise.releaseDate).to.deep.equal(moment(now));
+                expect(comp.quizExercise.releaseDate).to.deep.equal(dayjs(now));
             });
         });
 
@@ -1316,7 +1316,7 @@ describe('QuizExercise Management Detail Component', () => {
 
                 it('should put reason if release time is before now', () => {
                     quizExercise.isPlannedToStart = true;
-                    quizExercise.releaseDate = moment().subtract(1500, 's');
+                    quizExercise.releaseDate = dayjs().subtract(1500, 's');
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.startTimeInPast');
                 });
             });

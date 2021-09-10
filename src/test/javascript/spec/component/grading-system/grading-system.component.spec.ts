@@ -4,7 +4,7 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import { SinonStub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { AlertComponent } from 'app/shared/alert/alert.component';

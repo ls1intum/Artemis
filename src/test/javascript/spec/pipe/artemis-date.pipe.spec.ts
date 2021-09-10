@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as moment from 'moment';
+import sinonChai from 'sinon-chai';
+import dayjs from 'dayjs';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
@@ -12,14 +12,7 @@ const expect = chai.expect;
 describe('ArtemisDatePipe', () => {
     let pipe: ArtemisDatePipe;
     let translateService: TranslateService;
-    const dateTime = moment({
-        year: 2020,
-        month: 3,
-        day: 14,
-        hour: 9,
-        minute: 27,
-        seconds: 3,
-    }); // 2020-04-14 09:27:03
+    const dateTime = dayjs().year(2020).month(3).day(14).hour(9).minute(27).second(3); // 2020-03-14 09:27:03
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -33,17 +26,13 @@ describe('ArtemisDatePipe', () => {
     it('Return empty string if given date time is null', () => {
         let localizedDateTime = pipe.transform(null);
         expect(localizedDateTime).to.be.equal('');
-        localizedDateTime = pipe.transform(moment(null));
+        localizedDateTime = pipe.transform(dayjs(null));
         expect(localizedDateTime).to.be.equal('');
     });
 
-    it('Return empty string if given date time is invalid moment object', () => {
-        const invalidMoment = moment({
-            year: 2019,
-            month: 2,
-            day: 333,
-        }); // 2019-02-333
-        const localizedDateTime = pipe.transform(invalidMoment);
+    it('Return empty string if given date time is invalid dayjs object', () => {
+        const invalidDayjs = dayjs().year(2019).month(2).day(333); // 2019-02-333
+        const localizedDateTime = pipe.transform(invalidDayjs);
         expect(localizedDateTime).to.be.equal('');
     });
 

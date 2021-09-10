@@ -6,7 +6,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisTestModule } from '../../test.module';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DifferencePipe } from 'ngx-moment';
 import { RatingModule as StarRatingComponent } from 'ng-starrating';
 
 import { lastValueFrom, of } from 'rxjs';
@@ -34,7 +33,6 @@ describe('RatingListComponent', () => {
                     provide: ActivatedRoute,
                     useValue: route,
                 },
-                DifferencePipe,
                 {
                     provide: RatingService,
                     useValue: {

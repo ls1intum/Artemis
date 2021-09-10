@@ -12,7 +12,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
@@ -130,7 +130,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
 
     examHasFinished(exam: Exam): boolean {
         if (exam.latestIndividualEndDate) {
-            return exam.latestIndividualEndDate.isBefore(moment());
+            return exam.latestIndividualEndDate.isBefore(dayjs());
         }
         return false;
     }

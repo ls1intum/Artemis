@@ -11,7 +11,7 @@ import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService } from 'app/core/util/alert.service';
 
@@ -133,7 +133,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
      */
     hasVisibleExams(): boolean {
         for (const exam of this.course?.exams!) {
-            if (exam.visibleDate && moment(exam.visibleDate).isBefore(this.serverDateService.now())) {
+            if (exam.visibleDate && dayjs(exam.visibleDate).isBefore(this.serverDateService.now())) {
                 return true;
             }
         }

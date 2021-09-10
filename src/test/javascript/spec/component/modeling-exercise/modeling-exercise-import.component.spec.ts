@@ -12,7 +12,7 @@ import * as chai from 'chai';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';

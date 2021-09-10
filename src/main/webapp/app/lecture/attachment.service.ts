@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
@@ -59,16 +59,16 @@ export class AttachmentService {
 
     convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.releaseDate = res.body.releaseDate ? moment(res.body.releaseDate) : undefined;
-            res.body.uploadDate = res.body.uploadDate ? moment(res.body.uploadDate) : undefined;
+            res.body.releaseDate = res.body.releaseDate ? dayjs(res.body.releaseDate) : undefined;
+            res.body.uploadDate = res.body.uploadDate ? dayjs(res.body.uploadDate) : undefined;
         }
         return res;
     }
 
     convertAttachmentDateFromServer(attachment?: Attachment) {
         if (attachment) {
-            attachment.releaseDate = attachment.releaseDate ? moment(attachment.releaseDate) : undefined;
-            attachment.uploadDate = attachment.uploadDate ? moment(attachment.uploadDate) : undefined;
+            attachment.releaseDate = attachment.releaseDate ? dayjs(attachment.releaseDate) : undefined;
+            attachment.uploadDate = attachment.uploadDate ? dayjs(attachment.uploadDate) : undefined;
         }
         return attachment;
     }
@@ -76,8 +76,8 @@ export class AttachmentService {
     convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((attachment: Attachment) => {
-                attachment.releaseDate = attachment.releaseDate ? moment(attachment.releaseDate) : undefined;
-                attachment.uploadDate = attachment.uploadDate ? moment(attachment.uploadDate) : undefined;
+                attachment.releaseDate = attachment.releaseDate ? dayjs(attachment.releaseDate) : undefined;
+                attachment.uploadDate = attachment.uploadDate ? dayjs(attachment.uploadDate) : undefined;
             });
         }
         return res;

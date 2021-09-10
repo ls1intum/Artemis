@@ -14,7 +14,7 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
@@ -379,7 +379,7 @@ export class CourseUpdateComponent implements OnInit {
      */
     getSemesters() {
         // 2018 is the first year we offer semesters for and go one year into the future
-        const years = moment().year() - 2018 + 1;
+        const years = dayjs().year() - 2018 + 1;
         // Add an empty semester as default value
         const semesters: string[] = [''];
         for (let i = 0; i <= years; i++) {

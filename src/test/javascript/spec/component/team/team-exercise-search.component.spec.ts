@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -36,7 +36,7 @@ describe('Team Exercise Search Component', () => {
 
     it('formats the search result with release date', () => {
         const title = 'My exercise';
-        const releaseDate = moment();
+        const releaseDate = dayjs();
         const dateFormat = 'yyyy-MM-DD';
 
         const exercise = new TextExercise(undefined, undefined);

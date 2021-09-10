@@ -7,7 +7,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
@@ -103,11 +103,11 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidStartDate(): boolean {
-        return this.exam.startDate !== undefined && moment(this.exam.startDate).isAfter(this.exam.visibleDate);
+        return this.exam.startDate !== undefined && dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
     }
 
     get isValidEndDate(): boolean {
-        return this.exam.endDate !== undefined && moment(this.exam.endDate).isAfter(this.exam.startDate);
+        return this.exam.endDate !== undefined && dayjs(this.exam.endDate).isAfter(this.exam.startDate);
     }
 
     get isValidPublishResultsDate(): boolean {
@@ -115,8 +115,8 @@ export class ExamUpdateComponent implements OnInit {
         if (!this.exam.publishResultsDate) {
             return true;
         }
-        // check for undefined because undefined is otherwise treated as the now moment by moment.js
-        return this.exam.endDate !== undefined && moment(this.exam.publishResultsDate).isAfter(this.exam.endDate);
+        // check for undefined because undefined is otherwise treated as the now dayjs
+        return this.exam.endDate !== undefined && dayjs(this.exam.publishResultsDate).isAfter(this.exam.endDate);
     }
 
     get isValidExamStudentReviewStart(): boolean {
@@ -124,8 +124,8 @@ export class ExamUpdateComponent implements OnInit {
         if (!this.exam.examStudentReviewStart) {
             return true;
         }
-        // check for undefined because undefined is otherwise treated as the now moment by moment.js
-        return this.exam.publishResultsDate !== undefined && moment(this.exam.examStudentReviewStart).isAfter(this.exam.publishResultsDate);
+        // check for undefined because undefined is otherwise treated as the now dayjs
+        return this.exam.publishResultsDate !== undefined && dayjs(this.exam.examStudentReviewStart).isAfter(this.exam.publishResultsDate);
     }
 
     get isValidExamStudentReviewEnd(): boolean {
@@ -133,7 +133,7 @@ export class ExamUpdateComponent implements OnInit {
         if (!this.exam.examStudentReviewEnd) {
             return true;
         }
-        // check for undefined because undefined is otherwise treated as the now moment by moment.js
-        return this.exam.examStudentReviewStart !== undefined && moment(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
+        // check for undefined because undefined is otherwise treated as the now dayjs
+        return this.exam.examStudentReviewStart !== undefined && dayjs(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
     }
 }

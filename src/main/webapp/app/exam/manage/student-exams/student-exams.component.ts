@@ -14,8 +14,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -82,7 +81,7 @@ export class StudentExamsComponent implements OnInit {
             const examObservable = this.examManagementService.find(this.courseId, this.examId, true).pipe(
                 tap((examResponse) => {
                     this.exam = examResponse.body!;
-                    this.isExamStarted = this.exam.startDate ? this.exam.startDate.isBefore(moment()) : false;
+                    this.isExamStarted = this.exam.startDate ? this.exam.startDate.isBefore(dayjs()) : false;
                     this.calculateIsExamOver();
                 }),
             );
@@ -99,10 +98,10 @@ export class StudentExamsComponent implements OnInit {
 
     calculateIsExamOver() {
         if (this.longestWorkingTime && this.exam) {
-            const examEndDate = moment(this.exam.startDate);
+            const examEndDate = dayjs(this.exam.startDate);
             examEndDate.add(this.longestWorkingTime, 'seconds');
-            examEndDate.add(this.exam.gracePeriod, 'seconds');
-            this.isExamOver = examEndDate.isBefore(moment());
+            examEndDate.add(this.exam.gracePeriod!, 'seconds');
+            this.isExamOver = examEndDate.isBefore(dayjs());
         }
     }
 
@@ -300,9 +299,9 @@ export class StudentExamsComponent implements OnInit {
         }
     }
 
-    formatDate(date: Moment | Date | undefined) {
+    formatDate(date: dayjs.Dayjs | Date | undefined) {
         // TODO: we should try to use the artemis date pipe here
-        return date ? moment(date).format(defaultLongDateTimeFormat) : '';
+        return date ? dayjs(date).format(defaultLongDateTimeFormat) : '';
     }
 
     /**

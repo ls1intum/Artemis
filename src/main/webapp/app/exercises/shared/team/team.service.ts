@@ -11,7 +11,7 @@ import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/entities/team.model';
 import { downloadFile } from 'app/shared/util/download.util';
 import { createRequestOption } from 'app/shared/util/request-util';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Observable, Subscription } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 
@@ -306,22 +306,22 @@ export class TeamService implements ITeamService {
 
     private static convertDateFromServer(res: TeamResponse): TeamResponse {
         if (res.body) {
-            res.body.createdDate = moment(res.body.createdDate);
-            res.body.lastModifiedDate = res.body.lastModifiedDate ? moment(res.body.lastModifiedDate) : undefined;
+            res.body.createdDate = dayjs(res.body.createdDate);
+            res.body.lastModifiedDate = res.body.lastModifiedDate ? dayjs(res.body.lastModifiedDate) : undefined;
         }
         return res;
     }
 
     private static convertDatesForTeamFromServer(team: Team): Team {
-        team.createdDate = moment(team.createdDate);
-        team.lastModifiedDate = team.lastModifiedDate ? moment(team.lastModifiedDate) : undefined;
+        team.createdDate = dayjs(team.createdDate);
+        team.lastModifiedDate = team.lastModifiedDate ? dayjs(team.lastModifiedDate) : undefined;
         return team;
     }
 
     private static convertDateFromClient(team: Team): Team {
         return Object.assign({}, team, {
-            createdDate: moment(team.createdDate).isValid() ? moment(team.createdDate).toJSON() : undefined,
-            lastModifiedDate: team.lastModifiedDate && moment(team.lastModifiedDate).isValid() ? moment(team.lastModifiedDate).toJSON() : undefined,
+            createdDate: dayjs(team.createdDate).isValid() ? dayjs(team.createdDate).toJSON() : undefined,
+            lastModifiedDate: team.lastModifiedDate && dayjs(team.lastModifiedDate).isValid() ? dayjs(team.lastModifiedDate).toJSON() : undefined,
         });
     }
 }

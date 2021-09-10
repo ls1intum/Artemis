@@ -3,7 +3,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-dialog.component';
 import { By } from '@angular/platform-browser';

@@ -13,7 +13,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { QuizExercisePopupService } from 'app/exercises/quiz/manage/quiz-exercise-popup.service';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { restore, SinonStub, spy, stub } from 'sinon';
 import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';

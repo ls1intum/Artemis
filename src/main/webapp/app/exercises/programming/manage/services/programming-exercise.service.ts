@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -23,7 +22,7 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     released: boolean;
     hasStudentResult: boolean;
     testCasesChanged: boolean;
-    buildAndTestStudentSubmissionsAfterDueDate?: Moment;
+    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 };
 
 export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION' | 'TESTS' | 'AUXILIARY';
@@ -299,8 +298,8 @@ export class ProgrammingExerciseService {
         const copy = {
             ...this.exerciseService.convertDateFromClient(exercise),
             buildAndTestStudentSubmissionsAfterDueDate:
-                exercise.buildAndTestStudentSubmissionsAfterDueDate && moment(exercise.buildAndTestStudentSubmissionsAfterDueDate).isValid()
-                    ? moment(exercise.buildAndTestStudentSubmissionsAfterDueDate).toJSON()
+                exercise.buildAndTestStudentSubmissionsAfterDueDate && dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).isValid()
+                    ? dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).toJSON()
                     : undefined,
         };
         // Remove exercise from template & solution participation to avoid circular dependency issues.
@@ -316,7 +315,7 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Convert all date fields of the programming exercise to momentJs date objects.
+     * Convert all date fields of the programming exercise to dayjs date objects.
      * Note: This conversion could produce an invalid date if the date is malformatted.
      *
      * @param entity ProgrammingExercise
@@ -327,7 +326,7 @@ export class ProgrammingExerciseService {
             return res;
         }
         res.body.buildAndTestStudentSubmissionsAfterDueDate = res.body.buildAndTestStudentSubmissionsAfterDueDate
-            ? moment(res.body.buildAndTestStudentSubmissionsAfterDueDate)
+            ? dayjs(res.body.buildAndTestStudentSubmissionsAfterDueDate)
             : undefined;
         return res;
     }

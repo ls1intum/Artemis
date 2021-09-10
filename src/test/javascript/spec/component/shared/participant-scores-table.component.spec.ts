@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import * as chai from 'chai';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';

@@ -17,7 +17,7 @@ import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/entities/quiz/drag-state.enum';
-import * as $ from 'jquery';
+import $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';

@@ -12,14 +12,15 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { take } from 'rxjs/operators';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+
 chai.use(sinonChai);
 const expect = chai.expect;
 
@@ -38,9 +39,9 @@ describe('Course Management Service', () => {
     let textExercise: TextExercise;
 
     let fileUploadExercise: FileUploadExercise;
-    let releaseDate: moment.Moment;
-    let dueDate: moment.Moment;
-    let assessmentDueDate: moment.Moment;
+    let releaseDate: dayjs.Dayjs;
+    let dueDate: dayjs.Dayjs;
+    let assessmentDueDate: dayjs.Dayjs;
 
     let releaseDateString: string;
     let dueDateString: string;
@@ -66,12 +67,12 @@ describe('Course Management Service', () => {
         course.title = 'testTitle';
         const releaseDateRaw = new Date();
         releaseDateRaw.setMonth(3);
-        releaseDate = moment(releaseDateRaw);
+        releaseDate = dayjs(releaseDateRaw);
         const dueDateRaw = new Date();
         dueDateRaw.setMonth(6);
-        dueDate = moment(dueDateRaw);
+        dueDate = dayjs(dueDateRaw);
         const assessmentDueDateRaw = new Date();
-        assessmentDueDate = moment(assessmentDueDateRaw);
+        assessmentDueDate = dayjs(assessmentDueDateRaw);
 
         releaseDateString = releaseDateRaw.toISOString();
         dueDateString = dueDateRaw.toISOString();
@@ -107,12 +108,12 @@ describe('Course Management Service', () => {
     });
 
     const expectDateConversionToBeDone = (exerciseToCheck: Exercise, withoutAssessmentDueDate?: boolean) => {
-        expect(moment.isMoment(exerciseToCheck.releaseDate)).to.be.true;
+        expect(dayjs.isDayjs(exerciseToCheck.releaseDate)).to.be.true;
         expect(exerciseToCheck.releaseDate?.toISOString()).to.equal(releaseDateString);
-        expect(moment.isMoment(exerciseToCheck.dueDate)).to.be.true;
+        expect(dayjs.isDayjs(exerciseToCheck.dueDate)).to.be.true;
         expect(exerciseToCheck.dueDate?.toISOString()).to.equal(dueDateString);
         if (!withoutAssessmentDueDate) {
-            expect(moment.isMoment(exerciseToCheck.assessmentDueDate)).to.be.true;
+            expect(dayjs.isDayjs(exerciseToCheck.assessmentDueDate)).to.be.true;
             expect(exerciseToCheck.assessmentDueDate?.toISOString()).to.equal(assessmentDueDateString);
         }
     };

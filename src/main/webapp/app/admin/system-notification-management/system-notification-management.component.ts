@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
 import { SystemNotification } from 'app/entities/system-notification.model';
@@ -128,7 +128,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * @param systemNotification which relevance will be checked
      */
     isNotificationActive(systemNotification: SystemNotification) {
-        return systemNotification.notificationDate!.isBefore(moment()) && systemNotification.expireDate!.isAfter(moment());
+        return systemNotification.notificationDate!.isBefore(dayjs()) && systemNotification.expireDate!.isAfter(dayjs());
     }
 
     /**

@@ -18,7 +18,7 @@ import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);

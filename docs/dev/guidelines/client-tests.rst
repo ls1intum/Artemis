@@ -17,7 +17,7 @@ The most basic test looks similar to this:
  .. code:: ts
 
     import * as chai from 'chai';
-    import * as sinonChai from 'sinon-chai';
+    import sinonChai from 'sinon-chai';
     import * as sinon from 'sinon';
     import { ComponentFixture, TestBed } from '@angular/core/testing';
 
@@ -73,7 +73,7 @@ Example of a bad test practice:
 
             beforeEach(() => {
                 return TestBed.configureTestingModule({
-                    imports: [ArtemisTestModule, NgxDatatableModule, ArtemisResultModule, ArtemisSharedModule, TranslateModule.forRoot(), RouterTestingModule, MomentModule],
+                    imports: [ArtemisTestModule, NgxDatatableModule, ArtemisResultModule, ArtemisSharedModule, TranslateModule.forRoot(), RouterTestingModule],
                     declarations: [
                         ParticipationSubmissionComponent,
                         MockComponent(UpdatingResultComponent),
@@ -151,7 +151,6 @@ Here are the improvements for the test above:
   - ArtemisResultModule
   - ArtemisSharedModule
   - TranslateModule.forRoot()
-  - MomentModule
 
 * **Mocked** pipes, directives and components that are not supposed to be tested:
 
@@ -239,7 +238,7 @@ Here is an example of a test for `exercise-update-warning component <https://git
  .. code:: ts
 
     import * as chai from 'chai';
-    import * as sinonChai from 'sinon-chai';
+    import sinonChai from 'sinon-chai';
     import * as sinon from 'sinon';
 
     chai.use(sinonChai);

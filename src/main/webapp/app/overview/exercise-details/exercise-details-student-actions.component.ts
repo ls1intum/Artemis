@@ -1,5 +1,5 @@
 import { Component, ContentChild, HostBinding, Input, TemplateRef } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
@@ -49,7 +49,7 @@ export class ExerciseDetailsStudentActionsComponent {
      */
     isPracticeModeAvailable(): boolean {
         const quizExercise = this.exercise as QuizExercise;
-        return quizExercise.isPlannedToStart! && quizExercise.isOpenForPractice! && moment(quizExercise.dueDate!).isBefore(moment());
+        return quizExercise.isPlannedToStart! && quizExercise.isOpenForPractice! && dayjs(quizExercise.dueDate!).isBefore(dayjs());
     }
 
     /**

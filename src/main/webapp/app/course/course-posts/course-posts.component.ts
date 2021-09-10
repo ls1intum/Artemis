@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Post } from 'app/entities/metis/post.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { Moment } from 'moment';
+import * as dayjs from 'dayjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { PostService } from 'app/shared/metis/post.service';
@@ -11,7 +11,7 @@ import { VOTE_EMOJI_ID } from 'app/shared/metis/metis.service';
 export type PostForOverview = {
     id: number;
     content?: string;
-    creationDate?: Moment;
+    creationDate?: dayjs.Dayjs;
     votes: number;
     answers: number;
     approvedAnswerPosts: number;

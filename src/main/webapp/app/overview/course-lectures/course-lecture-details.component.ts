@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment } from 'app/entities/attachment.model';
@@ -70,7 +70,7 @@ export class CourseLectureDetailsComponent implements OnInit {
             );
     }
     attachmentNotReleased(attachment: Attachment): boolean {
-        return attachment.releaseDate != undefined && !moment(attachment.releaseDate).isBefore(moment())!;
+        return attachment.releaseDate != undefined && !dayjs(attachment.releaseDate).isBefore(dayjs())!;
     }
 
     attachmentExtension(attachment: Attachment): string {

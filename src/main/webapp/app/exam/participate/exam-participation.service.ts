@@ -8,7 +8,7 @@ import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { catchError, map } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash';
 import { ParticipationType } from 'app/entities/participation/participation.model';
@@ -217,12 +217,12 @@ export class ExamParticipationService {
 
     private static convertExamDateFromServer(exam?: Exam) {
         if (exam) {
-            exam.visibleDate = exam.visibleDate ? moment(exam.visibleDate) : undefined;
-            exam.startDate = exam.startDate ? moment(exam.startDate) : undefined;
-            exam.endDate = exam.endDate ? moment(exam.endDate) : undefined;
-            exam.publishResultsDate = exam.publishResultsDate ? moment(exam.publishResultsDate) : undefined;
-            exam.examStudentReviewStart = exam.examStudentReviewStart ? moment(exam.examStudentReviewStart) : undefined;
-            exam.examStudentReviewEnd = exam.examStudentReviewEnd ? moment(exam.examStudentReviewEnd) : undefined;
+            exam.visibleDate = exam.visibleDate ? dayjs(exam.visibleDate) : undefined;
+            exam.startDate = exam.startDate ? dayjs(exam.startDate) : undefined;
+            exam.endDate = exam.endDate ? dayjs(exam.endDate) : undefined;
+            exam.publishResultsDate = exam.publishResultsDate ? dayjs(exam.publishResultsDate) : undefined;
+            exam.examStudentReviewStart = exam.examStudentReviewStart ? dayjs(exam.examStudentReviewStart) : undefined;
+            exam.examStudentReviewEnd = exam.examStudentReviewEnd ? dayjs(exam.examStudentReviewEnd) : undefined;
         }
         return exam;
     }

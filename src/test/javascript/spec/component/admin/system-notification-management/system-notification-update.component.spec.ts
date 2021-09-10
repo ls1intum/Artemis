@@ -13,7 +13,7 @@ import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import { spy } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 

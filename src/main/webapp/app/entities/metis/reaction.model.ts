@@ -1,12 +1,12 @@
 import { User } from 'app/core/user/user.model';
-import { Moment } from 'moment';
+import * as dayjs from 'dayjs';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 export class Reaction {
     public id?: number;
     public user?: User;
-    public creationDate?: Moment;
+    public creationDate?: dayjs.Dayjs;
     public emojiId?: string;
     public post?: Post;
     public answerPost?: AnswerPost;

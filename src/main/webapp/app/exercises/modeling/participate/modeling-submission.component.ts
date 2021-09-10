@@ -26,7 +26,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
 import { omit } from 'lodash';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { Subject } from 'rxjs';
 import { Subscription } from 'rxjs';
@@ -156,8 +156,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingExercise &&
             !!this.modelingExercise.dueDate &&
             !!this.participation.initializationDate &&
-            moment(this.participation.initializationDate).isAfter(this.modelingExercise.dueDate);
-        this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || moment().isAfter(this.modelingExercise.assessmentDueDate);
+            dayjs(this.participation.initializationDate).isAfter(this.modelingExercise.dueDate);
+        this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || dayjs().isAfter(this.modelingExercise.assessmentDueDate);
         if (this.submission.model) {
             this.umlModel = JSON.parse(this.submission.model);
             this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
@@ -549,7 +549,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return this.modelingExercise && !this.examMode && (!this.modelingExercise.dueDate || moment(this.modelingExercise.dueDate).isSameOrAfter(moment()));
+        return this.modelingExercise && !this.examMode && (!this.modelingExercise.dueDate || dayjs(this.modelingExercise.dueDate).isSameOrAfter(dayjs()));
     }
 
     get submitButtonTooltip(): string {

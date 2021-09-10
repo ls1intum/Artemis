@@ -2,10 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
-import * as moment from 'moment';
-import { isMoment } from 'moment';
-import { Result } from '../../../entities/result.model';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
+import { Result } from 'app/entities/result.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -75,11 +73,11 @@ export class ResultService implements IResultService {
     public convertDateFromClient(result: Result): Result {
         const copy: Result = Object.assign({}, result, {
             completionDate:
-                // Result completionDate is a moment object -> toJSON.
-                result.completionDate && isMoment(result.completionDate)
+                // Result completionDate is a dayjs object -> toJSON.
+                result.completionDate && dayjs.isDayjs(result.completionDate)
                     ? result.completionDate.toJSON()
                     : // Result completionDate would be a valid date -> keep string.
-                    result.completionDate && moment(result.completionDate).isValid()
+                    result.completionDate && dayjs(result.completionDate).isValid()
                     ? result.completionDate
                     : // No valid date -> remove date.
                       null,
@@ -90,7 +88,7 @@ export class ResultService implements IResultService {
     protected convertArrayResponse(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((result: Result) => {
-                result.completionDate = result.completionDate ? moment(result.completionDate) : undefined;
+                result.completionDate = result.completionDate ? dayjs(result.completionDate) : undefined;
                 result.participation = this.convertParticipationDateFromServer(result.participation! as StudentParticipation);
             });
         }
@@ -99,7 +97,7 @@ export class ResultService implements IResultService {
 
     public convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.completionDate = res.body.completionDate ? moment(res.body.completionDate) : undefined;
+            res.body.completionDate = res.body.completionDate ? dayjs(res.body.completionDate) : undefined;
             res.body.participation = this.convertParticipationDateFromServer(res.body.participation! as StudentParticipation);
         }
         return res;
@@ -107,7 +105,7 @@ export class ResultService implements IResultService {
 
     convertParticipationDateFromServer(participation: StudentParticipation) {
         if (participation) {
-            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : undefined;
+            participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
             if (participation.exercise) {
                 participation.exercise = this.exerciseService.convertExerciseDateFromServer(participation.exercise);
             }
@@ -146,8 +144,8 @@ export class ResultService implements IResultService {
     /**
      * Utility function
      */
-    private durationInMinutes(completionDate: Moment, initializationDate: Moment) {
-        return moment(completionDate).diff(initializationDate, 'minutes');
+    private durationInMinutes(completionDate: dayjs.Dayjs, initializationDate: dayjs.Dayjs) {
+        return dayjs(completionDate).diff(initializationDate, 'minutes');
     }
 
     /**

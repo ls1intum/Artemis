@@ -10,7 +10,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -21,6 +21,7 @@ import { AlertService } from 'app/core/util/alert.service';
     templateUrl: './modeling-exercise-detail.component.html',
 })
 export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
+    readonly dayjs = dayjs;
     modelingExercise: ModelingExercise;
     course: Course | undefined;
     private subscription: Subscription;
@@ -32,7 +33,6 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     numberOfClusters: number;
 
     readonly ExerciseType = ExerciseType;
-    readonly moment = moment;
     doughnutStats: ExerciseManagementStatisticsDto;
     isExamExercise: boolean;
 

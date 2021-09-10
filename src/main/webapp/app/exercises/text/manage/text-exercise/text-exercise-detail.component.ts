@@ -10,7 +10,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseType } from 'app/entities/exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 
@@ -21,7 +21,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
-    readonly moment = moment;
+    readonly dayjs = dayjs;
 
     textExercise: TextExercise;
     course: Course | undefined;

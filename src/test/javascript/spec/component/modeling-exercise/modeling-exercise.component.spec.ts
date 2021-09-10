@@ -14,7 +14,7 @@ import { CourseExerciseService } from 'app/course/manage/course-management.servi
 import { Course } from 'app/entities/course.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { SortService } from 'app/shared/service/sort.service';
 import { EventManager } from 'app/core/util/event-manager.service';

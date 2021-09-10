@@ -11,6 +11,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { DurationPipe } from 'app/shared/pipes/duration.pipe';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule],
@@ -25,6 +26,7 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
         ArtemisDurationFromSecondsPipe,
+        DurationPipe,
     ],
     exports: [
         ArtemisSharedLibsModule,
@@ -38,6 +40,7 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
         ArtemisDurationFromSecondsPipe,
+        DurationPipe,
     ],
     providers: [ArtemisDatePipe],
 })

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared/util/request-util';
@@ -75,9 +75,8 @@ export class SystemNotificationService {
      */
     protected convertDateFromClient(notification: SystemNotification): SystemNotification {
         const copy: SystemNotification = Object.assign({}, notification, {
-            notificationDate:
-                notification.notificationDate && moment(notification.notificationDate).isValid() ? moment(notification.notificationDate).toISOString(true) : undefined,
-            expireDate: notification.expireDate && moment(notification.expireDate).isValid() ? moment(notification.expireDate).toISOString(true) : undefined,
+            notificationDate: notification.notificationDate && dayjs(notification.notificationDate).isValid() ? dayjs(notification.notificationDate).toISOString() : undefined,
+            expireDate: notification.expireDate && dayjs(notification.expireDate).isValid() ? dayjs(notification.expireDate).toISOString() : undefined,
         });
         return copy;
     }
@@ -89,8 +88,8 @@ export class SystemNotificationService {
      */
     convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.notificationDate = res.body.notificationDate ? moment(res.body.notificationDate) : undefined;
-            res.body.expireDate = res.body.expireDate ? moment(res.body.expireDate) : undefined;
+            res.body.notificationDate = res.body.notificationDate ? dayjs(res.body.notificationDate) : undefined;
+            res.body.expireDate = res.body.expireDate ? dayjs(res.body.expireDate) : undefined;
         }
         return res;
     }
@@ -103,8 +102,8 @@ export class SystemNotificationService {
     convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((notification: SystemNotification) => {
-                notification.notificationDate = notification.notificationDate ? moment(notification.notificationDate) : undefined;
-                notification.expireDate = notification.expireDate ? moment(notification.expireDate) : undefined;
+                notification.notificationDate = notification.notificationDate ? dayjs(notification.notificationDate) : undefined;
+                notification.expireDate = notification.expireDate ? dayjs(notification.expireDate) : undefined;
             });
         }
         return res;

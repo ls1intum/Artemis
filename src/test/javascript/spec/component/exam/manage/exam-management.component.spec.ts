@@ -2,9 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -152,7 +152,7 @@ describe('Exam Management Component', () => {
         sinon.replace(service, 'findAllExamsForCourse', sinon.fake.returns(of(responseFakeExams)));
 
         const examInformationDTO = new ExamInformationDTO();
-        examInformationDTO.latestIndividualEndDate = moment();
+        examInformationDTO.latestIndividualEndDate = dayjs();
         const responseFakeLatestIndividualEndDateOfExam = { body: examInformationDTO } as HttpResponse<ExamInformationDTO>;
         sinon.replace(service, 'getLatestIndividualEndDateOfExam', sinon.fake.returns(of(responseFakeLatestIndividualEndDateOfExam)));
 
@@ -209,7 +209,7 @@ describe('Exam Management Component', () => {
 
     it('Should return true for examHasFinished when exam is in the past ', () => {
         // GIVEN
-        exam.latestIndividualEndDate = moment().subtract(1, 'days');
+        exam.latestIndividualEndDate = dayjs().subtract(1, 'days');
 
         // WHEN
         const examHasFinished = comp.examHasFinished(exam);
@@ -220,7 +220,7 @@ describe('Exam Management Component', () => {
 
     it('Should return false for examHasFinished when exam is in the future ', () => {
         // GIVEN
-        exam.latestIndividualEndDate = moment().add(1, 'minute');
+        exam.latestIndividualEndDate = dayjs().add(1, 'minute');
 
         // WHEN
         const examHasFinished = comp.examHasFinished(exam);

@@ -3,7 +3,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +15,6 @@ import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsComponent } from 'app/exercises/shared/team/teams.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { DifferencePipe } from 'ngx-moment';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -65,7 +64,6 @@ describe('TeamsComponent', () => {
             declarations: [],
             providers: [
                 EventManager,
-                DifferencePipe,
                 { provide: TeamService, useClass: MockTeamService },
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: ActivatedRoute, useValue: route },

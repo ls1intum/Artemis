@@ -5,8 +5,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
 import { cloneDeep } from 'lodash';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as moment from 'moment';
+import sinonChai from 'sinon-chai';
+import dayjs from 'dayjs';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -563,7 +563,7 @@ describe('FileUploadAssessmentComponent', () => {
         });
         it('should not be able to override if tutor is assessor and result has a complaint', () => {
             comp.isAtLeastInstructor = false;
-            comp.exercise!.assessmentDueDate = moment().add(-100, 'seconds');
+            comp.exercise!.assessmentDueDate = dayjs().add(-100, 'seconds');
             expect(comp.canOverride).to.be.equal(false);
         });
         it('should not be able to override if exercise is undefined', () => {
@@ -632,7 +632,7 @@ const createSubmission = (exercise: FileUploadExercise) => {
         id: 2278,
         submitted: true,
         type: SubmissionType.MANUAL,
-        submissionDate: moment('2019-07-09T10:47:33.244Z'),
+        submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
         participation: { type: ParticipationType.STUDENT, exercise } as unknown as Participation,
     } as FileUploadSubmission;
 };
@@ -641,7 +641,7 @@ const createResult = (submission: FileUploadSubmission) => {
     const result = new Result();
     result.id = 2374;
     result.resultString = '1 of 12 points';
-    result.completionDate = moment('2019-07-09T11:51:23.251Z');
+    result.completionDate = dayjs('2019-07-09T11:51:23.251Z');
     result.successful = false;
     result.score = 1;
     result.rated = true;

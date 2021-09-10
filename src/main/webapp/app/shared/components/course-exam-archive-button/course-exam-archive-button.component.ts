@@ -8,7 +8,7 @@ import { tap } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { ButtonSize } from '../button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -156,9 +156,9 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     canArchive() {
         let isOver: boolean;
         if (this.archiveMode === 'Exam' && this.exam) {
-            isOver = !!this.exam.endDate?.isBefore(moment());
+            isOver = !!this.exam.endDate?.isBefore(dayjs());
         } else {
-            isOver = !!this.course.endDate?.isBefore(moment());
+            isOver = !!this.course.endDate?.isBefore(dayjs());
         }
         return this.accountService.isAtLeastInstructorInCourse(this.course) && isOver;
     }

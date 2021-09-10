@@ -1,7 +1,7 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -48,7 +48,7 @@ describe('VideoUnitFormComponent', () => {
         videoUnitFormComponentFixture.detectChanges();
         const exampleDescription = 'lorem ipsum';
         videoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        const exampleReleaseDate = moment({ years: 2010, months: 3, date: 5 });
+        const exampleReleaseDate = dayjs().year(2010).month(3).day(5);
         videoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         videoUnitFormComponent.sourceControl!.setValue(validYouTubeUrlInEmbeddableFormat);
         videoUnitFormComponentFixture.detectChanges();
@@ -74,7 +74,7 @@ describe('VideoUnitFormComponent', () => {
         videoUnitFormComponent.nameControl!.setValue(exampleName);
         const exampleDescription = 'lorem ipsum';
         videoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        const exampleReleaseDate = moment({ years: 2010, months: 3, date: 5 });
+        const exampleReleaseDate = dayjs().year(2010).month(3).day(5);
         videoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         videoUnitFormComponentFixture.detectChanges();
         expect(videoUnitFormComponent.form.invalid).to.be.true;
@@ -99,7 +99,7 @@ describe('VideoUnitFormComponent', () => {
         videoUnitFormComponent.nameControl!.setValue(exampleName);
         const exampleDescription = 'lorem ipsum';
         videoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        const exampleReleaseDate = moment({ years: 2010, months: 3, date: 5 });
+        const exampleReleaseDate = dayjs().year(2010).month(3).day(5);
         videoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         videoUnitFormComponent.sourceControl!.setValue(validYouTubeUrlInEmbeddableFormat);
         videoUnitFormComponentFixture.detectChanges();
@@ -148,7 +148,7 @@ describe('VideoUnitFormComponent', () => {
         const formData: VideoUnitFormData = {
             name: 'test',
             description: 'lorem ipsum',
-            releaseDate: moment({ years: 2010, months: 3, date: 5 }),
+            releaseDate: dayjs().year(2010).month(3).day(5),
             source: validYouTubeUrlInEmbeddableFormat,
         };
         videoUnitFormComponentFixture.detectChanges();

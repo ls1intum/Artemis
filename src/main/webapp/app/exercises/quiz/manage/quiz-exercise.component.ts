@@ -4,7 +4,7 @@ import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model'
 import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute } from '@angular/router';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -79,8 +79,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
      */
     quizIsOver(quizExercise: QuizExercise) {
         if (quizExercise.isPlannedToStart) {
-            const plannedEndMoment = moment(quizExercise.releaseDate!).add(quizExercise.duration, 'seconds');
-            return plannedEndMoment.isBefore(moment());
+            const plannedEndMoment = dayjs(quizExercise.releaseDate!).add(quizExercise.duration!, 'seconds');
+            return plannedEndMoment.isBefore(dayjs());
             // the quiz is over
         }
         // the quiz hasn't started yet

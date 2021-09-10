@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamSession } from 'app/entities/exam-session.model';
@@ -48,7 +48,7 @@ describe('Exam Navigation Bar Component', () => {
         repositoryService = fixture.debugElement.injector.get(CodeEditorRepositoryService);
         TestBed.inject(ExamParticipationService);
 
-        comp.endDate = moment();
+        comp.endDate = dayjs();
         comp.exercises = [
             {
                 id: 0,

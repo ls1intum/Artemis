@@ -124,3 +124,7 @@ export const splitCamelCase = (word: string) => {
     }
     return output.join('');
 };
+
+export const isDate = (input: any) => {
+    return input instanceof Date || Object.prototype.toString.call(input) === '[object Date]';
+};

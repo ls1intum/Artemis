@@ -35,12 +35,12 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
@@ -189,7 +189,7 @@ describe('ExamParticipationComponent', () => {
     it('should load exam if test run id is not defined', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
-        studentExam.exam.startDate = moment().subtract(2000, 'seconds');
+        studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
         studentExam.workingTime = 100;
         const studentExamWithExercises = new StudentExam();
         TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
@@ -287,7 +287,7 @@ describe('ExamParticipationComponent', () => {
     it('should initialize exercises when exam starts', () => {
         const studentExam = new StudentExam();
         studentExam.workingTime = 100;
-        comp.testRunStartTime = moment().subtract(1000, 'seconds');
+        comp.testRunStartTime = dayjs().subtract(1000, 'seconds');
         testExamStarted(studentExam);
     });
 
@@ -295,9 +295,9 @@ describe('ExamParticipationComponent', () => {
         // Should calculate time from exam start date when no test run, rest does not get effected
         TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         comp.ngOnInit();
-        const startDate = moment();
+        const startDate = dayjs();
         comp.exam = new Exam();
-        comp.exam.startDate = moment(startDate);
+        comp.exam.startDate = dayjs(startDate);
         const workingTime = 1000;
         const studentExam = new StudentExam();
         studentExam.workingTime = workingTime;
@@ -457,16 +457,16 @@ describe('ExamParticipationComponent', () => {
             expect(comp.isOver()).to.equal(true);
         });
         it('should be over if individual end date is before server date', () => {
-            const endDate = moment().subtract(1, 'days');
-            const date = moment();
+            const endDate = dayjs().subtract(1, 'days');
+            const date = dayjs();
             comp.individualStudentEndDate = endDate;
             const serverNowStub = stub(artemisServerDateService, 'now').returns(date);
             expect(comp.isOver()).to.equal(true);
             expect(serverNowStub).to.have.been.called;
         });
         it('should not be over if individual end date is after server date', () => {
-            const endDate = moment().add(1, 'days');
-            const date = moment();
+            const endDate = dayjs().add(1, 'days');
+            const date = dayjs();
             comp.individualStudentEndDate = endDate;
             const serverNowStub = stub(artemisServerDateService, 'now').returns(date);
             expect(comp.isOver()).to.equal(false);
@@ -493,8 +493,8 @@ describe('ExamParticipationComponent', () => {
 
         it('should be visible if visible date is before server date', () => {
             setComponentWithoutTestRun();
-            const visibleDate = moment().subtract(1, 'days');
-            const date = moment();
+            const visibleDate = dayjs().subtract(1, 'days');
+            const date = dayjs();
             comp.exam.visibleDate = visibleDate;
             const serverNowStub = stub(artemisServerDateService, 'now').returns(date);
             expect(comp.isVisible()).to.equal(true);
@@ -503,8 +503,8 @@ describe('ExamParticipationComponent', () => {
 
         it('should not be visible if visible date is before server date', () => {
             setComponentWithoutTestRun();
-            const visibleDate = moment().add(1, 'days');
-            const date = moment();
+            const visibleDate = dayjs().add(1, 'days');
+            const date = dayjs();
             comp.exam.visibleDate = visibleDate;
             const serverNowStub = stub(artemisServerDateService, 'now').returns(date);
             expect(comp.isVisible()).to.equal(false);
@@ -525,8 +525,8 @@ describe('ExamParticipationComponent', () => {
 
         it('should be active if start date is before server date', () => {
             setComponentWithoutTestRun();
-            const startDate = moment().subtract(1, 'days');
-            const date = moment();
+            const startDate = dayjs().subtract(1, 'days');
+            const date = dayjs();
             comp.exam.startDate = startDate;
             const serverNowStub = stub(artemisServerDateService, 'now').returns(date);
             expect(comp.isActive()).to.equal(true);
@@ -535,8 +535,8 @@ describe('ExamParticipationComponent', () => {
 
         it('should not be active if start date is before server date', () => {
             setComponentWithoutTestRun();
-            const startDate = moment().add(1, 'days');
-            const date = moment();
+            const startDate = dayjs().add(1, 'days');
+            const date = dayjs();
             comp.exam.startDate = startDate;
             const serverNowStub = stub(artemisServerDateService, 'now').returns(date);
             expect(comp.isActive()).to.equal(false);

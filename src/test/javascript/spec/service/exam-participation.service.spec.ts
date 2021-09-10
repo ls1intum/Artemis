@@ -1,7 +1,7 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { Exam } from 'app/entities/exam.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
@@ -68,12 +68,12 @@ describe('Exam Participation Service', () => {
     it('should load a StudentExam', async () => {
         const sendExam = Object.assign(
             {
-                visibleDate: moment(),
-                startDate: moment(),
-                endDate: moment(),
-                publishResultDate: moment(),
-                examStudentReviewStart: moment(),
-                examStudentReviewEnd: moment(),
+                visibleDate: dayjs(),
+                startDate: dayjs(),
+                endDate: dayjs(),
+                publishResultDate: dayjs(),
+                examStudentReviewStart: dayjs(),
+                examStudentReviewEnd: dayjs(),
             },
             exam,
         );

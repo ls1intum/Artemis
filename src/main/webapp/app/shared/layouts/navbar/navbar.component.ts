@@ -7,7 +7,6 @@ import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { SERVER_API_URL, VERSION } from 'app/app.constants';
-import * as moment from 'moment';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -456,7 +455,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     changeLanguage(languageKey: string) {
         this.sessionStorage.store('locale', languageKey);
         this.translateService.use(languageKey);
-        moment.locale(languageKey);
         this.localeConversionService.locale = languageKey;
     }
 

@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import * as sinon from 'sinon';
 import { SinonStub, spy, stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 import { ArtemisTestModule } from '../test.module';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';

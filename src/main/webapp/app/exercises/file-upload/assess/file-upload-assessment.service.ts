@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
@@ -59,13 +59,13 @@ export class FileUploadAssessmentService {
         const result = this.convertItemFromServer(res.body!);
 
         if (result.completionDate) {
-            result.completionDate = moment(result.completionDate);
+            result.completionDate = dayjs(result.completionDate);
         }
         if (result.submission && result.submission.submissionDate) {
-            result.submission.submissionDate = moment(result.submission.submissionDate);
+            result.submission.submissionDate = dayjs(result.submission.submissionDate);
         }
         if (result.participation && result.participation.initializationDate) {
-            result.participation.initializationDate = moment(result.participation.initializationDate);
+            result.participation.initializationDate = dayjs(result.participation.initializationDate);
         }
 
         return res.clone({ body: result });

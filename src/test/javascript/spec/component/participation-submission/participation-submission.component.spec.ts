@@ -2,8 +2,8 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as moment from 'moment';
+import sinonChai from 'sinon-chai';
+import dayjs from 'dayjs';
 import { restore, SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -169,7 +169,7 @@ describe('ParticipationSubmissionComponent', () => {
             id: 3,
             submitted: true,
             type: SubmissionType.MANUAL,
-            submissionDate: moment('2019-07-09T10:47:33.244Z'),
+            submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
             commitHash: '123456789',
             participation,
         };
@@ -189,7 +189,7 @@ describe('ParticipationSubmissionComponent', () => {
                 id: 2278,
                 submitted: true,
                 type: SubmissionType.MANUAL,
-                submissionDate: moment('2019-07-09T10:47:33.244Z'),
+                submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
                 text: 'My TextSubmission',
                 participation,
             },
@@ -230,7 +230,7 @@ describe('ParticipationSubmissionComponent', () => {
                 id: 3,
                 submitted: true,
                 type: SubmissionType.MANUAL,
-                submissionDate: moment('2019-07-09T10:47:33.244Z'),
+                submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
                 commitHash: '123456789',
                 participation: templateParticipation,
             },
@@ -267,7 +267,7 @@ describe('ParticipationSubmissionComponent', () => {
                 id: 4,
                 submitted: true,
                 type: SubmissionType.MANUAL,
-                submissionDate: moment('2019-07-09T10:47:33.244Z'),
+                submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
                 commitHash: '123456789',
                 participation: solutionParticipation,
             },

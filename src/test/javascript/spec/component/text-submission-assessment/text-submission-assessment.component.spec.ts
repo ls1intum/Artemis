@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -20,7 +20,7 @@ import { ParticipationType } from 'app/entities/participation/participation.mode
 import { getLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
@@ -73,7 +73,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         id: 2278,
         submitted: true,
         type: SubmissionType.MANUAL,
-        submissionDate: moment('2019-07-09T10:47:33.244Z'),
+        submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
         text: 'First text. Second text.',
         participation,
     } as unknown as TextSubmission;
@@ -81,7 +81,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         {
             id: 2374,
             resultString: '1 of 12 points',
-            completionDate: moment('2019-07-09T11:51:23.251Z'),
+            completionDate: dayjs('2019-07-09T11:51:23.251Z'),
             successful: false,
             score: 8,
             rated: true,

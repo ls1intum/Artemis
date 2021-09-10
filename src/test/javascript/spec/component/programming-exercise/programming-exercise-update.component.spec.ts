@@ -5,7 +5,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import { stub } from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
@@ -64,7 +64,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             // GIVEN
             const entity = new ProgrammingExercise(new Course(), undefined);
             entity.id = 123;
-            entity.releaseDate = moment(); // We will get a warning if we do not set a release date
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             spyOn(programmingExerciseService, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
             comp.programmingExercise.course = course;
@@ -80,7 +80,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
-            entity.releaseDate = moment(); // We will get a warning if we do not set a release date
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             spyOn(programmingExerciseService, 'automaticSetup').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
             comp.programmingExercise.course = course;
@@ -96,7 +96,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should trim the exercise title before saving', fakeAsync(() => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
-            entity.releaseDate = moment(); // We will get a warning if we do not set a release date
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             entity.title = 'My Exercise   ';
             spyOn(programmingExerciseService, 'automaticSetup').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;

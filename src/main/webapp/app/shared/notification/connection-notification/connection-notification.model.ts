@@ -1,4 +1,4 @@
-import { Moment } from 'moment';
+import * as dayjs from 'dayjs';
 import { Notification, NotificationType } from 'app/entities/notification.model';
 
 export const enum ConnectionNotificationType {
@@ -8,7 +8,7 @@ export const enum ConnectionNotificationType {
 }
 
 export class ConnectionNotification extends Notification {
-    public expireDate: Moment;
+    public expireDate: dayjs.Dayjs;
     public type?: ConnectionNotificationType;
 
     constructor() {

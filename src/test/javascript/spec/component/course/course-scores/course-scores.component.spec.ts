@@ -17,13 +17,12 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { round } from 'app/shared/util/utils';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { MomentModule } from 'ngx-moment';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import { SinonStub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
@@ -44,7 +43,7 @@ describe('CourseScoresComponent', () => {
 
     const exerciseWithFutureReleaseDate = {
         title: 'exercise with future release date',
-        releaseDate: moment().add(1, 'day'),
+        releaseDate: dayjs().add(1, 'day'),
     } as Exercise;
 
     const overallPoints = 10 + 10 + 10;
@@ -52,13 +51,13 @@ describe('CourseScoresComponent', () => {
     const textIncludedWith10Points10BonusPoints = {
         title: 'exercise', // testing duplicated titles
         id: 1,
-        dueDate: moment().add(5, 'minutes'),
+        dueDate: dayjs().add(5, 'minutes'),
         type: ExerciseType.TEXT,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
         maxPoints: 10,
         bonusPoints: 10,
     } as Exercise;
-    const sharedDueDate = moment().add(4, 'minutes');
+    const sharedDueDate = dayjs().add(4, 'minutes');
     const quizIncludedWith10Points0BonusPoints = {
         title: 'exercise', // testing duplicated titles
         id: 2,
@@ -80,7 +79,7 @@ describe('CourseScoresComponent', () => {
     const modelingIncludedWith10Points0BonusPoints = {
         title: 'exercise four',
         id: 4,
-        dueDate: moment().add(2, 'minutes'),
+        dueDate: dayjs().add(2, 'minutes'),
         type: ExerciseType.MODELING,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
         maxPoints: 10,
@@ -226,7 +225,7 @@ describe('CourseScoresComponent', () => {
         pointsOfStudent2.set(ExerciseType.TEXT, [Number.NaN]);
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MomentModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 CourseScoresComponent,
                 MockComponent(AlertComponent),

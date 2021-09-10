@@ -5,7 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { DebugElement, SimpleChange } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { SinonStub, spy, stub } from 'sinon';
 import { Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash';

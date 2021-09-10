@@ -18,14 +18,13 @@ import { CoursesComponent } from 'app/overview/courses.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { MomentModule } from 'ngx-moment';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
@@ -39,23 +38,23 @@ import { AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
-const endDate1 = moment().add(1, 'days');
-const visibleDate1 = moment().subtract(1, 'days');
-const endDate2 = moment().subtract(1, 'days');
-const visibleDate2 = moment().subtract(2, 'days');
+const endDate1 = dayjs().add(1, 'days');
+const visibleDate1 = dayjs().subtract(1, 'days');
+const endDate2 = dayjs().subtract(1, 'days');
+const visibleDate2 = dayjs().subtract(2, 'days');
 const dueDateStat1: DueDateStat = { inTime: 1, late: 0, total: 1 };
 const exercise1: Exercise = {
     id: 5,
     numberOfAssessmentsOfCorrectionRounds: [dueDateStat1],
     studentAssignedTeamIdComputed: false,
-    dueDate: moment().add(2, 'days'),
+    dueDate: dayjs().add(2, 'days'),
     secondCorrectionEnabled: true,
 };
 const exercise2: Exercise = {
     id: 6,
     numberOfAssessmentsOfCorrectionRounds: [dueDateStat1],
     studentAssignedTeamIdComputed: false,
-    dueDate: moment().add(1, 'days'),
+    dueDate: dayjs().add(1, 'days'),
     secondCorrectionEnabled: true,
 };
 
@@ -81,7 +80,7 @@ describe('CoursesComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MomentModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
             declarations: [
                 CoursesComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -138,7 +137,7 @@ describe('CoursesComponent', () => {
             const serverDateServiceStub = stub(serverDateService, 'now');
             const findNextRelevantExerciseSpy = sinon.spy(component, 'findNextRelevantExercise');
             findAllForDashboardStub.returns(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
-            serverDateServiceStub.returns(moment());
+            serverDateServiceStub.returns(dayjs());
 
             component.ngOnInit();
 
@@ -169,7 +168,7 @@ describe('CoursesComponent', () => {
 
             findAllForDashboardStub.returns(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
 
-            serverDateServiceStub.returns(moment());
+            serverDateServiceStub.returns(dayjs());
 
             component.ngOnInit();
 

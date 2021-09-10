@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Moment } from 'moment';
+import * as dayjs from 'dayjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 
@@ -15,7 +15,7 @@ export enum LectureUnitType {
 export abstract class LectureUnit implements BaseEntity {
     public id?: number;
     public name?: string;
-    public releaseDate?: Moment;
+    public releaseDate?: dayjs.Dayjs;
     public lecture?: Lecture;
     public learningGoals?: LearningGoal[];
     public type?: LectureUnitType;

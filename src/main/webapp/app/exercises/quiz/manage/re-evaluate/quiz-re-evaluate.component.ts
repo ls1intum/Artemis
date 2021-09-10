@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
 import { HttpResponse } from '@angular/common/http';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -134,7 +134,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @param quizExercise
      */
     prepareEntity(quizExercise: QuizExercise) {
-        quizExercise.releaseDate = quizExercise.releaseDate ? quizExercise.releaseDate : moment();
+        quizExercise.releaseDate = quizExercise.releaseDate ? quizExercise.releaseDate : dayjs();
         quizExercise.duration = Number(quizExercise.duration);
         quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
     }

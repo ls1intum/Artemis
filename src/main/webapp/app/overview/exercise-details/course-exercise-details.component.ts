@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { User } from 'app/core/user/user.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -175,7 +175,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exercise.studentParticipations = this.filterParticipations(newExercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.exercise.participationStatus = participationStatus(this.exercise);
-        const now = moment();
+        const now = dayjs();
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || now.isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exercise.categories || [];
         this.allowComplaintsForAutomaticAssessments = false;
@@ -203,7 +203,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.subscribeToTeamAssignmentUpdates();
 
         // Subscribe for late programming submissions to show the student a success message
-        if (this.exercise.type === ExerciseType.PROGRAMMING && this.exercise.dueDate && this.exercise.dueDate.isBefore(moment.now())) {
+        if (this.exercise.type === ExerciseType.PROGRAMMING && this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs())) {
             this.subscribeForNewSubmissions();
         }
 
@@ -257,8 +257,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     private resultSortFunction = (a: Result, b: Result) => {
-        const aValue = moment(a.completionDate!).valueOf();
-        const bValue = moment(b.completionDate!).valueOf();
+        const aValue = dayjs(a.completionDate!).valueOf();
+        const bValue = dayjs(b.completionDate!).valueOf();
         return aValue - bValue;
     };
 
@@ -297,7 +297,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 // Notify student about late submission result
                 if (
                     changedParticipation.exercise?.dueDate &&
-                    changedParticipation.exercise!.dueDate!.isBefore(moment.now()) &&
+                    changedParticipation.exercise!.dueDate!.isBefore(dayjs()) &&
                     changedParticipation.results?.length! > this.studentParticipation?.results?.length!
                 ) {
                     this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');

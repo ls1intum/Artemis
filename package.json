@@ -39,6 +39,7 @@
         "core-js": "3.17.3",
         "crypto-browserify": "3.12.0",
         "css-minimizer-webpack-plugin": "3.0.2",
+        "dayjs": "1.10.7",
         "diff-match-patch-typescript": "1.0.8",
         "dompurify": "2.3.1",
         "export-to-csv": "0.2.1",
@@ -49,7 +50,6 @@
         "lodash": "4.17.21",
         "lodash.template": "4.5.0",
         "mobile-drag-drop": "2.3.0-rc.2",
-        "moment": "2.29.1",
         "ng-pick-datetime": "7.0.0",
         "ng-starrating": "1.0.20",
         "ng2-ace-editor": "0.3.9",
@@ -60,7 +60,6 @@
         "ngx-cookie-service": "12.0.3",
         "ngx-device-detector": "2.1.1",
         "ngx-image-cropper": "4.0.1",
-        "ngx-moment": "5.0.0",
         "ngx-treeview": "10.0.2",
         "ngx-webstorage": "8.0.0",
         "papaparse": "5.3.1",
@@ -139,7 +138,6 @@
         "lint-staged": "11.1.2",
         "merge-jsons-webpack-plugin": "2.0.0-alpha",
         "mini-css-extract-plugin": "2.2.2",
-        "moment-locales-webpack-plugin": "1.2.0",
         "ng-mocks": "12.3.1",
         "postcss": "8.3.6",
         "postcss-loader": "6.1.1",
@@ -175,7 +173,7 @@
         "yarn": "1.22.11"
     },
     "engines": {
-        "node": ">=14.15.0 <15",
+        "node": ">=14.17.0 <15",
         "yarn": ">=1.22.4 <2"
     },
     "lint-staged": {
@@ -189,7 +187,6 @@
         "lint": "eslint . --ext .ts",
         "lint:fix": "yarn run lint --fix",
         "lint:doc": "tslint --config tslint-doc.json --project tsconfig.json -e 'node_modules/**'",
-        "ngc": "ngc -p tsconfig.app.json",
         "cleanup": "rimraf build/resources/main/static/ build/resources/main/aot",
         "clean-www": "rimraf build/resources/main/static/app/{src,build/}",
         "start": "yarn run webpack:dev",

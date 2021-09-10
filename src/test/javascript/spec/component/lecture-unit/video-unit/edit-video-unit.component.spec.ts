@@ -1,7 +1,7 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
@@ -96,7 +96,7 @@ describe('EditVideoUnitComponent', () => {
         const videoUnitOfResponse = new VideoUnit();
         videoUnitOfResponse.id = 1;
         videoUnitOfResponse.name = 'test';
-        videoUnitOfResponse.releaseDate = moment({ years: 2010, months: 3, date: 5 });
+        videoUnitOfResponse.releaseDate = dayjs().year(2010).month(3).day(5);
         videoUnitOfResponse.description = 'lorem ipsum';
         videoUnitOfResponse.source = 'https://www.youtube.com/embed/M7lc1UVf-VE';
 
@@ -124,7 +124,7 @@ describe('EditVideoUnitComponent', () => {
         const videoUnitInDatabase: VideoUnit = new VideoUnit();
         videoUnitInDatabase.id = 1;
         videoUnitInDatabase.name = 'test';
-        videoUnitInDatabase.releaseDate = moment({ years: 2010, months: 3, date: 5 });
+        videoUnitInDatabase.releaseDate = dayjs().year(2010).month(3).day(5);
         videoUnitInDatabase.description = 'lorem ipsum';
         videoUnitInDatabase.source = 'https://www.youtube.com/embed/M7lc1UVf-VE';
 

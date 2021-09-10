@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AlertService } from 'app/core/util/alert.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
@@ -117,7 +117,7 @@ describe('AssessmentHeaderComponent', () => {
     it('should display warning when assessment due date has not passed', () => {
         component.exercise = {
             id: 16,
-            dueDate: moment().subtract(2, 'days'),
+            dueDate: dayjs().subtract(2, 'days'),
         } as Exercise;
         // @ts-ignore
         component.result = undefined;
@@ -197,7 +197,7 @@ describe('AssessmentHeaderComponent', () => {
     it('should show override button when result is present', () => {
         component.isLoading = false;
         component.result = new Result();
-        component.result.completionDate = moment();
+        component.result.completionDate = dayjs();
         fixture.detectChanges();
 
         const saveButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=save]'));
@@ -233,7 +233,7 @@ describe('AssessmentHeaderComponent', () => {
         expect(nextSubmissionButtonSpan).toBeFalsy();
 
         component.result = new Result();
-        component.result.completionDate = moment();
+        component.result.completionDate = dayjs();
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeFalsy();

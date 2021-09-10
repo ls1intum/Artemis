@@ -1,11 +1,11 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { DebugElement } from '@angular/core';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
+import * as dayjs from 'dayjs';
 import * as sinon from 'sinon';
 import { SinonStub, spy, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -39,7 +39,7 @@ describe('AnswerPostHeaderComponent', () => {
 
     const user = { id: 1, name: 'username', login: 'login' } as User;
 
-    const yesterday: Moment = moment().subtract(1, 'day');
+    const yesterday: dayjs.Dayjs = dayjs().subtract(1, 'day');
 
     const answerPost = {
         id: 1,

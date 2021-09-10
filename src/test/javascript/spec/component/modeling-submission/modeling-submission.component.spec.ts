@@ -17,9 +17,9 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -148,8 +148,8 @@ describe('ModelingSubmission Management Component', () => {
     });
 
     it('should not allow to submit after the deadline if the initialization date is before the due date', () => {
-        submission.participation!.initializationDate = moment().subtract(2, 'days');
-        (<StudentParticipation>submission.participation).exercise!.dueDate = moment().subtract(1, 'days');
+        submission.participation!.initializationDate = dayjs().subtract(2, 'days');
+        (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().subtract(1, 'days');
         sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
         fixture.detectChanges();
@@ -160,8 +160,8 @@ describe('ModelingSubmission Management Component', () => {
     });
 
     it('should allow to submit after the deadline if the initialization date is after the due date and not submitted', () => {
-        submission.participation!.initializationDate = moment().add(1, 'days');
-        (<StudentParticipation>submission.participation).exercise!.dueDate = moment();
+        submission.participation!.initializationDate = dayjs().add(1, 'days');
+        (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs();
         submission.submitted = false;
         sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
@@ -186,15 +186,15 @@ describe('ModelingSubmission Management Component', () => {
     });
 
     it('should get inactive as soon as the due date passes the current date', () => {
-        (<StudentParticipation>submission.participation).exercise!.dueDate = moment().add(1, 'days');
+        (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().add(1, 'days');
         sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
         fixture.detectChanges();
-        comp.participation.initializationDate = moment();
+        comp.participation.initializationDate = dayjs();
 
         expect(comp.isActive).to.be.true;
 
-        comp.modelingExercise.dueDate = moment().subtract(1, 'days');
+        comp.modelingExercise.dueDate = dayjs().subtract(1, 'days');
 
         fixture.detectChanges();
         expect(comp.isActive).to.be.false;
@@ -257,7 +257,7 @@ describe('ModelingSubmission Management Component', () => {
         newResult.assessmentType = AssessmentType.MANUAL;
         newResult.submission = submission;
         newResult.participation = submission.participation;
-        newResult.completionDate = moment();
+        newResult.completionDate = dayjs();
         newResult.feedbacks = [unreferencedFeedback];
         sinon.replace(participationWebSocketService, 'subscribeForLatestResultOfParticipation', sinon.fake.returns(of(newResult)));
         fixture.detectChanges();

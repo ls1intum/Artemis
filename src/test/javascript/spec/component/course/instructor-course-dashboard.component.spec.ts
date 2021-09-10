@@ -9,7 +9,7 @@ import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -30,7 +30,7 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { instructorCourseDashboardRoute } from 'app/course/dashboards/instructor-course-dashboard/instructor-course-dashboard.route';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -48,9 +48,9 @@ describe('InstructorCourseDashboardComponent', () => {
     let sortService: SortService;
     let accountService: AccountService;
 
-    const assessmentDueDate = moment().subtract(1, 'days');
+    const assessmentDueDate = dayjs().subtract(1, 'days');
     const textExercise = { id: 234, type: ExerciseType.TEXT, assessmentDueDate } as TextExercise;
-    const modelingExercise = { id: 234, type: ExerciseType.MODELING, assessmentDueDate: moment() } as ModelingExercise;
+    const modelingExercise = { id: 234, type: ExerciseType.MODELING, assessmentDueDate: dayjs() } as ModelingExercise;
     const expectedCourse = {
         complaintsEnabled: true,
         exercises: [textExercise, modelingExercise],

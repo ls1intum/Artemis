@@ -11,7 +11,7 @@ import { User } from 'app/core/user/user.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { SERVER_API_URL } from 'app/app.constants';
 
 export const mockTeamStudents = [
@@ -61,14 +61,14 @@ export const mockTeam = {
     students: mockTeamStudents,
     owner: { id: 1 } as User,
     createdBy: 'tutor1',
-    createdDate: moment(mockTeamFromServer.createdDate),
-    lastModifiedDate: moment(mockTeamFromServer.lastModifiedDate),
+    createdDate: dayjs(mockTeamFromServer.createdDate),
+    lastModifiedDate: dayjs(mockTeamFromServer.lastModifiedDate),
 } as Team;
 
 export const mockTeams = [
     mockTeam,
-    { id: 2, name: 'Team 2', shortName: 'team2', students: [], owner: { id: 1 } as User, createdBy: 'tutor1', createdDate: moment() } as Team,
-    { id: 3, name: 'Team 3', shortName: 'team3', students: [], owner: { id: 1 } as User, createdBy: 'tutor1', createdDate: moment() } as Team,
+    { id: 2, name: 'Team 2', shortName: 'team2', students: [], owner: { id: 1 } as User, createdBy: 'tutor1', createdDate: dayjs() } as Team,
+    { id: 3, name: 'Team 3', shortName: 'team3', students: [], owner: { id: 1 } as User, createdBy: 'tutor1', createdDate: dayjs() } as Team,
 ];
 
 export const mockSourceTeam = {
@@ -78,13 +78,13 @@ export const mockSourceTeam = {
     students: mockSourceTeamStudents,
     owner: { id: 1 } as User,
     createdBy: 'tutor1',
-    createdDate: moment(),
+    createdDate: dayjs(),
 } as Team;
 
 export const mockSourceTeams = [
     mockSourceTeam,
-    { id: 2, name: 'Team 5', shortName: 'team5', students: [], owner: { id: 1 } as User, createdBy: 'tutor1', createdDate: moment() } as Team,
-    { id: 3, name: 'Team 6', shortName: 'team6', students: [], owner: { id: 1 } as User, createdBy: 'tutor1', createdDate: moment() } as Team,
+    { id: 2, name: 'Team 5', shortName: 'team5', students: [], owner: { id: 1 } as User, createdBy: 'tutor1', createdDate: dayjs() } as Team,
+    { id: 3, name: 'Team 6', shortName: 'team6', students: [], owner: { id: 1 } as User, createdBy: 'tutor1', createdDate: dayjs() } as Team,
 ];
 
 export const mockShortNames = {

@@ -1,12 +1,12 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { DebugElement } from '@angular/core';
 import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import * as sinon from 'sinon';
 import { SinonStub, spy, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -27,7 +27,7 @@ describe('AnswerPostFooterComponent', () => {
 
     const unApprovedAnswerPost = {
         id: 1,
-        creationDate: moment(),
+        creationDate: dayjs(),
         content: 'not approved most recent',
         tutorApproved: false,
     } as AnswerPost;

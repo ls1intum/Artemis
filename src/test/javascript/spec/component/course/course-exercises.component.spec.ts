@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -16,7 +16,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { MomentModule } from 'ngx-moment';
 import { CourseExercisesComponent, ExerciseFilter, ExerciseSortingOrder, SortingAttribute } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
@@ -28,7 +27,7 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -58,7 +57,7 @@ describe('CourseExercisesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MomentModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
             declarations: [
                 CourseExercisesComponent,
                 MockDirective(OrionFilterDirective),
@@ -96,8 +95,8 @@ describe('CourseExercisesComponent', () => {
                 course = new Course();
                 course.id = 123;
                 exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
-                exercise.dueDate = moment('2021-01-13T16:11:00+01:00').add(1, 'days');
-                exercise.releaseDate = moment('2021-01-13T16:11:00+01:00').subtract(1, 'days');
+                exercise.dueDate = dayjs('2021-01-13T16:11:00+01:00').add(1, 'days');
+                exercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00').subtract(1, 'days');
                 course.exercises = [exercise];
                 spyOn(service, 'getCourseUpdates').and.returnValue(of(course));
                 spyOn(translateService, 'onLangChange').and.returnValue(of(new Subject()));
@@ -137,15 +136,15 @@ describe('CourseExercisesComponent', () => {
             diagramType: UMLDiagramType.ClassDiagram,
             course,
             exerciseGroup: undefined,
-            releaseDate: moment('2021-01-13T16:11:00+01:00'),
-            dueDate: moment('2021-01-13T16:12:00+01:00'),
+            releaseDate: dayjs('2021-01-13T16:11:00+01:00'),
+            dueDate: dayjs('2021-01-13T16:12:00+01:00'),
         } as ModelingExercise;
         const evenOlderExercise = {
             diagramType: UMLDiagramType.ClassDiagram,
             course,
             exerciseGroup: undefined,
-            releaseDate: moment('2021-01-07T16:11:00+01:00'),
-            dueDate: moment('2021-01-07T16:12:00+01:00'),
+            releaseDate: dayjs('2021-01-07T16:11:00+01:00'),
+            dueDate: dayjs('2021-01-07T16:12:00+01:00'),
         } as ModelingExercise;
         component.course!.exercises = [oldExercise, evenOlderExercise];
         component.sortingOrder = ExerciseSortingOrder.DESC;
@@ -175,22 +174,22 @@ describe('CourseExercisesComponent', () => {
         // value. This is usually computed by the server
         // This exercise should be filtered, since the release date is in the future
         const newModelingExerciseWithFutureReleaseDate = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
-        newModelingExerciseWithFutureReleaseDate.releaseDate = moment().add(1, 'days');
+        newModelingExerciseWithFutureReleaseDate.releaseDate = dayjs().add(1, 'days');
         (newModelingExerciseWithFutureReleaseDate as QuizExercise).visibleToStudents = false;
 
         // This exercise should not be filtered, since the release date is in the past
         const newModelingExerciseWithPastReleaseDate = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
-        newModelingExerciseWithPastReleaseDate.releaseDate = moment().subtract(1, 'days');
+        newModelingExerciseWithPastReleaseDate.releaseDate = dayjs().subtract(1, 'days');
         (newModelingExerciseWithPastReleaseDate as QuizExercise).visibleToStudents = true;
 
         // This exercise should be filtered, since the release date is in the future
         const newTextExerciseWithFutureReleaseDate = new TextExercise(course, undefined) as Exercise;
-        newTextExerciseWithFutureReleaseDate.releaseDate = moment().add(1, 'days');
+        newTextExerciseWithFutureReleaseDate.releaseDate = dayjs().add(1, 'days');
         (newTextExerciseWithFutureReleaseDate as QuizExercise).visibleToStudents = false;
 
         // This exercise should not be filtered, since the release date is in the past
         const newTextExerciseWithPastReleaseDate = new TextExercise(course, undefined) as Exercise;
-        newTextExerciseWithPastReleaseDate.releaseDate = moment().subtract(1, 'days');
+        newTextExerciseWithPastReleaseDate.releaseDate = dayjs().subtract(1, 'days');
         (newTextExerciseWithPastReleaseDate as QuizExercise).visibleToStudents = true;
 
         // Adding the created exercises to the course exercises
@@ -230,8 +229,8 @@ describe('CourseExercisesComponent', () => {
 
         for (let i = 1; i < 8; i++) {
             const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
-            newExercise.dueDate = moment('2021-01-13T16:11:00+01:00').add(i, 'days');
-            newExercise.releaseDate = moment('2021-01-13T16:11:00+01:00').subtract(i, 'days');
+            newExercise.dueDate = dayjs('2021-01-13T16:11:00+01:00').add(i, 'days');
+            newExercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00').subtract(i, 'days');
             component.course!.exercises![i] = newExercise;
         }
         component.course!.exercises![component.course!.exercises!.length] = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
@@ -246,12 +245,12 @@ describe('CourseExercisesComponent', () => {
         expect(component.weeklyIndexKeys).to.deep.equal(['2021-01-17', '2021-01-10', 'noDate']);
         expect(component.exerciseCountMap.get('modeling')).to.equal(9);
 
-        // trigger updateUpcomingExercises dynamically with moment()
+        // trigger updateUpcomingExercises dynamically with dayjs()
         component.course!.exercises = [];
         for (let i = 0; i < 7; i++) {
             const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
-            newExercise.dueDate = moment().add(1 + i, 'days');
-            newExercise.releaseDate = moment().subtract(1 + i, 'days');
+            newExercise.dueDate = dayjs().add(1 + i, 'days');
+            newExercise.releaseDate = dayjs().subtract(1 + i, 'days');
             component.course!.exercises[i] = newExercise;
         }
 

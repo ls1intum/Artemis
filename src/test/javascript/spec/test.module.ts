@@ -16,7 +16,7 @@ import { FaIconLibrary, FontAwesomeModule, FaIconComponent } from '@fortawesome/
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import locale from '@angular/common/locales/en';
 import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockComponent } from 'ng-mocks';
 import { MockAlertService } from './helpers/mocks/service/mock-alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -85,7 +85,7 @@ export class ArtemisTestModule {
         registerLocaleData(locale);
         iconLibrary.addIconPacks(fas);
         iconLibrary.addIcons(...fontAwesomeIcons);
-        dpConfig.minDate = { year: moment().year() - 100, month: 1, day: 1 };
+        dpConfig.minDate = { year: dayjs().year() - 100, month: 1, day: 1 };
         translateService.setDefaultLang('en');
     }
 }

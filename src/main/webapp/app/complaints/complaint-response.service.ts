@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -74,21 +74,21 @@ export class ComplaintResponseService {
 
     public convertDateFromClient(complaintResponse: ComplaintResponse): ComplaintResponse {
         return Object.assign({}, complaintResponse, {
-            submittedTime: complaintResponse.submittedTime != undefined && moment(complaintResponse.submittedTime).isValid ? complaintResponse.submittedTime.toJSON() : undefined,
+            submittedTime: complaintResponse.submittedTime != undefined && dayjs(complaintResponse.submittedTime).isValid ? complaintResponse.submittedTime.toJSON() : undefined,
         });
     }
 
     public convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.convertDatesToMoment(res.body);
+            this.convertDatesToDayjs(res.body);
         }
         return res;
     }
 
-    public convertDatesToMoment(complaintResponse: ComplaintResponse): ComplaintResponse {
+    public convertDatesToDayjs(complaintResponse: ComplaintResponse): ComplaintResponse {
         if (complaintResponse) {
-            complaintResponse.submittedTime = complaintResponse.submittedTime != undefined ? moment(complaintResponse.submittedTime) : undefined;
-            complaintResponse.lockEndDate = complaintResponse.lockEndDate != undefined ? moment(complaintResponse.lockEndDate) : undefined;
+            complaintResponse.submittedTime = complaintResponse.submittedTime != undefined ? dayjs(complaintResponse.submittedTime) : undefined;
+            complaintResponse.lockEndDate = complaintResponse.lockEndDate != undefined ? dayjs(complaintResponse.lockEndDate) : undefined;
         }
         return complaintResponse;
     }

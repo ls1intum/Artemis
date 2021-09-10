@@ -3,8 +3,7 @@
 // In some cases it needs to be checked explicitly wether a result is legacy or not.
 // The date used is the date of the merge: 2019-05-10T22:12:28Z.
 import { Result } from 'app/entities/result.model';
-import * as moment from 'moment';
-import { isMoment } from 'moment';
+import dayjs from 'dayjs';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -45,9 +44,9 @@ export const isResultPreliminary = (latestResult: Result, programmingExercise?: 
         // in the unlikely case the completion date is not set yet (this should not happen), it is preliminary
         return true;
     }
-    // If not a moment date already, try to convert it (e.g. when it is a string).
-    if (resultCompletionDate && !isMoment(resultCompletionDate)) {
-        resultCompletionDate = moment(resultCompletionDate);
+    // If not a dayjs date already, try to convert it (e.g. when it is a string).
+    if (resultCompletionDate && !dayjs.isDayjs(resultCompletionDate)) {
+        resultCompletionDate = dayjs(resultCompletionDate);
     }
     // When the result completionDate would be null, we have to return here (edge case, every result should have a completionDate).
     if (!resultCompletionDate || !resultCompletionDate.isValid()) {
@@ -57,14 +56,14 @@ export const isResultPreliminary = (latestResult: Result, programmingExercise?: 
     if (programmingExercise.assessmentType !== AssessmentType.AUTOMATIC) {
         // either the semi-automatic result is not yet available as last result (then it is preliminary), or it is already available, then it still can be changed)
         if (programmingExercise.assessmentDueDate) {
-            return moment().isBefore(moment(programmingExercise.assessmentDueDate));
+            return dayjs().isBefore(dayjs(programmingExercise.assessmentDueDate));
         }
         // in case the assessment due date is not set, the assessment type of the latest result is checked. If it is automatic the result is still preliminary.
         return latestResult.assessmentType === AssessmentType.AUTOMATIC;
     }
     // When the due date for the automatic building and testing is available but not reached, the result is preliminary
     if (programmingExercise.buildAndTestStudentSubmissionsAfterDueDate) {
-        return resultCompletionDate.isBefore(moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
+        return resultCompletionDate.isBefore(dayjs(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
     }
     return false;
 };
@@ -91,8 +90,8 @@ export const hasDeadlinePassed = (exercise: ProgrammingExercise) => {
     }
     // The first priority is the buildAndTestAfterDueDate if it is set.
     let referenceDate = exercise.buildAndTestStudentSubmissionsAfterDueDate || exercise.dueDate!;
-    if (!isMoment(referenceDate)) {
-        referenceDate = moment(referenceDate);
+    if (!dayjs.isDayjs(referenceDate)) {
+        referenceDate = dayjs(referenceDate);
     }
-    return referenceDate.isBefore(moment());
+    return referenceDate.isBefore(dayjs());
 };

@@ -3,8 +3,8 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import * as sinon from 'sinon';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as moment from 'moment';
+import sinonChai from 'sinon-chai';
+import dayjs from 'dayjs';
 import { CourseWideContext, DisplayPriority, Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -81,7 +81,7 @@ describe('Metis Service', () => {
         post1.title = 'title';
         post1.tags = ['tag1', 'tag2'];
         post1.author = user1;
-        post1.creationDate = moment();
+        post1.creationDate = dayjs();
         post1.displayPriority = DisplayPriority.PINNED;
 
         post2 = new Post();
@@ -90,7 +90,7 @@ describe('Metis Service', () => {
         post2.title = 'title';
         post2.tags = ['tag1', 'tag2'];
         post2.author = user2;
-        post2.creationDate = moment().subtract(1, 'day');
+        post2.creationDate = dayjs().subtract(1, 'day');
         post2.displayPriority = DisplayPriority.NONE;
 
         post3 = new Post();
@@ -100,7 +100,7 @@ describe('Metis Service', () => {
         post3.tags = ['tag1', 'tag2'];
         post3.author = user2;
         post3.courseWideContext = CourseWideContext.RANDOM;
-        post3.creationDate = moment().subtract(2, 'day');
+        post3.creationDate = dayjs().subtract(2, 'day');
         post3.reactions = [reactionWithVoteEmoji];
         post3.displayPriority = DisplayPriority.NONE;
 
@@ -111,7 +111,7 @@ describe('Metis Service', () => {
         post4.tags = ['tag1', 'tag2'];
         post4.author = user2;
         post4.courseWideContext = CourseWideContext.RANDOM;
-        post4.creationDate = moment().subtract(2, 'minute');
+        post4.creationDate = dayjs().subtract(2, 'minute');
         post4.reactions = [reactionWithVoteEmoji];
         post4.displayPriority = DisplayPriority.ARCHIVED;
 

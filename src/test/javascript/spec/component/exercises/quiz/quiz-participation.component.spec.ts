@@ -24,12 +24,12 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -44,7 +44,7 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 // Store a copy of now to avoid timing issues
-const now = moment();
+const now = dayjs();
 const question1 = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1 } as QuizQuestion;
 const question2 = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [] } as QuizQuestion;
 const question3 = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3 } as QuizQuestion;
@@ -52,37 +52,37 @@ const question3 = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3 } as Q
 const quizExercise = (<any>{
     id: 1,
     quizQuestions: [question1, question2, question3],
-    releaseDate: moment(now).subtract(2, 'minutes'),
-    adjustedReleaseDate: moment(now).subtract(2, 'minutes'),
-    dueDate: moment(now).add(2, 'minutes'),
-    adjustedDueDate: moment(now).add(2, 'minutes'),
+    releaseDate: dayjs(now).subtract(2, 'minutes'),
+    adjustedReleaseDate: dayjs(now).subtract(2, 'minutes'),
+    dueDate: dayjs(now).add(2, 'minutes'),
+    adjustedDueDate: dayjs(now).add(2, 'minutes'),
     started: true,
 }) as QuizExercise;
 const quizExerciseForPractice = (<any>{
     id: 1,
     quizQuestions: [question1, question2, question3],
-    releaseDate: moment(now).subtract(4, 'minutes'),
-    adjustedReleaseDate: moment(now).subtract(4, 'minutes'),
-    dueDate: moment(now).subtract(2, 'minutes'),
-    adjustedDueDate: moment(now).subtract(2, 'minutes'),
+    releaseDate: dayjs(now).subtract(4, 'minutes'),
+    adjustedReleaseDate: dayjs(now).subtract(4, 'minutes'),
+    dueDate: dayjs(now).subtract(2, 'minutes'),
+    adjustedDueDate: dayjs(now).subtract(2, 'minutes'),
     isOpenForPractice: true,
 }) as QuizExercise;
 const quizExerciseForResults = (<any>{
     id: 1,
     quizQuestions: [question1, question2, question3],
-    releaseDate: moment(now).subtract(4, 'minutes'),
-    adjustedReleaseDate: moment(now).subtract(4, 'minutes'),
-    dueDate: moment(now).subtract(2, 'minutes'),
-    adjustedDueDate: moment(now).subtract(2, 'minutes'),
+    releaseDate: dayjs(now).subtract(4, 'minutes'),
+    adjustedReleaseDate: dayjs(now).subtract(4, 'minutes'),
+    dueDate: dayjs(now).subtract(2, 'minutes'),
+    adjustedDueDate: dayjs(now).subtract(2, 'minutes'),
     ended: true,
 }) as QuizExercise;
 const quizExerciseUnreleased = (<any>{
     id: 1,
     quizQuestions: [question1, question2, question3],
-    releaseDate: moment(now).add(2, 'days'),
-    adjustedReleaseDate: moment(now).add(2, 'days'),
-    dueDate: moment(now).add(4, 'days'),
-    adjustedDueDate: moment(now).add(4, 'days'),
+    releaseDate: dayjs(now).add(2, 'days'),
+    adjustedReleaseDate: dayjs(now).add(2, 'days'),
+    dueDate: dayjs(now).add(4, 'days'),
+    adjustedDueDate: dayjs(now).add(4, 'days'),
     ended: true,
 }) as QuizExercise;
 
@@ -317,7 +317,7 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should adjust release date of the quiz if it didnt start', () => {
-            const releaseDate = moment().add(1, 'minutes');
+            const releaseDate = dayjs().add(1, 'minutes');
             const timeUntilPlannedStart = 10;
             const quizToApply = { ...quizExercise, started: false, isPlannedToStart: true, releaseDate, timeUntilPlannedStart };
 
@@ -327,7 +327,7 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should apply participation', () => {
-            const submission: QuizSubmission = { id: 1, submissionDate: moment().subtract(10, 'minutes'), submittedAnswers: [] };
+            const submission: QuizSubmission = { id: 1, submissionDate: dayjs().subtract(10, 'minutes'), submittedAnswers: [] };
             const result: Result = { id: 1, submission, resultString: 'result-string' };
             const endedQuizExercise = { ...quizExercise, ended: true };
             const participation: StudentParticipation = { exercise: endedQuizExercise, results: [result] };

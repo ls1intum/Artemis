@@ -21,7 +21,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { FeedbackConflict, FeedbackConflictType } from 'app/entities/feedback-conflict';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -68,7 +68,7 @@ describe('TextFeedbackConflictsComponent', () => {
         id: 2278,
         submitted: true,
         type: SubmissionType.MANUAL,
-        submissionDate: moment('2019-07-09T10:47:33.244Z'),
+        submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
         text: 'First text. Second text.',
         participation,
     } as unknown as TextSubmission;
@@ -76,7 +76,7 @@ describe('TextFeedbackConflictsComponent', () => {
         {
             id: 2374,
             resultString: '1 of 12 points',
-            completionDate: moment('2019-07-09T11:51:23.251Z'),
+            completionDate: dayjs('2019-07-09T11:51:23.251Z'),
             successful: false,
             score: 8,
             rated: true,
@@ -116,7 +116,7 @@ describe('TextFeedbackConflictsComponent', () => {
             id: 1,
             conflict: true,
             conflictingFeedbackId: 5,
-            createdAt: moment('2019-07-09T11:51:23.251Z'),
+            createdAt: dayjs('2019-07-09T11:51:23.251Z'),
             type: FeedbackConflictType.INCONSISTENT_COMMENT,
             markedAsNoConflict: false,
         } as FeedbackConflict,
@@ -127,13 +127,13 @@ describe('TextFeedbackConflictsComponent', () => {
         id: 2280,
         submitted: true,
         type: SubmissionType.MANUAL,
-        submissionDate: moment('2019-07-09T10:47:33.244Z'),
+        submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
         text: 'First Conflicting Submission Text.',
     } as unknown as TextSubmission;
     conflictingSubmission.results = [
         {
             id: 2375,
-            completionDate: moment('2020-02-10T11:51:23.251Z'),
+            completionDate: dayjs('2020-02-10T11:51:23.251Z'),
             successful: false,
             score: 3,
             rated: true,

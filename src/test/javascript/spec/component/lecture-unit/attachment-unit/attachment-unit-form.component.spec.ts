@@ -5,10 +5,10 @@ import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockComponent, MockPipe, MockProviders } from 'ng-mocks';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -49,7 +49,7 @@ describe('AttachmentUnitFormComponent', () => {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
-                releaseDate: moment({ years: 2010, months: 3, date: 5 }),
+                releaseDate: dayjs().year(2010).month(3).day(5),
                 version: 2,
                 updateNotificationText: 'lorem ipsum',
             },
@@ -75,7 +75,7 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponentFixture.detectChanges();
         const exampleName = 'test';
         attachmentUnitFormComponent.nameControl!.setValue(exampleName);
-        const exampleReleaseDate = moment({ years: 2010, months: 3, date: 5 });
+        const exampleReleaseDate = dayjs().year(2010).month(3).day(5);
         attachmentUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         const exampleDescription = 'lorem ipsum';
         attachmentUnitFormComponent.descriptionControl!.setValue(exampleDescription);
@@ -118,7 +118,7 @@ describe('AttachmentUnitFormComponent', () => {
     });
     it('should not submit a form when name is missing', () => {
         attachmentUnitFormComponentFixture.detectChanges();
-        const exampleReleaseDate = moment({ years: 2010, months: 3, date: 5 });
+        const exampleReleaseDate = dayjs().year(2010).month(3).day(5);
         attachmentUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         const exampleDescription = 'lorem ipsum';
         attachmentUnitFormComponent.descriptionControl!.setValue(exampleDescription);

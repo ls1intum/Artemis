@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockComponent, MockProvider, MockModule } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateModule } from '@ngx-translate/core';

@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
@@ -108,7 +108,7 @@ describe('CreateAttachmentUnitComponent', () => {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
-                releaseDate: moment({ years: 2010, months: 3, date: 5 }),
+                releaseDate: dayjs({ years: 2010, months: 3, date: 5 }),
                 version: 2,
                 updateNotificationText: 'lorem ipsum',
             },

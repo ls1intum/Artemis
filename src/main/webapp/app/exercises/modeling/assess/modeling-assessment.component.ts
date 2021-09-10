@@ -4,7 +4,7 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { OtherModelElementCount } from 'app/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import interact from 'interactjs';
-import * as $ from 'jquery';
+import $ from 'jquery';
 import { AlertService } from 'app/core/util/alert.service';
 
 @Component({

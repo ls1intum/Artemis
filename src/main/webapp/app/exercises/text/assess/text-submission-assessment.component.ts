@@ -3,8 +3,7 @@ import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import * as moment from 'moment';
-import { now } from 'moment';
+import dayjs from 'dayjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -181,7 +180,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
         }
 
-        this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
+        this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && dayjs(this.exercise!.assessmentDueDate).isBefore(dayjs());
 
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();
@@ -442,7 +441,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.exercise.assessmentDueDate) {
-                isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
+                isBeforeAssessmentDueDate = dayjs().isBefore(this.exercise.assessmentDueDate!);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
             return this.isAssessor && isBeforeAssessmentDueDate;

@@ -2,7 +2,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testi
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement, EventEmitter } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { By } from '@angular/platform-browser';

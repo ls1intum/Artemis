@@ -4,8 +4,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { flatten, maxBy, sum } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -185,14 +184,14 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
         const filtered = this.course?.exercises?.filter(
             (exercise) =>
                 (!needsWorkFilterActive || this.needsWork(exercise)) &&
-                (!exercise.dueDate || !overdueFilterActive || exercise.dueDate.isAfter(moment(new Date()))) &&
+                (!exercise.dueDate || !overdueFilterActive || exercise.dueDate.isAfter(dayjs(new Date()))) &&
                 (!exercise.releaseDate || !unreleasedFilterActive || (exercise as QuizExercise)?.visibleToStudents) &&
                 (!isOrion || exercise.type === ExerciseType.PROGRAMMING),
         );
         this.groupExercises(filtered);
     }
 
-    private getSortingAttributeFromExercise(): (exercise: Exercise) => Moment | undefined {
+    private getSortingAttributeFromExercise(): (exercise: Exercise) => dayjs.Dayjs | undefined {
         return this.sortingAttribute === this.DUE_DATE ? (exercise) => exercise.dueDate : (exercise) => exercise.releaseDate;
     }
 
@@ -242,19 +241,19 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
                 notAssociatedExercises.push(exercise);
                 return;
             }
-            const dateIndex = dateValue ? moment(dateValue).startOf('week').format('YYYY-MM-DD') : 'NoDate';
+            const dateIndex = dateValue ? dayjs(dateValue).startOf('week').format('YYYY-MM-DD') : 'NoDate';
             if (!groupedExercises[dateIndex]) {
                 indexKeys.push(dateIndex);
                 groupedExercises[dateIndex] = {
-                    start: moment(dateValue).startOf('week'),
-                    end: moment(dateValue).endOf('week'),
-                    isCollapsed: dateValue.isBefore(moment(), 'week'),
-                    isCurrentWeek: dateValue.isSame(moment(), 'week'),
+                    start: dayjs(dateValue).startOf('week'),
+                    end: dayjs(dateValue).endOf('week'),
+                    isCollapsed: dateValue.isBefore(dayjs(), 'week'),
+                    isCurrentWeek: dateValue.isSame(dayjs(), 'week'),
                     exercises: [],
                 };
             }
             groupedExercises[dateIndex].exercises.push(exercise);
-            if (exercise.dueDate && moment().isSameOrBefore(dateValue, 'day')) {
+            if (exercise.dueDate && !dayjs().isAfter(dateValue, 'day')) {
                 upcomingExercises.push(exercise);
             }
         });
@@ -277,12 +276,12 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
         this.calcNumberOfExercises();
     }
 
-    private sortExercises(byAttribute: (exercise: Exercise) => Moment | undefined, exercises?: Exercise[]) {
+    private sortExercises(byAttribute: (exercise: Exercise) => dayjs.Dayjs | undefined, exercises?: Exercise[]) {
         return exercises?.sort((a, b) => {
             const sortingAttributeA = byAttribute(a);
             const sortingAttributeB = byAttribute(b);
-            const aValue = sortingAttributeA ? sortingAttributeA.seconds(0).milliseconds(0).valueOf() : moment().valueOf();
-            const bValue = sortingAttributeB ? sortingAttributeB.seconds(0).milliseconds(0).valueOf() : moment().valueOf();
+            const aValue = sortingAttributeA ? sortingAttributeA.second(0).millisecond(0).valueOf() : dayjs().valueOf();
+            const bValue = sortingAttributeB ? sortingAttributeB.second(0).millisecond(0).valueOf() : dayjs().valueOf();
             const titleSortValue = a.title && b.title ? a.title.localeCompare(b.title) : 0;
             return this.sortingOrder.valueOf() * (aValue - bValue === 0 ? titleSortValue : aValue - bValue);
         });

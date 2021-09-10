@@ -20,7 +20,7 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { MockPipe } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { StudentDTO } from 'app/entities/student-dto.model';

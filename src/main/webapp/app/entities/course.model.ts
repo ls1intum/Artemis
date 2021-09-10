@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Moment } from 'moment';
+import * as dayjs from 'dayjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TutorGroup } from 'app/entities/tutor-group.model';
@@ -19,8 +19,8 @@ export class Course implements BaseEntity {
     public teachingAssistantGroupName?: string;
     public editorGroupName?: string;
     public instructorGroupName?: string;
-    public startDate?: Moment;
-    public endDate?: Moment;
+    public startDate?: dayjs.Dayjs;
+    public endDate?: dayjs.Dayjs;
     public semester?: string;
     public testCourse?: boolean;
     public language?: Language;

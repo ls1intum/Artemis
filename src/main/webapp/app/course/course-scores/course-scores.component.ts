@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { forkJoin, of, Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { sum } from 'lodash';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExportToCsv } from 'export-to-csv';
@@ -129,7 +129,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
                 this.exercisesOfCourseThatAreIncludedInScoreCalculation = this.course
                     .exercises!.filter((exercise) => {
-                        const isReleasedExercise = !exercise.releaseDate || exercise.releaseDate.isBefore(moment());
+                        const isReleasedExercise = !exercise.releaseDate || exercise.releaseDate.isBefore(dayjs());
                         const isExerciseThatCounts = exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED;
                         return isReleasedExercise && isExerciseThatCounts;
                     })

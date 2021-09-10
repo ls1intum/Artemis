@@ -1,7 +1,7 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
@@ -91,7 +91,7 @@ describe('EditTextUnitComponent', () => {
         const originalTextUnit: TextUnit = new TextUnit();
         originalTextUnit.id = 1;
         originalTextUnit.name = 'Test';
-        originalTextUnit.releaseDate = moment({ years: 2010, months: 3, date: 5 });
+        originalTextUnit.releaseDate = dayjs().year(2010).month(3).day(5);
         originalTextUnit.content = 'Lorem Ipsum';
 
         const response: HttpResponse<TextUnit> = new HttpResponse({
@@ -120,7 +120,7 @@ describe('EditTextUnitComponent', () => {
         const originalTextUnit: TextUnit = new TextUnit();
         originalTextUnit.id = 1;
         originalTextUnit.name = 'Test';
-        originalTextUnit.releaseDate = moment({ years: 2010, months: 3, date: 5 });
+        originalTextUnit.releaseDate = dayjs().year(2010).month(3).day(5);
         originalTextUnit.content = 'Lorem Ipsum';
 
         const findByidResponse: HttpResponse<TextUnit> = new HttpResponse({
@@ -132,7 +132,7 @@ describe('EditTextUnitComponent', () => {
 
         const formDate: TextUnitFormData = {
             name: 'CHANGED',
-            releaseDate: moment({ years: 2010, months: 3, date: 5 }),
+            releaseDate: dayjs().year(2010).month(3).day(5),
             content: 'Lorem Ipsum',
         };
         const updatedTextUnit: TextUnit = new TextUnit();

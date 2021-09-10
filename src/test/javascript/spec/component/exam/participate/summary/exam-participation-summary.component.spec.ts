@@ -1,7 +1,7 @@
 import * as sinon from 'sinon';
 import * as chai from 'chai';
-import * as moment from 'moment';
-import * as sinonChai from 'sinon-chai';
+import dayjs from 'dayjs';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
@@ -48,12 +48,12 @@ let component: ExamParticipationSummaryComponent;
 
 const user = { id: 1, name: 'Test User' } as User;
 
-const visibleDate = moment().subtract(6, 'hours');
-const startDate = moment().subtract(5, 'hours');
-const endDate = moment().subtract(4, 'hours');
-const publishResultsDate = moment().subtract(3, 'hours');
-const reviewStartDate = moment().subtract(2, 'hours');
-const reviewEndDate = moment().add(1, 'hours');
+const visibleDate = dayjs().subtract(6, 'hours');
+const startDate = dayjs().subtract(5, 'hours');
+const endDate = dayjs().subtract(4, 'hours');
+const publishResultsDate = dayjs().subtract(3, 'hours');
+const reviewStartDate = dayjs().subtract(2, 'hours');
+const reviewEndDate = dayjs().add(1, 'hours');
 
 const exam = {
     id: 1,

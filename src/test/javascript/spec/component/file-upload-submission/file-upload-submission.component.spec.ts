@@ -2,7 +2,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { RouterTestingModule } from '@angular/router/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
@@ -18,7 +18,6 @@ import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { routes } from 'app/exercises/file-upload/participate/file-upload-participation.route';
 import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
-import { MomentModule } from 'ngx-moment';
 import { createFileUploadSubmission, MockFileUploadSubmissionService } from '../../helpers/mocks/service/mock-file-upload-submission.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
@@ -27,7 +26,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { of } from 'rxjs';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
@@ -62,7 +61,6 @@ describe('FileUploadSubmissionComponent', () => {
                 NgxDatatableModule,
                 ArtemisResultModule,
                 ArtemisSharedModule,
-                MomentModule,
                 ArtemisComplaintsModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([routes[0]]),
@@ -206,8 +204,8 @@ describe('FileUploadSubmissionComponent', () => {
 
     it('should not allow to submit after the deadline if the initialization date is before the due date', fakeAsync(() => {
         const submission = createFileUploadSubmission();
-        submission.participation!.initializationDate = moment().subtract(2, 'days');
-        (<StudentParticipation>submission.participation).exercise!.dueDate = moment().subtract(1, 'days');
+        submission.participation!.initializationDate = dayjs().subtract(2, 'days');
+        (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().subtract(1, 'days');
         stub(fileUploadSubmissionService, 'getDataForFileUploadEditor').returns(of(submission));
         comp.submissionFile = new File([''], 'exampleSubmission.png');
 
@@ -225,8 +223,8 @@ describe('FileUploadSubmissionComponent', () => {
 
     it('should allow to submit after the deadline if the initialization date is after the due date', fakeAsync(() => {
         const submission = createFileUploadSubmission();
-        submission.participation!.initializationDate = moment().add(1, 'days');
-        (<StudentParticipation>submission.participation).exercise!.dueDate = moment();
+        submission.participation!.initializationDate = dayjs().add(1, 'days');
+        (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs();
         stub(fileUploadSubmissionService, 'getDataForFileUploadEditor').returns(of(submission));
         comp.submissionFile = new File([''], 'exampleSubmission.png');
 
@@ -264,17 +262,17 @@ describe('FileUploadSubmissionComponent', () => {
 
     it('should get inactive as soon as the due date passes the current date', fakeAsync(() => {
         const submission = createFileUploadSubmission();
-        (<StudentParticipation>submission.participation).exercise!.dueDate = moment().add(1, 'days');
+        (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().add(1, 'days');
         stub(fileUploadSubmissionService, 'getDataForFileUploadEditor').returns(of(submission));
         comp.submissionFile = new File([''], 'exampleSubmission.png');
 
         fixture.detectChanges();
         tick();
-        comp.participation.initializationDate = moment();
+        comp.participation.initializationDate = dayjs();
 
         expect(comp.isActive).to.be.true;
 
-        comp.fileUploadExercise.dueDate = moment().subtract(1, 'days');
+        comp.fileUploadExercise.dueDate = dayjs().subtract(1, 'days');
 
         fixture.detectChanges();
         tick();

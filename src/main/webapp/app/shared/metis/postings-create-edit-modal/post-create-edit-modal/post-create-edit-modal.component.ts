@@ -3,7 +3,7 @@ import { PostingsCreateEditModalDirective } from 'app/shared/metis/postings-crea
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { FormBuilder, Validators } from '@angular/forms';
 
 const TITLE_MAX_LENGTH = 200;
@@ -37,7 +37,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
      */
     createPosting(): void {
         this.posting.title = this.formGroup.get('title')?.value;
-        this.posting.creationDate = moment();
+        this.posting.creationDate = dayjs();
         this.posting.tags = this.tags;
         this.metisService.createPost(this.posting).subscribe({
             next: (post: Post) => {

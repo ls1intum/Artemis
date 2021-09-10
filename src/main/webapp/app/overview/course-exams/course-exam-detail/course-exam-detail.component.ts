@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { round } from 'app/shared/util/utils';
 
 @Component({
@@ -28,6 +28,6 @@ export class CourseExamDetailComponent {
      * calculate the duration in seconds between the start and end date of the exam
      */
     get examDuration(): number {
-        return round(moment.duration(moment(this.exam.endDate).diff(moment(this.exam.startDate), 'seconds')));
+        return round(dayjs.duration(dayjs(this.exam.endDate).diff(dayjs(this.exam.startDate), 'seconds')));
     }
 }

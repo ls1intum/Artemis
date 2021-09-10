@@ -42,11 +42,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import * as chai from 'chai';
 import { cloneDeep } from 'lodash';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of } from 'rxjs';
 import { restore, SinonStub, stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
@@ -206,7 +206,7 @@ describe('CourseExerciseDetailsComponent', () => {
         studentParticipation.type = ParticipationType.STUDENT;
         const result = new Result();
         result.id = 1;
-        result.completionDate = moment();
+        result.completionDate = dayjs();
         studentParticipation.results = [result];
         studentParticipation.exercise = exercise;
 

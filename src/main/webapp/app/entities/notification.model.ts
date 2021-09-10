@@ -1,4 +1,4 @@
-import { Moment } from 'moment';
+import * as dayjs from 'dayjs';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { User } from 'app/core/user/user.model';
 
@@ -14,7 +14,7 @@ export class Notification implements BaseEntity {
     public notificationType?: NotificationType;
     public title?: string;
     public text?: string;
-    public notificationDate?: Moment;
+    public notificationDate?: dayjs.Dayjs;
     public target?: string;
     public author?: User;
 

@@ -1,7 +1,7 @@
 import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { Observable, Subject, timer } from 'rxjs';
 import { distinctUntilChanged, first, map, takeUntil } from 'rxjs/operators';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { cloneDeep } from 'lodash';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
@@ -15,10 +15,10 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
     @HostBinding('class.row') readonly row = true;
 
     @Input()
-    endDate: moment.Moment;
+    endDate: dayjs.Dayjs;
 
     @Input()
-    criticalTime: moment.Duration;
+    criticalTime: plugin.Duration;
 
     @Input()
     isEndView = false;
@@ -29,10 +29,10 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
     isCriticalTime: boolean;
 
     destroy$: Subject<boolean> = new Subject<boolean>();
-    private timer$: Observable<moment.Duration> = timer(0, 100).pipe(map(() => moment.duration(this.endDate.diff(this.serverDateService.now()))));
+    private timer: Observable<plugin.Duration> = timer(0, 100).pipe(map(() => dayjs.duration(this.endDate.diff(this.serverDateService.now()))));
 
-    displayTime$ = this.timer$.pipe(
-        map((timeLeft: moment.Duration) => this.updateDisplayTime(timeLeft)),
+    displayTime$ = this.timer.pipe(
+        map((timeLeft: plugin.Duration) => this.updateDisplayTime(timeLeft)),
         distinctUntilChanged(),
         takeUntil(this.destroy$),
     );
@@ -40,9 +40,9 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
     timePipe: ArtemisDurationFromSecondsPipe = new ArtemisDurationFromSecondsPipe();
 
     constructor(private serverDateService: ArtemisServerDateService) {
-        this.timer$
+        this.timer
             .pipe(
-                map((timeLeft: moment.Duration) => timeLeft.asSeconds()),
+                map((timeLeft: plugin.Duration) => timeLeft.asSeconds()),
                 distinctUntilChanged(),
                 first((durationInSeconds) => durationInSeconds <= 1),
                 takeUntil(this.destroy$),
@@ -56,7 +56,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        const duration: moment.Duration = moment.duration(this.endDate.diff(this.serverDateService.now()));
+        const duration = dayjs.duration(this.endDate.diff(this.serverDateService.now()));
         this.setIsCriticalTime(duration);
     }
 
@@ -64,7 +64,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
         this.destroy$.next(true);
     }
 
-    updateDisplayTime(timeDiff: moment.Duration) {
+    updateDisplayTime(timeDiff: plugin.Duration) {
         // update isCriticalTime
         this.setIsCriticalTime(timeDiff);
 
@@ -75,7 +75,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
         }
     }
 
-    setIsCriticalTime(timeDiff: moment.Duration) {
+    setIsCriticalTime(timeDiff: plugin.Duration) {
         const clonedTimeDiff = cloneDeep(timeDiff);
         if (this.criticalTime && clonedTimeDiff.subtract(this.criticalTime).asMilliseconds() < 0) {
             this.isCriticalTime = true;

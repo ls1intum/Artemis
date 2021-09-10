@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
@@ -74,15 +74,15 @@ export class SubmissionService {
     }
 
     protected convertSubmissionDateFromServer(submission: Submission) {
-        submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : undefined;
+        submission.submissionDate = submission.submissionDate ? dayjs(submission.submissionDate) : undefined;
         this.reconnectSubmissionAndResult(submission);
         return submission;
     }
 
     convertDateFromServerComplaint(complaint: Complaint) {
-        complaint.submittedTime = complaint.submittedTime ? moment(complaint.submittedTime) : undefined;
+        complaint.submittedTime = complaint.submittedTime ? dayjs(complaint.submittedTime) : undefined;
         if (complaint.complaintResponse) {
-            this.complaintResponseService.convertDatesToMoment(complaint.complaintResponse);
+            this.complaintResponseService.convertDatesToDayjs(complaint.complaintResponse);
         }
         return complaint;
     }
@@ -103,7 +103,7 @@ export class SubmissionService {
         const convertedResults: Result[] = [];
         if (results != undefined && results.length > 0) {
             results.forEach((result: Result) => {
-                result.completionDate = result.completionDate ? moment(result.completionDate) : undefined;
+                result.completionDate = result.completionDate ? dayjs(result.completionDate) : undefined;
                 convertedResults.push(result);
             });
         }
@@ -115,7 +115,7 @@ export class SubmissionService {
         if (submissions != undefined && submissions.length > 0) {
             submissions.forEach((submission: Submission) => {
                 if (submission !== null) {
-                    submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : undefined;
+                    submission.submissionDate = submission.submissionDate ? dayjs(submission.submissionDate) : undefined;
                     this.reconnectSubmissionAndResult(submission);
                     convertedSubmissions.push(submission);
                 }

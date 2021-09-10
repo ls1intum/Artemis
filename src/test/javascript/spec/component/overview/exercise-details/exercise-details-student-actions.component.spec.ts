@@ -1,6 +1,6 @@
 import * as chai from 'chai';
 
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';

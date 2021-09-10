@@ -11,7 +11,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -93,7 +93,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 // Find programming exercise of template and solution programming participation
                 this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
+                    this.exerciseStatusBadge = dayjs(this.exercise.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
                     const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
                     const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
                     // Check if requested participationId belongs to the template or solution participation
@@ -113,7 +113,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 // Get exercise for release and due dates
                 this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
+                    this.exerciseStatusBadge = dayjs(this.exercise.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
                 });
                 this.fetchParticipationAndSubmissionsForStudent();
             }

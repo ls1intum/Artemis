@@ -9,7 +9,7 @@ import { User } from 'app/core/user/user.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/util/alert.service';
 import { round } from 'app/shared/util/utils';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { GradeType } from 'app/entities/grading-scale.model';
@@ -161,7 +161,7 @@ export class StudentExamDetailComponent implements OnInit {
             return !!this.studentExam.submitted;
         } else if (this.studentExam.exam) {
             // Disable the form to edit the working time if the exam is already visible
-            return moment(this.studentExam.exam.visibleDate).isBefore(moment());
+            return dayjs(this.studentExam.exam.visibleDate).isBefore(dayjs());
         }
         // if exam is undefined, the form to edit the working time is disabled
         return true;
@@ -170,7 +170,7 @@ export class StudentExamDetailComponent implements OnInit {
     examIsOver(): boolean {
         if (this.studentExam.exam) {
             // only show the button when the exam is over
-            return moment(this.studentExam.exam.endDate).add(this.studentExam.exam.gracePeriod, 'seconds').isBefore(moment());
+            return dayjs(this.studentExam.exam.endDate).add(this.studentExam.exam.gracePeriod!, 'seconds').isBefore(dayjs());
         }
         // if exam is undefined, we do not want to show the button
         return false;

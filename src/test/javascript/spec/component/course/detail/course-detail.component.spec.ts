@@ -10,9 +10,9 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { MockRouterLinkDirective } from '../../lecture-unit/lecture-unit-management.component.spec';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -41,7 +41,7 @@ describe('Course Management Detail Component', () => {
     let eventManager: EventManager;
 
     const route = { params: of({ courseId: 1 }) };
-    const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: moment().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
+    const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
     const dtoMock = {
         numberOfStudentsInCourse: 100,
         numberOfTeachingAssistantsInCourse: 5,

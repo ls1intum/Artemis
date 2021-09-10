@@ -18,7 +18,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Submission } from 'app/entities/submission.model';
@@ -32,12 +32,12 @@ import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/progr
     encapsulation: ViewEncapsulation.None,
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
+    readonly dayjs = dayjs;
     readonly ActionType = ActionType;
     readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly moment = moment;
     assessmentType = AssessmentType.SEMI_AUTOMATIC;
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;

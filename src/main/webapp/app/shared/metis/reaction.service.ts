@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 type EntityResponseType = HttpResponse<Reaction>;
 
@@ -42,7 +42,7 @@ export class ReactionService {
      */
     private convertDateFromServer(res: HttpResponse<Reaction>): HttpResponse<Reaction> {
         if (res.body) {
-            res.body.creationDate = res.body.creationDate ? moment(res.body.creationDate) : undefined;
+            res.body.creationDate = res.body.creationDate ? dayjs(res.body.creationDate) : undefined;
         }
         return res;
     }

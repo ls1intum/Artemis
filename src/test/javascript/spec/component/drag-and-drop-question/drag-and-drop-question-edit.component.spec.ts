@@ -22,7 +22,7 @@ import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { DndModule } from 'ng2-dnd';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { ArtemisTestModule } from '../../test.module';

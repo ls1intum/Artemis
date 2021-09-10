@@ -12,7 +12,7 @@ import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.
 import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
@@ -30,15 +30,15 @@ Text.size = () => {
 const question1 = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1 } as QuizQuestion;
 const question2 = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [] } as QuizQuestion;
 const question3 = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3 } as QuizQuestion;
-const now = moment();
+const now = dayjs();
 
 const quizExercise = (<any>{
     id: 1,
     quizQuestions: [question1, question2, question3],
-    releaseDate: moment(now).subtract(2, 'minutes'),
-    adjustedReleaseDate: moment(now).subtract(2, 'minutes'),
-    dueDate: moment(now).add(2, 'minutes'),
-    adjustedDueDate: moment(now).add(2, 'minutes'),
+    releaseDate: dayjs(now).subtract(2, 'minutes'),
+    adjustedReleaseDate: dayjs(now).subtract(2, 'minutes'),
+    dueDate: dayjs(now).add(2, 'minutes'),
+    adjustedDueDate: dayjs(now).add(2, 'minutes'),
     started: true,
 }) as QuizExercise;
 

@@ -17,7 +17,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 import interact from 'interactjs';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { lastValueFrom } from 'rxjs';
 
 @Component({
@@ -173,7 +173,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.exercise.assessmentDueDate) {
-                isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
+                isBeforeAssessmentDueDate = dayjs().isBefore(this.exercise.assessmentDueDate!);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
             return this.isAssessor(result) && isBeforeAssessmentDueDate;

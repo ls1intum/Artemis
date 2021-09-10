@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testing';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
 import { TranslateModule } from '@ngx-translate/core';
@@ -21,7 +21,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Component } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
@@ -146,15 +146,15 @@ describe('Exam Update Component', function () {
     });
 
     it('should validate the dates correctly', () => {
-        exam.visibleDate = moment().add(1, 'hours');
-        exam.startDate = moment().add(2, 'hours');
-        exam.endDate = moment().add(3, 'hours');
+        exam.visibleDate = dayjs().add(1, 'hours');
+        exam.startDate = dayjs().add(2, 'hours');
+        exam.endDate = dayjs().add(3, 'hours');
         fixture.detectChanges();
         expect(component.isValidConfiguration).is.true;
 
-        exam.publishResultsDate = moment().add(4, 'hours');
-        exam.examStudentReviewStart = moment().add(5, 'hours');
-        exam.examStudentReviewEnd = moment().add(6, 'hours');
+        exam.publishResultsDate = dayjs().add(4, 'hours');
+        exam.examStudentReviewStart = dayjs().add(5, 'hours');
+        exam.examStudentReviewEnd = dayjs().add(6, 'hours');
         fixture.detectChanges();
         expect(component.isValidConfiguration).is.true;
 

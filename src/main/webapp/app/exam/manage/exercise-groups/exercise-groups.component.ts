@@ -18,7 +18,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exam } from 'app/entities/exam.model';
-import { Moment } from 'moment';
+import * as dayjs from 'dayjs';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -39,7 +39,7 @@ export class ExerciseGroupsComponent implements OnInit {
     dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
-    latestIndividualEndDate?: Moment;
+    latestIndividualEndDate?: dayjs.Dayjs;
     exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
 
     constructor(

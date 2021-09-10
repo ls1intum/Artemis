@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { ArtemisTestModule } from '../../../test.module';
 import { of } from 'rxjs';

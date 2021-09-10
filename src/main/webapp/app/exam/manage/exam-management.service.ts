@@ -4,7 +4,7 @@ import { filter, map, tap } from 'rxjs/operators';
 
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Exam } from 'app/entities/exam.model';
 import { createRequestOption } from 'app/shared/util/request-util';
@@ -150,7 +150,7 @@ export class ExamManagementService {
         const url = `${this.resourceUrl}/${courseId}/exams/${examId}/latest-end-date`;
         return this.http.get<ExamInformationDTO>(url, { observe: 'response' }).pipe(
             map((res: HttpResponse<ExamInformationDTO>) => {
-                res.body!.latestIndividualEndDate = moment(res.body!.latestIndividualEndDate);
+                res.body!.latestIndividualEndDate = dayjs(res.body!.latestIndividualEndDate);
                 return res;
             }),
         );
@@ -337,12 +337,12 @@ export class ExamManagementService {
 
     public static convertDateFromClient(exam: Exam): Exam {
         return Object.assign({}, exam, {
-            startDate: exam.startDate && moment(exam.startDate).isValid() ? exam.startDate.toJSON() : undefined,
-            endDate: exam.endDate && moment(exam.endDate).isValid() ? exam.endDate.toJSON() : undefined,
-            visibleDate: exam.visibleDate && moment(exam.visibleDate).isValid() ? exam.visibleDate.toJSON() : undefined,
-            publishResultsDate: exam.publishResultsDate && moment(exam.publishResultsDate).isValid() ? exam.publishResultsDate.toJSON() : undefined,
-            examStudentReviewStart: exam.examStudentReviewStart && moment(exam.examStudentReviewStart).isValid() ? exam.examStudentReviewStart.toJSON() : undefined,
-            examStudentReviewEnd: exam.examStudentReviewEnd && moment(exam.examStudentReviewEnd).isValid() ? exam.examStudentReviewEnd.toJSON() : undefined,
+            startDate: exam.startDate && dayjs(exam.startDate).isValid() ? exam.startDate.toJSON() : undefined,
+            endDate: exam.endDate && dayjs(exam.endDate).isValid() ? exam.endDate.toJSON() : undefined,
+            visibleDate: exam.visibleDate && dayjs(exam.visibleDate).isValid() ? exam.visibleDate.toJSON() : undefined,
+            publishResultsDate: exam.publishResultsDate && dayjs(exam.publishResultsDate).isValid() ? exam.publishResultsDate.toJSON() : undefined,
+            examStudentReviewStart: exam.examStudentReviewStart && dayjs(exam.examStudentReviewStart).isValid() ? exam.examStudentReviewStart.toJSON() : undefined,
+            examStudentReviewEnd: exam.examStudentReviewEnd && dayjs(exam.examStudentReviewEnd).isValid() ? exam.examStudentReviewEnd.toJSON() : undefined,
         });
     }
 
@@ -361,12 +361,12 @@ export class ExamManagementService {
     }
 
     private static convertExamDate(exam: Exam) {
-        exam.startDate = exam.startDate ? moment(exam.startDate) : undefined;
-        exam.endDate = exam.endDate ? moment(exam.endDate) : undefined;
-        exam.visibleDate = exam.visibleDate ? moment(exam.visibleDate) : undefined;
-        exam.publishResultsDate = exam.publishResultsDate ? moment(exam.publishResultsDate) : undefined;
-        exam.examStudentReviewStart = exam.examStudentReviewStart ? moment(exam.examStudentReviewStart) : undefined;
-        exam.examStudentReviewEnd = exam.examStudentReviewEnd ? moment(exam.examStudentReviewEnd) : undefined;
+        exam.startDate = exam.startDate ? dayjs(exam.startDate) : undefined;
+        exam.endDate = exam.endDate ? dayjs(exam.endDate) : undefined;
+        exam.visibleDate = exam.visibleDate ? dayjs(exam.visibleDate) : undefined;
+        exam.publishResultsDate = exam.publishResultsDate ? dayjs(exam.publishResultsDate) : undefined;
+        exam.examStudentReviewStart = exam.examStudentReviewStart ? dayjs(exam.examStudentReviewStart) : undefined;
+        exam.examStudentReviewEnd = exam.examStudentReviewEnd ? dayjs(exam.examStudentReviewEnd) : undefined;
     }
 
     findAllLockedSubmissionsOfExam(courseId: number, examId: number) {

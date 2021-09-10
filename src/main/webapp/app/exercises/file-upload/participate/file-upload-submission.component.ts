@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
@@ -103,13 +103,13 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     this.fileUploadExercise &&
                     !!this.fileUploadExercise.dueDate &&
                     !!this.participation.initializationDate &&
-                    moment(this.participation.initializationDate).isAfter(this.fileUploadExercise.dueDate);
+                    dayjs(this.participation.initializationDate).isAfter(this.fileUploadExercise.dueDate);
 
                 this.acceptedFileExtensions = this.fileUploadExercise
                     .filePattern!.split(',')
                     .map((extension) => `.${extension}`)
                     .join(',');
-                this.isAfterAssessmentDueDate = !this.fileUploadExercise.assessmentDueDate || moment().isAfter(this.fileUploadExercise.assessmentDueDate);
+                this.isAfterAssessmentDueDate = !this.fileUploadExercise.assessmentDueDate || dayjs().isAfter(this.fileUploadExercise.assessmentDueDate);
 
                 if (this.submission.submitted) {
                     this.setSubmittedFile();
@@ -222,7 +222,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return !this.examMode && this.fileUploadExercise && (!this.fileUploadExercise.dueDate || moment(this.fileUploadExercise.dueDate).isSameOrAfter(moment()));
+        return !this.examMode && this.fileUploadExercise && (!this.fileUploadExercise.dueDate || !dayjs(this.fileUploadExercise.dueDate).isBefore(dayjs()));
     }
 
     get submitButtonTooltip(): string {

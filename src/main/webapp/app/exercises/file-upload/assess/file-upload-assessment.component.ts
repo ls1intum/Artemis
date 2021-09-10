@@ -4,8 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import * as moment from 'moment';
-import { now } from 'moment';
+import dayjs from 'dayjs';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -192,7 +191,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.submission = submission;
         this.participation = this.submission.participation as StudentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
-        this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && moment(this.exercise.assessmentDueDate).isBefore(now());
+        this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && dayjs(this.exercise.assessmentDueDate).isBefore(dayjs());
         if (this.resultId > 0) {
             this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
             this.result = getSubmissionResultById(this.submission, this.resultId);
@@ -427,7 +426,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.exercise.assessmentDueDate) {
-                isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
+                isBeforeAssessmentDueDate = dayjs().isBefore(this.exercise.assessmentDueDate!);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
             return this.isAssessor && isBeforeAssessmentDueDate;

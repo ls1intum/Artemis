@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Subject } from 'rxjs';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
@@ -70,7 +70,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         newAttachment.lecture = this.lecture;
         newAttachment.attachmentType = AttachmentType.FILE;
         newAttachment.version = 0;
-        newAttachment.uploadDate = moment();
+        newAttachment.uploadDate = dayjs();
         this.attachmentToBeCreated = newAttachment;
     }
 
@@ -79,7 +79,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
             return this.addAttachment();
         }
         this.attachmentToBeCreated.version!++;
-        this.attachmentToBeCreated.uploadDate = moment();
+        this.attachmentToBeCreated.uploadDate = dayjs();
 
         if (this.attachmentToBeCreated.id) {
             const requestOptions = {} as any;

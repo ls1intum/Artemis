@@ -3,7 +3,6 @@ const { merge } = require('webpack-merge');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCSSAssetsPlugin = require('css-minimizer-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-const MomentLocalesPlugin = require('moment-locales-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const WorkboxPlugin = require('workbox-webpack-plugin');
 
@@ -136,9 +135,6 @@ module.exports = merge(commonConfig({ env: '"production"' }), {
             // Options similar to the same options in webpackOptions.output, both options are optional
             filename: 'content/[name].[contenthash].css',
             chunkFilename: '[id].css'
-        }),
-        new MomentLocalesPlugin({
-            localesToKeep: ['en', 'de']
         }),
         new BundleAnalyzerPlugin({
             analyzerMode: 'static',

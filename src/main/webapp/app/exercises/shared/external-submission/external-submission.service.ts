@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
 import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
@@ -32,7 +32,7 @@ export class ExternalSubmissionService {
      */
     generateInitialManualResult() {
         const newResult = new Result();
-        newResult.completionDate = moment();
+        newResult.completionDate = dayjs();
         newResult.successful = true;
         newResult.score = 100;
         newResult.rated = true;

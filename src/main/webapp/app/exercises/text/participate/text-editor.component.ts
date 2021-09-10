@@ -7,7 +7,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { merge, Subject } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -95,12 +95,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.textExercise.studentParticipations = [this.participation];
         this.textExercise.participationStatus = participationStatus(this.textExercise);
         this.checkIfSubmitAlwaysEnabled();
-        this.isAfterAssessmentDueDate = !!this.textExercise.course && (!this.textExercise.assessmentDueDate || moment().isAfter(this.textExercise.assessmentDueDate));
+        this.isAfterAssessmentDueDate = !!this.textExercise.course && (!this.textExercise.assessmentDueDate || dayjs().isAfter(this.textExercise.assessmentDueDate));
         this.isAfterPublishDate =
             !!this.textExercise.exerciseGroup &&
             !!this.textExercise.exerciseGroup.exam &&
             !!this.textExercise.exerciseGroup.exam.publishResultsDate &&
-            moment().isAfter(this.textExercise.exerciseGroup.exam.publishResultsDate);
+            dayjs().isAfter(this.textExercise.exerciseGroup.exam.publishResultsDate);
 
         if (participation.submissions && participation.submissions.length > 0) {
             this.submission = participation.submissions[0] as TextSubmission;
@@ -141,7 +141,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     private checkIfSubmitAlwaysEnabled() {
         const isInitializationAfterDueDate =
-            this.textExercise.dueDate && this.participation.initializationDate && moment(this.participation.initializationDate).isAfter(this.textExercise.dueDate);
+            this.textExercise.dueDate && this.participation.initializationDate && dayjs(this.participation.initializationDate).isAfter(this.textExercise.dueDate);
         const isAlwaysActive = !this.result && (!this.textExercise.dueDate || isInitializationAfterDueDate);
 
         this.isAllowedToSubmitAfterDeadline = !!isInitializationAfterDueDate;
@@ -153,9 +153,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     get isActive(): boolean {
         const isActive =
-            !this.examMode &&
-            !this.result &&
-            (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && moment(this.textExercise.dueDate).isSameOrAfter(moment())));
+            !this.examMode && !this.result && (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && dayjs(this.textExercise.dueDate).isSameOrAfter(dayjs())));
         return !!isActive;
     }
 

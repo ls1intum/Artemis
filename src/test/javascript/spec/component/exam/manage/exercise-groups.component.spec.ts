@@ -20,7 +20,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
@@ -123,7 +123,7 @@ describe('Exercise Groups Component', () => {
     }));
 
     it('loads exam information', fakeAsync(() => {
-        const latestIndividualEndDate = moment();
+        const latestIndividualEndDate = dayjs();
         const mockResponse = new HttpResponse<ExamInformationDTO>({ body: { latestIndividualEndDate } });
 
         spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').and.returnValue(of(mockResponse));

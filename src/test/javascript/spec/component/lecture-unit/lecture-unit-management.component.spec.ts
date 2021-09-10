@@ -3,7 +3,7 @@ import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import * as sinon from 'sinon';
 import { MockPipe } from 'ng-mocks';

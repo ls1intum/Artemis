@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AlertService } from 'app/core/util/alert.service';

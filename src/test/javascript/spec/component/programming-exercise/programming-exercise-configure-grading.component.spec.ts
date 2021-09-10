@@ -1,9 +1,9 @@
 import { async, ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
+import * as dayjs from 'dayjs';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { sortBy as _sortBy } from 'lodash';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, Subject } from 'rxjs';
@@ -165,7 +165,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         },
     } as ProgrammingExerciseGradingStatistics;
 
-    const getExerciseTestCasteStateDTO = (released: boolean, hasStudentResult: boolean, testCasesChanged: boolean, buildAndTestStudentSubmissionsAfterDueDate?: Moment) => ({
+    const getExerciseTestCasteStateDTO = (released: boolean, hasStudentResult: boolean, testCasesChanged: boolean, buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs) => ({
         body: {
             released,
             hasStudentResult,
@@ -286,7 +286,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         hasStudentResult = true,
         testCasesChanged = false,
         hasBuildAndTestAfterDueDate = true,
-        buildAndTestAfterDueDate = moment(),
+        buildAndTestAfterDueDate = dayjs(),
         showInactive = false,
     } = {}) => {
         comp.ngOnInit();

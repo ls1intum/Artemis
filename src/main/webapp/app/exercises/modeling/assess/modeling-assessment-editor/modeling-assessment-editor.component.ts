@@ -7,8 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
-import { now } from 'moment';
+import dayjs from 'dayjs';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -164,7 +163,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         } else {
             this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
         }
-        this.hasAssessmentDueDatePassed = !!this.modelingExercise!.assessmentDueDate && moment(this.modelingExercise!.assessmentDueDate).isBefore(now());
+        this.hasAssessmentDueDatePassed = !!this.modelingExercise!.assessmentDueDate && dayjs(this.modelingExercise!.assessmentDueDate).isBefore(dayjs());
 
         this.getComplaint();
 
@@ -265,7 +264,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.modelingExercise.assessmentDueDate) {
-                isBeforeAssessmentDueDate = moment().isBefore(this.modelingExercise.assessmentDueDate!);
+                isBeforeAssessmentDueDate = dayjs().isBefore(this.modelingExercise.assessmentDueDate!);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
             return this.isAssessor && isBeforeAssessmentDueDate;
@@ -329,7 +328,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
 
             // if the assessment is before the assessment due date, don't show the confirm submission button
-            const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
+            const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && dayjs().isBefore(this.modelingExercise.assessmentDueDate);
             if (isBeforeAssessmentDueDate) {
                 this.submitAssessment();
             } else {

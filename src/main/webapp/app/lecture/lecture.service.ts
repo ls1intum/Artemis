@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
@@ -97,8 +97,8 @@ export class LectureService {
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.startDate = res.body.startDate ? moment(res.body.startDate) : undefined;
-            res.body.endDate = res.body.endDate ? moment(res.body.endDate) : undefined;
+            res.body.startDate = res.body.startDate ? dayjs(res.body.startDate) : undefined;
+            res.body.endDate = res.body.endDate ? dayjs(res.body.endDate) : undefined;
             if (res.body.lectureUnits) {
                 res.body.lectureUnits = this.lectureUnitService.convertDateArrayFromServerEntity(res.body.lectureUnits);
             }
@@ -129,8 +129,8 @@ export class LectureService {
 
     public convertDatesForLectureFromServer(lecture?: Lecture) {
         if (lecture) {
-            lecture.startDate = lecture.startDate ? moment(lecture.startDate) : undefined;
-            lecture.endDate = lecture.endDate ? moment(lecture.endDate) : undefined;
+            lecture.startDate = lecture.startDate ? dayjs(lecture.startDate) : undefined;
+            lecture.endDate = lecture.endDate ? dayjs(lecture.endDate) : undefined;
             if (lecture.lectureUnits) {
                 lecture.lectureUnits = this.lectureUnitService.convertDateArrayFromServerEntity(lecture.lectureUnits);
             }

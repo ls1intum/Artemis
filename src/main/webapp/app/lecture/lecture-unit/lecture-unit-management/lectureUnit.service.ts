@@ -3,7 +3,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Injectable } from '@angular/core';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
@@ -51,7 +51,7 @@ export class LectureUnitService {
             }
         }
         return Object.assign({}, lectureUnit, {
-            releaseDate: lectureUnit.releaseDate && moment(lectureUnit.releaseDate).isValid() ? lectureUnit.releaseDate.toJSON() : undefined,
+            releaseDate: lectureUnit.releaseDate && dayjs(lectureUnit.releaseDate).isValid() ? lectureUnit.releaseDate.toJSON() : undefined,
         });
     }
 
@@ -75,7 +75,7 @@ export class LectureUnitService {
                     (<ExerciseUnit>res.body).exercise = this.exerciseService.convertExerciseDateFromServer((<ExerciseUnit>res.body).exercise);
                 }
             } else {
-                res.body.releaseDate = res.body.releaseDate ? moment(res.body.releaseDate) : undefined;
+                res.body.releaseDate = res.body.releaseDate ? dayjs(res.body.releaseDate) : undefined;
             }
         }
         return res;
@@ -91,7 +91,7 @@ export class LectureUnitService {
                 (<ExerciseUnit>lectureUnit).exercise = this.exerciseService.convertExerciseDateFromServer((<ExerciseUnit>lectureUnit).exercise);
             }
         } else {
-            lectureUnit.releaseDate = lectureUnit.releaseDate ? moment(lectureUnit.releaseDate) : undefined;
+            lectureUnit.releaseDate = lectureUnit.releaseDate ? dayjs(lectureUnit.releaseDate) : undefined;
         }
         return lectureUnit;
     }

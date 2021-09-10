@@ -1,4 +1,4 @@
-import { Moment } from 'moment';
+import * as dayjs from 'dayjs';
 import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Complaint } from 'app/entities/complaint.model';
@@ -7,13 +7,13 @@ export class ComplaintResponse implements BaseEntity {
     public id?: number;
 
     public responseText?: string;
-    public submittedTime?: Moment;
+    public submittedTime?: dayjs.Dayjs;
     public complaint?: Complaint;
     public reviewer?: User;
     // transient property that will be calculated on the server
     public isCurrentlyLocked?: boolean;
     // transient property that will be calculated on the server
-    public lockEndDate?: Moment;
+    public lockEndDate?: dayjs.Dayjs;
 
     constructor() {}
 }

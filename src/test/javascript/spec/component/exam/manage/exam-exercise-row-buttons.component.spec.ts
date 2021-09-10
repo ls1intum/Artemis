@@ -3,7 +3,7 @@ import { Router, RouterModule } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
@@ -14,7 +14,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { of } from 'rxjs';
 import { MockTranslateService, TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -151,7 +151,7 @@ describe('Exam Exercise Row Buttons Component', () => {
 
     describe('check exam is over', () => {
         it('should check exam is over is true', () => {
-            comp.latestIndividualEndDate = moment().subtract(1, 'days');
+            comp.latestIndividualEndDate = dayjs().subtract(1, 'days');
 
             const isExamOver = comp.isExamOver();
 
@@ -159,7 +159,7 @@ describe('Exam Exercise Row Buttons Component', () => {
         });
 
         it('should check exam is over is false', () => {
-            comp.latestIndividualEndDate = moment().add(1, 'days');
+            comp.latestIndividualEndDate = dayjs().add(1, 'days');
 
             const isExamOver = comp.isExamOver();
 

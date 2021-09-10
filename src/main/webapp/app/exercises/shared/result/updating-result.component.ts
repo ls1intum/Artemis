@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { RepositoryService } from 'app/exercises/shared/result/repository.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -93,7 +93,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 filter((result) => !!result),
                 // Ignore ungraded results if ungraded results are supposed to be ignored.
                 filter((result: Result) => this.showUngradedResults || result.rated === true),
-                map((result) => ({ ...result, completionDate: result.completionDate ? moment(result.completionDate) : undefined, participation: this.participation })),
+                map((result) => ({ ...result, completionDate: result.completionDate ? dayjs(result.completionDate) : undefined, participation: this.participation })),
                 tap((result) => (this.result = result)),
             )
             .subscribe();
@@ -119,7 +119,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                         !this.exercise.dueDate ||
                         submission.type === SubmissionType.INSTRUCTOR ||
                         submission.type === SubmissionType.TEST ||
-                        this.exercise.dueDate.isAfter(moment(submission.submissionDate!)),
+                        this.exercise.dueDate.isAfter(dayjs(submission.submissionDate!)),
                 ),
                 tap(({ submissionState }) => {
                     this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;

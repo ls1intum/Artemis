@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import * as _ from 'lodash';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -208,7 +208,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 // if the quiz was not yet started, we might have missed the quiz start => refresh
                 if (this.quizExercise && !this.quizExercise.started) {
                     this.refreshQuiz(true);
-                } else if (this.quizExercise && this.quizExercise.adjustedDueDate && this.quizExercise.adjustedDueDate.isBefore(moment())) {
+                } else if (this.quizExercise && this.quizExercise.adjustedDueDate && this.quizExercise.adjustedDueDate.isBefore(dayjs())) {
                     // if the quiz has ended, we might have missed to load the results => refresh
                     this.refreshQuiz(true);
                 }
@@ -292,7 +292,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.submission = new QuizSubmission();
 
         // adjust end date
-        this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.duration, 'seconds');
+        this.quizExercise.adjustedDueDate = dayjs().add(this.quizExercise.duration!, 'seconds');
 
         // auto submit when time is up
         this.runningTimeouts.push(
@@ -370,9 +370,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // update remaining time
         if (this.quizExercise && this.quizExercise.adjustedDueDate) {
             const endDate = this.quizExercise.adjustedDueDate;
-            if (endDate.isAfter(moment())) {
+            if (endDate.isAfter(dayjs())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(moment(), 'seconds');
+                this.remainingTimeSeconds = endDate.diff(dayjs(), 'seconds');
                 this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
@@ -387,14 +387,14 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
         // update submission time
         if (this.submission && this.submission.adjustedSubmissionDate) {
-            // exact value is not important => use default relative time from moment for better readability and less distraction
-            this.lastSavedTimeText = moment(this.submission.adjustedSubmissionDate).fromNow();
+            // exact value is not important => use default relative time from dayjs for better readability and less distraction
+            this.lastSavedTimeText = dayjs(this.submission.adjustedSubmissionDate).fromNow();
         }
 
         // update time until start
         if (this.quizExercise && this.quizExercise.adjustedReleaseDate) {
-            if (this.quizExercise.adjustedReleaseDate.isAfter(moment())) {
-                this.timeUntilStart = this.relativeTimeText(this.quizExercise.adjustedReleaseDate.diff(moment(), 'seconds'));
+            if (this.quizExercise.adjustedReleaseDate.isAfter(dayjs())) {
+                this.timeUntilStart = this.relativeTimeText(this.quizExercise.adjustedReleaseDate.diff(dayjs(), 'seconds'));
             } else {
                 this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
                 // Check if websocket has updated the quiz exercise and check that following block is only executed once
@@ -603,8 +603,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.waitingForQuizStart = false;
 
             // update timeDifference
-            this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.remainingTime, 'seconds');
-            this.timeDifference = moment(this.quizExercise.dueDate!).diff(this.quizExercise.adjustedDueDate, 'seconds');
+            this.quizExercise.adjustedDueDate = dayjs().add(this.quizExercise.remainingTime!, 'seconds');
+            this.timeDifference = dayjs(this.quizExercise.dueDate!).diff(this.quizExercise.adjustedDueDate, 'seconds');
 
             // check if quiz hasn't ended
             if (!this.quizExercise.ended) {
@@ -623,8 +623,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
             if (this.quizExercise.isPlannedToStart) {
                 // synchronize time with server
-                this.quizExercise.releaseDate = moment(this.quizExercise.releaseDate!);
-                this.quizExercise.adjustedReleaseDate = moment().add(this.quizExercise.timeUntilPlannedStart, 'seconds');
+                this.quizExercise.releaseDate = dayjs(this.quizExercise.releaseDate!);
+                this.quizExercise.adjustedReleaseDate = dayjs().add(this.quizExercise.timeUntilPlannedStart!, 'seconds');
             }
         }
     }
@@ -737,7 +737,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         if (this.sendWebsocket) {
             if (!this.disconnected) {
                 // this.isSaving = true;
-                this.submission.submissionDate = moment().add(this.timeDifference, 'seconds');
+                this.submission.submissionDate = dayjs().add(this.timeDifference, 'seconds');
                 this.sendWebsocket(this.submission);
                 this.unsavedChanges = false;
                 this.updateSubmissionTime();
@@ -752,8 +752,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     updateSubmissionTime() {
         if (this.submission.submissionDate) {
-            this.submission.adjustedSubmissionDate = moment(this.submission.submissionDate).subtract(this.timeDifference, 'seconds').toDate();
-            if (Math.abs(moment(this.submission.adjustedSubmissionDate).diff(moment(), 'seconds')) < 2) {
+            this.submission.adjustedSubmissionDate = dayjs(this.submission.submissionDate).subtract(this.timeDifference, 'seconds').toDate();
+            if (Math.abs(dayjs(this.submission.adjustedSubmissionDate).diff(dayjs(), 'seconds')) < 2) {
                 this.justSaved = true;
                 this.timeoutJustSaved();
             }

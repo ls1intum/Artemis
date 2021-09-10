@@ -1,7 +1,6 @@
 import { Component, ElementRef, EventEmitter, forwardRef, Input, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import * as moment from 'moment';
-import { isMoment, Moment } from 'moment';
+import dayjs from 'dayjs';
 
 @Component({
     selector: 'jhi-date-time-picker',
@@ -16,8 +15,8 @@ import { isMoment, Moment } from 'moment';
                 [ngClass]="{ 'is-invalid': error }"
                 [ngModel]="value"
                 [disabled]="disabled"
-                [min]="min?.isValid() ? min.toDate() : null"
-                [max]="max?.isValid() ? max.toDate() : null"
+                [min]="min.isValid() ? min.toDate() : null"
+                [max]="max.isValid() ? max.toDate() : null"
                 (ngModelChange)="updateField($event)"
                 [owlDateTime]="dt"
                 name="datePicker"
@@ -25,7 +24,7 @@ import { isMoment, Moment } from 'moment';
             <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
                 <fa-icon [icon]="'calendar-alt'"></fa-icon>
             </button>
-            <owl-date-time [startAt]="startAt?.isValid() ? startAt.toDate() : null" #dt></owl-date-time>
+            <owl-date-time [startAt]="startAt.isValid() ? startAt.toDate() : null" #dt></owl-date-time>
         </div>
     `,
     providers: [
@@ -42,13 +41,13 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() value: any;
     @Input() disabled: boolean;
     @Input() error: boolean;
-    @Input() startAt: Moment = moment().startOf('minutes'); // Default selected date. By default this sets it to the current time without seconds or milliseconds;
-    @Input() min: Moment; // Dates before this date are not selectable.
-    @Input() max: Moment; // Dates after this date are not selectable.
+    @Input() startAt: dayjs.Dayjs = dayjs().startOf('minutes'); // Default selected date. By default this sets it to the current time without seconds or milliseconds;
+    @Input() min: dayjs.Dayjs; // Dates before this date are not selectable.
+    @Input() max: dayjs.Dayjs; // Dates after this date are not selectable.
     @Output() valueChange = new EventEmitter();
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _onChange = (val: Moment) => {};
+    _onChange = (val: dayjs.Dayjs) => {};
 
     /**
      * Emits the value change from component.
@@ -59,12 +58,12 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     /**
      * Function that writes the value safely.
-     * @param value as moment or date
+     * @param value as dayjs or date
      */
     writeValue(value: any) {
-        // convert moment to date, because owl-date-time only works correctly with date objects
-        if (isMoment(value)) {
-            this.value = (value as Moment).toDate();
+        // convert dayjs to date, because owl-date-time only works correctly with date objects
+        if (dayjs.isDayjs(value)) {
+            this.value = (value as dayjs.Dayjs).toDate();
         } else {
             this.value = value;
         }
@@ -89,9 +88,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      *
      * @param newValue
      */
-    updateField(newValue: Moment) {
+    updateField(newValue: dayjs.Dayjs) {
         this.value = newValue;
-        this._onChange(moment(this.value));
+        this._onChange(dayjs(this.value));
         this.valueChanged();
     }
 }

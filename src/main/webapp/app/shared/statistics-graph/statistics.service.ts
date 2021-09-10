@@ -7,7 +7,7 @@ import { CourseManagementStatisticsDTO } from 'app/course/manage/course-manageme
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { map } from 'rxjs/operators';
 import { round } from 'app/shared/util/utils';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
@@ -68,7 +68,7 @@ export class StatisticsService {
 
     private static convertDatesFromServer(dto: CourseManagementStatisticsDTO): CourseManagementStatisticsDTO {
         dto.averageScoresOfExercises.forEach((averageScores) => {
-            averageScores.releaseDate = averageScores.releaseDate !== null ? moment(averageScores.releaseDate) : undefined;
+            averageScores.releaseDate = averageScores.releaseDate !== null ? dayjs(averageScores.releaseDate) : undefined;
         });
         return dto;
     }

@@ -1,4 +1,4 @@
-import { Moment } from 'moment';
+import * as dayjs from 'dayjs';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
@@ -18,7 +18,7 @@ export enum TextAssessmentEventType {
 export class TextAssessmentEvent implements BaseEntity {
     public id?: number;
     public userId?: number;
-    public timestamp?: Moment;
+    public timestamp?: dayjs.Dayjs;
     public eventType?: TextAssessmentEventType;
     public feedbackType?: FeedbackType;
     public segmentType?: TextBlockType;

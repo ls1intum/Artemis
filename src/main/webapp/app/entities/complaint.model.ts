@@ -1,4 +1,4 @@
-import { Moment } from 'moment';
+import * as dayjs from 'dayjs';
 import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Result } from 'app/entities/result.model';
@@ -15,7 +15,7 @@ export class Complaint implements BaseEntity {
 
     public complaintText?: string;
     public accepted?: boolean;
-    public submittedTime?: Moment;
+    public submittedTime?: dayjs.Dayjs;
     public result?: Result;
     public student?: User;
     public team?: Team;

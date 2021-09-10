@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
@@ -7,7 +7,6 @@ import { Course } from 'app/entities/course.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { Subject } from 'rxjs';
-import { DifferencePipe } from 'ngx-moment';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
@@ -59,7 +58,6 @@ describe('ProgrammingExerciseImportComponent', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
-                DifferencePipe,
                 { provide: ProgrammingExercisePagingService, useClass: MockProgrammingExercisePagingService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],

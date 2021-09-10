@@ -1,5 +1,5 @@
 import { CourseParticipantScoresComponent } from 'app/course/course-participant-scores/course-participant-scores.component';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';

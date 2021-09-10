@@ -2,12 +2,12 @@ import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { getTestBed, TestBed } from '@angular/core/testing';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
@@ -42,8 +42,8 @@ describe('AttachmentUnitService', () => {
         attachment.id = 0;
         attachment.version = 1;
         attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = moment({ years: 2010, months: 3, date: 5 });
-        attachment.uploadDate = moment({ years: 2010, months: 3, date: 5 });
+        attachment.releaseDate = dayjs().year(2010).month(3).day(5);
+        attachment.uploadDate = dayjs().year(2010).month(3).day(5);
         attachment.name = 'test';
         attachment.link = '/path/to/file/test.pdf';
 

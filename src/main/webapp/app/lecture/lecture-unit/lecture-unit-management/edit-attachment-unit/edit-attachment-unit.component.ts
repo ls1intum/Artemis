@@ -11,7 +11,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { forkJoin, combineLatest } from 'rxjs';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 @Component({
     selector: 'jhi-edit-attachment-unit',
@@ -99,7 +99,7 @@ export class EditAttachmentUnitComponent implements OnInit {
                 (result) => {
                     // we only update the version when the underlying file has changed
                     this.attachment.version = this.attachment.version! + 1;
-                    this.attachment.uploadDate = moment();
+                    this.attachment.uploadDate = dayjs();
                     // update link to the path provided by the server
                     this.attachment.link = result.path;
                     this.performUpdate();

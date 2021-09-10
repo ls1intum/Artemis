@@ -5,7 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';

@@ -4,7 +4,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -203,13 +203,13 @@ export class TextAssessmentService {
         const result = TextAssessmentService.convertItemFromServer(res.body!);
 
         if (result.completionDate) {
-            result.completionDate = moment(result.completionDate);
+            result.completionDate = dayjs(result.completionDate);
         }
         if (result.submission && result.submission.submissionDate) {
-            result.submission.submissionDate = moment(result.submission.submissionDate);
+            result.submission.submissionDate = dayjs(result.submission.submissionDate);
         }
         if (result.participation && result.participation.initializationDate) {
-            result.participation.initializationDate = moment(result.participation.initializationDate);
+            result.participation.initializationDate = dayjs(result.participation.initializationDate);
         }
 
         return res.clone({ body: result });

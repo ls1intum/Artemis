@@ -7,7 +7,7 @@ import { DebugElement } from '@angular/core';
 import { SinonStub, stub } from 'sinon';
 import { of, Subject } from 'rxjs';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';

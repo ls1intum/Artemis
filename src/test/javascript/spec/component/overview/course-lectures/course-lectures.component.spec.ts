@@ -15,11 +15,11 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -60,9 +60,9 @@ describe('CourseLectures', () => {
         course = new Course();
         course.id = 1;
 
-        const wednesdayBase = moment('18-03-2020', 'DD-MM-YYYY');
-        const wednesdayBefore = moment('11-03-2020', 'DD-MM-YYYY');
-        const wednesdayAfter = moment('25-03-2020', 'DD-MM-YYYY');
+        const wednesdayBase = dayjs('18-03-2020', 'DD-MM-YYYY');
+        const wednesdayBefore = dayjs('11-03-2020', 'DD-MM-YYYY');
+        const wednesdayAfter = dayjs('25-03-2020', 'DD-MM-YYYY');
 
         lecture1 = new Lecture();
         lecture1.id = 1;

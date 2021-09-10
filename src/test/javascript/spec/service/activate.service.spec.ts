@@ -1,6 +1,6 @@
 import { async } from '@angular/core/testing';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
 import { ActivateService } from 'app/account/activate/activate.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';

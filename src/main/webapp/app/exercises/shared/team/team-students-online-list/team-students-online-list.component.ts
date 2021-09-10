@@ -5,8 +5,7 @@ import { User } from 'app/core/user/user.model';
 import { orderBy } from 'lodash';
 import { Observable } from 'rxjs';
 import { map, throttleTime } from 'rxjs/operators';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
@@ -109,7 +108,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         return this.onlineTeamStudents.map((student: OnlineTeamStudent) => student.login).includes(user.login!);
     };
 
-    lastActionDate = (user: User): Moment | undefined => {
+    lastActionDate = (user: User): dayjs.Dayjs | undefined => {
         return this.onlineTeamStudents.find((student: OnlineTeamStudent) => student.login === user.login!)?.lastActionDate;
     };
 
@@ -126,12 +125,12 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
      */
     private computeTypingTeamStudents() {
         this.typingTeamStudents = this.onlineTeamStudents.filter((student: OnlineTeamStudent) => {
-            return Boolean(student.lastTypingDate?.isAfter(moment().subtract(this.showTypingDuration, 'ms')));
+            return Boolean(student.lastTypingDate?.isAfter(dayjs().subtract(this.showTypingDuration, 'ms')));
         });
         if (this.typingTeamStudents.length > 0) {
             const lastTypingDates = this.typingTeamStudents.map((student: OnlineTeamStudent) => student.lastTypingDate).filter(Boolean);
-            const earliestExpiration: Moment = moment(moment.min(lastTypingDates)).add(this.showTypingDuration, 'ms');
-            const timeToExpirationInMilliseconds = earliestExpiration.diff(moment());
+            const earliestExpiration = dayjs.min(lastTypingDates).add(this.showTypingDuration, 'ms');
+            const timeToExpirationInMilliseconds = earliestExpiration.diff(dayjs());
             setTimeout(() => this.computeTypingTeamStudents(), timeToExpirationInMilliseconds);
         }
     }
@@ -140,8 +139,8 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         return students.map((student) => {
             return {
                 ...student,
-                lastTypingDate: student.lastTypingDate !== null ? moment(student.lastTypingDate) : null,
-                lastActionDate: student.lastActionDate !== null ? moment(student.lastActionDate) : null,
+                lastTypingDate: student.lastTypingDate !== null ? dayjs(student.lastTypingDate) : null,
+                lastActionDate: student.lastActionDate !== null ? dayjs(student.lastActionDate) : null,
             };
         });
     }

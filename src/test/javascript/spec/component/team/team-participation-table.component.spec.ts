@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -17,7 +17,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-participation-table/team-participation-table.component';
 import { Exercise, ExerciseMode, ExerciseType } from 'app/entities/exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
@@ -44,7 +44,7 @@ describe('TeamParticipationTableComponent', () => {
         title: 'Course Title',
         isAtLeastInstructor: true,
         isAtLeastEditor: true,
-        endDate: moment().subtract(5, 'minutes'),
+        endDate: dayjs().subtract(5, 'minutes'),
         courseArchivePath: 'some-path',
     } as Course;
     const exercise1 = {
@@ -58,7 +58,7 @@ describe('TeamParticipationTableComponent', () => {
     const submission2 = {
         id: 2,
         submitted: true,
-        submissionDate: moment().subtract(10, 'minutes'),
+        submissionDate: dayjs().subtract(10, 'minutes'),
         results: [
             {
                 id: 2,
@@ -85,13 +85,13 @@ describe('TeamParticipationTableComponent', () => {
     const submission3 = {
         id: 3,
         submitted: true,
-        submissionDate: moment().subtract(10, 'minutes'),
+        submissionDate: dayjs().subtract(10, 'minutes'),
     } as Submission;
     const exercise3 = {
         id: 3,
         type: ExerciseType.FILE_UPLOAD,
         mode: ExerciseMode.TEAM,
-        dueDate: moment().subtract(5, 'minutes'),
+        dueDate: dayjs().subtract(5, 'minutes'),
         teams: [mockTeam],
         course,
         studentParticipations: [
@@ -105,12 +105,12 @@ describe('TeamParticipationTableComponent', () => {
     const submission4 = {
         id: 4,
         submitted: true,
-        submissionDate: moment().subtract(10, 'minutes'),
+        submissionDate: dayjs().subtract(10, 'minutes'),
         results: [
             {
                 id: 2,
                 successful: true,
-                completionDate: moment().subtract(5, 'minutes'),
+                completionDate: dayjs().subtract(5, 'minutes'),
             },
         ],
     } as Submission;
@@ -118,7 +118,7 @@ describe('TeamParticipationTableComponent', () => {
         id: 3,
         type: ExerciseType.PROGRAMMING,
         mode: ExerciseMode.TEAM,
-        dueDate: moment().add(5, 'minutes'),
+        dueDate: dayjs().add(5, 'minutes'),
         teams: [mockTeam],
         course,
         studentParticipations: [
@@ -133,12 +133,12 @@ describe('TeamParticipationTableComponent', () => {
     const submission5 = {
         id: 5,
         submitted: true,
-        submissionDate: moment().subtract(10, 'minutes'),
+        submissionDate: dayjs().subtract(10, 'minutes'),
         results: [
             {
                 id: 2,
                 successful: true,
-                completionDate: moment().subtract(5, 'minutes'),
+                completionDate: dayjs().subtract(5, 'minutes'),
             },
         ],
     } as Submission;
@@ -146,7 +146,7 @@ describe('TeamParticipationTableComponent', () => {
         id: 5,
         type: ExerciseType.MODELING,
         mode: ExerciseMode.TEAM,
-        dueDate: moment().add(5, 'minutes'),
+        dueDate: dayjs().add(5, 'minutes'),
         teams: [mockTeam],
         course,
         studentParticipations: [

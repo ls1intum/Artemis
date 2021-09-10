@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { spy } from 'sinon';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';

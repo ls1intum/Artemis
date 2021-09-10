@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CoursePostsComponent, PostForOverview } from 'app/course/course-posts/course-posts.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';

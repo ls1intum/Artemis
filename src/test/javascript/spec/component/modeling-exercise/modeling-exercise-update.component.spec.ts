@@ -13,7 +13,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exam } from 'app/entities/exam.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -114,9 +114,9 @@ describe('ModelingExercise Management Update Component', () => {
         course.id = 123;
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         modelingExercise.id = 1;
-        modelingExercise.releaseDate = moment();
-        modelingExercise.dueDate = moment();
-        modelingExercise.assessmentDueDate = moment();
+        modelingExercise.releaseDate = dayjs();
+        modelingExercise.dueDate = dayjs();
+        modelingExercise.assessmentDueDate = dayjs();
         const courseId = 1;
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
@@ -148,9 +148,9 @@ describe('ModelingExercise Management Update Component', () => {
         exerciseGroup.exam.course.id = 1;
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup);
         modelingExercise.id = 1;
-        modelingExercise.releaseDate = moment();
-        modelingExercise.dueDate = moment();
-        modelingExercise.assessmentDueDate = moment();
+        modelingExercise.releaseDate = dayjs();
+        modelingExercise.dueDate = dayjs();
+        modelingExercise.assessmentDueDate = dayjs();
         const courseId = 1;
 
         beforeEach(() => {
@@ -180,9 +180,9 @@ describe('ModelingExercise Management Update Component', () => {
     describe('ngOnInit in import mode: Course to Exam', () => {
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
         modelingExercise.id = 1;
-        modelingExercise.releaseDate = moment();
-        modelingExercise.dueDate = moment();
-        modelingExercise.assessmentDueDate = moment();
+        modelingExercise.releaseDate = dayjs();
+        modelingExercise.dueDate = dayjs();
+        modelingExercise.assessmentDueDate = dayjs();
         const groupId = 1;
 
         beforeEach(() => {
@@ -210,9 +210,9 @@ describe('ModelingExercise Management Update Component', () => {
         const exerciseGroup = new ExerciseGroup();
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup);
         modelingExercise.id = 1;
-        modelingExercise.releaseDate = moment();
-        modelingExercise.dueDate = moment();
-        modelingExercise.assessmentDueDate = moment();
+        modelingExercise.releaseDate = dayjs();
+        modelingExercise.dueDate = dayjs();
+        modelingExercise.assessmentDueDate = dayjs();
         const groupId = 1;
 
         beforeEach(() => {

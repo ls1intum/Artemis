@@ -9,7 +9,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { restore, stub } from 'sinon';
 import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';

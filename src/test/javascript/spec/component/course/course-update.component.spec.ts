@@ -22,7 +22,7 @@ import { ImageCropperModule } from 'ngx-image-cropper';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of } from 'rxjs';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
@@ -31,7 +31,7 @@ import { SinonStub, stub } from 'sinon';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-uploader.service';
 import { base64StringToBlob } from 'blob-util';
 
@@ -61,8 +61,8 @@ describe('Course Management Update Component', () => {
         course.title = 'testCourseTitle';
         course.shortName = 'testShortName';
         course.description = 'description';
-        course.startDate = moment();
-        course.endDate = moment();
+        course.startDate = dayjs();
+        course.endDate = dayjs();
         course.semester = 'testSemester';
         course.testCourse = true;
         course.onlineCourse = true;
@@ -426,7 +426,7 @@ describe('Course Management Update Component', () => {
 
     describe('getSemesters', () => {
         it('should get semesters around current year', () => {
-            const years = moment().year() - 2018 + 1;
+            const years = dayjs().year() - 2018 + 1;
             const semesters = comp.getSemesters();
             expect(semesters[0]).to.equal('');
             for (let i = 0; i <= years; i++) {

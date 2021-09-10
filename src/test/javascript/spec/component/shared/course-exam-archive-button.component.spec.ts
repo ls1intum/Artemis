@@ -9,7 +9,7 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import * as sinon from 'sinon';
@@ -96,7 +96,7 @@ describe('Course Exam Archive Button Component', () => {
     });
 
     describe('OnInit for course that is not over', () => {
-        const course = { id: 123, endDate: moment().subtract(5, 'minutes') };
+        const course = { id: 123, endDate: dayjs().subtract(5, 'minutes') };
 
         beforeEach(() => {
             comp.archiveMode = 'Course';
@@ -116,7 +116,7 @@ describe('Course Exam Archive Button Component', () => {
     });
 
     describe('OnInit for course that has no archive', () => {
-        const course = { id: 123, isAtLeastInstructor: true, endDate: moment().subtract(5, 'minutes') };
+        const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes') };
 
         beforeEach(() => {
             comp.archiveMode = 'Course';
@@ -134,7 +134,7 @@ describe('Course Exam Archive Button Component', () => {
     });
 
     describe('OnInit for course that has an archive', () => {
-        const course = { id: 123, isAtLeastInstructor: true, endDate: moment().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
+        const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
 
         beforeEach(fakeAsync(() => {
             comp.archiveMode = 'Course';
@@ -218,8 +218,8 @@ describe('Course Exam Archive Button Component', () => {
     });
 
     describe('OnInit for exam that has an archive', () => {
-        const course = { id: 123, isAtLeastInstructor: true, endDate: moment().subtract(5, 'minutes') };
-        const exam: Exam = { id: 123, endDate: moment().subtract(5, 'minutes'), examArchivePath: 'some-path', course };
+        const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes') };
+        const exam: Exam = { id: 123, endDate: dayjs().subtract(5, 'minutes'), examArchivePath: 'some-path', course };
 
         beforeEach(fakeAsync(() => {
             comp.archiveMode = 'Exam';

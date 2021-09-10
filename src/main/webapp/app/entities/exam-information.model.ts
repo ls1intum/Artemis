@@ -1,5 +1,5 @@
-import { Moment } from 'moment';
+import * as dayjs from 'dayjs';
 
 export class ExamInformationDTO {
-    public latestIndividualEndDate: Moment;
+    public latestIndividualEndDate: dayjs.Dayjs;
 }

@@ -15,7 +15,7 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { QuizPointStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-point-statistic/quiz-point-statistic.component';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { SinonStub, stub } from 'sinon';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
@@ -117,7 +117,7 @@ describe('QuizExercise Point Statistic Component', () => {
     describe('updateDisplayedTimes', function () {
         it('should update remaining time ', () => {
             // setup
-            quizExercise.adjustedDueDate = moment(Date.now());
+            quizExercise.adjustedDueDate = dayjs();
             comp.quizExercise = quizExercise;
 
             // call

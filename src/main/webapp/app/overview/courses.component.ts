@@ -12,7 +12,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Router } from '@angular/router';
@@ -120,7 +120,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                     relevantExercises.find((exercise: QuizExercise) => exercise.isVisibleBeforeStart) ||
                     // 3rd priority is the next due exercise
                     relevantExercises.sort((a, b) => {
-                        return moment(a.dueDate).valueOf() - moment(b.dueDate).valueOf();
+                        return dayjs(a.dueDate).valueOf() - dayjs(b.dueDate).valueOf();
                     })[0];
             }
             this.nextRelevantCourse = relevantExercise.course!;
@@ -140,7 +140,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                 relevantExam = this.nextRelevantExams[0];
             } else {
                 relevantExam = this.nextRelevantExams.sort((a, b) => {
-                    return moment(a.startDate).valueOf() - moment(b.startDate).valueOf();
+                    return dayjs(a.startDate).valueOf() - dayjs(b.startDate).valueOf();
                 })[0];
             }
             this.nextRelevantCourseForExam = relevantExam.course!;

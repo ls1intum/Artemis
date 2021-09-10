@@ -10,8 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { Duration, Option } from './quiz-exercise-interfaces';
 import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -228,7 +227,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.entity.isVisibleBeforeStart = false;
             this.entity.isOpenForPractice = false;
             this.entity.isPlannedToStart = false;
-            this.entity.releaseDate = moment();
+            this.entity.releaseDate = dayjs();
             this.entity.randomizeQuestionOrder = true;
             this.entity.quizQuestions = [];
             this.quizExercise = this.entity;
@@ -281,10 +280,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     get showDropdown(): string {
         if (this.quizExercise && this.quizExercise.isPlannedToStart) {
             const releaseDate = this.quizExercise.releaseDate!;
-            const plannedEndMoment = moment(releaseDate).add(this.quizExercise.duration, 'seconds');
-            if (plannedEndMoment.isBefore(moment())) {
+            const plannedEndMoment = dayjs(releaseDate).add(this.quizExercise.duration!, 'seconds');
+            if (plannedEndMoment.isBefore(dayjs())) {
                 return 'isOpenForPractice';
-            } else if (moment(releaseDate).isBefore(moment())) {
+            } else if (dayjs(releaseDate).isBefore(dayjs())) {
                 return 'active';
             }
         }
@@ -313,12 +312,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * All dates which are in the past (< today) are disabled
      */
     isDateInPast = (date: NgbDate, current: { month: number }) =>
-        current.month < moment().month() + 1 ||
-        moment()
+        current.month < dayjs().month() + 1 ||
+        dayjs()
             .year(date.year)
             .month(date.month - 1)
             .date(date.day)
-            .isBefore(moment());
+            .isBefore(dayjs());
 
     /**
      * Add an empty multiple choice question to the quiz
@@ -635,15 +634,15 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * This function compares the provided dates with help of the moment library
-     * Since we might be receiving an string instead of a moment object (e.g. when receiving it from the server)
-     * we wrap both dates in a moment object. If it's already a moment object, this will just be ignored.
-     * @param date1 {string|Moment} First date to compare
-     * @param date2 {string|Moment} Second date to compare to
+     * This function compares the provided dates with help of the dayjs library
+     * Since we might be receiving an string instead of a dayjs object (e.g. when receiving it from the server)
+     * we wrap both dates in a dayjs object. If it's already a dayjs object, this will just be ignored.
+     * @param date1 {string|dayjs.Dayjs} First date to compare
+     * @param date2 {string|dayjs.Dayjs} Second date to compare to
      * @return {boolean} True if the dates are identical, false otherwise
      */
-    areDatesIdentical(date1: string | Moment, date2: string | Moment): boolean {
-        return moment(date1).isSame(moment(date2));
+    areDatesIdentical(date1: string | dayjs.Dayjs, date2: string | dayjs.Dayjs): boolean {
+        return dayjs(date1).isSame(dayjs(date2));
     }
 
     /**
@@ -658,7 +657,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         // Release date should also not be in the past
         const releaseDateValidAndNotInPastCondition =
             !this.quizExercise.isPlannedToStart ||
-            (this.quizExercise.releaseDate !== undefined && moment(this.quizExercise.releaseDate).isValid() && moment(this.quizExercise.releaseDate).isAfter(moment()));
+            (this.quizExercise.releaseDate !== undefined && dayjs(this.quizExercise.releaseDate).isValid() && dayjs(this.quizExercise.releaseDate).isAfter(dayjs()));
 
         const isGenerallyValid =
             this.quizExercise.title != undefined &&
@@ -862,15 +861,15 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
         /** We only verify the releaseDate if the checkbox is activated **/
         if (this.quizExercise.isPlannedToStart) {
-            if (!this.quizExercise.releaseDate || !moment(this.quizExercise.releaseDate).isValid()) {
+            if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.invalidStartTime',
                     translateValues: {},
                 });
             }
             // Release Date valid but lies in the past
-            if (this.quizExercise.releaseDate && moment(this.quizExercise.releaseDate).isValid()) {
-                if (moment(this.quizExercise.releaseDate).isBefore(moment())) {
+            if (this.quizExercise.releaseDate && dayjs(this.quizExercise.releaseDate).isValid()) {
+                if (dayjs(this.quizExercise.releaseDate).isBefore(dayjs())) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.startTimeInPast',
                         translateValues: {},
@@ -1258,9 +1257,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     prepareEntity(quizExercise: QuizExercise): void {
         if (this.isExamMode) {
-            quizExercise.releaseDate = moment(quizExercise.releaseDate);
+            quizExercise.releaseDate = dayjs(quizExercise.releaseDate);
         } else {
-            quizExercise.releaseDate = quizExercise.releaseDate ? moment(quizExercise.releaseDate) : moment();
+            quizExercise.releaseDate = quizExercise.releaseDate ? dayjs(quizExercise.releaseDate) : dayjs();
             quizExercise.duration = Number(quizExercise.duration);
             quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
         }
@@ -1271,12 +1270,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     onDurationChange(): void {
         if (!this.isExamMode) {
-            const duration = moment.duration(this.duration);
+            const duration = dayjs.duration(this.duration);
             this.quizExercise.duration = Math.min(Math.max(duration.asSeconds(), 0), 10 * 60 * 60);
             this.updateDuration();
             this.cacheValidation();
         } else if (this.quizExercise.releaseDate && this.quizExercise.dueDate) {
-            const duration = moment(this.quizExercise.dueDate).diff(this.quizExercise.releaseDate, 's');
+            const duration = dayjs(this.quizExercise.dueDate).diff(this.quizExercise.releaseDate, 's');
             this.quizExercise.duration = round(duration);
             this.updateDuration();
             this.cacheValidation();
@@ -1287,7 +1286,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * Update ui to current value of duration
      */
     updateDuration(): void {
-        const duration = moment.duration(this.quizExercise.duration, 'seconds');
+        const duration = dayjs.duration(this.quizExercise.duration!, 'seconds');
         this.changeDetector.detectChanges();
         // when input fields are empty do not update their values
         if (this.duration.minutes !== undefined) {
@@ -1357,7 +1356,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @return {boolean} true if the saved quiz has started, otherwise false
      */
     get hasSavedQuizStarted(): boolean {
-        return !!(this.savedEntity && this.savedEntity.isPlannedToStart && moment(this.savedEntity.releaseDate!).isBefore(moment()));
+        return !!(this.savedEntity && this.savedEntity.isPlannedToStart && dayjs(this.savedEntity.releaseDate!).isBefore(dayjs()));
     }
 
     /**

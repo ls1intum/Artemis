@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import * as chai from 'chai';
 import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { MockFeatureToggleService } from '../helpers/mocks/service/mock-feature-toggle.service';

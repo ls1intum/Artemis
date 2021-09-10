@@ -7,10 +7,7 @@ import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interc
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { NgbDateAdapter, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
-import * as moment from 'moment';
 import { NgxWebstorageModule, SessionStorageService } from 'ngx-webstorage';
-import { DifferencePipe, MomentModule } from 'ngx-moment';
-import { NgbDateMomentAdapter } from 'app/shared/util/datepicker-adapter';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import locale from '@angular/common/locales/en';
@@ -23,15 +20,14 @@ import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { ArtemisVersionInterceptor } from 'app/core/interceptor/artemis-version.interceptor';
 import { missingTranslationHandler, translatePartialLoader } from './config/translation.config';
+import dayjs from 'dayjs';
+import './config/dayjs';
+import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 
 @NgModule({
     imports: [
         HttpClientModule,
         NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
-        /**
-         * @external MomentModule is a date library for parsing, validating, manipulating, and formatting dates.
-         */
-        MomentModule,
         TranslateModule.forRoot({
             loader: {
                 provide: TranslateLoader,
@@ -50,10 +46,9 @@ import { missingTranslationHandler, translatePartialLoader } from './config/tran
             provide: LOCALE_ID,
             useValue: 'en',
         },
-        { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter },
+        { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
         { provide: ErrorHandler, useClass: SentryErrorHandler },
         DatePipe,
-        DifferencePipe,
         CookieService,
         /**
          * @description Interceptor declarations:
@@ -111,7 +106,7 @@ export class ArtemisCoreModule {
         registerLocaleData(locale);
         iconLibrary.addIconPacks(fas);
         iconLibrary.addIcons(...fontAwesomeIcons);
-        dpConfig.minDate = { year: moment().year() - 100, month: 1, day: 1 };
+        dpConfig.minDate = { year: dayjs().subtract(100, 'year').year(), month: 1, day: 1 };
         translateService.setDefaultLang('en');
         const langKey = sessionStorageService.retrieve('locale') ?? 'en';
         translateService.use(langKey);

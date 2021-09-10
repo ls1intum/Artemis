@@ -13,7 +13,7 @@ export class UserMgmtResolve implements Resolve<User> {
 
     /**
      * Resolve route to find the user before the route is activated
-     * @param route  contains the information about a route associated with a component loaded in an outlet at a particular moment in time
+     * @param route  contains the information about a route associated with a component loaded in an outlet at a particular dayjs in time
      */
     resolve(route: ActivatedRouteSnapshot): Observable<User> {
         if (route.params['login']) {

@@ -1,7 +1,6 @@
 import { Component, ContentChild, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
-import * as moment from 'moment';
-import { now } from 'moment';
+import dayjs from 'dayjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
@@ -221,7 +220,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.participation = submission.participation!;
         addUserIndependentRepositoryUrl(this.participation);
         this.exercise = this.participation.exercise as ProgrammingExercise;
-        this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
+        this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && dayjs(this.exercise!.assessmentDueDate).isBefore(dayjs());
 
         this.checkPermissions();
         this.handleFeedback();
@@ -432,7 +431,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.exercise.assessmentDueDate) {
-                isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate);
+                isBeforeAssessmentDueDate = dayjs().isBefore(this.exercise.assessmentDueDate);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
             return this.isAssessor && isBeforeAssessmentDueDate;
