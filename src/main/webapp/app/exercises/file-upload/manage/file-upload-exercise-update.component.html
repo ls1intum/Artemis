@@ -1,8 +1,8 @@
 <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-    <h2 *ngIf="fileUploadExercise.id" id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel">Edit a File Upload Exercise</h2>
-    <h2 *ngIf="!fileUploadExercise.id" id="jhi-file-upload-exercise-heading-create" jhiTranslate="artemisApp.fileUploadExercise.home.createLabel">
+    <h4 *ngIf="fileUploadExercise.id" id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel">Edit a File Upload Exercise</h4>
+    <h4 *ngIf="!fileUploadExercise.id" id="jhi-file-upload-exercise-heading-create" jhiTranslate="artemisApp.fileUploadExercise.home.createLabel">
         Create a new File Upload Exercise
-    </h2>
+    </h4>
     <div>
         <jhi-alert></jhi-alert>
         <jhi-alert-error></jhi-alert-error>
@@ -133,6 +133,7 @@
                 [domainCommands]="domainCommandsProblemStatement"
                 [(markdown)]="fileUploadExercise.problemStatement"
                 [editorMode]="EditorMode.LATEX"
+                [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
         <!-- TODO we want to have a file upload here and store a PDF, not a text. We could allow to add text in the sample_solution_explanation field -->
@@ -143,18 +144,12 @@
                 [domainCommands]="domainCommandsSampleSolution"
                 [(markdown)]="fileUploadExercise.sampleSolution"
                 [editorMode]="EditorMode.LATEX"
+                [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
-        <div class="form-group" name="gradingInstructions" id="field_gradingInstructions">
-            <jhi-slide-toggle class="form-element" (checkedEmitter)="getCheckedFlag($event)"></jhi-slide-toggle>
-            <jhi-markdown-editor
-                *ngIf="this.checkedFlag === false"
-                class="markdown-editor background-editor-color"
-                [domainCommands]="domainCommandsGradingInstructions"
-                [(markdown)]="fileUploadExercise.gradingInstructions"
-                [editorMode]="EditorMode.LATEX"
-            ></jhi-markdown-editor>
-            <jhi-grading-instructions-details *ngIf="this.checkedFlag" [exercise]="fileUploadExercise"></jhi-grading-instructions-details>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
+            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="fileUploadExercise"></jhi-grading-instructions-details>
         </div>
     </div>
     <div>

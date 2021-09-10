@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -61,6 +62,8 @@ public class PostService extends PostingService {
 
         // set author to current user
         post.setAuthor(user);
+        // set default value display priority -> NONE
+        post.setDisplayPriority(DisplayPriority.NONE);
         Post savedPost = postRepository.save(post);
 
         sendNotification(savedPost);
@@ -94,6 +97,11 @@ public class PostService extends PostingService {
         existingPost.setContent(post.getContent());
         existingPost.setVisibleForStudents(post.isVisibleForStudents());
         existingPost.setTags(post.getTags());
+
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            existingPost.setDisplayPriority(post.getDisplayPriority());
+        }
+
         Post updatedPost = postRepository.save(existingPost);
 
         if (updatedPost.getExercise() != null) {
@@ -105,37 +113,18 @@ public class PostService extends PostingService {
     }
 
     /**
-     * Checks course, user and post validity,
-     * updates the votes, persists the post,
-     * and ensures that sensitive information is filtered out
+     * Invokes the updatePost method to persist the change of displayPriority
      *
-     * @param courseId   id of the course the post belongs to
-     * @param postId     id of the post to vote on
-     * @param voteChange value by which votes are increased / decreased
+     * @param courseId          id of the course the post belongs to
+     * @param postId            id of the post to change the pin state for
+     * @param displayPriority   new displayPriority
      * @return updated post that was persisted
      */
-    public Post updatePostVotes(Long courseId, Long postId, Integer voteChange) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        preCheckUserAndCourse(user, courseId);
+    public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
         Post post = postRepository.findByIdElseThrow(postId);
-        preCheckPostValidity(post);
-        if (voteChange < -2 || voteChange > 2) {
-            throw new BadRequestAlertException("VoteChange can only be changed +1 or -1", METIS_POST_ENTITY_NAME, "400", true);
-        }
+        post.setDisplayPriority(displayPriority);
 
-        // update votes
-        Integer newVotes = post.getVotes() + voteChange;
-        post.setVotes(newVotes);
-        Post updatedPost = postRepository.save(post);
-
-        if (updatedPost.getExercise() != null) {
-            // protect sample solution, grading instructions, etc.
-            updatedPost.getExercise().filterSensitiveInformation();
-        }
-
-        return updatedPost;
+        return updatePost(courseId, post);
     }
 
     /**

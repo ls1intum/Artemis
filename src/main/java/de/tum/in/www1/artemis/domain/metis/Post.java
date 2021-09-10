@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 
 /**
  * A Post, i.e. start of a Metis thread.
@@ -26,7 +27,6 @@ import de.tum.in.www1.artemis.domain.Lecture;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Post extends Posting {
 
-    // To be used with introduction of Metis
     @Size(max = 200)
     @Column(name = "title")
     private String title;
@@ -43,14 +43,12 @@ public class Post extends Posting {
     @Column(name = "votes", columnDefinition = "integer default 0")
     private Integer votes = 0;
 
-    // To be used with introduction of Metis
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Reaction> reactions = new HashSet<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<AnswerPost> answers = new HashSet<>();
 
-    // To be used with introduction of Metis
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "post_tag", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "text")
@@ -71,6 +69,10 @@ public class Post extends Posting {
     @Enumerated(EnumType.STRING)
     @Column(name = "course_wide_context")
     private CourseWideContext courseWideContext;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "display_priority")
+    private DisplayPriority displayPriority;
 
     public String getTitle() {
         return title;
@@ -151,7 +153,6 @@ public class Post extends Posting {
         this.lecture = lecture;
     }
 
-    @Override
     public Course getCourse() {
         return course;
     }
@@ -168,9 +169,17 @@ public class Post extends Posting {
         this.courseWideContext = courseWideContext;
     }
 
+    public DisplayPriority getDisplayPriority() {
+        return displayPriority;
+    }
+
+    public void setDisplayPriority(DisplayPriority displayPriority) {
+        this.displayPriority = displayPriority;
+    }
+
     @Override
     public String toString() {
         return "Post{" + "id=" + getId() + ", content='" + getContent() + "'" + ", creationDate='" + getCreationDate() + "'" + ", visibleForStudents='" + isVisibleForStudents()
-                + "'" + ", votes='" + getVotes() + "'" + "}";
+                + "'" + ", displayPriority='" + getDisplayPriority() + "'" + "}";
     }
 }
