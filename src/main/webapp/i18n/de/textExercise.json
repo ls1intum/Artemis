@@ -33,12 +33,12 @@
             "clusterStatistics": {
                 "title": "Cluster Statistik",
                 "clusterId": "Cluster ID",
-                "reusedFeedbackRatio": "Quote wiederverwendeter Feedbacks im Cluster",
+                "reusedFeedbackRatio": "Anzahl wiederverwendetes Feedback / Clustergröße",
                 "reusedFeedbackRatioTooltip": "Anzahl der wiederverwendeten automatischen Feedbacks / Clustergröße",
                 "action": "Aktion",
                 "disable": "Deaktivieren",
                 "enable": "Aktivieren",
-                "noClustersFound": "<b>Keine Textcluster für diese Aufgabe gefunden</b>"
+                "noClustersFound": "Keine Textcluster für diese Aufgabe gefunden"
             }
         }
     }
