@@ -148,9 +148,7 @@ export class NotificationSidebarComponent implements OnInit {
 
     private subscribeToNotificationUpdates(): void {
         this.notificationService.subscribeToNotificationUpdates().subscribe((notification: Notification) => {
-            debugger;
             if (this.notificationSettingsService.isNotificationAllowedBySettings(notification, this.notificationTitleActivationMap)) {
-                debugger;
                 // ignores live exam notifications because the sidebar is not visible during the exam mode
                 if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
                     return;
