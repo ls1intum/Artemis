@@ -12,7 +12,6 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { ProgrammingAssessmentRepoExportService } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { ArtemisTestModule } from '../../test.module';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
 import { TranslateService } from '@ngx-translate/core';

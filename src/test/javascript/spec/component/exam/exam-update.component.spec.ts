@@ -9,7 +9,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { MockComponent, MockProvider, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockProvider, MockModule, MockPipe, MockDirective } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FormsModule } from '@angular/forms';
@@ -28,6 +28,8 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -44,7 +46,8 @@ describe('Exam Update Component', function () {
     const exam = new Exam();
     exam.id = 1;
 
-    const course = { id: 1 } as Course;
+    const course = new Course();
+    course.id = 1;
     const routes = [
         { path: 'course-management/:courseId/exams/:examId', component: DummyComponent },
         { path: 'course-management/:courseId/exams', component: DummyComponent },
@@ -65,6 +68,23 @@ describe('Exam Update Component', function () {
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                MockDirective(TranslateDirective),
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        data: {
+                            subscribe: (fn: (value: Params) => void) =>
+                                fn({
+                                    exam,
+                                }),
+                        },
+                        snapshot: {
+                            paramMap: convertToParamMap({
+                                courseId: '1',
+                            }),
+                        },
+                    },
+                },
                 MockProvider(AlertService),
                 MockProvider(CourseManagementService, {
                     find: () => {
