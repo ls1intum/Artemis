@@ -83,36 +83,38 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit {
         // finds the initial difference then cleans the text with added html & css elements
         const diff = dmp.diff_main(outdatedProblemStatement!, this.updatedProblemStatement);
         dmp.diff_cleanupEfficiency(diff);
-        // remove ¶; (= &para;) symbols
-
         this.updatedProblemStatementWithHighlightedDifferences = this.diffPrettyHtml(diff);
         return this.updatedProblemStatementWithHighlightedDifferences;
     }
 
     /**
      * Convert a diff array into a pretty HTML report.
-     * Modified diff_prettHtml() method from DiffMatchPatch
      * Keeps markdown styling intact (not like the original method)
+     * Modified diff_prettHtml() method from DiffMatchPatch
+     * The original library method is intended to be modified
+     * for more info: https://www.npmjs.com/package/diff-match-patch,
+     * https://github.com/google/diff-match-patch/blob/master/javascript/diff_match_patch_uncompressed.js
+     *
      * @param diffs Array of diff tuples. (from DiffMatchPatch)
      * @return the HTML representation as string with markdown intact.
      */
     diffPrettyHtml = function (diffs: Diff[]): string {
-        const html = [];
-        for (let x = 0; x < diffs.length; x++) {
-            const op = diffs[x][0]; // Operation (insert, delete, equal)
-            const text = diffs[x][1]; // Text of change.
+        const html: any[] = [];
+        diffs.forEach((diff: Diff, index: number) => {
+            const op = diffs[index][0]; // Operation (insert, delete, equal)
+            const text = diffs[index][1]; // Text of change.
             switch (op) {
                 case DiffOperation.DIFF_INSERT:
-                    html[x] = '<ins style="background:#e6ffe6;">' + text + '</ins>';
+                    html[index] = '<ins style="background:#e6ffe6;">' + text + '</ins>';
                     break;
                 case DiffOperation.DIFF_DELETE:
-                    html[x] = '<del style="background:#ffe6e6;">' + text + '</del>';
+                    html[index] = '<del style="background:#ffe6e6;">' + text + '</del>';
                     break;
                 case DiffOperation.DIFF_EQUAL:
-                    html[x] = text;
+                    html[index] = text;
                     break;
             }
-        }
+        });
         return html.join('');
     };
 }
