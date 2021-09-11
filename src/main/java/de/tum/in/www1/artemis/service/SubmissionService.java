@@ -654,7 +654,7 @@ public class SubmissionService {
      * @param exerciseId exerciseId which submissions belongs to
      * @return A wrapper object containing a list of all found submissions and the total number of pages
      */
-    public SearchResultPageDTO<Submission> getSubmissionsOnPageWithSize(final PageableSearchDTO<String> search, long exerciseId) {
+    public SearchResultPageDTO<Submission> getSubmissionsOnPageWithSize(PageableSearchDTO<String> search, Long exerciseId) {
         var sorting = Sort.by(StudentParticipation.StudentParticipationSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
         sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         final var sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);

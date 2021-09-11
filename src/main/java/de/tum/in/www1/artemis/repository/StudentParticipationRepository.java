@@ -422,7 +422,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                   AND (p.student.firstName LIKE %:partialStudentName% OR p.student.lastName LIKE %:partialStudentName%)
                   AND r.completionDate IS NOT NULL
             """)
-    Page<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName,
+    Page<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(@Param("exerciseId") Long exerciseId, @Param("partialStudentName") String partialStudentName,
             Pageable pageable);
 
     @Query("""
