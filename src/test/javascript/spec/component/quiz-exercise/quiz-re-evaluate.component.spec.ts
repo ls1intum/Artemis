@@ -19,7 +19,6 @@ import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/exercises/quiz/ma
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
 import { ReEvaluateShortAnswerQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/short-answer-question/re-evaluate-short-answer-question.component';
-import { MockTranslateValuesDirective } from '../course/course-scores/course-scores.component.spec';
 import { NgModel } from '@angular/forms';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -31,6 +30,7 @@ import { SimpleChange } from '@angular/core';
 import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;

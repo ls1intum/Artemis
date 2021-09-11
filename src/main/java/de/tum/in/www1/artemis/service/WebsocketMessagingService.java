@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 
 /**
  * This service sends out websocket messages.
@@ -24,8 +25,11 @@ public class WebsocketMessagingService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public WebsocketMessagingService(SimpMessageSendingOperations messagingTemplate) {
+    private final ExamDateService examDateService;
+
+    public WebsocketMessagingService(SimpMessageSendingOperations messagingTemplate, ExamDateService examDateService) {
         this.messagingTemplate = messagingTemplate;
+        this.examDateService = examDateService;
     }
 
     /**
@@ -56,12 +60,18 @@ public class WebsocketMessagingService {
         // TODO: Are there other cases that must be handled here?
         if (participation instanceof StudentParticipation) {
             var exercise = participation.getExercise();
+            boolean isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise);
+            // Don't send students results after the exam ended
+            boolean isAfterExamEnd = isWorkingPeriodOver && exercise.isExamExercise();
             // If the assessment due date is not over yet, do not send manual feedback to students!
-            if (AssessmentType.AUTOMATIC == result.getAssessmentType() || exercise.getAssessmentDueDate() == null || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate())) {
+            boolean isReadyForRelease = AssessmentType.AUTOMATIC == result.getAssessmentType() || exercise.getAssessmentDueDate() == null
+                    || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
+
+            if (isReadyForRelease && !isAfterExamEnd) {
                 StudentParticipation studentParticipation = (StudentParticipation) participation;
 
                 result.filterSensitiveInformation();
-                result.filterSensitiveFeedbacks(studentParticipation.getExercise().isBeforeDueDate());
+                result.filterSensitiveFeedbacks(!isWorkingPeriodOver);
 
                 studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
             }

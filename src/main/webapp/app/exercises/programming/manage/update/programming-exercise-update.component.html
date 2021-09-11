@@ -161,7 +161,7 @@
             <select
                 #select
                 required
-                class="form-control"
+                class="form-select"
                 [ngModel]="selectedProgrammingLanguage"
                 (ngModelChange)="select.value = onProgrammingLanguageChange($event)"
                 name="programmingLanguage"
@@ -186,7 +186,7 @@
             <select
                 #select
                 required
-                class="form-control"
+                class="form-select"
                 [ngModel]="selectedProjectType"
                 (ngModelChange)="select.value = onProjectTypeChange($event)"
                 name="projectType"
@@ -360,16 +360,9 @@
                 class="form__editable-instructions"
             ></jhi-programming-exercise-editable-instructions>
         </div>
-        <div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="form-group" name="gradingInstructions" id="field_gradingInstructions">
-            <jhi-slide-toggle (checkedEmitter)="getCheckedFlag($event)"></jhi-slide-toggle>
-            <jhi-markdown-editor
-                *ngIf="this.checkedFlagForStructuredGradingInstructions === false"
-                class="markdown-editor background-editor-color"
-                [domainCommands]="domainCommandsGradingInstructions"
-                [(markdown)]="programmingExercise.gradingInstructions"
-                [editorMode]="EditorMode.LATEX"
-            ></jhi-markdown-editor>
-            <jhi-grading-instructions-details *ngIf="this.checkedFlagForStructuredGradingInstructions" [exercise]="programmingExercise"></jhi-grading-instructions-details>
+        <div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="form-group">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
+            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise"></jhi-grading-instructions-details>
         </div>
         <!-- It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
         <div class="form-group mb-0" *ngIf="sequentialTestRunsAllowed">

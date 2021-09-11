@@ -6,29 +6,21 @@ import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
-import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent } from 'ng-mocks';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
-import { TranslateModule } from '@ngx-translate/core';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
@@ -37,7 +29,6 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
@@ -50,9 +41,9 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { Complaint } from 'app/entities/complaint.model';
+import { ComplaintType } from 'app/entities/complaint.model';
 import { Language } from 'app/entities/tutor-group.model';
-import { SubmissionExerciseType } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
@@ -60,8 +51,24 @@ import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
-import { SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
+import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
 import { InfoPanelComponent } from 'app/shared/info-panel/info-panel.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
+import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { ComplaintService } from 'app/complaints/complaint.service';
+import { RouterTestingModule } from '@angular/router/testing';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -93,7 +100,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let exerciseServiceGetStatsForTutorsStub: SinonStub;
 
     let tutorParticipationService: TutorParticipationService;
-    let tutorParticipationServiceCreateStub: SinonStub;
 
     let guidedTourService: GuidedTourService;
     const result1 = { id: 11 } as Result;
@@ -153,8 +159,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     } as TextSubmission;
     const programmingSubmissionAssessed = { id: 28, results: [result1, result2], participation } as ProgrammingSubmission;
 
-    const complaint = { id: 29, result: { id: 30, submission: textSubmission } } as Complaint;
-
     const numberOfAssessmentsOfCorrectionRounds = [
         { inTime: 1, late: 1 },
         { inTime: 8, late: 0 },
@@ -180,47 +184,53 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         },
     } as SubmissionWithComplaintDTO;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
-    const router = new MockRouter();
-    const navigateSpy = sinon.spy(router, 'navigate');
 
-    beforeEach(async () => {
+    let navigateSpy: sinon.SinonStub;
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, exerciseId: modelingExercise.id! }) } } as any as ActivatedRoute;
+
+    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), TranslateTestingModule];
+    const declarations = [
+        ExerciseAssessmentDashboardComponent,
+        MockComponent(TutorLeaderboardComponent),
+        MockComponent(TutorParticipationGraphComponent),
+        MockComponent(HeaderExercisePageWithDetailsComponent),
+        MockComponent(HeaderParticipationPageComponent),
+        MockComponent(SidePanelComponent),
+        MockComponent(InfoPanelComponent),
+        MockComponent(ModelingEditorComponent),
+        MockComponent(SecondCorrectionEnableButtonComponent),
+        MockComponent(CollapsableAssessmentInstructionsComponent),
+        MockComponent(AssessmentInstructionsComponent),
+        MockComponent(StructuredGradingInstructionsAssessmentLayoutComponent),
+        MockComponent(LanguageTableCellComponent),
+        MockComponent(ProgrammingExerciseInstructionComponent),
+        MockComponent(ButtonComponent),
+        MockComponent(ResultComponent),
+        MockComponent(AlertComponent),
+        MockPipe(ArtemisTranslatePipe),
+        MockPipe(ArtemisDatePipe),
+        MockDirective(ExtensionPointDirective),
+        MockHasAnyAuthorityDirective,
+        MockTranslateValuesDirective,
+        MockDirective(NgbTooltip),
+        MockComponent(AssessmentWarningComponent),
+    ];
+    const providers = [
+        JhiLanguageHelper,
+        DeviceDetectorService,
+        MockProvider(HttpClient),
+        MockProvider(ArtemisDatePipe),
+        { provide: ActivatedRoute, useValue: route },
+        { provide: LocalStorageService, useClass: MockSyncStorage },
+        { provide: SessionStorageService, useClass: MockSyncStorage },
+    ];
+
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                ArtemisSharedModule,
-                ArtemisSharedComponentModule,
-                ArtemisProgrammingAssessmentModule,
-                ArtemisProgrammingExerciseInstructionsRenderModule,
-                ArtemisResultModule,
-                RouterModule,
-                TranslateModule.forRoot(),
-                ArtemisAssessmentSharedModule,
-            ],
-            declarations: [
-                ExerciseAssessmentDashboardComponent,
-                MockComponent(TutorLeaderboardComponent),
-                MockComponent(TutorParticipationGraphComponent),
-                MockComponent(HeaderExercisePageWithDetailsComponent),
-                MockComponent(HeaderParticipationPageComponent),
-                MockComponent(SidePanelComponent),
-                MockComponent(InfoPanelComponent),
-                MockComponent(ModelingEditorComponent),
-                MockComponent(SecondCorrectionEnableButtonComponent),
-                MockComponent(CollapsableAssessmentInstructionsComponent),
-                MockComponent(AssessmentInstructionsComponent),
-                MockComponent(StructuredGradingInstructionsAssessmentLayoutComponent),
-                MockComponent(LanguageTableCellComponent),
-            ],
-            providers: [
-                JhiLanguageHelper,
-                DeviceDetectorService,
-                { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
-                { provide: Router, useValue: router },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-            ],
+            imports,
+            declarations,
+            providers,
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseAssessmentDashboardComponent);
@@ -231,6 +241,15 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
                 exerciseService = TestBed.inject(ExerciseService);
                 programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
+
+                const submissionService = TestBed.inject(SubmissionService);
+                stub(submissionService, 'getSubmissionsWithComplaintsForTutor').returns(of(new HttpResponse({ body: [] })));
+
+                const complaintService = TestBed.inject(ComplaintService);
+                stub(complaintService, 'getMoreFeedbackRequestsForTutor').returns(of(new HttpResponse({ body: [] })));
+
+                const router = TestBed.get(Router);
+                navigateSpy = sinon.stub(router, 'navigate');
 
                 tutorParticipationService = TestBed.inject(TutorParticipationService);
 
@@ -272,20 +291,12 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     afterEach(() => {
-        modelingSubmissionStubWithoutAssessment.restore();
-        modelingSubmissionStubWithAssessment.restore();
+        sinon.restore();
+    });
 
-        textSubmissionStubWithoutAssessment.restore();
-        textSubmissionStubWithAssessment.restore();
-
-        fileUploadSubmissionStubWithAssessment.restore();
-        fileUploadSubmissionStubWithoutAssessment.restore();
-
-        programmingSubmissionStubWithAssessment.restore();
-        programmingSubmissionStubWithoutAssessment.restore();
-
-        exerciseServiceGetForTutorsStub.restore();
-        exerciseServiceGetStatsForTutorsStub.restore();
+    it('should initialize', () => {
+        fixture.detectChanges();
+        expect(comp).to.be.ok;
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
@@ -367,7 +378,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should call readInstruction', () => {
-        tutorParticipationServiceCreateStub = stub(tutorParticipationService, 'create');
+        const tutorParticipationServiceCreateStub = stub(tutorParticipationService, 'create');
         const tutorParticipation = { id: 1, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS };
         tutorParticipationServiceCreateStub.returns(of(new HttpResponse({ body: tutorParticipation, headers: new HttpHeaders() })));
 
@@ -414,17 +425,147 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
     });
 
-    it('should viewComplaint', () => {
-        const openAssessmentEditor = stub(comp, 'openAssessmentEditor');
-        comp.viewComplaint(complaint);
-        expect(openAssessmentEditor).to.have.been.called;
+    describe('getAssessmentLink', () => {
+        const fakeExerciseType = ExerciseType.TEXT;
+        const fakeCourseId = 42;
+        const fakeExerciseId = 1337;
+        const fakeExamId = 69;
+        const fakeExerciseGroupId = 27;
+        it('Expect new submission to delegate correct link', () => {
+            const submission = 'new';
+            initComponent();
+            const expectedParticipationId = undefined;
+            const expectedSubmissionUrlParameter = 'new';
+            testLink(expectedParticipationId, expectedSubmissionUrlParameter, submission);
+        });
+
+        it('Expect existing submission without participation to delegate correct link', () => {
+            const submission = { id: 42 };
+            initComponent();
+            const expectedParticipationId = undefined;
+            const expectedSubmissionUrlParameter = 42;
+            testLink(expectedParticipationId, expectedSubmissionUrlParameter, submission);
+        });
+
+        it('Expect existing submission with participation to delegate correct link', () => {
+            const submission = { id: 42, participation: { id: 1337 } };
+            initComponent();
+            const expectedParticipationId = 1337;
+            const expectedSubmissionUrlParameter = 42;
+            testLink(expectedParticipationId, expectedSubmissionUrlParameter, submission);
+        });
+
+        function initComponent() {
+            comp.exercise = { type: fakeExerciseType, numberOfAssessmentsOfCorrectionRounds: [], studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false };
+            comp.courseId = fakeCourseId;
+            comp.exerciseId = fakeExerciseId;
+            comp.examId = fakeExamId;
+            comp.exerciseGroupId = fakeExerciseGroupId;
+        }
+
+        function testLink(expectedParticipationId: number | undefined, expectedSubmissionUrlParameter: number | 'new', submission: Submission | 'new') {
+            const expectedLink = getLinkToSubmissionAssessment(
+                fakeExerciseType,
+                fakeCourseId,
+                fakeExerciseId,
+                expectedParticipationId,
+                expectedSubmissionUrlParameter,
+                fakeExamId,
+                fakeExerciseGroupId,
+            );
+
+            const link = comp.getAssessmentLink(submission);
+
+            expect(link).to.eql(expectedLink);
+        }
+    });
+
+    describe('getComplaintQueryParams', () => {
+        it('Expect more feedback request to delegate the correct query', () => {
+            const moreFeedbackComplaint = { complaintType: ComplaintType.MORE_FEEDBACK };
+            const arrayLength = 42;
+            comp.numberOfAssessmentsOfCorrectionRounds = new Array(arrayLength);
+            const complaintQuery = comp.getComplaintQueryParams(moreFeedbackComplaint);
+
+            expect(complaintQuery).to.eql(comp.getAssessmentQueryParams(arrayLength - 1));
+        });
+
+        it('Expect complaint with not present submission to resolve undefined', () => {
+            const submission = {
+                id: 8,
+            };
+            const complaintComplaint = {
+                complaintType: ComplaintType.COMPLAINT,
+                result: { submission },
+            };
+            const complaintQuery = comp.getComplaintQueryParams(complaintComplaint);
+
+            expect(complaintQuery).to.undefined;
+        });
+
+        it('Expect present complaint to delegate the correct query', () => {
+            const fakeResults = [
+                { assessmentType: AssessmentType.MANUAL },
+                { assessmentType: AssessmentType.SEMI_AUTOMATIC },
+                { assessmentType: AssessmentType.SEMI_AUTOMATIC },
+                { assessmentType: AssessmentType.MANUAL },
+            ];
+            const submission = {
+                id: 8,
+                results: fakeResults,
+            };
+            const complaintComplaint = {
+                complaintType: ComplaintType.COMPLAINT,
+                result: { submission },
+            };
+            comp.submissionsWithComplaints = [{ submission, complaint: complaintComplaint }];
+            const complaintQuery = comp.getComplaintQueryParams(complaintComplaint);
+
+            expect(complaintQuery).to.eql(comp.getAssessmentQueryParams(fakeResults.length - 1));
+        });
+    });
+
+    describe('getSubmissionToViewFromComplaintSubmission', () => {
+        it('Expect not present submission to resolve undefined', () => {
+            const fakeDTOList: SubmissionWithComplaintDTO[] = [];
+            const inputSubmission = { id: 1 };
+            comp.submissionsWithComplaints = fakeDTOList;
+            const submissionToView = comp.getSubmissionToViewFromComplaintSubmission(inputSubmission);
+
+            expect(submissionToView).to.undefined;
+        });
+
+        it('Expect submission without results to gain an empty list', () => {
+            const fakeDTOList: SubmissionWithComplaintDTO[] = [{ submission: { id: 1 }, complaint: {} }];
+            const expectedSubmission = { id: 1, results: [] };
+            const inputSubmission = { id: 1 };
+            comp.submissionsWithComplaints = fakeDTOList;
+            const submissionToView = comp.getSubmissionToViewFromComplaintSubmission(inputSubmission);
+
+            expect(submissionToView).to.eql(expectedSubmission);
+        });
+
+        it('Expect only non automatic results to be returned', () => {
+            const fakeResults = [
+                { assessmentType: AssessmentType.MANUAL },
+                { assessmentType: AssessmentType.AUTOMATIC },
+                { assessmentType: AssessmentType.SEMI_AUTOMATIC },
+                { assessmentType: AssessmentType.AUTOMATIC },
+            ];
+            const fakeDTOList: SubmissionWithComplaintDTO[] = [{ submission: { id: 1, results: fakeResults }, complaint: {} }];
+            const expectedSubmissionToView = { id: 1, results: [{ assessmentType: AssessmentType.MANUAL }, { assessmentType: AssessmentType.SEMI_AUTOMATIC }] };
+            const inputSubmission = { id: 1 };
+            comp.submissionsWithComplaints = fakeDTOList;
+            const submissionToView = comp.getSubmissionToViewFromComplaintSubmission(inputSubmission);
+
+            expect(submissionToView).to.eql(expectedSubmissionToView);
+        });
     });
 
     describe('openExampleSubmission', () => {
         const courseId = 4;
 
         it('should not openExampleSubmission', () => {
-            navigateSpy.resetHistory();
             const submission = { id: 8 };
             comp.openExampleSubmission(submission!.id);
             expect(navigateSpy).to.have.not.been.called;
@@ -438,59 +579,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             const submission = { id: 8 };
             comp.openExampleSubmission(submission!.id, true, true);
             expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/example-submissions/${submission.id}`]);
-        });
-    });
-
-    describe('openAssessmentEditor', () => {
-        it('should not openExampleSubmission', () => {
-            navigateSpy.resetHistory();
-            const submission = { id: 8 };
-            comp.openAssessmentEditor(submission);
-            expect(navigateSpy).to.have.not.been.called;
-        });
-
-        it('should openExampleSubmission with modelingExercise', () => {
-            comp.exercise = exercise;
-            comp.exercise.type = ExerciseType.MODELING;
-            comp.courseId = 4;
-            comp.exercise = exercise;
-            comp.exerciseId = exercise.id!;
-            const submission = { id: 8 };
-            comp.openAssessmentEditor(submission);
-
-            const expectedUrl = [
-                '/course-management',
-                comp.courseId.toString(),
-                'modeling-exercises',
-                exercise.id!.toString(),
-                'submissions',
-                submission.id.toString(),
-                'assessment',
-            ];
-            expect(navigateSpy).to.have.been.calledWith(expectedUrl, { queryParams: { 'correction-round': 0 } });
-        });
-
-        it('should openExampleSubmission with programmingExercise', () => {
-            comp.exercise = exercise;
-            comp.exercise.type = ExerciseType.PROGRAMMING;
-            comp.courseId = 4;
-            comp.exerciseId = exercise.id!;
-            const submission = { id: 8 };
-
-            const expectedUrl = [
-                '/course-management',
-                comp.courseId.toString(),
-                'programming-exercises',
-                exercise.id!.toString(),
-                'submissions',
-                submission.id.toString(),
-                'assessment',
-            ];
-            comp.openAssessmentEditor(submission);
-            expect(navigateSpy).to.have.been.calledWith(expectedUrl);
-            comp.isTestRun = true;
-            comp.openAssessmentEditor(submission);
-            expect(navigateSpy).to.have.been.calledWith(expectedUrl);
         });
     });
 });

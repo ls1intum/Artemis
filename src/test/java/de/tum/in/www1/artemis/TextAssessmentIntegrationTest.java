@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis;
 import static java.time.ZonedDateTime.now;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -20,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -355,8 +358,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         StudentParticipation participation = request.get(
                 "/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/for-text-assessment", HttpStatus.OK,
                 StudentParticipation.class);
-        final Result result = participation.getResults().iterator().next();
-        final Complaint complaint = request.get("/api/complaints/result/" + result.getId(), HttpStatus.OK, Complaint.class);
+        final Complaint complaint = request.get("/api/complaints/submissions/" + textSubmission.getId(), HttpStatus.OK, Complaint.class);
 
         // Accept Complaint and update Assessment
         ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
@@ -1445,6 +1447,9 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
                 paramsGetAssessedCR1);
 
         assertThat(assessedSubmissionList.size()).isEqualTo(0);
+
+        // Student should not have received a result over WebSocket as manual correction is ongoing
+        verify(messagingTemplate, never()).convertAndSendToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
     }
 
     @NotNull

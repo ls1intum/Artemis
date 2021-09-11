@@ -18,11 +18,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -72,7 +75,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // filter existing posts with course-wide context
         existingCourseWidePosts = existingPosts.stream().filter(coursePost -> (coursePost.getCourseWideContext() != null)).collect(Collectors.toList());
 
-        course = existingPosts.get(0).getCourse();
+        course = existingExercisePosts.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
 
         courseId = course.getId();
 
@@ -238,6 +241,58 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(updatedPost).isNull();
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testPinPost_asStudent_forbidden() throws Exception {
+        Post postToNotPin = editExistingPost(existingPosts.get(1));
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("displayPriority", DisplayPriority.PINNED.toString());
+
+        // try to change display priority to PINNED
+        Post notUpdatedPost = request.putWithResponseBodyAndParams("/api/courses/" + courseId + "/posts/" + postToNotPin.getId() + "/display-priority", null, Post.class,
+                HttpStatus.FORBIDDEN, params);
+        assertThat(notUpdatedPost).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testPinPost_asTutor() throws Exception {
+        Post postToPin = editExistingPost(existingPosts.get(0));
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("displayPriority", DisplayPriority.PINNED.toString());
+
+        // change display priority to PINNED
+        Post updatedPost = request.putWithResponseBodyAndParams("/api/courses/" + courseId + "/posts/" + postToPin.getId() + "/display-priority", null, Post.class, HttpStatus.OK,
+                params);
+        assertThat(updatedPost).isEqualTo(postToPin);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testArchivePost_asStudent_forbidden() throws Exception {
+        Post postToNotArchive = editExistingPost(existingPosts.get(1));
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("displayPriority", DisplayPriority.ARCHIVED.toString());
+
+        // try to change display priority to ARCHIVED
+        Post notUpdatedPost = request.putWithResponseBodyAndParams("/api/courses/" + courseId + "/posts/" + postToNotArchive.getId() + "/display-priority", null, Post.class,
+                HttpStatus.FORBIDDEN, params);
+        assertThat(notUpdatedPost).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testArchivePost_asTutor() throws Exception {
+        Post postToArchive = editExistingPost(existingPosts.get(0));
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("displayPriority", DisplayPriority.ARCHIVED.toString());
+
+        // change display priority to ARCHIVED
+        Post updatedPost = request.putWithResponseBodyAndParams("/api/courses/" + courseId + "/posts/" + postToArchive.getId() + "/display-priority", null, Post.class,
+                HttpStatus.OK, params);
+        assertThat(updatedPost).isEqualTo(postToArchive);
+    }
+
     // GET
 
     @Test
@@ -350,47 +405,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.delete("/api/courses/" + courseId + "/posts/" + 9999L, HttpStatus.NOT_FOUND);
     }
 
-    // UPDATE VOTES (tests for post votes will be refactored with the introduction of reactions)
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testEditPostVotes_asInstructor() throws Exception {
-        Post post = existingPosts.get(0);
-
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + post.getId() + "/votes", 1, Post.class, HttpStatus.OK);
-        assertThat(updatedPost.getVotes()).isEqualTo(1);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testEditPostVotesToInvalidAmount() throws Exception {
-        Post post = existingPosts.get(0);
-
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + post.getId() + "/votes", 3, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(updatedPost).isNull();
-
-        updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + post.getId() + "/votes", -3, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(updatedPost).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testEditPostVotes_asTA() throws Exception {
-        Post post = existingExercisePosts.get(0);
-
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + post.getId() + "/votes", 2, Post.class, HttpStatus.OK);
-        assertThat(updatedPost.getVotes()).isEqualTo(2);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testEditPostVotes_asStudent() throws Exception {
-        Post post = existingLecturePosts.get(0);
-
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + post.getId() + "/votes", 2, Post.class, HttpStatus.OK);
-        assertThat(updatedPost.getVotes()).isEqualTo(2);
-    }
-
     // HELPER METHODS
 
     private Post createPostWithoutContext() {
@@ -398,6 +412,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         post.setTitle("Title Post");
         post.setContent("Content Post");
         post.setVisibleForStudents(true);
+        post.setDisplayPriority(DisplayPriority.NONE);
         post.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
         post.addTag("Tag");
         return post;
@@ -424,8 +439,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // check if default values are set correctly on creation
         assertThat(createdPost.getAnswers()).isEmpty();
-        assertThat(createdPost.getVotes()).isEqualTo(0);
         assertThat(createdPost.getReactions()).isEmpty();
+        assertThat(createdPost.getDisplayPriority()).isEqualTo(expectedPost.getDisplayPriority());
 
         // check if context, i.e. either correct lecture, exercise or course-wide context are set correctly on creation
         assertThat(createdPost.getExercise()).isEqualTo(expectedPost.getExercise());

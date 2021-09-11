@@ -1,8 +1,6 @@
 import * as ace from 'brace';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import { NgbModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { FormsModule } from '@angular/forms';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
@@ -12,15 +10,13 @@ import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
-import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
 import { JhiAlertService } from 'ng-jhipster';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -36,7 +32,6 @@ import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repo
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
-import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -51,9 +46,34 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
-import { TreeviewItem } from 'ngx-treeview';
+import { TreeviewComponent, TreeviewItem } from 'ngx-treeview';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { RouterTestingModule } from '@angular/router/testing';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
+import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
+import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
+import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
+import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
+import { KeysPipe } from 'app/shared/pipes/keys.pipe';
+import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
+import { CodeEditorFileBrowserCreateNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-create-node.component';
+import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
+import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
+import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
+import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
+import { AceEditorComponent } from 'ng2-ace-editor';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -82,7 +102,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let repositoryFileService: CodeEditorRepositoryFileService;
 
     let updateAfterComplaintStub: SinonStub;
-    let findByResultIdStub: SinonStub;
+    let findBySubmissionIdStub: SinonStub;
     let getIdentityStub: SinonStub;
     let getProgrammingSubmissionForExerciseWithoutAssessmentStub: SinonStub;
     let lockAndGetProgrammingSubmissionParticipationStub: SinonStub;
@@ -140,19 +160,40 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     const fileContent = 'This is the content of a file';
     const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [
-                TranslateModule.forRoot(),
-                ArtemisTestModule,
-                ArtemisSharedModule,
-                NgbModule,
-                FormDateTimePickerModule,
-                FormsModule,
-                ArtemisProgrammingAssessmentModule,
-                RouterTestingModule,
+            imports: [ArtemisTestModule, RouterTestingModule],
+            declarations: [
+                CodeEditorTutorAssessmentContainerComponent,
+                MockComponent(ProgrammingAssessmentRepoExportButtonComponent),
+                MockComponent(FaIconComponent),
+                AssessmentLayoutComponent,
+                MockComponent(AssessmentComplaintAlertComponent),
+                MockComponent(AssessmentHeaderComponent),
+                MockComponent(ComplaintsForTutorComponent),
+                CodeEditorContainerComponent,
+                CodeEditorFileBrowserComponent,
+                MockPipe(KeysPipe),
+                MockComponent(TreeviewComponent),
+                MockComponent(CodeEditorStatusComponent),
+                MockComponent(CodeEditorFileBrowserCreateNodeComponent),
+                MockComponent(CodeEditorFileBrowserFolderComponent),
+                MockComponent(CodeEditorFileBrowserFileComponent),
+                MockComponent(CodeEditorBuildOutputComponent),
+                MockComponent(CodeEditorGridComponent),
+                MockComponent(CodeEditorActionsComponent),
+                CodeEditorAceComponent,
+                MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
+                AceEditorComponent,
+                MockComponent(CodeEditorInstructionsComponent),
+                MockComponent(ResultComponent),
+                MockComponent(IncludedInScoreBadgeComponent),
+                MockComponent(ExerciseHintStudentComponent),
+                MockComponent(AssessmentInstructionsComponent),
+                MockComponent(UnreferencedFeedbackComponent),
+                MockPipe(ArtemisTranslatePipe),
+                ExtensionPointDirective,
             ],
-            declarations: [MockComponent(ProgrammingAssessmentRepoExportButtonComponent)],
             providers: [
                 ProgrammingAssessmentManualResultService,
                 ComplaintService,
@@ -160,6 +201,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 AccountService,
                 JhiAlertService,
                 ResultService,
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
                 { provide: ExerciseHintService, useClass: MockExerciseHintService },
@@ -179,6 +221,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 fixture = TestBed.createComponent(CodeEditorTutorAssessmentContainerComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
+
                 programmingAssessmentManualResultService = debugElement.injector.get(ProgrammingAssessmentManualResultService);
                 programmingSubmissionService = debugElement.injector.get(ProgrammingSubmissionService);
                 complaintService = debugElement.injector.get(ComplaintService);
@@ -190,7 +233,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 lockAndGetProgrammingSubmissionParticipationStub = stub(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation').returns(
                     of(submission).pipe(delay(100)),
                 );
-                findByResultIdStub = stub(complaintService, 'findByResultId').returns(of({ body: complaint } as HttpResponse<Complaint>));
+                findBySubmissionIdStub = stub(complaintService, 'findBySubmissionId').returns(of({ body: complaint } as HttpResponse<Complaint>));
                 getIdentityStub = stub(accountService, 'identity').returns(new Promise((promise) => promise(user)));
                 getProgrammingSubmissionForExerciseWithoutAssessmentStub = stub(
                     programmingSubmissionService,
@@ -204,7 +247,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     afterEach(fakeAsync(() => {
         updateAfterComplaintStub.restore();
-        findByResultIdStub.restore();
+        findBySubmissionIdStub.restore();
         lockAndGetProgrammingSubmissionParticipationStub.restore();
         getProgrammingSubmissionForExerciseWithoutAssessmentStub.restore();
     }));
@@ -220,7 +263,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         expect(getIdentityStub.calledOnce).to.be.true;
         expect(lockAndGetProgrammingSubmissionParticipationStub.calledOnce).to.be.true;
-        expect(findByResultIdStub.calledOnce).to.be.true;
+        expect(findBySubmissionIdStub.calledOnce).to.be.true;
         expect(comp.isAssessor).to.be.true;
         expect(comp.complaint).to.exist;
         fixture.detectChanges();
@@ -245,14 +288,14 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
     }));
 
-    it('should not show complaint when result does not have it', fakeAsync(() => {
-        result.hasComplaint = false;
+    it('should not show complaint when participation contains no complaint', fakeAsync(() => {
+        findBySubmissionIdStub.returns(of({ body: undefined }));
         comp.ngOnInit();
         tick(100);
 
         expect(getIdentityStub.calledOnce).to.be.true;
         expect(lockAndGetProgrammingSubmissionParticipationStub.calledOnce).to.be.true;
-        expect(findByResultIdStub.notCalled).to.be.true;
+        expect(findBySubmissionIdStub.calledOnce).to.be.true;
         expect(comp.complaint).to.not.exist;
         fixture.detectChanges();
 
@@ -441,8 +484,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         fixture.detectChanges();
         codeEditorFileBrowserComp.isLoadingFiles = false;
         fixture.detectChanges();
-        const filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
-        expect(filesInTreeHtml).to.have.lengthOf(1);
+        const browserComponent = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
+        expect(browserComponent).to.exist;
+        expect(browserComponent.filesTreeViewItem).to.have.lengthOf(1);
 
         const codeEditorAceComp = fixture.debugElement.query(By.directive(CodeEditorAceComponent)).componentInstance;
         codeEditorAceComp.isLoading = false;

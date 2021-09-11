@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Complaint entity.
@@ -23,9 +24,26 @@ import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
 @Repository
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
-    Optional<Complaint> findByResult_Id(Long resultId);
+    @Query("""
+            SELECT c FROM Complaint c
+            LEFT JOIN c.result r
+            LEFT JOIN r.submission s
+            WHERE s.id = :#{#submissionId}
+            """)
+    Optional<Complaint> findByResultSubmissionId(@Param("submissionId") Long submissionId);
 
-    @Query("SELECT c FROM Complaint c LEFT JOIN FETCH c.result r LEFT JOIN FETCH r.assessor WHERE c.id = :#{#complaintId}")
+    Optional<Complaint> findByResultId(Long resultId);
+
+    default Complaint findByResultIdElseThrow(Long resultId) {
+        return findById(resultId).orElseThrow(() -> new EntityNotFoundException("Complaint by ResultId", resultId));
+    }
+
+    @Query("""
+            SELECT c FROM Complaint c
+            LEFT JOIN FETCH c.result r
+            LEFT JOIN FETCH r.assessor
+            WHERE c.id = :#{#complaintId}
+            """)
     Optional<Complaint> findByIdWithEagerAssessor(@Param("complaintId") Long complaintId);
 
     /**
@@ -56,9 +74,13 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     long countByResult_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(Long examId, ComplaintType complaintType);
 
     @Query("""
-            SELECT c FROM Complaint c LEFT JOIN FETCH c.result r LEFT JOIN FETCH r.assessor LEFT JOIN FETCH r.participation p LEFT JOIN FETCH p.exercise e LEFT JOIN FETCH r.submission
-            WHERE e.id = :#{#exerciseId}
-            AND c.complaintType = :#{#complaintType}
+            SELECT c FROM Complaint c
+            LEFT JOIN FETCH c.result r
+            LEFT JOIN FETCH r.assessor
+            LEFT JOIN FETCH r.participation p
+            LEFT JOIN FETCH p.exercise e
+            LEFT JOIN FETCH r.submission
+            WHERE e.id = :#{#exerciseId} AND c.complaintType = :#{#complaintType}
             """)
     List<Complaint> getAllComplaintsByExerciseIdAndComplaintType(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
 
@@ -70,7 +92,11 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @param courseId  the id of the course
      * @return the number of unaccepted complaints
      */
-    @Query("SELECT COUNT(c) FROM Complaint c WHERE c.complaintType = 'COMPLAINT' AND c.student.id = :#{#studentId} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
+    @Query("""
+            SELECT COUNT(c) FROM Complaint c
+            WHERE c.complaintType = 'COMPLAINT' AND c.student.id = :#{#studentId}
+            AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)
+            """)
     long countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
 
     /**
@@ -81,7 +107,11 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @param courseId  the id of the course
      * @return the number of unaccepted complaints
      */
-    @Query("SELECT COUNT(c) FROM Complaint c WHERE c.complaintType = 'COMPLAINT' AND c.team.shortName = :#{#teamShortName} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
+    @Query("""
+            SELECT COUNT(c) FROM Complaint c
+            WHERE c.complaintType = 'COMPLAINT' AND c.team.shortName = :#{#teamShortName}
+            AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)
+            """)
     long countUnacceptedComplaintsByComplaintTypeTeamShortNameAndCourseId(@Param("teamShortName") String teamShortName, @Param("courseId") Long courseId);
 
     /**
@@ -243,6 +273,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                     c.complaintType = 'COMPLAINT'
                 and e.course.id = :courseId
                 and r.completionDate IS NOT NULL
+                and r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByCourseId(@Param("courseId") long courseId);
@@ -267,6 +298,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                     c.complaintType = 'COMPLAINT'
                 and e.id = :#{#exerciseId}
                 and r.completionDate IS NOT NULL
+                and r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByExerciseId(@Param("exerciseId") long exerciseId);
@@ -291,6 +323,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                     c.complaintType = 'COMPLAINT'
                 and eg.exam.id = :#{#examId}
                 and r.completionDate IS NOT NULL
+                and r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByExamId(@Param("examId") long examId);

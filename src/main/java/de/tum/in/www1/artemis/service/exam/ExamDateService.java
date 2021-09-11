@@ -9,6 +9,7 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -52,6 +53,24 @@ public class ExamDateService {
     public boolean isExamWithGracePeriodOver(Exam exam) {
         var now = ZonedDateTime.now();
         return getLatestIndividualExamEndDate(exam).plusSeconds(exam.getGracePeriod()).isBefore(now);
+    }
+
+    /**
+     * Returns <code>true</code> if the exercise working period is over, which is the case when:
+     * <ul>
+     * <li>The due date is set and it has passed in case of course exercises.</li>
+     * <li>No student can hand in their exam anymore in case of exam exercises.</li>
+     * </ul>
+     *
+     * @param exercise the course or exam exercise
+     * @return <code>true</code> if the exercise is over and students cannot submit (graded) solutions anymore, <code>false</code> otherwise
+     * @throws EntityNotFoundException the given exercise is an exam exercise and the exam cannot be found
+     */
+    public boolean isExerciseWorkingPeriodOver(Exercise exercise) {
+        if (exercise.isExamExercise()) {
+            return isExamWithGracePeriodOver(exercise.getExamViaExerciseGroupOrCourseMember());
+        }
+        return !exercise.isBeforeDueDate();
     }
 
     /**
