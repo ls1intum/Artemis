@@ -198,8 +198,8 @@ const getAttachmentUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayj
     attachment.id = id;
     attachment.version = 1;
     attachment.attachmentType = AttachmentType.FILE;
-    attachment.releaseDate = dayjs({ years: 2020, months: 3, date: 5 });
-    attachment.uploadDate = dayjs({ years: 2020, months: 3, date: 5 });
+    attachment.releaseDate = dayjs().year(2020).month(3).date(5);
+    attachment.uploadDate = dayjs().year(2020).month(3).date(5);
     attachment.name = 'test';
     attachment.link = '/path/to/file/test.pdf';
 

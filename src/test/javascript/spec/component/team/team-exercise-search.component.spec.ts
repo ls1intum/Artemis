@@ -37,7 +37,7 @@ describe('Team Exercise Search Component', () => {
     it('formats the search result with release date', () => {
         const title = 'My exercise';
         const releaseDate = dayjs();
-        const dateFormat = 'yyyy-MM-DD';
+        const dateFormat = 'YYYY-MM-DD';
 
         const exercise = new TextExercise(undefined, undefined);
         exercise.title = title;
