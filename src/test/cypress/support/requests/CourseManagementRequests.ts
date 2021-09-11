@@ -13,7 +13,6 @@ import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_tem
 const COURSE_BASE = BASE_API + 'courses/';
 const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
 const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
-const oneDay = 24 * 60 * 60 * 1000;
 export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 
 /**
@@ -213,7 +212,7 @@ export class CourseManagementRequests {
         });
     }
 
-    createQuizExercise(quizQuestions: [any], title: string, releaseDate: day.Dayjs, body: { course: any } | { exerciseGroup: any }) {
+    createQuizExercise(body: { course: any } | { exerciseGroup: any }, title = 'Cypress quiz exercise' + generateUUID(), releaseDate = day(), quizQuestions: [any]) {
         const quizExercise: any = {
             ...quizTemplate,
             title,
