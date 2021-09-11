@@ -43,7 +43,7 @@ public class NotificationTitleTypeConstants {
 
     public static final String EXAM_ARCHIVE_FAILED_TITLE = "Exam archival failed";
 
-    // bi directional map
+    // bidirectional map
     private static final BiMap<NotificationType, String> NOTIFICATION_TYPE_AND_TITLE_MAP = new ImmutableBiMap.Builder<NotificationType, String>()
             .put(NotificationType.ATTACHMENT_CHANGE, ATTACHMENT_CHANGE_TITLE).put(NotificationType.EXERCISE_CREATED, EXERCISE_CREATED_TITLE)
             .put(NotificationType.EXERCISE_PRACTICE, EXERCISE_PRACTICE_TITLE).put(NotificationType.QUIZ_EXERCISE_STARTED, QUIZ_EXERCISE_STARTED_TITLE)
