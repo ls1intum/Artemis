@@ -47,7 +47,8 @@
             "assessmentExplanation": "Erklärung",
             "assessmentExplanationInfo": "Zusätzliche Erklärung zu dieser Beispielbewertung",
             "importExampleSubmission": "Beispielabgabe importieren",
-            "importExampleSubmissionLabel": "Beispielabgabe importieren"
+            "importExampleSubmissionLabel": "Beispielabgabe importieren",
+            "searchSubmission": "Suche nach Einreichung"
         },
         "tutorParticipation": {
             "deleted": "Die Tutorteilnahme wurde erfolgreich gelöscht"

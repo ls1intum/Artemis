@@ -655,16 +655,16 @@ public class SubmissionService {
      * @return A wrapper object containing a list of all found submissions and the total number of pages
      */
     public SearchResultPageDTO<Submission> getSubmissionsOnPageWithSize(final PageableSearchDTO<String> search, long exerciseId) {
-        var sorting = Sort.by(Submission.SubmissionSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
+        var sorting = Sort.by(StudentParticipation.StudentParticipationSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
         sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         final var sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
         final var searchTerm = search.getSearchTerm();
 
-        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(exerciseId, searchTerm);
+        Page<StudentParticipation> studentParticipationPage = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(exerciseId, searchTerm, sorted);
 
         List<Submission> submissions = new ArrayList<>();
 
-        for (StudentParticipation participation : participations) {
+        for (StudentParticipation participation : studentParticipationPage.getContent()) {
             Optional<Submission> optionalSubmission = participation.findLatestSubmission();
 
             if (!optionalSubmission.isEmpty()) {
@@ -674,6 +674,6 @@ public class SubmissionService {
 
         final Page<Submission> submissionPage = new PageImpl<>(submissions, sorted, submissions.size());
 
-        return new SearchResultPageDTO<>(submissionPage.getContent(), submissionPage.getTotalPages());
+        return new SearchResultPageDTO<>(submissionPage.getContent(), studentParticipationPage.getTotalPages());
     }
 }

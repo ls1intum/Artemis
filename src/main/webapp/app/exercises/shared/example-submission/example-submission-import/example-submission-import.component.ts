@@ -13,7 +13,6 @@ import { ExampleSubmissionImportPagingService } from 'app/exercises/shared/examp
 enum TableColumn {
     ID = 'ID',
     STUDENT_NAME = 'STUDENT_NAME',
-    SUBMISSION_DATE = 'SUBMISSION_DATE',
 }
 
 @Component({
@@ -102,6 +101,15 @@ export class ExampleSubmissionImportComponent implements OnInit {
         this.sort.next();
     }
 
+    set searchTerm(searchTerm: string) {
+        this.state.searchTerm = searchTerm;
+        this.search.next();
+    }
+
+    get searchTerm(): string {
+        return this.state.searchTerm;
+    }
+
     set sortedColumn(sortedColumn: string) {
         this.setSearchParam({ sortedColumn });
     }
@@ -122,15 +130,6 @@ export class ExampleSubmissionImportComponent implements OnInit {
 
     get listSorting(): boolean {
         return this.state.sortingOrder === SortingOrder.ASCENDING;
-    }
-
-    set searchTerm(searchTerm: string) {
-        this.state.searchTerm = searchTerm;
-        this.search.next();
-    }
-
-    get searchTerm(): string {
-        return this.state.searchTerm;
     }
 
     /**

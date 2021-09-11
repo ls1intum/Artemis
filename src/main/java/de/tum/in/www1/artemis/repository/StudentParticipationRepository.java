@@ -8,6 +8,8 @@ import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -405,16 +407,23 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
-    @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p
+    @Query(value = """
+            SELECT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH p.results r
-            LEFT JOIN FETCH r.assessor a
+            WHERE p.exercise.id = :#{#exerciseId}
+                  AND (p.student.firstName LIKE %:partialStudentName% OR p.student.lastName LIKE %:partialStudentName%)
+                  AND r.completionDate IS NOT NULL
+            """, countQuery = """
+            SELECT count(p) FROM StudentParticipation p
+            LEFT JOIN p.submissions s
+            LEFT JOIN p.results r
             WHERE p.exercise.id = :#{#exerciseId}
                   AND (p.student.firstName LIKE %:partialStudentName% OR p.student.lastName LIKE %:partialStudentName%)
                   AND r.completionDate IS NOT NULL
             """)
-    List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName);
+    Page<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(@Param("exerciseId") long exerciseId, @Param("partialStudentName") String partialStudentName,
+            Pageable pageable);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p

@@ -47,7 +47,8 @@
             "assessmentExplanation": "Explanation",
             "assessmentExplanationInfo": "Additional explanation for this example assessment",
             "importExampleSubmission": "Import Example Submission",
-            "importExampleSubmissionLabel": "Import an Example Submission"
+            "importExampleSubmissionLabel": "Import an Example Submission",
+            "searchSubmission": "Search for Submission"
         },
         "tutorParticipation": {
             "deleted": "The tutor participation was deleted successfully"
