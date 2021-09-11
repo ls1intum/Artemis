@@ -119,7 +119,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
      *
      * @param umlModel the model for which the assessments should be removed
      */
-    private removeAssessments(umlModel: UMLModel): void {
+    private removeAssessments(umlModel: UMLModel) {
         if (umlModel) {
             umlModel.assessments = [];
         }
@@ -130,7 +130,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
      * of the model outside of Apollon.
      */
     getCurrentModel(): UMLModel {
-        const currentModel: UMLModel = this.apollonEditor!.model;
+        const currentModel = this.apollonEditor!.model;
         this.removeAssessments(currentModel);
         return currentModel;
     }
@@ -144,7 +144,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
 
     /**
      * If changes are made to the the uml model, update the model and remove assessments
-     * @param {simpleChanges} changes - Changes made
+     * @param {SimpleChanges} changes - Changes made
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.diagramType) {

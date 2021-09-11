@@ -56,15 +56,19 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         // Evaluate the format length based on the current window width.
         this.formatLengthBasedOnWindowWidth(window.innerWidth);
 
-        // Set locale to current language.
+        // Set locale to current language
         this.updateLocale(this.translateService.currentLang);
+        this.updateLocalizedDateTime();
 
-        // Clean up existing subscription to onLangChange.
+        // Clean up a possibly existing subscription to onLangChange
         this.cleanUpSubscription();
 
         // Subscribe to onLangChange event, in case the language changes.
         if (!this.onLangChange) {
-            this.onLangChange = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => this.updateLocale(event.lang));
+            this.onLangChange = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
+                this.updateLocale(event.lang);
+                this.updateLocalizedDateTime();
+            });
         }
 
         return this.localizedDateTime;
@@ -86,13 +90,14 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         return dateFormat + (dateFormat && timeFormat ? ' ' : '') + timeFormat;
     }
 
-    private updateLocale(lang: string): void {
-        if (this.locale === undefined && lang === undefined) {
-            this.locale = 'en';
+    private updateLocale(lang?: string): void {
+        if (!lang) {
+            // when there is no lang defined, we use the default one
+            lang = 'en';
         }
+
         if (lang !== this.locale) {
             this.locale = lang;
-            this.updateLocalizedDateTime();
         }
     }
 
