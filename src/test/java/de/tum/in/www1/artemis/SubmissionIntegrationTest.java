@@ -2,15 +2,19 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -19,6 +23,19 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Autowired
     private ResultRepository resultRepository;
+
+    @Autowired
+    private CourseRepository courseRepository;
+
+    @BeforeEach
+    public void initTestCase() throws Exception {
+        database.addUsers(1, 1, 0, 1);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
+    }
 
     @Test
     public void addMultipleResultsToOneSubmission() {
@@ -115,6 +132,25 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(submission.getFirstResult()).isEqualTo(result1);
         assertThat(submission.getLatestResult()).isEqualTo(result2);
 
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void getSubmissionsOnPageWithSize_wrongExerciseId() throws Exception {
+        Long randomExerciseId = 12345L;
+        final var search = database.configureStudentParticipationSearch("");
+        request.get("/api/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void getSubmissionsOnPageWithSize_isNotAtLeastInstructorInExercise_forbidden() throws Exception {
+        Course course = database.addCourseWithModelingAndTextExercise();
+        TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findFirst().get();
+        course.setInstructorGroupName("test");
+        courseRepository.save(course);
+        final var search = database.configureStudentParticipationSearch("");
+        request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
     }
 
 }

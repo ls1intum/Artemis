@@ -163,7 +163,7 @@ public class SubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/submissions-for-import")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<SearchResultPageDTO<Submission>> getAllExercisesOnPage(@PathVariable Long exerciseId, PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<Submission>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, PageableSearchDTO<String> search) {
         log.debug("REST request to get all Submissions for import : {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
