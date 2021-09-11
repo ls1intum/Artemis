@@ -164,6 +164,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     loadExercise() {
         this.exercise = undefined;
         this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
+        this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.studentParticipation?.results);
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
             this.getLatestRatedResult();
@@ -377,24 +378,20 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * For other exercise types it returns a rated result.
      */
     getLatestRatedResult() {
-        if (!this.studentParticipation || !this.hasResults) {
-            return undefined;
+        if (!this.studentParticipation?.submissions || !this.studentParticipation!.submissions![0] || !this.hasResults) {
+            return;
         }
-        const resultWithComplaint = getFirstResultWithComplaintFromResults(this.studentParticipation?.results);
-        if (resultWithComplaint) {
-            this.complaintService.findByResultId(resultWithComplaint.id!).subscribe(
-                (res) => {
-                    if (!res.body) {
-                        return;
-                    }
-                    this.complaint = res.body;
-                },
-                (err: HttpErrorResponse) => {
-                    this.onError(err.message);
-                },
-            );
-        }
-        this.resultWithComplaint = resultWithComplaint;
+        this.complaintService.findBySubmissionId(this.studentParticipation!.submissions![0].id!).subscribe(
+            (res) => {
+                if (!res.body) {
+                    return;
+                }
+                this.complaint = res.body;
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err.message);
+            },
+        );
 
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
             return this.studentParticipation?.results?.find((result: Result) => !!result.completionDate) || undefined;
