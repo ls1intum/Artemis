@@ -34,9 +34,7 @@ public class StaticCodeAnalysisConfigurer {
         languageToDefaultCategories = Map.of(ProgrammingLanguage.JAVA, createDefaultCategoriesForJava(), ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift(),
                 ProgrammingLanguage.C, createDefaultCategoriesForC());
 
-        List<ProgrammingLanguage> supportedLanguages = new LinkedList<>(languageToDefaultCategories.keySet());
-
-        log.debug("Initialized default static code analysis categories for: " + supportedLanguages);
+        log.debug("Initialized default static code analysis categories for: {}", languageToDefaultCategories.keySet());
     }
 
     /**
