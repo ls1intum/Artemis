@@ -98,10 +98,7 @@ export class StudentExamsComponent implements OnInit {
 
     calculateIsExamOver() {
         if (this.longestWorkingTime && this.exam) {
-            const examEndDate = dayjs(this.exam.startDate);
-            examEndDate.add(this.longestWorkingTime, 'seconds');
-            examEndDate.add(this.exam.gracePeriod!, 'seconds');
-            this.isExamOver = examEndDate.isBefore(dayjs());
+            this.isExamOver = dayjs(this.exam.startDate).add(this.longestWorkingTime, 'seconds').add(this.exam.gracePeriod!, 'seconds').isBefore(dayjs());
         }
     }
 
