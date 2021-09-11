@@ -61,7 +61,7 @@ describe('Exam Assessment', () => {
         });
 
         it('Assess a modeling exercise submission', () => {
-            courseManagementRequests.createModelingExercise({ exerciseGroup }, );
+            courseManagementRequests.createModelingExercise({ exerciseGroup });
             courseManagementRequests.generateMissingIndividualExams(exam);
             courseManagementRequests.prepareExerciseStartForExam(exam);
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
