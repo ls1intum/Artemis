@@ -77,7 +77,7 @@ export class ExampleSubmissionsComponent implements OnInit {
 
     /**
      * Opens the import module for example submission
-     * Then invokes import api for selected submission submission
+     * Then invokes import api for selected submission
      */
     openImportModal() {
         const exampleSubmissionImportModalRef = this.modalService.open(ExampleSubmissionImportComponent, {

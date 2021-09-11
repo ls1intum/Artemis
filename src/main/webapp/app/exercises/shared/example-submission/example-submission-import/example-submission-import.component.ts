@@ -10,7 +10,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExampleSubmissionImportPagingService } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import-paging.service';
 
-enum TableColumn {
+export enum TableColumn {
     ID = 'ID',
     STUDENT_NAME = 'STUDENT_NAME',
 }

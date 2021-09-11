@@ -35,6 +35,11 @@ describe('Example Submission Import Paging Service', () => {
         httpMock = injector.get(HttpTestingController);
     });
 
+    afterEach(() => {
+        httpMock.verify();
+        sinon.restore();
+    });
+
     it('should find submission', fakeAsync(() => {
         const exercise = {
             id: 1,
@@ -55,9 +60,4 @@ describe('Example Submission Import Paging Service', () => {
         req.flush(searchResult);
         tick();
     }));
-
-    afterEach(() => {
-        httpMock.verify();
-        sinon.restore();
-    });
 });
