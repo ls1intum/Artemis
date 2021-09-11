@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.config;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
