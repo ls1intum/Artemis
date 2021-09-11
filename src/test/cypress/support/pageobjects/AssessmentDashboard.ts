@@ -25,7 +25,7 @@ export class AssessmentDashboard {
     }
 
     submitAssessment() {
-        cy.contains('Submit').click();
+        cy.get('[jhitranslate="entity.action.submit"]').click();
         cy.on('window:confirm', () => true);
     }
 }
