@@ -44,7 +44,7 @@ public class NotificationTitleTypeConstants {
     public static final String EXAM_ARCHIVE_FAILED_TITLE = "Exam archival failed";
 
     // bi directional map
-    private static final BiMap<NotificationType, String> notificationTypeAndTitleMap = new ImmutableBiMap.Builder<NotificationType, String>()
+    private static final BiMap<NotificationType, String> NOTIFICATION_TYPE_AND_TITLE_MAP = new ImmutableBiMap.Builder<NotificationType, String>()
             .put(NotificationType.ATTACHMENT_CHANGE, ATTACHMENT_CHANGE_TITLE).put(NotificationType.EXERCISE_CREATED, EXERCISE_CREATED_TITLE)
             .put(NotificationType.EXERCISE_PRACTICE, EXERCISE_PRACTICE_TITLE).put(NotificationType.QUIZ_EXERCISE_STARTED, QUIZ_EXERCISE_STARTED_TITLE)
             .put(NotificationType.EXERCISE_UPDATED, EXERCISE_UPDATED_TITLE).put(NotificationType.DUPLICATE_TEST_CASE, DUPLICATE_TEST_CASE_TITLE)
@@ -60,7 +60,7 @@ public class NotificationTitleTypeConstants {
      * @return corresponding NotificationType
      */
     public static NotificationType findCorrespondingNotificationType(String title) {
-        return notificationTypeAndTitleMap.inverse().get(title);
+        return NOTIFICATION_TYPE_AND_TITLE_MAP.inverse().get(title);
     }
 
     /**
@@ -69,6 +69,6 @@ public class NotificationTitleTypeConstants {
      * @return corresponding notification title
      */
     public static String findCorrespondingNotificationTitle(NotificationType type) {
-        return notificationTypeAndTitleMap.get(type);
+        return NOTIFICATION_TYPE_AND_TITLE_MAP.get(type);
     }
 }
