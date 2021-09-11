@@ -39,6 +39,7 @@ import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -68,7 +69,7 @@ describe('FileUploadSubmissionComponent', () => {
                 ArtemisHeaderExercisePageWithDetailsModule,
                 RatingModule,
             ],
-            declarations: [FileUploadSubmissionComponent, MockComponent(ComplaintsForTutorComponent), MockPipe(HtmlForMarkdownPipe)],
+            declarations: [FileUploadSubmissionComponent, MockComponent(ComplaintsForTutorComponent), MockPipe(HtmlForMarkdownPipe), MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

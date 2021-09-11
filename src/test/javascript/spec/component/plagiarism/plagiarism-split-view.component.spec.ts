@@ -13,6 +13,8 @@ import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiar
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { PlagiarismMatch } from 'app/exercises/shared/plagiarism/types/PlagiarismMatch';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { MockPipe } from 'ng-mocks';
 
 const collapse = jest.fn();
 const setSizes = jest.fn();
@@ -38,6 +40,7 @@ describe('Plagiarism Split View Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
+            declarations: [MockPipe(ArtemisDatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

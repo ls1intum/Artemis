@@ -15,8 +15,8 @@ import dayjs from 'dayjs';
                 [ngClass]="{ 'is-invalid': error }"
                 [ngModel]="value"
                 [disabled]="disabled"
-                [min]="min.isValid() ? min.toDate() : null"
-                [max]="max.isValid() ? max.toDate() : null"
+                [min]="convert(min)"
+                [max]="convert(max)"
                 (ngModelChange)="updateField($event)"
                 [owlDateTime]="dt"
                 name="datePicker"
@@ -24,7 +24,7 @@ import dayjs from 'dayjs';
             <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
                 <fa-icon [icon]="'calendar-alt'"></fa-icon>
             </button>
-            <owl-date-time [startAt]="startAt.isValid() ? startAt.toDate() : null" #dt></owl-date-time>
+            <owl-date-time [startAt]="convert(startAt)" #dt></owl-date-time>
         </div>
     `,
     providers: [
@@ -54,6 +54,15 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     valueChanged() {
         this.valueChange.emit();
+    }
+
+    /**
+     * Function that converts a possibly undefined dayjs value to a date or null.
+     *
+     * @param value as dayjs
+     */
+    convert(value?: dayjs.Dayjs) {
+        return value != undefined && value.isValid() ? value.toDate() : null;
     }
 
     /**
