@@ -37,7 +37,7 @@ export class StudentExamsComponent implements OnInit {
     filteredStudentExamsSize = 0;
     isExamStarted = false;
     isExamOver = false;
-    longestWorkingTime: number;
+    longestWorkingTime?: number;
     isAdmin = false;
 
     constructor(
@@ -98,7 +98,12 @@ export class StudentExamsComponent implements OnInit {
 
     calculateIsExamOver() {
         if (this.longestWorkingTime && this.exam) {
-            this.isExamOver = dayjs(this.exam.startDate).add(this.longestWorkingTime, 'seconds').add(this.exam.gracePeriod!, 'seconds').isBefore(dayjs());
+            const startDate = dayjs(this.exam.startDate);
+            let endDate = startDate.add(this.longestWorkingTime, 'seconds');
+            if (this.exam.gracePeriod) {
+                endDate = endDate.add(this.exam.gracePeriod!, 'seconds');
+            }
+            this.isExamOver = endDate.isBefore(dayjs());
         }
     }
 
