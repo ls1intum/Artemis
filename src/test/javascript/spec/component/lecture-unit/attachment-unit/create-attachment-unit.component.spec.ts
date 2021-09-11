@@ -108,7 +108,7 @@ describe('CreateAttachmentUnitComponent', () => {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
-                releaseDate: dayjs({ years: 2010, months: 3, date: 5 }),
+                releaseDate: dayjs().year(2010).month(3).date(5),
                 version: 2,
                 updateNotificationText: 'lorem ipsum',
             },

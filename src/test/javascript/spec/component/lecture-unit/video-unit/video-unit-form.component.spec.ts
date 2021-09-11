@@ -48,7 +48,7 @@ describe('VideoUnitFormComponent', () => {
         videoUnitFormComponentFixture.detectChanges();
         const exampleDescription = 'lorem ipsum';
         videoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        const exampleReleaseDate = dayjs().year(2010).month(3).day(5);
+        const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
         videoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         videoUnitFormComponent.sourceControl!.setValue(validYouTubeUrlInEmbeddableFormat);
         videoUnitFormComponentFixture.detectChanges();
@@ -74,7 +74,7 @@ describe('VideoUnitFormComponent', () => {
         videoUnitFormComponent.nameControl!.setValue(exampleName);
         const exampleDescription = 'lorem ipsum';
         videoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        const exampleReleaseDate = dayjs().year(2010).month(3).day(5);
+        const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
         videoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         videoUnitFormComponentFixture.detectChanges();
         expect(videoUnitFormComponent.form.invalid).to.be.true;
@@ -99,7 +99,7 @@ describe('VideoUnitFormComponent', () => {
         videoUnitFormComponent.nameControl!.setValue(exampleName);
         const exampleDescription = 'lorem ipsum';
         videoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        const exampleReleaseDate = dayjs().year(2010).month(3).day(5);
+        const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
         videoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         videoUnitFormComponent.sourceControl!.setValue(validYouTubeUrlInEmbeddableFormat);
         videoUnitFormComponentFixture.detectChanges();
@@ -148,7 +148,7 @@ describe('VideoUnitFormComponent', () => {
         const formData: VideoUnitFormData = {
             name: 'test',
             description: 'lorem ipsum',
-            releaseDate: dayjs().year(2010).month(3).day(5),
+            releaseDate: dayjs().year(2010).month(3).date(5),
             source: validYouTubeUrlInEmbeddableFormat,
         };
         videoUnitFormComponentFixture.detectChanges();

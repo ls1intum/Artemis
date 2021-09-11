@@ -96,7 +96,7 @@ describe('EditVideoUnitComponent', () => {
         const videoUnitOfResponse = new VideoUnit();
         videoUnitOfResponse.id = 1;
         videoUnitOfResponse.name = 'test';
-        videoUnitOfResponse.releaseDate = dayjs().year(2010).month(3).day(5);
+        videoUnitOfResponse.releaseDate = dayjs().year(2010).month(3).date(5);
         videoUnitOfResponse.description = 'lorem ipsum';
         videoUnitOfResponse.source = 'https://www.youtube.com/embed/M7lc1UVf-VE';
 
@@ -124,7 +124,7 @@ describe('EditVideoUnitComponent', () => {
         const videoUnitInDatabase: VideoUnit = new VideoUnit();
         videoUnitInDatabase.id = 1;
         videoUnitInDatabase.name = 'test';
-        videoUnitInDatabase.releaseDate = dayjs().year(2010).month(3).day(5);
+        videoUnitInDatabase.releaseDate = dayjs().year(2010).month(3).date(5);
         videoUnitInDatabase.description = 'lorem ipsum';
         videoUnitInDatabase.source = 'https://www.youtube.com/embed/M7lc1UVf-VE';
 

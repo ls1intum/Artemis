@@ -72,7 +72,7 @@ describe('TextUnitFormComponent', () => {
         routerMock.setUrl(fakeUrl);
         const cache = {
             markdown: 'Lorem Ipsum',
-            date: dayjs().year(2010).month(3).day(5).format('MMM DD YYYY, HH:mm:ss'),
+            date: dayjs().year(2010).month(3).date(5).format('MMM DD YYYY, HH:mm:ss'),
         };
         store[fakeUrl] = JSON.stringify(cache);
 
@@ -157,7 +157,7 @@ describe('TextUnitFormComponent', () => {
     it('should correctly set form values in edit mode', fakeAsync(() => {
         const formData: TextUnitFormData = {
             name: 'test',
-            releaseDate: dayjs().year(2010).month(3).day(5),
+            releaseDate: dayjs().year(2010).month(3).date(5),
             content: 'Lorem Ipsum',
         };
 

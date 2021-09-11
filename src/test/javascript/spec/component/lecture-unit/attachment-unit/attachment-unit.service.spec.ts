@@ -42,8 +42,8 @@ describe('AttachmentUnitService', () => {
         attachment.id = 0;
         attachment.version = 1;
         attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = dayjs().year(2010).month(3).day(5);
-        attachment.uploadDate = dayjs().year(2010).month(3).day(5);
+        attachment.releaseDate = dayjs().year(2010).month(3).date(5);
+        attachment.uploadDate = dayjs().year(2010).month(3).date(5);
         attachment.name = 'test';
         attachment.link = '/path/to/file/test.pdf';
 

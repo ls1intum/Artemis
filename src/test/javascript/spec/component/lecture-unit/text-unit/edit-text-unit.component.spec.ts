@@ -91,7 +91,7 @@ describe('EditTextUnitComponent', () => {
         const originalTextUnit: TextUnit = new TextUnit();
         originalTextUnit.id = 1;
         originalTextUnit.name = 'Test';
-        originalTextUnit.releaseDate = dayjs().year(2010).month(3).day(5);
+        originalTextUnit.releaseDate = dayjs().year(2010).month(3).date(5);
         originalTextUnit.content = 'Lorem Ipsum';
 
         const response: HttpResponse<TextUnit> = new HttpResponse({
@@ -120,7 +120,7 @@ describe('EditTextUnitComponent', () => {
         const originalTextUnit: TextUnit = new TextUnit();
         originalTextUnit.id = 1;
         originalTextUnit.name = 'Test';
-        originalTextUnit.releaseDate = dayjs().year(2010).month(3).day(5);
+        originalTextUnit.releaseDate = dayjs().year(2010).month(3).date(5);
         originalTextUnit.content = 'Lorem Ipsum';
 
         const findByidResponse: HttpResponse<TextUnit> = new HttpResponse({
@@ -132,7 +132,7 @@ describe('EditTextUnitComponent', () => {
 
         const formDate: TextUnitFormData = {
             name: 'CHANGED',
-            releaseDate: dayjs().year(2010).month(3).day(5),
+            releaseDate: dayjs().year(2010).month(3).date(5),
             content: 'Lorem Ipsum',
         };
         const updatedTextUnit: TextUnit = new TextUnit();

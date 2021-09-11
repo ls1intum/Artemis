@@ -49,7 +49,7 @@ describe('AttachmentUnitFormComponent', () => {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
-                releaseDate: dayjs().year(2010).month(3).day(5),
+                releaseDate: dayjs().year(2010).month(3).date(5),
                 version: 2,
                 updateNotificationText: 'lorem ipsum',
             },
@@ -75,7 +75,7 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponentFixture.detectChanges();
         const exampleName = 'test';
         attachmentUnitFormComponent.nameControl!.setValue(exampleName);
-        const exampleReleaseDate = dayjs().year(2010).month(3).day(5);
+        const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
         attachmentUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         const exampleDescription = 'lorem ipsum';
         attachmentUnitFormComponent.descriptionControl!.setValue(exampleDescription);
@@ -118,7 +118,7 @@ describe('AttachmentUnitFormComponent', () => {
     });
     it('should not submit a form when name is missing', () => {
         attachmentUnitFormComponentFixture.detectChanges();
-        const exampleReleaseDate = dayjs().year(2010).month(3).day(5);
+        const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
         attachmentUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         const exampleDescription = 'lorem ipsum';
         attachmentUnitFormComponent.descriptionControl!.setValue(exampleDescription);

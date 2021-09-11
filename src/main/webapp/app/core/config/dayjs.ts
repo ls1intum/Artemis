@@ -8,11 +8,11 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isBetween from 'dayjs/plugin/isBetween';
 import minMax from 'dayjs/plugin/minMax';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
 
 import 'dayjs/locale/en';
 import 'dayjs/locale/de';
 
-// DAYJS CONFIGURATION
 dayjs.extend(customParseFormat);
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
@@ -22,3 +22,4 @@ dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isBetween);
 dayjs.extend(minMax);
+dayjs.extend(localizedFormat);

@@ -5,7 +5,6 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { DebugElement } from '@angular/core';
 import dayjs from 'dayjs';
-import * as dayjs from 'dayjs';
 import * as sinon from 'sinon';
 import { SinonStub, spy, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
