@@ -16,7 +16,7 @@ export class CourseExamDetailComponent {
     constructor(private router: Router) {}
 
     /**
-     * navigate to /courses/:courseid/exams/:examId
+     * navigate to /courses/:courseId/exams/:examId
      */
     openExam(): void {
         this.router.navigate(['courses', this.course.id, 'exams', this.exam.id]);
@@ -28,6 +28,7 @@ export class CourseExamDetailComponent {
      * calculate the duration in seconds between the start and end date of the exam
      */
     get examDuration(): number {
-        return round(dayjs.duration(dayjs(this.exam.endDate).diff(dayjs(this.exam.startDate), 'seconds')));
+        const diff = dayjs(this.exam.endDate).diff(dayjs(this.exam.startDate), 'second');
+        return round(diff);
     }
 }
