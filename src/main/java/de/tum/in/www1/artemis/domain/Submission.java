@@ -324,5 +324,4 @@ public abstract class Submission extends DomainObject {
     public Result getResultWithComplaint() {
         return results.stream().filter(result -> Boolean.TRUE.equals(result.hasComplaint())).findFirst().orElse(null);
     }
-
 }
