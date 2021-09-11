@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { User } from 'app/core/user/user.model';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { Reaction } from 'app/entities/metis/reaction.model';
 
 export abstract class Posting implements BaseEntity {

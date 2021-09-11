@@ -1,6 +1,5 @@
 import { async, ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import dayjs from 'dayjs';
-import * as dayjs from 'dayjs';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import sinonChai from 'sinon-chai';

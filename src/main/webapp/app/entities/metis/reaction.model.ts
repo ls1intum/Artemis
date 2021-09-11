@@ -1,5 +1,5 @@
 import { User } from 'app/core/user/user.model';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 

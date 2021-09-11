@@ -15,7 +15,6 @@ import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visu
 import { RouterTestingModule } from '@angular/router/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs';
-import * as dayjs from 'dayjs';
 import { HttpResponse } from '@angular/common/http';
 
 chai.use(sinonChai);

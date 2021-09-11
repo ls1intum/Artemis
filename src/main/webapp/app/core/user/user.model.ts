@@ -1,5 +1,5 @@
 import { Account } from 'app/core/user/account.model';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { Organization } from 'app/entities/organization.model';
 
 export class User extends Account {

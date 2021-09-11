@@ -3,7 +3,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Result } from 'app/entities/result.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { filter } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';

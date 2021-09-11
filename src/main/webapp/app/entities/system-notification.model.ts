@@ -1,4 +1,4 @@
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { Notification, NotificationType } from 'app/entities/notification.model';
 
 export const enum SystemNotificationType {

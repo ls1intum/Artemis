@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Post } from 'app/entities/metis/post.model';
 import { SortService } from 'app/shared/service/sort.service';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { PostService } from 'app/shared/metis/post.service';
