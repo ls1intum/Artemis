@@ -1,4 +1,4 @@
-import { CourseWideContext, Post } from 'app/entities/metis/post.model';
+import { CourseWideContext, DisplayPriority, Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -177,6 +177,20 @@ export class MetisService {
     }
 
     /**
+     * updates the display priority of a post to NONE, PINNED, ARCHIVED
+     * @param postId            id of the post for which the displayPriority is changed
+     * @param displayPriority   new displayPriority
+     */
+    updatePostDisplayPriority(postId: number, displayPriority: DisplayPriority): Observable<Post> {
+        return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(
+            tap(() => {
+                this.getPostsForFilter(this.currentPostFilter);
+            }),
+            map((res: HttpResponse<Post>) => res.body!),
+        );
+    }
+
+    /**
      * deletes a post by invoking the post service
      * fetches the posts for the currently set filter on response and updates course tags
      * @param post post to delete
@@ -246,14 +260,28 @@ export class MetisService {
 
     /**
      * sorts posts by two criteria
-     * 1. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
-     * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
+     * 1. criterion: displayPriority is PINNED -> pinned posts come first
+     * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
+     * 3. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
+     * 4. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
      * @return Post[] sorted array of posts
      */
     static sortPosts(posts: Post[]): Post[] {
         return posts.sort(function (postA, postB) {
             const postAVoteEmojiCount = postA.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
             const postBVoteEmojiCount = postB.reactions?.filter((reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
+            if (postA.displayPriority === DisplayPriority.PINNED && postB.displayPriority !== DisplayPriority.PINNED) {
+                return -1;
+            }
+            if (postA.displayPriority !== DisplayPriority.PINNED && postB.displayPriority === DisplayPriority.PINNED) {
+                return 1;
+            }
+            if (postA.displayPriority === DisplayPriority.ARCHIVED && postB.displayPriority !== DisplayPriority.ARCHIVED) {
+                return 1;
+            }
+            if (postA.displayPriority !== DisplayPriority.ARCHIVED && postB.displayPriority === DisplayPriority.ARCHIVED) {
+                return -1;
+            }
             if (postAVoteEmojiCount > postBVoteEmojiCount) {
                 return -1;
             }

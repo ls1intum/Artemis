@@ -41,7 +41,7 @@ describe('ExamScoresComponent', () => {
         lowerBoundPercentage: 0,
         upperBoundInclusive: false,
         upperBoundPercentage: 40,
-        gradeName: 'D',
+        gradeName: '4',
     };
     const gradeStep2: GradeStep = {
         isPassingGrade: true,
@@ -49,7 +49,7 @@ describe('ExamScoresComponent', () => {
         lowerBoundPercentage: 40,
         upperBoundInclusive: false,
         upperBoundPercentage: 60,
-        gradeName: 'C',
+        gradeName: '3',
     };
     const gradeStep3: GradeStep = {
         isPassingGrade: true,
@@ -57,7 +57,7 @@ describe('ExamScoresComponent', () => {
         lowerBoundPercentage: 60,
         upperBoundInclusive: false,
         upperBoundPercentage: 80,
-        gradeName: 'B',
+        gradeName: '2',
     };
     const gradeStep4: GradeStep = {
         isPassingGrade: true,
@@ -65,7 +65,7 @@ describe('ExamScoresComponent', () => {
         lowerBoundPercentage: 80,
         upperBoundInclusive: true,
         upperBoundPercentage: 100,
-        gradeName: 'A',
+        gradeName: '1',
     };
     const gradingScale = new GradingScale();
     gradingScale.gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep4];
@@ -75,12 +75,35 @@ describe('ExamScoresComponent', () => {
         title: 'ex1_1',
         maxPoints: 100,
         numberOfParticipants: 1,
+        exerciseType: 'TextExercise',
     } as ExerciseInfo;
     const exInfo2 = {
         exerciseId: 12,
         title: 'ex1_2',
         maxPoints: 100,
         numberOfParticipants: 1,
+        exerciseType: 'ModelingExercise',
+    } as ExerciseInfo;
+    const exInfo3 = {
+        exerciseId: 13,
+        title: 'ex1_3',
+        maxPoints: 100,
+        numberOfParticipants: 1,
+        exerciseType: 'ProgrammingExercise',
+    } as ExerciseInfo;
+    const exInfo4 = {
+        exerciseId: 14,
+        title: 'ex1_4',
+        maxPoints: 100,
+        numberOfParticipants: 1,
+        exerciseType: 'FileUploadExercise',
+    } as ExerciseInfo;
+    const exInfo5 = {
+        exerciseId: 15,
+        title: 'ex1_5',
+        maxPoints: 100,
+        numberOfParticipants: 1,
+        exerciseType: 'QuizExercise',
     } as ExerciseInfo;
 
     const exGroup1Id = 1;
@@ -89,7 +112,7 @@ describe('ExamScoresComponent', () => {
         title: 'group',
         maxPoints: 100,
         numberOfParticipants: 2,
-        containedExercises: [exInfo1, exInfo2],
+        containedExercises: [exInfo1, exInfo2, exInfo3, exInfo4, exInfo5],
     } as ExerciseGroup;
 
     const exResult1ForGroup1 = {
@@ -337,7 +360,7 @@ describe('ExamScoresComponent', () => {
         expect(groupResult1!.averagePercentage).to.equal((averagePoints / groupResult1!.maxPoints) * 100);
 
         // expect correct average points for exercises
-        expect(groupResult1!.exerciseResults.length).to.equal(2);
+        expect(groupResult1!.exerciseResults.length).to.equal(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
             let averageExPoints = 0;
             let exInfo;
@@ -384,7 +407,7 @@ describe('ExamScoresComponent', () => {
         expect(groupResult1!.averagePercentage).to.equal((averagePoints / groupResult1!.maxPoints) * 100);
 
         // expect correct average points for exercises
-        expect(groupResult1!.exerciseResults.length).to.equal(2);
+        expect(groupResult1!.exerciseResults.length).to.equal(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
             let averageExPoints = 0;
             let exInfo;
