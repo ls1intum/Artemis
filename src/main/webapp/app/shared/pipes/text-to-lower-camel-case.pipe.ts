@@ -1,27 +1,19 @@
 import { PipeTransform, Pipe } from '@angular/core';
+import camelcase from 'camelcase';
 
 @Pipe({ name: 'lowerCamelCase' })
 export class TextToLowerCamelCasePipe implements PipeTransform {
     /**
      * Converts a string (text) into lowerCamelCase.
-     * Removes any (extra) white spaces and underscores "_"
+     * Uses the npm package camelcase https://www.npmjs.com/package/camelcase
+     * Remark: camelcase('WoRd') -> woRd
      * @param input to be converted into lowerCamelCase.
      */
     transform(input: string) {
         if (input == undefined || input === '') {
             return '';
         }
-        input = input.replace(/_/g, ' ');
-        let words = input.split(' ');
-
-        // remove extra white space
-        words = words.filter((word) => word !== '');
-
-        // converts words to lowerCamelCase
-        const upperCamelCase = words.reduce((accumulator: string, currentWord: string) => {
-            return accumulator + currentWord[0].toUpperCase() + currentWord.substr(1).toLowerCase();
-        }, '');
-
-        return upperCamelCase[0].toLowerCase() + upperCamelCase.substr(1);
+        input = camelcase(input);
+        return input[0].toLowerCase() + input.substr(1);
     }
 }
