@@ -1,4 +1,4 @@
-import { BASE_API } from './../../../support/constants';
+import { BASE_API } from '../../../support/constants';
 import { DELETE } from '../../../support/constants';
 import { generateUUID } from '../../../support/utils';
 import { artemis } from '../../../support/ArtemisTesting';
