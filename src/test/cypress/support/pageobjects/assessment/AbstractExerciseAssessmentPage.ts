@@ -5,8 +5,7 @@ import { PUT, BASE_API } from './../../constants';
  */
 export abstract class AbstractExerciseAssessmentPage {
     getInstructionsRootElement() {
-        cy.url().should('contain', '/assessment');
-        return cy.contains('Instructions');
+        return cy.get('#cardInstructions');
     }
 
     addNewFeedback(points: number, feedback?: string) {

@@ -1,4 +1,4 @@
-import { CypressAssessmentType } from './../../../support/requests/CourseManagementRequests';
+import { CypressAssessmentType } from '../../../support/requests/CourseManagementRequests';
 import { artemis } from 'src/test/cypress/support/ArtemisTesting';
 import { generateUUID } from 'src/test/cypress/support/utils';
 
