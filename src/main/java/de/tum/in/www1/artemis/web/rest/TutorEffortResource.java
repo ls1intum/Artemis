@@ -69,7 +69,7 @@ public class TutorEffortResource {
 
         Map<Long, List<TextAssessmentEvent>> newMap = groupByUserId(listOfEvents);
         if (newMap.isEmpty()) {
-            return ResponseEntity.ok().build();
+            return ResponseEntity.noContent().build();
         }
         newMap.forEach((currentUserId, currentUserEvents) -> {
             if (currentUserEvents != null) {
@@ -106,17 +106,14 @@ public class TutorEffortResource {
     private int calculateTutorOverallTimeSpent(List<TextAssessmentEvent> tutorEvents) {
         int timeSeconds = 0;
         int index = 0;
-        while (index < tutorEvents.size()) {
+        // avoid index out of bounds by incrementing index for accessing tutorEvents list elements
+        while (index + 1 < tutorEvents.size()) {
             TextAssessmentEvent current = tutorEvents.get(index);
-            try {
-                // access next element & catch out of bounds if end of the list.
-                TextAssessmentEvent next = tutorEvents.get(index + 1);
-                int diffInSeconds = getDateDiffInSeconds(Date.from(current.getTimestamp()), Date.from(next.getTimestamp()));
-                if (diffInSeconds <= THRESHOLD_MINUTES * 60) {
-                    timeSeconds += diffInSeconds;
-                }
-            }
-            catch (IndexOutOfBoundsException ignored) {
+            // access next element
+            TextAssessmentEvent next = tutorEvents.get(index + 1);
+            int diffInSeconds = getDateDiffInSeconds(Date.from(current.getTimestamp()), Date.from(next.getTimestamp()));
+            if (diffInSeconds <= THRESHOLD_MINUTES * 60) {
+                timeSeconds += diffInSeconds;
             }
             index++;
         }
@@ -132,15 +129,12 @@ public class TutorEffortResource {
         Map<Long, List<TextAssessmentEvent>> map = new HashMap<>();
 
         events.forEach((event) -> {
-            Long cUserId = event.getUserId();
-            var cEvents = map.get(cUserId);
-            // key, value pair doesn't exist, initialize empty list
-            if (cEvents == null) {
-                cEvents = new ArrayList<>();
-            }
-            // key, value pair exists, append to value list, a new element (pass by reference, map.put redundant)
+            Long currentUserId = event.getUserId();
+            // if key, value pair doesn't exist, initialize empty list
+            var cEvents = map.getOrDefault(currentUserId, new ArrayList<>());
+            // append a new element to value list
             cEvents.add(event);
-            map.putIfAbsent(cUserId, cEvents);
+            map.putIfAbsent(currentUserId, cEvents);
         });
         return map;
     }

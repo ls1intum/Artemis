@@ -123,15 +123,19 @@ export class TutorEffortStatisticsComponent implements OnInit {
         );
     }
 
+    /**
+     * Tutor Effort is distributed among the effortDistribution entries with each entry representing
+     * a corresponding index in the chartLables field.
+     * chartLabels.["0-10"] - corresponds to effortDistribution[0]
+     * chartLabels.["10-20"] - corresponds to effortDistribution[1]
+     * and so on. chartlabels is divided in steps of length 10, which is why division/10 and floor function is used.
+     */
     distributeEffortToSets() {
-        this.effortDistribution = new Array<number>(13).fill(0);
+        this.effortDistribution = new Array<number>(this.chartLabels.length).fill(0);
         this.tutorEfforts.forEach((effort) => {
-            const time = Math.floor(effort.totalTimeSpentMinutes / 10);
-            if (time > -1 && time < 11) {
-                this.effortDistribution[time]++;
-            } else if (time >= 12) {
-                this.effortDistribution[12]++;
-            }
+            const BUCKET_COUNT = this.chartLabels.length;
+            const time = Math.min(Math.floor(effort.totalTimeSpentMinutes / 10), BUCKET_COUNT - 1);
+            this.effortDistribution[time]++;
         });
     }
 }

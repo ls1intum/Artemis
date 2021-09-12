@@ -52,12 +52,7 @@
         </a>
 
         <!-- Tutor Effort Statistics -->
-        <a
-            *ngIf="exercise.isAtLeastInstructor && exercise.type == 'text'"
-            [routerLink]="baseResource + 'tutor-effort-statistics'"
-            class="btn btn-success btn-sm me-1"
-            style="margin-bottom: 10px"
-        >
+        <a *ngIf="exercise.isAtLeastInstructor && exercise.type == 'text'" [routerLink]="baseResource + 'tutor-effort-statistics'" class="btn btn-success btn-sm me-1 mb-2">
             <fa-icon [icon]="'chart-bar'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title">Tutor Effort Statistics</span>
         </a>
