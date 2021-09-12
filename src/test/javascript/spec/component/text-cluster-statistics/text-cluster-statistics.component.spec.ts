@@ -9,7 +9,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
-
 describe('TextClusterStatisticsComponent', () => {
     let fixture: ComponentFixture<ClusterStatisticsComponent>;
     let component: ClusterStatisticsComponent;

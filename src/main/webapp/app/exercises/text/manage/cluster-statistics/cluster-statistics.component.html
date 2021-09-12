@@ -1,6 +1,6 @@
 <div class="container-fluid table-responsive">
     <h4 jhiTranslate="artemisApp.textExercise.clusterStatistics.title"></h4>
-    <table *ngIf="clusters.length > 0" class="table exercise-table guided-tour-exercise-table">
+    <table *ngIf="clusters && clusters.length > 0" class="table exercise-table guided-tour-exercise-table">
         <thead>
             <tr>
                 <th>
@@ -40,5 +40,5 @@
             </tr>
         </tbody>
     </table>
-    <span *ngIf="clusters.length == 0" jhiTranslate="artemisApp.textExercise.clusterStatistics.noClustersFound"><b>No text clusters found for this exercise</b></span>
+    <span *ngIf="clusters && clusters.length == 0" jhiTranslate="artemisApp.textExercise.clusterStatistics.noClustersFound"><b>No text clusters found for this exercise</b></span>
 </div>

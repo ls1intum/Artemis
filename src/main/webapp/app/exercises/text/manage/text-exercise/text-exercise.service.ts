@@ -151,8 +151,10 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * @param exerciseId The id of the exercise to get the cluster information from
      * @returns An Observable resolving to a TextExerciseClusterStatistics containing the returned data from the server
      */
-    public getClusterStats(exerciseId: number): Observable<HttpResponse<TextExerciseClusterStatistics[]>> {
-        return this.http.get<TextExerciseClusterStatistics[]>(`api/text-exercises/${exerciseId}/cluster-statistics`, { observe: 'response' });
+    public getClusterStats(exerciseId: number): Observable<TextExerciseClusterStatistics[]> {
+        return this.http
+            .get<TextExerciseClusterStatistics[]>(`api/text-exercises/${exerciseId}/cluster-statistics`, { observe: 'response' })
+            .pipe(map((response: HttpResponse<TextExerciseClusterStatistics[]>) => response.body!));
     }
 
     /**

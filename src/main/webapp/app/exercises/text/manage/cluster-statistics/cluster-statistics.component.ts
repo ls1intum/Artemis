@@ -26,13 +26,8 @@ export class ClusterStatisticsComponent implements OnInit {
      * @param exerciseId The id of the exercise to fetch the cluster stats for
      */
     loadClusterFromExercise(exerciseId: number) {
-        this.textExerciseService.getClusterStats(exerciseId).subscribe({
-            next: (res: HttpResponse<TextExerciseClusterStatistics[]>) => {
-                this.clusters = res.body!;
-            },
-            error: (error: HttpErrorResponse) => {
-                console.log('Error while retrieving cluster statistics: ', error);
-            },
+        this.textExerciseService.getClusterStats(exerciseId).subscribe((clusterStatistics: TextExerciseClusterStatistics[]) => {
+            this.clusters = clusterStatistics;
         });
     }
 
@@ -42,14 +37,9 @@ export class ClusterStatisticsComponent implements OnInit {
      * @param disabled The predicate specifying whether the cluster should be disabled or not
      */
     setClusterDisabledPredicate(clusterId: number, disabled: boolean): void {
-        this.textExerciseService.setClusterDisabledPredicate(clusterId, disabled).subscribe({
-            next: () => {
-                // reload content again
-                this.loadClusterFromExercise(this.currentExerciseId);
-            },
-            error: (error: HttpErrorResponse) => {
-                console.log('Error while setting cluster disabled state: ', error);
-            },
+        this.textExerciseService.setClusterDisabledPredicate(clusterId, disabled).subscribe(() => {
+            // reload content again
+            this.loadClusterFromExercise(this.currentExerciseId);
         });
     }
 }
