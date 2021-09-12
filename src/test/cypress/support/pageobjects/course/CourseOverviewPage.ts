@@ -1,4 +1,4 @@
-import { POST, BASE_API, GET } from './../../constants';
+import { POST, BASE_API, GET } from '../../constants';
 /**
  * A class which encapsulates UI selectors and actions for the course overview page (/courses/*).
  */

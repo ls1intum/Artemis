@@ -1,4 +1,4 @@
-import { GET, BASE_API } from './../../support/constants';
+import { GET, BASE_API } from '../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
