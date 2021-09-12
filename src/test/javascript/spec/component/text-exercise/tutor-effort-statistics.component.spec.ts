@@ -10,6 +10,7 @@ import { TutorEffortStatisticsComponent } from 'app/exercises/text/manage/tutor-
 import { ArtemisTestModule } from '../../test.module';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ChartsModule } from 'ng2-charts';
+import { TutorEffort } from 'app/entities/tutor-effort.model';
 
 describe('TutorEffortStatisticsComponent', () => {
     let fixture: ComponentFixture<TutorEffortStatisticsComponent>;
@@ -69,11 +70,43 @@ describe('TutorEffortStatisticsComponent', () => {
         httpMock.expectOne({ url: `api/courses/1/exercises/1/tutor-effort`, method: 'GET' });
     });
 
+    it('should check tutor effort response handler with non-empty input', () => {
+        component.currentExerciseId = 1;
+        const expected = tutorEffortsMocked;
+        component.handleTutorEffortResponse(expected);
+        expect(component.tutorEfforts).toStrictEqual(expected);
+        expect(component.numberOfSubmissions).toEqual(3);
+        expect(component.totalTimeSpent).toEqual(51);
+        expect(component.averageTimeSpent).toEqual(Math.round((component.numberOfSubmissions / component.totalTimeSpent + Number.EPSILON) * 100) / 100);
+        expect(component.chartDataSets[0].data).toStrictEqual(component.effortDistribution);
+    });
+
+    it('should check tutor effort response handler with empty input', () => {
+        component.currentExerciseId = 1;
+        const expected: TutorEffort[] = [];
+        component.handleTutorEffortResponse(expected);
+        expect(component.tutorEfforts).toStrictEqual(expected);
+        expect(component.numberOfSubmissions).toEqual(0);
+        expect(component.totalTimeSpent).toEqual(0);
+        expect(component.averageTimeSpent).toEqual(0);
+        expect(component.chartDataSets[0].data).toStrictEqual(component.effortDistribution);
+    });
+
     it('should call loadNumberOfTutorsInvolved', () => {
         component.currentExerciseId = 1;
         component.currentCourseId = 1;
         component.loadNumberOfTutorsInvolved();
         httpMock.expectOne({ url: `/analytics/text-assessment/events/courses/1/exercises/1`, method: 'GET' });
+    });
+
+    it('should call setTutorsInvolved', () => {
+        component.setTutorsInvolved(1);
+        expect(component.numberOfTutorsInvolvedInCourse).toEqual(1);
+    });
+
+    it('should call setTutorsInvolved with invalid parameters', () => {
+        component.setTutorsInvolved(undefined);
+        expect(component.numberOfTutorsInvolvedInCourse).toBeUndefined();
     });
 
     it('should call distributeEffortToSets', () => {

@@ -88,39 +88,38 @@ export class TutorEffortStatisticsComponent implements OnInit {
     }
 
     loadTutorEfforts() {
-        this.textExerciseService.calculateTutorEffort(this.currentExerciseId, this.currentCourseId).subscribe({
-            next: (res: HttpResponse<TutorEffort[]>) => {
-                this.tutorEfforts = res.body!;
-                if (!this.tutorEfforts) {
-                    return;
-                }
-                this.numberOfSubmissions = this.tutorEfforts.reduce((n, { numberOfSubmissionsAssessed }) => n + numberOfSubmissionsAssessed, 0);
-                this.totalTimeSpent = this.tutorEfforts.reduce((n, { totalTimeSpentMinutes }) => n + totalTimeSpentMinutes, 0);
-                const avgTemp = this.totalTimeSpent === 0 ? 0 : this.numberOfSubmissions / this.totalTimeSpent;
-                if (avgTemp) {
-                    this.averageTimeSpent = Math.round((avgTemp + Number.EPSILON) * 100) / 100;
-                }
-                this.distributeEffortToSets();
-                this.chartDataSets[0].data = this.effortDistribution;
-            },
-            error: (error: HttpErrorResponse) => {
-                console.error('Error while retrieving tutor effort statistics:', error);
-            },
+        this.textExerciseService.calculateTutorEffort(this.currentExerciseId, this.currentCourseId).subscribe((tutorEffortResponse: TutorEffort[]) => {
+            this.handleTutorEffortResponse(tutorEffortResponse);
         });
         this.loadNumberOfTutorsInvolved();
     }
 
+    /**
+     * Handler function to handle input data coming from service call.
+     * Separation enables better testing
+     * @param tutorEffortData - data to handle
+     */
+    handleTutorEffortResponse(tutorEffortData: TutorEffort[]) {
+        this.tutorEfforts = tutorEffortData;
+        if (!this.tutorEfforts) {
+            return;
+        }
+        this.numberOfSubmissions = this.tutorEfforts.reduce((n, { numberOfSubmissionsAssessed }) => n + numberOfSubmissionsAssessed, 0);
+        this.totalTimeSpent = this.tutorEfforts.reduce((n, { totalTimeSpentMinutes }) => n + totalTimeSpentMinutes, 0);
+        const avgTemp = this.totalTimeSpent === 0 ? 0 : this.numberOfSubmissions / this.totalTimeSpent;
+        this.averageTimeSpent = avgTemp ? Math.round((avgTemp + Number.EPSILON) * 100) / 100 : 0;
+        this.distributeEffortToSets();
+        this.chartDataSets[0].data = this.effortDistribution;
+    }
+
     loadNumberOfTutorsInvolved() {
-        this.textAssessmentService.getNumberOfTutorsInvolvedInAssessment(this.currentCourseId, this.currentExerciseId).subscribe(
-            (res: number) => {
-                if (res) {
-                    this.numberOfTutorsInvolvedInCourse = res!;
-                }
-            },
-            (error) => {
-                console.error('Error while retrieving number of tutors involved:', error);
-            },
-        );
+        this.textAssessmentService.getNumberOfTutorsInvolvedInAssessment(this.currentCourseId, this.currentExerciseId).subscribe(this.setTutorsInvolved);
+    }
+
+    setTutorsInvolved(count: any) {
+        if (count && count >= 0) {
+            this.numberOfTutorsInvolvedInCourse = count;
+        }
     }
 
     /**
