@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TextExerciseService } from '../text-exercise/text-exercise.service';
 import { ActivatedRoute } from '@angular/router';
 import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
