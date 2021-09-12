@@ -1,4 +1,4 @@
-import { PUT, BASE_API } from './../../../constants';
+import { PUT, BASE_API } from '../../../constants';
 /**
  * A class which encapsulates UI selectors and actions for the text editor page.
  */
