@@ -1,5 +1,3 @@
-import { BASE_API } from './../../support/constants';
-import { PUT } from '../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs';
 import { artemis } from '../../support/ArtemisTesting';
@@ -117,7 +115,7 @@ describe('Exam management', () => {
                 courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
                     courseManagementRequests.createTextExercise({ exerciseGroup }).then((response) => {
-                        const textExercise = response.body;
+                        textExercise = response.body;
                         courseManagementRequests.generateMissingIndividualExams(exam);
                         courseManagementRequests.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
