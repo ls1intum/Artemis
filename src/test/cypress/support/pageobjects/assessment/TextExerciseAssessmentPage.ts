@@ -1,3 +1,4 @@
+import { POST, BASE_API } from '../../constants';
 import { CypressExerciseType } from '../../requests/CourseManagementRequests';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 
@@ -6,6 +7,12 @@ import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage
  */
 export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     readonly feedbackEditorSelector = 'jhi-textblock-feedback-editor';
+
+    getInstructionsRootElement() {
+        // Text exercise assessment pages don't have the id on the instructions tab, so we override the parent selector
+        cy.url().should('contain', '/assessment');
+        return cy.contains('Instructions').parents('.card');
+    }
 
     provideFeedbackOnTextSection(section: string, points: number, feedback: string) {
         cy.contains(section).parents('jhi-textblock-assessment-card').first().click();
@@ -22,9 +29,11 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     }
 
     submit() {
-        const request = super.submit();
+        // Feedback route is special for text exercises so we override parent here...
+        cy.intercept(POST, BASE_API + 'participations/*/results/*/submit-text-assessment').as('submitFeedback');
+        cy.get('[jhitranslate="entity.action.submit"]').click();
         cy.contains('Your assessment was submitted successfully!').should('be.visible');
-        return request;
+        return cy.wait('@submitFeedback');
     }
 
     rejectComplaint(response: string) {
