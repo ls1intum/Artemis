@@ -8,6 +8,7 @@ import { UserSettingsService } from 'app/shared/user-settings/user-settings.serv
 
 /**
  * Is used as the abstract user-settings "parent" component with all the necessary basic logic for other "child" components to implement/inherit from.
+ * The @Component decorated and templateUrl are needed to be able to use OnInit
  */
 @Component({
     templateUrl: 'user-settings-prototype.component.html',

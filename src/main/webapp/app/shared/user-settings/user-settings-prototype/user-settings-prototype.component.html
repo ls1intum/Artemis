@@ -10,6 +10,7 @@
 <div class="d-flex justify-content-between">
     <h1>
         <! --UserSettingsCategory-- >
+        <! -- please look at the README.md file to understand how the translation works -- >
         {{ 'artemisApp.userSettings.categories.' + (userSettingsCategory | lowerCamelCase) | artemisTranslate }}
     </h1>
     <button type="button" class="btn btn-primary" *ngIf="optionsChanged" id="apply-changes-button" (click)="saveOptions()">
