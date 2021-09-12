@@ -13,7 +13,6 @@ export const COURSE_BASE = BASE_API + 'courses/';
 export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
 export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
 export const EXERCISE_BASE = BASE_API + 'exercises/';
-const oneDay = 24 * 60 * 60 * 1000;
 
 /**
  * A class which encapsulates all cypress requests related to course management.
