@@ -9,6 +9,7 @@ export class TutorLeaderboardElement {
     public numberOfAnsweredMoreFeedbackRequests = 0;
     public numberOfTutorMoreFeedbackRequests = 0;
     public points = 0;
+    public averageScore = 0;
 
     constructor() {}
 }

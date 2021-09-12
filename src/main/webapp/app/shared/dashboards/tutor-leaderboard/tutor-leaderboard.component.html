@@ -31,6 +31,10 @@
                     <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfAnsweredMoreFeedbackRequests' | artemisTranslate }}</a>
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
+                <th jhiSortBy="averageScore">
+                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.averageScore' | artemisTranslate }}</a>
+                    <fa-icon [icon]="'sort'"></fa-icon>
+                </th>
             </tr>
         </thead>
         <tbody>
@@ -77,6 +81,7 @@
 
                 <td>{{ tutor.numberOfComplaintResponses }}</td>
                 <td *ngIf="!isExamMode">{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
+                <td>{{ tutor.averageScore }}%</td>
             </tr>
         </tbody>
     </table>

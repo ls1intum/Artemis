@@ -451,7 +451,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments(
                 r.assessor.id,
                 count(r),
-                sum(e.maxPoints)
+                sum(e.maxPoints),
+                avg(r.score)
                 )
             FROM
                 Result r join r.participation p join p.exercise e join r.assessor a
@@ -469,7 +470,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments(
                 a.id,
                 count(r),
-                sum(e.maxPoints)
+                sum(e.maxPoints),
+                avg(r.score)
             )
             FROM
                 Result r join r.participation p join p.exercise e join r.assessor a
@@ -485,7 +487,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments(
                 a.id,
                 count(r),
-                sum(e.maxPoints)
+                sum(e.maxPoints),
+                avg(r.score)
             )
             FROM
                 Result r join r.participation p join p.exercise e join e.exerciseGroup eg join eg.exam ex join r.assessor a
