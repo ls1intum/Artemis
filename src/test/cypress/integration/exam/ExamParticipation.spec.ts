@@ -7,7 +7,6 @@ import submission from '../../fixtures/programming_exercise_submissions/all_succ
 
 // Requests
 const courseRequests = artemis.requests.courseManagement;
-const examRequests = artemis.requests.examManagement;
 
 // User management
 const users = artemis.users;
@@ -22,14 +21,9 @@ const onlineEditor = artemis.pageobjects.onlineEditor;
 
 // Common primitives
 const uid = generateUUID();
-const courseName = 'Cypress course' + uid;
-const courseShortName = 'cypress' + uid;
 const examTitle = 'exam' + uid;
-const textExerciseTitle = 'Text exercise 1';
-const programmingExerciseTitle = 'Programming exercise';
-const programmingShortName = 'short' + uid;
 const submissionText = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.';
-const packageName = 'de.test';
+const textExerciseTitle = 'Cypress text exercise';
 
 describe('Exam participation', () => {
     let course: any;
@@ -37,7 +31,7 @@ describe('Exam participation', () => {
 
     before(() => {
         cy.login(users.getAdmin());
-        courseRequests.createCourse(courseName, courseShortName).then((response) => {
+        courseRequests.createCourse().then((response) => {
             course = response.body;
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
@@ -49,15 +43,15 @@ describe('Exam participation', () => {
                 .build();
             courseRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                examRequests.registerStudent(course, exam, student);
-                examRequests.addExerciseGroup(course, exam, 'group 1', true).then((groupResponse) => {
-                    courseRequests.createTextExercise(textExerciseTitle, { exerciseGroup: groupResponse.body });
+                courseRequests.registerStudentForExam(exam, student);
+                courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
+                    courseRequests.createAndAddTextExerciseToExam(groupResponse.body, textExerciseTitle);
                 });
-                examRequests.addExerciseGroup(course, exam, 'group 2', true).then((groupResponse) => {
-                    courseRequests.createProgrammingExercise(programmingExerciseTitle, programmingShortName, packageName, { exerciseGroup: groupResponse.body });
+                courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
+                    courseRequests.createProgrammingExercise({ exerciseGroup: groupResponse.body });
                 });
-                examRequests.generateMissingIndividualExams(course, exam);
-                examRequests.prepareExerciseStart(course, exam);
+                courseRequests.generateMissingIndividualExams(exam);
+                courseRequests.prepareExerciseStartForExam(exam);
             });
         });
     });
@@ -73,7 +67,7 @@ describe('Exam participation', () => {
 
     function startParticipation() {
         cy.login(student, '/');
-        courses.openCourse(courseName);
+        courses.openCourse(course.title);
         courseOverview.openExamsTab();
         courseOverview.openExam(examTitle);
         cy.url().should('contain', `/exams/${exam.id}`);
@@ -98,7 +92,7 @@ describe('Exam participation', () => {
         onlineEditor.deleteFile('Client.java');
         onlineEditor.deleteFile('BubbleSort.java');
         onlineEditor.deleteFile('MergeSort.java');
-        onlineEditor.typeSubmission(submission, packageName);
+        onlineEditor.typeSubmission(submission, 'de.test');
         onlineEditor.submit();
         onlineEditor.getResultPanel().contains('100%').should('be.visible');
         onlineEditor.getResultPanel().contains('13 of 13 passed').should('be.visible');
