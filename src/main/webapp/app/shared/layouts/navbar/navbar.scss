@@ -1,3 +1,6 @@
+@import '../../../../content/scss/_artemis-variables.scss';
+@import '../../../../content/scss/_bootstrap-variables.scss';
+
 /* ==========================================================================
 Navbar
 ========================================================================== */
@@ -12,12 +15,12 @@ a:not(.btn):hover {
 }
 
 #settings {
-    color: #353d47; //navigation bar grey
+    color: $artemis-dark;
     font-size: medium;
     font-weight: 600;
 
     &:hover {
-        color: #3e8acc; //blue
+        color: $primary;
         font-weight: bold;
     }
 }

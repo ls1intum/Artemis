@@ -1,21 +1,21 @@
-## Developer Guide for using and extending user settings
+# Developer Guide for using and extending user settings
 
-### General Structure
+## General Structure
 * The data/interface/class **hierarchy** is explained in `user-settings.service.ts` (look at the **interfaces**).
 
 ## How to create new "child"- settings
 *Look at the `notification-settings` directory as a prime **example** for child-settings*
 
-#### Steps :
-0)  **Add a new route** for the new settings in `user-settings.route.ts`. *(under `children:`)*
+**Steps :**
+1)  **Add a new route** for the new settings in `user-settings.route.ts`. *(under `children:`)*
     
     Add your option to the `user-settings-container.component.html` *(under `<!-- links to different settings -->`)*
     
 
-1) **Create a new folder** for `childSettings` and **put** `childSettings` specific files into it
+2) **Create a new folder** for `childSettings` and **put** `childSettings` specific files into it
    
 
-2) a) Use the `prototype.html`(**copy**) and `.scss`(**link**) in `child-settings` to **reuse** the same UI *(as in notification-settings)* <br>
+3) a) Use the `prototype.html`(**copy**) and `.scss`(**link**) in `child-settings` to **reuse** the same UI *(as in notification-settings)* <br>
 
    b) Create a new `child-settings.default.ts` file and create your options **based on the user-settings hierarchy**<br>
    * Add a new `X-OptionCore` that **extends** `OptionCore` and define the needed properties for `child-settings`
@@ -70,7 +70,7 @@
           ```
     
 
-3) Create a new `child-settings.component.ts` file :
+4) Create a new `child-settings.component.ts` file :
    * **Extend** from `user-settings-prototype.component` *(if you want to reuse its functionality)* and **implement** `OnInit`
    * Place the relevant Services for the parent(prototype) component in the constructor
    * Inside `ngOnInit()` call `super.ngOnInit()`, afterwards set the child specific `userSettingsCategory`*(same as in default.ts)* and `changeEventMessage`
@@ -87,11 +87,13 @@
         super.ngOnInit();
         }
      ```
-4) For further child specific logic e.g. add a new `child-settings.service` file, new custom template/scss, etc.
+5) For further child specific logic e.g. add a new `child-settings.service` file, new custom template/scss, etc.
 
-###Server Side :
+## Server Side :
 For every new child-settings you have to create a new **table**, **REST controller/resource** (service) and repository due to the possibly big differences between the `OptionCores`.
             *(Might change due to found similarities)*
 
+
+## Additional Information
 For further reading see the original PR that introduces these settings : https://github.com/ls1intum/Artemis/pull/3922
 
