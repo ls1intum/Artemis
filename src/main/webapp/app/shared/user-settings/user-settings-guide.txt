@@ -1,6 +1,6 @@
 Developer Guide/Readme for using and extending user settings
 
-    The (data/interface/class( hierarchy is explained in user-settings.service.ts (look at the interfaces)
+    The (data/interface/class) hierarchy is explained in user-settings.service.ts (look at the interfaces)
 
     How to create a new "child"-settings.component : (Look at notification-settings as a prime example for child-settings):
 
