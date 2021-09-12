@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -50,8 +51,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
 
     private List<User> users;
 
-    private NotificationType notificationType = NotificationType.UNSPECIFIED;
-
     @BeforeEach
     public void initTestCase() {
         users = database.addUsers(2, 1, 1, 1);
@@ -77,7 +76,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(roles = "USER")
     public void testCreateNotification_asUser() throws Exception {
         GroupNotificationType type = GroupNotificationType.STUDENT;
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type, notificationType);
+        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type);
         groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
         request.post("/api/notifications", groupNotification, HttpStatus.FORBIDDEN);
     }
@@ -86,7 +85,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(roles = "INSTRUCTOR")
     public void testCreateNotification_asInstructor() throws Exception {
         GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type, notificationType);
+        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type);
         groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
         GroupNotification response = request.postWithResponseBody("/api/notifications", groupNotification, GroupNotification.class, HttpStatus.CREATED);
         assertThat(response.getTarget()).as("response same target").isEqualTo(groupNotification.getTarget());
@@ -96,7 +95,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(roles = "INSTRUCTOR")
     public void testCreateNotification_asInstructor_BAD_REQUEST() throws Exception {
         GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type, notificationType);
+        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type);
         groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
         groupNotification.setId(1L);
         request.post("/api/notifications", groupNotification, HttpStatus.BAD_REQUEST);
@@ -213,7 +212,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(roles = "INSTRUCTOR")
     public void testUpdateNotification_asInstructor_OK() throws Exception {
         GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type, notificationType);
+        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type);
         groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
         groupNotification.setId(1L);
         request.put("/api/notifications", groupNotification, HttpStatus.OK);
@@ -223,7 +222,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(roles = "INSTRUCTOR")
     public void testUpdateNotification_asInstructor_BAD_REQUEST() throws Exception {
         GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type, notificationType);
+        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type);
         groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
         request.putWithResponseBody("/api/notifications", groupNotification, GroupNotification.class, HttpStatus.BAD_REQUEST);
     }
@@ -232,7 +231,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(roles = "USER")
     public void testUpdateNotification_asStudent() throws Exception {
         GroupNotificationType type = GroupNotificationType.STUDENT;
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type, notificationType);
+        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type);
         groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
         groupNotification.setId(2L);
         request.put("/api/notifications", groupNotification, HttpStatus.FORBIDDEN);
@@ -242,7 +241,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(roles = "INSTRUCTOR")
     public void testGetNotification_asInstructor() throws Exception {
         GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type, notificationType);
+        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type);
         groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
         Notification notification = request.postWithResponseBody("/api/notifications", groupNotification, Notification.class, HttpStatus.CREATED);
         request.put("/api/notifications", notification, HttpStatus.OK);
@@ -263,11 +262,11 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         notificationOptionRepository.save(blockedOption);
 
         GroupNotification allowedNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
-        allowedNotification.setOriginalNotificationType(allowedType);
+        allowedNotification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(allowedType));
         notificationRepository.save(allowedNotification);
 
         GroupNotification blockedNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
-        blockedNotification.setOriginalNotificationType(blockedType);
+        blockedNotification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(blockedType));
         notificationRepository.save(blockedNotification);
 
         List<Notification> notifications = request.getList("/api/notifications/filtered-by-settings", HttpStatus.OK, Notification.class);
@@ -280,7 +279,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(roles = "INSTRUCTOR")
     public void testDeleteNotification_asInstructor() throws Exception {
         GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type, notificationType);
+        GroupNotification groupNotification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), "Title", "Notification Text", null, type);
         groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
         Notification notification = request.postWithResponseBody("/api/notifications", groupNotification, Notification.class, HttpStatus.CREATED);
         request.put("/api/notifications", notification, HttpStatus.OK);

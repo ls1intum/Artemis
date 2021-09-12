@@ -26,6 +26,15 @@ public class NotificationSettingsService {
     }
 
     /**
+     * Converts the provided NotificationType Set to a String Set (representing the titles from NotificationTitleTypeConstants)
+     * @param types Set that should be converted to String
+     * @return the converted String Set
+     */
+    public Set<String> convertNotificationTypesToTitles(Set<NotificationType> types) {
+        return types.stream().map(type -> NotificationTitleTypeConstants.findCorrespondingNotificationTitle(type)).collect(Collectors.toSet());
+    }
+
+    /**
      * Checks if the notification type has email support
      * For some types there is no need for email support and they will be filtered out here.
      * @param type of the notification

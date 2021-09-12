@@ -106,59 +106,59 @@
     <!-- Greetings End -->
     <br>
     <!-- Notification Content -->
-    <th:block th:switch="${notification.originalNotificationType.toString()}">
+    <th:block th:switch="${notification.title}">
         <th:block th:case="'ATTACHMENT_CHANGE'">
-            <span th:text="#{email.notification.original.attachment}"/>
+            <span th:text="#{email.notification.title.attachment}"/>
             <th:block th:fragment="notificationText">
                 <p class="notification-text-header" th:text="#{email.notification.aux.notification.text.header.change.message}"/>
                 <p id="notification-text" th:text="${notification.text}">Notification Text</p>
             </th:block>
         </th:block>
         <th:block th:case="'EXERCISE_CREATED'">
-            <span th:text="#{email.notification.original.exercise.created(${notificationSubject})}"/>
+            <span th:text="#{email.notification.title.exercise.created(${notificationSubject})}"/>
         </th:block>
         <th:block th:case="'EXERCISE_PRACTICE'">
-            <span th:text="#{email.notification.original.exercise.practice(${notificationSubject})}"/>
+            <span th:text="#{email.notification.title.exercise.practice(${notificationSubject})}"/>
         </th:block>
         <th:block th:case="'EXERCISE_UPDATED'">
-            <span th:text="#{email.notification.original.exercise.updated}"/>
+            <span th:text="#{email.notification.title.exercise.updated}"/>
             <th:block th:replace="mail/notificationEmail :: notificationText"/>
         </th:block>
         <th:block th:case="'NEW_ANSWER_POST_FOR_EXERCISE'">
             <th:block th:if="${isGroupNotification}">
                 <!--GROUP-->
-                <span th:utext="#{email.notification.original.answer.exercise.group(${notificationSubject})}"/>
+                <span th:utext="#{email.notification.title.answer.exercise.group(${notificationSubject})}"/>
             </th:block>
             <th:block th:unless="${isGroupNotification}">
                 <!--SINGLE-->
-                <span th:utext="#{email.notification.original.answer.exercise.single}"/>
+                <span th:utext="#{email.notification.title.answer.exercise.single}"/>
             </th:block>
         </th:block>
         <th:block th:case="'NEW_ANSWER_POST_FOR_LECTURE'">
             <th:block th:if="${isGroupNotification}">
                 <!--GROUP-->
-                <span th:utext="#{email.notification.original.answer.lecture.group(${notificationSubject})}"/>
+                <span th:utext="#{email.notification.title.answer.lecture.group(${notificationSubject})}"/>
             </th:block>
             <th:block th:unless="${isGroupNotification}">
                 <!--SINGLE-->
-                <span th:utext="#{email.notification.original.answer.lecture.single}"/>
+                <span th:utext="#{email.notification.title.answer.lecture.single}"/>
             </th:block>
         </th:block>
         <th:block th:case="'NEW_POST_FOR_EXERCISE'">
-            <span th:utext="#{email.notification.original.post.exercise(${notificationSubject})}"/>
+            <span th:utext="#{email.notification.title.post.exercise(${notificationSubject})}"/>
         </th:block>
         <th:block th:case="'NEW_POST_FOR_LECTURE'">
-            <span th:utext="#{email.notification.original.post.lecture(${notificationSubject})}"/>
+            <span th:utext="#{email.notification.title.post.lecture(${notificationSubject})}"/>
         </th:block>
         <!-- difficult to test -->
         <th:block th:case="'COURSE_ARCHIVE_FAILED'">
-            <span th:utext="#{email.notification.original.archive.failed.course}"/>
+            <span th:utext="#{email.notification.title.archive.failed.course}"/>
         </th:block>
         <th:block th:case="'DUPLICATE_TEST_CASE'">
-            <span th:utext="#{email.notification.original.duplicate}"/>
+            <span th:utext="#{email.notification.title.duplicate}"/>
         </th:block>
         <th:block th:case="'ILLEGAL_SUBMISSION'">
-            <span th:utext="#{email.notification.original.illegal.submission}"/>
+            <span th:utext="#{email.notification.title.illegal.submission}"/>
         </th:block>
     </th:block>
 

@@ -5,7 +5,7 @@ import * as chai from 'chai';
 import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { GroupNotification } from 'app/entities/group-notification.model';
-import { NotificationType, OriginalNotificationType } from 'app/entities/notification.model';
+import { ATTACHMENT_CHANGE_TITLE, COURSE_ARCHIVE_STARTED_TITLE, EXAM_ARCHIVE_STARTED_TITLE, EXERCISE_PRACTICE_TITLE, NotificationType } from 'app/entities/notification.model';
 import { OptionSpecifier } from 'app/shared/constants/user-settings.constants';
 
 export const notificationOptionCoreA: NotificationOptionCore = {
@@ -41,24 +41,23 @@ describe('User Settings Service', () => {
         describe('test is notification allowed by settings', () => {
             it('should correctly check if the given notification is allowed by the settings', () => {
                 const notificationA: GroupNotification = {
-                    title: 'Notification Title',
+                    title: ATTACHMENT_CHANGE_TITLE,
                     text: 'Notification Text',
                     notificationType: NotificationType.GROUP,
-                    originalNotificationType: OriginalNotificationType.ATTACHMENT_CHANGE,
                 };
 
                 const notificationB: GroupNotification = {
-                    originalNotificationType: OriginalNotificationType.EXAM_ARCHIVE_STARTED,
+                    title: EXAM_ARCHIVE_STARTED_TITLE,
                 };
 
                 const activationStatusOfA = false;
                 const activationStatusOfB = true;
 
-                const map: Map<OriginalNotificationType, boolean> = new Map<OriginalNotificationType, boolean>();
+                const map: Map<string, boolean> = new Map<string, boolean>();
                 // deactivated in notification settings
-                map.set(notificationA.originalNotificationType!, activationStatusOfA);
+                map.set(notificationA.title!, activationStatusOfA);
                 // activated in notification settings
-                map.set(notificationB.originalNotificationType!, activationStatusOfB);
+                map.set(notificationB.title!, activationStatusOfB);
 
                 const resultOfA = notificationSettingsService.isNotificationAllowedBySettings(notificationA, map);
                 const resultOfB = notificationSettingsService.isNotificationAllowedBySettings(notificationB, map);
@@ -68,20 +67,20 @@ describe('User Settings Service', () => {
             });
         });
 
-        it('should update OriginalNotificationTypeActivationMap & map between NotificationType and OptionCore', () => {
-            const type1 = OriginalNotificationType.EXERCISE_PRACTICE;
+        it('should update notificationTitleActivationMap & map between NotificationType and OptionCore', () => {
+            const type1 = EXERCISE_PRACTICE_TITLE;
             const type1ActivationStatus = notificationOptionCoreA.webapp;
-            const type2 = OriginalNotificationType.EXAM_ARCHIVE_STARTED;
+            const type2 = EXAM_ARCHIVE_STARTED_TITLE;
             const type2ActivationStatus = notificationOptionCoreB.webapp;
-            const type3 = OriginalNotificationType.COURSE_ARCHIVE_STARTED;
+            const type3 = COURSE_ARCHIVE_STARTED_TITLE;
             const type3ActivationStatus = notificationOptionCoreB.webapp;
 
-            const expectedMap: Map<OriginalNotificationType, boolean> = new Map<OriginalNotificationType, boolean>();
+            const expectedMap: Map<string, boolean> = new Map<string, boolean>();
             expectedMap.set(type1, type1ActivationStatus);
             expectedMap.set(type2, type2ActivationStatus);
             expectedMap.set(type3, type3ActivationStatus);
 
-            const resultMap = notificationSettingsService.createUpdatedOriginalNotificationTypeActivationMap(notificationOptionCoresForTesting);
+            const resultMap = notificationSettingsService.createUpdatedNotificationTitleActivationMap(notificationOptionCoresForTesting);
 
             expect(resultMap.has(type1)).to.be.true;
             expect(resultMap.has(type2)).to.be.true;
