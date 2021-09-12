@@ -34,7 +34,7 @@ public class TutorLeaderboardAssessments {
         this.userId = userId;
         this.assessments = assessments;
         this.points = points;
-        this.averageScore = averageScore;
+        this.averageScore = averageScore == null ? 0 : averageScore;
     }
 
     public TutorLeaderboardAssessments() {

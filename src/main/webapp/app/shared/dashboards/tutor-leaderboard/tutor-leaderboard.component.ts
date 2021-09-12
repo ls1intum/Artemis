@@ -43,4 +43,14 @@ export class TutorLeaderboardComponent implements OnInit {
     sortRows() {
         this.sortService.sortByProperty(this.tutorsData, this.sortPredicate, this.reverseOrder);
     }
+
+    averageScorePercentage(averageScore: number): string {
+        // If number is already rounded, return it.
+        if (Math.round(averageScore) - averageScore === 0) {
+            return `${averageScore}`;
+        }
+
+        // Round up to the last two digits after comma.
+        return averageScore.toFixed(2);
+    }
 }

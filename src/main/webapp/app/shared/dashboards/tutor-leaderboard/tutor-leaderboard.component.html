@@ -81,7 +81,7 @@
 
                 <td>{{ tutor.numberOfComplaintResponses }}</td>
                 <td *ngIf="!isExamMode">{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
-                <td>{{ tutor.averageScore }}%</td>
+                <td>{{ averageScorePercentage(tutor.averageScore) }}%</td>
             </tr>
         </tbody>
     </table>
