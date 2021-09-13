@@ -33,6 +33,10 @@ export class ComplaintsFormComponent implements OnInit {
             this.maxComplaintsPerCourse = 1;
         }
     }
+
+    /**
+     * Creates a new complaint on the provided result with the entered text and notifies the output emitter on success.
+     */
     createComplaint(): void {
         const complaint = new Complaint();
         complaint.complaintText = this.complaintText;
