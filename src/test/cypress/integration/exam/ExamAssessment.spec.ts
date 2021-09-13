@@ -21,7 +21,6 @@ const assessmentDashboard = artemis.pageobjects.assessmentDashboard;
 const admin = artemis.users.getAdmin();
 const student = artemis.users.getStudentOne();
 const tutor = artemis.users.getTutor();
-const packageName = 'de.test';
 let exam: any;
 let exerciseGroup: any;
 let course: any;
