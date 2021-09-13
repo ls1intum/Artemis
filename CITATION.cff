@@ -1,0 +1,28 @@
+authors:
+  -
+    affiliation: "Technische Universität München"
+    family-names: Krusche
+    given-names: Stephan
+cff-version: 1.2.0
+license: MIT
+message: "If you want to reference Artemis in your work, please cite this paper."
+repository-code: "https://github.com/ls1intum/Artemis/"
+title: "Artemis"
+preferred-citation:
+  type: conference-paper
+  authors:
+    -
+      affiliation: "Technische Universität München"
+      family-names: Krusche
+      given-names: Stephan
+    -
+      affiliation: "Technische Universität München"
+      family-names: Seitz
+      given-names: Andreas
+  title: "ArTEMiS: An Automatic Assessment Management System for Interactive Learning"
+  doi: "10.1145/3159450.3159602"
+  year: 2018
+  journal: "49th ACM Technical Symposium on Computer Science Education"
+  pages: 6
+  start: 284
+  end: 289
