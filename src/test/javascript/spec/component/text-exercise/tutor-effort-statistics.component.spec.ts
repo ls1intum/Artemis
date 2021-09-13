@@ -1,13 +1,13 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ComponentFixture, TestBed, getTestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockPipe, MockDirective } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TutorEffortStatisticsComponent } from 'app/exercises/text/manage/tutor-effort/tutor-effort-statistics.component';
 import { ArtemisTestModule } from '../../test.module';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
@@ -25,7 +25,6 @@ const expect = chai.expect;
 describe('TutorEffortStatisticsComponent', () => {
     let fixture: ComponentFixture<TutorEffortStatisticsComponent>;
     let component: TutorEffortStatisticsComponent;
-    let httpMock: HttpTestingController;
     let compiled: any;
     let textExerciseService: TextExerciseService;
     let textAssessmentService: TextAssessmentService;
@@ -72,7 +71,6 @@ describe('TutorEffortStatisticsComponent', () => {
                 component = fixture.componentInstance;
                 compiled = fixture.debugElement.nativeElement;
                 fixture.detectChanges();
-                httpMock = getTestBed().get(HttpTestingController);
                 textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
                 textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
                 getNumberOfTutorsInvolvedInAssessmentStub = sinon.spy(textAssessmentService, 'getNumberOfTutorsInvolvedInAssessment');
