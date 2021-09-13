@@ -34,15 +34,12 @@ public class TutorEffortResource {
 
     private final TutorEffortService tutorEffortService;
 
-    private final TextAssessmentEventRepository textAssessmentEventRepository;
-
     public TutorEffortResource(AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository,
-            TutorEffortService tutorEffortService, TextAssessmentEventRepository textAssessmentEventRepository) {
+            TutorEffortService tutorEffortService) {
         this.exerciseRepository = exerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.tutorEffortService = tutorEffortService;
-        this.textAssessmentEventRepository = textAssessmentEventRepository;
     }
 
     /**
@@ -64,5 +61,4 @@ public class TutorEffortResource {
         }
         return ResponseEntity.ok().body(tutorEffortList);
     }
-
 }
