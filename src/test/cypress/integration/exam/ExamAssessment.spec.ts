@@ -67,7 +67,7 @@ describe('Exam Assessment', () => {
             modelingEditor.addComponentToModel(1);
             modelingEditor.addComponentToModel(2);
             modelingEditor.addComponentToModel(3);
-            cy.intercept('PUT', '/api/exercises/*/modeling-submissions').as('createModelingSubmission');
+            cy.intercept(PUT, BASE_API + 'exercises/*/modeling-submissions').as('createModelingSubmission');
             cy.contains('Save').click();
             cy.wait('@createModelingSubmission');
             cy.get('#exam-navigation-bar').find('.btn-danger').click();
