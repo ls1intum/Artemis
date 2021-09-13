@@ -116,7 +116,7 @@ describe('TextExercise Service', () => {
                 },
             ];
             req.flush(returnedFromService);
-            expect(requestResult.body).to.equal(returnedFromService);
+            expect(requestResult).to.equal(returnedFromService);
         });
     });
 

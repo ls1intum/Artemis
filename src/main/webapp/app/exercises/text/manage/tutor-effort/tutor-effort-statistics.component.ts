@@ -113,13 +113,9 @@ export class TutorEffortStatisticsComponent implements OnInit {
     }
 
     loadNumberOfTutorsInvolved() {
-        this.textAssessmentService.getNumberOfTutorsInvolvedInAssessment(this.currentCourseId, this.currentExerciseId).subscribe(this.setTutorsInvolved);
-    }
-
-    setTutorsInvolved(count: any) {
-        if (count && count >= 0) {
-            this.numberOfTutorsInvolvedInCourse = count;
-        }
+        this.textAssessmentService.getNumberOfTutorsInvolvedInAssessment(this.currentCourseId, this.currentExerciseId).subscribe((response: number) => {
+            this.numberOfTutorsInvolvedInCourse = response;
+        });
     }
 
     /**

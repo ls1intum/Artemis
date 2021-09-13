@@ -60,11 +60,11 @@ public class TextAssessmentEventResource {
     }
 
     /**
-     * This function retrieves all of the events from the 'text_assessment_event' table by course id
+     * Get events/{courseId} : Retrieve all of the events from the 'text_assessment_event' table by course id
      * @param courseId the id of the course to filter by
      * @return returns a List of TextAssessmentEvent's
      */
-    @GetMapping("/events/{courseId}")
+    @GetMapping("events/{courseId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<TextAssessmentEvent>> getEventsByCourseId(@PathVariable Long courseId) {
         List<TextAssessmentEvent> events = textAssessmentEventRepository.findAllByCourseId(courseId);
@@ -72,11 +72,11 @@ public class TextAssessmentEventResource {
     }
 
     /**
-     * This function adds an assessment event into the text_assessment_event table.
+     * POST events : Adds an assessment event into the text_assessment_event table.
      * @param event to be added
      * @return the status of the finished request
      */
-    @PostMapping("/events")
+    @PostMapping("events")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssessmentEvent event) {
         log.debug("REST request to save assessmentEvent : {}", event);
@@ -91,12 +91,12 @@ public class TextAssessmentEventResource {
     }
 
     /**
-     * Finds the number of the tutors involved in the list of events
+     * GET events/courses/{courseId}/exercises/{exerciseId} : get the number of the tutors involved in the list of events
      * @param courseId the id of the course to query events for
      * @param exerciseId the id of the exercise to query events for
      * @return an integer representing the number of tutors involved for the respective course and exercise
      */
-    @GetMapping("/events/courses/{courseId}/exercises/{exerciseId}")
+    @GetMapping("events/courses/{courseId}/exercises/{exerciseId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Integer> getNumberOfTutorsInvolved(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();

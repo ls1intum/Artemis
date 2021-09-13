@@ -1,3 +1,5 @@
+import * as chai from 'chai';
+import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed, getTestBed } from '@angular/core/testing';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -11,6 +13,9 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ChartsModule } from 'ng2-charts';
 import { TutorEffort } from 'app/entities/tutor-effort.model';
+
+chai.use(sinonChai);
+const expect = chai.expect;
 
 describe('TutorEffortStatisticsComponent', () => {
     let fixture: ComponentFixture<TutorEffortStatisticsComponent>;
@@ -60,7 +65,7 @@ describe('TutorEffortStatisticsComponent', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(component).toBeTruthy();
+        expect(component).to.be.ok;
     });
 
     it('should call loadTutorEfforts', () => {
@@ -74,22 +79,22 @@ describe('TutorEffortStatisticsComponent', () => {
         component.currentExerciseId = 1;
         const expected = tutorEffortsMocked;
         component.handleTutorEffortResponse(expected);
-        expect(component.tutorEfforts).toStrictEqual(expected);
-        expect(component.numberOfSubmissions).toEqual(3);
-        expect(component.totalTimeSpent).toEqual(51);
-        expect(component.averageTimeSpent).toEqual(Math.round((component.numberOfSubmissions / component.totalTimeSpent + Number.EPSILON) * 100) / 100);
-        expect(component.chartDataSets[0].data).toStrictEqual(component.effortDistribution);
+        expect(component.tutorEfforts).to.deep.equal(expected);
+        expect(component.numberOfSubmissions).to.equal(3);
+        expect(component.totalTimeSpent).to.equal(51);
+        expect(component.averageTimeSpent).to.equal(Math.round((component.numberOfSubmissions / component.totalTimeSpent + Number.EPSILON) * 100) / 100);
+        expect(component.chartDataSets[0].data).to.deep.equal(component.effortDistribution);
     });
 
     it('should check tutor effort response handler with empty input', () => {
         component.currentExerciseId = 1;
         const expected: TutorEffort[] = [];
         component.handleTutorEffortResponse(expected);
-        expect(component.tutorEfforts).toStrictEqual(expected);
-        expect(component.numberOfSubmissions).toEqual(0);
-        expect(component.totalTimeSpent).toEqual(0);
-        expect(component.averageTimeSpent).toEqual(0);
-        expect(component.chartDataSets[0].data).toStrictEqual(component.effortDistribution);
+        expect(component.tutorEfforts).to.deep.equal(expected);
+        expect(component.numberOfSubmissions).to.equal(0);
+        expect(component.totalTimeSpent).to.equal(0);
+        expect(component.averageTimeSpent).to.equal(0);
+        expect(component.chartDataSets[0].data).to.deep.equal(component.effortDistribution);
     });
 
     it('should call loadNumberOfTutorsInvolved', () => {
@@ -97,16 +102,6 @@ describe('TutorEffortStatisticsComponent', () => {
         component.currentCourseId = 1;
         component.loadNumberOfTutorsInvolved();
         httpMock.expectOne({ url: `/analytics/text-assessment/events/courses/1/exercises/1`, method: 'GET' });
-    });
-
-    it('should call setTutorsInvolved', () => {
-        component.setTutorsInvolved(1);
-        expect(component.numberOfTutorsInvolvedInCourse).toEqual(1);
-    });
-
-    it('should call setTutorsInvolved with invalid parameters', () => {
-        component.setTutorsInvolved(undefined);
-        expect(component.numberOfTutorsInvolvedInCourse).toBeUndefined();
     });
 
     it('should call distributeEffortToSets', () => {
@@ -117,7 +112,7 @@ describe('TutorEffortStatisticsComponent', () => {
         expected[2] = 1;
         expected[3] = 1;
         component.distributeEffortToSets();
-        expect(component.effortDistribution).toStrictEqual(expected);
+        expect(component.effortDistribution).to.deep.equal(expected);
     });
 
     it('should show the table headers if tutor efforts list is not empty', () => {
@@ -127,10 +122,10 @@ describe('TutorEffortStatisticsComponent', () => {
         const totalTimeSpent = compiled.querySelector('[jhiTranslate$=totalTimeSpent]');
         const averageTime = compiled.querySelector('[jhiTranslate$=averageTime]');
         const numberOfTutorsInvolved = compiled.querySelector('[jhiTranslate$=numberOfTutorsInvolved]');
-        expect(numberOfSubmissionsAssessed).toBeTruthy();
-        expect(totalTimeSpent).toBeTruthy();
-        expect(averageTime).toBeTruthy();
-        expect(numberOfTutorsInvolved).toBeTruthy();
+        expect(numberOfSubmissionsAssessed).to.be.ok;
+        expect(totalTimeSpent).to.be.ok;
+        expect(averageTime).to.be.ok;
+        expect(numberOfTutorsInvolved).to.be.ok;
     });
 
     it('should show the no data message if tutor efforts list is empty', () => {
@@ -138,7 +133,11 @@ describe('TutorEffortStatisticsComponent', () => {
         fixture.detectChanges();
         const noData = compiled.querySelector('[jhiTranslate$=noData]');
         const numberOfSubmissionsAssessed = compiled.querySelector('[jhiTranslate$=numberOfSubmissionsAssessed]');
-        expect(noData).toBeTruthy();
-        expect(numberOfSubmissionsAssessed).toBeFalsy();
+        expect(noData).to.be.ok;
+        expect(numberOfSubmissionsAssessed).to.not.be.ok;
+    });
+
+    afterEach(() => {
+        httpMock.verify();
     });
 });

@@ -27,6 +27,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     dialogError$ = this.dialogErrorSource.asObservable();
     baseResource: string;
     shortBaseResource: string;
+    readonly ExerciseType = ExerciseType;
 
     constructor(
         private textExerciseService: TextExerciseService,

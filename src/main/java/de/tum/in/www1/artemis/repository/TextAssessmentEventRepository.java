@@ -62,14 +62,14 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
      * @return a TutorAssessedSubmissionsCount interface representing user id and number of submissions involved
      */
     @Query("""
-                SELECT textAssessmentEvent.userId AS tutorId, COUNT(DISTINCT textAssessmentEvent.submissionId) AS submissionsInvolved
-                FROM TextAssessmentEvent textAssessmentEvent
-                WHERE textAssessmentEvent.userId > 0 AND
-                 textAssessmentEvent.submissionId > 0 AND
-                 textAssessmentEvent.participationId > 0 AND
-                 textAssessmentEvent.courseId = :#{#courseId} AND
-                 textAssessmentEvent.textExerciseId = :#{#textExerciseId}
-                GROUP BY textAssessmentEvent.userId
+            SELECT textAssessmentEvent.userId AS tutorId, COUNT(DISTINCT textAssessmentEvent.submissionId) AS submissionsInvolved
+            FROM TextAssessmentEvent textAssessmentEvent
+            WHERE textAssessmentEvent.userId IS NOT NULL AND
+             textAssessmentEvent.submissionId IS NOT NULL AND
+             textAssessmentEvent.participationId IS NOT NULL AND
+             textAssessmentEvent.courseId = :#{#courseId} AND
+             textAssessmentEvent.textExerciseId = :#{#textExerciseId}
+            GROUP BY textAssessmentEvent.userId
             """)
     List<TutorAssessedSubmissionsCount> findNumberOfSubmissionsAssessedForTutor(Long courseId, Long textExerciseId);
 
