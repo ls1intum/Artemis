@@ -130,7 +130,7 @@ describe('Exam Assessment', () => {
                     examStartEnd.finishExam();
                     cy.get('.alert').should('be.visible');
                     cy.login(tutor, '/course-management/' + course.id + '/exams');
-                    cy.contains('Assessment Dashboard', { timeout: examEnd * 1000 }).click();
+                    cy.contains('Assessment Dashboard', { timeout: examEnd }).click();
                     assessmentDashboard.startAssessing();
                     assessmentDashboard.addNewFeedback(2, 'Good job');
                     assessmentDashboard.submitAssessment();
