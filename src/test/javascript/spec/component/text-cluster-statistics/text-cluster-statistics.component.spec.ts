@@ -1,3 +1,6 @@
+import * as chai from 'chai';
+import * as sinonChai from 'sinon-chai';
+import * as sinon from 'sinon';
 import { ComponentFixture, TestBed, getTestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -9,11 +12,19 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
+import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
+import { MockActivatedRoute } from '../../helpers/mocks/service/mock-route.service';
+import { ActivatedRoute } from '@angular/router';
+
+chai.use(sinonChai);
+const expect = chai.expect;
+
 describe('TextClusterStatisticsComponent', () => {
     let fixture: ComponentFixture<ClusterStatisticsComponent>;
     let component: ClusterStatisticsComponent;
     let httpMock: HttpTestingController;
     let compiled: any;
+    let textExerciseService: TextExerciseService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -23,6 +34,10 @@ describe('TextClusterStatisticsComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                {
+                    provide: ActivatedRoute,
+                    useValue: new MockActivatedRoute({ exerciseId: 123 }),
+                },
             ],
         })
             .compileComponents()
@@ -31,23 +46,26 @@ describe('TextClusterStatisticsComponent', () => {
                 component = fixture.componentInstance;
                 compiled = fixture.debugElement.nativeElement;
                 fixture.detectChanges();
+                textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
             });
         httpMock = getTestBed().get(HttpTestingController);
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(component).toBeTruthy();
+        expect(component).to.be.ok;
     });
 
     it('should call loadClusterFromExercise', () => {
+        const getClusterStatsSpy = sinon.spy(textExerciseService, 'getClusterStats');
         component.loadClusterFromExercise(1);
-        httpMock.expectOne({ url: `api/text-exercises/1/cluster-statistics`, method: 'GET' });
+        expect(getClusterStatsSpy).to.have.been.calledWith(1);
     });
 
     it('should call setClusterDisabledPredicate', () => {
+        const getClusterStatsSpy = sinon.spy(textExerciseService, 'setClusterDisabledPredicate');
         component.setClusterDisabledPredicate(1, true);
-        httpMock.expectOne({ url: `api/text-clusters/1?disabled=true`, method: 'PATCH' });
+        expect(getClusterStatsSpy).to.have.been.calledWith(1, true);
     });
 
     it('should show a not found message in case the cluster statistics is empty', () => {
@@ -55,7 +73,7 @@ describe('TextClusterStatisticsComponent', () => {
         component.currentExerciseId = 1;
 
         const noClusterFoundComponent = compiled.querySelector('[jhiTranslate$=noClustersFound]');
-        expect(noClusterFoundComponent).toBeTruthy();
+        expect(noClusterFoundComponent).to.be.ok;
     });
 
     it('should show the table elements in case the cluster statistics is not empty', () => {
@@ -74,9 +92,9 @@ describe('TextClusterStatisticsComponent', () => {
         const secondColumn = compiled.querySelector('[jhiTranslate$=reusedFeedbackRatio]');
         const thirdColumn = compiled.querySelector('[jhiTranslate$=action]');
         const noClustersFound = compiled.querySelector('[jhiTranslate$=noClustersFound]');
-        expect(firstColumn).toBeTruthy();
-        expect(secondColumn).toBeTruthy();
-        expect(thirdColumn).toBeTruthy();
-        expect(noClustersFound).toBeFalsy();
+        expect(firstColumn).to.be.ok;
+        expect(secondColumn).to.be.ok;
+        expect(thirdColumn).to.be.ok;
+        expect(noClustersFound).to.be.not.ok;
     });
 });

@@ -52,7 +52,11 @@
         </a>
 
         <!-- Cluster Statistics  -->
-        <a *ngIf="exercise.isAtLeastInstructor && exercise.type == 'text'" [routerLink]="baseResource + 'text-cluster-statistics'" class="btn btn-success btn-sm me-1 mb-2">
+        <a
+            *ngIf="exercise.isAtLeastInstructor && exercise.type === ExerciseType.TEXT"
+            [routerLink]="baseResource + 'text-cluster-statistics'"
+            class="btn btn-success btn-sm me-1 mb-2"
+        >
             <fa-icon [icon]="'chart-bar'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.clusterStatistics.title">Cluster Statistics</span>
         </a>
