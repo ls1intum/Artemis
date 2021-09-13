@@ -31,7 +31,7 @@ public class TutorEffortService {
      * from the resulting grouping
      * @param courseId id of the course to calculate for
      * @param exerciseId id of the exercise to calculate for
-     * @return
+     * @return a list of built tutor efforts
      */
     public List<TutorEffort> buildTutorEffortList(Long courseId, Long exerciseId) {
         Map<Long, Integer> submissionsPerTutor = textAssessmentEventRepository.getAssessedSubmissionCountPerTutor(courseId, exerciseId);
