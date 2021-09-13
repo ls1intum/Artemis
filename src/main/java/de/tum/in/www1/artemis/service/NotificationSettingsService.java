@@ -15,12 +15,12 @@ import de.tum.in.www1.artemis.repository.NotificationOptionRepository;
 @Service
 public class NotificationSettingsService {
 
-    private NotificationOptionRepository notificationOptionRepository;
+    private final NotificationOptionRepository notificationOptionRepository;
 
-    private Set<NotificationType> notificationTypesWithNoEmailSupport = Set.of(NotificationType.COURSE_ARCHIVE_STARTED, NotificationType.COURSE_ARCHIVE_FINISHED,
+    private final Set<NotificationType> notificationTypesWithNoEmailSupport = Set.of(NotificationType.COURSE_ARCHIVE_STARTED, NotificationType.COURSE_ARCHIVE_FINISHED,
             NotificationType.EXAM_ARCHIVE_STARTED, NotificationType.EXAM_ARCHIVE_FINISHED);
 
-    private Set<NotificationType> urgendEmailNotificationTypes = Set.of(NotificationType.DUPLICATE_TEST_CASE, NotificationType.ILLEGAL_SUBMISSION);
+    private final Set<NotificationType> urgentEmailNotificationTypes = Set.of(NotificationType.DUPLICATE_TEST_CASE, NotificationType.ILLEGAL_SUBMISSION);
 
     public NotificationSettingsService(NotificationOptionRepository notificationOptionRepository) {
         this.notificationOptionRepository = notificationOptionRepository;
@@ -52,7 +52,7 @@ public class NotificationSettingsService {
      * @return true if the type indicated an urgent case else false
      */
     public boolean checkNotificationTypeForEmailUrgency(NotificationType type) {
-        return urgendEmailNotificationTypes.contains(type);
+        return urgentEmailNotificationTypes.contains(type);
     }
 
     /**
@@ -90,15 +90,6 @@ public class NotificationSettingsService {
             }
         });
         return deactivatedNotificationTypes;
-    }
-
-    /**
-     * Converts the provided NotificationType Set to a String Set (representing the titles from NotificationTitleTypeConstants)
-     * @param types Set that should be converted to String
-     * @return the converted String Set
-     */
-    public Set<String> convertNotificationTypesToTitles(Set<NotificationType> types) {
-        return types.stream().map(type -> NotificationTitleTypeConstants.findCorrespondingNotificationTitle(type)).collect(Collectors.toSet());
     }
 
     /**

@@ -20,9 +20,11 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
+import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import io.github.jhipster.config.JHipsterProperties;
 
 /**
@@ -50,6 +52,8 @@ public class MailService {
     // notification related variables
 
     private static final String NOTIFICATION = "notification";
+
+    private static final String NOTIFICATION_TYPE_FROM_TITLE = "notificationTypeFromTitle";
 
     private static final String NOTIFICATION_SUBJECT = "notificationSubject";
 
@@ -162,8 +166,9 @@ public class MailService {
         if (!isGroup) {
             context.setVariable(USER, user);
         }
-
         context.setVariable(NOTIFICATION, notification);
+        NotificationType notificationType = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
+        context.setVariable(NOTIFICATION_TYPE_FROM_TITLE, notificationType.toString());
         context.setVariable(NOTIFICATION_SUBJECT, findNotificationSubject(notification));
         // replace with (e.g.) "http://localhost:9000" for local testing
         context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, jHipsterProperties.getMail().getBaseUrl()));
