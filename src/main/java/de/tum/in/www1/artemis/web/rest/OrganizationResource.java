@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing the Organization entities
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 @PreAuthorize("hasRole('ADMIN')")
 public class OrganizationResource {
 
@@ -53,15 +53,14 @@ public class OrganizationResource {
     }
 
     /**
-     * POST organizations/course/:courseId/organization/:organizationId :
+     * POST organizations/:organizationId/courses/:courseId :
      * Add a course to an organization
      *
      * @param courseId the id of the course to add
      * @param organizationId the id of the organization where the course should be added
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
-    @PostMapping("organizations/course/{courseId}/organization/{organizationId}") // TODO: this path doesn't make sense, should be organizations/{organizationId}/courses, the
-                                                                                  // courseId should be chosen by the server
+    @PostMapping("organizations/{organizationId}/courses/{courseId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> addCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
         log.debug("REST request to add course to organization : {}", organizationId);
@@ -72,14 +71,14 @@ public class OrganizationResource {
     }
 
     /**
-     * DELETE organizations/course/:courseId/organization/:organizationId :
+     * DELETE organizations/:organizationId/courses/:courseId :
      * Remove a course from an organization
      *
      * @param courseId the id of the course to remove
      * @param organizationId the id of the organization from with the course should be removed
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
-    @DeleteMapping("organizations/course/{courseId}/organization/{organizationId}") // TODO: should be organizations/{organizationId}/courses/{courseId}
+    @DeleteMapping("organizations/{organizationId}/courses/{courseId}") // TODO: should be organizations/{organizationId}/courses/{courseId}
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> removeCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
         Organization organization = organizationRepository.findOneOrElseThrow(organizationId);
