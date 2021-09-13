@@ -288,4 +288,17 @@ public class OrganizationResource {
         Set<Organization> organizations = organizationRepository.findAllOrganizationsByUserId(userId);
         return new ResponseEntity<>(organizations, HttpStatus.OK);
     }
+
+    /**
+     * GET organizations/:organizationId/title : Returns the title of the organization with the given id
+     *
+     * @param organizationId the id of the organization
+     * @return the title of the organization wrapped in an ResponseEntity or 404 Not Found if no organization with that id exists
+     */
+    @GetMapping("organizations/{organizationId}/title")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> getOrganizationTitle(@PathVariable Long organizationId) {
+        final var title = organizationRepository.getOrganizationTitle(organizationId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
 }

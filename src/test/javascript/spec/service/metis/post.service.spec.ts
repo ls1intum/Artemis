@@ -2,11 +2,11 @@ import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import * as chai from 'chai';
 import { take } from 'rxjs/operators';
-import { Post } from 'app/entities/metis/post.model';
+import { DisplayPriority, Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { PostService } from 'app/shared/metis/post/post.service';
+import { PostService } from 'app/shared/metis/post.service';
 
 const expect = chai.expect;
 
@@ -86,24 +86,39 @@ describe('Post Service', () => {
             tick();
         }));
 
+        it('should pin a Post', fakeAsync(() => {
+            const newDisplayPriority = DisplayPriority.PINNED;
+            const returnedFromService = { ...elemDefault, displayPriority: newDisplayPriority };
+
+            const expected = { ...returnedFromService };
+            service
+                .updatePostDisplayPriority(1, elemDefault.id!, newDisplayPriority)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
+            const req = httpMock.expectOne({ method: 'PUT' });
+            req.flush(returnedFromService);
+            tick();
+        }));
+
+        it('should archive a Post', fakeAsync(() => {
+            const newDisplayPriority = DisplayPriority.ARCHIVED;
+            const returnedFromService = { ...elemDefault, displayPriority: newDisplayPriority };
+
+            const expected = { ...returnedFromService };
+            service
+                .updatePostDisplayPriority(1, elemDefault.id!, newDisplayPriority)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
+            const req = httpMock.expectOne({ method: 'PUT' });
+            req.flush(returnedFromService);
+            tick();
+        }));
+
         it('should delete a Post', fakeAsync(() => {
             service.delete(1, elemDefault).subscribe((resp) => expect(resp.ok).to.be.true);
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
-            tick();
-        }));
-
-        it('should update the votes of a Post', fakeAsync(() => {
-            const returnedFromService = { ...elemDefault, votes: 42 };
-
-            const expected = { ...returnedFromService };
-            service
-                .updateVotes(1, expected.id!, 0)
-                .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
-            const req = httpMock.expectOne({ method: 'PUT' });
-            req.flush(returnedFromService);
             tick();
         }));
 

@@ -101,4 +101,8 @@ export class OrganizationManagementService {
     addUserToOrganization(organizationId: number, userLogin: String): Observable<HttpResponse<void>> {
         return this.http.post<void>(`${this.resourceUrl}/${organizationId}/users/${userLogin}`, {}, { observe: 'response' });
     }
+
+    getTitle(organizationId: number): Observable<HttpResponse<string>> {
+        return this.http.get(`${this.resourceUrl}/${organizationId}/title`, { observe: 'response', responseType: 'text' });
+    }
 }

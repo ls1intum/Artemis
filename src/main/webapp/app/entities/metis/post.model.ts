@@ -10,20 +10,30 @@ export enum CourseWideContext {
     RANDOM = 'RANDOM',
 }
 
+export enum DisplayPriority {
+    PINNED = 'PINNED',
+    ARCHIVED = 'ARCHIVED',
+    NONE = 'NONE',
+}
+
 export class Post extends Posting {
     public title?: string;
     public visibleForStudents?: boolean;
-    public votes?: number;
     public answers?: AnswerPost[];
     public tags?: string[];
     public exercise?: Exercise;
     public lecture?: Lecture;
     public course?: Course;
     public courseWideContext?: CourseWideContext;
+    public displayPriority?: DisplayPriority;
+    // deprecated, will be removed
+    public votes?: number;
 
     constructor() {
         super();
-        this.visibleForStudents = true; // default value
-        this.votes = 0; // default value
+        // set default values
+        this.visibleForStudents = true;
+        this.votes = 0;
+        this.displayPriority = DisplayPriority.NONE;
     }
 }

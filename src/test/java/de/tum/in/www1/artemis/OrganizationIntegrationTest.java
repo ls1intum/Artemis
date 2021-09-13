@@ -456,4 +456,15 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(updatedOrganization.getUsers()).hasSize(1);
         assertThat(updatedOrganization.getUsers()).contains(users.get(0));
     }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testGetOrganizationTitle() throws Exception {
+        Organization organization = database.createOrganization();
+        organization.setName("Test Organization");
+        organization = organizationRepo.save(organization);
+
+        final var title = request.get("/api/organizations/" + organization.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(organization.getName());
+    }
 }

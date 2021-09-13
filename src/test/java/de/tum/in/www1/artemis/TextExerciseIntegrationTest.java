@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
@@ -38,6 +39,9 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private DatabaseUtilService databaseUtilService;
 
     @Autowired
     private TextClusterRepository textClusterRepository;
@@ -301,6 +305,27 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExercise_updatingCourseId_asInstructor() throws Exception {
+        // Create a text exercise.
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise existingTextExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        // Create a new course with different id.
+        Long oldCourseId = course.getId();
+        Long newCourseId = oldCourseId + 1L;
+        Course newCourse = databaseUtilService.createCourse(newCourseId);
+
+        // Assign new course to the text exercise.
+        TextExercise updatedTextExercise = existingTextExercise;
+        updatedTextExercise.setCourse(newCourse);
+
+        // Text exercise update with the new course should fail.
+        TextExercise returnedTextExercise = request.putWithResponseBody("/api/text-exercises", updatedTextExercise, TextExercise.class, HttpStatus.CONFLICT);
+        assertThat(returnedTextExercise).isNull();
+    }
+
+    @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void updateTextExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
@@ -361,7 +386,6 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
 
-        textExercise.setCourse(null);
         textExercise.setExerciseGroup(exerciseGroup);
 
         request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
@@ -370,13 +394,11 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void updateTextExercise_convertFromExamToCourseExercise_badRequest() throws Exception {
-        Course course = database.addEmptyCourse();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
         textExerciseRepository.save(textExercise);
 
         textExercise.setExerciseGroup(null);
-        textExercise.setCourse(course);
 
         request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
