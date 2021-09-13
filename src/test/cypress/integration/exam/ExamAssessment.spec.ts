@@ -108,7 +108,9 @@ describe('Exam Assessment', () => {
             cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
             assessmentDashboard.startAssessing();
             assessmentDashboard.addNewFeedback(7, 'Good job');
+            cy.intercept(POST, BASE_API + 'participations/*/results/*/submit-text-assessment').as('submitFeedback');
             assessmentDashboard.submitAssessment();
+            cy.wait('@submitFeedback');
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
             cy.get('.question-options').contains('7 of 10 points').should('be.visible');
         });
