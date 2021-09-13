@@ -21,6 +21,7 @@ import { Submission } from 'app/entities/submission.model';
 import { TableColumn } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import.component';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -49,6 +50,7 @@ describe('ExampleSubmissionImportComponent', () => {
                 MockDirective(ButtonComponent),
                 MockDirective(NgModel),
                 MockPipe(ArtemisDatePipe),
+                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
