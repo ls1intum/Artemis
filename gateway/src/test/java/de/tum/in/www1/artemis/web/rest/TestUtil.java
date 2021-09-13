@@ -21,7 +21,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
  */
 public final class TestUtil {
 
-    private static final ObjectMapper mapper = createObjectMapper();
+    private static final ObjectMapper MAPPER = createObjectMapper();
 
     private static ObjectMapper createObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -39,7 +39,7 @@ public final class TestUtil {
      * @throws IOException
      */
     public static byte[] convertObjectToJsonBytes(Object object) throws IOException {
-        return mapper.writeValueAsBytes(object);
+        return MAPPER.writeValueAsBytes(object);
     }
 
     /**
@@ -93,6 +93,7 @@ public final class TestUtil {
      * Creates a matcher that matches when the examined string represents the same instant as the reference datetime.
      *
      * @param date the reference datetime against which the examined string is checked.
+     * @return matcher for the given date
      */
     public static ZonedDateTimeMatcher sameInstant(ZonedDateTime date) {
         return new ZonedDateTimeMatcher(date);
@@ -149,6 +150,7 @@ public final class TestUtil {
      * Creates a matcher that matches when the examined number represents the same value as the reference BigDecimal.
      *
      * @param number the reference BigDecimal against which the examined number is checked.
+     * @return matcher for the given number
      */
     public static NumberMatcher sameNumber(BigDecimal number) {
         return new NumberMatcher(number);
@@ -156,6 +158,10 @@ public final class TestUtil {
 
     /**
      * Verifies the equals/hashcode contract on the domain object.
+     * 
+     * @param clazz
+     * @param <T>
+     * @throws Exception
      */
     public static <T> void equalsVerifier(Class<T> clazz) throws Exception {
         T domainObject1 = clazz.getConstructor().newInstance();
