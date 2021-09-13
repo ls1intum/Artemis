@@ -1,7 +1,6 @@
 import { GET, BASE_API } from '../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
-import { generateUUID } from '../../support/utils';
 import dayjs from 'dayjs';
 import submission from '../../fixtures/programming_exercise_submissions/all_successful/submission.json';
 
@@ -20,9 +19,6 @@ const examNavigation = artemis.pageobjects.examNavigationBar;
 const onlineEditor = artemis.pageobjects.onlineEditor;
 
 // Common primitives
-const uid = generateUUID();
-const examTitle = 'exam' + uid;
-const submissionText = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.';
 const textExerciseTitle = 'Cypress text exercise';
 
 describe('Exam participation', () => {
@@ -34,7 +30,6 @@ describe('Exam participation', () => {
         courseRequests.createCourse().then((response) => {
             course = response.body;
             const examContent = new CypressExamBuilder(course)
-                .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(2, 'days'))
                 .endDate(dayjs().add(3, 'days'))
@@ -69,7 +64,7 @@ describe('Exam participation', () => {
         cy.login(student, '/');
         courses.openCourse(course.title);
         courseOverview.openExamsTab();
-        courseOverview.openExam(examTitle);
+        courseOverview.openExam(exam.title);
         cy.url().should('contain', `/exams/${exam.id}`);
         examStartEnd.startExam();
     }
@@ -80,11 +75,13 @@ describe('Exam participation', () => {
 
     function makeTextExerciseSubmission() {
         const textEditor = artemis.pageobjects.textEditor;
-        textEditor.typeSubmission(submissionText);
-        // Loading the content of the existing files might take some time so we wait for the return of the request here
-        cy.intercept(GET, BASE_API + 'repository/*/files').as('getFiles');
-        textEditor.saveAndContinue().its('request.body.text').should('eq', submissionText);
-        cy.wait('@getFiles').its('response.statusCode').should('eq', 200);
+        cy.fixture('loremIpsum.txt').then((submissionText) => {
+            textEditor.typeSubmission(submissionText);
+            // Loading the content of the existing files might take some time so we wait for the return of the request here
+            cy.intercept(GET, BASE_API + 'repository/*/files').as('getFiles');
+            textEditor.saveAndContinue().its('request.body.text').should('eq', submissionText);
+            cy.wait('@getFiles').its('response.statusCode').should('eq', 200);
+        });
     }
 
     function makeProgrammingExerciseSubmission() {
@@ -110,7 +107,9 @@ describe('Exam participation', () => {
     function verifyFinalPage() {
         cy.get('.alert').contains('Your exam was submitted successfully.');
         cy.contains(textExerciseTitle).should('be.visible');
-        cy.contains(submissionText).should('be.visible');
+        cy.fixture('loremIpsum.txt').then((submissionText) => {
+            cy.contains(submissionText).should('be.visible');
+        });
     }
 
     after(() => {

@@ -9,6 +9,7 @@ const courseManagementRequests = artemis.requests.courseManagement;
 
 // page objects
 const examStartEnd = artemis.pageobjects.examStartEnd;
+const textEditor = artemis.pageobjects.textEditor;
 
 describe('Exam management', () => {
     let course: any;
@@ -91,9 +92,9 @@ describe('Exam management', () => {
                         examStartEnd.startExam();
                         cy.contains('Exam Overview').should('exist');
                         cy.contains(textExercise.title).should('be.visible').click();
-                        artemis.pageobjects.textEditor.typeSubmission(
-                            'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-                        );
+                        cy.fixture('loremIpsum.txt').then((submissionText) => {
+                            textEditor.typeSubmission(submissionText);
+                        });
                         cy.intercept(PUT, `/api/exercises/${textExercise.id}/text-submissions`).as('savedSubmission');
                         cy.contains('Save').click();
                         cy.wait('@savedSubmission');
@@ -125,9 +126,9 @@ describe('Exam management', () => {
                         cy.contains('Welcome to ' + exam.title).should('be.visible');
                         examStartEnd.startExam();
                         cy.contains(textExercise.title).should('be.visible').click();
-                        artemis.pageobjects.textEditor.typeSubmission(
-                            'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-                        );
+                        cy.fixture('loremIpsum.txt').then((submissionText) => {
+                            textEditor.typeSubmission(submissionText);
+                        });
                         cy.contains('Save').click();
                         cy.contains('This is the end of ' + exam.title, { timeout: 20000 });
                         examStartEnd.setConfirmCheckmark();
