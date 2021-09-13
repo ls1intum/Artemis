@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
@@ -13,7 +13,7 @@ import { onError } from 'app/shared/util/global.utils';
 @Component({
     templateUrl: 'example-submissions.component.html',
 })
-export class ExampleSubmissionsComponent implements OnInit {
+export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     exercise: Exercise;
 
     constructor(
@@ -34,6 +34,15 @@ export class ExampleSubmissionsComponent implements OnInit {
             this.courseService.checkAndSetCourseRights(exercise.course);
             this.exercise = exercise;
         });
+    }
+
+    /**
+     * Closes open modal on component destroy
+     */
+    ngOnDestroy() {
+        if (this.modalService.hasOpenModals()) {
+            this.modalService.dismissAll();
+        }
     }
 
     /**

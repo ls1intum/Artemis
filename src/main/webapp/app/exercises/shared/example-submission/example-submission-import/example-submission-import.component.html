@@ -6,7 +6,14 @@
     <div class="modal-body">
         <div class="form-group form-inline">
             <label class="form-control-label" jhiTranslate="artemisApp.exampleSubmission.searchSubmission" for="searchParticipant">Search for Submission</label>
-            <input class="form-control ms-2" type="text" name="searchParticipant" id="searchParticipant" [(ngModel)]="searchTerm" />
+            <input
+                class="form-control ms-2"
+                type="text"
+                name="searchParticipant"
+                id="searchParticipant"
+                [(ngModel)]="searchTerm"
+                placeholder="{{ 'artemisApp.exercise.studentName' | artemisTranslate }}"
+            />
             <span class="ms-3" *ngIf="loading" jhiTranslate="artemisApp.exercise.import.loading">Loading...</span>
         </div>
         <div *ngIf="content.resultsOnPage && content.resultsOnPage.length > 0; else emptyTable" class="table-responsive">

@@ -650,15 +650,15 @@ public class SubmissionService {
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of submissions if there are that many in Artemis.
      *
-     * @param search     The search query defining the search term and the size of the returned page
-     * @param exerciseId exerciseId which submissions belongs to
+     * @param search     DTO containing the search term and information required for pagination and sorting
+     * @param exerciseId Id of the exercise the submissions belongs to
      * @return A wrapper object containing a list of all found submissions and the total number of pages
      */
     public SearchResultPageDTO<Submission> getSubmissionsOnPageWithSize(PageableSearchDTO<String> search, Long exerciseId) {
-        var sorting = Sort.by(StudentParticipation.StudentParticipationSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
+        Sort sorting = Sort.by(StudentParticipation.StudentParticipationSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
         sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
-        final var sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
-        final var searchTerm = search.getSearchTerm();
+        PageRequest sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
+        String searchTerm = search.getSearchTerm();
 
         Page<StudentParticipation> studentParticipationPage = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(exerciseId, searchTerm, sorted);
 

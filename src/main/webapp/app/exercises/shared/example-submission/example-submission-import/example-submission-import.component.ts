@@ -77,7 +77,6 @@ export class ExampleSubmissionImportComponent implements OnInit {
 
     /**
      * Closes the modal in which the import component is opened. Gives the selected submission as a result.
-     *
      * @param submission The submission which was selected by the user for the import.
      */
     openImport(submission: Submission) {
@@ -120,8 +119,7 @@ export class ExampleSubmissionImportComponent implements OnInit {
 
     /**
      * Set the list sorting direction
-     *
-     * @param ascending {boolean} Ascending order set
+     * @param ascending {boolean} flag indicating if the sorting order is set to ascending or not
      */
     set listSorting(ascending: boolean) {
         const sortingOrder = ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING;
@@ -134,7 +132,6 @@ export class ExampleSubmissionImportComponent implements OnInit {
 
     /**
      * Callback function when the user navigates through the page results
-     *
      * @param pageNumber The current page number
      */
     onPageChange(pageNumber: number) {

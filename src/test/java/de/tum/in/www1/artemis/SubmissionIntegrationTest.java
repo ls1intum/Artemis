@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -140,13 +141,14 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetSubmissionsOnPageWithSize() throws Exception {
         Course course = database.addCourseWithModelingAndTextExercise();
-        TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findFirst().get();
-        Submission submission = ModelFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
-        submission = database.saveTextSubmission(textExercise, (TextSubmission) submission, "student1");
+        TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findFirst().orElse(null);
+        assertThat(textExercise).isNotNull();
+        TextSubmission submission = ModelFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
+        submission = database.saveTextSubmission(textExercise, submission, "student1");
         database.addResultToSubmission(submission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"));
-        final var search = database.configureStudentParticipationSearch("");
+        PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
 
-        final var resultPage = request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, SearchResultPageDTO.class,
+        SearchResultPageDTO resultPage = request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, SearchResultPageDTO.class,
                 database.exerciseSearchMapping(search));
         assertThat(resultPage.getResultsOnPage().size()).isEqualTo(1);
     }
@@ -154,8 +156,8 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetSubmissionsOnPageWithSize_exerciseNotFound() throws Exception {
-        Long randomExerciseId = 12345L;
-        final var search = database.configureStudentParticipationSearch("");
+        long randomExerciseId = 12345L;
+        PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
         request.get("/api/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
     }
 
@@ -163,10 +165,11 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetSubmissionsOnPageWithSize_isNotAtLeastInstructorInExercise_forbidden() throws Exception {
         Course course = database.addCourseWithModelingAndTextExercise();
-        TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findFirst().get();
+        TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findFirst().orElse(null);
+        assertThat(textExercise).isNotNull();
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        final var search = database.configureStudentParticipationSearch("");
+        PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
         request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
     }
 

@@ -15,7 +15,7 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('Exercise Scores Component', () => {
+describe('Example Submission Component', () => {
     let component: ExampleSubmissionsComponent;
     let fixture: ComponentFixture<ExampleSubmissionsComponent>;
     let exampleSubmissionService: ExampleSubmissionService;

@@ -13,7 +13,7 @@ export class ExampleSubmissionImportPagingService {
 
     /**
      * Gets all submissions with exerciseId
-     * @param pageable   pageable search containing the page size and query string
+     * @param pageable   pageable search containing information required for pagination and sorting
      * @param exerciseId id of exercise which submissions belongs to
      */
     searchForSubmissions(pageable: PageableSearch, exerciseId: number): Observable<EntityResponseType> {
