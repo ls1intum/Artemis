@@ -119,7 +119,7 @@ describe('Exam Assessment', () => {
 
         it('Assess a programming exercise submission (MANUAL)', () => {
             cy.login(admin);
-            courseManagementRequests.createProgrammingExercise({ exerciseGroup }, programmingExerciseName, programmingExerciseShortName, packageName).then((progRespone) => {
+            courseManagementRequests.createProgrammingExercise({ exerciseGroup }).then((progRespone) => {
                 const programmingExercise = progRespone.body;
                 courseManagementRequests.generateMissingIndividualExams(exam);
                 courseManagementRequests.prepareExerciseStartForExam(exam);
