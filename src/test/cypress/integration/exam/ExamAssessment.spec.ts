@@ -114,11 +114,6 @@ describe('Exam Assessment', () => {
         let programmingExerciseShortName: string;
         const examEnd = (Cypress.env('isBamboo') ? GROUP_SYNCHRONIZATION / 1000 : 0) + 115;
 
-        before('Generate exercise names', () => {
-            uid = generateUUID();
-            programmingExerciseName = 'Cypress programming exercise ' + uid;
-            programmingExerciseShortName = 'cypress' + uid;
-        });
 
         beforeEach('Create Exam', () => {
             prepareExam(dayjs().add(examEnd, 'seconds'));
