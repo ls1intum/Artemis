@@ -148,7 +148,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.addResultToSubmission(submission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"));
         PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
 
-        SearchResultPageDTO resultPage = request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, SearchResultPageDTO.class,
+        var resultPage = request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, SearchResultPageDTO.class,
                 database.exerciseSearchMapping(search));
         assertThat(resultPage.getResultsOnPage().size()).isEqualTo(1);
     }
