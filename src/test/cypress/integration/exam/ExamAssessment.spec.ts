@@ -168,7 +168,7 @@ function prepareExam(examEnd: dayjs.Dayjs) {
     courseManagementRequests.createExam(examContent).then((examResponse) => {
         exam = examResponse.body;
         courseManagementRequests.registerStudentForExam(exam, student);
-        courseManagementRequests.addExerciseGroupForExam(exam, 'group 1', true).then((groupResponse) => {
+        courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
             exerciseGroup = groupResponse.body;
         });
     });
