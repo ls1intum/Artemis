@@ -14,6 +14,9 @@ public class TitleJaccardSimilarityCompareStrategy implements PostContentCompare
     public Double performSimilarityCheck(Post post1, Post post2) {
         JaccardSimilarity jaccardSimilarity = new JaccardSimilarity();
 
+        if (post1.getTitle() == null && post2.getTitle() == null) {
+            return 0.0;
+        }
         return jaccardSimilarity.apply(post1.getTitle().toLowerCase(), post2.getTitle().toLowerCase());
     }
 }
