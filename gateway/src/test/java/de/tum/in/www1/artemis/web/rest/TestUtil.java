@@ -158,7 +158,7 @@ public final class TestUtil {
 
     /**
      * Verifies the equals/hashcode contract on the domain object.
-     * 
+     *
      * @param clazz
      * @param <T>
      * @throws Exception
