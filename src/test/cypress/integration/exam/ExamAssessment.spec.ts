@@ -110,7 +110,7 @@ describe('Exam Assessment', () => {
     });
 
     describe('Exam Programming Exercise Assessment', () => {
-        const examEnd = (Cypress.env('isBamboo') ? GROUP_SYNCHRONIZATION / 1000 : 0) + 115;
+        const examEnd = (Cypress.env('isBamboo') ? GROUP_SYNCHRONIZATION : 0) + 115000;
 
 
         beforeEach('Create Exam', () => {
