@@ -114,7 +114,7 @@ describe('Exam Assessment', () => {
 
 
         beforeEach('Create Exam', () => {
-            prepareExam(dayjs().add(examEnd, 'seconds'));
+            prepareExam(dayjs().add(examEnd, 'milliseconds'));
         });
 
         it('Assess a programming exercise submission (MANUAL)', () => {
