@@ -21,6 +21,10 @@
             margin: 0 auto;
         }
 
+        a {
+            color: #3e8acc;
+        }
+
         #logo {
             max-width: 50px;
             vertical-align: middle;
@@ -106,7 +110,6 @@
     <!-- Greetings End -->
     <br>
     <!-- Notification Content -->
-    <!--<th:block th:switch="${notification.title}">-->
     <th:block th:switch="${notificationTypeFromTitle}">
         <th:block th:case="'ATTACHMENT_CHANGE'">
             <span th:text="#{email.notification.title.attachment}"/>
@@ -126,8 +129,6 @@
             <th:block th:replace="mail/notificationEmail :: notificationText"/>
         </th:block>
         <th:block th:case="'NEW_ANSWER_POST_FOR_EXERCISE'">
-        <!--<th:block th:case="notificationTitleTest.NEW_ANSWER_POST_FOR_EXERCISE_TITLE">-->
-        <!--<th:block th:case="${notificationTitleTest.NEW_ANSWER_POST_FOR_EXERCISE_TITLE}">-->
             <th:block th:if="${isGroupNotification}">
                 <!--GROUP-->
                 <span th:utext="#{email.notification.title.answer.exercise.group(${notificationSubject})}"/>
