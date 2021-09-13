@@ -14,6 +14,8 @@ public class TutorLeaderboardAssessments {
 
     private final double averageScore;
 
+    private final double averageRating;
+
     public long getUserId() {
         return userId;
     }
@@ -30,11 +32,16 @@ public class TutorLeaderboardAssessments {
         return averageScore;
     }
 
-    public TutorLeaderboardAssessments(Long userId, Long assessments, Double points, Double averageScore) {
+    public double getAverageRating() {
+        return averageRating;
+    }
+
+    public TutorLeaderboardAssessments(Long userId, Long assessments, Double points, Double averageScore, Double averageRating) {
         this.userId = userId;
         this.assessments = assessments;
         this.points = points;
         this.averageScore = averageScore == null ? 0 : averageScore;
+        this.averageRating = averageRating == null ? 0 : averageRating;
     }
 
     public TutorLeaderboardAssessments() {
@@ -42,6 +49,7 @@ public class TutorLeaderboardAssessments {
         this.assessments = 0L;
         this.points = 0.0;
         this.averageScore = 0.0;
+        this.averageRating = 0.0;
     }
 
     public Long getKey() {

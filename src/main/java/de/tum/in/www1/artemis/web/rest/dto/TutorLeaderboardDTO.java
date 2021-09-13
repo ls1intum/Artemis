@@ -27,13 +27,15 @@ public class TutorLeaderboardDTO {
 
     private double averageScore;
 
+    private double averageRating;
+
     public TutorLeaderboardDTO() {
         // to make Jackson happy
     }
 
     public TutorLeaderboardDTO(long userId, String name, long numberOfAssessments, long numberOfAcceptedComplaints, long numberOfTutorComplaints,
             long numberOfNotAnsweredMoreFeedbackRequests, long numberOfComplaintResponses, long numberOfAnsweredMoreFeedbackRequests, long numberOfTutorMoreFeedbackRequests,
-            double points, double averageScore) {
+            double points, double averageScore, double averageRating) {
         this.userId = userId;
         this.name = name;
         this.numberOfAssessments = numberOfAssessments;
@@ -45,6 +47,7 @@ public class TutorLeaderboardDTO {
         this.numberOfTutorMoreFeedbackRequests = numberOfTutorMoreFeedbackRequests;
         this.points = points;
         this.averageScore = averageScore;
+        this.averageRating = averageRating;
     }
 
     public long getUserId() {
@@ -133,5 +136,13 @@ public class TutorLeaderboardDTO {
 
     public void setAverageScore(double averageScore) {
         this.averageScore = averageScore;
+    }
+
+    public double getAverageRating() {
+        return this.averageRating;
+    }
+
+    public void setAverageRating(double averageRating) {
+        this.averageRating = averageRating;
     }
 }

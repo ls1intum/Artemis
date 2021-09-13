@@ -35,7 +35,8 @@
                 "numberOfComplaintResponses": "Beschwerdeantworten",
                 "numberOfAnsweredMoreFeedbackRequests": "Beantwortete Feedbackanfragen",
                 "points": "Punkte",
-                "averageScore": "Durchschnittliche Punktzahl"
+                "averageScore": "Durchschnittliche Punktzahl",
+                "averageRating": "Durchschnittliches Rating"
             }
         }
     }

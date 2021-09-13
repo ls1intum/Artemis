@@ -196,7 +196,7 @@ public class TutorLeaderboardService {
 
             var leaderboardEntry = new TutorLeaderboardDTO(tutor.getId(), tutor.getName(), numberOfAssessments, numberOfAcceptedComplaints, numberOfTutorComplaints,
                     numberOfNotAnsweredMoreFeedbackRequests, numberOfComplaintResponses, numberOfAnsweredMoreFeedbackRequests, numberOfTutorMoreFeedbackRequests, points,
-                    assessmentsOfTutor.getAverageScore());
+                    assessmentsOfTutor.getAverageScore(), assessmentsOfTutor.getAverageRating());
             tutorLeaderBoardEntries.add(leaderboardEntry);
         }
         return tutorLeaderBoardEntries;
