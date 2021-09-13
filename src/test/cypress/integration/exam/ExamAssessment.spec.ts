@@ -26,6 +26,11 @@ let exerciseGroup: any;
 let course: any;
 let examTitle: string;
 
+// This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
+Cypress.on('uncaught:exception', () => {
+    return false;
+});
+
 describe('Exam Assessment', () => {
     before('Create a course', () => {
         cy.login(admin);
