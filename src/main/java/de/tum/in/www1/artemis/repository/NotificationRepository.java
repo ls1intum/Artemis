@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 
 /**
@@ -33,7 +32,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             SELECT notification FROM Notification notification LEFT JOIN notification.course LEFT JOIN notification.recipient
             WHERE notification.notificationDate IS NOT NULL
                 AND (type(notification) = GroupNotification
-                   AND (notification.title NOT IN :#{#deactivatedTypes}
+                   AND (notification.title NOT IN :#{#deactivatedTitles}
                        OR notification.title IS NULL)
                    AND ((notification.course.instructorGroupName IN :#{#currentGroups} AND notification.type = 'INSTRUCTOR')
                        OR (notification.course.teachingAssistantGroupName IN :#{#currentGroups} AND notification.type = 'TA')
@@ -41,9 +40,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                        OR (notification.course.studentGroupName IN :#{#currentGroups} AND notification.type = 'STUDENT')))
                 OR (type(notification) = SingleUserNotification
                     AND notification.recipient.login = :#{#login}
-                    AND (notification.title NOT IN :#{#deactivatedTypes}
+                    AND (notification.title NOT IN :#{#deactivatedTitles}
                         OR notification.title IS NULL))
             """)
     Page<Notification> findAllNotificationsFilteredBySettingsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
-            @Param("deactivatedTypes") Set<NotificationType> deactivatedTypes, Pageable pageable);
+            @Param("deactivatedTitles") Set<String> deactivatedTitles, Pageable pageable);
 }

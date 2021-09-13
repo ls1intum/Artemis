@@ -11,11 +11,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.domain.NotificationOption;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.repository.NotificationOptionRepository;
 
 public class NotificationSettingsServiceTest {
 
     @Autowired
     private static NotificationSettingsService notificationSettingsService;
+
+    @Autowired
+    private static NotificationOptionRepository notificationOptionRepository;
 
     private static User student1;
 
@@ -37,7 +41,7 @@ public class NotificationSettingsServiceTest {
 
     @BeforeAll
     private static void setup() {
-        notificationSettingsService = new NotificationSettingsService();
+        notificationSettingsService = new NotificationSettingsService(notificationOptionRepository);
 
         student1 = new User();
         student1.setId(555L);
@@ -83,7 +87,7 @@ public class NotificationSettingsServiceTest {
     public void testFindDeactivatedNotificationTypes() {
         NotificationOption[] tmpNotificationOptionsArray = Arrays.copyOf(savedNotificationOptions, savedNotificationOptions.length);
         Set<NotificationOption> tmpNotificationOptionsSet = new HashSet<>(Arrays.asList(tmpNotificationOptionsArray));
-        Set<NotificationType> resultingTypeSet = notificationSettingsService.findDeactivatedNotificationTypes(tmpNotificationOptionsSet);
+        Set<NotificationType> resultingTypeSet = notificationSettingsService.findDeactivatedNotificationTypes(true, tmpNotificationOptionsSet);
         // OptionA : exercise-open-for-practice -> [EXERCISE_PRACTICE] : webapp deactivated
         // OptionB : attachment-changes -> [ATTACHMENT_CHANGE] : webapp activated <- not part of set
         // OptionC : course-and-exam-archiving-started -> [EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED] : webapp deactivated

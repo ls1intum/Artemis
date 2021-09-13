@@ -23,8 +23,6 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
     @Autowired
     private NotificationOptionRepository notificationOptionRepository;
 
-    private List<User> users;
-
     private NotificationOption optionA;
 
     private NotificationOption optionB;
@@ -34,7 +32,7 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
      */
     @BeforeEach
     public void initTestCase() {
-        users = database.addUsers(2, 1, 1, 1);
+        List<User> users = database.addUsers(2, 1, 1, 1);
 
         User student1 = users.get(0);
         users.set(0, student1);

@@ -1,3 +1,5 @@
+@import '../../../../content/scss/_artemis-variables.scss';
+
 #avatar {
     padding-top: 8px;
     padding-right: 15px;
@@ -6,7 +8,7 @@
 #user-header {
     font-size: x-large;
     font-weight: 600;
-    color: #353d47;
+    color: $artemis-dark;
 }
 
 #login {

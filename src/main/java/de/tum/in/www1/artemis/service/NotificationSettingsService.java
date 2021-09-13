@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -92,6 +93,15 @@ public class NotificationSettingsService {
     }
 
     /**
+     * Converts the provided NotificationType Set to a String Set (representing the titles from NotificationTitleTypeConstants)
+     * @param types Set that should be converted to String
+     * @return the converted String Set
+     */
+    public Set<String> convertNotificationTypesToTitles(Set<NotificationType> types) {
+        return types.stream().map(type -> NotificationTitleTypeConstants.findCorrespondingNotificationTitle(type)).collect(Collectors.toSet());
+    }
+
+    /**
      * Converts the provided NotificationOptions to a map of corresponding NotificationTypes and activation status.
      * @param checkForWebapp indicates if the status for the webapp (true) or for email (false) should be used/checked
      * @param notificationOptions which will be mapped to their respective NotificationTypes with respect to their activation status
@@ -150,7 +160,7 @@ public class NotificationSettingsService {
     /**
      * Updates the notificationOptions by setting the current user
      * @param notificationOptions which might be saved the very first time and have no user set yet
-     * @param currentUser
+     * @param currentUser who should be set
      */
     public void setCurrentUser(NotificationOption[] notificationOptions, User currentUser) {
         for (NotificationOption notificationOption : notificationOptions) {

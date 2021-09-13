@@ -1,3 +1,5 @@
+@import '../../../../content/scss/_artemis-variables.scss';
+
 .light-button {
     border: 0;
     background-color: transparent;
@@ -59,9 +61,7 @@
         padding: 20px 16px;
     }
 
-    .header-icon {
-        fa-icon {
-            color: #353d47; /* main navigation bar gray  */
-        }
+    .ng-fa-icon {
+        color: $artemis-dark;
     }
 }

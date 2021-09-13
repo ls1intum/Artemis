@@ -113,11 +113,12 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify tutor, editor and instructor groups about a new post in an exercise.
+     * Notify all groups about a new post in an exercise.
      *
      * @param post that has been posted
      */
-    public void notifyTutorAndEditorAndInstructorGroupAboutNewPostForExercise(Post post) {
+    public void notifyAllGroupsAboutNewPostForExercise(Post post) {
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.NEW_POST_FOR_EXERCISE));
         saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_POST_FOR_EXERCISE));
         saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_POST_FOR_EXERCISE));
         saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_POST_FOR_EXERCISE));
@@ -146,11 +147,12 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify tutor, editor and instructor groups about a new post in a lecture.
+     * Notify all groups about a new post in a lecture.
      *
      * @param post that has been posted
      */
-    public void notifyTutorAndEditorAndInstructorGroupAboutNewPostForLecture(Post post) {
+    public void notifyAllGroupsAboutNewPostForLecture(Post post) {
+        saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.NEW_POST_FOR_LECTURE));
         saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_POST_FOR_LECTURE));
         saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_POST_FOR_LECTURE));
         saveAndSend(createNotification(post, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_POST_FOR_LECTURE));

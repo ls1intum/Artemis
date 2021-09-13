@@ -1,8 +1,4 @@
 import { Injectable } from '@angular/core';
-import { GroupNotification } from 'app/entities/group-notification.model';
-import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
-import { OptionSpecifier } from 'app/shared/constants/user-settings.constants';
-import { Notification } from 'app/entities/notification.model';
 import {
     ATTACHMENT_CHANGE_TITLE,
     COURSE_ARCHIVE_STARTED_TITLE,
@@ -13,8 +9,12 @@ import {
     NEW_ANSWER_POST_FOR_LECTURE_TITLE,
     NEW_POST_FOR_EXERCISE_TITLE,
     NEW_POST_FOR_LECTURE_TITLE,
+    Notification,
     NotificationType,
 } from 'app/entities/notification.model';
+import { GroupNotification } from 'app/entities/group-notification.model';
+import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { OptionSpecifier } from 'app/shared/constants/user-settings.constants';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationSettingsService {
@@ -44,7 +44,7 @@ export class NotificationSettingsService {
      */
     public isNotificationAllowedBySettings(notification: Notification, notificationTitleActivationMap: Map<string, boolean>): boolean {
         if (notification instanceof GroupNotification || notification.notificationType === NotificationType.GROUP || notification.notificationType === NotificationType.SINGLE) {
-            if (notification.notificationType == NotificationType.GROUP && notification.title) {
+            if (notification.title) {
                 return notificationTitleActivationMap.get(notification.title) ?? true;
             }
         }

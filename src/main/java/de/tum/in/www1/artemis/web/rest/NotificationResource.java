@@ -114,7 +114,7 @@ public class NotificationResource {
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         Set<NotificationOption> notificationOptions = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
-        Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(notificationOptions);
+        Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(true, notificationOptions);
         Set<String> deactivatedTitles = notificationSettingsService.convertNotificationTypesToTitles(deactivatedTypes);
         final Page<Notification> page;
         if (deactivatedTitles.isEmpty()) {

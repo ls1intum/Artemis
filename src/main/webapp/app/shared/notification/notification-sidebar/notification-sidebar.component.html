@@ -14,13 +14,13 @@
         <div class="header pt-4 px-3">
             <div class="d-flex header-icon justify-content-between align-items-baseline">
                 <a class="ps-2" [routerLink]="['/user-settings/notifications']" (click)="toggleSidebar()">
-                    <fa-icon [icon]="'cog'"></fa-icon>
+                    <fa-icon class="ng-fa-icon" [icon]="'cog'"></fa-icon>
                 </a>
                 <h5 class="mb-3 text-center">
                     {{ 'artemisApp.notification.notifications' | artemisTranslate }}
                 </h5>
                 <button class="close header-icon border-0 bg-transparent pe-2" (click)="toggleSidebar()">
-                    <fa-icon [icon]="'times'"></fa-icon>
+                    <fa-icon class="ng-fa-icon" [icon]="'times'"></fa-icon>
                 </button>
             </div>
             <div class="text-end">

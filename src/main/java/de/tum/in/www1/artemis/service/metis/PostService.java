@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -61,6 +62,8 @@ public class PostService extends PostingService {
 
         // set author to current user
         post.setAuthor(user);
+        // set default value display priority -> NONE
+        post.setDisplayPriority(DisplayPriority.NONE);
         Post savedPost = postRepository.save(post);
 
         sendNotification(savedPost);
@@ -94,6 +97,11 @@ public class PostService extends PostingService {
         existingPost.setContent(post.getContent());
         existingPost.setVisibleForStudents(post.isVisibleForStudents());
         existingPost.setTags(post.getTags());
+
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            existingPost.setDisplayPriority(post.getDisplayPriority());
+        }
+
         Post updatedPost = postRepository.save(existingPost);
 
         if (updatedPost.getExercise() != null) {
@@ -102,6 +110,21 @@ public class PostService extends PostingService {
         }
 
         return updatedPost;
+    }
+
+    /**
+     * Invokes the updatePost method to persist the change of displayPriority
+     *
+     * @param courseId          id of the course the post belongs to
+     * @param postId            id of the post to change the pin state for
+     * @param displayPriority   new displayPriority
+     * @return updated post that was persisted
+     */
+    public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
+        Post post = postRepository.findByIdElseThrow(postId);
+        post.setDisplayPriority(displayPriority);
+
+        return updatePost(courseId, post);
     }
 
     /**
@@ -264,7 +287,7 @@ public class PostService extends PostingService {
             // set exercise retrieved from database to show title in notification
             Exercise exercise = exerciseRepository.findByIdElseThrow(post.getExercise().getId());
             post.setExercise(exercise);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForExercise(post);
+            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post);
             // protect sample solution, grading instructions, etc.
             post.getExercise().filterSensitiveInformation();
         }
@@ -273,7 +296,7 @@ public class PostService extends PostingService {
             // set lecture retrieved from database to show title in notification
             Lecture lecture = lectureRepository.findByIdElseThrow(post.getLecture().getId());
             post.setLecture(lecture);
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForLecture(post);
+            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post);
         }
     }
 
