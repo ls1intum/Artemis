@@ -22,7 +22,6 @@ const expect = chai.expect;
 describe('TextClusterStatisticsComponent', () => {
     let fixture: ComponentFixture<ClusterStatisticsComponent>;
     let component: ClusterStatisticsComponent;
-    let httpMock: HttpTestingController;
     let compiled: any;
     let textExerciseService: TextExerciseService;
 
@@ -48,7 +47,6 @@ describe('TextClusterStatisticsComponent', () => {
                 fixture.detectChanges();
                 textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
             });
-        httpMock = getTestBed().get(HttpTestingController);
     });
 
     it('should initialize', () => {
