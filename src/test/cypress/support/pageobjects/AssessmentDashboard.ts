@@ -4,11 +4,11 @@ export class AssessmentDashboard {
     }
 
     confirmInstruction() {
-        cy.contains(/I have read and understood the instructions|Start participating in the exercise/).click();
+        cy.get('.guided-tour-instructions-button').click();
     }
 
     startNewAssessment() {
-        cy.contains('Start new assessment').should('be.visible').click();
+        cy.get('.guided-tour-new-assessment-btn').click();
     }
 
     startAssessing() {

@@ -1,7 +1,7 @@
 import { generateUUID } from '../../support/utils';
 import { artemis } from '../../support/ArtemisTesting';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
-import { GROUP_SYNCHRONIZATION } from '../../support/constants';
+import { BASE_API, GROUP_SYNCHRONIZATION, PUT } from '../../support/constants';
 import dayjs from 'dayjs';
 import { ProgrammingExerciseSubmission } from '../../support/pageobjects/OnlineEditorPage';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
@@ -29,7 +29,7 @@ let examTitle: string;
 describe('Exam Assessment', () => {
     before('Create a course', () => {
         cy.login(admin);
-        courseManagementRequests.createCourse(courseName, courseShortName).then((response) => {
+        courseManagementRequests.createCourse().then((response) => {
             course = response.body;
             courseManagementRequests.addStudentToCourse(course.id, artemis.users.getStudentOne().username);
             courseManagementRequests.addTutorToCourse(course, artemis.users.getTutor());
@@ -57,33 +57,34 @@ describe('Exam Assessment', () => {
         });
 
         it('Assess a modeling exercise submission', () => {
-            courseManagementRequests.createModelingExercise({ exerciseGroup });
-            courseManagementRequests.generateMissingIndividualExams(exam);
-            courseManagementRequests.prepareExerciseStartForExam(exam);
-            cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-            examStartEnd.startExam();
-            cy.contains('Cypress modeling exercise').should('be.visible').click();
-            modelingEditor.addComponentToModel(1);
-            modelingEditor.addComponentToModel(2);
-            modelingEditor.addComponentToModel(3);
-            cy.intercept(PUT, BASE_API + 'exercises/*/modeling-submissions').as('createModelingSubmission');
-            cy.contains('Save').click();
-            cy.wait('@createModelingSubmission');
-            cy.get('#exam-navigation-bar').find('.btn-danger').click();
-            examStartEnd.finishExam();
-            cy.login(tutor, '/course-management/' + course.id + '/exams');
-            cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
-            assessmentDashboard.startAssessing();
-            modelingAssessment.addNewFeedback(2, 'Noice');
-            modelingAssessment.openAssessmentForComponent(1);
-            modelingAssessment.assessComponent(1, 'Good');
-            modelingAssessment.openAssessmentForComponent(2);
-            modelingAssessment.assessComponent(0, 'Neutral');
-            modelingAssessment.openAssessmentForComponent(3);
-            modelingAssessment.assessComponent(-1, 'Wrong');
-            assessmentDashboard.submitAssessment();
-            cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-            cy.get('.question-options').contains('2 of 10 points').should('be.visible');
+            courseManagementRequests.createModelingExercise({ exerciseGroup }).then((modelingResponse) => {
+                courseManagementRequests.generateMissingIndividualExams(exam);
+                courseManagementRequests.prepareExerciseStartForExam(exam);
+                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                examStartEnd.startExam();
+                cy.contains(modelingResponse.body.title).should('be.visible').click();
+                modelingEditor.addComponentToModel(1);
+                modelingEditor.addComponentToModel(2);
+                modelingEditor.addComponentToModel(3);
+                cy.intercept(PUT, BASE_API + 'exercises/*/modeling-submissions').as('createModelingSubmission');
+                cy.contains('Save').click();
+                cy.wait('@createModelingSubmission');
+                cy.get('#exam-navigation-bar').find('.btn-danger').click();
+                examStartEnd.finishExam();
+                cy.login(tutor, '/course-management/' + course.id + '/exams');
+                cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
+                assessmentDashboard.startAssessing();
+                modelingAssessment.addNewFeedback(2, 'Noice');
+                modelingAssessment.openAssessmentForComponent(1);
+                modelingAssessment.assessComponent(1, 'Good');
+                modelingAssessment.openAssessmentForComponent(2);
+                modelingAssessment.assessComponent(0, 'Neutral');
+                modelingAssessment.openAssessmentForComponent(3);
+                modelingAssessment.assessComponent(-1, 'Wrong');
+                assessmentDashboard.submitAssessment();
+                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                cy.get('.question-options').contains('2 of 10 points').should('be.visible');
+            });
         });
 
         it('Assess a text exercise submission', () => {
@@ -111,7 +112,6 @@ describe('Exam Assessment', () => {
     describe('Exam Programming Exercise Assessment', () => {
         const examEnd = (Cypress.env('isBamboo') ? GROUP_SYNCHRONIZATION : 0) + 115000;
 
-
         beforeEach('Create Exam', () => {
             prepareExam(dayjs().add(examEnd, 'milliseconds'));
         });
@@ -125,7 +125,7 @@ describe('Exam Assessment', () => {
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                 examStartEnd.startExam();
                 cy.contains(programmingExercise.title).should('be.visible').click();
-                makeSubmissionAndVerifyResults(partiallySuccessful, () => {
+                makeSubmissionAndVerifyResults(partiallySuccessful, programmingExercise.packageName, () => {
                     cy.get('#exam-navigation-bar').find('.btn-danger').click();
                     examStartEnd.finishExam();
                     cy.get('.alert').should('be.visible');
@@ -142,7 +142,7 @@ describe('Exam Assessment', () => {
     });
 });
 
-function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
+function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmission, packageName: string, verifyOutput: () => void) {
     // We create an empty file so that the file browser does not create an extra subfolder when all files are deleted
     editorPage.createFileInRootPackage('placeholderFile');
     // We delete all existing files, so we can create new files and don't have to delete their already existing content
