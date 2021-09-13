@@ -24,7 +24,7 @@ import tech.jhipster.config.JHipsterConstants;
 @EnableConfigurationProperties({ ApplicationProperties.class })
 public class GatewayApp {
 
-    private static final Logger log = LoggerFactory.getLogger(GatewayApp.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GatewayApp.class);
 
     private final Environment env;
 
@@ -43,10 +43,10 @@ public class GatewayApp {
     public void initApplication() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
-            log.error("You have misconfigured your application! It should not run " + "with both the 'dev' and 'prod' profiles at the same time.");
+            LOGGER.error("You have misconfigured your application! It should not run " + "with both the 'dev' and 'prod' profiles at the same time.");
         }
         if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_CLOUD)) {
-            log.error("You have misconfigured your application! It should not " + "run with both the 'dev' and 'cloud' profiles at the same time.");
+            LOGGER.error("You have misconfigured your application! It should not " + "run with both the 'dev' and 'cloud' profiles at the same time.");
         }
     }
 
@@ -71,9 +71,9 @@ public class GatewayApp {
             hostAddress = InetAddress.getLocalHost().getHostAddress();
         }
         catch (UnknownHostException e) {
-            log.warn("The host name could not be determined, using `localhost` as fallback");
+            LOGGER.warn("The host name could not be determined, using `localhost` as fallback");
         }
-        log.info(
+        LOGGER.info(
                 "\n----------------------------------------------------------\n\t" + "Application '{}' is running! Access URLs:\n\t" + "Local: \t\t{}://localhost:{}{}\n\t"
                         + "External: \t{}://{}:{}{}\n\t" + "Profile(s): \t{}\n----------------------------------------------------------",
                 env.getProperty("spring.application.name"), protocol, serverPort, contextPath, protocol, hostAddress, serverPort, contextPath, env.getActiveProfiles());
@@ -82,7 +82,7 @@ public class GatewayApp {
         if (configServerStatus == null) {
             configServerStatus = "Not found or not setup for this application";
         }
-        log.info("\n----------------------------------------------------------\n\t" + "Config Server: \t{}\n----------------------------------------------------------",
+        LOGGER.info("\n----------------------------------------------------------\n\t" + "Config Server: \t{}\n----------------------------------------------------------",
                 configServerStatus);
     }
 }

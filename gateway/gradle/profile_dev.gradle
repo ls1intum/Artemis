@@ -1,5 +1,5 @@
 dependencies {
-    developmentOnly "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
+    developmentOnly "org.springframework.boot:spring-boot-devtools:${spring_boot_version}"
 }
 
 def profiles = "dev"
