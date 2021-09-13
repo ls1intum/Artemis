@@ -1,7 +1,7 @@
 import { generateUUID } from '../../support/utils';
 import { artemis } from '../../support/ArtemisTesting';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
-import { BASE_API, GROUP_SYNCHRONIZATION, PUT } from '../../support/constants';
+import { BASE_API, GROUP_SYNCHRONIZATION, PUT, POST } from '../../support/constants';
 import dayjs from 'dayjs';
 import { ProgrammingExerciseSubmission } from '../../support/pageobjects/OnlineEditorPage';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
