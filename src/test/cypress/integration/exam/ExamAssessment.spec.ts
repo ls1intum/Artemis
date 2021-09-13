@@ -18,9 +18,6 @@ const editorPage = artemis.pageobjects.onlineEditor;
 const assessmentDashboard = artemis.pageobjects.assessmentDashboard;
 
 // Common primitives
-let uid = generateUUID();
-const courseName = 'Cypress course' + uid;
-const courseShortName = 'cypress' + uid;
 const admin = artemis.users.getAdmin();
 const student = artemis.users.getStudentOne();
 const tutor = artemis.users.getTutor();
