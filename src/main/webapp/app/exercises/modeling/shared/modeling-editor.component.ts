@@ -1,11 +1,11 @@
-import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges, ViewChild, Output, EventEmitter } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, UMLDiagramType, UMLElementType, UMLModel, UMLRelationship, UMLRelationshipType } from '@ls1intum/apollon';
-import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import interact from 'interactjs';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { MODELING_EDITOR_MAX_HEIGHT, MODELING_EDITOR_MAX_WIDTH, MODELING_EDITOR_MIN_HEIGHT, MODELING_EDITOR_MIN_WIDTH } from 'app/shared/constants/modeling.constants';
 import { isFullScreen } from 'app/shared/util/fullscreen.util';
+import interact from 'interactjs';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -24,7 +24,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     @Input()
     readOnly = false;
     @Input()
-    resizeOptions: { initialWidth?: string; maxWidth?: number; verticalResize?: boolean };
+    resizeOptions: { horizontalResize?: boolean; verticalResize?: boolean };
     @Input()
     showHelpButton = true;
     @Input()
@@ -41,7 +41,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     private apollonEditor?: ApollonEditor;
     private modelSubscription: number;
 
-    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2, private modalService: NgbModal, private guidedTourService: GuidedTourService) {}
+    constructor(private modalService: NgbModal, private guidedTourService: GuidedTourService) {}
 
     /**
      * Initializes the Apollon editor.
@@ -56,16 +56,13 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
             }
         });
         if (this.resizeOptions) {
-            if (this.resizeOptions.initialWidth) {
-                this.renderer.setStyle(this.resizeContainer.nativeElement, 'width', this.resizeOptions.initialWidth);
-            }
             interact('.resizable')
                 .resizable({
-                    edges: { left: false, right: this.resizeOptions.initialWidth && '.draggable-right', bottom: this.resizeOptions.verticalResize, top: false },
+                    edges: { left: false, right: this.resizeOptions.horizontalResize && '.draggable-right', bottom: this.resizeOptions.verticalResize, top: false },
                     modifiers: [
                         interact.modifiers!.restrictSize({
-                            min: { width: 15, height: 1000 },
-                            max: { width: this.resizeOptions.maxWidth ? this.resizeOptions.maxWidth : 2500, height: 20000 },
+                            min: { width: MODELING_EDITOR_MIN_WIDTH, height: MODELING_EDITOR_MIN_HEIGHT },
+                            max: { width: MODELING_EDITOR_MAX_WIDTH, height: MODELING_EDITOR_MAX_HEIGHT },
                         }),
                     ],
                     inertia: true,
@@ -78,7 +75,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
                 })
                 .on('resizemove', (event: any) => {
                     const target = event.target;
-                    if (this.resizeOptions.initialWidth) {
+                    if (this.resizeOptions.horizontalResize) {
                         target.style.width = event.rect.width + 'px';
                     }
                     if (this.resizeOptions.verticalResize) {

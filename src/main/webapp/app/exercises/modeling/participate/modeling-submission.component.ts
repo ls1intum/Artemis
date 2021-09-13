@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewInit, Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Selection, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -17,21 +17,20 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ButtonType } from 'app/shared/components/button.component';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
 import { omit } from 'lodash';
 import * as moment from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
-import { Subject } from 'rxjs';
-import { Subscription } from 'rxjs';
-import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
-import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
+import { Subject, Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-modeling-submission',
