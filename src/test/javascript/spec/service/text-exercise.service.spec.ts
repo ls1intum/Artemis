@@ -11,12 +11,12 @@ import { Router } from '@angular/router';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
-import * as chai from 'chai';
 import * as moment from 'moment';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import * as chai from 'chai';
 import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
-import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 
 const expect = chai.expect;
 
@@ -52,7 +52,7 @@ describe('TextExercise Service', () => {
         plagiarismResults.exercise = elemDefault;
         plagiarismResults.comparisons = [];
         plagiarismResults.duration = 40;
-        plagiarismResults.similarityDistribution = [1, 10];
+        plagiarismResults.similarityDistribution = [4, 10];
     });
 
     describe('Service methods', () => {
@@ -149,14 +149,14 @@ describe('TextExercise Service', () => {
         });
 
         it('should get plagiarism result', () => {
-            const expectedReturn = { ...plagiarismResults };
+            const expectedReturnValue = { ...plagiarismResults };
             service
                 .getLatestPlagiarismResult(123)
                 .pipe(take(1))
                 .subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(expectedReturn);
-            expect(requestResult).to.equal(expectedReturn);
+            req.flush(expectedReturnValue);
+            expect(requestResult).to.equal(expectedReturnValue);
         });
 
         it('should retrieve TextExercise cluster statistics', () => {
