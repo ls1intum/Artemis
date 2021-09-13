@@ -110,8 +110,6 @@ describe('Exam Assessment', () => {
     });
 
     describe('Exam Programming Exercise Assessment', () => {
-        let programmingExerciseName: string;
-        let programmingExerciseShortName: string;
         const examEnd = (Cypress.env('isBamboo') ? GROUP_SYNCHRONIZATION / 1000 : 0) + 115;
 
 
