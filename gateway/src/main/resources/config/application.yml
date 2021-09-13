@@ -126,7 +126,7 @@ spring:
         - id: artemis-api-route
           uri: lb://artemis
           predicates:
-          - Path=/api/**,/time,/websocket/tracker/info,/websocket/tracker/info/**,/management/**
+          - Path=/api/**,/time,/websocket/tracker/info,/websocket/tracker/info/**,/management/**,/public/**
         # Normal Websocket route
         - id: websocket_route
           uri: lb:ws://artemis

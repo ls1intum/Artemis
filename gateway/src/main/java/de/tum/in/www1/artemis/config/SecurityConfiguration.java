@@ -93,6 +93,7 @@ public class SecurityConfiguration {
             .pathMatchers("/websocket/tracker").hasAuthority(Role.ADMIN.getAuthority())
             .pathMatchers("/websocket/**").permitAll()
             .pathMatchers("/services/artemis/api/authenticate").permitAll()
+            .pathMatchers("/services/artemis/public/**").permitAll()
             .pathMatchers("/services/artemis/time").permitAll()
             .pathMatchers("/services/**").authenticated()
             .pathMatchers("/management/health").permitAll()
@@ -100,6 +101,7 @@ public class SecurityConfiguration {
             .pathMatchers("/management/info").permitAll()
             .pathMatchers("/management/prometheus").permitAll()
             .pathMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
+            .pathMatchers("/public/**").permitAll()
             .pathMatchers("/time").permitAll();
         // @formatter:on
         return http.build();
