@@ -2,11 +2,11 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import de.tum.in.www1.artemis.config.KafkaProperties;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -19,9 +19,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.testcontainers.containers.KafkaContainer;
 
+import de.tum.in.www1.artemis.config.KafkaProperties;
+
 class GatewayKafkaResourceIT {
 
     private static boolean started = false;
+
     private static KafkaContainer kafkaContainer;
 
     private WebTestClient client;
@@ -58,14 +61,7 @@ class GatewayKafkaResourceIT {
 
     @Test
     void producesMessages() {
-        client
-            .post()
-            .uri("/api/gateway-kafka/publish/topic-produce?message=value-produce")
-            .exchange()
-            .expectStatus()
-            .isOk()
-            .expectHeader()
-            .contentType(MediaType.APPLICATION_JSON);
+        client.post().uri("/api/gateway-kafka/publish/topic-produce?message=value-produce").exchange().expectStatus().isOk().expectHeader().contentType(MediaType.APPLICATION_JSON);
 
         Map<String, Object> consumerProps = new HashMap<>(getConsumerProps("group-produce"));
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
@@ -84,18 +80,8 @@ class GatewayKafkaResourceIT {
 
         producer.send(new ProducerRecord<>("topic-consume", "value-consume"));
 
-        String value = client
-            .get()
-            .uri("/api/gateway-kafka/consume?topic=topic-consume")
-            .accept(MediaType.TEXT_EVENT_STREAM)
-            .exchange()
-            .expectStatus()
-            .isOk()
-            .expectHeader()
-            .contentTypeCompatibleWith(MediaType.TEXT_EVENT_STREAM)
-            .returnResult(String.class)
-            .getResponseBody()
-            .blockFirst(Duration.ofSeconds(10));
+        String value = client.get().uri("/api/gateway-kafka/consume?topic=topic-consume").accept(MediaType.TEXT_EVENT_STREAM).exchange().expectStatus().isOk().expectHeader()
+                .contentTypeCompatibleWith(MediaType.TEXT_EVENT_STREAM).returnResult(String.class).getResponseBody().blockFirst(Duration.ofSeconds(10));
 
         assertThat(value).isEqualTo("value-consume");
     }

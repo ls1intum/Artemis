@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import java.net.URI;
 import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,6 +15,7 @@ import org.springframework.cloud.gateway.route.Route;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+
 import reactor.core.publisher.Flux;
 import springfox.documentation.swagger.web.SwaggerResource;
 import springfox.documentation.swagger.web.SwaggerResourcesProvider;
@@ -34,31 +36,11 @@ class GatewaySwaggerResourcesProviderTest {
     void shouldGet() {
         // Given
         ReflectionTestUtils.setField(gatewaySwaggerResourcesProvider, "gatewayName", "burger");
-        when(swaggerResourcesProvider.get())
-            .thenReturn(
-                List.of(
-                    swaggerResource("default", "/v3/api-docs"),
-                    swaggerResource("default", "/v3/api-docs?group=management"),
-                    swaggerResource("default", "/v3/api-docs?group=openapi")
-                )
-            );
+        when(swaggerResourcesProvider.get()).thenReturn(List.of(swaggerResource("default", "/v3/api-docs"), swaggerResource("default", "/v3/api-docs?group=management"),
+                swaggerResource("default", "/v3/api-docs?group=openapi")));
         when(routeLocator.getRoutes())
-            .thenReturn(
-                Flux.just(
-                    Route
-                        .async()
-                        .id("ReactiveCompositeDiscoveryClient_BURGER")
-                        .uri(URI.create("lb://BURGER"))
-                        .predicate(exchange -> true)
-                        .build(),
-                    Route
-                        .async()
-                        .id("ReactiveCompositeDiscoveryClient_BEER")
-                        .uri(URI.create("lb://BEER"))
-                        .predicate(exchange -> true)
-                        .build()
-                )
-            );
+                .thenReturn(Flux.just(Route.async().id("ReactiveCompositeDiscoveryClient_BURGER").uri(URI.create("lb://BURGER")).predicate(exchange -> true).build(),
+                        Route.async().id("ReactiveCompositeDiscoveryClient_BEER").uri(URI.create("lb://BEER")).predicate(exchange -> true).build()));
 
         // When
         List<SwaggerResource> result = gatewaySwaggerResourcesProvider.get();

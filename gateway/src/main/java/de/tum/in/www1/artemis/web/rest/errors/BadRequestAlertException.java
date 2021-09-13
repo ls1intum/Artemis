@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest.errors;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.zalando.problem.AbstractThrowableProblem;
 import org.zalando.problem.Status;
 

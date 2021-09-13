@@ -1,10 +1,5 @@
 package de.tum.in.www1.artemis.web.filter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -13,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +24,13 @@ import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -46,7 +49,8 @@ public class ModifyServersOpenApiFilter implements GlobalFilter, Ordered {
 
             // replace response with decorator
             return chain.filter(exchange.mutate().response(decoratedResponse).build());
-        } else {
+        }
+        else {
             return chain.filter(exchange);
         }
     }
@@ -56,19 +60,18 @@ public class ModifyServersOpenApiFilter implements GlobalFilter, Ordered {
         return -1;
     }
 
-    public ModifyServersOpenApiInterceptor createModifyServersOpenApiInterceptor(
-        String path,
-        ServerHttpResponse originalResponse,
-        DataBufferFactory bufferFactory
-    ) {
+    public ModifyServersOpenApiInterceptor createModifyServersOpenApiInterceptor(String path, ServerHttpResponse originalResponse, DataBufferFactory bufferFactory) {
         return new ModifyServersOpenApiInterceptor(path, originalResponse, bufferFactory);
     }
 
     public class ModifyServersOpenApiInterceptor extends ServerHttpResponseDecorator {
 
         private final String path;
+
         private final ServerHttpResponse originalResponse;
+
         private final DataBufferFactory bufferFactory;
+
         private String rewritedBody = "";
 
         private ModifyServersOpenApiInterceptor(String path, ServerHttpResponse originalResponse, DataBufferFactory bufferFactory) {
@@ -119,7 +122,8 @@ public class ModifyServersOpenApiFilter implements GlobalFilter, Ordered {
 
                 rewritedBody = jsonBody.toString();
                 return rewritedBodyToDataBuffer();
-            } catch (JsonProcessingException e) {
+            }
+            catch (JsonProcessingException e) {
                 log.error("Error when modify servers from api-doc of {}: {}", path, e.getMessage());
             }
             return join;
@@ -144,11 +148,8 @@ public class ModifyServersOpenApiFilter implements GlobalFilter, Ordered {
         }
 
         private boolean isZippedResponse() {
-            return (
-                !originalResponse.getHeaders().isEmpty() &&
-                originalResponse.getHeaders().get(HttpHeaders.CONTENT_ENCODING) != null &&
-                Objects.requireNonNull(originalResponse.getHeaders().get(HttpHeaders.CONTENT_ENCODING)).contains("gzip")
-            );
+            return (!originalResponse.getHeaders().isEmpty() && originalResponse.getHeaders().get(HttpHeaders.CONTENT_ENCODING) != null
+                    && Objects.requireNonNull(originalResponse.getHeaders().get(HttpHeaders.CONTENT_ENCODING)).contains("gzip"));
         }
 
         private byte[] unzipContent(byte[] content) {
@@ -157,7 +158,8 @@ public class ModifyServersOpenApiFilter implements GlobalFilter, Ordered {
                 byte[] unzippedContent = gzipInputStream.readAllBytes();
                 gzipInputStream.close();
                 return unzippedContent;
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 log.error("Error when unzip content during modify servers from api-doc of {}: {}", path, e.getMessage());
             }
             return content;
@@ -171,7 +173,8 @@ public class ModifyServersOpenApiFilter implements GlobalFilter, Ordered {
                 gzipOutputStream.flush();
                 gzipOutputStream.close();
                 return byteArrayOutputStream.toByteArray();
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 log.error("Error when zip content during modify servers from api-doc of {}: {}", path, e.getMessage());
             }
             return content.getBytes();

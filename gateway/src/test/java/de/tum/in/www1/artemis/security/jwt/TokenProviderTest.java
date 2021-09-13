@@ -2,14 +2,10 @@ package de.tum.in.www1.artemis.security.jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import de.tum.in.www1.artemis.security.Role;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,6 +13,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import de.tum.in.www1.artemis.security.Role;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import tech.jhipster.config.JHipsterProperties;
 
 class TokenProviderTest {
@@ -24,6 +26,7 @@ class TokenProviderTest {
     private static final long ONE_MINUTE = 60000;
 
     private Key key;
+
     private TokenProvider tokenProvider;
 
     @BeforeEach
@@ -109,7 +112,7 @@ class TokenProviderTest {
 
     private Authentication createAuthentication() {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS));
+        authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
         return new UsernamePasswordAuthenticationToken("anonymous", "anonymous", authorities);
     }
 
@@ -118,15 +121,8 @@ class TokenProviderTest {
     }
 
     private String createTokenWithDifferentSignature() {
-        Key otherKey = Keys.hmacShaKeyFor(
-            Decoders.BASE64.decode("Xfd54a45s65fds737b9aafcb3412e07ed99b267f33413274720ddbb7f6c5e64e9f14075f2d7ed041592f0b7657baf8")
-        );
+        Key otherKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode("Xfd54a45s65fds737b9aafcb3412e07ed99b267f33413274720ddbb7f6c5e64e9f14075f2d7ed041592f0b7657baf8"));
 
-        return Jwts
-            .builder()
-            .setSubject("anonymous")
-            .signWith(otherKey, SignatureAlgorithm.HS512)
-            .setExpiration(new Date(new Date().getTime() + ONE_MINUTE))
-            .compact();
+        return Jwts.builder().setSubject("anonymous").signWith(otherKey, SignatureAlgorithm.HS512).setExpiration(new Date(new Date().getTime() + ONE_MINUTE)).compact();
     }
 }

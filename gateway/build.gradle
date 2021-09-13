@@ -33,7 +33,7 @@ sourceCompatibility=16
 targetCompatibility=16
 
 apply from: "gradle/docker.gradle"
-apply from: "gradle/sonar.gradle"
+//apply from: "gradle/sonar.gradle"
 apply from: "gradle/swagger.gradle"
 //jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
 
@@ -88,7 +88,6 @@ springBoot {
 
 test {
     useJUnitPlatform()
-    exclude "**/*IT*", "**/*IntTest*"
     testLogging {
         events 'FAILED', 'SKIPPED'
     }
@@ -99,36 +98,10 @@ test {
     reports.html.enabled = false
 }
 
-task integrationTest(type: Test) {
-    useJUnitPlatform()
-    description = "Execute integration tests."
-    group = "verification"
-    include "**/*IT*", "**/*IntTest*"
-    testLogging {
-        events 'FAILED', 'SKIPPED'
-    }
-    jvmArgs += '-Djava.security.egd=file:/dev/./urandom -Xmx256m'
-    if (project.hasProperty('testcontainers')) {
-        environment 'SPRING_PROFILES_ACTIVE', 'testcontainers'
-    }
-
-    // uncomment if the tests reports are not generated
-    // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
-    // ignoreFailures true
-    reports.html.enabled = false
-}
-
-check.dependsOn integrationTest
 task testReport(type: TestReport) {
     destinationDir = file("$buildDir/reports/tests")
     reportOn test
 }
-
-task integrationTestReport(type: TestReport) {
-    destinationDir = file("$buildDir/reports/tests")
-    reportOn integrationTest
-}
-
 
 gitProperties {
     failOnNoGitDirectory = false
@@ -151,7 +124,7 @@ configurations {
         resolutionStrategy {
             // Inherited version from Spring Boot can't be used because of regressions:
             // To be removed as soon as spring-boot use the same version
-            force 'org.liquibase:liquibase-core:4.3.5'
+//            force 'org.liquibase:liquibase-core:4.3.5'
         }
     }
 }
@@ -230,7 +203,6 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-starter-test"
     testImplementation "org.springframework.security:spring-security-test"
     testImplementation "org.springframework.boot:spring-boot-test"
-    testImplementation "io.projectreactor.tools:blockhound-junit-platform:${blockhound_junit_platform_version}"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_platform_launcher_version}"
     testImplementation "com.tngtech.archunit:archunit-junit5-api:${archunit_junit5_version}"
     testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:${archunit_junit5_version}"
