@@ -24,6 +24,10 @@ export class AssessmentDashboard {
         cy.get('.col-lg-6 >>>> :nth-child(2) > :nth-child(2)').type(feedback);
     }
 
+    saveAssessment() {
+        cy.get('[jhitranslate="entity.action.save"]').click();
+    }
+
     submitAssessment() {
         cy.get('[jhitranslate="entity.action.submit"]').click();
         cy.on('window:confirm', () => true);

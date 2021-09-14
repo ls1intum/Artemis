@@ -86,6 +86,7 @@ describe('Exam Assessment', () => {
                 modelingAssessment.assessComponent(0, 'Neutral');
                 modelingAssessment.openAssessmentForComponent(3);
                 modelingAssessment.assessComponent(-1, 'Wrong');
+                assessmentDashboard.saveAssessment();
                 assessmentDashboard.submitAssessment();
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                 cy.get('.question-options').contains('2 of 10 points').should('be.visible');
