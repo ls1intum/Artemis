@@ -1,4 +1,4 @@
-import { CypressCredentials } from './../support/users';
+import { CypressCredentials } from '../support/users';
 import allSuccessful from '../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import partiallySuccessful from '../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import { artemis } from '../support/ArtemisTesting';
