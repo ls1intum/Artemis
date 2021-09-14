@@ -9,7 +9,6 @@ import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
@@ -166,7 +165,6 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      */
     private countDragAndDrop() {
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
-        const dndQuestion = this.question as DragAndDropQuestion;
         this.wronglyMappedDragAndDropItems = this.incorrectlyMappedDragAndDropItems;
         this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems - this.wronglyMappedDragAndDropItems;
 
