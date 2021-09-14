@@ -8,12 +8,12 @@ resources:
   - secrets/artemis-secrets.yml
   - secrets/jhipster-registry-secret.yml
   #ConfigMaps
-  - configmap/application-configmap.yml
-  - configmap/artemis-configmap.yml
+  - configmaps/application-configmap.yml
+  - configmaps/artemis-configmap.yml
   #Stateful sets
-  - statefulset/jhipster-registry.yml
+  - statefulsets/jhipster-registry.yml
   #Deployments
-  - deployment/artemis-deployment.yml
-  - deployment/artemis-ingress.yml
-  - deployment/artemis-mysql.yml
-  - deployment/kafka.yml
+  - deployments/artemis-deployment.yml
+  - deployments/artemis-ingress.yml
+  - deployments/artemis-mysql.yml
+  - deployments/kafka.yml
