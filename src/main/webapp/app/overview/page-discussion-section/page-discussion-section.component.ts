@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -19,7 +19,7 @@ import { HttpResponse } from '@angular/common/http';
     styleUrls: ['./page-discussion-section.scss'],
     providers: [MetisService],
 })
-export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
+export class PageDiscussionSectionComponent implements OnInit, AfterViewInit, OnDestroy {
     @Input() exercise?: Exercise;
     @Input() lecture?: Lecture;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
@@ -59,14 +59,6 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
             this.posts = posts;
             this.isLoading = false;
         });
-    }
-
-    /**
-     * on changes: fetches the posts for the exercise or lecture the discussion section is placed at,
-     * triggers the creation of an empty post
-     */
-    ngOnChanges(): void {
-        this.createEmptyPost();
     }
 
     /**
