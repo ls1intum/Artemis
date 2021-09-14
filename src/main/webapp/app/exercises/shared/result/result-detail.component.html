@@ -80,8 +80,8 @@
  -->
     <p *ngIf="exerciseType === ExerciseType.PROGRAMMING && result.submission">
         <span>{{ 'artemisApp.result.linkedCommit' | artemisTranslate }}</span>
-        <a *ngIf="getCommitUrl(); else commitWithoutLink" href="{{ getCommitUrl() }}" target="_blank" rel="noopener noreferrer">{{ getCommitHash().substr(0, 11) }}</a>
-        <ng-template #commitWithoutLink>{{ getCommitHash().substr(0, 11) }}</ng-template>
+        <a *ngIf="commitUrl; else commitWithoutLink" href="{{ commitUrl }}" target="_blank" rel="noopener noreferrer">{{ commitHash }}</a>
+        <ng-template #commitWithoutLink>{{ commitHash }}</ng-template>
     </p>
 </div>
 <div class="modal-footer">

@@ -33,28 +33,27 @@ export const createCommitUrl = (
     projectKey: string | undefined,
     participation: Participation | undefined,
     submission: ProgrammingSubmission,
-): string => {
+): string | undefined => {
     const projectKeyLowerCase = projectKey?.toLowerCase();
-    let repoSlug: string | undefined = undefined;
+    let repoSlugPostfix: string | undefined = undefined;
     if (participation?.type === ParticipationType.PROGRAMMING) {
         const studentParticipation = participation as ProgrammingExerciseStudentParticipation;
         if (studentParticipation.repositoryUrl) {
-            repoSlug = projectKeyLowerCase + '-' + studentParticipation.participantIdentifier;
+            repoSlugPostfix = studentParticipation.participantIdentifier;
         }
     } else if (participation?.type === ParticipationType.TEMPLATE) {
         // In case of a test submisson, we need to use the test repository
-        repoSlug = projectKeyLowerCase + (submission?.type === SubmissionType.TEST ? '-tests' : '-exercise');
+        repoSlugPostfix = submission?.type === SubmissionType.TEST ? 'tests' : 'exercise';
     } else if (participation?.type === ParticipationType.SOLUTION) {
         // In case of a test submisson, we need to use the test repository
-        repoSlug = projectKeyLowerCase + (submission?.type === SubmissionType.TEST ? '-tests' : '-solution');
+        repoSlugPostfix = submission?.type === SubmissionType.TEST ? 'tests' : 'solution';
     }
-    if (repoSlug && template && projectKeyLowerCase) {
+    if (repoSlugPostfix && template && projectKeyLowerCase) {
         return template
             .replace('{projectKey}', projectKeyLowerCase)
-            .replace('{repoSlug}', repoSlug)
+            .replace('{repoSlug}', projectKeyLowerCase + '-' + repoSlugPostfix)
             .replace('{commitHash}', submission.commitHash ?? '');
     }
-    return '';
 };
 
 /**

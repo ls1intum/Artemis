@@ -71,9 +71,13 @@ export class ResultDetailComponent implements OnInit {
     showScoreChartTooltip = false;
 
     commitHashURLTemplate?: string;
+    commitHash?: string;
+    commitUrl?: string;
 
     get exercise(): Exercise | undefined {
-        return getExercise(this.result.participation);
+        if (this.result.participation) {
+            return getExercise(this.result.participation);
+        }
     }
 
     constructor(
@@ -139,9 +143,12 @@ export class ResultDetailComponent implements OnInit {
                 this.isLoading = false;
             });
 
+        this.commitHash = this.getCommitHash().substr(0, 11);
+
         // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
         this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
             this.commitHashURLTemplate = info?.commitHashURLTemplate;
+            this.commitUrl = this.getCommitUrl();
         });
     }
 
@@ -375,7 +382,7 @@ export class ResultDetailComponent implements OnInit {
         return (this.result?.submission as ProgrammingSubmission)?.commitHash ?? 'n.a.';
     }
 
-    getCommitUrl(): string {
+    getCommitUrl(): string | undefined {
         const projectKey = (this.exercise as ProgrammingExercise)?.projectKey;
         const programmingSubmission = this.result.submission as ProgrammingSubmission;
         return createCommitUrl(this.commitHashURLTemplate, projectKey, this.result.participation, programmingSubmission);
