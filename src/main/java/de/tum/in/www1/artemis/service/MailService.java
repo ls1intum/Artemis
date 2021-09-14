@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -53,13 +52,9 @@ public class MailService {
 
     private static final String NOTIFICATION = "notification";
 
-    private static final String NOTIFICATION_TYPE_FROM_TITLE = "notificationTypeFromTitle";
-
     private static final String NOTIFICATION_SUBJECT = "notificationSubject";
 
     private static final String NOTIFICATION_URL = "notificationUrl";
-
-    private static final String IS_GROUP_NOTIFICATION = "isGroupNotification";
 
     public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine) {
         this.jHipsterProperties = jHipsterProperties;
@@ -71,36 +66,29 @@ public class MailService {
     /**
      * Sends an e-mail to the specified sender
      *
-     * @param isGroupEmail indicates if the email will be send to an individual or a group
-     * @param users who should be contacted.
+     * @param user who should be contacted.
      * @param subject The mail subject
      * @param content The content of the mail. Can be enriched with HTML tags
      * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
      * @param isHtml Whether the mail should support HTML tags
      */
     @Async
-    public void sendEmail(boolean isGroupEmail, List<User> users, String subject, String content, boolean isMultipart, boolean isHtml) {
-        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}' and content={}", isMultipart, isHtml, users, subject, content);
+    public void sendEmail(User user, String subject, String content, boolean isMultipart, boolean isHtml) {
+        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}' and content={}", isMultipart, isHtml, user, subject, content);
 
         // Prepare message using a Spring helper
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         try {
             MimeMessageHelper message = new MimeMessageHelper(mimeMessage, isMultipart, StandardCharsets.UTF_8.name());
-            if (!isGroupEmail) {
-                message.setTo(users.get(0).getEmail());
-            }
-            else {
-                String[] bcc = users.stream().map(User::getEmail).toArray(String[]::new);
-                message.setBcc(bcc);
-            }
+            message.setTo(user.getEmail());
             message.setFrom(jHipsterProperties.getMail().getFrom());
             message.setSubject(subject);
             message.setText(content, isHtml);
             javaMailSender.send(mimeMessage);
-            log.info("Sent email with subject '{}' to User '{}'", subject, users);
+            log.info("Sent email with subject '{}' to User '{}'", subject, user);
         }
         catch (MailException | MessagingException e) {
-            log.warn("Email could not be sent to user '{}'", users, e);
+            log.warn("Email could not be sent to user '{}'", user, e);
         }
     }
 
@@ -120,7 +108,7 @@ public class MailService {
 
         String content = templateEngine.process(templateName, context);
         String subject = messageSource.getMessage(titleKey, null, context.getLocale());
-        sendEmail(false, Collections.singletonList(user), subject, content, false, true);
+        sendEmail(user, subject, content, false, true);
     }
 
     @Async
@@ -152,48 +140,45 @@ public class MailService {
     /**
      * Sends a notification based Email to one user or to multiple via BCC (i.e. only one email is created)
      * @param notification which properties are used to create the email
-     * @param users that should be contacted (might be only one user)
+     * @param user who should be contacted
+     * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
      */
     @Async
-    public void sendNotificationEmail(Notification notification, List<User> users) {
-        boolean isGroup = notification instanceof GroupNotification;
-        User user = users.get(0);
-        log.debug(isGroup ? "Sending group notification email" : "Sending notification email to '{}'", user.getEmail());
-
-        Locale locale = Locale.forLanguageTag(isGroup ? "en" : user.getLangKey());
-        Context context = new Context(locale);
-
-        if (!isGroup) {
-            context.setVariable(USER, user);
-        }
-        context.setVariable(NOTIFICATION, notification);
+    public void sendNotificationEmail(Notification notification, User user, Object notificationSubject) {
         NotificationType notificationType = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
-        context.setVariable(NOTIFICATION_TYPE_FROM_TITLE, notificationType.toString());
-        context.setVariable(NOTIFICATION_SUBJECT, findNotificationSubject(notification));
+        log.debug("Sending \"{}\" notification email to '{}'", notificationType.name(), user.getEmail());
+
+        Locale locale = Locale.forLanguageTag(user.getLangKey());
+
+        Context context = new Context(locale);
+        context.setVariable(USER, user);
+        context.setVariable(NOTIFICATION, notification);
+        context.setVariable(NOTIFICATION_SUBJECT, notificationSubject);
         // replace with (e.g.) "http://localhost:9000" for local testing
         context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, jHipsterProperties.getMail().getBaseUrl()));
-        context.setVariable(IS_GROUP_NOTIFICATION, isGroup);
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
 
-        String content = templateEngine.process("mail/notificationEmail", context);
+        String content = createContentForNotificationEmailByType(notificationType, context);
         String subject = notification.getTitle();
 
-        sendEmail(isGroup, users, subject, content, false, true);
+        sendEmail(user, subject, content, false, true);
     }
 
     /**
-     * Finds the most important part (the "subject") of the notification text property
-     * E.g. notification (original type = EXERCISE_CREATED) -> "subject" = name of the exercise (this information is part of the text property)
-     * @param notification which "subject" should be extracted
-     * @return the "subject" of the notification (text property)
+     * Creates content for a notification email based on its type
+     * @param notificationType which is used to find the corresponding html template
+     * @param context which is needed for creating the content via the templateEngine
+     * @return created content based on notification type
      */
-    private String findNotificationSubject(Notification notification) {
-        String text = notification.getText();
-        // some notification texts can be customized (e.g. by an instructor) -> usually no [..."subject"...] structure anymore
-        boolean isCustomSubject = text.indexOf('"') == -1;
-        if (isCustomSubject) {
-            return text;
-        }
-        return text.substring(text.indexOf('"') + 1, text.lastIndexOf('"'));
+    private String createContentForNotificationEmailByType(NotificationType notificationType, Context context) {
+        return switch (notificationType) {
+            case ATTACHMENT_CHANGE -> templateEngine.process("mail/notification/attachmentChangedEmail", context);
+            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        };
+    }
+
+    @Async
+    public void sendNotificationEmailForMultipleUsers(GroupNotification notification, List<User> users, Object notificationSubject) {
+        users.forEach(user -> sendNotificationEmail(notification, user, notificationSubject));
     }
 }

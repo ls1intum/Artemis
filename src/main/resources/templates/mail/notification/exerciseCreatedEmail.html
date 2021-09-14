@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="mail/notification/fragments :: head"/>
+<body>
+<th:block th:replace="mail/notification/fragments :: header"/>
+<!-- Message Body Start -->
+<div id="message-body">
+    <th:block th:replace="mail/notification/fragments :: greetingsFullName"/>
+    <div class="notification-content">
+            <span th:text="#{email.notification.title.attachment(
+                ${notificationSubject.getName()},
+                ${notificationSubject.getLecture().getTitle()},
+                ${notificationSubject.getLecture().getCourse().getTitle()}
+                )}">Notification Content for Attachment Changed</span>
+        <!-- Change message : notification text -->
+        <th:block th:replace="mail/notification/fragments :: notificationText"/>
+        <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
+    </div>
+    <th:block th:replace="mail/notification/fragments :: farewell"/>
+</div>
+<!-- Message Body End -->
+<th:block th:replace="mail/notification/fragments :: footer"/>
+</body>
+</html>
+
+<th:block th:case="'EXERCISE_CREATED'">
+    <span th:text="#{email.notification.title.exercise.created(${notificationSubject})}"/>
+</th:block>

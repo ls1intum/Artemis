@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 
-import java.util.Collections;
-
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +36,7 @@ public class SingleUserNotificationService {
      * @param answer for exercise that is new
      */
     public void notifyUserAboutNewAnswerForExercise(AnswerPost answer) {
-        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
+        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE), answer);
     }
 
     /**
@@ -47,7 +45,7 @@ public class SingleUserNotificationService {
      * @param answer for lecture that is new
      */
     public void notifyUserAboutNewAnswerForLecture(AnswerPost answer) {
-        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_POST_FOR_LECTURE));
+        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_POST_FOR_LECTURE), answer);
     }
 
     /**
@@ -55,10 +53,10 @@ public class SingleUserNotificationService {
      * Also creates and sends an email.
      * @param notification that should be saved and sent
      */
-    private void saveAndSend(SingleUserNotification notification) {
+    private void saveAndSend(SingleUserNotification notification, Object notificationSubject) {
         singleUserNotificationRepository.save(notification);
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
-        prepareSingleUserNotificationEmail(notification);
+        prepareSingleUserNotificationEmail(notification, notificationSubject);
     }
 
     /**
@@ -67,7 +65,7 @@ public class SingleUserNotificationService {
      * If the notification type indicates an urgent (critical) email it will be send regardless of settings
      * @param notification that should be checked
      */
-    private void prepareSingleUserNotificationEmail(SingleUserNotification notification) {
+    private void prepareSingleUserNotificationEmail(SingleUserNotification notification, Object notificationSubject) {
         NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
         boolean hasEmailSupport = notificationSettingsService.checkNotificationTypeForEmailSupport(type);
         if (hasEmailSupport) {
@@ -77,8 +75,7 @@ public class SingleUserNotificationService {
                 isAllowedBySettings = notificationSettingsService.checkIfNotificationEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient());
             }
             if (isUrgentEmail || isAllowedBySettings) {
-                // method works with single and group notifications therefore using a list of users
-                mailService.sendNotificationEmail(notification, Collections.singletonList(notification.getRecipient()));
+                mailService.sendNotificationEmail(notification, notification.getRecipient(), notificationSubject);
             }
         }
     }
