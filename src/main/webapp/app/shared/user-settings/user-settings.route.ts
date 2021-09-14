@@ -12,6 +12,7 @@ export const userSettingsState: Routes = [
         canActivate: [UserRouteAccessService],
         data: {
             authorities: [Authority.USER],
+            pageTitle: 'artemisApp.userSettings.title',
         },
         children: [
             {
