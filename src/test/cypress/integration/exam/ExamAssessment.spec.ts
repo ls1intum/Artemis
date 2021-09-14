@@ -89,13 +89,13 @@ describe('Exam Assessment', () => {
                 assessmentDashboard.saveAssessment();
                 assessmentDashboard.submitAssessment();
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                cy.get('.question-options').contains('2 of 10 points').should('be.visible');
+                cy.contains('2 of 10 points').should('be.visible');
             });
         });
 
         it('Assess a text exercise submission', () => {
             const exerciseTitle = 'Cypress Text Exercise';
-            courseManagementRequests.createAndAddTextExerciseToExam(exerciseGroup, exerciseTitle);
+            courseManagementRequests.createTextExercise({ exerciseGroup }, exerciseTitle);
             courseManagementRequests.generateMissingIndividualExams(exam);
             courseManagementRequests.prepareExerciseStartForExam(exam);
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
