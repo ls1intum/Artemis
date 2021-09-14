@@ -1,4 +1,3 @@
-import { PUT } from './../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs';
 import { artemis } from '../../support/ArtemisTesting';
@@ -9,7 +8,7 @@ const courseManagementRequests = artemis.requests.courseManagement;
 
 // page objects
 const examStartEnd = artemis.pageobjects.examStartEnd;
-const textEditor = artemis.pageobjects.textEditor;
+const textEditor = artemis.pageobjects.textExercise.editor;
 
 describe('Exam management', () => {
     let course: any;
@@ -30,6 +29,7 @@ describe('Exam management', () => {
 
     describe('Exam timing', () => {
         let exam: any;
+        let textExercise: any;
         it('Does not show exam before visible date', () => {
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
@@ -68,7 +68,6 @@ describe('Exam management', () => {
 
         it('Student can start after start Date', () => {
             let exerciseGroup: any;
-            let textExercise: any;
             const student = artemis.users.getStudentOne();
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
@@ -81,7 +80,7 @@ describe('Exam management', () => {
                 courseManagementRequests.registerStudentForExam(exam, student);
                 courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.createAndAddTextExerciseToExam(exerciseGroup).then((exerciseResponse) => {
+                    courseManagementRequests.createTextExercise({ exerciseGroup }).then((exerciseResponse) => {
                         textExercise = exerciseResponse.body;
                         courseManagementRequests.generateMissingIndividualExams(exam);
                         courseManagementRequests.prepareExerciseStartForExam(exam);
@@ -92,12 +91,10 @@ describe('Exam management', () => {
                         examStartEnd.startExam();
                         cy.contains('Exam Overview').should('exist');
                         cy.contains(textExercise.title).should('be.visible').click();
-                        cy.fixture('loremIpsum.txt').then((submissionText) => {
-                            textEditor.typeSubmission(submissionText);
+                        cy.fixture('loremIpsum.txt').then((submission) => {
+                            textEditor.typeSubmission(submission);
                         });
-                        cy.intercept(PUT, `/api/exercises/${textExercise.id}/text-submissions`).as('savedSubmission');
-                        cy.contains('Save').click();
-                        cy.wait('@savedSubmission');
+                        textEditor.submit();
                     });
                 });
             });
@@ -117,8 +114,8 @@ describe('Exam management', () => {
                 courseManagementRequests.registerStudentForExam(exam, student);
                 courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.createAndAddTextExerciseToExam(exerciseGroup).then((response) => {
-                        const textExercise = response.body;
+                    courseManagementRequests.createTextExercise({ exerciseGroup }).then((response) => {
+                        textExercise = response.body;
                         courseManagementRequests.generateMissingIndividualExams(exam);
                         courseManagementRequests.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
@@ -131,9 +128,7 @@ describe('Exam management', () => {
                         });
                         cy.contains('Save').click();
                         cy.contains('This is the end of ' + exam.title, { timeout: 20000 });
-                        examStartEnd.setConfirmCheckmark();
-                        examStartEnd.enterFirstnameLastname();
-                        examStartEnd.pressFinish();
+                        examStartEnd.finishExam();
                         cy.get('.alert').contains('Your exam was submitted successfully.');
                     });
                 });
