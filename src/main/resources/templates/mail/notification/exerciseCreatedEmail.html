@@ -2,27 +2,29 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <th:block th:replace="mail/notification/fragments :: head"/>
 <body>
-<th:block th:replace="mail/notification/fragments :: header"/>
-<!-- Message Body Start -->
-<div id="message-body">
-    <th:block th:replace="mail/notification/fragments :: greetingsFullName"/>
-    <div class="notification-content">
-            <span th:text="#{email.notification.title.attachment(
-                ${notificationSubject.getName()},
-                ${notificationSubject.getLecture().getTitle()},
-                ${notificationSubject.getLecture().getCourse().getTitle()}
-                )}">Notification Content for Attachment Changed</span>
-        <!-- Change message : notification text -->
-        <th:block th:replace="mail/notification/fragments :: notificationText"/>
-        <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
+    <th:block th:replace="mail/notification/fragments :: header"/>
+    <!-- Message Body Start -->
+    <div id="message-body">
+        <th:block th:replace="mail/notification/fragments :: greetingsFullName"/>
+        <div class="notification-content">
+            <span th:text="#{email.notification.title.exercise.created(
+                ${notificationSubject.getTitle()},
+                ${notificationSubject.getCourseViaExerciseGroupOrCourseMember().getTitle()}
+                )}">Notification Content for Exercise Created</span>
+            <p class="bold-text" th:text="#{email.notification.title.exercise.created.information}">Information about this exercise:</p>
+            <ul>
+                <th:block th:if="${notificationSubject.getDifficulty()}">
+                    <li th:text="#{email.notification.title.exercise.created.information.difficulty(${notificationSubject.getDifficulty()})}">Difficulty</li>
+                </th:block>
+                <li th:text="#{email.notification.title.exercise.created.information.max(${notificationSubject.getMaxPoints()})}">Max Points</li>
+                <li th:text="#{email.notification.title.exercise.created.information.bonus(${notificationSubject.getBonusPoints()})}">Bonus Points</li>
+                <li th:text="#{email.notification.title.exercise.created.information.assessment.type(${notificationSubject.getAssessmentType()})}">Assessment Type</li>
+            </ul>
+            <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
+        </div>
+        <th:block th:replace="mail/notification/fragments :: farewell"/>
     </div>
-    <th:block th:replace="mail/notification/fragments :: farewell"/>
-</div>
-<!-- Message Body End -->
-<th:block th:replace="mail/notification/fragments :: footer"/>
+    <!-- Message Body End -->
+    <th:block th:replace="mail/notification/fragments :: footer"/>
 </body>
 </html>
-
-<th:block th:case="'EXERCISE_CREATED'">
-    <span th:text="#{email.notification.title.exercise.created(${notificationSubject})}"/>
-</th:block>

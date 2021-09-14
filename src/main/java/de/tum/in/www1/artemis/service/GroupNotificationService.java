@@ -228,22 +228,10 @@ public class GroupNotificationService {
         GroupNotificationType groupType = notification.getType();
         List<User> foundUsers = new ArrayList<>();
         switch (groupType) {
-            case STUDENT -> {
-                foundUsers = userRepository.getStudents(course);
-                break;
-            }
-            case INSTRUCTOR -> {
-                foundUsers = userRepository.getInstructors(course);
-                break;
-            }
-            case EDITOR -> {
-                foundUsers = userRepository.getEditors(course);
-                break;
-            }
-            case TA -> {
-                foundUsers = userRepository.getTutors(course);
-                break;
-            }
+            case STUDENT -> foundUsers = userRepository.getStudents(course);
+            case INSTRUCTOR -> foundUsers = userRepository.getInstructors(course);
+            case EDITOR -> foundUsers = userRepository.getEditors(course);
+            case TA -> foundUsers = userRepository.getTutors(course);
         }
         prepareGroupNotificationEmail(notification, foundUsers, notificationSubject);
     }

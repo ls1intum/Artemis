@@ -173,6 +173,7 @@ public class MailService {
     private String createContentForNotificationEmailByType(NotificationType notificationType, Context context) {
         return switch (notificationType) {
             case ATTACHMENT_CHANGE -> templateEngine.process("mail/notification/attachmentChangedEmail", context);
+            case EXERCISE_CREATED -> templateEngine.process("mail/notification/exerciseCreatedEmail", context);
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };
     }

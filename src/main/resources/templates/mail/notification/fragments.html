@@ -46,6 +46,10 @@
                 padding-top: 3px;
             }
 
+            ul {
+                padding-left: 20px;
+            }
+
             .button {
                 background-color: #5B9CD4;
                 color: white;
@@ -173,12 +177,12 @@
     ADDITIONAL AUXILIARY FRAGMENTS
 -->
 
-<!-- ONLY INTENDED IF BASED ON GROUP-NOTIFICATIONS -->
-
 <!-- Fragment displaying full course title -->
 <th:block th:fragment="courseTitle">
-    <span th:utext="${notification.course.title}">Course Title</span>
+    <span th:utext="${not}">Course Title</span>
 </th:block>
+
+<!-- ONLY INTENDED IF BASED ON GROUP-NOTIFICATIONS -->
 
 <!-- Fragment displaying the authority of the user (e.g. -> "Instructors") -->
 <th:block th:fragment="authority">
