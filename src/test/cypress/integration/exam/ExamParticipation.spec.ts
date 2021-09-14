@@ -40,7 +40,7 @@ describe('Exam participation', () => {
                 exam = examResponse.body;
                 courseRequests.registerStudentForExam(exam, student);
                 courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
-                    courseRequests.createAndAddTextExerciseToExam(groupResponse.body, textExerciseTitle);
+                    courseRequests.createTextExercise({ exerciseGroup: groupResponse.body }, textExerciseTitle);
                 });
                 courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     courseRequests.createProgrammingExercise({ exerciseGroup: groupResponse.body });
@@ -74,7 +74,7 @@ describe('Exam participation', () => {
     }
 
     function makeTextExerciseSubmission() {
-        const textEditor = artemis.pageobjects.textEditor;
+        const textEditor = artemis.pageobjects.textExercise.editor;
         cy.fixture('loremIpsum.txt').then((submissionText) => {
             textEditor.typeSubmission(submissionText);
             // Loading the content of the existing files might take some time so we wait for the return of the request here
