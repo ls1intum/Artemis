@@ -42,8 +42,8 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
                     },
                 },
                 {
-                    name: 'New Answer Post for Exercises',
-                    description: 'Get notified if a new answer post about an exercise has been created',
+                    name: 'New Reply for Exercises',
+                    description: 'Get notified if a new reply about an exercise has been created',
                     optionCore: {
                         webapp: true,
                         email: false,
@@ -75,8 +75,8 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
                     },
                 },
                 {
-                    name: 'New Answer Post for Lecture',
-                    description: 'Get notified when a new answer post about an exercise has been created',
+                    name: 'New Reply for Lecture',
+                    description: 'Get notified when a new reply about an exercise has been created',
                     optionCore: {
                         webapp: true,
                         email: false,
