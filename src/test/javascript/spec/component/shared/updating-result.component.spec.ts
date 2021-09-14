@@ -25,6 +25,7 @@ import { CodeEditorFileService } from 'app/exercises/programming/shared/code-edi
 import { Result } from 'app/entities/result.model';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MissingResultInfo } from 'app/exercises/shared/result/result.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -193,10 +194,7 @@ describe('UpdatingResultComponent', () => {
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).to.be.false;
-        expect(comp.missingResultInfo).to.deep.equal({
-            message: 'artemisApp.result.missing.programmingFailedSubmission.message',
-            tooltip: 'artemisApp.result.missing.programmingFailedSubmission.tooltipOfflineIde',
-        });
+        expect(comp.missingResultInfo).to.equal(MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE);
     });
 
     it('should set missingResultInfo attribute if the exerciseType is PROGRAMMING and the latest submission failed (online IDE)', () => {
@@ -204,10 +202,7 @@ describe('UpdatingResultComponent', () => {
         getLatestPendingSubmissionStub.returns(of({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 3 }));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
-        expect(comp.missingResultInfo).to.deep.equal({
-            message: 'artemisApp.result.missing.programmingFailedSubmission.message',
-            tooltip: 'artemisApp.result.missing.programmingFailedSubmission.tooltipOnlineIde',
-        });
+        expect(comp.missingResultInfo).to.equal(MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE);
     });
 
     it('should not set the isBuilding attribute to true if the exerciseType is not PROGRAMMING', () => {

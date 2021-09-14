@@ -69,7 +69,18 @@
     <ng-container *ngSwitchCase="ResultTemplateStatus.MISSING">
         <span class="text-danger">
             <fa-icon [icon]="['fas', 'exclamation-circle']" size="lg"></fa-icon>&nbsp;
-            <span [ngbTooltip]="missingResultInfo!.tooltip">{{ missingResultInfo!.message }}</span>
+            <ng-container [ngSwitch]="missingResultInfo">
+                <ng-container *ngSwitchCase="MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE">
+                    <span [ngbTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOnlineIde' | artemisTranslate">{{
+                        'artemisApp.result.missing.programmingFailedSubmission.message' | artemisTranslate
+                    }}</span>
+                </ng-container>
+                <ng-container *ngSwitchCase="MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE">
+                    <span [ngbTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOfflineIde' | artemisTranslate">{{
+                        'artemisApp.result.missing.programmingFailedSubmission.message' | artemisTranslate
+                    }}</span>
+                </ng-container>
+            </ng-container>
             <span *ngIf="result" class="result" (click)="showDetails(result)">{{ 'artemisApp.result.missing.viewPrevious' | artemisTranslate }}</span>
         </span>
     </ng-container>

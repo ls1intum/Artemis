@@ -2,7 +2,6 @@ import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/
 import { orderBy as _orderBy } from 'lodash';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { TranslateService } from '@ngx-translate/core';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { RepositoryService } from 'app/exercises/shared/result/repository.service';
 import * as moment from 'moment';
@@ -14,6 +13,7 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { hasParticipationChanged } from 'app/overview/participation-utils';
 import { Result } from 'app/entities/result.model';
+import { MissingResultInfo } from 'app/exercises/shared/result/result.component';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged in user.
@@ -39,15 +39,11 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
     result?: Result;
     isBuilding: boolean;
-    missingResultInfo?: { message: string; tooltip: string };
+    missingResultInfo?: MissingResultInfo;
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
-    constructor(
-        private participationWebsocketService: ParticipationWebsocketService,
-        private submissionService: ProgrammingSubmissionService,
-        private translate: TranslateService,
-    ) {}
+    constructor(private participationWebsocketService: ParticipationWebsocketService, private submissionService: ProgrammingSubmissionService) {}
 
     /**
      * If there are changes, reorders the participation results and subscribes for new participation results.
@@ -63,7 +59,6 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             const latestResult = this.participation.results && this.participation.results.find(({ rated }) => this.showUngradedResults || rated === true);
             // Make sure that the participation result is connected to the newest result.
             this.result = latestResult ? { ...latestResult, participation: this.participation } : undefined;
-            // TODO: how to determine that here?
             this.missingResultInfo = undefined;
 
             this.subscribeForNewResults();
@@ -148,12 +143,9 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
     private generateMissingResultInfoForFailedProgrammingExerciseSubmission() {
         // Students have more options to check their code if the offline IDE is activated, so we suggest different actions
-        const missingResultInfo = {
-            message: this.translate.instant('artemisApp.result.missing.programmingFailedSubmission.message'),
-        };
         if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
-            return { ...missingResultInfo, tooltip: this.translate.instant('artemisApp.result.missing.programmingFailedSubmission.tooltipOfflineIde') };
+            return MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
         }
-        return { ...missingResultInfo, tooltip: this.translate.instant('artemisApp.result.missing.programmingFailedSubmission.tooltipOnlineIde') };
+        return MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE;
     }
 }

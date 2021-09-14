@@ -64,6 +64,14 @@ enum ResultTemplateStatus {
     MISSING = 'MISSING',
 }
 
+/**
+ * Information about a missing result to communicate problems and give hints how to respond.
+ */
+export enum MissingResultInfo {
+    FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE = 'FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE',
+    FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE = 'FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE',
+}
+
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
@@ -77,6 +85,7 @@ enum ResultTemplateStatus {
 export class ResultComponent implements OnInit, OnChanges {
     // make constants available to html for comparison
     readonly ResultTemplateStatus = ResultTemplateStatus;
+    readonly MissingResultInfo = MissingResultInfo;
     readonly round = round;
 
     @Input() participation: Participation;
@@ -86,10 +95,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge = false;
     @Input() showTestDetails = false;
-    /**
-     * Information about a missing result can be set to communicate problems and give hints how to respond.
-     */
-    @Input() missingResultInfo?: { message: string; tooltip: string } = undefined;
+    @Input() missingResultInfo?: MissingResultInfo = undefined;
 
     ParticipationType = ParticipationType;
     textColorClass: string;
@@ -174,9 +180,7 @@ export class ResultComponent implements OnInit, OnChanges {
     evaluate() {
         this.templateStatus = this.evaluateTemplateStatus();
 
-        if (this.templateStatus === ResultTemplateStatus.MISSING) {
-            // nothing to do
-        } else if (this.templateStatus === ResultTemplateStatus.LATE) {
+        if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = this.getTextColorClass();
             this.resultIconClass = this.getResultIconClass();
         } else if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
@@ -186,7 +190,7 @@ export class ResultComponent implements OnInit, OnChanges {
             this.resultIconClass = this.getResultIconClass();
             this.resultString = this.buildResultString();
             this.resultTooltip = this.buildResultTooltip();
-        } else {
+        } else if (this.templateStatus !== ResultTemplateStatus.MISSING) {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
             // this state is only possible if no rated results are available at all, so we show the info that no graded result is available
             this.templateStatus = ResultTemplateStatus.NO_RESULT;
@@ -275,11 +279,6 @@ export class ResultComponent implements OnInit, OnChanges {
      * Gets the build result string.
      */
     buildResultString() {
-        // If there is a problem, it has priority and we show that instead
-        if (this.missingResultInfo) {
-            return this.missingResultInfo.message;
-        }
-
         if (this.isBuildFailed(this.submission)) {
             return this.isManualResult(this.result) ? this.result!.resultString : this.translate.instant('artemisApp.editor.buildFailed');
             // Only show the 'preliminary' string for programming student participation results and if the buildAndTestAfterDueDate has not passed.
@@ -304,11 +303,6 @@ export class ResultComponent implements OnInit, OnChanges {
      * Gets the tooltip text that should displayed next to the result string. Not required.
      */
     buildResultTooltip() {
-        // If there is a problem, it has priority and we show that instead
-        if (this.missingResultInfo) {
-            return this.missingResultInfo.message;
-        }
-
         // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         const programmingExercise = getExercise(this.participation) as ProgrammingExercise;
         if (this.participation && isProgrammingExerciseStudentParticipation(this.participation) && isResultPreliminary(this.result!, programmingExercise)) {
