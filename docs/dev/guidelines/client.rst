@@ -44,7 +44,7 @@ Some general aspects:
 4. ``null`` and ``undefined``
 =============================
 
-1. Use **undefined**. Do not use null.
+Use **undefined**. Do not use null.
 
 5. General Assumptions
 ======================
@@ -55,7 +55,7 @@ Some general aspects:
 6. Comments
 ============
 
-1. Use JSDoc style comments for functions, interfaces, enums, and classes.
+Use JSDoc style comments for functions, interfaces, enums, and classes.
 
 7. Strings
 ============
@@ -70,7 +70,31 @@ Some general aspects:
 2. Buttons are best used to trigger certain functionalities (e.g. ``<button (click)='deleteExercise(exercise)'>...</button``)
 3. Links are best for navigating on Artemis (e.g. ``<a [routerLink]='getLinkForExerciseEditor(exercise)' [queryParams]='getQueryParamsForEditor(exercise)'>...</a>``)
 
-9. Style
+9. Icons with Text
+====================
+
+If you use icons aside of text (for example for a button or link), make sure that they are separated by a newline. HTML renders one or multiple newlines as a space.
+
+Do this:
+.. code-block:: html
+    <fa-icon [icon]="'times'"></fa-icon>
+    <span>Text</span>
+
+Don't do these or any combinations of them:
+
+.. code-block:: html
+
+    <fa-icon [icon]="'times'"></fa-icon><span>Text</span>
+
+    <fa-icon [icon]="'times'"></fa-icon><span> Text</span>
+    <fa-icon [icon]="'times'"></fa-icon> <span>Text</span>
+
+    <fa-icon [icon]="'times'"></fa-icon>
+    <span> Text</span>
+
+Ignoring this will lead to inconsistent spacing between icons and text.
+
+10. Style
 ========
 
 1. Use arrow functions over anonymous function expressions.
@@ -97,8 +121,8 @@ Some general aspects:
 We use ``prettier`` to style code automatically and ``eslint`` to find additional issues.
 You can find the corresponding commands to invoke those tools in ``package.json``.
 
-10. Preventing Memory Leaks
-===========================
+11. Preventing Memory Leaks
+==========================
 
 It is crucial that you try to prevent memory leaks in both your components and your tests.
 
@@ -173,7 +197,7 @@ or
    jest --detectLeaks
 
 
-11. Defining Routes and Breadcrumbs
+12. Defining Routes and Breadcrumbs
 ===================================
 
 The ideal schema for routes is that every variable in a path is preceded by a unique path segment: ``\entityA\:entityIDA\entityB\:entityIDB``
@@ -208,7 +232,7 @@ When creating a completely new route you will have to register the new paths in 
 		}
 	}
 
-12. Strict Template Check
+13. Strict Template Check
 =========================
 
 To prevent errors for strict template rule in TypeScript, Artemis uses following approaches.

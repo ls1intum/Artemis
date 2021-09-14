@@ -54,7 +54,7 @@ The most basic test looks similar to this:
 
         it('should initialize', () => {
             someComponentFixture.detectChanges();
-            expect(SomeComponent).to.be.ok;
+            expect(SomeComponent).to.not.be.undefined;
         });
     });
 
@@ -63,6 +63,9 @@ Some guidelines:
 1. A component should be tested in isolation without any dependencies if possible. Do not simply import the whole production module. Only import real dependencies if it is essential for the test
    that the real dependency is used. Instead, use mock pipes, mock directives and mock components that the component under test depends upon. A very useful technique is writing `stubs for child components <https://angular.io/guide/testing-components-scenarios#stubbing-unneeded-components>`_.
    This has the benefit of being able to test the interaction with the child components.
+2. According to [Chai](https://www.chaijs.com/api/bdd) you should make expectations as specific as possible. This means
+    - Rather compare to the specific result you expect instead of comparing to something to be not equal to an **arbitrary** other value.
+    - Instead of using `.to.be.ok` (which only checks for a truthy value) use `.to.not.be.undefined` or `.to.be.true` depending on your use case. But remember that `.to.not.be.undefined` could possibly be arbitrary here.
 
 Example of a bad test practice:
 
