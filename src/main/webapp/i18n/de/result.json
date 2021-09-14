@@ -69,7 +69,7 @@
                     "tooltipOnlineIde": "Für deine letzte Einreichung konnte kein Ergebnis gefunden / nicht rechtzeitig generiert werden. Bitte überprüfe deinen Code soweit möglich manuell."
                 }
             },
-            "notLatestSubmission": "<h6>Hinweis: Dieses Ergebnis und Feedback bezieht sich <strong>nicht</strong> auf die letzte Einreichung.</h6>"
+            "notLatestSubmission": "Hinweis: Dieses Ergebnis und Feedback bezieht sich <strong>nicht</strong> auf die letzte Einreichung."
         }
     }
 }
