@@ -10,11 +10,16 @@ resources:
   #ConfigMaps
   - configmaps/application-configmap.yml
   - configmaps/artemis-configmap.yml
+  - configmaps/artemis-mysql-configmap.yml
+  - configmaps/kafka-configmap.yml
+  - configmaps/zookeeper-configmap.yml
+  - configmaps/jhipster-registry-configmap.yml
   #Stateful sets
   - statefulsets/jhipster-registry.yml
   #Deployments
   - deployments/artemis-deployment.yml
   - deployments/artemis-mysql.yml
+  - deployments/zookeeper.yml
   - deployments/kafka.yml
   #Ingresses
   - ingresses/artemis-ingress.yml

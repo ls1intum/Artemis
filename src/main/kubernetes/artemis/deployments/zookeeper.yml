@@ -5,13 +5,15 @@ metadata:
     field.cattle.io/creatorId: user-gpcv5
   labels:
     cattle.io/creator: norman
-    workload.user.cattle.io/workloadselector: deployment-artemis-kafka
-  name: kafka
+    workload.user.cattle.io/workloadselector: deployment-artemis-zookeeper
+  name: zookeeper
 spec:
+  progressDeadlineSeconds: 600
   replicas: 1
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
-      workload.user.cattle.io/workloadselector: deployment-artemis-kafka
+      workload.user.cattle.io/workloadselector: deployment-artemis-zookeeper
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -20,16 +22,20 @@ spec:
   template:
     metadata:
       labels:
-        workload.user.cattle.io/workloadselector: deployment-artemis-kafka
+        workload.user.cattle.io/workloadselector: deployment-artemis-zookeeper
     spec:
       containers:
       - envFrom:
         - configMapRef:
-            name: kafka
+            name: zookeeper
             optional: false
-        image: confluentinc/cp-kafka:5.5.3
+        image: confluentinc/cp-zookeeper:5.5.3
         imagePullPolicy: Always
-        name: kafka
+        name: zookeeper
+        ports:
+        - containerPort: 2181
+          name: 2181tcp02
+          protocol: TCP
         resources: {}
         securityContext:
           allowPrivilegeEscalation: false

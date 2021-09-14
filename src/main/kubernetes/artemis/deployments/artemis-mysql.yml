@@ -32,12 +32,10 @@ spec:
         - --skip-ssl
         - --character_set_server=utf8mb4
         - --explicit_defaults_for_timestamp
-        env:
-        - name: MYSQL_ALLOW_EMPTY_PASSWORD
-          value: "yes"
-        - name: MYSQL_DATABASE
-          value: Artemis
-        - name: MYSQL_ROOT_PASSWORD
+        envFrom:
+        - configMapRef:
+            name: artemis-mysql
+            optional: false
         image: mysql:8.0.25
         imagePullPolicy: Always
         name: artemis-mysql

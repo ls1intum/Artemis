@@ -53,42 +53,12 @@ spec:
           image: jhipster/jhipster-registry:v6.7.1
           ports:
             - containerPort: 8761
-          env:
-            # StatefulSet specific configuration
-            # Registry configuration
-            - name: SPRING_PROFILES_ACTIVE
-              value: prod,k8s
-            - name: SPRING_SECURITY_USER_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: registry-secret
-                  key: registry-admin-password
-            - name: JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET
-              value: YlhrdGMyVmpjbVYwTFhSdmEyVnVMWFJ2TFdOb1lXNW5aUzFwYmkxd2NtOWtkV04wYVc5dUxXRnVaQzEwYnkxclpXVndMV2x1TFdFdGMyVmpkWEpsTFhCc1lXTmwK
-            - name: SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_TYPE
-              value: native
-            - name: SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_SEARCH_LOCATIONS
-              value: file:./central-config
-            - name: EUREKA_INSTANCE_LEASE_RENEWAL_INTERVAL_IN_SECONDS
-              value: "15"
-            - name: EUREKA_INSTANCE_LEASE_EXPIRATION_DURATION_IN_SECONDS
-              value: "30"
-            - name: EUREKA_SERVER_PEER_EUREKA_NODES_UPDATE_INTERVAL_MS
-              value: "15000"
-            - name: EUREKA_SERVER_RENAWAL_THRESHOLD_UPDATE_INTERVAL_MS
-              value: "15000"
-            - name: EUREKA_SERVER_REGISTRY_SYNC_RETRIES
-              value: "3"
-            - name: EUREKA_SERVER_ENABLE_SELF_PRESERVATION
-              value: "false"
-            - name: EUREKA_SERVER_PEER_NODE_CONNECT_TIMEOUT_MS
-              value: "2000"
-            - name: EUREKA_CLIENT_FETCH_REGISTRY
-              value: "true"
-            - name: EUREKA_CLIENT_REGISTER_WITH_EUREKA
-              value: "true"
-            - name: K8S_CONFIG_PATH
-              value: "/central-config/"
+          envFrom:
+          - configMapRef:
+              name: jhipster-registry
+              optional: false
+          - secretRef:
+              name: registry-secret
           volumeMounts:
             - name: config-volume
               mountPath: /central-config
