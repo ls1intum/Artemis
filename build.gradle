@@ -20,7 +20,7 @@ plugins {
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "3.1.4"
-    id "com.github.node-gradle.node" version "3.1.0"
+    id "com.github.node-gradle.node" version "3.1.1"
     id "com.diffplug.spotless" version "5.15.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.39.0"
@@ -226,7 +226,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
     implementation "io.netty:netty-all:4.1.68.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.0.10"
+    implementation "io.projectreactor.netty:reactor-netty:1.0.11"
     implementation "org.springframework:spring-messaging:5.3.9"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
