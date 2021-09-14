@@ -1,3 +1,5 @@
+import { TextEditorPage } from './exercises/text/TextEditorPage';
+import { CourseManagementExercisesPage } from './CourseManagementExercisesPage';
 import { ProgrammingExerciseCreationPage } from './ProgrammingExerciseCreationPage';
 import { ExamManagementPage } from './ExamManagementPage';
 import { ExamCreationPage } from './ExamCreationPage';
@@ -9,12 +11,16 @@ import { ModelingExerciseAssessmentEditor } from './ModelingExerciseAssessmentEd
 import { ModelingEditor } from './ModelingEditor';
 import { ExamStartEndPage } from './ExamStartEndPage';
 import { QuizExerciseCreationPage } from './QuizExerciseCreationPage';
+import { TextExerciseCreationPage } from './exercises/text/TextExerciseCreationPage';
+import { TextExerciseExampleSubmissionsPage } from './exercises/text/TextExerciseExampleSubmissionsPage';
+import { TextExerciseExampleSubmissionCreationPage } from './exercises/text/TextExerciseExampleSubmissionCreationPage';
 
 /**
  * A class which encapsulates all pageobjects, which can be used to automate the Artemis UI.
  */
 export class ArtemisPageobjects {
     courseManagement = new CourseManagementPage();
+    courseManagementExercises = new CourseManagementExercisesPage();
     navigationBar = new NavigationBar();
     onlineEditor = new OnlineEditorPage();
     examCreation = new ExamCreationPage();
@@ -25,4 +31,10 @@ export class ArtemisPageobjects {
     modelingEditor = new ModelingEditor();
     examStartEnd = new ExamStartEndPage();
     quizExerciseCreation = new QuizExerciseCreationPage();
+    textExercise = {
+        creation: new TextExerciseCreationPage(),
+        exampleSubmissions: new TextExerciseExampleSubmissionsPage(),
+        exampleSubmissionCreation: new TextExerciseExampleSubmissionCreationPage(),
+        editor: new TextEditorPage(),
+    };
 }
