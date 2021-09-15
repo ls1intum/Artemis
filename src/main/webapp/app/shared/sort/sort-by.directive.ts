@@ -10,25 +10,27 @@ import { SortDirective } from './sort.directive';
     selector: '[jhiSortBy]',
 })
 export class SortByDirective<T> implements AfterContentInit, OnDestroy {
-    @Input() jhiSortBy?: T;
+    @Input() jhiSortBy!: T;
 
-    @ContentChild(FaIconComponent, { static: true })
+    @ContentChild(FaIconComponent, { static: false })
     iconComponent?: FaIconComponent;
 
     sortIcon = faSort;
     sortAscIcon = faSortUp;
     sortDescIcon = faSortDown;
 
-    private readonly destroy$ = new Subject<void>();
+    private readonly destroy = new Subject<void>();
 
     constructor(@Host() private sort: SortDirective<T>) {
-        sort.predicateChange.pipe(takeUntil(this.destroy$)).subscribe(() => this.updateIconDefinition());
-        sort.ascendingChange.pipe(takeUntil(this.destroy$)).subscribe(() => this.updateIconDefinition());
+        sort.predicateChange.pipe(takeUntil(this.destroy)).subscribe(() => this.updateIconDefinition());
+        sort.ascendingChange.pipe(takeUntil(this.destroy)).subscribe(() => this.updateIconDefinition());
     }
 
     @HostListener('click')
     onClick(): void {
-        this.sort.sort(this.jhiSortBy);
+        if (this.iconComponent) {
+            this.sort.sort(this.jhiSortBy);
+        }
     }
 
     ngAfterContentInit(): void {
@@ -36,8 +38,8 @@ export class SortByDirective<T> implements AfterContentInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.destroy$.next();
-        this.destroy$.complete();
+        this.destroy.next();
+        this.destroy.complete();
     }
 
     private updateIconDefinition(): void {

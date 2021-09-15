@@ -4,7 +4,6 @@ import { take } from 'rxjs/operators';
 import * as chai from 'chai';
 import dayjs from 'dayjs';
 import sinonChai from 'sinon-chai';
-import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';

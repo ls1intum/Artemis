@@ -4,8 +4,6 @@
   "newProjectRoot": "projects",
   "projects": {
     "artemis": {
-      "root": "",
-      "sourceRoot": "src/main/webapp",
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -15,6 +13,9 @@
           "strict": true
         }
       },
+      "root": "",
+      "sourceRoot": "src/main/webapp",
+      "prefix": "jhi",
       "architect": {
         "build": {
           "builder": "@angular-builders/custom-webpack:browser",
@@ -59,11 +60,17 @@
               "src/main/webapp/mstile-150x150.png",
               "src/main/webapp/mstile-310x150.png",
               "src/main/webapp/mstile-310x310.png",
-              "src/main/webapp/safari-pinned-tab.svg"
+              "src/main/webapp/safari-pinned-tab.svg",
+              {
+                "glob": "*.{js,css,html,png}",
+                "input": "./node_modules/swagger-ui-dist",
+                "output": "swagger-ui",
+                "ignore": ["**/index.html"]
+              },
+              { "glob": "axios.min.js", "input": "./node_modules/axios/dist", "output": "swagger-ui" },
+              { "glob": "**/*", "input": "src/main/webapp/swagger-ui/", "output": "swagger-ui" }
             ],
-            "styles": [
-              "src/main/webapp/content/scss/global.scss"
-            ],
+            "styles": ["src/main/webapp/content/scss/vendor.scss", "src/main/webapp/content/scss/global.scss"],
             "scripts": []
           },
           "configurations": {
@@ -87,13 +94,13 @@
               "sourceMap": true,
               "namedChunks": true
             }
-          }
+          },
+          "defaultConfiguration": "production"
         },
         "serve": {
           "builder": "@angular-builders/custom-webpack:dev-server",
           "options": {
             "browserTarget": "artemis:build:development",
-            "proxyConfig": "./webpack/proxy.conf.js",
             "port": 4200
           },
           "configurations": {
@@ -117,16 +124,6 @@
   },
   "defaultProject": "artemis",
   "cli": {
-    "packageManager": "yarn"
-  },
-  "schematics": {
-    "@schematics/angular:component": {
-      "inlineStyle": true,
-      "inlineTemplate": false,
-      "prefix": "jhi"
-    },
-    "@schematics/angular:directive": {
-      "prefix": "jhi"
-    }
+    "packageManager": "npm"
   }
 }

@@ -5,7 +5,6 @@ import { filter, map, tap } from 'rxjs/operators';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs';
-import { SERVER_API_URL } from 'app/app.constants';
 import { Exam } from 'app/entities/exam.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { StudentDTO } from 'app/entities/student-dto.model';

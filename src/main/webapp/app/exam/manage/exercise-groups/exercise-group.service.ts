@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { SERVER_API_URL } from 'app/app.constants';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 type EntityResponseType = HttpResponse<ExerciseGroup>;

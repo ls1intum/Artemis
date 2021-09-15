@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
 import { MetricsService } from 'app/admin/metrics/metrics.service';
-import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
 describe('Logs Service', () => {

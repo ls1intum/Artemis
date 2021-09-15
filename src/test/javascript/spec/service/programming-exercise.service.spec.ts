@@ -14,7 +14,6 @@ import dayjs from 'dayjs';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
-import { SERVER_API_URL } from 'app/app.constants';
 
 chai.use(sinonChai);
 const expect = chai.expect;

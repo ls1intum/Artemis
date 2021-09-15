@@ -3,7 +3,6 @@ import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
-import { SERVER_API_URL } from 'app/app.constants';
 import { PasswordService } from 'app/account/password/password.service';
 
 chai.use(sinonChai);

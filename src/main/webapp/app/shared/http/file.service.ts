@@ -1,7 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import { SERVER_API_URL } from 'app/app.constants';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { lastValueFrom } from 'rxjs';
 

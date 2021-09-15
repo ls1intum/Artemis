@@ -10,7 +10,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
     template: `
         <table>
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" [callback]="transition.bind(this)">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition($event)">
                     <th jhiSortBy="name">ID<fa-icon [icon]="'sort'"></fa-icon></th>
                 </tr>
             </thead>

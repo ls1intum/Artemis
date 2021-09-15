@@ -12,7 +12,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import dayjs from 'dayjs';
-import { SERVER_API_URL } from 'app/app.constants';
 
 export const mockTeamStudents = [
     { id: 1, firstName: 'John', lastName: 'Doe', name: 'John Doe', login: 'ga12abc', email: 'john.doe@example.com', visibleRegistrationNumber: '01234567' },

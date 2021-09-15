@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { SERVER_API_URL } from 'app/app.constants';
 import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import dayjs from 'dayjs';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';

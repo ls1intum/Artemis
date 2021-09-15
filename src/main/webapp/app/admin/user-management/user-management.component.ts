@@ -7,13 +7,13 @@ import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { combineLatest, Subject } from 'rxjs';
-import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { AlertService } from 'app/core/util/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ParseLinks } from 'app/core/util/parse-links.service';
+import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination.constants';
 
 @Component({
     selector: 'jhi-user-management',
@@ -33,7 +33,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     searchTermString = '';
 
     private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
+    dialogError = this.dialogErrorSource.asObservable();
     userSearchForm: FormGroup;
 
     constructor(
@@ -133,7 +133,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             relativeTo: this.activatedRoute.parent,
             queryParams: {
                 page: this.page,
-                sort: this.predicate + ',' + (this.ascending ? 'asc' : 'desc'),
+                sort: `${this.predicate},${this.ascending ? ASC : DESC}`,
             },
         });
     }
@@ -142,9 +142,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         combineLatest(this.activatedRoute.data, this.activatedRoute.queryParamMap, (data: Data, params: ParamMap) => {
             const page = params.get('page');
             this.page = page != undefined ? +page : 1;
-            const sort = (params.get('sort') ?? data['defaultSort']).split(',');
+            const sort = (params.get(SORT) ?? data['defaultSort']).split(',');
             this.predicate = sort[0];
-            this.ascending = sort[1] === 'asc';
+            this.ascending = sort[1] === ASC;
             this.loadAll();
         }).subscribe();
     }

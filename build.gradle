@@ -24,6 +24,7 @@ plugins {
     id "com.diffplug.spotless" version "5.15.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.39.0"
+    id "com.github.andygoossens.gradle-modernizer-plugin" version "1.6.0"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -77,6 +78,11 @@ springBoot {
 
 bootRun {
     jvmArgs = ["--illegal-access=warn"]
+}
+
+modernizer {
+    failOnViolations = true
+    includeTestClasses = true
 }
 
 // Execute the test cases: ./gradlew executeTests
@@ -180,9 +186,9 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-ui:1.5.10"
 
     // import JHipster dependencies BOM
-    implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
+    implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
 
-    implementation "io.github.jhipster:jhipster-framework"
+    implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
     implementation "io.micrometer:micrometer-registry-prometheus:1.7.3"
     implementation "net.logstash.logback:logstash-logback-encoder:6.6"
@@ -195,7 +201,7 @@ dependencies {
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-hibernate53:2.2.1"
     implementation "javax.cache:cache-api:1.1.1"
-    implementation "org.hibernate:hibernate-core"
+    implementation "org.hibernate:hibernate-core:${hibernate_version}"
     implementation "com.zaxxer:HikariCP:5.0.0"
     implementation "org.apache.commons:commons-text:1.9"
     implementation 'org.apache.commons:commons-math3:3.6.1'
@@ -227,7 +233,7 @@ dependencies {
 
     implementation "io.netty:netty-all:4.1.68.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.0.11"
-    implementation "org.springframework:spring-messaging:5.3.9"
+    implementation "org.springframework:spring-messaging:5.3.10"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -246,7 +252,7 @@ dependencies {
     implementation "io.springfox:springfox-bean-validators:3.0.0"
     implementation "mysql:mysql-connector-java:8.0.26"
 
-    implementation "org.zalando:problem-spring-web:0.26.2"
+    implementation "org.zalando:problem-spring-web:0.27.0"
     implementation "com.ibm.icu:icu4j:69.1"
     implementation "com.github.seancfoley:ipaddress:5.3.3"
     implementation "org.apache.maven:maven-model:3.8.2"
@@ -329,12 +335,13 @@ node {
     download = true
     version = "${node_version}"
     yarnVersion = "${yarn_version}"
+    npmVersion = "${npm_version}"
 }
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
-    toolVersion "9.0"
-    configFile file("${rootDir}/checkstyle.xml")
+    toolVersion "${checkstyle_version}"
+    configFile file("checkstyle.xml")
     checkstyleTest.enabled = false
     maxErrors = 0
 }

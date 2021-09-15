@@ -74,7 +74,7 @@
 
             <table class="table" *ngIf="course.exercises && course.exercises.length >= 0">
                 <thead>
-                    <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="sortRows.bind(this)">
+                    <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" (sortChange)="sortRows()">
                         <th jhiSortBy="id">
                             <a class="th-link">#</a>
                             <fa-icon [icon]="'sort'"></fa-icon>

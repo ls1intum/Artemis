@@ -6,8 +6,6 @@ import { ActivateService } from 'app/account/activate/activate.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { HttpParams } from '@angular/common/http';
 
-import { SERVER_API_URL } from 'app/app.constants';
-
 chai.use(sinonChai);
 const expect = chai.expect;
 

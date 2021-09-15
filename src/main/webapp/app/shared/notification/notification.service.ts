@@ -4,7 +4,6 @@ import { Observable, ReplaySubject } from 'rxjs';
 import dayjs from 'dayjs';
 import { map } from 'rxjs/operators';
 
-import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';

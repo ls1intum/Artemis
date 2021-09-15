@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
-import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Authority } from 'app/shared/constants/authority.constants';
 

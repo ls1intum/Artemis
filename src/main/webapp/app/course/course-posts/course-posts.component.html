@@ -10,7 +10,7 @@
     <div class="table-responsive" *ngIf="posts && posts.length > 0; else noPosts">
         <table class="table table-striped">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span><fa-icon [icon]="'sort'"></fa-icon></th>
                     <th><span jhiTranslate="artemisApp.metis.post.text">Question Text</span></th>
                     <th jhiSortBy="creationDate"><span jhiTranslate="artemisApp.metis.post.creationDate">Creation Date</span><fa-icon [icon]="'sort'"></fa-icon></th>
