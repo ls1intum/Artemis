@@ -63,7 +63,7 @@
                         <span *ngIf="course.isAtLeastInstructor">
                             <a [routerLink]="[exam.id]">{{ exam.id }}</a>
                         </span>
-                        <span *ngIf="!course.isAtLeastInstructor">
+                        <span *ngIf="course.isAtLeastInstructor">
                             {{ exam.id }}
                         </span>
                     </td>
@@ -71,7 +71,7 @@
                         <span class="bold" *ngIf="course.isAtLeastInstructor">
                             <a [routerLink]="[exam.id]">{{ exam.title }}</a>
                         </span>
-                        <span *ngIf="!course.isAtLeastInstructor">
+                        <span *ngIf="course.isAtLeastInstructor">
                             {{ exam.title }}
                         </span>
                     </td>
@@ -88,7 +88,7 @@
                                 {{ exam.numberOfRegisteredUsers }}
                             </a>
                         </span>
-                        <span *ngIf="!course.isAtLeastInstructor && course.isAtLeastTutor">
+                        <span *ngIf="course.isAtLeastInstructor && course.isAtLeastTutor">
                             {{ exam.numberOfRegisteredUsers }}
                         </span>
                     </td>
