@@ -71,7 +71,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * POST exercises/{exerciseId}/file-upload-submissions : Create a new fileUploadSubmission
      *
      * @param exerciseId of the file upload exercise a submission should be created for
-     * @param principal, the identity of the logged in user - provided by Spring
+     * @param principal the identity of the logged in user - provided by Spring
      * @param fileUploadSubmission the fileUploadSubmission to create
      * @param file The uploaded file belonging to the submission
      *
@@ -93,7 +93,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         // the exercise needs to be the same as the one referenced in the path via exerciseId
         if (fileUploadSubmission.getParticipation() != null && fileUploadSubmission.getParticipation().getExercise() != null
                 && !fileUploadSubmission.getParticipation().getExercise().getId().equals(exerciseId)) {
-            return badRequest("exerciseId", "400", "ExerciseId in Body doesnt match ExerciseId in path!");
+            return badRequest("exerciseId", "400", "ExerciseId in Body doesn't match ExerciseId in path!");
         }
 
         // Apply further checks if it is an exam submission
