@@ -16,9 +16,9 @@ resources:
   - configmaps/jhipster-registry-configmap.yml
   #Stateful sets
   - statefulsets/jhipster-registry.yml
+  - statefulsets/artemis-mysql.yml
   #Deployments
   - deployments/artemis-deployment.yml
-  - deployments/artemis-mysql.yml
   - deployments/zookeeper-deployment.yml
   - deployments/kafka-deployment.yml
   #Services
