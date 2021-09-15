@@ -1,5 +1,4 @@
-import { PATCH } from '../../../constants';
-import { PROGRAMMING_EXERCISE_BASE } from '../../../requests/CourseManagementRequests';
+import { BASE_API, PATCH } from '../../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for static code analysis grading configuration page.
@@ -16,7 +15,7 @@ export class CodeAnalysisGradingPage {
     }
 
     saveChanges() {
-        cy.intercept(PATCH, PROGRAMMING_EXERCISE_BASE + '*/static-code-analysis-categories').as('scaConfigurationRequest');
+        cy.intercept(PATCH, BASE_API + 'programming-exercise/*/static-code-analysis-categories').as('scaConfigurationRequest');
         cy.get('#save-table-button').click();
         return cy.wait('@scaConfigurationRequest');
     }
