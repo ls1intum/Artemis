@@ -100,7 +100,7 @@ export class MetisService {
      * fetches all posts for a course, optionally fetching posts only for a certain context, i.e. a lecture, exercise or specified course-wide-context,
      * informs all components that subscribed on posts by sending the newly fetched posts
      * @param postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
-     * @param forceUpdate
+     * @param forceUpdate if true, forces a re-fetch even if filter property did not change
      */
     getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {
         // check if the post context did change
@@ -273,7 +273,7 @@ export class MetisService {
         const emptyPost: Post = new Post();
         if (courseWideContext) {
             emptyPost.courseWideContext = courseWideContext;
-            emptyPost.course = { id: this.courseId } as Course;
+            emptyPost.course = this.course;
         } else if (exercise) {
             emptyPost.exercise = { ...this.exerciseService.convertExerciseForServer(exercise) };
         } else if (lectureId) {

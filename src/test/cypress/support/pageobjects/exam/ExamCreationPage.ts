@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { dayjsToString } from '../utils';
+import { dayjsToString } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam creation page.

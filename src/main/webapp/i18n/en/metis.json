@@ -35,7 +35,7 @@
             },
             "overview": {
                 "title": "Posts",
-                "searchBarDefault": "Search for specific keywords in posts, use # to find a specific post (e.g. #1)",
+                "searchBarDefault": "Search for a post, use # to find a specific post (e.g. #1)",
                 "postContextFilter": "Show posts for:",
                 "courseFilterExplanation": "(All posts)",
                 "sortPostsBy": "Sort by:",

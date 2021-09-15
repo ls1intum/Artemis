@@ -200,7 +200,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
      * -- in between pinned and archived posts --
      * 3. criterion: currently selected criterion in combination with currently selected order
-     * @return Post[] sorted array of posts
+     * @return number indicating the order of two elements
      */
     overviewSortFn = (postA: Post, postB: Post): number => {
         if (postA.displayPriority === DisplayPriority.PINNED && postB.displayPriority !== DisplayPriority.PINNED) {
