@@ -11,12 +11,8 @@
         "uuid": "8.3.2",
         "@4tw/cypress-drag-drop": "1.8.0"
     },
-    "lint-staged": {
-        "src/{main/webapp,test}/**/*.{json,js,ts,css,scss,html}": "prettier --write",
-        "src/{main,test}/java/**/*.java": "bash ./linting.sh"
-    },
     "scripts": {
-        "cypress:open": "yarn run cypress open ",
-        "cypress:run": "yarn run cypress run --browser=chrome"
+        "cypress:open": "npx cypress open ",
+        "cypress:run": "npx cypress run --browser=chrome"
     }
 }
