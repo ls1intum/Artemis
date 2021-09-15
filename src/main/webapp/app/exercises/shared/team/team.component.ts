@@ -51,9 +51,6 @@ export class TeamComponent implements OnInit {
             this.setLoadingState(true);
             this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                 this.exercise = exerciseResponse.body!;
-                this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
-                this.exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.exercise.course!);
-                this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
                 this.teamService.find(this.exercise, params['teamId']).subscribe((teamResponse) => {
                     this.team = teamResponse.body!;
                     this.setTeamOwnerFlag();

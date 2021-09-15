@@ -239,7 +239,6 @@ export class AccountService implements IAccountService {
      *
      * @param exercise for which the access rights shall be set
      */
-    // TODO: find a static solution that can be directly used when handling REST responses
     setAccessRightsForExercise(exercise: Exercise): void {
         exercise.isAtLeastTutor = this.isAtLeastTutorForExercise(exercise);
         exercise.isAtLeastEditor = this.isAtLeastEditorForExercise(exercise);
@@ -251,7 +250,6 @@ export class AccountService implements IAccountService {
      *
      * @param course for which the access rights shall be set
      */
-    // TODO: find a static solution that can be directly used when handling REST responses
     setAccessRightsForCourse(course: Course): void {
         course.isAtLeastTutor = this.isAtLeastTutorInCourse(course);
         course.isAtLeastEditor = this.isAtLeastEditorInCourse(course);
