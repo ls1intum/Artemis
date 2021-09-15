@@ -48,6 +48,8 @@ public class MailService {
 
     private final SpringTemplateEngine templateEngine;
 
+    private final TimeService timeService;
+
     // notification related variables
 
     private static final String NOTIFICATION = "notification";
@@ -56,11 +58,19 @@ public class MailService {
 
     private static final String NOTIFICATION_URL = "notificationUrl";
 
-    public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine) {
+    // time related variables
+    // todo remove .getDueDate()
+    private static final String DUE_DATE = "dueDate";
+
+    private static final String TIME_SERVICE = "timeService";
+
+    public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine,
+            TimeService timeService) {
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
         this.messageSource = messageSource;
         this.templateEngine = templateEngine;
+        this.timeService = timeService;
     }
 
     /**
@@ -105,7 +115,6 @@ public class MailService {
         Context context = new Context(locale);
         context.setVariable(USER, user);
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
-
         String content = templateEngine.process(templateName, context);
         String subject = messageSource.getMessage(titleKey, null, context.getLocale());
         sendEmail(user, subject, content, false, true);
@@ -154,6 +163,9 @@ public class MailService {
         context.setVariable(USER, user);
         context.setVariable(NOTIFICATION, notification);
         context.setVariable(NOTIFICATION_SUBJECT, notificationSubject);
+
+        context.setVariable(TIME_SERVICE, this.timeService);
+
         // replace with (e.g.) "http://localhost:9000" for local testing
         context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, jHipsterProperties.getMail().getBaseUrl()));
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
