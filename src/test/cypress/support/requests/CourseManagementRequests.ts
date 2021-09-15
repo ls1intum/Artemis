@@ -11,6 +11,7 @@ import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
+export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
 export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 
 /**
@@ -23,6 +24,8 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     deleteCourse(id: number) {
+        // Sometimes the backend fails with a ConstraintViolationError if we delete the course immediately after a login...
+        cy.wait(1000);
         return cy.request({ method: DELETE, url: COURSE_BASE + id });
     }
 
@@ -151,11 +154,10 @@ export class CourseManagementRequests {
      * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
      * */
-    createAndAddTextExerciseToExam(group: any, title = 'Text exercise ' + generateUUID()) {
-        const textExercise: any = { ...textExerciseTemplate, exerciseGroup: group };
-        textExercise.exerciseGroup = group;
-        textExercise.title = title;
-        return cy.request({ method: POST, url: BASE_API + 'text-exercises', body: textExercise });
+    createTextExercise(body: { course: any } | { exerciseGroup: any }, title = 'Text exercise ' + generateUUID()) {
+        const template: any = { ...textExerciseTemplate, title };
+        const templateWithBody = Object.assign({}, template, body);
+        return cy.request({ method: POST, url: TEXT_EXERCISE_BASE, body: templateWithBody });
     }
 
     /**

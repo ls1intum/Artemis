@@ -1,4 +1,4 @@
-import { POST, BASE_API } from './../support/constants';
+import { POST, BASE_API } from '../support/constants';
 import { dayjsToString } from '../support/utils';
 import { artemis } from '../support/ArtemisTesting';
 
