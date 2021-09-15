@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
@@ -30,7 +30,7 @@ window.addEventListener('touchmove', function () {}, { passive: false });
     styleUrls: ['./drag-and-drop-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class DragAndDropQuestionComponent implements OnChanges {
+export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     /** needed to trigger a manual reload of the drag and drop background picture */
     @ViewChild(SecuredImageComponent, { static: false })
     secureImageComponent: SecuredImageComponent;
@@ -78,13 +78,19 @@ export class DragAndDropQuestionComponent implements OnChanges {
     sampleSolutionMappings = new Array<DragAndDropMapping>();
     dropAllowed = false;
     correctAnswer: number;
+    incorrectLocationMappings: number;
+    mappedLocations: number;
 
     loadingState = 'loading';
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
+    ngOnInit(): void {
+        this.evaluateDropLocations();
+    }
+
     ngOnChanges(): void {
-        this.countCorrectMappings();
+        this.evaluateDropLocations();
     }
 
     watchCollection() {
@@ -299,23 +305,14 @@ export class DragAndDropQuestionComponent implements OnChanges {
     }
 
     /**
-     * counts the amount of right mappings for a question by using the isLocationCorrect Method
-     * drop locations that are correctly left blank are excluded because they are excluded from grading as well
+     * Count and assign the amount of right mappings, incorrect mappings and the number of drop locations participating in at least one mapping for a question
+     * by using the isLocationCorrect Method and the isAssignedLocation Method
      */
-    countCorrectMappings(): void {
-        this.correctAnswer = this.question.dropLocations!.filter((dropLocation) => this.isLocationCorrect(dropLocation)).length;
-    }
-
-    /**
-     * counts the amount of incorrect mappings for a question by using the isLocationCorrect Method
-     */
-    countIncorrectMappings(): number {
-        return this.question.dropLocations!.filter((dropLocation) => this.isLocationCorrect(dropLocation) === false).length;
-    }
-    /**
-     * counts the amount of drop locations participating in at least one mapping for a question by using the isAssignedLocation Method
-     */
-    countAssignedLocations(): number {
-        return this.question.dropLocations!.filter((dropLocation) => this.isAssignedLocation(dropLocation)).length;
+    evaluateDropLocations(): void {
+        if (this.question.dropLocations) {
+            this.correctAnswer = this.question.dropLocations.filter((dropLocation) => this.isLocationCorrect(dropLocation)).length;
+            this.incorrectLocationMappings = this.question.dropLocations.filter((dropLocation) => this.isLocationCorrect(dropLocation) === false).length;
+            this.mappedLocations = this.question.dropLocations.filter((dropLocation) => this.isAssignedLocation(dropLocation)).length;
+        }
     }
 }

@@ -46,7 +46,6 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     checkForWrongAnswers = new Array<AnswerOption>();
 
     /* Drag and Drop Counting Variables*/
-    wronglyMappedDragAndDropItems: number; // Amount of wrongly mapped drag and drop item
     differenceDragAndDrop: number; // Difference between the wronglyMappedDragAndDropItems and correctlyMappedDragAndDropItems
 
     /* Short Answer Counting Variables*/
@@ -165,8 +164,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      */
     private countDragAndDrop() {
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
-        this.wronglyMappedDragAndDropItems = this.incorrectlyMappedDragAndDropItems;
-        this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems - this.wronglyMappedDragAndDropItems;
+        this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems - this.incorrectlyMappedDragAndDropItems;
 
         if (this.correctlyMappedDragAndDropItems === 1) {
             this.rightMap = this.translateService.instant(translationBasePath + 'item');
@@ -174,7 +172,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
             this.rightMap = this.translateService.instant(translationBasePath + 'items');
         }
 
-        if (this.wronglyMappedDragAndDropItems === 1) {
+        if (this.incorrectlyMappedDragAndDropItems === 1) {
             this.wrongMap = this.translateService.instant(translationBasePath + 'item');
         } else {
             this.wrongMap = this.translateService.instant(translationBasePath + 'items');
