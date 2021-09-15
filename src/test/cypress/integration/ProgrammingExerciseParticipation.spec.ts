@@ -1,4 +1,4 @@
-import { CypressCredentials } from './../support/users';
+import { CypressCredentials } from '../support/users';
 import allSuccessful from '../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import partiallySuccessful from '../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import { artemis } from '../support/ArtemisTesting';
@@ -13,16 +13,11 @@ const courseManagement = artemis.requests.courseManagement;
 // PageObjects
 const editorPage = artemis.pageobjects.onlineEditor;
 
-// Container for a course dto
-let course: any;
-
-// Common primitives
 const exercisePath = '/exercises';
-
-// Selectors
 const exerciseRow = '.course-exercise-row';
 
 describe('Programming exercise participations', () => {
+    let course: any;
     let programmingExercise: any;
 
     before(() => {
