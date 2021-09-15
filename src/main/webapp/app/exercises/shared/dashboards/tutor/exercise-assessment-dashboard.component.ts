@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -14,7 +14,14 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import {
+    calculateSubmissionStatusIsDraft,
+    getLatestSubmissionResult,
+    getSubmissionResultByCorrectionRound,
+    setLatestSubmissionResult,
+    Submission,
+    SubmissionExerciseType,
+} from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -35,14 +42,11 @@ import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/d
 import { Exam } from 'app/entities/exam.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
-import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import { ExerciseView, isOrion, OrionState } from 'app/shared/orion/orion';
 import { onError } from 'app/shared/util/global.utils';
 import { round } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export interface ExampleSubmissionQueryParams {
@@ -51,14 +55,14 @@ export interface ExampleSubmissionQueryParams {
 }
 
 @Component({
-    selector: 'jhi-courses',
+    selector: 'jhi-exercise-assessment-dashboard',
     templateUrl: './exercise-assessment-dashboard.component.html',
-    styles: ['jhi-collapsable-assessment-instructions { max-height: 100vh }'],
+    styleUrls: ['./exercise-assessment-dashboard.component.scss'],
     providers: [CourseManagementService],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly round = round;
-    readonly ExerciseView = ExerciseView;
+    calculateSubmissionStatusIsDraft = calculateSubmissionStatusIsDraft;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     programmingExercise: ProgrammingExercise;
@@ -118,9 +122,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     readonly ExerciseType = ExerciseType;
 
-    orionState: OrionState;
-    isOrionAndProgramming = false;
-
     stats = {
         toReview: {
             done: 0,
@@ -142,6 +143,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     exerciseForGuidedTour?: Exercise;
 
+    // extension points, see shared/extension-point
+    @ContentChild('overrideAssessmentTable') overrideAssessmentTable: TemplateRef<any>;
+    @ContentChild('overrideOpenButton') overrideOpenButton: TemplateRef<any>;
+    @ContentChild('overrideNewButton') overrideNewButton: TemplateRef<any>;
+
     constructor(
         private exerciseService: ExerciseService,
         private courseManagementService: CourseManagementService,
@@ -162,7 +168,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
-        private orionConnectorService: OrionConnectorService,
     ) {}
 
     /**
@@ -178,10 +183,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
-
-        this.orionConnectorService.state().subscribe((state) => {
-            this.orionState = state;
-        });
 
         this.loadAll();
         this.accountService.identity().then((user: User) => (this.tutor = user));
@@ -256,8 +257,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                     this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
                 }
 
-                this.isOrionAndProgramming = isOrion && this.exercise.type === ExerciseType.PROGRAMMING;
-
                 // load the guided tour step only after everything else on the page is loaded
                 this.guidedTourService.componentPageLoaded();
             },
@@ -327,6 +326,21 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
                 (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
+        }
+    }
+
+    get yourStatusTitle(): string {
+        switch (this.tutorParticipationStatus) {
+            case TutorParticipationStatus.TRAINED:
+                // If we are in 'TRAINED' state, but never really "trained" on example submissions, display the
+                // 'REVIEWED_INSTRUCTIONS' state text instead.
+                if (!this.exercise.exampleSubmissions || this.exercise.exampleSubmissions.length === 0) {
+                    return TutorParticipationStatus.REVIEWED_INSTRUCTIONS.toString();
+                }
+
+                return TutorParticipationStatus.TRAINED.toString();
+            default:
+                return this.tutorParticipationStatus.toString();
         }
     }
 
@@ -529,19 +543,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         this.jhiAlertService.error(error);
     }
 
-    /**
-     * Calculates the status of a submission by inspecting the result
-     * @param submission Submission which to check
-     * @param correctionRound for which to get status
-     */
-    calculateSubmissionStatus(submission: Submission, correctionRound = 0) {
-        const tmpResult = submission.results?.[correctionRound];
-        if (tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!)) {
-            return 'DONE';
-        }
-        return 'DRAFT';
-    }
-
     calculateComplaintStatus(complaint: Complaint) {
         // a complaint is handled if it is either accepted or denied and a complaint response exists
         const handled = complaint.accepted !== undefined && complaint.complaintResponse !== undefined;
@@ -597,71 +598,64 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Uses the router to navigate to the assessment editor for a given/new submission
+     * Generates and returns the link to the assessment editor without query parameters
      * @param submission Either submission or 'new'.
-     * @param correctionRound
      */
-    async openAssessmentEditor(submission: Submission | 'new', correctionRound = 0): Promise<void> {
-        if (!this.exercise || !this.exercise.type || !submission) {
-            return;
-        }
-
-        this.openingAssessmentEditorForNewSubmission = true;
-        const submissionId: number | 'new' = submission === 'new' ? 'new' : submission.id!;
+    getAssessmentLink(submission: Submission | 'new'): string[] {
+        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
         let participationId = undefined;
         if (submission !== 'new' && submission.participation !== undefined) {
             participationId = submission.participation!.id;
         }
-        const url = getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, submissionId, this.examId, this.exerciseGroupId);
+        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId!, this.exerciseId, participationId, submissionUrlParameter, this.examId, this.exerciseGroupId);
+    }
+
+    /**
+     * Generates and returns the query parameters required for opening the assessment editor
+     * @param correctionRound
+     */
+    getAssessmentQueryParams(correctionRound = 0): object {
         if (this.isTestRun) {
-            await this.router.navigate(url, { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
+            return {
+                testRun: this.isTestRun,
+                'correction-round': correctionRound,
+            };
         } else {
-            await this.router.navigate(url, { queryParams: { 'correction-round': correctionRound } });
-        }
-        this.openingAssessmentEditorForNewSubmission = false;
-    }
-
-    /**
-     * Triggers downloading the test repository and opening it, allowing for submissions to be downloaded
-     */
-    openAssessmentInOrion() {
-        this.orionConnectorService.assessExercise(this.exercise);
-    }
-
-    /**
-     * Retrieves a new submission if necessary and then delegates to the
-     * {@link programmingSubmissionService} to download the submission
-     *
-     * @param submission submission to send to Orion or 'new' if a new one should be loaded
-     * @param correctionRound correction round
-     */
-    downloadSubmissionInOrion(submission: Submission | 'new', correctionRound = 0) {
-        if (submission === 'new') {
-            this.programmingSubmissionService
-                .getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exerciseId, true, correctionRound)
-                .subscribe((newSubmission) => this.programmingSubmissionService.downloadSubmissionInOrion(this.exerciseId, newSubmission.id!, correctionRound));
-        } else {
-            this.programmingSubmissionService.downloadSubmissionInOrion(this.exerciseId, submission.id!, correctionRound);
+            return { 'correction-round': correctionRound };
         }
     }
 
     /**
-     * Show complaint depending on the exercise type
-     * @param complaint that we want to show
+     * Generates and returns the query parameters required for opening a complaint
+     * @param complaint
      */
-    viewComplaint(complaint: Complaint) {
+    getComplaintQueryParams(complaint: Complaint) {
         const submission: Submission = complaint.result?.submission!;
         // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
         if (complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
-            this.openAssessmentEditor(submission, this.numberOfAssessmentsOfCorrectionRounds.length - 1);
+            return this.getAssessmentQueryParams(this.numberOfAssessmentsOfCorrectionRounds.length - 1);
         }
-        const submissionToView = this.submissionsWithComplaints.filter((dto) => dto.submission.id === submission.id).pop()?.submission;
+        const result = this.getSubmissionToViewFromComplaintSubmission(submission);
+
+        if (result !== undefined) {
+            return this.getAssessmentQueryParams(result.results!.length - 1);
+        }
+    }
+
+    /**
+     * Returns either the corresponding submission to view or undefined.
+     * This complaint has to be a true complaint or else issues can arise.
+     * @param submission
+     */
+    getSubmissionToViewFromComplaintSubmission(submission: Submission): Submission | undefined {
+        const submissionToView = this.submissionsWithComplaints.find((dto) => dto.submission.id === submission.id)?.submission;
         if (submissionToView) {
-            if (!submissionToView.results) {
+            if (submissionToView.results) {
+                submissionToView.results = submissionToView.results.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC);
+            } else {
                 submissionToView.results = [];
             }
-            submissionToView.results = submissionToView.results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC);
-            this.openAssessmentEditor(submissionToView, submissionToView.results!.length - 1);
+            return submissionToView;
         }
     }
 

@@ -114,6 +114,21 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
+    public void shouldFilterOutDuplicateTestCases() {
+        testCaseRepository.deleteAll();
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().text("test1"));
+        feedbacks.add(new Feedback().text("generateTestsForAllClasses"));
+        feedbacks.add(new Feedback().text("generateTestsForAllClasses"));
+        feedbacks.add(new Feedback().text("generateTestsForAllClasses"));
+        testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
+
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases).hasSize(2);
+    }
+
+    @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void shouldResetTestWeights() throws Exception {
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";

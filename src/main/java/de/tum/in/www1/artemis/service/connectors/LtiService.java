@@ -438,31 +438,34 @@ public class LtiService {
     public void onNewResult(StudentParticipation participation) {
         if (this.OAUTH_KEY.isPresent() && this.OAUTH_SECRET.isPresent()) {
             // Get the LTI outcome URL
-            participation.getStudents().forEach(student -> ltiOutcomeUrlRepository.findByUserAndExercise(student, participation.getExercise()).ifPresent(ltiOutcomeUrl -> {
+            var students = participation.getStudents();
+            if (students != null) {
+                students.forEach(student -> ltiOutcomeUrlRepository.findByUserAndExercise(student, participation.getExercise()).ifPresent(ltiOutcomeUrl -> {
 
-                String score = "0.00";
+                    String score = "0.00";
 
-                // Get the latest result
-                Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
+                    // Get the latest result
+                    Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
-                if (latestResult.isPresent() && latestResult.get().getScore() != null) {
-                    // LTI scores needs to be formatted as String between "0.00" and "1.00"
-                    score = String.format(Locale.ROOT, "%.2f", latestResult.get().getScore().floatValue() / 100);
-                }
+                    if (latestResult.isPresent() && latestResult.get().getScore() != null) {
+                        // LTI scores needs to be formatted as String between "0.00" and "1.00"
+                        score = String.format(Locale.ROOT, "%.2f", latestResult.get().getScore().floatValue() / 100);
+                    }
 
-                try {
-                    log.info("Reporting score {} for participation {} to LTI consumer with outcome URL {} using the source id {}", score, participation, ltiOutcomeUrl.getUrl(),
-                            ltiOutcomeUrl.getSourcedId());
-                    HttpPost request = IMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY.get(), OAUTH_SECRET.get(), ltiOutcomeUrl.getSourcedId(), score, null,
-                            false);
-                    HttpResponse response = client.execute(request);
-                    String responseString = new BasicResponseHandler().handleResponse(response);
-                    log.info("Response from LTI consumer: {}", responseString);
-                }
-                catch (Exception ex) {
-                    log.error("Reporting to LTI consumer failed", ex);
-                }
-            }));
+                    try {
+                        log.info("Reporting score {} for participation {} to LTI consumer with outcome URL {} using the source id {}", score, participation, ltiOutcomeUrl.getUrl(),
+                                ltiOutcomeUrl.getSourcedId());
+                        HttpPost request = IMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY.get(), OAUTH_SECRET.get(), ltiOutcomeUrl.getSourcedId(), score, null,
+                                false);
+                        HttpResponse response = client.execute(request);
+                        String responseString = new BasicResponseHandler().handleResponse(response);
+                        log.info("Response from LTI consumer: {}", responseString);
+                    }
+                    catch (Exception ex) {
+                        log.error("Reporting to LTI consumer failed", ex);
+                    }
+                }));
+            }
         }
     }
 

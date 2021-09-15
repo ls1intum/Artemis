@@ -211,7 +211,9 @@ public class CourseExamExportService {
 
         // Export the exercises of the course exams
         List<Path> exportedExercises = exportExams(notificationTopic, courseExams, outputDir, progress, totalExercises, exportErrors, reportData);
-        exportedFiles.addAll(new ArrayList<>(exportedExercises));
+        if (!exportedExercises.isEmpty()) {
+            exportedFiles.addAll(new ArrayList<>(exportedExercises));
+        }
 
         // Add total to report
         reportData.add(new ArchivalReportEntry(null, "Total Exercises", totalExercises, exportedFiles.size(), 0));
@@ -432,6 +434,12 @@ public class CourseExamExportService {
      */
     private Optional<Path> createCourseZipFile(Path outputZipFile, List<Path> filesToZip, Path relativeZipPath, List<String> exportErrors) {
         try {
+            // Create the parent directories if they don't exist otherwise the zip file cannot be created.
+            Path parentDir = outputZipFile.getParent();
+            if (!Files.exists(parentDir)) {
+                Files.createDirectories(parentDir);
+            }
+
             zipFileService.createZipFile(outputZipFile, filesToZip, relativeZipPath);
             log.info("Successfully created zip file: {}", outputZipFile);
             return Optional.of(outputZipFile);

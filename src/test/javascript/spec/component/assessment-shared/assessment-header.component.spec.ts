@@ -1,35 +1,94 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
-import { MockComponent } from 'ng-mocks';
-import { Exercise } from 'app/entities/exercise.model';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateDirective, TranslateService } from '@ngx-translate/core';
+import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingScale } from 'app/entities/grading-scale.model';
+import { HttpResponse } from '@angular/common/http';
+import { GradeStep } from 'app/entities/grade-step.model';
+import { of } from 'rxjs';
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
     let fixture: ComponentFixture<AssessmentHeaderComponent>;
 
-    beforeEach(async(() => {
+    const gradeStep1: GradeStep = {
+        isPassingGrade: false,
+        lowerBoundInclusive: true,
+        lowerBoundPercentage: 0,
+        upperBoundInclusive: false,
+        upperBoundPercentage: 40,
+        gradeName: 'D',
+    };
+    const gradeStep2: GradeStep = {
+        isPassingGrade: true,
+        lowerBoundInclusive: true,
+        lowerBoundPercentage: 40,
+        upperBoundInclusive: false,
+        upperBoundPercentage: 60,
+        gradeName: 'C',
+    };
+
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, RouterTestingModule],
-            declarations: [AssessmentHeaderComponent, MockComponent(AssessmentWarningComponent)],
+            imports: [ArtemisTestModule, RouterTestingModule],
+            declarations: [
+                AssessmentHeaderComponent,
+                AssessmentWarningComponent,
+                AlertComponent,
+                MockComponent(NgbAlert),
+                MockDirective(NgbTooltip),
+                TranslateDirective,
+                ArtemisTranslatePipe,
+                MockTranslateValuesDirective,
+                MockComponent(FaIconComponent),
+            ],
             providers: [
                 {
                     provide: JhiAlertService,
                     useClass: JhiAlertService, // use the real one
                 },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                MockProvider(GradingSystemService, {
+                    findGradingScaleForExam: () => {
+                        return of(
+                            new HttpResponse({
+                                body: new GradingScale(),
+                                status: 200,
+                            }),
+                        );
+                    },
+                    findMatchingGradeStep: () => {
+                        return gradeStep1;
+                    },
+                    sortGradeSteps: () => {
+                        return [gradeStep1, gradeStep2];
+                    },
+                }),
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(AssessmentHeaderComponent);
@@ -161,11 +220,14 @@ describe('AssessmentHeaderComponent', () => {
         expect(component.submit.emit).toHaveBeenCalledTimes(1);
     });
 
-    it('should show next submission if assessor or instructur, result is present and no complaint', () => {
+    it('should show next submission if assessor or instructor, result is present and no complaint', () => {
         spyOn(component.nextSubmission, 'emit');
         component.isLoading = false;
         component.isAssessor = false;
         component.hasComplaint = false;
+        component.exercise = {
+            id: 1,
+        } as Exercise;
         fixture.detectChanges();
 
         let nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
@@ -238,5 +300,45 @@ describe('AssessmentHeaderComponent', () => {
 
         expect(component.highlightDifferencesChange.emit).toHaveBeenCalled();
         expect(component.highlightDifferences).toEqual(false);
+    });
+
+    it('should send assessment event on assess next button click when exercise set to Text', () => {
+        component.exercise = {
+            type: ExerciseType.TEXT,
+        } as Exercise;
+        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        component.sendAssessNextEventToAnalytics();
+        fixture.detectChanges();
+        expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION);
+    });
+
+    it('should not send assessment event on assess next button click when exercise is not Text', () => {
+        component.exercise = {
+            type: ExerciseType.FILE_UPLOAD,
+        } as Exercise;
+        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        component.sendAssessNextEventToAnalytics();
+        fixture.detectChanges();
+        expect(sendAssessmentEvent).toHaveBeenCalledTimes(0);
+    });
+
+    it('should send assessment event on submit button click when exercise set to Text', () => {
+        component.exercise = {
+            type: ExerciseType.TEXT,
+        } as Exercise;
+        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        component.sendSubmitAssessmentEventToAnalytics();
+        fixture.detectChanges();
+        expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.SUBMIT_ASSESSMENT);
+    });
+
+    it('should not send assessment event on submit button click when exercise is not Text', () => {
+        component.exercise = {
+            type: ExerciseType.FILE_UPLOAD,
+        } as Exercise;
+        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        component.sendSubmitAssessmentEventToAnalytics();
+        fixture.detectChanges();
+        expect(sendAssessmentEvent).toHaveBeenCalledTimes(0);
     });
 });

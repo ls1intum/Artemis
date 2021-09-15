@@ -1,0 +1,18 @@
+<div class="col-12">
+    <jhi-markdown-editor
+        class="markdown-editor background-editor-color w-100"
+        [markdown]="content"
+        (markdownChange)="updateField($event)"
+        [enableResize]="true"
+        [metaCommands]="[]"
+        [headerCommands]="[]"
+        [defaultCommands]="defaultCommands"
+        [enableFileUpload]="false"
+        [colorCommands]="[]"
+    ></jhi-markdown-editor>
+</div>
+<div class="col text-end">
+    <p class="small my-0 ms-2" [ngStyle]="{ color: content?.length! > maxContentLength || content?.length! == 0 ? 'red' : 'black' }">
+        {{ content?.length }} / {{ maxContentLength }}
+    </p>
+</div>

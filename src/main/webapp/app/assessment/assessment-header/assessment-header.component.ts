@@ -1,7 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result.model';
-import { Exercise } from 'app/entities/exercise.model';
-
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
+import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { ActivatedRoute } from '@angular/router';
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
  * It displays a header bar above the assessment editor with information of locking, as well as offering save/submit/etc buttons.
@@ -43,12 +45,18 @@ export class AssessmentHeaderComponent {
     @Output() cancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() highlightDifferencesChange = new EventEmitter<boolean>();
+    @Output() importExampleSubmission = new EventEmitter<void>();
 
     private _highlightDifferences: boolean;
+    readonly exerciseType = ExerciseType;
 
     @Input() set highlightDifferences(highlightDifferences: boolean) {
         this._highlightDifferences = highlightDifferences;
         this.highlightDifferencesChange.emit(this.highlightDifferences);
+    }
+
+    constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
+        textAssessmentAnalytics.setComponentRoute(route);
     }
 
     get highlightDifferences() {
@@ -62,5 +70,23 @@ export class AssessmentHeaderComponent {
     public toggleHighlightDifferences() {
         this.highlightDifferences = !this.highlightDifferences;
         this.highlightDifferencesChange.emit(this.highlightDifferences);
+    }
+
+    /**
+     * Sends and assessment event for the submit button using the analytics service in case the exercise type is TEXT
+     */
+    sendSubmitAssessmentEventToAnalytics() {
+        if (this.exercise?.type === ExerciseType.TEXT) {
+            this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.SUBMIT_ASSESSMENT);
+        }
+    }
+
+    /**
+     * Sends and assessment event for the assess next button using the analytics service in case the exercise type is TEXT
+     */
+    sendAssessNextEventToAnalytics() {
+        if (this.exercise?.type === ExerciseType.TEXT) {
+            this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION);
+        }
     }
 }

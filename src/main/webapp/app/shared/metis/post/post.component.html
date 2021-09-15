@@ -1,0 +1,10 @@
+<jhi-post-header [posting]="posting" (toggleAnswersChange)="toggleAnswersChange.emit()"></jhi-post-header>
+<div class="row align-items-center">
+    <div class="col">
+        <div class="row">
+            <b>{{ posting.title }}</b>
+        </div>
+        <div class="markdown-preview" [innerHTML]="posting.content ? (posting.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"></div>
+    </div>
+</div>
+<jhi-post-footer [posting]="posting"></jhi-post-footer>

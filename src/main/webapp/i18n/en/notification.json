@@ -10,6 +10,7 @@
             "loadedNotificationCount": "{{loaded}} of {{total}} notifications loaded",
             "by": "by",
             "allLoaded": "No further notifications available.",
+            "liveExamExerciseUpdateNotification": "Updated Exam Exercise Problem Statement!",
             "target": {
                 "newAnswer": "View reply",
                 "newQuestion": "View post",

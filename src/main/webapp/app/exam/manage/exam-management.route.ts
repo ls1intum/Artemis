@@ -55,6 +55,7 @@ import { GradingSystemComponent } from 'app/grading-system/grading-system.compon
 import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
+import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ExampleModelingSubmissionComponent } from 'app/exercises/modeling/manage/example-modeling/example-modeling-submission.component';
 import { QuizParticipationComponent } from 'app/exercises/quiz/participate/quiz-participation.component';
 import { QuizReEvaluateComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate.component';
@@ -63,6 +64,9 @@ import { QuizStatisticComponent } from 'app/exercises/quiz/manage/statistics/qui
 import { MultipleChoiceQuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/multiple-choice-question-statistic/multiple-choice-question-statistic.component';
 import { DragAndDropQuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
 import { ShortAnswerQuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/short-answer-question-statistic/short-answer-question-statistic.component';
+import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
+import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
+import { isOrion } from 'app/shared/orion/orion';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -597,6 +601,15 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/grading/:tab',
+        component: ProgrammingExerciseConfigureGradingComponent,
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/preview',
         component: QuizParticipationComponent,
         data: {
@@ -681,7 +694,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/assessment-dashboard/:exerciseId',
-        component: ExerciseAssessmentDashboardComponent,
+        component: !isOrion ? ExerciseAssessmentDashboardComponent : OrionExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
@@ -690,7 +703,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-assessment-dashboard/:exerciseId',
-        component: ExerciseAssessmentDashboardComponent,
+        component: !isOrion ? ExerciseAssessmentDashboardComponent : OrionExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader',
@@ -842,7 +855,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessment',
-        component: CodeEditorTutorAssessmentContainerComponent,
+        component: !isOrion ? CodeEditorTutorAssessmentContainerComponent : OrionTutorAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',

@@ -1,38 +1,51 @@
 {
     "artemisApp": {
         "metis": {
-            "sidebar": {
+            "noPosts": "Es gibt noch keine Beiträge.",
+            "addNewPost": "Neuer Beitrag",
+            "answerNow": "Jetzt beantworten",
+            "startDiscussion": "Diskussion beginnen",
+            "savePosting": "Speichern",
+            "toggleThread": "Klicke, um den Thread ein-/auszuklappen",
+            "deletePost": "Möchtest du deinen Beitrag löschen?",
+            "confirmDeletePost": "Bitte bestätige, dass du diesen Beitrag löschen möchtest!",
+            "deleteAnswer": "Möchtest du deine Antwort löschen?",
+            "confirmDeleteAnswer": "Bitte bestätige, dass du diese Antwort löschen möchtest!",
+            "createModalTitlePost": "Beitrag erstellen",
+            "createModalTitleAnswer": "Antwort erstellen",
+            "editPosting": "Inhalt bearbeiten",
+            "approveAnswer": "Bestätigen",
+            "approvedAnswer": "Bestätigt",
+            "today": "Heute",
+            "pinnedPostTooltip": "Dieser Beitrag wurde von Tutor:in angeheftet",
+            "archivedPostTooltip": "Dieser Beitrag wurde von Tutor:in archiviert",
+            "pinPostTutorTooltip": "Klicke, um diesen Beitrag oben in der Liste anzupinnen",
+            "archivePostTutorTooltip": "Klicke, um diesen Beitrag nach unten zu schieben",
+            "removePinPostTutorTooltip": "Klicke, um den Pin für diesen Beitrag zu entfernen",
+            "removeArchivePostTutorTooltip": "Klicke, um den Post wieder chronologisch einzuordnen",
+            "chooseReaction": "Wähle eine Reaktion...",
+            "searchEmoji": "Emoji suchen",
+            "courseEmojiSelectionCategory": "Ausgewählte Emojis für diesen Kurs",
+            "discussion": {
                 "header": "Diskussion",
                 "show": "Diskussion anzeigen",
-                "hide": "Diskussion einklappen",
-                "noPosts": "Es gibt keine Beiträge.",
-                "addNewPost": "Einen neuen Beitrag erstellen",
-                "approvedLabel": "Vom Tutor bestätigt",
-                "answerNow": "Jetzt beantworten",
-                "answerCount": "Zeige Antworten ({{count}})",
-                "cancel": "Abbrechen",
-                "addPost": "Beitrag hinzufügen",
-                "savePost": "Beitrag speichern",
-                "addAnswer": "Antwort hinzufügen",
-                "saveAnswer": "Antwort speichern",
-                "deletePost": "Möchtest du deinen Beitrag löschen?",
-                "confirmDeletePost": "Bitte bestätige, dass du deinen Beitrag löschen möchtest!",
-                "editPost": "Beitrag bearbeiten",
-                "deleteAnswer": "Möchtest du deine Antwort löschen?",
-                "confirmDeleteAnswer": "Bitte bestätige, dass du deine Antwort löschen möchtest!",
-                "editAnswer": "Antwort bearbeiten",
-                "approveAnswer": "Antwort bestätigen",
-                "unapproveAnswer": "Antwort nicht bestätigen",
-                "hideAnswers": "Weniger Antworten anzeigen",
-                "showAnswers": "Weitere Antworten anzeigen ({{count}})"
+                "hide": "Diskussion einklappen"
             },
             "overview": {
                 "title": "Beiträge",
-                "noPosts": "Es gibt keine Beiträge in diesem Kurs",
+                "noPosts": "Es gibt noch keine Beiträge in diesem Kurs.",
                 "showApproved": "Zeige Beiträge mit bestätigten Antworten an",
                 "hideApproved": "Ignoriere Beiträge mit bestätigten Antworten"
             },
             "post": {
+                "title": "Titel",
+                "titleTooltip": "Gib deinem Beitrag einen prägnanten und zusammenfassenden Titel",
+                "tags": "Tags",
+                "tagsTooltip": "Gib deinem Beitrag bis zu drei aussagekräftige und wiederverwendbare Tags. Tippe in das Eingabefeld und bestätige mit Enter, um ein Tag hinzuzufügen.",
+                "tagPlaceholder": "+ Tag",
+                "tagSecondaryPlaceholder": "Tag(s) hinzufügen",
+                "content": "Inhalt",
+                "contentTooltip": "Beschreibe dein Problem oder deine Anfrage so präzise wie möglich. Dort, wo es die Lesbarkeit verbessert, verwende bitte Markdown Formatierungen.",
                 "created": "Beitrag erfolgreich erstellt",
                 "updated": "Beitrag erfolgreich aktualisiert",
                 "deleted": "Beitrag erfolgreich gelöscht",
@@ -45,7 +58,6 @@
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",
-                "updated": "Antwort erfolgreich aktualisiert",
                 "deleted": "Antwort erfolgreich gelöscht"
             }
         }

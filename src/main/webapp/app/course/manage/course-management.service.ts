@@ -88,6 +88,11 @@ export class CourseManagementService {
             .pipe(filter((res: HttpResponse<CourseManagementDetailViewDto>) => !!res.body));
     }
 
+    /**
+     * gets the active users for the line chart in the detail view
+     * @param courseId the id of the course of which the statistics should be fetched
+     * @param periodIndex the period of the statistics we want to have
+     */
     getStatisticsData(courseId: number, periodIndex: number): Observable<number[]> {
         const params = new HttpParams().set('periodIndex', '' + periodIndex);
         return this.http.get<number[]>(`${this.resourceUrl}/${courseId}/statistics`, { params });
@@ -638,7 +643,7 @@ export class CourseExerciseService {
     }
 
     /**
-     * handle the given student participaon by adding in the participationWebsocketService
+     * handle the given student participation by adding in the participationWebsocketService
      * @param participation - the participation to be handled
      */
     handleParticipation(participation: StudentParticipation) {

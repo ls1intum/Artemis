@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.util.RequestUtilService.parameters;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -7,12 +8,12 @@ import static org.mockito.Mockito.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.ListBranchCommand;
@@ -22,6 +23,7 @@ import org.eclipse.jgit.merge.MergeStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.mockito.stubbing.Answer;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +42,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.util.GitUtilService;
@@ -210,6 +213,21 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetFilesWithContent_shouldNotThrowException() throws Exception {
+        Map<de.tum.in.www1.artemis.domain.File, FileType> mockedFiles = new HashMap<>();
+        mockedFiles.put(mock(de.tum.in.www1.artemis.domain.File.class), FileType.FILE);
+        doReturn(mockedFiles).when(gitService).listFilesAndFolders(any(Repository.class));
+
+        MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class);
+        mockedFileUtils.when(() -> FileUtils.readFileToString(any(File.class), eq(StandardCharsets.UTF_8))).thenThrow(IOException.class);
+
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content", HttpStatus.OK, String.class, String.class);
+        assertThat(files).isEmpty();
+        mockedFileUtils.close();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetFilesWithInfoAboutChange_noChange() throws Exception {
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-change", HttpStatus.OK, String.class, Boolean.class);
         assertThat(files).isNotEmpty();
@@ -296,6 +314,17 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetFile_shouldThrowException() throws Exception {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFileName);
+
+        doReturn(Optional.empty()).when(gitService).getFileByName(any(Repository.class), eq(currentLocalFileName));
+        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.NOT_FOUND, byte[].class, params);
+        assertThat(file).isNull();
     }
 
     @Test
@@ -565,6 +594,65 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(receivedLogs).isNotNull();
         assertThat(receivedLogs).hasSize(3);
         assertThat(receivedLogs).isEqualTo(buildLogEntries);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testBuildLogsFromDatabaseForSpecificResults() throws Exception {
+        // FIRST SUBMISSION
+        var submission1 = new ProgrammingSubmission();
+        submission1.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
+        submission1.setSubmitted(true);
+        submission1.setCommitHash("A");
+        submission1.setType(SubmissionType.MANUAL);
+        submission1.setBuildFailed(true);
+
+        var submission1Logs = new ArrayList<BuildLogEntry>();
+        submission1Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 1 - Log 1", submission1));
+        submission1Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 1 - Log 2", submission1));
+
+        submission1.setBuildLogEntries(submission1Logs);
+        database.addProgrammingSubmission(programmingExercise, submission1, "student1");
+        var result1 = database.addResultToSubmission(submission1, AssessmentType.AUTOMATIC).getFirstResult();
+
+        // SECOND SUBMISSION
+        var submission2 = new ProgrammingSubmission();
+        submission2.setSubmissionDate(ZonedDateTime.now().minusMinutes(2));
+        submission2.setSubmitted(true);
+        submission2.setCommitHash("B");
+        submission2.setType(SubmissionType.MANUAL);
+        submission2.setBuildFailed(true);
+
+        var submission2Logs = new ArrayList<BuildLogEntry>();
+        submission2Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 2 - Log 1", submission2));
+        submission2Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 2 - Log 2", submission2));
+
+        submission2.setBuildLogEntries(submission2Logs);
+        database.addProgrammingSubmission(programmingExercise, submission2, "student1");
+        var result2 = database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC).getFirstResult();
+
+        // Specify to use result1
+        var receivedLogs1 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
+                parameters(Map.of("resultId", result1.getId())));
+        assertThat(receivedLogs1).isEqualTo(submission1Logs);
+
+        // Specify to use result2
+        var receivedLogs2 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
+                parameters(Map.of("resultId", result2.getId())));
+        assertThat(receivedLogs2).isEqualTo(submission2Logs);
+
+        // Without parameters, the latest submission must be used
+        var receivedLogsLatest = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
+        assertThat(receivedLogsLatest).isEqualTo(submission2Logs);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testBuildLogsFromDatabaseForSpecificResults_otherParticipation() throws Exception {
+        var result = database.addProgrammingParticipationWithResultForExercise(programmingExercise, "tutor1");
+        database.addProgrammingSubmissionToResultAndParticipation(result, (StudentParticipation) result.getParticipation(), "xyz");
+
+        request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.BAD_REQUEST, BuildLogEntry.class, parameters(Map.of("resultId", result.getId())));
     }
 
     @Test

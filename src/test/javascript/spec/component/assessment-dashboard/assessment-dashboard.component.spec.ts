@@ -6,16 +6,13 @@ import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap, RouterModule, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -40,6 +37,14 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { TimeAgoPipe } from 'ngx-moment';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { JhiSortDirective } from 'ng-jhipster';
+import { NgModel } from '@angular/forms';
+import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -121,9 +126,9 @@ describe('AssessmentDashboardInformationComponent', () => {
         },
     } as any as ActivatedRoute;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisSharedComponentModule, RouterModule, TranslateModule.forRoot(), ArtemisAssessmentSharedModule],
+            imports: [ArtemisTestModule, RouterModule, TranslateModule.forRoot()],
             declarations: [
                 AssessmentDashboardComponent,
                 MockComponent(TutorLeaderboardComponent),
@@ -134,6 +139,14 @@ describe('AssessmentDashboardInformationComponent', () => {
                 MockPipe(TimeAgoPipe),
                 MockComponent(SecondCorrectionEnableButtonComponent),
                 MockPipe(HtmlForMarkdownPipe),
+                MockComponent(FaIconComponent),
+                MockComponent(AlertComponent),
+                MockDirective(JhiSortDirective),
+                MockDirective(NgModel),
+                MockDirective(NgbTooltip),
+                MockComponent(NotReleasedTagComponent),
+                MockPipe(ArtemisTimeAgoPipe),
+                MockDirective(MockHasAnyAuthorityDirective),
             ],
             providers: [
                 JhiLanguageHelper,

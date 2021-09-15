@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.service.metis.PostService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -60,24 +61,23 @@ public class PostResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @RequestBody Post post) {
         Post updatedPost = postService.updatePost(courseId, post);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, postService.getEntityName(), updatedPost.getId().toString()))
-                .body(updatedPost);
+        return new ResponseEntity<>(updatedPost, null, HttpStatus.OK);
     }
 
     /**
-     * PUT /courses/{courseId}/posts/{postId}/votes : Vote on an existing post
+     * PUT /courses/{courseId}/posts/{postId}/display-priority : Update the display priority of an existing post
      *
-     * @param courseId   id of the course the post belongs to
-     * @param postId     id of the post to vote on
-     * @param voteChange value by which votes are increased / decreased
+     * @param courseId          id of the course the post belongs to
+     * @param postId            id of the post change the displayPriority for
+     * @param displayPriority   new enum value for displayPriority, i.e. either PINNED, ARCHIVED, NONE
      * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
      * or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
-    @PutMapping("courses/{courseId}/posts/{postId}/votes")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Post> updatePostVotes(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Integer voteChange) {
-        Post postWithUpdatedVotes = postService.updatePostVotes(courseId, postId, voteChange);
-        return ResponseEntity.ok().body(postWithUpdatedVotes);
+    @PutMapping("courses/{courseId}/posts/{postId}/display-priority")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
+        Post postWithUpdatedDisplayPriority = postService.changeDisplayPriority(courseId, postId, displayPriority);
+        return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
     }
 
     /**
@@ -108,6 +108,20 @@ public class PostResource {
     public ResponseEntity<List<Post>> getAllPostsForLecture(@PathVariable Long courseId, @PathVariable Long lectureId) {
         List<Post> lecturePosts = postService.getAllLecturePosts(courseId, lectureId);
         return new ResponseEntity<>(lecturePosts, null, HttpStatus.OK);
+    }
+
+    /**
+     * GET /courses/{courseId}/posts/tags : Get all tags for posts in a certain course
+     *
+     * @param courseId  id of the course the post belongs to
+     * @return the ResponseEntity with status 200 (OK) and with body all tags for posts in that course,
+     * or 400 (Bad Request) if the checks on user or course validity fail
+     */
+    @GetMapping("courses/{courseId}/posts/tags")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<String>> getAllPostTagsForCourse(@PathVariable Long courseId) {
+        List<String> tags = postService.getAllCourseTags(courseId);
+        return new ResponseEntity<>(tags, null, HttpStatus.OK);
     }
 
     /**

@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,7 +12,6 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { JhiEventManager } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,6 +20,9 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import * as moment from 'moment';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { SortService } from 'app/shared/service/sort.service';
+import { Submission } from 'app/entities/submission.model';
+import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -62,6 +64,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private translateService: TranslateService,
         private profileService: ProfileService,
         private statisticsService: StatisticsService,
+        private sortService: SortService,
+        private router: Router,
     ) {}
 
     ngOnInit() {
@@ -71,23 +75,45 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
 
             this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
-                // TODO: the feedback would be missing here, is that a problem?
                 this.programmingExercise = updatedProgrammingExercise.body!;
+                this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorForExercise(this.programmingExercise);
+                this.programmingExercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.programmingExercise);
+                this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
                 // get the latest results for further processing
                 if (this.programmingExercise.templateParticipation) {
-                    const templateSubmissions = this.programmingExercise.templateParticipation.submissions;
-                    if (templateSubmissions && templateSubmissions.length > 0) {
-                        this.programmingExercise.templateParticipation.results = templateSubmissions.last()?.results;
+                    const latestTemplateResult = this.getLatestResult(this.programmingExercise.templateParticipation.submissions);
+                    if (latestTemplateResult) {
+                        this.programmingExercise.templateParticipation.results = [latestTemplateResult];
                     }
                 }
                 if (this.programmingExercise.solutionParticipation) {
-                    const solutionSubmissions = this.programmingExercise.solutionParticipation.submissions;
-                    if (solutionSubmissions && solutionSubmissions.length > 0) {
-                        this.programmingExercise.solutionParticipation.results = solutionSubmissions.last()?.results;
+                    const latestSolutionResult = this.getLatestResult(this.programmingExercise.solutionParticipation.submissions);
+                    if (latestSolutionResult) {
+                        this.programmingExercise.solutionParticipation.results = [latestSolutionResult];
                     }
                 }
                 this.loadingTemplateParticipationResults = false;
                 this.loadingSolutionParticipationResults = false;
+
+                this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                    if (profileInfo) {
+                        if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation && this.programmingExercise.templateParticipation.buildPlanId) {
+                            this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
+                                profileInfo.buildPlanURLTemplate,
+                                this.programmingExercise.projectKey,
+                                this.programmingExercise.templateParticipation.buildPlanId,
+                            );
+                        }
+                        if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation && this.programmingExercise.solutionParticipation.buildPlanId) {
+                            this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
+                                profileInfo.buildPlanURLTemplate,
+                                this.programmingExercise.projectKey,
+                                this.programmingExercise.solutionParticipation.buildPlanId,
+                            );
+                        }
+                        this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
+                    }
+                });
             });
 
             this.statisticsService.getExerciseStatistics(programmingExercise.id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
@@ -103,16 +129,26 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
             }
         });
-
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
-            }
-        });
     }
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
+    }
+
+    /**
+     * returns the latest result within the submissions array or undefined, sorting is based on the submission date and the result order retrieved from the server
+     *
+     * @param submissions
+     */
+    getLatestResult(submissions?: Submission[]) {
+        if (submissions && submissions.length > 0) {
+            // important: sort to get the latest submission (the order of the server can be random)
+            this.sortService.sortByProperty(submissions, 'submissionDate', true);
+            const results = submissions.sort().last()?.results;
+            if (results && results.length > 0) {
+                return results.last();
+            }
+        }
     }
 
     combineTemplateCommits() {
@@ -182,6 +218,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     content: 'Deleted a programming exercise',
                 });
                 this.dialogErrorSource.next('');
+
+                if (!this.isExamExercise) {
+                    this.router.navigateByUrl(`/course-management/${this.courseId}/exercises`);
+                } else {
+                    this.router.navigateByUrl(`/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/exercise-groups`);
+                }
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
@@ -263,5 +305,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
+    }
+
+    /**
+     * Generates the link to any participation's submissions, used for the link to template and solution submissions
+     * @param id of the participation
+     */
+    getParticipationSubmissionLink(id: number) {
+        const link = [this.baseResource, 'participations', id];
+        // For unknown reason normal exercises append /submissions to the submission view whereas exam exercises do not
+        if (!this.isExamExercise) {
+            link.push('submissions');
+        }
+        return link;
     }
 }

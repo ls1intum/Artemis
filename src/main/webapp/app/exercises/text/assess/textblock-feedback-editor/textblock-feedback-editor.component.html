@@ -17,7 +17,7 @@
     <span
         class="badge bg-warning"
         *ngIf="!conflictMode && feedback.conflictingTextAssessments && feedback.conflictingTextAssessments.length > 0"
-        (click)="onConflictsClicked.emit(feedback.id)"
+        (click)="onConflictClicked(feedback.id)"
     >
         <fa-icon [icon]="'balance-scale-right'"></fa-icon>
         <span jhiTranslate="artemisApp.textAssessment.conflict.conflictingAssessments" [translateValues]="{ number: feedback.conflictingTextAssessments?.length }"></span>
@@ -67,6 +67,7 @@
                     [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.impactWarningTooltip' | artemisTranslate"
                     placement="bottom"
                     class="impactWarningLabel"
+                    (mouseenter)="mouseEnteredWarningLabel()"
                     [translateValues]="{ affectedSubmissionsCount: textBlock.numberOfAffectedSubmissions }"
                     >This feedback might affect <b>{{ textBlock.numberOfAffectedSubmissions }}</b> other similar submission/s.</span
                 >
@@ -90,6 +91,13 @@
         <div class="form-group col-md-1" *ngIf="feedback.gradingInstruction!">
             <jhi-grading-instruction-link-icon [assessment]="feedback"></jhi-grading-instruction-link-icon>
         </div>
+    </div>
+
+    <!-- Text showing whether the tutor feedback is correct or not (upon validation on the server) -->
+    <div *ngIf="feedback.correctionStatus != undefined">
+        <span>{{ 'artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus! | artemisTranslate }} </span>
+        <!-- :warning: emoji was rendered as a black-white glyph, hence the solution with the fa-icon -->
+        <fa-icon *ngIf="feedback.correctionStatus != 'CORRECT'" class="text-warning" [icon]="'exclamation-triangle'"></fa-icon>
     </div>
 
     <ng-template #toggleMore let-modal>

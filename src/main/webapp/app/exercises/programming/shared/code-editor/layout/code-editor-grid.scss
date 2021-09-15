@@ -8,7 +8,7 @@ Code-Editor Layout Styles
     grid-row-gap: 10px;
 
     .collapsed--horizontal {
-        width: 75px !important;
+        width: 50px !important;
     }
     .collapsed--vertical {
         height: 42px !important;
@@ -94,24 +94,50 @@ Collapsable styling
 
 // File browser
 .editor-sidebar-left.collapsed--horizontal {
-    > * {
-        flex: none !important;
+    flex: none !important;
+    .card-header {
+        height: 100%;
+        width: 100%;
+        > fa-icon {
+            display: none;
+        }
+    }
 
-        .card-header {
-            height: 100%;
-            width: 100%;
-            > fa-icon {
-                display: none;
-            }
+    .card-body,
+    .card-second-header {
+        display: none !important;
+    }
+
+    .collapsed-file-browser {
+        width: 50px;
+        cursor: pointer;
+
+        .header {
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+            position: absolute;
+            top: 27%;
+            left: 25%;
         }
 
-        .card-body,
-        .card-second-header {
-            display: none !important;
+        fa-icon {
+            position: absolute;
+            left: 15px;
         }
 
-        .card-title span {
-            display: none !important;
+        .top-icon {
+            top: 15px;
+        }
+
+        #panel-symbol {
+            padding-right: 0 !important;
+            position: absolute;
+            top: 66%;
+            left: 25%;
+        }
+
+        .bottom-icon {
+            bottom: 15px;
         }
     }
 }
@@ -147,7 +173,6 @@ Collapsable styling
 // Instructions
 .editor-sidebar-right.collapsed--horizontal {
     flex: none !important;
-
     .card-header {
         height: 100%;
         width: 100%;
@@ -162,17 +187,42 @@ Collapsable styling
         .editable-instruction-container__editor {
             display: none;
         }
-        .instructions__content {
-            display: none;
-        }
     }
 
     .card-second-header {
         display: none !important;
     }
 
-    .card-title span {
-        display: none !important;
+    .collapsed-instructions-card {
+        width: 50px;
+        cursor: pointer;
+
+        .header {
+            writing-mode: vertical-lr;
+            position: absolute;
+            top: 29%;
+            left: 25%;
+        }
+
+        fa-icon {
+            position: absolute;
+            right: 15px;
+        }
+
+        .top-icon {
+            top: 15px;
+        }
+
+        #panel-symbol {
+            padding-right: 0 !important;
+            position: absolute;
+            top: 18%;
+            left: 40%;
+        }
+
+        .bottom-icon {
+            bottom: 15px;
+        }
     }
 
     .editable-instruction-container__status {
@@ -258,4 +308,8 @@ Resizable drag elements
     cursor: col-resize;
     margin-left: 4px;
     margin-right: 4px;
+}
+
+.separator {
+    margin: 5px;
 }

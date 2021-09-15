@@ -1,20 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
-import { ActivatedRoute, RouterModule, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TextFeedbackConflictsComponent } from 'app/exercises/text/assess/conflicts/text-feedback-conflicts.component';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
-import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
-import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
 import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/text-submission-assessment.component';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
@@ -34,7 +29,23 @@ import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
+import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { JhiTranslateDirective } from 'ng-jhipster';
+import { NgModel } from '@angular/forms';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 
 describe('TextFeedbackConflictsComponent', () => {
     let component: TextFeedbackConflictsComponent;
@@ -152,18 +163,7 @@ describe('TextFeedbackConflictsComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                ArtemisSharedModule,
-                ArtemisAssessmentSharedModule,
-                AssessmentInstructionsModule,
-                TranslateModule.forRoot(),
-                ArtemisConfirmIconModule,
-                RouterModule,
-                RouterTestingModule,
-                TextSharedModule,
-                ArtemisGradingInstructionLinkIconModule,
-            ],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), RouterTestingModule],
             declarations: [
                 TextFeedbackConflictsComponent,
                 TextSubmissionAssessmentComponent,
@@ -172,8 +172,28 @@ describe('TextFeedbackConflictsComponent', () => {
                 TextblockFeedbackEditorComponent,
                 ManualTextblockSelectionComponent,
                 TextFeedbackConflictsHeaderComponent,
+                MockComponent(ScoreDisplayComponent),
+                MockComponent(FaIconComponent),
+                MockTranslateValuesDirective,
+                MockComponent(AssessmentLayoutComponent),
+                MockComponent(AssessmentInstructionsComponent),
+                MockComponent(ResizeableContainerComponent),
+                MockComponent(UnreferencedFeedbackComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(JhiTranslateDirective),
+                MockDirective(NgbTooltip),
+                MockComponent(ConfirmIconComponent),
+                MockDirective(NgModel),
+                MockComponent(GradingInstructionLinkIconComponent),
+                MockComponent(AssessmentCorrectionRoundBadgeComponent),
+                MockComponent(ManualTextSelectionComponent),
+                MockComponent(AlertComponent),
             ],
-            providers: [{ provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ feedbackId: 1 }) } } }],
+            providers: [
+                { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ feedbackId: 1 }) } } },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+            ],
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {

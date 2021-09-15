@@ -24,12 +24,12 @@ import { Course } from 'app/entities/course.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
 import { Router, RouterModule } from '@angular/router';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -164,8 +164,8 @@ describe('TeamParticipationTableComponent', () => {
     beforeEach(async () => {
         router = new MockRouter();
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisDataTableModule, MockModule(NgxDatatableModule), MockModule(RouterModule), MockModule(NgJhipsterModule), MockModule(NgbModule)],
-            declarations: [TeamParticipationTableComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule), MockModule(RouterModule), MockModule(NgJhipsterModule), MockModule(NgbModule)],
+            declarations: [TeamParticipationTableComponent, MockComponent(DataTableComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             providers: [
                 MockProvider(TranslateService),
                 ExerciseService,
@@ -220,11 +220,20 @@ describe('TeamParticipationTableComponent', () => {
     }));
 
     it('Navigate to assessment editor when opening exercise submission', fakeAsync(() => {
-        comp.openAssessmentEditor(exercise1, 'new');
+        const participation = exercise2.studentParticipations![0];
+        comp.openAssessmentEditor(exercise2, participation, 'new');
         tick();
         expect(router.navigate).to.have.been.calledOnce;
         const navigationUrl = router.navigate.getCall(0).args[0];
-        expect(navigationUrl).to.deep.equal([`/course-management/${course.id}/${exercise1.type}-exercises/${exercise1.id}/submissions/new/assessment`]);
+        expect(navigationUrl).to.deep.equal([
+            '/course-management',
+            course.id!.toString(),
+            exercise2.type! + '-exercises',
+            exercise2.id!.toString(),
+            'submissions',
+            'new',
+            'assessment',
+        ]);
     }));
 
     it('Check enabled assessment button for exercises without due date', fakeAsync(() => {

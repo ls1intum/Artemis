@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -500,6 +501,67 @@ public class ModelFactory {
         return course;
     }
 
+    /**
+     * Generates a TextAssessment event with the given parameters
+     * @param eventType the type of the event
+     * @param feedbackType the type of the feedback
+     * @param segmentType the segment type of the event
+     * @param courseId the course id of the event
+     * @param userId the userid of the event
+     * @param exerciseId the exercise id of the event
+     * @param participationId the participation id of the event
+     * @param submissionId the submission id of the event
+     * @return the TextAssessment event with all the properties applied
+     */
+    public static TextAssessmentEvent generateTextAssessmentEvent(TextAssessmentEventType eventType, FeedbackType feedbackType, TextBlockType segmentType, Long courseId,
+            Long userId, Long exerciseId, Long participationId, Long submissionId) {
+        TextAssessmentEvent event = new TextAssessmentEvent();
+        event.setId(null);
+        event.setEventType(eventType);
+        event.setFeedbackType(feedbackType);
+        event.setSegmentType(segmentType);
+        event.setCourseId(courseId);
+        event.setTextExerciseId(exerciseId);
+        event.setParticipationId(participationId);
+        event.setSubmissionId(submissionId);
+        event.setUserId(userId);
+        return event;
+    }
+
+    /**
+     * Generates a list of different combinations of assessment events based on the given parameters
+     * @param courseId the course id of the event
+     * @param userId the userid of the event
+     * @param exerciseId the exercise id of the event
+     * @param participationId the participation id of the event
+     * @param submissionId the submission id of the event
+     * @return a list of TextAssessment events that are generated
+     */
+    public static List<TextAssessmentEvent> generateMultipleTextAssessmentEvents(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
+        List<TextAssessmentEvent> events = new ArrayList<>();
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
+                exerciseId, participationId, submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId, exerciseId,
+                participationId, submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING, FeedbackType.MANUAL, TextBlockType.AUTOMATIC, courseId, userId, exerciseId,
+                participationId, submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC, courseId, userId, exerciseId, participationId,
+                submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC, courseId, userId,
+                exerciseId, participationId, submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC, courseId, userId, exerciseId, participationId,
+                submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId, userId,
+                exerciseId, participationId, submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.SUBMIT_ASSESSMENT, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId, userId, exerciseId, participationId,
+                submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId, userId, exerciseId,
+                participationId, submissionId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId, userId, exerciseId,
+                participationId, submissionId));
+        return events;
+    }
+
     public static Exam generateExamWithStudentReviewDates(Course course) {
         ZonedDateTime currentTime = ZonedDateTime.now();
         Exam exam = new Exam();
@@ -631,6 +693,16 @@ public class ModelFactory {
         return negativeFeedback;
     }
 
+    @NotNull
+    public static Feedback createManualTextFeedback(Double credits, String textBlockReference) {
+        Feedback feedback = new Feedback();
+        feedback.setCredits(credits);
+        feedback.setText("bad");
+        feedback.setType(FeedbackType.MANUAL);
+        feedback.setReference(textBlockReference);
+        return feedback;
+    }
+
     public static List<Feedback> generateStaticCodeAnalysisFeedbackList(int numOfFeedback) {
         List<Feedback> feedbackList = new ArrayList<>();
         for (int i = 0; i < numOfFeedback; i++) {
@@ -733,6 +805,20 @@ public class ModelFactory {
         studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
         studentParticipation.setExercise(exercise);
         studentParticipation.setParticipant(user);
+        return studentParticipation;
+    }
+
+    /**
+     * Generates a minimal student participation without a specific user attached.
+     * @param initializationState the state of the participation
+     * @param exercise the referenced exercise of the participation
+     * @return the StudentParticipation created
+     */
+    public static StudentParticipation generateStudentParticipationWithoutUser(InitializationState initializationState, Exercise exercise) {
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setInitializationState(initializationState);
+        studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
+        studentParticipation.setExercise(exercise);
         return studentParticipation;
     }
 

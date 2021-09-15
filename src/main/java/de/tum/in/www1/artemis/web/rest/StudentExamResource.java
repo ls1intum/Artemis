@@ -66,10 +66,12 @@ public class StudentExamResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final ExamService examService;
+
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService,
             ExamSessionService examSessionService, StudentParticipationRepository studentParticipationRepository, QuizExerciseRepository quizExerciseRepository,
-            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService) {
+            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -82,6 +84,7 @@ public class StudentExamResource {
         this.quizExerciseRepository = quizExerciseRepository;
         this.examRepository = examRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.examService = examService;
     }
 
     /**
@@ -113,7 +116,7 @@ public class StudentExamResource {
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
-            filterParticipation(studentExam, exercise, participations, true);
+            filterParticipationForExercise(studentExam, exercise, participations, true);
         }
         studentExam.getUser().setVisibleRegistrationNumber();
 
@@ -158,11 +161,16 @@ public class StudentExamResource {
         }
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         if (!studentExam.isTestRun()) {
-            Exam exam = examRepository.findById(examId).get();
+            Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
             // when the exam is already visible, the working time cannot be changed, due to permission issues with unlock and lock operations for programming exercises
             if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
                 return badRequest();
             }
+            if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDate(exam)) && exam.getStartDate() != null
+                    && ZonedDateTime.now().isBefore(exam.getStartDate().plusSeconds(workingTime))) {
+                examService.scheduleModelingExercises(exam);
+            }
+
         }
 
         studentExam.setWorkingTime(workingTime);
@@ -502,6 +510,7 @@ public class StudentExamResource {
         final String instanceId = request.getHeader("X-Artemis-Client-Instance-ID");
         ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId, ipAddress);
         examSession.hideDetails();
+        examSession.setInitialSession(this.examSessionService.checkExamSessionIsInitial(studentExam.getId()));
         studentExam.setExamSessions(Set.of(examSession));
 
         // not needed
@@ -512,7 +521,7 @@ public class StudentExamResource {
      * For all exercises from the student exam, fetch participation, submissions & result for the current user.
      *
      * @param studentExam the student exam in question
-     * @param currentUser logged in user with groups and authorities
+     * @param currentUser logged-in user with groups and authorities
      */
     private void fetchParticipationsSubmissionsAndResultsForStudentExam(StudentExam studentExam, User currentUser) {
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
@@ -524,7 +533,7 @@ public class StudentExamResource {
         // connect & filter the exercises and student participations including the latest submission and results where necessary, to make sure all relevant associations are
         // available
         for (Exercise exercise : studentExam.getExercises()) {
-            filterParticipation(studentExam, exercise, participations, isAtLeastInstructor);
+            filterParticipationForExercise(studentExam, exercise, participations, isAtLeastInstructor);
         }
     }
 
@@ -538,7 +547,7 @@ public class StudentExamResource {
      * @param participations the set of participations, wherein to search for the relevant participation
      * @param isAtLeastInstructor flag for instructor access privileges
      */
-    private void filterParticipation(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
+    private void filterParticipationForExercise(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
 
@@ -551,7 +560,7 @@ public class StudentExamResource {
         }
 
         // get user's participation for the exercise
-        StudentParticipation participation = participations != null ? exercise.findRelevantParticipation(participations) : null;
+        StudentParticipation participation = participations != null ? exercise.findParticipation(participations) : null;
 
         // add relevant submission (relevancy depends on InitializationState) with its result to participation
         if (participation != null) {
@@ -566,7 +575,7 @@ public class StudentExamResource {
                 setResultIfNecessary(studentExam, participation, isAtLeastInstructor);
 
                 if (exercise instanceof QuizExercise) {
-                    // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
+                    // filter quiz solutions when the publishing result date is not set (or when set before the publish result date)
                     ((QuizSubmission) latestSubmission).filterForExam(studentExam.areResultsPublishedYet(), isAtLeastInstructor);
                 }
                 else {
@@ -602,11 +611,6 @@ public class StudentExamResource {
                 latestResult.setSubmission(lastSubmission);
                 // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
                 // lastResult -> lastSubmission
-                var resultWithComplaint = lastSubmission.getResultWithComplaint();
-                if (resultWithComplaint != null) {
-                    latestResult.setHasComplaint(true);
-                    latestResult.setId(resultWithComplaint.getId());
-                }
                 participation.setResults(Set.of(latestResult));
             }
             lastSubmission.setResults(null);

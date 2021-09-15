@@ -2,8 +2,10 @@ package de.tum.in.www1.artemis.web.rest.lecture;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -91,6 +93,14 @@ public class VideoUnitResource {
             return conflict();
         }
 
+        // Validate the URL
+        try {
+            new URL(videoUnit.getSource());
+        }
+        catch (MalformedURLException exception) {
+            badRequest();
+        }
+
         if (!authorizationCheckService.isAtLeastEditorInCourse(videoUnit.getLecture().getCourse(), null)) {
             return forbidden();
         }
@@ -118,6 +128,15 @@ public class VideoUnitResource {
         if (videoUnit.getId() != null) {
             return badRequest();
         }
+
+        // Validate the URL
+        try {
+            new URL(videoUnit.getSource());
+        }
+        catch (MalformedURLException exception) {
+            badRequest();
+        }
+
         Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
         if (lectureOptional.isEmpty()) {
             return badRequest();

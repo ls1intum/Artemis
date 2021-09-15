@@ -6,9 +6,6 @@ import { Exam } from 'app/entities/exam.model';
 import { round } from 'app/shared/util/utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { catchError } from 'rxjs/operators';
-import { HttpErrorResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
 import { GradeType } from 'app/entities/grading-scale.model';
 
 @Component({
@@ -55,26 +52,16 @@ export class ExamPointsSummaryComponent implements OnInit {
      */
     calculateExamGrade() {
         const achievedPointsRelative = (this.calculatePointsSum() / this.calculateMaxPointsSum()) * 100;
-        this.gradingSystemService
-            .matchPercentageToGradeStepForExam(this.courseId, this.exam!.id!, achievedPointsRelative)
-            .pipe(
-                catchError((error: HttpErrorResponse) => {
-                    if (error.status === 404) {
-                        return of(undefined);
-                    }
-                    return throwError(error);
-                }),
-            )
-            .subscribe((gradeObservable) => {
-                if (gradeObservable && gradeObservable!.body) {
-                    const gradeDTO = gradeObservable!.body;
-                    this.gradingScaleExists = true;
-                    this.grade = gradeDTO.gradeName;
-                    this.hasPassed = gradeDTO.isPassingGrade;
-                    this.isBonus = gradeDTO.gradeType === GradeType.BONUS;
-                    this.changeDetector.detectChanges();
-                }
-            });
+        this.gradingSystemService.matchPercentageToGradeStepForExam(this.courseId, this.exam!.id!, achievedPointsRelative).subscribe((gradeObservable) => {
+            if (gradeObservable && gradeObservable!.body) {
+                const gradeDTO = gradeObservable!.body;
+                this.gradingScaleExists = true;
+                this.grade = gradeDTO.gradeName;
+                this.isBonus = gradeDTO.gradeType === GradeType.BONUS;
+                this.hasPassed = gradeDTO.isPassingGrade;
+                this.changeDetector.detectChanges();
+            }
+        });
     }
 
     /**

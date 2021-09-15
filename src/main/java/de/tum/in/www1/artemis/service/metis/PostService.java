@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -30,16 +31,13 @@ public class PostService extends PostingService {
 
     private final PostRepository postRepository;
 
-    private final LectureRepository lectureRepository;
-
     private final GroupNotificationService groupNotificationService;
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService) {
-        super(courseRepository, exerciseRepository, postRepository, authorizationCheckService);
+        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
-        this.lectureRepository = lectureRepository;
         this.groupNotificationService = groupNotificationService;
     }
 
@@ -60,10 +58,12 @@ public class PostService extends PostingService {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
         preCheckUserAndCourse(user, courseId);
-        preCheckPostValidity(post, courseId);
+        preCheckPostValidity(post);
 
         // set author to current user
         post.setAuthor(user);
+        // set default value display priority -> NONE
+        post.setDisplayPriority(DisplayPriority.NONE);
         Post savedPost = postRepository.save(post);
 
         sendNotification(savedPost);
@@ -87,16 +87,21 @@ public class PostService extends PostingService {
         if (post.getId() == null) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
         }
-        preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
         Post existingPost = postRepository.findByIdElseThrow(post.getId());
-        preCheckPostValidity(existingPost, courseId);
-        mayUpdateOrDeletePostingElseThrow(existingPost, user);
+        preCheckPostValidity(existingPost);
+        mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
 
         // update: allow overwriting of values only for depicted fields
         existingPost.setTitle(post.getTitle());
         existingPost.setContent(post.getContent());
         existingPost.setVisibleForStudents(post.isVisibleForStudents());
         existingPost.setTags(post.getTags());
+
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            existingPost.setDisplayPriority(post.getDisplayPriority());
+        }
+
         Post updatedPost = postRepository.save(existingPost);
 
         if (updatedPost.getExercise() != null) {
@@ -108,37 +113,18 @@ public class PostService extends PostingService {
     }
 
     /**
-     * Checks course, user and post validity,
-     * updates the votes, persists the post,
-     * and ensures that sensitive information is filtered out
+     * Invokes the updatePost method to persist the change of displayPriority
      *
-     * @param courseId   id of the course the post belongs to
-     * @param postId     id of the post to vote on
-     * @param voteChange value by which votes are increased / decreased
+     * @param courseId          id of the course the post belongs to
+     * @param postId            id of the post to change the pin state for
+     * @param displayPriority   new displayPriority
      * @return updated post that was persisted
      */
-    public Post updatePostVotes(Long courseId, Long postId, Integer voteChange) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        preCheckUserAndCourse(user, courseId);
+    public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
         Post post = postRepository.findByIdElseThrow(postId);
-        preCheckPostValidity(post, courseId);
-        if (voteChange < -2 || voteChange > 2) {
-            throw new BadRequestAlertException("VoteChange can only be changed +1 or -1", METIS_POST_ENTITY_NAME, "400", true);
-        }
+        post.setDisplayPriority(displayPriority);
 
-        // update votes
-        Integer newVotes = post.getVotes() + voteChange;
-        post.setVotes(newVotes);
-        Post updatedPost = postRepository.save(post);
-
-        if (updatedPost.getExercise() != null) {
-            // protect sample solution, grading instructions, etc.
-            updatedPost.getExercise().filterSensitiveInformation();
-        }
-
-        return updatedPost;
+        return updatePost(courseId, post);
     }
 
     /**
@@ -234,13 +220,28 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(postId);
-        preCheckPostValidity(post, courseId);
-        mayUpdateOrDeletePostingElseThrow(post, user);
+        preCheckPostValidity(post);
+        mayUpdateOrDeletePostingElseThrow(post, user, course);
 
         // delete
         postRepository.deleteById(postId);
+    }
+
+    /**
+     * Checks course and user validity,
+     * retrieves all tags for posts in a certain course
+     *
+     * @param courseId  id of the course the tags belongs to
+     * @return tags of all posts that belong to the course
+     */
+    public List<String> getAllCourseTags(Long courseId) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        preCheckUserAndCourse(user, courseId);
+        return postRepository.findPostTagsForCourse(courseId);
     }
 
     /**
@@ -283,12 +284,18 @@ public class PostService extends PostingService {
     void sendNotification(Post post) {
         // notify via exercise
         if (post.getExercise() != null) {
+            // set exercise retrieved from database to show title in notification
+            Exercise exercise = exerciseRepository.findByIdElseThrow(post.getExercise().getId());
+            post.setExercise(exercise);
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForExercise(post);
             // protect sample solution, grading instructions, etc.
             post.getExercise().filterSensitiveInformation();
         }
         // notify via lecture
         if (post.getLecture() != null) {
+            // set lecture retrieved from database to show title in notification
+            Lecture lecture = lectureRepository.findByIdElseThrow(post.getLecture().getId());
+            post.setLecture(lecture);
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForLecture(post);
         }
     }

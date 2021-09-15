@@ -101,6 +101,13 @@
                             </a>
                         </div>
 
+                        <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                            <a *ngIf="isAtLeastInstructor" [routerLink]="[exam.id, 'grading-system']" class="btn btn-info btn-sm me-1 mb-1" id="grading-key-button-{{ exam.id }}">
+                                <fa-icon [icon]="'clipboard'"></fa-icon>
+                                <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.gradingSystem' | artemisTranslate }}</span>
+                            </a>
+                        </div>
+
                         <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR', 'ROLE_TA']">
                             <a
                                 *ngIf="(course.isAtLeastTutor && examHasFinished(exam)) || course.isAtLeastInstructor"

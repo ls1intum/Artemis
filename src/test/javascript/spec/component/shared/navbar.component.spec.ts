@@ -21,7 +21,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ChartsModule } from 'ng2-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
@@ -29,6 +28,7 @@ import * as sinonChai from 'sinon-chai';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
+import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -80,7 +80,7 @@ describe('NavbarComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ChartsModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 NavbarComponent,
                 MockDirective(NgbCollapse),
@@ -184,6 +184,23 @@ describe('NavbarComponent', () => {
         // Use matching here to ignore non-semantic differences between objects
         sinon.assert.match(component.breadcrumbs[0], { label: 'userManagement.home.title', translate: true, uri: '/admin/user-management/' } as MockBreadcrumb);
         sinon.assert.match(component.breadcrumbs[1], { label: 'test_user', translate: false, uri: '/admin/user-management/test_user/' } as MockBreadcrumb);
+    });
+
+    it('should build breadcrumbs for organization management', () => {
+        const testUrl = '/admin/organization-management/1';
+        router.setUrl(testUrl);
+
+        const organizationService = fixture.debugElement.injector.get(OrganizationManagementService);
+        const organizationStub = sinon.stub(organizationService, 'getTitle').returns(of({ body: 'Organization Name' } as HttpResponse<string>));
+
+        fixture.detectChanges();
+
+        expect(organizationStub).to.have.been.calledWith(1);
+        expect(component.breadcrumbs.length).to.equal(2);
+
+        // Use matching here to ignore non-semantic differences between objects
+        sinon.assert.match(component.breadcrumbs[0], { label: 'organizationManagement.title', translate: true, uri: '/admin/organization-management/' } as MockBreadcrumb);
+        sinon.assert.match(component.breadcrumbs[1], { label: 'Organization Name', translate: false, uri: '/admin/organization-management/1/' } as MockBreadcrumb);
     });
 
     it('should not error without translation', () => {

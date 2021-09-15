@@ -224,8 +224,8 @@ public class ExamService {
                     participantsForExercise = 0L;
                 }
                 numberOfExerciseGroupParticipants += participantsForExercise;
-                exerciseGroupDTO.containedExercises
-                        .add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), participantsForExercise));
+                exerciseGroupDTO.containedExercises.add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(),
+                        participantsForExercise, exercise.getClass().getSimpleName()));
             }
             exerciseGroupDTO.numberOfParticipants = numberOfExerciseGroupParticipants;
             scores.exerciseGroups.add(exerciseGroupDTO);
@@ -296,12 +296,15 @@ public class ExamService {
 
             if (scores.maxPoints != null) {
                 studentResult.overallScoreAchieved = (studentResult.overallPointsAchieved / scores.maxPoints) * 100.0;
+                var overallScoreAchievedInFirstCorrection = (studentResult.overallPointsAchievedInFirstCorrection / scores.maxPoints) * 100.0;
                 // Sets grading scale related properties for exam scores
                 Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
                 if (gradingScale.isPresent()) {
                     // Calculate current student grade
                     GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(studentResult.overallScoreAchieved, gradingScale.get().getId());
+                    GradeStep studentGradeInFirstCorrection = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchievedInFirstCorrection, gradingScale.get().getId());
                     studentResult.overallGrade = studentGrade.getGradeName();
+                    studentResult.overallGradeInFirstCorrection = studentGradeInFirstCorrection.getGradeName();
                     studentResult.hasPassed = studentGrade.getIsPassingGrade();
                 }
             }
@@ -485,7 +488,7 @@ public class ExamService {
             numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId()));
 
             log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
-            if (!(exercise instanceof QuizExercise || exercise.getAssessmentType() == AssessmentType.AUTOMATIC)) {
+            if (!(exercise instanceof QuizExercise || AssessmentType.AUTOMATIC == exercise.getAssessmentType())) {
                 numberOfParticipationsForAssessmentGeneratedByExercise.add(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exercise.getId()));
             }
         }));
@@ -751,5 +754,17 @@ public class ExamService {
                 log.error("An error occurred when trying to combine template commits for exam " + exam.getId() + ".", e);
             }
         }));
+    }
+
+    /**
+     * Schedules all modeling exercises
+     * This is executed when exam is updated or individual working times are updated
+     *
+     * @param exam - the exam whose modeling exercises will be scheduled
+     */
+    public void scheduleModelingExercises(Exam exam) {
+        // for all modeling exercises in the exam, send their ids for scheduling
+        exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(exercise -> exercise instanceof ModelingExercise).map(Exercise::getId)
+                .forEach(instanceMessageSendService::sendModelingExerciseSchedule);
     }
 }

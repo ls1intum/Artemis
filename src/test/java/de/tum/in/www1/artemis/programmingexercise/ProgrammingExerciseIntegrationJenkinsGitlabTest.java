@@ -94,7 +94,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void textExportSubmissionsByStudentLogins() throws Exception {
-        programmingExerciseIntegrationServiceTest.textExportSubmissionsByStudentLogins();
+        programmingExerciseIntegrationServiceTest.testExportSubmissionsByStudentLogins();
     }
 
     @Test
@@ -298,6 +298,12 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest() throws Exception {
         programmingExerciseIntegrationServiceTest.updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercise_updatingCourseId_conflict() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateProgrammingExerciseShouldFailWithConflictWhenUpdatingCourseId();
     }
 
     @Test

@@ -1,3 +1,4 @@
+<jhi-alert></jhi-alert>
 <h3 class="top-container">
     <!--back button only used in assessment dashboard-->
     <div class="row-container me-2">
@@ -7,7 +8,6 @@
             Warning: You are viewing an illegal submission.
         </span>
     </div>
-    <jhi-alert></jhi-alert>
     <ngb-alert
         *ngIf="hasAssessmentDueDatePassed && !result?.completionDate"
         [style.fontSize]="'65%'"
@@ -47,7 +47,7 @@
             There is a complaint for this assessment. Another tutor must respond.
         </span>
         <span
-            id="assessmentReadOnlyhandled"
+            id="assessmentReadOnlyHandled"
             *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && complaintHandled"
             class="ms-3"
             style="font-size: 65%"
@@ -91,7 +91,11 @@
                 <fa-icon [icon]="'save'"></fa-icon>
                 <span jhiTranslate="entity.action.save">Save</span>
             </button>
-            <button class="btn ms-2 btn-success" (click)="submit.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">
+            <button
+                class="btn ms-2 btn-success"
+                (click)="submit.emit(); sendSubmitAssessmentEventToAnalytics()"
+                [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy"
+            >
                 <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="entity.action.submit">Submit</span>
             </button>
@@ -114,10 +118,19 @@
             id="assessNextButton"
             *ngIf="result?.completionDate && (isAssessor || isAtLeastInstructor) && !hasComplaint && !isTeamMode && !isTestRun"
             [disabled]="nextSubmissionBusy || submitBusy"
-            (click)="nextSubmission.emit()"
+            (click)="nextSubmission.emit(); sendAssessNextEventToAnalytics()"
         >
             <fa-icon *ngIf="nextSubmissionBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.assessment.button.nextSubmission"> Next Submission</span>
+        </button>
+        <button
+            class="btn ms-2 btn-primary"
+            id="importExampleSubmission"
+            *ngIf="result?.completionDate && isAtLeastInstructor && (exercise!.type === exerciseType.MODELING || exercise!.type === exerciseType.TEXT)"
+            (click)="importExampleSubmission.emit()"
+        >
+            <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true"></fa-icon>
+            <span jhiTranslate="artemisApp.assessment.button.importExampleSubmission">Import as Example Submission</span>
         </button>
 
         <a [routerLink]="exerciseDashboardLink" class="btn ms-2 btn-info">

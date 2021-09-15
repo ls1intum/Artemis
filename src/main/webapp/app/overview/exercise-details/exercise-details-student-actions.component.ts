@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input } from '@angular/core';
+import { Component, ContentChild, HostBinding, Input, TemplateRef } from '@angular/core';
 import * as moment from 'moment';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { Router } from '@angular/router';
@@ -37,6 +37,9 @@ export class ExerciseDetailsStudentActionsComponent {
     @Input() showResult: boolean;
 
     @Input() examMode: boolean;
+
+    // extension points, see shared/extension-point
+    @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
 
     constructor(private jhiAlertService: JhiAlertService, private courseExerciseService: CourseExerciseService, private httpClient: HttpClient, private router: Router) {}
 

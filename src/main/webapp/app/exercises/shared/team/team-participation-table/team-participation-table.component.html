@@ -120,14 +120,13 @@
                             placement="left"
                             container="body"
                         >
-                            <button
-                                [disabled]="isAssessmentButtonDisabled(value, value.submission)"
-                                (click)="openAssessmentEditor(value, value.submission)"
+                            <a
+                                [class.disabled]="isAssessmentButtonDisabled(value, value.submission)"
+                                [routerLink]="getAssessmentLink(exercise, value.participation, value.submission)"
                                 class="btn btn-warning btn-sm"
+                                ><fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                                {{ 'artemisApp.exerciseAssessmentDashboard.' + assessmentAction(value.submission) + 'Assessment' | artemisTranslate }}</a
                             >
-                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                                <span [jhiTranslate]="'artemisApp.exerciseAssessmentDashboard.' + assessmentAction(value.submission) + 'Assessment'"></span>
-                            </button>
                         </div>
                         <fa-icon
                             class="mx-3"

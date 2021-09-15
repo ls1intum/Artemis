@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -23,7 +22,6 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MockTranslateValuesDirective } from '../../../course/course-scores/course-scores.component.spec';
 import { Exercise } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -34,6 +32,10 @@ import { ParticipationType } from 'app/entities/participation/participation.mode
 import { Result } from 'app/entities/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -52,6 +54,7 @@ describe('StudentExamDetailComponent', () => {
 
     let courseManagementService: any;
     let studentExamService: any;
+    let gradingSystemService: GradingSystemService;
 
     beforeEach(() => {
         course = { id: 1 };
@@ -99,16 +102,17 @@ describe('StudentExamDetailComponent', () => {
         return TestBed.configureTestingModule({
             imports: [
                 RouterTestingModule.withRoutes([]),
-                ArtemisDataTableModule,
                 NgbModule,
                 NgxDatatableModule,
                 FontAwesomeTestingModule,
                 ReactiveFormsModule,
                 TranslateModule.forRoot(),
+                HttpClientTestingModule,
             ],
             declarations: [
                 StudentExamDetailComponent,
                 MockComponent(AlertComponent),
+                MockComponent(DataTableComponent),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
                 MockTranslateValuesDirective,
@@ -178,6 +182,7 @@ describe('StudentExamDetailComponent', () => {
                 studentExamDetailComponent = studentExamDetailComponentFixture.componentInstance;
                 courseManagementService = TestBed.inject(CourseManagementService);
                 studentExamService = TestBed.inject(StudentExamService);
+                gradingSystemService = TestBed.inject(GradingSystemService);
             });
     });
     afterEach(() => {
@@ -186,9 +191,11 @@ describe('StudentExamDetailComponent', () => {
 
     it('initialize', () => {
         const findCourseSpy = sinon.spy(courseManagementService, 'find');
+        const gradeSpy = sinon.spy(gradingSystemService, 'matchPercentageToGradeStepForExam');
         studentExamDetailComponentFixture.detectChanges();
 
         expect(findCourseSpy).to.have.been.calledOnce;
+        expect(gradeSpy).to.have.been.calledOnce;
         expect(course.id).to.equal(1);
         expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
         expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);

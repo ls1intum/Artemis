@@ -586,11 +586,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         return EXERCISE_TOPIC_ROOT + exerciseId + PROGRAMMING_SUBMISSION_TOPIC;
     }
 
-    public ProgrammingSubmission findByResultId(long resultId) throws EntityNotFoundException {
-        Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository.findByResultId(resultId);
-        return programmingSubmission.orElseThrow(() -> new EntityNotFoundException("Could not find programming submission for result id " + resultId));
-    }
-
     /**
      * Given an exercise id and a tutor id, it returns all the programming submissions where the tutor has assessed a result
      *
@@ -723,7 +718,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     // TODO: why do we override this method and why do we not try to reuse the method in the super class?
     protected Result lockSubmission(Submission submission, int correctionRound) {
         Optional<Result> optionalExistingResult;
-        if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC.equals(submission.getLatestResult().getAssessmentType())) {
+        if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
             optionalExistingResult = Optional.of(submission.getLatestResult());
         }
         else if (correctionRound == 0 && submission.getLatestResult() == null) {

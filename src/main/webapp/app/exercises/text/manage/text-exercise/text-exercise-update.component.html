@@ -28,10 +28,11 @@
                 <jhi-difficulty-picker [exercise]="textExercise"></jhi-difficulty-picker>
             </div>
         </div>
-        <jhi-team-config-form-group [exercise]="textExercise" [isImport]="isImport"></jhi-team-config-form-group>
+        <jhi-team-config-form-group class="form-element" [exercise]="textExercise" [isImport]="isImport"></jhi-team-config-form-group>
         <div class="d-flex" *ngIf="!isExamMode">
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker
+                    class="form-element"
                     labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
                     [(ngModel)]="textExercise.releaseDate"
                     (valueChange)="validateDate()"
@@ -41,6 +42,7 @@
             </div>
             <div class="form-group flex-grow-1 ms-3">
                 <jhi-date-time-picker
+                    class="form-element"
                     name="dueDate"
                     [error]="!!textExercise.dueDateError"
                     labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
@@ -52,6 +54,7 @@
         </div>
         <div class="form-group" *ngIf="!isExamMode">
             <jhi-date-time-picker
+                class="form-element"
                 name="assessmentDueDate"
                 [error]="!!textExercise.assessmentDueDateError"
                 labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
@@ -124,43 +127,39 @@
             </div>
         </div>
         <jhi-presentation-score-checkbox [exercise]="textExercise"></jhi-presentation-score-checkbox>
-        <div class="form-group" id="field_problemStatement">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
+        <div class="form-group">
+            <label jhiTranslate="artemisApp.exercise.problemStatement" for="problemStatement">Problem Statement</label>
             <jhi-markdown-editor
+                id="problemStatement"
                 class="markdown-editor"
                 [domainCommands]="domainCommandsProblemStatement"
                 [(markdown)]="textExercise.problemStatement"
                 [editorMode]="EditorMode.LATEX"
                 [shouldDisplayAlert]="false"
+                [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
-        <div class="form-group" id="field_sampleSolution">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.sampleSolution" for="field_sampleSolution">Sample Solution</label>
+        <div class="form-group">
+            <label jhiTranslate="artemisApp.exercise.sampleSolution" for="sampleSolution">Sample Solution</label>
             <jhi-markdown-editor
+                id="sampleSolution"
                 class="markdown-editor"
                 [domainCommands]="domainCommandsSampleSolution"
                 [(markdown)]="textExercise.sampleSolution"
                 [editorMode]="EditorMode.LATEX"
                 [shouldDisplayAlert]="false"
+                [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
-        <div class="form-group" name="gradingInstructions" id="field_gradingInstructions">
-            <jhi-slide-toggle (checkedEmitter)="getCheckedFlag($event)"></jhi-slide-toggle>
-            <jhi-markdown-editor
-                *ngIf="this.checkedFlag === false"
-                class="markdown-editor background-editor-color"
-                [domainCommands]="domainCommandsGradingInstructions"
-                [(markdown)]="textExercise.gradingInstructions"
-                [editorMode]="EditorMode.LATEX"
-                [shouldDisplayAlert]="false"
-            ></jhi-markdown-editor>
-            <jhi-grading-instructions-details *ngIf="this.checkedFlag" [exercise]="textExercise"></jhi-grading-instructions-details>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
+            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="textExercise"></jhi-grading-instructions-details>
         </div>
         <div class="form-group" *ngIf="isImport || !textExercise.id">
-            <span jhiTranslate="artemisApp.textExercise.exampleSubmissions">Example submissions</span>
+            <label class="form-control-label" jhiTranslate="artemisApp.textExercise.exampleSubmissions">Example submissions</label>
             <div class="alert alert-info" *ngIf="!textExercise.id || isImport" jhiTranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise"></div>
         </div>
-        <div class="form-group" *ngIf="textExercise.id && !isExamMode && !isImport">
+        <div class="form-group" *ngIf="textExercise.id && !isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
             <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>

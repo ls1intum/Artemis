@@ -2,7 +2,11 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService.studentLogin;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_REQUEST;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.doThrow;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -15,12 +19,14 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 
 public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -290,6 +296,20 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testArchiveCourseWithProgrammingExercise() throws Exception {
         programmingExerciseTestService.testArchiveCourseWithProgrammingExercise();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportProgrammingExerciseInstructorMaterial_failToCreateZip() throws Exception {
+        doThrow(IOException.class).when(zipFileService).createZipFile(any(Path.class), any(), eq(false));
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportProgrammingExerciseInstructorMaterial_failToExportRepository() throws Exception {
+        doThrow(GitException.class).when(fileService).getUniquePathString(anyString());
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test

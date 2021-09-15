@@ -10,9 +10,7 @@ import * as moment from 'moment';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FileUploadAssessmentComponent } from 'app/exercises/file-upload/assess/file-upload-assessment.component';
 import { DebugElement } from '@angular/core';
@@ -20,7 +18,6 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
@@ -32,9 +29,7 @@ import { getFirstResult, setLatestSubmissionResult, SubmissionExerciseType, Subm
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Result } from 'app/entities/result.model';
-import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { routes } from 'app/exercises/file-upload/assess/file-upload-assessment.route';
-import { By } from '@angular/platform-browser';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
@@ -45,6 +40,11 @@ import * as sinon from 'sinon';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
+import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 chai.use(sinonChai);
 
@@ -78,22 +78,21 @@ describe('FileUploadAssessmentComponent', () => {
         id: 20,
         results: [resultWithComplaint],
     } as FileUploadSubmission;
-    beforeEach(async () => {
+
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                ArtemisSharedModule,
-                RouterTestingModule.withRoutes([routes[0]]),
-                ArtemisAssessmentSharedModule,
-                ModelingAssessmentModule,
-                TranslateModule.forRoot(),
-            ],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([routes[0]]), TranslateModule.forRoot()],
             declarations: [
                 FileUploadAssessmentComponent,
                 MockComponent(UpdatingResultComponent),
                 MockComponent(CollapsableAssessmentInstructionsComponent),
                 MockComponent(ComplaintsForTutorComponent),
                 MockComponent(AssessmentInstructionsComponent),
+                MockComponent(AssessmentLayoutComponent),
+                MockComponent(ScoreDisplayComponent),
+                MockComponent(ResizeableContainerComponent),
+                MockComponent(UnreferencedFeedbackComponent),
+                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 JhiLanguageHelper,
@@ -104,12 +103,6 @@ describe('FileUploadAssessmentComponent', () => {
                 { provide: ActivatedRoute, useValue: { queryParamMap: of(map1), params: of(params1) } },
             ],
         })
-            .overrideModule(ArtemisTestModule, {
-                remove: {
-                    declarations: [MockComponent(FaIconComponent)],
-                    exports: [MockComponent(FaIconComponent)],
-                },
-            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FileUploadAssessmentComponent);
@@ -139,7 +132,7 @@ describe('FileUploadAssessmentComponent', () => {
     });
 
     afterEach(() => {
-        getFileUploadSubmissionForExerciseWithoutAssessmentStub.restore();
+        sinon.restore();
     });
 
     describe('ngOnInit', () => {
@@ -162,8 +155,6 @@ describe('FileUploadAssessmentComponent', () => {
             fixture.detectChanges();
 
             expect(getFirstResult(comp.submission)).to.equal(comp.result);
-            const assessNextButton = debugElement.query(By.css('#assessNextButton'));
-            expect(assessNextButton).to.exist;
         }));
 
         it('should get correctionRound', fakeAsync(() => {
@@ -186,13 +177,12 @@ describe('FileUploadAssessmentComponent', () => {
             fixture.detectChanges();
 
             expect(getFirstResult(comp.submission)).to.equal(comp.result);
-            const assessNextButton = debugElement.query(By.css('#assessNextButton'));
-            expect(assessNextButton).to.exist;
             expect(comp.correctionRound).to.be.equal(1);
         }));
     });
+
     describe('loadSubmission', () => {
-        it('should load submission', fakeAsync(() => {
+        it('should load submission', () => {
             const submission = createSubmission(exercise);
             const result = createResult(submission);
             result.hasComplaint = true;
@@ -200,7 +190,7 @@ describe('FileUploadAssessmentComponent', () => {
             complaint.id = 0;
             complaint.complaintText = 'complaint';
             stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-            stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
+            stub(complaintService, 'findBySubmissionId').returns(of({ body: complaint } as EntityResponseType));
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, result);
             const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
@@ -212,7 +202,7 @@ describe('FileUploadAssessmentComponent', () => {
             expect(comp.result!.feedbacks?.length === 0).to.equal(true);
             expect(comp.busy).to.be.false;
             expect(handleFeedbackStub).to.have.been.called;
-        }));
+        });
 
         it('should load optimal submission', () => {
             const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
@@ -222,7 +212,6 @@ describe('FileUploadAssessmentComponent', () => {
             const result = createResult(submission);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(of(submission));
             stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-            // stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
 
             fixture.detectChanges();
             expect(comp.result).to.not.equal(result);
@@ -240,6 +229,7 @@ describe('FileUploadAssessmentComponent', () => {
             expect(navigateByUrlStub).to.have.been.called;
             expect(comp.busy).to.be.true;
         });
+
         it('should get lock limit reached error when loading optimal submission', () => {
             navigateByUrlStub.returns(Promise.resolve(true));
             const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
@@ -250,6 +240,7 @@ describe('FileUploadAssessmentComponent', () => {
             expect(navigateByUrlStub).to.have.been.called;
             expect(comp.busy).to.be.true;
         });
+
         it('should fail to load optimal submission', () => {
             navigateByUrlStub.returns(Promise.resolve(true));
             const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
@@ -323,6 +314,7 @@ describe('FileUploadAssessmentComponent', () => {
         comp.updateAssessment();
         expect(comp.totalScore).to.equal(100);
     });
+
     describe('onSaveAssessment', () => {
         it('should save the assessment', () => {
             const submission = createSubmission(exercise);
@@ -400,6 +392,7 @@ describe('FileUploadAssessmentComponent', () => {
         expect(comp.result).to.equal(changedResult);
         expect(comp.participation.results![0]).to.equal(changedResult);
     });
+
     describe('onUpdateAssessmentAfterComplaint', () => {
         it('should update assessment after complaint', () => {
             const submission = createSubmission(exercise);
@@ -427,6 +420,7 @@ describe('FileUploadAssessmentComponent', () => {
             expect(comp.result).to.equal(changedResult);
             expect(comp.participation.results![0]).to.equal(changedResult);
         });
+
         it('should not update assessment after complaint if already locked', () => {
             const alertServiceErrorSpy = sinon.spy(alertService, 'error');
             const errorResponse = new HttpErrorResponse({
@@ -461,6 +455,7 @@ describe('FileUploadAssessmentComponent', () => {
             expect(comp.isLoading).to.be.false;
             sinon.assert.calledOnceWithExactly(alertServiceErrorSpy, 'errormessage', []);
         });
+
         it('should not update assessment after complaint', () => {
             const alertServiceErrorSpy = sinon.spy(alertService, 'error');
             const errorResponse = new HttpErrorResponse({
@@ -582,15 +577,16 @@ describe('FileUploadAssessmentComponent', () => {
             comp.submission = submissionWithResultsAndComplaint;
             comp.result = resultWithComplaint;
             const complaint = resultWithComplaint.complaint;
-            stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
+            stub(complaintService, 'findBySubmissionId').returns(of({ body: complaint } as EntityResponseType));
             expect(comp.complaint).to.be.undefined;
             comp.getComplaint();
             expect(comp.complaint).to.be.equal(complaint);
         });
 
         it('should get empty Complaint', () => {
+            comp.submission = submissionWithResultsAndComplaint;
             comp.result = createResult(comp.submission);
-            stub(complaintService, 'findByResultId').returns(of({} as EntityResponseType));
+            stub(complaintService, 'findBySubmissionId').returns(of({} as EntityResponseType));
             expect(comp.complaint).to.be.undefined;
             comp.getComplaint();
             expect(comp.complaint).to.be.undefined;
@@ -600,7 +596,7 @@ describe('FileUploadAssessmentComponent', () => {
             comp.result = resultWithComplaint;
             const alertServiceSpy = sinon.spy(alertService, 'error');
             const errorResponse = new HttpErrorResponse({ error: { message: 'Forbidden' }, status: 403 });
-            stub(complaintService, 'findByResultId').returns(throwError(errorResponse));
+            stub(complaintService, 'findBySubmissionId').returns(throwError(errorResponse));
             comp.getComplaint();
             expect(alertServiceSpy).to.have.been.called;
         });
@@ -621,6 +617,7 @@ describe('FileUploadAssessmentComponent', () => {
         expect(cancelAssessmentStub).to.have.been.calledOnce;
         expect(comp.isLoading).to.be.false;
     });
+
     it('should navigate back', () => {
         comp.submission = createSubmission(exercise);
         navigateByUrlStub.returns(Promise.resolve(true));

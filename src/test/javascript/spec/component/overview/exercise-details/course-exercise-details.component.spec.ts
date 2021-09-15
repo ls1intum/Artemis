@@ -20,7 +20,6 @@ import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
-import { BuildPlanButtonDirective } from 'app/exercises/programming/shared/utils/build-plan-button.directive';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -32,14 +31,12 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
-import { ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview/exercise-details/programming-exercise-student-ide-actions.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -55,7 +52,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
 
@@ -92,6 +89,7 @@ describe('CourseExerciseDetailsComponent', () => {
     let getTeamPayloadStub: SinonStub;
     let mergeStudentParticipationStub: SinonStub;
     let subscribeForParticipationChangesStub: SinonStub;
+    let complaintService: ComplaintService;
     const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [] } as unknown as Exercise;
     const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
@@ -103,11 +101,8 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(HtmlForMarkdownPipe),
-                MockDirective(OrionFilterDirective),
-                MockDirective(BuildPlanButtonDirective),
                 MockDirective(RouterOutlet),
                 MockComponent(HeaderExercisePageWithDetailsComponent),
-                MockComponent(ProgrammingExerciseStudentIdeActionsComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ExerciseActionButtonComponent),
@@ -172,6 +167,8 @@ describe('CourseExerciseDetailsComponent', () => {
                 participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
                 subscribeForParticipationChangesStub = stub(participationWebsocketService, 'subscribeForParticipationChanges');
                 subscribeForParticipationChangesStub.returns(new BehaviorSubject<Participation | undefined>(undefined));
+
+                complaintService = TestBed.inject(ComplaintService);
             });
     }));
 
@@ -206,6 +203,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
         // return initial participation for websocketService
         stub(participationWebsocketService, 'getParticipationForExercise').returns(studentParticipation);
+        stub(complaintService, 'findBySubmissionId').returns(of({} as EntityResponseType));
 
         mergeStudentParticipationStub.returns(studentParticipation);
         const changedParticipation = cloneDeep(studentParticipation);

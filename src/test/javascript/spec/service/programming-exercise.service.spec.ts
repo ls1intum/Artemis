@@ -9,13 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { routes } from 'app/exercises/programming/manage/programming-exercise-management-routing.module';
-import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisTestModule } from '../test.module';
-import { FormsModule } from '@angular/forms';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import * as moment from 'moment';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -33,17 +27,10 @@ describe('ProgrammingExercise Service', () => {
     let httpMock: HttpTestingController;
     let defaultProgrammingExercise: ProgrammingExercise;
     const resourceUrl = SERVER_API_URL + 'api/programming-exercises';
-    beforeEach(() => {
+
+    beforeAll(() => {
         TestBed.configureTestingModule({
-            imports: [
-                HttpClientTestingModule,
-                RouterTestingModule.withRoutes(routes),
-                ArtemisTestModule,
-                FormsModule,
-                ArtemisSharedModule,
-                ArtemisSharedComponentModule,
-                ArtemisProgrammingExerciseManagementModule,
-            ],
+            imports: [ArtemisTestModule, HttpClientTestingModule],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
