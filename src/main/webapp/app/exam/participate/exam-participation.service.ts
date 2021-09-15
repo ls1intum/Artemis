@@ -9,7 +9,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';

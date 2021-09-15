@@ -10,7 +10,7 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExercisePopupService } from 'app/exercises/quiz/manage/quiz-exercise-popup.service';
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 

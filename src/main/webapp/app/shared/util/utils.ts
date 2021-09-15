@@ -1,4 +1,4 @@
-import { omit } from 'lodash';
+import { omit } from 'lodash-es';
 import * as Sentry from '@sentry/browser';
 import { Result } from 'app/entities/result.model';
 import { Alert } from 'app/core/util/alert.service';

@@ -33,7 +33,7 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
 import * as Sentry from '@sentry/browser';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 

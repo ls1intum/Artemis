@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { partition } from 'lodash';
+import { partition } from 'lodash-es';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from '../../manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';

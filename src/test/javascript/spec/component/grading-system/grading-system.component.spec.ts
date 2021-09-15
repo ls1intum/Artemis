@@ -16,7 +16,7 @@ import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { GradingSystemInfoModalComponent } from 'app/grading-system/grading-system-info-modal/grading-system-info-modal.component';
 import { FormsModule } from '@angular/forms';
 import { GradeStep } from 'app/entities/grade-step.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';

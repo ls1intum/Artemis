@@ -6,7 +6,7 @@ import { catchError, delay, map, switchMap } from 'rxjs/operators';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TranslateService } from '@ngx-translate/core';
-import * as _ from 'lodash';
+import * as _ from 'lodash-es';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 
 /**

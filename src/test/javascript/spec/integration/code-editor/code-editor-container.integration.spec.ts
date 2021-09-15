@@ -50,7 +50,7 @@ import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exerci
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
-import { omit } from 'lodash';
+import { omit } from 'lodash-es';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';

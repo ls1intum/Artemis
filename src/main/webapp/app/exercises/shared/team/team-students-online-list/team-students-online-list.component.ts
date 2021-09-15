@@ -2,7 +2,7 @@ import { Component, Input, OnInit, OnDestroy, ViewEncapsulation } from '@angular
 import { OnlineTeamStudent, Team } from 'app/entities/team.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { orderBy } from 'lodash';
+import { orderBy } from 'lodash-es';
 import { Observable } from 'rxjs';
 import { map, throttleTime } from 'rxjs/operators';
 import dayjs from 'dayjs';

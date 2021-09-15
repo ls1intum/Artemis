@@ -17,7 +17,7 @@ import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import * as _ from 'lodash';
+import * as _ from 'lodash-es';
 import * as Sentry from '@sentry/browser';
 
 chai.use(sinonChai);

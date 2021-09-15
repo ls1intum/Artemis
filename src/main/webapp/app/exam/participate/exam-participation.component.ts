@@ -27,7 +27,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
 import * as Sentry from '@sentry/browser';
 import { HttpErrorResponse } from '@angular/common/http';

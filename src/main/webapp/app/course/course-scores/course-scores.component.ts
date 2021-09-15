@@ -3,7 +3,7 @@ import { forkJoin, of, Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs';
-import { sum } from 'lodash';
+import { sum } from 'lodash-es';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExportToCsv } from 'export-to-csv';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';

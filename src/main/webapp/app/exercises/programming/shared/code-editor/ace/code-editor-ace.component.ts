@@ -24,7 +24,7 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { TextChange } from 'app/entities/text-change.model';
 import { LocalStorageService } from 'ngx-webstorage';
-import { fromPairs, pickBy } from 'lodash';
+import { fromPairs, pickBy } from 'lodash-es';
 import { Feedback } from 'app/entities/feedback.model';
 
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };

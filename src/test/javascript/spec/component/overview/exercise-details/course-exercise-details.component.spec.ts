@@ -41,7 +41,7 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import * as chai from 'chai';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of } from 'rxjs';

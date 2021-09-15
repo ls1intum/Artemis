@@ -8,7 +8,7 @@ import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import { SinonStub, spy, stub } from 'sinon';
 import { Subject } from 'rxjs';
-import { isEqual as _isEqual } from 'lodash';
+import { isEqual as _isEqual } from 'lodash-es';
 
 import { AceEditorModule } from 'ng2-ace-editor';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';

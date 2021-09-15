@@ -3,7 +3,7 @@ import { Observable, Subject, timer } from 'rxjs';
 import { distinctUntilChanged, first, map, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({

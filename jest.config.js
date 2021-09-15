@@ -1,4 +1,4 @@
-const esModules = ['ngx-treeview', 'lodash-es'].join('|');
+const esModules = ['ngx-treeview', 'lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collapse-white-space'].join('|');
 
 const {
     compilerOptions: { paths = {}, baseUrl = './' },
@@ -32,7 +32,7 @@ module.exports = {
             lines: 76.9,
         },
     },
-    setupFilesAfterEnv: ['<rootDir>/src/test/javascript/jest.ts', 'jest-sinon'],
+    setupFilesAfterEnv: ['jest-sinon'],
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
     modulePathIgnorePatterns: [],
     testTimeout: 2000,

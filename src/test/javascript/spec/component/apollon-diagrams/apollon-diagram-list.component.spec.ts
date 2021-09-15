@@ -14,7 +14,7 @@ import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
-import * as _ from 'lodash';
+import * as _ from 'lodash-es';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import detect from 'franc-min';
+import { francAll } from 'franc-min';
 import { Language } from 'app/entities/tutor-group.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
@@ -20,7 +20,7 @@ export class TextEditorService {
      * @returns {Language} language of the text
      */
     predictLanguage(text: string): Language | undefined {
-        const languageProbabilities = detect.all(text);
+        const languageProbabilities = francAll(text);
 
         switch (languageProbabilities[0][0]) {
             case 'eng':

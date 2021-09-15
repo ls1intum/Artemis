@@ -8,7 +8,7 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Team, TeamImportStrategyType as ImportStrategy } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { flatMap } from 'lodash';
+import { flatMap } from 'lodash-es';
 import { User } from 'app/core/user/user.model';
 
 @Component({

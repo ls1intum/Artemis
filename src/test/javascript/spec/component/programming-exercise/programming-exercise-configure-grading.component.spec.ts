@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import sinonChai from 'sinon-chai';
-import { sortBy as _sortBy } from 'lodash';
+import { sortBy as _sortBy } from 'lodash-es';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, Subject } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';

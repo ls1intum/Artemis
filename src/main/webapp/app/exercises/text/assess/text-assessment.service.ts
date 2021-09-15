@@ -9,7 +9,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, getSubmissionResultById, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';

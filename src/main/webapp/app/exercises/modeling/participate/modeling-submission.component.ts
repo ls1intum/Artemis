@@ -25,7 +25,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { ButtonType } from 'app/shared/components/button.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { omit } from 'lodash';
+import { omit } from 'lodash-es';
 import dayjs from 'dayjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { Subject } from 'rxjs';

@@ -3,7 +3,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import dayjs from 'dayjs';

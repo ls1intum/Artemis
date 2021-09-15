@@ -21,7 +21,7 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseLearningGoalProgress, CourseLectureUnitProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 import * as Sentry from '@sentry/browser';
-import * as _ from 'lodash';
+import * as _ from 'lodash-es';
 
 chai.use(sinonChai);
 const expect = chai.expect;

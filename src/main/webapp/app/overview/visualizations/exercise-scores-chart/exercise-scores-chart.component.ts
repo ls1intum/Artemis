@@ -8,7 +8,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
+import * as _ from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { round } from 'app/shared/util/utils';

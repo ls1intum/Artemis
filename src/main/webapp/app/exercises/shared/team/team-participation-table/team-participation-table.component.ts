@@ -7,7 +7,7 @@ import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { get } from 'lodash';
+import { get } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';

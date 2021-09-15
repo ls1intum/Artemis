@@ -8,7 +8,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { forkJoin } from 'rxjs';
 import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
-import * as _ from 'lodash';
+import * as _ from 'lodash-es';
 import { AccountService } from 'app/core/auth/account.service';
 import * as Sentry from '@sentry/browser';
 

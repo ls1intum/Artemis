@@ -28,7 +28,7 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { round } from 'app/shared/util/utils';
 import { MAX_SIZE_UNIT } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { filter, debounceTime } from 'rxjs/operators';

@@ -4,7 +4,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ProfileInfo } from './profile-info.model';
 import { BehaviorSubject, Observable, OperatorFunction } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import * as _ from 'lodash';
+import * as _ from 'lodash-es';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 

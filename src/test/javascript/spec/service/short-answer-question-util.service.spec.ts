@@ -8,7 +8,7 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 chai.use(sinonChai);

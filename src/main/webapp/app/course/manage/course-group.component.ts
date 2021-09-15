@@ -7,7 +7,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course, CourseGroup, courseGroups } from 'app/entities/course.model';
-import { capitalize } from 'lodash';
+import { capitalize } from 'lodash-es';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';

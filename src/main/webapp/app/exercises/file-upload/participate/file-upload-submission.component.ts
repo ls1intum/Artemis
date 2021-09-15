@@ -10,7 +10,7 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
-import { omit } from 'lodash';
+import { omit } from 'lodash-es';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';

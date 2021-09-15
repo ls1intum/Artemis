@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { orderBy as _orderBy } from 'lodash';
+import { orderBy as _orderBy } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';

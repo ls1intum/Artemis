@@ -23,7 +23,7 @@ import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/model
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { SimpleChange } from '@angular/core';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements

@@ -17,7 +17,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { flatMap } from 'lodash';
+import { flatMap } from 'lodash-es';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { restore, SinonSpy, SinonStub, spy, stub } from 'sinon';

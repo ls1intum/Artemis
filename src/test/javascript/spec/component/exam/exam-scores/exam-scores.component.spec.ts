@@ -17,7 +17,7 @@ import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scor
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import * as chai from 'chai';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
 import { empty, of } from 'rxjs';

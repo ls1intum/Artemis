@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import dayjs from 'dayjs';
 import { SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, lastValueFrom, of, Subject } from 'rxjs';
-import { range as _range } from 'lodash';
+import { range as _range } from 'lodash-es';
 import sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';

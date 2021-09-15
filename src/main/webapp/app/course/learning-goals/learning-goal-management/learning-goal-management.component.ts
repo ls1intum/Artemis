@@ -8,7 +8,7 @@ import { finalize, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { forkJoin, Subject } from 'rxjs';
 import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
-import * as _ from 'lodash';
+import * as _ from 'lodash-es';
 import * as Sentry from '@sentry/browser';
 
 @Component({
