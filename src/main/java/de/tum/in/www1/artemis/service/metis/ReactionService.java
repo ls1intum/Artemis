@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.time.ZonedDateTime;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -57,6 +59,9 @@ public class ReactionService {
         // set user to current user
         reaction.setUser(user);
 
+        // set creation date to now
+        reaction.setCreationDate(ZonedDateTime.now());
+
         // we query the repository dependent on the type of posting and update this posting
         Reaction savedReaction;
         if (posting instanceof Post) {
@@ -64,6 +69,10 @@ public class ReactionService {
             Post post = postService.findById(posting.getId());
             reaction.setPost(post);
             reaction.setUser(user);
+            // check if the user already reacted with the reaction to add (-> avoid duplicated reactions) before saving
+            if (reactionRepository.findReactionsByPostIdAndEmojiIdAndUserId(post.getId(), reaction.getEmojiId(), user.getId()).size() > 0) {
+                throw new BadRequestAlertException("You can only react once with a certain emoji", METIS_REACTION_ENTITY_NAME, "duplicatedReaction");
+            }
             // save reaction
             savedReaction = reactionRepository.save(reaction);
             // save post
@@ -78,6 +87,10 @@ public class ReactionService {
             AnswerPost answerPost = answerPostService.findById(posting.getId());
             reaction.setAnswerPost(answerPost);
             reaction.setUser(user);
+            // check if the user already reacted with the reaction to add (-> avoid duplicated reactions) before saving
+            if (reactionRepository.findReactionsByAnswerPostIdAndEmojiIdAndUserId(answerPost.getId(), reaction.getEmojiId(), user.getId()).size() > 0) {
+                throw new BadRequestAlertException("You can only react once with a certain emoji", METIS_REACTION_ENTITY_NAME, "duplicatedReaction");
+            }
             // save reaction
             savedReaction = reactionRepository.save(reaction);
             // save answer post

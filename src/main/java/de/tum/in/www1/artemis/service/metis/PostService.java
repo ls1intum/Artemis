@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -63,6 +64,10 @@ public class PostService extends PostingService {
 
         // set author to current user
         post.setAuthor(user);
+
+        // set creation date to now
+        post.setCreationDate(ZonedDateTime.now());
+
         // set default value display priority -> NONE
         post.setDisplayPriority(DisplayPriority.NONE);
         Post savedPost = postRepository.save(post);

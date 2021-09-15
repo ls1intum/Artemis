@@ -30,7 +30,6 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        this.posting.creationDate = moment();
         this.metisService.createAnswerPost(this.posting).subscribe({
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup();

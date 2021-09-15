@@ -102,4 +102,8 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         this.pinTooltip = this.getPinTooltip();
         this.archiveTooltip = this.getArchiveTooltip();
     }
+
+    toggleSelect() {
+        this.showReactionSelector = !this.showReactionSelector;
+    }
 }
