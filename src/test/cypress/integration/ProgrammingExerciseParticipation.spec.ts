@@ -13,16 +13,11 @@ const courseManagement = artemis.requests.courseManagement;
 // PageObjects
 const editorPage = artemis.pageobjects.onlineEditor;
 
-// Container for a course dto
-let course: any;
-
-// Common primitives
 const exercisePath = '/exercises';
-
-// Selectors
 const exerciseRow = '.course-exercise-row';
 
 describe('Programming exercise participations', () => {
+    let course: any;
     let programmingExercise: any;
 
     before(() => {
