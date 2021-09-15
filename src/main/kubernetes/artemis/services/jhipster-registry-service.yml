@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: jhipster-registry
+  labels:
+    app: jhipster-registry
+  # annotations:
+  #   service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+spec:
+  ports:
+    - port: 8761
+      name: http
+  clusterIP: None
+  selector:
+    app: jhipster-registry

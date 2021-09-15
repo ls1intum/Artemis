@@ -1,33 +1,28 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   annotations:
-    deployment.kubernetes.io/revision: "1"
-    field.cattle.io/creatorId: user-hwfmq
-  generation: 1
+    field.cattle.io/creatorId: user-nxxf9
   labels:
     cattle.io/creator: norman
-    workload.user.cattle.io/workloadselector: deployment-artemis-artemis-mysql
+    workload.user.cattle.io/workloadselector: statefulSet-artemis-artemis-mysql
   name: artemis-mysql
 spec:
-  progressDeadlineSeconds: 600
+  podManagementPolicy: OrderedReady
   replicas: 1
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      workload.user.cattle.io/workloadselector: deployment-artemis-artemis-mysql
-  strategy:
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-    type: RollingUpdate
+      workload.user.cattle.io/workloadselector: statefulSet-artemis-artemis-mysql
+  serviceName: artemis-mysql
   template:
     metadata:
       labels:
-        workload.user.cattle.io/workloadselector: deployment-artemis-artemis-mysql
+        workload.user.cattle.io/workloadselector: statefulSet-artemis-artemis-mysql
     spec:
       containers:
       - args:
+        - mysqld
         - --lower_case_table_names=1
         - --skip-ssl
         - --character_set_server=utf8mb4
@@ -35,17 +30,16 @@ spec:
         envFrom:
         - configMapRef:
             name: artemis-mysql
-            optional: false
         image: mysql:8.0.25
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         name: artemis-mysql
         ports:
         - containerPort: 3306
+          name: 3306tcp2
           protocol: TCP
         resources: {}
         securityContext:
           allowPrivilegeEscalation: false
-          capabilities: {}
           privileged: false
           readOnlyRootFilesystem: false
           runAsNonRoot: false
@@ -56,6 +50,7 @@ spec:
         volumeMounts:
         - mountPath: /var/lib/mysql/
           name: artemis-data
+      dnsConfig: {}
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
@@ -65,3 +60,5 @@ spec:
       - name: artemis-data
         persistentVolumeClaim:
           claimName: artemis-data
+  updateStrategy:
+    type: RollingUpdate

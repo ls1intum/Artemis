@@ -19,7 +19,9 @@ resources:
   #Deployments
   - deployments/artemis-deployment.yml
   - deployments/artemis-mysql.yml
-  - deployments/zookeeper.yml
-  - deployments/kafka.yml
+  - deployments/zookeeper-deployment.yml
+  - deployments/kafka-deployment.yml
+  #Services
+  - services/jhipster-registry-service.yml
   #Ingresses
   - ingresses/artemis-ingress.yml

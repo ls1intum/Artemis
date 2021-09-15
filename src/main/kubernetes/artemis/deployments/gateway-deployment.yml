@@ -25,21 +25,10 @@ spec:
         workload.user.cattle.io/workloadselector: deployment-artemis-gateway
     spec:
       containers:
-      - env:
-        - name: EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE
-          value: http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
-        - name: JHIPSTER_SLEEP
-          value: "30"
-        - name: KAFKA_BOOTSTRAPSERVERS
-          value: kafka:9092
-        - name: MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED
-          value: "true"
-        - name: SPRING_CLOUD_CONFIG_URI
-          value: http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
-        - name: SPRING_PROFILES_ACTIVE
-          value: prod,api-docs
-        - name: _JAVA_OPTIONS
-          value: -Xmx512m -Xms256m
+      - envFrom:
+        - configMapRef:
+            name: gateway
+            optional: false
         image: <DockerId>/artemis-gateway
         imagePullPolicy: Always
         name: gateway

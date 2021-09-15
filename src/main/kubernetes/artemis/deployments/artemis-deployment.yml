@@ -31,7 +31,7 @@ spec:
             optional: false
         - secretRef:
             name: artemis-secrets
-        image: mmehmed/artemis
+        image: <DockerId>/artemis
         imagePullPolicy: Always
         name: artemis
         ports:
