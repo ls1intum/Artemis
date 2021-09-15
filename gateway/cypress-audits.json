@@ -1,14 +1,15 @@
-
-  "baseUrl": "http://localhost:8089/",
-  "testFiles": "**/*.audits.ts",
-  "supportFile": "src/test/javascript/cypress/support/index.ts",
+{
+  "fixturesFolder": "src/test/cypress/fixtures",
+  "integrationFolder": "src/test/cypress/integration",
+  "pluginsFile": "src/test/cypress/plugins/index.ts",
+  "screenshotsFolder": "src/test/cypress/screenshots",
+  "videosFolder": "src/test/cypress/videos",
+  "supportFile": "src/test/cypress/support/index.ts",
+  "baseUrl": "http://localhost:8089",
   "video": false,
-  "integrationFolder": "src/test/javascript/cypress/integration",
-  "fixturesFolder": "src/test/javascript/cypress/fixtures",
-  "pluginsFile": "src/test/javascript/cypress/plugins/index.ts",
-  "screenshotsFolder": "build/cypress/screenshots",
-  "chromeWebSecurity": true,
-  "viewportWidth": 1200,
-  "viewportHeight": 720,
-  "retries": 2
+  "screenshotOnRunFailure": false,
+  "viewportWidth": 1920,
+  "viewportHeight": 1080,
+  "defaultCommandTimeout": 20000,
+  "testFiles": "**/*.audits.ts"
 }

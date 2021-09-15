@@ -4,6 +4,8 @@
 /src/main/webapp/content/css/main.css
 /build/resources/main/static/**
 /src/test/javascript/coverage/
+/src/test/javascript/PhantomJS*/
+/test-results.xml
 
 ######################
 # Node
@@ -157,3 +159,16 @@ Desktop.ini
 ######################
 /coverage/
 /.nyc_output/
+
+######################
+# Docker
+######################
+.bash_history
+.v8flags.*.json
+/.cache-loader
+/src/main/generated
+/coverage
+/exports
+/src/main/resources/config/application-local*.yml
+/src/test/cypress/screenshots/
+/src/test/cypress/videos/

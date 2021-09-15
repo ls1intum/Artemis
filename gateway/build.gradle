@@ -18,7 +18,7 @@ plugins {
     id "com.google.cloud.tools.jib" version "3.1.2"
     id "com.github.node-gradle.node" version "3.1.0"
     id "com.diffplug.spotless" version "5.14.2"
-    id "com.gorylenko.gradle-git-properties"
+//    id "com.gorylenko.gradle-git-properties"
     id "org.openapi.generator"
     id "org.sonarqube"
     id "io.spring.nohttp"
@@ -103,10 +103,10 @@ task testReport(type: TestReport) {
     reportOn test
 }
 
-gitProperties {
-    failOnNoGitDirectory = false
-    keys = ["git.branch", "git.commit.id.abbrev", "git.commit.id.describe"]
-}
+//gitProperties {
+//    failOnNoGitDirectory = false
+//    keys = ["git.branch", "git.commit.id.abbrev", "git.commit.id.describe"]
+//}
 
 checkstyle {
     toolVersion "8.45"
