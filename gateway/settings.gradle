@@ -7,7 +7,6 @@ pluginManagement {
     plugins {
         id 'org.springframework.boot' version "${spring_boot_version}"
         id 'com.google.cloud.tools.jib' version "${jib_plugin_version}"
-//        id 'com.gorylenko.gradle-git-properties' version "${git_properties_plugin_version}"
         id "org.openapi.generator" version "${openapi_plugin_version}"
         id 'com.github.node-gradle.node' version "${gradle_node_plugin_version}"
         id 'org.sonarqube' version "${sonarqube_plugin_version}"

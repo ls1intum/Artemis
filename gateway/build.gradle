@@ -18,7 +18,6 @@ plugins {
     id "com.google.cloud.tools.jib" version "3.1.2"
     id "com.github.node-gradle.node" version "3.1.0"
     id "com.diffplug.spotless" version "5.14.2"
-//    id "com.gorylenko.gradle-git-properties"
     id "org.openapi.generator"
     id "org.sonarqube"
     id "io.spring.nohttp"
@@ -33,7 +32,7 @@ sourceCompatibility=16
 targetCompatibility=16
 
 apply from: "gradle/docker.gradle"
-//apply from: "gradle/sonar.gradle"
+apply from: "gradle/sonar.gradle"
 apply from: "gradle/swagger.gradle"
 //jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
 
@@ -103,11 +102,6 @@ task testReport(type: TestReport) {
     reportOn test
 }
 
-//gitProperties {
-//    failOnNoGitDirectory = false
-//    keys = ["git.branch", "git.commit.id.abbrev", "git.commit.id.describe"]
-//}
-
 checkstyle {
     toolVersion "8.45"
     configFile file("checkstyle.xml")
@@ -120,13 +114,6 @@ nohttp {
 configurations {
     providedRuntime
     implementation.exclude module: "spring-boot-starter-tomcat"
-    all {
-        resolutionStrategy {
-            // Inherited version from Spring Boot can't be used because of regressions:
-            // To be removed as soon as spring-boot use the same version
-//            force 'org.liquibase:liquibase-core:4.3.5'
-        }
-    }
 }
 
 repositories {

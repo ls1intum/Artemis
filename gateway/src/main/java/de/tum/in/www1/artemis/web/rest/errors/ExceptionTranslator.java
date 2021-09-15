@@ -101,23 +101,6 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
 
     @ExceptionHandler
-    public Mono<ResponseEntity<Problem>> handleEmailAlreadyUsedException(de.tum.in.www1.artemis.service.EmailAlreadyUsedException ex, ServerWebExchange request) {
-        EmailAlreadyUsedException problem = new EmailAlreadyUsedException();
-        return create(problem, request, HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getMessage()));
-    }
-
-    @ExceptionHandler
-    public Mono<ResponseEntity<Problem>> handleUsernameAlreadyUsedException(de.tum.in.www1.artemis.service.UsernameAlreadyUsedException ex, ServerWebExchange request) {
-        LoginAlreadyUsedException problem = new LoginAlreadyUsedException();
-        return create(problem, request, HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getMessage()));
-    }
-
-    @ExceptionHandler
-    public Mono<ResponseEntity<Problem>> handleInvalidPasswordException(de.tum.in.www1.artemis.service.InvalidPasswordException ex, ServerWebExchange request) {
-        return create(new InvalidPasswordException(), request);
-    }
-
-    @ExceptionHandler
     public Mono<ResponseEntity<Problem>> handleBadRequestAlertException(BadRequestAlertException ex, ServerWebExchange request) {
         return create(ex, request, HeaderUtil.createFailureAlert(applicationName, true, ex.getEntityName(), ex.getErrorKey(), ex.getMessage()));
     }
@@ -137,17 +120,6 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
                 return Problem.builder().withType(type).withTitle(status.getReasonPhrase()).withStatus(status).withDetail("Unable to convert http message")
                         .withCause(Optional.ofNullable(throwable.getCause()).filter(cause -> isCausalChainsEnabled()).map(this::toProblem).orElse(null));
             }
-            // if (throwable instanceof DataAccessException) {
-            // return Problem
-            // .builder()
-            // .withType(type)
-            // .withTitle(status.getReasonPhrase())
-            // .withStatus(status)
-            // .withDetail("Failure during data access")
-            // .withCause(
-            // Optional.ofNullable(throwable.getCause()).filter(cause -> isCausalChainsEnabled()).map(this::toProblem).orElse(null)
-            // );
-            // }
             if (containsPackageName(throwable.getMessage())) {
                 return Problem.builder().withType(type).withTitle(status.getReasonPhrase()).withStatus(status).withDetail("Unexpected runtime exception")
                         .withCause(Optional.ofNullable(throwable.getCause()).filter(cause -> isCausalChainsEnabled()).map(this::toProblem).orElse(null));
