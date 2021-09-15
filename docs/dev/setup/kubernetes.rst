@@ -128,20 +128,20 @@ With the following commands, you will set up one cluster with three agents as we
 
    ::
 
-      helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+      helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
       helm repo update
       kubectl create namespace cattle-system
-      helm install rancher rancher-latest/rancher --namespace cattle-system --set hostname=$RANCHER_SERVER_HOSTNAME --wait
+      helm install rancher rancher-stable/rancher --namespace cattle-system --set hostname=$RANCHER_SERVER_HOSTNAME --version 2.5.9 --wait
       kubectl -n cattle-system rollout status deploy/rancher
 
    **For Windows**:
 
    ::
 
-      helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+      helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
       helm repo update
       kubectl create namespace cattle-system
-      helm install rancher rancher-latest/rancher --namespace cattle-system --set hostname=${env:RANCHER_SERVER_HOSTNAME} --wait
+      helm install rancher rancher-stable/rancher --namespace cattle-system --set hostname=${env:RANCHER_SERVER_HOSTNAME} --version 2.5.9 --wait
       kubectl -n cattle-system rollout status deploy/rancher
 
 5. Open Rancher and update the password
