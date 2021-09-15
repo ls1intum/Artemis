@@ -69,7 +69,7 @@ describe('Static code analysis tests', () => {
      * Configures every SCA category to affect the grading.
      */
     function configureStaticCodeAnalysisGrading() {
-        cy.login(users.getInstructor());
+        cy.login(users.getAdmin());
         scaConfig.visit(course.id, exercise.id);
         scaConfig.makeEveryScaCategoryInfluenceGrading();
         scaConfig.saveChanges();
