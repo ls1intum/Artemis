@@ -84,7 +84,7 @@ describe('PageDiscussionSectionComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         sinon.restore();
     });
 

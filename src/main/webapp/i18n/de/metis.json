@@ -35,7 +35,7 @@
             },
             "overview": {
                 "title": "Beiträge",
-                "searchBarDefault": "Tippe hier, um nach einem bestimmten Beitrag zu suchen...",
+                "searchBarDefault": "Suche nach Beiträgen...",
                 "postContextFilter": "Zeige Beiträge in:",
                 "courseFilterExplanation": "(Alle Beiträge)",
                 "sortPostsBy": "Sortiere nach:",

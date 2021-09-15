@@ -35,7 +35,7 @@
             },
             "overview": {
                 "title": "Posts",
-                "searchBarDefault": "Type to search for post...",
+                "searchBarDefault": "Search for a post...",
                 "postContextFilter": "Show posts for:",
                 "courseFilterExplanation": "(All posts)",
                 "sortPostsBy": "Sort by:",

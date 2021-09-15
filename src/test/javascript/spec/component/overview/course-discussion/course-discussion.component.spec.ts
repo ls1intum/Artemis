@@ -56,20 +56,20 @@ describe('CourseDiscussionComponent', () => {
     let fixture: ComponentFixture<CourseDiscussionComponent>;
     let courseManagementService: CourseManagementService;
     let metisService: MetisService;
-    let metisServiceSpy: SinonSpy;
+    let metisServiceGetFilteredPostsSpy: SinonSpy;
     let post1: Post;
     let post2: Post;
     let post3: Post;
     let post4: Post;
     let posts: Post[];
 
-    beforeEach(() => {
-        const id = metisCourse.id;
-        const parentRoute = {
-            params: of({ id }),
-        } as any as ActivatedRoute;
-        const route = { parent: parentRoute } as any as ActivatedRoute;
+    const id = metisCourse.id;
+    const parentRoute = {
+        params: of({ id }),
+    } as any as ActivatedRoute;
+    const route = { parent: parentRoute } as any as ActivatedRoute;
 
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             providers: [
@@ -100,17 +100,16 @@ describe('CourseDiscussionComponent', () => {
                 stub(courseManagementService, 'findOneForDashboard').returns(of({ body: metisCourse }) as Observable<HttpResponse<Course>>);
                 fixture = TestBed.createComponent(CourseDiscussionComponent);
                 component = fixture.componentInstance;
-                component = fixture.componentInstance;
                 metisService = fixture.debugElement.injector.get(MetisService);
-                metisServiceSpy = spy(metisService, 'getFilteredPosts');
+                metisServiceGetFilteredPostsSpy = spy(metisService, 'getFilteredPosts');
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         sinon.restore();
     });
 
-    it('should set course and posts for ocurse on initialization', fakeAsync(() => {
+    it('should set course and posts for course on initialization', fakeAsync(() => {
         component.ngOnInit();
         tick();
         expect(component.course).to.deep.equal(metisCourse);
@@ -170,18 +169,18 @@ describe('CourseDiscussionComponent', () => {
         expect(postCountInformation.innerHTML).to.not.be.empty;
     }));
 
-    it('should invoke metis service with foreReload false when search text changed', fakeAsync(() => {
+    it('should invoke metis service without forcing a reload when search text changed', fakeAsync(() => {
         component.ngOnInit();
         tick();
         component.onSearch();
-        expect(metisServiceSpy).to.have.been.calledWith(
+        expect(metisServiceGetFilteredPostsSpy).to.have.been.calledWith(
             {
                 courseId: metisCourse.id,
                 courseWideContext: undefined,
                 exerciseId: undefined,
                 lectureId: undefined,
             },
-            false,
+            false, // forceReload false
         );
     }));
 
@@ -201,7 +200,7 @@ describe('CourseDiscussionComponent', () => {
         contextOptions.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(metisServiceSpy).to.have.been.called;
+        expect(metisServiceGetFilteredPostsSpy).to.have.been.called;
         expect(component.posts).to.be.deep.equal(metisCoursePostsWithCourseWideContext.filter((post) => post.courseWideContext === CourseWideContext.ORGANIZATION));
     }));
 
@@ -221,7 +220,7 @@ describe('CourseDiscussionComponent', () => {
         contextOptions.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(metisServiceSpy).to.have.been.called;
+        expect(metisServiceGetFilteredPostsSpy).to.have.been.called;
         expect(component.posts).to.be.deep.equal(metisExercisePosts);
     }));
 
@@ -241,41 +240,41 @@ describe('CourseDiscussionComponent', () => {
         contextOptions.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(metisServiceSpy).to.have.been.called;
+        expect(metisServiceGetFilteredPostsSpy).to.have.been.called;
         expect(component.posts).to.be.deep.equal(metisLecturePosts);
     }));
 
-    it('should invoke metis service forceReload false when sort criterion changed', fakeAsync(() => {
+    it('should invoke metis service without forcing a reload when sort criterion changed', fakeAsync(() => {
         component.ngOnInit();
         tick();
         fixture.detectChanges();
         const sortByOptions = getElement(fixture.debugElement, 'select[name=sortBy]');
         sortByOptions.dispatchEvent(new Event('change'));
-        expect(metisServiceSpy).to.have.been.calledWith(
+        expect(metisServiceGetFilteredPostsSpy).to.have.been.calledWith(
             {
                 courseId: metisCourse.id,
                 courseWideContext: undefined,
                 exerciseId: undefined,
                 lectureId: undefined,
             },
-            false,
+            false, // forceReload false
         );
     }));
 
-    it('should invoke metis service forceReload false when sort direction changed', fakeAsync(() => {
+    it('should invoke metis service without forcing a reload when sort direction changed', fakeAsync(() => {
         component.ngOnInit();
         tick();
         fixture.detectChanges();
         const sortByOptions = getElement(fixture.debugElement, 'select[name=sortDirection]');
         sortByOptions.dispatchEvent(new Event('change'));
-        expect(metisServiceSpy).to.have.been.calledWith(
+        expect(metisServiceGetFilteredPostsSpy).to.have.been.calledWith(
             {
                 courseId: metisCourse.id,
                 courseWideContext: undefined,
                 exerciseId: undefined,
                 lectureId: undefined,
             },
-            false,
+            false, // forceReload false
         );
     }));
 

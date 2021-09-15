@@ -39,10 +39,7 @@ describe('PostFooterComponent', () => {
             imports: [MockModule(ArtemisCoursesRoutingModule)],
             providers: [
                 { provide: MetisService, useClass: MockMetisService },
-                {
-                    provide: TranslateService,
-                    useClass: MockTranslateService,
-                },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
             declarations: [PostFooterComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(PostReactionsBarComponent)],
         })
