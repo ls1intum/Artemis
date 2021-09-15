@@ -1,4 +1,4 @@
-import { DELETE } from './../support/constants';
+import { DELETE } from '../support/constants';
 import { artemis } from '../support/ArtemisTesting';
 import { generateUUID } from '../support/utils';
 

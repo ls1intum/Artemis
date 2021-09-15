@@ -12,11 +12,10 @@ const courseManagement = artemis.requests.courseManagement;
 // PageObjects
 const editorPage = artemis.pageobjects.programmingExercise.editor;
 
-// Container for a course dto
-let course: any;
-
 describe('Programming exercise participations', () => {
+    let course: any;
     let exercise: any;
+
     before(() => {
         setupCourseAndProgrammingExercise();
     });
