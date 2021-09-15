@@ -7,7 +7,7 @@
         <p *ngIf="assessmentMode" jhiTranslate="artemisApp.exampleSubmission.assessmentInstruction">Double-click on a model element to view and edit the element's assessment.</p>
     </div>
 
-    <div class="col-12 col-lg-4 text-end" *ngIf="isAtLeastEditor && !readOnly && !toComplete">
+    <div class="col-12 col-lg-4 text-end" *ngIf="exercise.isAtLeastEditor && !readOnly && !toComplete">
         <div class="d-flex justify-content-end flex-wrap" *ngIf="!assessmentMode">
             <div class="form-check align-baseline">
                 <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial" [(ngModel)]="usedForTutorial" />

@@ -6,7 +6,7 @@ import * as moment from 'moment';
 import { Exercise, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { LtiConfiguration } from 'app/entities/lti-configuration.model';
@@ -87,11 +87,20 @@ export class ExerciseService {
      * @param { number } exerciseId - Exercise that should be loaded
      */
     find(exerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Exercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.checkPermission(res)));
+        return (
+            this.http
+                .get<Exercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
+                // TODO Refactor Services: Why 3 pipes here, can't this be combined within one pipe?
+                .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
+                .pipe(map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)))
+                .pipe(
+                    tap((res: EntityResponseType) => {
+                        if (res.body) {
+                            this.accountService.setAccessRightsForExercise(res.body);
+                        }
+                    }),
+                )
+        );
     }
 
     /**
@@ -274,6 +283,7 @@ export class ExerciseService {
         return res;
     }
 
+    // TODO Refactoring Services: Remove this method as this should be done by the account service?!
     /**
      * Look up permissions and add/replace isAtLeastInstructor, isAtLeastEditor and isAtLeastTutor to http request containing a course
      * @param { ERT } res - Response from server including a course

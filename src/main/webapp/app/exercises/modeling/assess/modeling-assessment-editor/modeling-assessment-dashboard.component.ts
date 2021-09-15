@@ -93,7 +93,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                     this.courseId = this.exercise.course ? this.exercise.course.id! : this.exercise.exerciseGroup!.exam!.course!.id!;
                     this.getSubmissions();
                     this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
-                    this.setPermissions();
                 } else {
                     // TODO: error message if this is not a modeling exercise
                 }
@@ -147,14 +146,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     getAssessmentRouterLink(participationId: number, submissionId: number): string[] {
         return getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, participationId, submissionId, this.examId, this.exerciseGroupId);
-    }
-
-    private setPermissions() {
-        if (this.exercise.course) {
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
-        } else {
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup?.exam?.course!);
-        }
     }
 
     /**

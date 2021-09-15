@@ -47,8 +47,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     totalScore: number;
     invalidError?: string;
     exercise: ModelingExercise;
-    isAtLeastEditor = false;
-    isAtLeastInstructor = false;
     readOnly: boolean;
     toComplete: boolean;
     assessmentExplanation: string;
@@ -94,8 +92,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
             this.exercise = exerciseResponse.body!;
             this.isExamMode = this.exercise.exerciseGroup != undefined;
-            this.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
         });
 
         if (this.isNewSubmission) {
