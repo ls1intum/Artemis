@@ -8,10 +8,12 @@ import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
 import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_template.json';
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
+import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
 export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
+const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
 export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
 export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 
@@ -210,6 +212,28 @@ export class CourseManagementRequests {
         return cy.request({
             url: `${MODELING_EXERCISE_BASE}/${exerciseID}`,
             method: DELETE,
+        });
+    }
+
+    deleteQuizExercise(exerciseId: number) {
+        return cy.request({
+            url: QUIZ_EXERCISE_BASE + exerciseId,
+            method: DELETE,
+        });
+    }
+
+    createQuizExercise(body: { course: any } | { exerciseGroup: any }, title = 'Cypress quiz exercise' + generateUUID(), releaseDate = day(), quizQuestions: [any]) {
+        const quizExercise: any = {
+            ...quizTemplate,
+            title,
+            releaseDate: dayjsToString(releaseDate),
+            quizQuestions,
+        };
+        const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
+        return cy.request({
+            url: QUIZ_EXERCISE_BASE,
+            method: POST,
+            body: newQuizExercise,
         });
     }
 
