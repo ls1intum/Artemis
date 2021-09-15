@@ -1,4 +1,4 @@
-import * as ace from 'brace';
+import { acequire, UndoManager } from 'brace';
 import 'brace/ext/language_tools';
 import 'brace/ext/modelist';
 import 'brace/mode/java';
@@ -70,11 +70,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     onFileLoad = new EventEmitter<string>();
 
     // This fetches a list of all supported editor modes and matches it afterwards against the file extension
-    readonly aceModeList = ace.acequire('ace/ext/modelist');
+    readonly aceModeList = acequire('ace/ext/modelist');
     // Line widgets for inline feedback
-    readonly LineWidgets = ace.acequire('ace/line_widgets').LineWidgets;
+    readonly LineWidgets = acequire('ace/line_widgets').LineWidgets;
 
-    readonly Range = ace.acequire('ace/range').Range;
+    readonly Range = acequire('ace/range').Range;
 
     /** Ace Editor Options **/
     editorMode: string; // string or mode object
@@ -181,7 +181,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.editor.getEditor().resize();
             this.editor.getEditor().focus();
             // Reset the undo stack after file change, otherwise the user can undo back to the old file
-            this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
+            this.editor.getEditor().getSession().setUndoManager(new UndoManager());
             this.displayAnnotations();
 
             // Setup inline feedbacks

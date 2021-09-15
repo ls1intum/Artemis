@@ -32,7 +32,6 @@ import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
-import * as Sentry from '@sentry/browser';
 import { cloneDeep } from 'lodash-es';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -47,6 +46,7 @@ import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/shor
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
+import { captureException } from '@sentry/browser';
 
 export interface Reason {
     translateKey: string;
@@ -702,7 +702,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)
                 );
             } else {
-                Sentry.captureException(new Error('Unknown question type: ' + question));
+                captureException(new Error('Unknown question type: ' + question));
                 return question.title && question.title !== '';
             }
         }, this);

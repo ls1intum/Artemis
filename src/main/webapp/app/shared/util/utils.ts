@@ -1,5 +1,5 @@
 import { omit } from 'lodash-es';
-import * as Sentry from '@sentry/browser';
+import { captureException } from '@sentry/browser';
 import { Result } from 'app/entities/result.model';
 import { Alert } from 'app/core/util/alert.service';
 
@@ -103,7 +103,7 @@ export const checkForMissingTranslationKey = (alert: Alert) => {
             alert.message = alert.message.replace('translation-not-found', '');
         }
         // Sent a sentry warning with the translation key
-        Sentry.captureException(new Error('Unknown translation key: ' + alert.message));
+        captureException(new Error('Unknown translation key: ' + alert.message));
     }
 };
 /**

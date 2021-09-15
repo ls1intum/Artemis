@@ -29,7 +29,7 @@ import dayjs from 'dayjs';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
-import * as Sentry from '@sentry/browser';
+import { captureException } from '@sentry/browser';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/entities/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
@@ -487,7 +487,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.triggerSave(exerciseChange.forceSave);
         } catch (error) {
             // an error here should never lead to the wrong exercise being shown
-            Sentry.captureException(error);
+            captureException(error);
         }
         if (!exerciseChange.overViewChange) {
             this.initializeExercise(exerciseChange.exercise!);

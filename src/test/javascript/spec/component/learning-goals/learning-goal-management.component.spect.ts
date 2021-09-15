@@ -20,8 +20,8 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseLearningGoalProgress, CourseLectureUnitProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
-import * as Sentry from '@sentry/browser';
-import * as _ from 'lodash-es';
+import { cloneDeep } from 'lodash-es';
+import { captureException } from '@sentry/browser';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -106,7 +106,7 @@ describe('LearningGoalManagementComponent', () => {
             body: courseLearningGoalProgress,
             status: 200,
         });
-        const courseProgressParticipantScores = _.cloneDeep(courseLearningGoalProgress);
+        const courseProgressParticipantScores = cloneDeep(courseLearningGoalProgress);
         courseProgressParticipantScores.averagePointsAchievedByStudentInLearningGoal = 1;
         const learningGoalProgressParticipantScoreResponse: HttpResponse<CourseLearningGoalProgress> = new HttpResponse({
             body: courseProgressParticipantScores,
@@ -117,7 +117,7 @@ describe('LearningGoalManagementComponent', () => {
         getProgressStub.withArgs(sinon.match.any, sinon.match.any, false).returns(of(learningGoalProgressResponse));
         getProgressStub.withArgs(sinon.match.any, sinon.match.any, true).returns(of(learningGoalProgressParticipantScoreResponse));
 
-        const captureExceptionSpy = sinon.spy(Sentry, 'captureException');
+        const captureExceptionSpy = sinon.spy(captureException);
 
         learningGoalManagementComponentFixture.detectChanges();
 

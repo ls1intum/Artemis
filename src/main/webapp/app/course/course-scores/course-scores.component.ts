@@ -14,7 +14,7 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { round } from 'app/shared/util/utils';
-import * as Sentry from '@sentry/browser';
+import { captureException } from '@sentry/browser';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
@@ -233,7 +233,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     logErrorOnSentry(errorMessage: string) {
-        Sentry.captureException(new Error(errorMessage));
+        captureException(new Error(errorMessage));
     }
 
     /**

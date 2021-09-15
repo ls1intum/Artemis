@@ -8,7 +8,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { StudentDTO } from 'app/entities/student-dto.model';
-import * as Papa from 'papaparse';
+import { parse } from 'papaparse';
 
 const csvColumns = Object.freeze({
     registrationNumber: 'registrationnumber',
@@ -164,7 +164,7 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
      */
     private parseCSVFile(csvFile: File): Promise<CsvStudent[]> {
         return new Promise((resolve, reject) => {
-            Papa.parse(csvFile, {
+            parse(csvFile, {
                 header: true,
                 transformHeader: (header: string) => header.toLowerCase().replace(' ', '').replace('_', ''),
                 skipEmptyLines: true,

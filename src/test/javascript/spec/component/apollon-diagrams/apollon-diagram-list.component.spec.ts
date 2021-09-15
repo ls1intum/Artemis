@@ -14,11 +14,11 @@ import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
-import * as _ from 'lodash-es';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { isEqual } from 'lodash-es';
 
 describe('ApollonDiagramList Component', () => {
     let apollonDiagramService: ApollonDiagramService;
@@ -69,7 +69,7 @@ describe('ApollonDiagramList Component', () => {
 
         // test
         fixture.componentInstance.ngOnInit();
-        expect(_.isEqual(fixture.componentInstance.apollonDiagrams, apollonDiagrams)).toBeTruthy();
+        expect(isEqual(fixture.componentInstance.apollonDiagrams, apollonDiagrams)).toBeTruthy();
     });
 
     it('delete', () => {

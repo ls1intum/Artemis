@@ -8,9 +8,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { forkJoin } from 'rxjs';
 import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
-import * as _ from 'lodash-es';
 import { AccountService } from 'app/core/auth/account.service';
-import * as Sentry from '@sentry/browser';
+import { captureException } from '@sentry/browser';
+import { isEqual } from 'lodash-es';
 
 @Component({
     selector: 'jhi-course-learning-goals',
@@ -100,14 +100,14 @@ export class CourseLearningGoalsComponent implements OnInit {
     private testIfScoreUsingParticipantScoresTableDiffers() {
         this.learningGoalIdToLearningGoalProgress.forEach((learningGoalProgress, learningGoalId) => {
             const learningGoalProgressParticipantScoresTable = this.learningGoalIdToLearningGoalProgressUsingParticipantScoresTables.get(learningGoalId);
-            if (!_.isEqual(learningGoalProgress.pointsAchievedByStudentInLearningGoal, learningGoalProgressParticipantScoresTable!.pointsAchievedByStudentInLearningGoal)) {
+            if (!isEqual(learningGoalProgress.pointsAchievedByStudentInLearningGoal, learningGoalProgressParticipantScoresTable!.pointsAchievedByStudentInLearningGoal)) {
                 const userName = this.accountService.userIdentity?.login;
                 const message = `Warning: Learning Goal(id=${
                     learningGoalProgress.learningGoalId
                 }) Progress different using participant scores for user ${userName}! Original: ${JSON.stringify(learningGoalProgress)} | Using ParticipantScores: ${JSON.stringify(
                     learningGoalProgressParticipantScoresTable,
                 )}!`;
-                Sentry.captureException(new Error(message));
+                captureException(new Error(message));
             }
         });
     }

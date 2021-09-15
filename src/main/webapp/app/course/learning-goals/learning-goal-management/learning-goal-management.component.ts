@@ -8,8 +8,8 @@ import { finalize, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { forkJoin, Subject } from 'rxjs';
 import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
-import * as _ from 'lodash-es';
-import * as Sentry from '@sentry/browser';
+import { captureException } from '@sentry/browser';
+import { isEqual } from 'lodash-es';
 
 @Component({
     selector: 'jhi-learning-goal-management',
@@ -109,7 +109,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         this.learningGoalIdToLearningGoalCourseProgress.forEach((learningGoalProgress, learningGoalId) => {
             const learningGoalProgressParticipantScoresTable = this.learningGoalIdToLearningGoalCourseProgressUsingParticipantScoresTables.get(learningGoalId);
             if (
-                !_.isEqual(
+                !isEqual(
                     learningGoalProgress.averagePointsAchievedByStudentInLearningGoal,
                     learningGoalProgressParticipantScoresTable!.averagePointsAchievedByStudentInLearningGoal,
                 )
@@ -117,7 +117,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 const message = `Warning: Learning Goal(id=${learningGoalProgress.learningGoalId}) Course Progress different using participant scores for course ${
                     this.courseId
                 }! Original: ${JSON.stringify(learningGoalProgress)} | Using ParticipantScores: ${JSON.stringify(learningGoalProgressParticipantScoresTable)}!`;
-                Sentry.captureException(new Error(message));
+                captureException(new Error(message));
             }
         });
     }

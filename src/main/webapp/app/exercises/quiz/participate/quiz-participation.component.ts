@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import dayjs from 'dayjs';
-import * as _ from 'lodash-es';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -32,10 +31,11 @@ import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
-import * as Sentry from '@sentry/browser';
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { debounce } from 'lodash-es';
+import { captureException } from '@sentry/browser';
 
 @Component({
     selector: 'jhi-quiz',
@@ -113,7 +113,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * debounced function to reset 'justSubmitted', so that time since last submission is displayed again when no submission has been made for at least 2 seconds
      * @type {Function}
      */
-    timeoutJustSaved = _.debounce(() => {
+    timeoutJustSaved = debounce(() => {
         this.justSaved = false;
     }, 2000);
 
@@ -687,7 +687,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     const shortAnswerFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
                     shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
                 } else {
-                    Sentry.captureException(new Error('Unknown question type: ' + clientQuestion));
+                    captureException(new Error('Unknown question type: ' + clientQuestion));
                 }
             }
         }, this);
