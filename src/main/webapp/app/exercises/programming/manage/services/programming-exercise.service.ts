@@ -200,7 +200,7 @@ export class ProgrammingExerciseService {
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
             tap((res: EntityResponseType) => {
                 if (res.body) {
-                    this.accountService.setAccessRightsForCourse(res.body);
+                    this.accountService.setAccessRightsForExercise(res.body);
                 }
             }),
         );
