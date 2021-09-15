@@ -8,7 +8,6 @@ const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPl
 const WebpackNotifierPlugin = require('webpack-notifier');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
-const NodePolyfillPlugin = require("node-polyfill-webpack-plugin");
 
 const environment = require('./environment');
 const proxyConfig = require('./proxy.conf');
@@ -129,8 +128,6 @@ module.exports = async (config, options, targetOptions) => {
                 ],
             },
         }),
-        // see e.g. https://github.com/dropbox/dropbox-sdk-js/issues/614
-        new NodePolyfillPlugin()
     );
 
     config = merge(
