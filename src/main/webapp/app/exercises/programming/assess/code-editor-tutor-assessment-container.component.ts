@@ -27,7 +27,6 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Course } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
@@ -67,7 +66,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     submitBusy = false;
     cancelBusy = false;
     nextSubmissionBusy = false;
-    isAtLeastInstructor = false;
     isAssessor = false;
     assessmentsAreValid = false;
     complaint: Complaint;
@@ -140,7 +138,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.isTestRun = queryParams.get('testRun') === 'true';
             this.correctionRound = Number(queryParams.get('correction-round'));
         });
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
@@ -421,7 +418,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     get canOverride(): boolean {
         if (this.exercise) {
-            if (this.isAtLeastInstructor) {
+            if (this.exercise.isAtLeastInstructor) {
                 // Instructors can override any assessment at any time.
                 return true;
             }
@@ -475,7 +472,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Defines whether the inline feedback should be read only or not
      */
     readOnly() {
-        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+        return !this.exercise.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
@@ -500,7 +497,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.isAssessor = true;
         }
         if (this.exercise) {
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
+            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
         }
     }
 

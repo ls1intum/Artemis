@@ -214,6 +214,11 @@ export class ProgrammingExerciseService {
         return this.http.get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-participations`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            tap((res: EntityResponseType) => {
+                if (res.body) {
+                    this.accountService.setAccessRightsForExercise(res.body);
+                }
+            }),
         );
     }
 
