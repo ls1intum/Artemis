@@ -48,12 +48,9 @@ describe('Static code analysis tests', () => {
         courseManagement.createCourse().then((response) => {
             course = response.body;
             courseManagement.addStudentToCourse(course.id, users.getStudentOne().username);
-            courseManagement
-                .createProgrammingExercise({ course }, 50)
-                .its('body')
-                .then((dto) => {
-                    exercise = dto;
-                });
+            courseManagement.createProgrammingExercise({ course }, 50).then((dto) => {
+                exercise = dto.body;
+            });
         });
     }
 

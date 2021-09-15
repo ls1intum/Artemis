@@ -161,7 +161,7 @@ export function startParticipationInProgrammingExercise(courseName: string, prog
     cy.wait('@participateInExerciseQuery');
     cy.intercept(GET, BASE_API + 'programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
     cy.get(exerciseRow).find('[buttonicon="folder-open"]').click();
-    cy.wait('@initialQuery').wait(2000);
+    cy.wait('@initialQuery');
 }
 
 /**
