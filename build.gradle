@@ -334,7 +334,6 @@ task stage(dependsOn: "bootWar") {
 node {
     download = true
     version = "${node_version}"
-    yarnVersion = "${yarn_version}"
     npmVersion = "${npm_version}"
 }
 

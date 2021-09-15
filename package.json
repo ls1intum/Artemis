@@ -212,6 +212,9 @@
         "webapp:dev-ssl": "ng serve --ssl",
         "webapp:prod": "npm run clean-www && npm run webapp:build:prod",
         "webapp:test": "npm run test --",
-        "prepare": "husky install"
+        "prepare": "husky install",
+        "java:war": "./gradlew bootWar -Pwar -x test -x integrationTest",
+        "java:war:dev": "npm run java:war -- -Pdev,webapp",
+        "java:war:prod": "npm run java:war -- -Pprod"
     }
 }
