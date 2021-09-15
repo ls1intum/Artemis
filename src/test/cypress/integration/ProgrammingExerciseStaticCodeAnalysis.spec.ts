@@ -28,7 +28,7 @@ describe('Static code analysis tests', () => {
         scaConfig.saveChanges();
     });
 
-    it('Makes successful submission with SCA errors', function () {
+    it('Makes successful submission with SCA errors', () => {
         startParticipationInProgrammingExercise(course.title, exercise.title, users.getStudentOne());
         makeSuccessfulSubmissionWithScaErrors();
     });
