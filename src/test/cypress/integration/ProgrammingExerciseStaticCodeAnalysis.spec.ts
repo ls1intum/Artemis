@@ -21,14 +21,8 @@ describe('Static code analysis tests', () => {
         setupCourseAndProgrammingExercise();
     });
 
-    it('Configure every static code analysis category to influence grading', () => {
-        cy.login(users.getAdmin());
-        scaConfig.visit(course.id, exercise.id);
-        scaConfig.makeEveryScaCategoryInfluenceGrading();
-        scaConfig.saveChanges();
-    });
-
-    it('Makes successful submission with SCA errors', () => {
+    it('Configures SCA grading and makes a successful submission with SCA errors', () => {
+        configureStaticCodeAnalysisGrading();
         startParticipationInProgrammingExercise(course.title, exercise.title, users.getStudentOne());
         makeSuccessfulSubmissionWithScaErrors();
     });
@@ -69,5 +63,15 @@ describe('Static code analysis tests', () => {
             scaFeedback.shouldShowCodeIssue('Unread public/protected field: de.test.BubbleSort.literal1', '0.2');
             scaFeedback.closeModal();
         });
+    }
+
+    /**
+     * Configures every SCA category to affect the grading.
+     */
+    function configureStaticCodeAnalysisGrading() {
+        cy.login(users.getInstructor());
+        scaConfig.visit(course.id, exercise.id);
+        scaConfig.makeEveryScaCategoryInfluenceGrading();
+        scaConfig.saveChanges();
     }
 });
