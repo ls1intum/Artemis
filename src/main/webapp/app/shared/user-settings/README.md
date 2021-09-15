@@ -54,16 +54,15 @@
    * These names correspond with other places where **mapping** and **translation** take place
         **Translation :**<br>
      TranslationFile : `userSettings.json`
-     * Use the `camelCase pipe` before the `artemisTranslate` **pipe** for easy mappings
-        * Example : <br> `{{ 'artemisApp.userSettings.optionGroupNames.' + (optionGroup.name | lowerCamelCase) | artemisTranslate }}`<br>
-        with `optionGroup.name` = *'Exercise Notifications'* ➡ *'exerciseNotifications'* <br>
+        * Example : <br> `{{ 'artemisApp.userSettings.optionGroupNames.' + optionGroup.name | artemisTranslate }}`<br>
+        with `optionGroup.name` = *'Exercise Notifications'* <br>
           The structure of `userSettings.json` :
           ```json
            "artemisApp": {
            "userSettings": {
             ...
            "optionGroupNames": {
-           "exerciseNotifications": "Exercise Notifications",
+           "Exercise Notifications": "Exercise Notifications",
             ...
            },
            ...

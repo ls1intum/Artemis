@@ -14,32 +14,32 @@
                 "joinedArtemis": "Artemis beigetreten am"
             },
             "categories": {
-                "notificationSettings": "Benachrichtigungseinstellungen"
+                "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen"
             },
             "optionGroupNames": {
-                "exerciseNotifications": "Aufgabenbenachrichtigungen",
-                "lectureNotifications": "Vorlesungsbenachrichtigungen",
-                "instructorExclusiveNotifications": "Exklusive Benachrichtigungen für Lehrende"
+                "Exercise Notifications": "Aufgabenbenachrichtigungen",
+                "Lecture Notifications": "Vorlesungsbenachrichtigungen",
+                "Instructor Exclusive Notifications": "Exklusive Benachrichtigungen für Lehrende"
             },
             "optionNames": {
-                "exerciseCreatedOrStarted": "(Neue) Aufgabe erstellt oder gestartet",
-                "exerciseOpenForPractice": "Aufgabe zum Üben freigegeben",
-                "newPostForExercises": "Neue Beiträge für Aufgaben",
-                "newReplyForExercises": "Neue Antworten für Aufgaben",
-                "attachmentChanges": "Änderungen von Anhängen",
-                "newPostForLecture": "Neue Beiträge für Vorlesungen",
-                "newReplyForLecture": "Neue Antworten für Vorlesungen",
-                "courseAndExamArchivingStarted": "Kurs und Klausur Archivierungsstart"
+                "Exercise created or started": "(Neue) Aufgabe erstellt oder gestartet",
+                "Exercise open for Practice": "Aufgabe zum Üben freigegeben",
+                "New Post for Exercises": "Neue Beiträge für Aufgaben",
+                "New Reply for Exercises": "Neue Antworten für Aufgaben",
+                "Attachment Changes": "Änderungen von Anhängen",
+                "New Post for Lecture": "Neue Beiträge für Vorlesungen",
+                "New Reply for Lecture": "Neue Antworten für Vorlesungen",
+                "Course and Exam Archiving Started": "Kurs und Klausur Archivierungsstart"
             },
             "optionDescriptions": {
-                "getNotifiedIfANewExerciseHasBeenCreatedOrStarted": "Erhalte eine Mitteilung wenn eine (neue) Aufgabe erstellt oder gestartet wurde",
-                "getNotifiedIfAnExerciseHasBeenOpenedForPractice": "Erhalte eine Mitteilung wenn eine Aufgabe zum Üben freigeschalten wurde (bsp. Quiz)",
-                "getNotifiedIfANewPostAboutAnExerciseHasBeenCreated": "Erhalte eine Mitteilung wenn ein neuer Beitrag zu einer Aufgabe erstellt wurde",
-                "getNotifiedIfANewReplyAboutAnExerciseHasBeenCreated": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher Aufgaben betrifft, erstellt wurde",
-                "receiveANotificationWhenAnAttachmentWasChanged": "Erhalte eine Mitteilung wenn ein Anhang aktualisiert wurde",
-                "getNotifiedWhenANewPostAboutAnExerciseHasBeenCreated": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher Vorlesungen betrifft, erstellt wurde",
-                "getNotifiedWhenANewReplyAboutAnExerciseHasBeenCreated": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher Vorlesungen betrifft, erstellt wurde",
-                "receiveANotificationWhenTheProcessOfArchivingACourseOrExamHasBeenStarted": "Erhalte eine Mitteilung wenn das Archivieren eines Kurses oder einer Klausur angefangen hat"
+                "Get notified if a new exercise has been created or started": "Erhalte eine Mitteilung wenn eine (neue) Aufgabe erstellt oder gestartet wurde",
+                "Get notified if an exercise has been opened for practice": "Erhalte eine Mitteilung wenn eine Aufgabe zum Üben freigeschalten wurde (bsp. Quiz)",
+                "Get notified if a new post about an exercise has been created": "Erhalte eine Mitteilung wenn ein neuer Beitrag zu einer Aufgabe erstellt wurde",
+                "Get notified if a new reply about an exercise has been created": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher Aufgaben betrifft, erstellt wurde",
+                "Receive a notification when an attachment was changed": "Erhalte eine Mitteilung wenn ein Anhang aktualisiert wurde",
+                "Get notified when a new post about an exercise has been created": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher Vorlesungen betrifft, erstellt wurde",
+                "Get notified when a new reply about an exercise has been created": "Erhalte eine Mitteilung wenn eine neue Antwort auf einen Beitrag, welcher Vorlesungen betrifft, erstellt wurde",
+                "Receive a notification when the process of archiving a course or exam has been started": "Erhalte eine Mitteilung wenn das Archivieren eines Kurses oder einer Klausur angefangen hat"
             }
         }
     }
