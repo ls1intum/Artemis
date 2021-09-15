@@ -138,11 +138,11 @@ Corresponding commands from the article for our project (enter in the root direc
 
 .. code-block:: text
 
-   node --expose-gc ./node_modules/.bin/jest --runInBand --logHeapUsage --config ./src/test/javascript/jest.config.js --env=jsdom
+   node --expose-gc ./node_modules/.bin/jest --runInBand --logHeapUsage --config ./jest.config.js --env=jsdom
 
 .. code-block:: text
 
-   node --inspect-brk --expose-gc ./node_modules/.bin/jest --runInBand --logHeapUsage --config ./src/test/javascript/jest.config.js --env=jsdom
+   node --inspect-brk --expose-gc ./node_modules/.bin/jest --runInBand --logHeapUsage --config ./jest.config.js --env=jsdom
 
 A live demonstration of this technique to find the reason for memory leaks in the GitLab repository: https://www.youtube.com/watch?v=GOYmouFrGrE
 

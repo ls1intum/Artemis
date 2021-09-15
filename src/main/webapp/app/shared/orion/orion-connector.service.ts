@@ -258,7 +258,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * @param correctionRound correction round, also needed to navigate to the correct URL
      * @param base64data the student's submission as base64
      */
-    downloadSubmission(submissionId: number, correctionRound: number, base64data: String) {
+    downloadSubmission(submissionId: number, correctionRound: number, base64data: string) {
         theWindow().orionExerciseConnector.downloadSubmission(String(submissionId), String(correctionRound), base64data);
     }
 

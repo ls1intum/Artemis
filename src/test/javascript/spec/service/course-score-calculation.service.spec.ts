@@ -145,7 +145,7 @@ describe('CourseScoreCalculationService', () => {
     }
 
     function expectCalculationResult(
-        resultMap: Map<String, number>,
+        resultMap: Map<string, number>,
         expectedAbsoluteScore?: number,
         expectedRelativeScore?: number,
         expectedCurrentRelativeScore?: number,

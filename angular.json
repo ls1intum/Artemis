@@ -7,56 +7,111 @@
       "root": "",
       "sourceRoot": "src/main/webapp",
       "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        },
+        "@schematics/angular:application": {
+          "strict": true
+        }
+      },
       "architect": {
-          "build": {
-              "builder": "@angular-devkit/build-angular:browser",
-              "options": {
-                  "outputPath": "dist/artemis",
-                  "index": "src/main/webapp/index.html",
-                  "main": "src/main/webapp/app/app.main.ts",
-                  "polyfills": "src/main/webapp/app/polyfills.ts",
-                  "tsConfig": "tsconfig.json",
-                  "inlineStyleLanguage": "scss",
-                  "assets": [
-                      "./src/main/webapp/favicon.svg",
-                      "./src/main/webapp/content",
-                      "./src/main/webapp/android-chrome-192x192.png",
-                      ",./src/main/webapp/android-chrome-512x512.png",
-                      "./src/main/webapp/apple-touch-icon.png",
-                      "./src/main/webapp/browserconfig.xml",
-                      "./src/main/webapp/favicon.ico",
-                      "./src/main/webapp/favicon-16x16.png",
-                      "./src/main/webapp/favicon-32x32.png",
-                      "./src/main/webapp/mstile-70x70.png",
-                      "./src/main/webapp/mstile-144x144.png",
-                      "./src/main/webapp/mstile-150x150.png",
-                      "./src/main/webapp/mstile-310x150.png",
-                      "./src/main/webapp/mstile-310x310.png",
-                      "./src/main/webapp/safari-pinned-tab.svg",
-                      "./src/main/webapp/manifest.webapp"
-                  ],
-                  "styles": [
-                      "src/main/webapp/content/scss/global.scss"
-                  ],
-                  "scripts": [
-                  ]
-              },
-              "configurations": {
-                  "production": {
-                      "fileReplacements": [
-                      ],
-                      "optimization": true,
-                      "outputHashing": "all",
-                      "sourceMap": true,
-                      "extractCss": true,
-                      "namedChunks": false,
-                      "aot": true,
-                      "extractLicenses": true,
-                      "vendorChunk": false,
-                      "buildOptimizer": true
-                  }
-              }
+        "build": {
+          "builder": "@angular-builders/custom-webpack:browser",
+          "options": {
+            "customWebpackConfig": {
+              "path": "./webpack/webpack.custom.js"
+            },
+            "allowedCommonJsDependencies": [
+              "lodash/fp",
+              "sockjs-client",
+              "chart.js",
+              "showdown-highlight",
+              "brace/mode/markdown",
+              "export-to-csv",
+              "@ls1intum/apollon",
+              "prop-types",
+              "dayjs/locale/de",
+              "brace/mode/java",
+              "crypto",
+              "franc-min"
+            ],
+            "outputPath": "build/resources/main/static/",
+            "index": "src/main/webapp/index.html",
+            "main": "src/main/webapp/app/app.main.ts",
+            "polyfills": "src/main/webapp/app/polyfills.ts",
+            "tsConfig": "tsconfig.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              "src/main/webapp/content",
+              "src/main/webapp/favicon.svg",
+              "src/main/webapp/manifest.webapp",
+              "src/main/webapp/robots.txt",
+              "src/main/webapp/android-chrome-192x192.png",
+              "src/main/webapp/android-chrome-512x512.png",
+              "src/main/webapp/apple-touch-icon.png",
+              "src/main/webapp/browserconfig.xml",
+              "src/main/webapp/favicon.ico",
+              "src/main/webapp/favicon-16x16.png",
+              "src/main/webapp/favicon-32x32.png",
+              "src/main/webapp/mstile-70x70.png",
+              "src/main/webapp/mstile-144x144.png",
+              "src/main/webapp/mstile-150x150.png",
+              "src/main/webapp/mstile-310x150.png",
+              "src/main/webapp/mstile-310x310.png",
+              "src/main/webapp/safari-pinned-tab.svg"
+            ],
+            "styles": [
+              "src/main/webapp/content/scss/global.scss"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": true,
+              "namedChunks": false,
+              "aot": true,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "serviceWorker": true,
+              "ngswConfigPath": "ngsw-config.json"
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
+            }
           }
+        },
+        "serve": {
+          "builder": "@angular-builders/custom-webpack:dev-server",
+          "options": {
+            "browserTarget": "artemis:build:development",
+            "proxyConfig": "./webpack/proxy.conf.js",
+            "port": 4200
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "artemis:build:production"
+            },
+            "development": {
+              "browserTarget": "artemis:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular-builders/jest:run",
+          "options": {
+            "configPath": "jest.config.js"
+          }
+        }
       }
     }
   },
@@ -72,12 +127,6 @@
     },
     "@schematics/angular:directive": {
       "prefix": "jhi"
-    },
-    "@schematics/angular:guard": {
-    },
-    "@schematics/angular:pipe": {
-    },
-    "@schematics/angular:service": {
     }
   }
 }

@@ -275,7 +275,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             return;
         }
 
-        const elementCountMap = new Map<String, Number>();
+        const elementCountMap = new Map<string, Number>();
 
         newElementCounts.forEach((elementCount) => elementCountMap.set(elementCount.elementId, elementCount.numberOfOtherElements));
 

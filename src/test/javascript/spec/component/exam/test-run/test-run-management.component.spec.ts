@@ -124,7 +124,7 @@ describe('Test Run Management Component', () => {
             const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
             exam.exerciseGroups = [exerciseGroup];
 
-            const componentInstance = { title: String, text: String };
+            const componentInstance = { title: string, text: string };
             const result = new Promise((resolve) => resolve({} as StudentExam));
             spyOn(modalService, 'open').and.returnValue(<NgbModalRef>{ componentInstance, result });
             spyOn(examManagementService, 'createTestRun').and.returnValue(of(new HttpResponse({ body: { id: 3, user: { id: 90 }, exercises: [exercise] } as StudentExam })));
@@ -145,7 +145,7 @@ describe('Test Run Management Component', () => {
             exam.exerciseGroups = [exerciseGroup];
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
 
-            const componentInstance = { title: String, text: String };
+            const componentInstance = { title: string, text: string };
             const result = new Promise((resolve) => resolve({} as StudentExam));
             spyOn(modalService, 'open').and.returnValue(<NgbModalRef>{ componentInstance, result });
             spyOn(examManagementService, 'createTestRun').and.returnValue(throwError(httpError));

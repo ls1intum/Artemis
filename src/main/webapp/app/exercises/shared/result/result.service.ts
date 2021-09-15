@@ -151,7 +151,7 @@ export class ResultService implements IResultService {
     /**
      * Utility function used to trigger the download of a CSV file
      */
-    public triggerDownloadCSV(rows: String[], csvFileName: String) {
+    public triggerDownloadCSV(rows: string[], csvFileName: string) {
         const csvContent = rows.join('\n');
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement('a');

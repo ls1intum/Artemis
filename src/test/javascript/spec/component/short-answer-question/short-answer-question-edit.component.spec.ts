@@ -392,7 +392,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             substring(start: number, end?: number): string {
                 return '';
             },
-        } as String;
+        } as string;
         spyOn(artemisMarkdown, 'markdownForHtml').and.returnValue(markdownHelper);
         const questionUpdated = sinon.spy(component.questionUpdated, 'emit');
 

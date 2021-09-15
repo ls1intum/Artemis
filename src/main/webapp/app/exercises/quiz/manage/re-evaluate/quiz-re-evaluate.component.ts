@@ -141,8 +141,8 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
 
     /**
      * @function durationString
-     * @desc Gives the duration time in a String with this format: <minutes>:<seconds>
-     * @returns {String} the duration as String
+     * @desc Gives the duration time in a string with this format: <minutes>:<seconds>
+     * @returns {string} the duration as string
      */
     durationString(): string {
         if (this.duration.seconds! <= 0) {

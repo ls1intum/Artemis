@@ -1,4 +1,3 @@
-import 'jest-preset-angular/setup-jest';
 import './jest-global-mocks';
 import 'jest-canvas-mock';
 import 'app/shared/util/array.extension';

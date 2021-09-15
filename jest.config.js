@@ -1,12 +1,13 @@
 const esModules = ['ngx-treeview', 'lodash-es'].join('|');
 
+const {
+    compilerOptions: { paths = {}, baseUrl = './' },
+} = require('./tsconfig.json');
+const environment = require('./webpack/environment');
+
 module.exports = {
     globals: {
-        //TODO: this is copied from webpack/environment.ts --> would be better, if we could reuse it
-        __TIMESTAMP__: String(new Date().getTime()),
-        __VERSION__: process.env.hasOwnProperty('APP_VERSION') ? process.env.APP_VERSION : 'DEV',
-        __DEBUG_INFO_ENABLED__: false,
-        __SERVER_API_URL__: '',
+        ...environment,
         'ts-jest': {
             tsconfig: '<rootDir>/tsconfig.spec.json',
             stringifyContentPathRegex: '\\.html$',
@@ -15,6 +16,12 @@ module.exports = {
             },
         },
     },
+    roots: ['<rootDir>', `<rootDir>/${baseUrl}`],
+    modulePaths: [`<rootDir>/${baseUrl}`],
+    setupFiles: ['jest-date-mock'],
+    cacheDirectory: '<rootDir>/build/jest-cache',
+    coverageDirectory: '<rootDir>/build/test-results/',
+    reporters: ['default', ['jest-junit', { outputDirectory: '<rootDir>/build/test-results/', outputName: 'TESTS-results-jest.xml' }]],
     collectCoverageFrom: ['src/main/webapp/**/*.{js,jsx,ts,tsx}', '!src/main/webapp/**/*.module.{js,jsx,ts,tsx}'],
     coverageThreshold: {
         global: {
@@ -25,11 +32,8 @@ module.exports = {
             lines: 76.9,
         },
     },
-    preset: 'jest-preset-angular',
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/jest.ts', 'jest-sinon'],
-    modulePaths: ['<rootDir>/src/main/webapp/'],
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
-    rootDir: '../../../',
     modulePathIgnorePatterns: [],
     testTimeout: 2000,
     testMatch: [

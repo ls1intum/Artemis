@@ -359,7 +359,7 @@ describe('StudentExamsComponent', () => {
         exam.startDate = dayjs().add(120, 'seconds');
 
         studentExamsComponentFixture.detectChanges();
-        const componentInstance = { title: String, text: String };
+        const componentInstance = { title: string, text: string };
         const result = new Promise((resolve) => resolve(true));
         const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
             componentInstance,
@@ -467,7 +467,7 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should unlock all repositories of the students', () => {
-        const componentInstance = { title: String, text: String };
+        const componentInstance = { title: string, text: string };
         const result = new Promise((resolve) => resolve(true));
         const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
             componentInstance,
@@ -492,7 +492,7 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should correctly catch HTTPError when unlocking all repositories', () => {
-        const componentInstance = { title: String, text: String };
+        const componentInstance = { title: string, text: string };
         const result = new Promise((resolve) => resolve(true));
         const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
             componentInstance,
@@ -521,7 +521,7 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should lock all repositories of the students', () => {
-        const componentInstance = { title: String, text: String };
+        const componentInstance = { title: string, text: string };
         const result = new Promise((resolve) => resolve(true));
         const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
             componentInstance,
@@ -546,7 +546,7 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should correctly catch HTTPError when locking all repositories', () => {
-        const componentInstance = { title: String, text: String };
+        const componentInstance = { title: string, text: string };
         const result = new Promise((resolve) => resolve(true));
         const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{
             componentInstance,

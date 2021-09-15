@@ -24,8 +24,8 @@ export class CourseParticipantScoresComponent implements OnInit {
     avgRatedScore = 0;
 
     gradingScale?: GradingScale;
-    avgGrade?: String;
-    avgRatedGrade?: String;
+    avgGrade?: string;
+    avgRatedGrade?: string;
 
     constructor(
         private participantScoreService: ParticipantScoresService,

@@ -291,7 +291,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * @param participation Student participation
      * @param repoUrl original repository url
      */
-    getRepositoryLink = (participation: StudentParticipation, repoUrl: String) => {
+    getRepositoryLink = (participation: StudentParticipation, repoUrl: string) => {
         if ((participation as ProgrammingExerciseStudentParticipation).repositoryUrl === repoUrl) {
             return (participation as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUrl;
         }

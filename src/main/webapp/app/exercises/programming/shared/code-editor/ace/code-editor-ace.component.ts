@@ -77,7 +77,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     readonly Range = ace.acequire('ace/range').Range;
 
     /** Ace Editor Options **/
-    editorMode: string; // String or mode object
+    editorMode: string; // string or mode object
     isLoading = false;
     annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
