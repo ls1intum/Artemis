@@ -16,9 +16,22 @@
                 <th:block th:if="${notificationSubject.getDifficulty()}">
                     <li th:text="#{email.notification.title.exercise.created.information.difficulty(${notificationSubject.getDifficulty()})}">Difficulty</li>
                 </th:block>
+                <th:block th:if="${notificationSubject.getReleaseDate()}">
+                    <li th:text="#{email.notification.aux.information.release.date(${timeService.convertToHumanReadableDate(notificationSubject.getReleaseDate())})}">Release Date</li>
+                </th:block>
+                <th:block th:if="${notificationSubject.getDueDate()}">
+                    <li th:text="#{email.notification.aux.information.due.date(${timeService.convertToHumanReadableDate(notificationSubject.getDueDate())})}">Due Date</li>
+                </th:block>
                 <li th:text="#{email.notification.title.exercise.created.information.max(${notificationSubject.getMaxPoints()})}">Max Points</li>
-                <li th:text="#{email.notification.title.exercise.created.information.bonus(${notificationSubject.getBonusPoints()})}">Bonus Points</li>
-                <li th:text="#{email.notification.title.exercise.created.information.assessment.type(${notificationSubject.getAssessmentType()})}">Assessment Type</li>
+                <th:block th:if="${notificationSubject.getBonusPoints()}">
+                    <li th:text="#{email.notification.title.exercise.created.information.bonus(${notificationSubject.getBonusPoints()})}">Bonus Points</li>
+                </th:block>
+                <th:block th:if="${notificationSubject.getAssessmentType()}">
+                    <li th:text="#{email.notification.title.exercise.created.information.assessment.type(${notificationSubject.getAssessmentType()})}">Assessment Type</li>
+                </th:block>
+                <th:block th:if="${notificationSubject.getAssessmentDueDate()}">
+                    <li th:text="#{email.notification.aux.information.assessment.due.date(${timeService.convertToHumanReadableDate(notificationSubject.getAssessmentDueDate())})}">Assessment Due Date</li>
+                </th:block>
             </ul>
             <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
         </div>

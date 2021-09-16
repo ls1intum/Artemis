@@ -12,9 +12,7 @@ public class TimeService {
         return ZonedDateTime.now();
     }
 
-    private static final String defaultLongDateTimeFormat = "YYYY-MM-DD HH:mm:ss";
-
-    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy - HH:mm z");
+    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy - hh:mm");
 
     public String convertToHumanReadableDate(ZonedDateTime dateTime) {
         return dateTime.format(formatter);

@@ -10,13 +10,8 @@
             <span th:text="#{email.notification.title.attachment(
                 ${notificationSubject.getName()},
                 ${notificationSubject.getLecture().getTitle()},
-                ${timeService.convertToHumanReadableDate(notificationSubject.getUploadDate())}
-                )}">Notification Content for Attachment Changed</span>
-            <!--<span th:text="#{email.notification.title.attachment(
-                ${notificationSubject.getName()},
-                ${notificationSubject.getLecture().getTitle()},
                 ${courseTitle}
-                )}">Notification Content for Attachment Changed</span>-->
+                )}">Notification Content for Attachment Changed</span>
             <!-- Change message : notification text -->
             <th:block th:replace="mail/notification/fragments :: notificationText"/>
             <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
