@@ -34,15 +34,19 @@ export class ArtemisPageobjects {
     examStartEnd = new ExamStartEndPage();
     examNavigationBar = new ExamNavigationBar();
     programmingExerciseCreation = new ProgrammingExerciseCreationPage();
-    createModelingExercise = new CreateModelingExercisePage();
-    modelingExerciseAssessmentEditor = new ModelingExerciseAssessmentEditor();
-    modelingEditor = new ModelingEditor();
-    multipleChoiceQuiz = new MultipleChoiceQuiz();
-    quizExerciseCreation = new QuizExerciseCreationPage();
     textExercise = {
         creation: new TextExerciseCreationPage(),
         exampleSubmissions: new TextExerciseExampleSubmissionsPage(),
         exampleSubmissionCreation: new TextExerciseExampleSubmissionCreationPage(),
         editor: new TextEditorPage(),
+    };
+    modelingExercise = {
+        creation: new CreateModelingExercisePage(),
+        assessmentEditor: new ModelingExerciseAssessmentEditor(),
+        editor: new ModelingEditor()
+    };
+    quizExercise = {
+        creation : new QuizExerciseCreationPage(),
+        multipleChoice: new MultipleChoiceQuiz(),
     };
 }
