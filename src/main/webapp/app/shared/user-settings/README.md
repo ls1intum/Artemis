@@ -52,9 +52,9 @@
    * These names correspond with other places where **mapping** and **translation** take place
         **Translation :**<br>
      TranslationFile : `userSettings.json`
-        * Example : <br> `{{ 'artemisApp.userSettings.optionGroupNames.' + optionGroup.name | artemisTranslate }}`<br>
-        with `optionGroup.name` = *'Exercise Notifications'* <br>
-          The structure of `userSettings.json` :
+       * Example : `{{ 'artemisApp.userSettings.optionGroupNames.' + optionGroup.name | artemisTranslate }}`
+         with `optionGroup.name` = *'Exercise Notifications'* <br>
+         The structure of `userSettings.json` :
           ```json
           {
            "artemisApp": {
