@@ -16,6 +16,7 @@ module.exports = {
             },
         },
     },
+    testRunner: "jest-jasmine2",
     roots: ['<rootDir>', `<rootDir>/${baseUrl}`],
     modulePaths: [`<rootDir>/${baseUrl}`],
     setupFiles: ['jest-date-mock'],

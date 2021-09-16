@@ -117,7 +117,7 @@ describe('LearningGoalManagementComponent', () => {
         getProgressStub.withArgs(sinon.match.any, sinon.match.any, false).returns(of(learningGoalProgressResponse));
         getProgressStub.withArgs(sinon.match.any, sinon.match.any, true).returns(of(learningGoalProgressParticipantScoreResponse));
 
-        const captureExceptionSpy = sinon.spy(captureException);
+        const captureExceptionSpy = sinon.stub(captureException);
 
         learningGoalManagementComponentFixture.detectChanges();
 

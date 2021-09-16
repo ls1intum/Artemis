@@ -146,7 +146,7 @@ describe('Audit Component Tests', () => {
 
         describe('Create sort object', () => {
             beforeEach(() => {
-                jest.spyOn(service, 'query').mockReturnValue(of(new HttpResponse({ body: null })));
+                jest.spyOn(service, 'query').mockReturnValue(of(new HttpResponse<Audit[]>()));
             });
 
             it('Should sort only by id asc', () => {

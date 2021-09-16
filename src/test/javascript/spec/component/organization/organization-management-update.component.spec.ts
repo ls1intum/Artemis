@@ -10,6 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { HttpResponse } from '@angular/common/http';
 
 describe('OrganizationManagementUpdateComponent', () => {
     let component: OrganizationManagementUpdateComponent;
@@ -67,7 +68,7 @@ describe('OrganizationManagementUpdateComponent', () => {
         it('should update the current edited organization', fakeAsync(() => {
             organization1.name = 'updatedName';
             component.organization = organization1;
-            jest.spyOn(organizationService, 'update').mockReturnValue(of(organization1));
+            jest.spyOn(organizationService, 'update').mockReturnValue(of(new HttpResponse<Organization>({ body: organization1 })));
 
             component.save();
             tick();
@@ -83,7 +84,7 @@ describe('OrganizationManagementUpdateComponent', () => {
             newOrganization.emailPattern = '.*';
 
             component.organization = newOrganization;
-            jest.spyOn(organizationService, 'add').mockReturnValue(of(newOrganization));
+            jest.spyOn(organizationService, 'add').mockReturnValue(of(new HttpResponse<Organization>({ body: newOrganization })));
 
             component.save();
             tick();

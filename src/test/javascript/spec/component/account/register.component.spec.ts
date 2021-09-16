@@ -58,7 +58,7 @@ describe('Component Tests', () => {
         it('should update success to true after creating an account', inject(
             [RegisterService],
             fakeAsync((service: RegisterService) => {
-                jest.spyOn(service, 'save').mockReturnValue(of({}));
+                jest.spyOn(service, 'save').mockReturnValue(of());
                 comp.registerForm.patchValue({
                     password: 'password',
                     confirmPassword: 'password',

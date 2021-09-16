@@ -69,7 +69,7 @@ describe('GradeKeyOverviewComponent', () => {
     it('should initialize', () => {
         jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDto));
         jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue([gradeStep1, gradeStep2]);
-        const gradePointsSpy = jest.spyOn(gradingSystemService, 'setGradePoints').and.stub();
+        const gradePointsSpy = jest.spyOn(gradingSystemService, 'setGradePoints').mockImplementation();
 
         fixture.detectChanges();
 

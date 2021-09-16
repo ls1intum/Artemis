@@ -11,6 +11,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { User } from 'app/core/user/user.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { HttpResponse } from '@angular/common/http';
 
 describe('SettingsComponent', () => {
     let comp: SettingsComponent;
@@ -55,7 +56,7 @@ describe('SettingsComponent', () => {
         fakeAsync((service: AccountService) => {
             // GIVEN
             jest.spyOn(service, 'identity').mockReturnValue(Promise.resolve(accountValues));
-            jest.spyOn(service, 'save').mockReturnValue(of({}));
+            jest.spyOn(service, 'save').mockReturnValue(of(new HttpResponse({ body: {} })));
             jest.spyOn(service, 'authenticate');
 
             const settingsFormValues = {
@@ -84,7 +85,7 @@ describe('SettingsComponent', () => {
         fakeAsync((service: AccountService) => {
             // GIVEN
             jest.spyOn(service, 'identity').mockReturnValue(Promise.resolve(accountValues));
-            jest.spyOn(service, 'save').mockReturnValue(of({}));
+            jest.spyOn(service, 'save').mockReturnValue(of(new HttpResponse({ body: {} })));
 
             // WHEN
             comp.ngOnInit();

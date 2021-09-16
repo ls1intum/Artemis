@@ -338,13 +338,7 @@ describe('TextFeedbackConflictsComponent', () => {
         const feedbackConflict = textSubmission.latestResult!.feedbacks![0].conflictingTextAssessments![0];
         feedbackConflict.conflict = false;
         feedbackConflict.discard = true;
-        jest.spyOn(textAssessmentService, 'solveFeedbackConflict').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: feedbackConflict,
-                }),
-            ),
-        );
+        jest.spyOn(textAssessmentService, 'solveFeedbackConflict').mockReturnValue(of(feedbackConflict));
         component.discardConflict();
         expect(textAssessmentService.solveFeedbackConflict).toHaveBeenCalledWith(exercise!.id!, feedbackConflict.id!);
     });

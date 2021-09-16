@@ -53,8 +53,8 @@ describe('ModelingAssessmentDashboardComponent', () => {
     let modelingSubmissionService: ModelingSubmissionService;
     let modelingAssessmentService: ModelingAssessmentService;
     let sortService: SortService;
-    let exerciseFindSpy: jasmine.Spy;
-    let courseFindSpy: jasmine.Spy;
+    let exerciseFindSpy: jest.SpyInstance;
+    let courseFindSpy: jest.SpyInstance;
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
@@ -143,7 +143,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         const windowSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
         const getSubmissionsSpy = jest.spyOn(component, 'getSubmissions');
 
-        const modelAssServiceCancelAssSpy = jest.spyOn(modelingAssessmentService, 'cancelAssessment').mockReturnValue(of(1));
+        const modelAssServiceCancelAssSpy = jest.spyOn(modelingAssessmentService, 'cancelAssessment').mockReturnValue(of());
 
         // call
         component.cancelAssessment(modelingSubmission);

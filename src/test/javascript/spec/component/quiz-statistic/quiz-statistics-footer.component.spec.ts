@@ -70,7 +70,7 @@ describe('QuizExercise Statistic Footer Component', () => {
     it('Should load Quiz on Init', fakeAsync(() => {
         // setup
         jest.useFakeTimers();
-        const loadSpy = jest.spyOn(comp, 'loadQuiz').and.callThrough();
+        const loadSpy = jest.spyOn(comp, 'loadQuiz');
         const updateDisplayedTimesSpy = jest.spyOn(comp, 'updateDisplayedTimes');
 
         // call

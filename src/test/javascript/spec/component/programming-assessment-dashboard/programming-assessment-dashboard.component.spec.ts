@@ -127,7 +127,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         isAtLeastInstructorInCourseStub.returns(true);
         jest.spyOn<any, any>(component, 'setPermissions');
         const getSubmissionSpy = jest.spyOn<any, any>(component, 'getSubmissions');
-        getSubmissionSpy.and.callThrough();
+        getSubmissionSpy;
         // call
         component.ngOnInit();
         tick(500);
@@ -152,7 +152,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         // findExerciseStub.returns(of(new HttpResponse({ body: fileUploadExercise, headers: new HttpHeaders() })));
         exerciseServiceFind.returns(of(new HttpResponse({ body: programmingExercise2, headers: new HttpHeaders() })));
         const getSubmissionSpy = jest.spyOn<any, any>(component, 'getSubmissions');
-        getSubmissionSpy.and.callThrough();
+        getSubmissionSpy;
         component.exercise = programmingExercise2;
 
         // call

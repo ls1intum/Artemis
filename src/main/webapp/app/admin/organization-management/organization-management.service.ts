@@ -22,8 +22,8 @@ export class OrganizationManagementService {
      * Send GET request to retrieve the number of users and courses of
      * all organizations
      */
-    getNumberOfUsersAndCoursesOfOrganizations(): Observable<[OrganizationCountDto]> {
-        return this.http.get<[OrganizationCountDto]>(this.resourceUrl + '/count-all');
+    getNumberOfUsersAndCoursesOfOrganizations(): Observable<OrganizationCountDto[]> {
+        return this.http.get<OrganizationCountDto[]>(this.resourceUrl + '/count-all');
     }
 
     /**

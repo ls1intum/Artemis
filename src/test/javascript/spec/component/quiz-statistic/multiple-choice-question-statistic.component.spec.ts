@@ -31,8 +31,8 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy: jasmine.Spy;
-    let quizServiceFindSpy: jasmine.Spy;
+    let accountSpy: jest.SpyInstance;
+    let quizServiceFindSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

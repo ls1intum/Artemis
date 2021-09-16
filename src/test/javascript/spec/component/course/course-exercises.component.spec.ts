@@ -1,5 +1,6 @@
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
+import { EventEmitter } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -12,7 +13,7 @@ import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { TranslateService } from '@ngx-translate/core';
+import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -28,7 +29,6 @@ import * as sinon from 'sinon';
 import { stub } from 'sinon';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import dayjs from 'dayjs';
-import { Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -99,7 +99,7 @@ describe('CourseExercisesComponent', () => {
                 exercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00').subtract(1, 'days');
                 course.exercises = [exercise];
                 jest.spyOn(service, 'getCourseUpdates').mockReturnValue(of(course));
-                jest.spyOn(translateService, 'onLangChange').mockReturnValue(of(new Subject()));
+                jest.spyOn(translateService, 'onLangChange').mockReturnValue(new EventEmitter<LangChangeEvent>());
                 jest.spyOn(localStorageService, 'retrieve').mockReturnValue('OVERDUE,NEEDS_WORK');
                 courseCalculationSpy = stub(courseCalculation, 'getCourse').returns(course);
 
