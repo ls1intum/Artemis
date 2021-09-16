@@ -6,8 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +25,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RestController
 @RequestMapping("/api")
 public class NotificationSettingsResource {
-
-    private final Logger log = LoggerFactory.getLogger(NotificationSettingsResource.class);
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -58,15 +54,8 @@ public class NotificationSettingsResource {
     @GetMapping("/notification-settings/fetch-options")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<NotificationOption>> getNotificationOptionsForCurrentUser() {
-        log.debug("REST request to get NotificationOptionsForCurrentUser");
-        long start = System.currentTimeMillis();
-
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         final Set<NotificationOption> notificationOptionSet = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
-
-        long end = System.currentTimeMillis();
-        log.info("getNotificationOptionsForCurrentUser took {}ms for user{}", end - start, currentUser);
-
         return new ResponseEntity<>(notificationOptionSet, HttpStatus.OK);
     }
 
@@ -82,13 +71,9 @@ public class NotificationSettingsResource {
     @PostMapping("/notification-settings/save-options")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<NotificationOption[]> saveNotificationOptionsForCurrentUser(@RequestBody NotificationOption[] notificationOptions) {
-        log.debug("REST request (POST) to saveUserOptionsForCurrentUser");
-        long start = System.currentTimeMillis();
-
         if (notificationOptions == null || notificationOptions.length == 0) {
             return badRequest("notificationOptions", "400", "Can not save non existing Notification Options");
         }
-
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         notificationSettingsService.setCurrentUser(notificationOptions, currentUser);
         List<NotificationOption> resultAsList = notificationOptionRepository.saveAll(Arrays.stream(notificationOptions).toList());
@@ -96,10 +81,6 @@ public class NotificationSettingsResource {
             return badRequest("notificationOptions", "500", "Error occurred during saving of Notification Options");
         }
         NotificationOption[] resultAsArray = resultAsList.toArray(new NotificationOption[resultAsList.size()]);
-
-        long end = System.currentTimeMillis();
-        log.info("saveUserOptionsForCurrentUser took {}ms for user{}", end - start, currentUser);
-
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "notificationOption", "test")).body(resultAsArray);
     }
 }

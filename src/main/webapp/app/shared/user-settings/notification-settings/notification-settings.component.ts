@@ -1,6 +1,6 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-settings-prototype/user-settings-prototype.component';
+import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
 import { JhiAlertService } from 'ng-jhipster';
 import { reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
@@ -11,9 +11,9 @@ import { UserSettings } from 'app/shared/user-settings/user-settings.model';
 @Component({
     selector: 'jhi-notification-settings',
     templateUrl: 'notification-settings.component.html',
-    styleUrls: ['../user-settings-prototype/user-settings-prototype.component.scss'],
+    styleUrls: ['../user-settings.scss'],
 })
-export class NotificationSettingsComponent extends UserSettingsPrototypeComponent implements OnInit {
+export class NotificationSettingsComponent extends UserSettingsDirective {
     constructor(notificationService: NotificationService, userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: JhiAlertService) {
         super(userSettingsService, alertService, changeDetector);
     }

@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Directive, OnInit } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { User } from 'app/core/user/user.model';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
@@ -7,14 +7,10 @@ import { OptionCore, UserSettings } from 'app/shared/user-settings/user-settings
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 
 /**
- * Is used as the abstract user-settings "parent" component with all the necessary basic logic for other "child" components to implement/inherit from.
- * The @Component decorated and templateUrl are needed to be able to use OnInit
+ * Is used as the abstract user-settings "parent" with all the necessary basic logic for other "child" components to implement/inherit from.
  */
-@Component({
-    templateUrl: 'user-settings-prototype.component.html',
-    styleUrls: ['user-settings-prototype.component.scss'],
-})
-export abstract class UserSettingsPrototypeComponent implements OnInit {
+@Directive()
+export abstract class UserSettingsDirective implements OnInit {
     // HTML template related
     optionsChanged = false;
     currentUser: User;

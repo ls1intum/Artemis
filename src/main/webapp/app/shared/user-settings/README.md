@@ -13,7 +13,7 @@
 
 2) **Create a new folder** for `childSettings` and **put** `childSettings` specific files into it
 
-3) a) Use the `prototype.html`(**copy**) and `.scss`(**link**) in `child-settings` to **reuse** the same UI *(as in notification-settings)* <br>
+3) a) Use the `notification-settings.component.html`(**copy**) and `user-settings.scss`(**link**) in `child-settings` to **reuse** the same UI (just replace the relevant OptionCore part)<br>
 
    b) Create a new `child-settings.default.ts` file and create your options **based on the user-settings hierarchy**<br>
    * Add a new `X-OptionCore` that **extends** `OptionCore` and define the needed properties for `child-settings`
@@ -67,12 +67,12 @@
           }
           ```
 4) Create a new `child-settings.component.ts` file :
-   * **Extend** from `user-settings-prototype.component` *(if you want to reuse its functionality)* and **implement** `OnInit`
+   * **Extend** from `user-settings.directive` *(if you want to reuse its functionality)*
    * Place the relevant Services for the parent(prototype) component in the constructor
    * Inside `ngOnInit()` call `super.ngOnInit()`, afterwards set the child specific `userSettingsCategory`*(same as in default.ts)* and `changeEventMessage`
      ```ts
         @Component
-        export class UserSettingsComponent extends UserSettingsPrototypeComponent implements OnInit {
+        export class UserSettingsComponent extends UserSettingsDirective {
         constructor(userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: JhiAlertService) {
         super(userSettingsService, alertService, changeDetector);
         }

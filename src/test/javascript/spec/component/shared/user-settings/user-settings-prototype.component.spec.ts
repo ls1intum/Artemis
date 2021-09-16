@@ -11,8 +11,8 @@ import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websoc
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
-import { ChangeDetectorRef } from '@angular/core';
-import { UserSettingsPrototypeComponent } from 'app/shared/user-settings/user-settings-prototype/user-settings-prototype.component';
+import { ChangeDetectorRef, Component } from '@angular/core';
+import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
 import { JhiAlertService } from 'ng-jhipster';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
@@ -23,9 +23,13 @@ import { MockProvider } from 'ng-mocks';
 import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
 
 /**
- * needed for testing the abstract UserSettingsPrototypeComponent
+ * needed for testing the abstract UserSettingsDirective
  */
-class UserSettingsPrototypeComponentMock extends UserSettingsPrototypeComponent {
+@Component({
+    selector: 'jhi-user-settings-prototype',
+    template: '',
+})
+class UserSettingsPrototypeComponentMock extends UserSettingsDirective {
     changeDetector: ChangeDetectorRef;
     alertService: JhiAlertService;
 
@@ -39,7 +43,7 @@ class UserSettingsPrototypeComponentMock extends UserSettingsPrototypeComponent 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('User Settings Prototype Component', () => {
+describe('User Settings Directive', () => {
     let comp: UserSettingsPrototypeComponentMock;
     let fixture: ComponentFixture<UserSettingsPrototypeComponentMock>;
 

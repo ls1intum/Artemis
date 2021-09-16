@@ -24,7 +24,7 @@ export class Notification implements BaseEntity {
 }
 
 /**
- * Corresponds to the NotificationTitleTypeConstants(.java) constant Strings in the server
+ * Corresponds to the server-side NotificationTitleTypeConstants(.java) constant Strings
  */
 export const ATTACHMENT_CHANGE_TITLE = 'Attachment updated';
 

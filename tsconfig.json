@@ -42,6 +42,6 @@
         "src/main/webapp/app"
     ],
     "exclude": [
-        "node_modules",
+        "node_modules"
     ]
 }

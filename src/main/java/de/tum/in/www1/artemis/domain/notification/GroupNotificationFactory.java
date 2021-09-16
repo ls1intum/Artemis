@@ -194,7 +194,7 @@ public class GroupNotificationFactory {
             }
             case NEW_ANSWER_POST_FOR_LECTURE -> {
                 Lecture lecture = answerPost.getPost().getLecture();
-                title = NotificationTitleTypeConstants.NEW_POST_FOR_LECTURE_TITLE;
+                title = NotificationTitleTypeConstants.NEW_ANSWER_POST_FOR_LECTURE_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new reply.";
                 course = lecture.getCourse();
             }
