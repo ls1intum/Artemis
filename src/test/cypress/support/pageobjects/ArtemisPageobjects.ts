@@ -33,7 +33,6 @@ export class ArtemisPageobjects {
     examManagement = new ExamManagementPage();
     examStartEnd = new ExamStartEndPage();
     examNavigationBar = new ExamNavigationBar();
-    programmingExerciseCreation = new ProgrammingExerciseCreationPage();
     createModelingExercise = new CreateModelingExercisePage();
     modelingExerciseAssessmentEditor = new ModelingExerciseAssessmentEditor();
     modelingEditor = new ModelingEditor();

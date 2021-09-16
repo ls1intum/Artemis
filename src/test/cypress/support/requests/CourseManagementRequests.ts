@@ -13,7 +13,7 @@ import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_tem
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
 export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
-const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
+export const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
 export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
 export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 
