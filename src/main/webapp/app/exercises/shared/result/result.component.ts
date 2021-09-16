@@ -68,6 +68,7 @@ enum ResultTemplateStatus {
  * Information about a missing result to communicate problems and give hints how to respond.
  */
 export enum MissingResultInfo {
+    NONE = 'NONE',
     FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE = 'FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE',
     FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE = 'FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE',
 }
@@ -95,7 +96,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge = false;
     @Input() showTestDetails = false;
-    @Input() missingResultInfo?: MissingResultInfo = undefined;
+    @Input() missingResultInfo = MissingResultInfo.NONE;
 
     ParticipationType = ParticipationType;
     textColorClass: string;
@@ -210,7 +211,7 @@ export class ResultComponent implements OnInit, OnChanges {
         }
 
         // If there is a problem, it has priority and we show that instead
-        if (this.missingResultInfo) {
+        if (this.missingResultInfo !== MissingResultInfo.NONE) {
             return ResultTemplateStatus.MISSING;
         }
 

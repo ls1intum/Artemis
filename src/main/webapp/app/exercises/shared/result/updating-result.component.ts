@@ -39,7 +39,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
     result?: Result;
     isBuilding: boolean;
-    missingResultInfo?: MissingResultInfo;
+    missingResultInfo = MissingResultInfo.NONE;
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
@@ -59,7 +59,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             const latestResult = this.participation.results && this.participation.results.find(({ rated }) => this.showUngradedResults || rated === true);
             // Make sure that the participation result is connected to the newest result.
             this.result = latestResult ? { ...latestResult, participation: this.participation } : undefined;
-            this.missingResultInfo = undefined;
+            this.missingResultInfo = MissingResultInfo.NONE;
 
             this.subscribeForNewResults();
             // Currently submissions are only used for programming exercises to visualize the build process.
@@ -134,7 +134,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                         this.missingResultInfo = this.generateMissingResultInfoForFailedProgrammingExerciseSubmission();
                     } else {
                         // everything ok, remove the warning
-                        this.missingResultInfo = undefined;
+                        this.missingResultInfo = MissingResultInfo.NONE;
                     }
                 }),
             )

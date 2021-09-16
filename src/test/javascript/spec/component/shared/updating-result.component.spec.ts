@@ -174,7 +174,7 @@ describe('UpdatingResultComponent', () => {
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).to.be.true;
-        expect(comp.missingResultInfo).to.equal(undefined);
+        expect(comp.missingResultInfo).to.equal(MissingResultInfo.NONE);
     });
 
     it('should set the isBuilding attribute to false if exerciseType is PROGRAMMING and there is no pending submission anymore', () => {
@@ -184,7 +184,7 @@ describe('UpdatingResultComponent', () => {
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).to.be.false;
-        expect(comp.missingResultInfo).to.equal(undefined);
+        expect(comp.missingResultInfo).to.equal(MissingResultInfo.NONE);
     });
 
     it('should set missingResultInfo attribute if the exerciseType is PROGRAMMING and the latest submission failed (offline IDE)', () => {
@@ -210,6 +210,6 @@ describe('UpdatingResultComponent', () => {
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).not.to.have.been.called;
         expect(comp.isBuilding).to.equal(undefined);
-        expect(comp.missingResultInfo).to.equal(undefined);
+        expect(comp.missingResultInfo).to.equal(MissingResultInfo.NONE);
     });
 });
