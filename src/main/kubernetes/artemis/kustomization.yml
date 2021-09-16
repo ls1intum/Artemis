@@ -1,0 +1,27 @@
+namespace: artemis
+
+resources:
+  #Persistence Volume Claims
+  - pvc/artemis-mysql.yml
+  - pvc/artemis.yml
+  #Secrets
+  - secrets/artemis-secrets.yml
+  - secrets/jhipster-registry-secret.yml
+  #ConfigMaps
+  - configmaps/application-configmap.yml
+  - configmaps/artemis-configmap.yml
+  - configmaps/artemis-mysql-configmap.yml
+  - configmaps/kafka-configmap.yml
+  - configmaps/zookeeper-configmap.yml
+  - configmaps/jhipster-registry-configmap.yml
+  #Stateful sets
+  - statefulsets/jhipster-registry.yml
+  - statefulsets/artemis-mysql.yml
+  #Deployments
+  - deployments/artemis-deployment.yml
+  - deployments/zookeeper-deployment.yml
+  - deployments/kafka-deployment.yml
+  #Services
+  - services/jhipster-registry-service.yml
+  #Ingresses
+  - ingresses/artemis-ingress.yml
