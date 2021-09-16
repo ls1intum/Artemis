@@ -603,7 +603,6 @@ public class ProgrammingExerciseService {
                 fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}",
                         programmingExercise.getPackageFolderName());
                 replacements.put("${packageName}", programmingExercise.getPackageName());
-                break;
             }
             case SWIFT -> {
                 switch (projectType) {
@@ -612,16 +611,13 @@ public class ProgrammingExerciseService {
                                 programmingExercise.getPackageName());
                         fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
                         replacements.put("${packageName}", programmingExercise.getPackageName());
-                        break;
                     }
                     case XCODE -> {
                         fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
                         fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
                         replacements.put("${appName}", programmingExercise.getPackageName());
-                        break;
                     }
                 }
-                break;
             }
         }
 
