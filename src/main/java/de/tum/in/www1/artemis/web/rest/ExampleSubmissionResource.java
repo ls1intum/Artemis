@@ -15,7 +15,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -43,11 +46,14 @@ public class ExampleSubmissionResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final ExerciseRepository exerciseRepository;
+
     public ExampleSubmissionResource(ExampleSubmissionService exampleSubmissionService, ExampleSubmissionRepository exampleSubmissionRepository,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository) {
         this.exampleSubmissionService = exampleSubmissionService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.authCheckService = authCheckService;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -144,5 +150,26 @@ public class ExampleSubmissionResource {
         exampleSubmissionService.deleteById(exampleSubmission.get().getId());
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+    }
+
+    /**
+     * POST exercises/:exerciseId/example-submissions/import/:sourceSubmissionId : Imports an existing student submission as an example submission.
+     *
+     * @param exerciseId                the id of the corresponding exercise
+     * @param sourceSubmissionId        the submission id to be imported as an example submission
+     * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
+     */
+    @PostMapping("exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId, @PathVariable Long sourceSubmissionId) {
+        log.debug("REST request to import Student Submission as ExampleSubmission : {}", sourceSubmissionId);
+
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+        ExampleSubmission exampleSubmission = exampleSubmissionService.importStudentSubmissionAsExampleSubmission(sourceSubmissionId, exercise);
+
+        return ResponseEntity.ok(exampleSubmission);
     }
 }

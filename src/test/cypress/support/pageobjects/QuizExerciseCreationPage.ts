@@ -1,3 +1,5 @@
+import { POST } from '../constants';
+
 export class QuizExerciseCreationPage {
     setTitle(title: string) {
         cy.get('#quiz-title').type(title);
@@ -20,7 +22,12 @@ export class QuizExerciseCreationPage {
         });
     }
 
+    /**
+     * @return <Chainable>  the response of the request
+     */
     saveQuiz() {
+        cy.intercept(POST, '/api/quiz-exercises').as('createQuizExercise');
         cy.contains('Save').click();
+        return cy.wait('@createQuizExercise');
     }
 }

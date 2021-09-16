@@ -1,4 +1,5 @@
-import { artemis } from '../ArtemisTesting';
+import { artemis } from '../../ArtemisTesting';
+import { BASE_API, POST } from '../../constants';
 
 export class ExamStartEndPage {
     enterFirstnameLastname() {
@@ -6,15 +7,17 @@ export class ExamStartEndPage {
     }
 
     setConfirmCheckmark(timeout?: number) {
-        cy.get('#confirmBox', { timeout }).click();
+        cy.get('#confirmBox', { timeout }).check();
     }
 
     pressStart() {
-        cy.contains('Start').click();
+        cy.get('[jhitranslate="artemisApp.exam.startExam"]').click();
     }
 
     pressFinish() {
+        cy.intercept(POST, BASE_API + 'courses/*/exams/*/student-exams/submit').as('finishExam');
         cy.get('.btn').contains('Finish').click();
+        return cy.wait('@finishExam');
     }
 
     startExam() {
@@ -26,6 +29,6 @@ export class ExamStartEndPage {
     finishExam(timeout?: number) {
         this.setConfirmCheckmark(timeout ? timeout : Cypress.config('defaultCommandTimeout'));
         this.enterFirstnameLastname();
-        this.pressFinish();
+        return this.pressFinish();
     }
 }

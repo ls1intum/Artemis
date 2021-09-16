@@ -35,7 +35,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
     lineChartLegend = false;
     // Data
     lineChartLabels: Label[] = [];
-    chartData: ChartDataSets[] = [];
+    chartData: ChartDataSets[] = [{ data: [] }];
     data: number[] = [];
     absoluteData: number[] = [];
 
