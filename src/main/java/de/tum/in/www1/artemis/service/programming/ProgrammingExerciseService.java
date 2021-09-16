@@ -597,13 +597,15 @@ public class ProgrammingExerciseService {
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
         }
-        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT && programmingExercise.getProjectType() == ProjectType.PLAIN) {
-            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageName());
-            fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
-        }
-        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT && programmingExercise.getProjectType() == ProjectType.XCODE) {
-            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
-            fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
+        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
+            if (programmingExercise.getProjectType() == ProjectType.PLAIN) {
+                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageName());
+                fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
+            }
+            if (programmingExercise.getProjectType() == ProjectType.XCODE) {
+                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
+                fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
+            }
         }
 
         Map<String, String> replacements = new HashMap<>();
@@ -611,11 +613,13 @@ public class ProgrammingExerciseService {
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
             replacements.put("${packageName}", programmingExercise.getPackageName());
         }
-        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT && programmingExercise.getProjectType() == ProjectType.PLAIN) {
-            replacements.put("${packageName}", programmingExercise.getPackageName());
-        }
-        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT && programmingExercise.getProjectType() == ProjectType.XCODE) {
-            replacements.put("${appName}", programmingExercise.getPackageName());
+        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
+            if (programmingExercise.getProjectType() == ProjectType.PLAIN) {
+                replacements.put("${packageName}", programmingExercise.getPackageName());
+            }
+            if (programmingExercise.getProjectType() == ProjectType.XCODE) {
+                replacements.put("${appName}", programmingExercise.getPackageName());
+            }
         }
         // there is no need in python to replace package names
 

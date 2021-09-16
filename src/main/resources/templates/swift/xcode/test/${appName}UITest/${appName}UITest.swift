@@ -26,8 +26,4 @@ class ${appName}UITest: XCTestCase {
     func testGreetingUI() {
         XCTAssertTrue(app.staticTexts["Hello, world!"].exists, "The greeting was not presented correctly!")
     }
-    
-//    func testGreetingLogic() throws {
-//        XCTAssertEqual(${appName}.Greeting.greet(), "Hello, world!", "The greeting was not done correctly!")
-//    }
 }
