@@ -10,10 +10,8 @@
 1)  **Add a new route** for the new settings in `user-settings.route.ts`. *(under `children:`)*
     
     Add your option to the `user-settings-container.component.html` *(under `<!-- links to different settings -->`)*
-    
 
 2) **Create a new folder** for `childSettings` and **put** `childSettings` specific files into it
-   
 
 3) a) Use the `prototype.html`(**copy**) and `.scss`(**link**) in `child-settings` to **reuse** the same UI *(as in notification-settings)* <br>
 
@@ -68,8 +66,6 @@
            }}}
           }
           ```
-    
-
 4) Create a new `child-settings.component.ts` file :
    * **Extend** from `user-settings-prototype.component` *(if you want to reuse its functionality)* and **implement** `OnInit`
    * Place the relevant Services for the parent(prototype) component in the constructor
@@ -80,7 +76,6 @@
         constructor(userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: JhiAlertService) {
         super(userSettingsService, alertService, changeDetector);
         }
-        
             userSettings: UserSettings<ChildOptionCore>;
             optionCores: Array<ChildOptionCore>;
         
@@ -97,7 +92,5 @@
 For every new child-settings you have to create a new **table**, **REST controller/resource** (service) and repository due to the possibly big differences between the `OptionCores`.
             *(Might change due to found similarities)*
 
-
 ## Additional Information
 For further reading see the original PR that introduces these settings : https://github.com/ls1intum/Artemis/pull/3922
-
