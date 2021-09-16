@@ -52,20 +52,20 @@
    * These names correspond with other places where **mapping** and **translation** take place
         **Translation :**<br>
      TranslationFile : `userSettings.json`
-       * Example : `{{ 'artemisApp.userSettings.optionGroupNames.' + optionGroup.name | artemisTranslate }}`
-         with `optionGroup.name` = *'Exercise Notifications'* <br>
-         The structure of `userSettings.json` :
-          ```json
-          {
-           "artemisApp": {
-           "userSettings": {
-            "...": "...",
-           "optionGroupNames": {
-           "Exercise Notifications": "Exercise Notifications",
-            "...": "..."
-           }}}
-          }
-          ```
+   * Example : `{{ 'artemisApp.userSettings.optionGroupNames.' + optionGroup.name | artemisTranslate }}`
+     with `optionGroup.name` = *'Exercise Notifications'* <br>
+     The structure of `userSettings.json` :
+     ```json
+      {
+       "artemisApp": {
+       "userSettings": {
+        "...": "...",
+       "optionGroupNames": {
+       "Exercise Notifications": "Exercise Notifications",
+        "...": "..."
+       }}}
+      }
+      ```
 4) Create a new `child-settings.component.ts` file :
    * **Extend** from `user-settings.directive` *(if you want to reuse its functionality)* and implement `OnInit` 
    * Place the relevant Services for the parent(prototype) component in the constructor
