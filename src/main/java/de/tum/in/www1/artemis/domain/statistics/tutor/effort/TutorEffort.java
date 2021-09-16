@@ -10,7 +10,7 @@ public class TutorEffort {
 
     private int numberOfSubmissionsAssessed;
 
-    private int totalTimeSpentMinutes;
+    private double totalTimeSpentMinutes;
 
     private Long exerciseId;
 
@@ -32,11 +32,11 @@ public class TutorEffort {
         this.numberOfSubmissionsAssessed = numberOfSubmissionsAssessed;
     }
 
-    public int getTotalTimeSpentMinutes() {
+    public double getTotalTimeSpentMinutes() {
         return totalTimeSpentMinutes;
     }
 
-    public void setTotalTimeSpentMinutes(int totalTimeSpentMinutes) {
+    public void setTotalTimeSpentMinutes(double totalTimeSpentMinutes) {
         this.totalTimeSpentMinutes = totalTimeSpentMinutes;
     }
 

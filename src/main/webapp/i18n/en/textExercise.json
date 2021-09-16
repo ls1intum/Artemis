@@ -34,8 +34,8 @@
                 "title": "Tutor Effort Statistics",
                 "numberOfSubmissionsAssessed": "Number of total submissions involved",
                 "totalTimeSpent": "Total time spent grading (Minutes)",
-                "averageTime": "Grading Pace (Submissions/Min)",
-                "noData": "No data records currently present for this exercise. Try again later.",
+                "averageTime": "Grading Speed (Submissions/Minute)",
+                "noData": "No data records currently present for this exercise. Please try again later.",
                 "minutes": "Minutes",
                 "tutors": "Tutors",
                 "numberOfTutorsInvolved": "Number of tutors involved"

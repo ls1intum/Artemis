@@ -26,6 +26,9 @@ export class TutorEffortStatisticsComponent implements OnInit {
      */
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
+    // Distance value representing step difference between chartLabel entries, i.e:. 1-10, 10-20
+    bucketSize = 10;
+
     /**
      * The labels of the chart are fixed and represent the 13 intervals we group the tutors into.
      */
@@ -127,9 +130,12 @@ export class TutorEffortStatisticsComponent implements OnInit {
     distributeEffortToSets() {
         this.effortDistribution = new Array<number>(this.chartLabels.length).fill(0);
         this.tutorEfforts.forEach((effort) => {
-            const BUCKET_COUNT = this.chartLabels.length;
-            const time = Math.min(Math.floor(effort.totalTimeSpentMinutes / 10), BUCKET_COUNT - 1);
-            this.effortDistribution[time]++;
+            const BUCKET_LAST_INDEX = this.chartLabels.length - 1;
+            const BUCKET_POSITION = effort.totalTimeSpentMinutes / this.bucketSize;
+            // the element will either be distributed in one of first 12 elements (chartLabels.length)
+            // or the last element if the time passed is larger than 120 (i.e.: chartLabels[12] = 120+)
+            const BUCKET_INDEX = Math.min(Math.floor(BUCKET_POSITION), BUCKET_LAST_INDEX);
+            this.effortDistribution[BUCKET_INDEX]++;
         });
     }
 }

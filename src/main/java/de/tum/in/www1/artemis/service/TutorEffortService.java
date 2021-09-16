@@ -74,8 +74,8 @@ public class TutorEffortService {
      * @param tutorEvents events to be analysed
      * @return the number of minutes spent
      */
-    private int calculateTutorOverallTimeSpent(List<TextAssessmentEvent> tutorEvents) {
-        int timeSeconds = 0;
+    private double calculateTutorOverallTimeSpent(List<TextAssessmentEvent> tutorEvents) {
+        double timeSeconds = 0;
         int index = 0;
         // avoid index out of bounds by incrementing index for accessing tutorEvents list elements
         while (index + 1 < tutorEvents.size()) {

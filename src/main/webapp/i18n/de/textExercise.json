@@ -34,11 +34,11 @@
                 "title": "Tutor Aufwand Statistik",
                 "numberOfSubmissionsAssessed": "Anzahl der insgesamt bewerteten Einreichungen beteiligt",
                 "totalTimeSpent": "Gesamtdauer der Benotung (in Minuten)",
-                "averageTime": "Benotungsrhythmus (Submissions/Min)",
-                "noData": "Für diese Übung sind derzeit keine Datensätze vorhanden. Später erneut versuchen",
+                "averageTime": "Bewertungsgeschwindigkeit (Submissions/Minuten)",
+                "noData": "Für diese Übung sind derzeit keine Datensätze vorhanden. Bitte versuchen Sie es später noch einmal.",
                 "minutes": "Minuten",
-                "tutors": "Tutoren",
-                "numberOfTutorsInvolved": "Anzahl der beteiligten Tutoren"
+                "tutors": "Tutor:innen",
+                "numberOfTutorsInvolved": "Anzahl der beteiligten Tutor:innen"
             }
         }
     }
