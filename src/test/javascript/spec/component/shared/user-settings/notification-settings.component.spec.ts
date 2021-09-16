@@ -2,7 +2,6 @@ import { NotificationSettingsComponent } from 'app/shared/user-settings/notifica
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockProvider } from 'ng-mocks/cjs/lib/mock-provider/mock-provider';
-import { TextToLowerCamelCasePipe } from 'app/shared/pipes/text-to-lower-camel-case.pipe';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
@@ -25,19 +24,8 @@ describe('NotificationSettingsComponent', () => {
     let fixture: ComponentFixture<NotificationSettingsComponent>;
 
     const imports = [ArtemisTestModule, TranslateTestingModule];
-    const declarations = [
-        MockComponent(AlertComponent),
-        NotificationSettingsComponent,
-        MockHasAnyAuthorityDirective,
-        MockPipe(ArtemisTranslatePipe),
-        MockPipe(TextToLowerCamelCasePipe),
-    ];
-    const providers = [
-        MockProvider(JhiAlertService),
-        MockProvider(TextToLowerCamelCasePipe),
-        { provide: LocalStorageService, useClass: MockSyncStorage },
-        { provide: SessionStorageService, useClass: MockSyncStorage },
-    ];
+    const declarations = [MockComponent(AlertComponent), NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
+    const providers = [MockProvider(JhiAlertService), { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }];
 
     beforeEach(() => {
         // TestBed.configureTestingModule({
