@@ -303,7 +303,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
         const guidedTourMapping = {} as GuidedTourMapping;
-        spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(true);
+        jest.spyOn<any, any>(guidedTourService, 'checkTourState').and.returnValue(true);
         guidedTourService.guidedTourMapping = guidedTourMapping;
         modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 

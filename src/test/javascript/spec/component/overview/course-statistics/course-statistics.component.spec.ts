@@ -238,14 +238,14 @@ describe('CourseStatisticsComponent', () => {
 
     afterEach(function () {
         // has to be done so the component can cleanup properly
-        spyOn(comp, 'ngOnDestroy').and.callFake(() => {});
+        jest.spyOn(comp, 'ngOnDestroy').mockImplementation();
         fixture.destroy();
     });
 
     it('should group all exercises', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [...modelingExercises];
-        spyOn(courseScoreCalculationService, 'getCourse').and.returnValue(courseToAdd);
+        jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(courseToAdd);
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.detectChanges();
@@ -268,7 +268,7 @@ describe('CourseStatisticsComponent', () => {
     it('should calculate scores correctly', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [...modelingExercises];
-        spyOn(courseScoreCalculationService, 'getCourse').and.returnValue(courseToAdd);
+        jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(courseToAdd);
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.detectChanges();

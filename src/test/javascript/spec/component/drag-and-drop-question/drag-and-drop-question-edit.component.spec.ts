@@ -132,7 +132,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         const newPath = 'alwaysGoYourPath';
         const mockReturnValue = Promise.resolve({ path: newPath } as FileUploadResponse);
-        spyOn(uploadService, 'uploadFile').and.returnValue(mockReturnValue);
+        jest.spyOn(uploadService, 'uploadFile').mockReturnValue(mockReturnValue);
 
         component.uploadBackground();
         tick();
@@ -339,8 +339,8 @@ describe('DragAndDropQuestionEditComponent', () => {
 
             const newPath = 'alwaysGoYourPath';
             let mockReturnValue = Promise.resolve({ path: newPath });
-            const spy = spyOn(uploadService, 'uploadFile');
-            spy.and.returnValue(mockReturnValue);
+            const spy = jest.spyOn(uploadService, 'uploadFile');
+            spy.mockReturnValue(mockReturnValue);
 
             component.uploadDragItem();
             tick();
@@ -353,7 +353,7 @@ describe('DragAndDropQuestionEditComponent', () => {
             sinon.restore();
 
             mockReturnValue = Promise.reject({ path: newPath });
-            spy.and.returnValue(mockReturnValue);
+            spy.mockReturnValue(mockReturnValue);
             component.dragItemFile = new File([], 'file');
 
             component.uploadDragItem();
@@ -369,7 +369,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.dragItemFile = new File([], 'file');
         const newPath = 'alwaysGoYourPath';
         const mockReturnValue = Promise.resolve({ path: newPath } as FileUploadResponse);
-        spyOn(uploadService, 'uploadFile').and.returnValue(mockReturnValue);
+        jest.spyOn(uploadService, 'uploadFile').mockReturnValue(mockReturnValue);
         const questionUpdatedSpy = sinon.spy(component.questionUpdated, 'emit');
 
         component.uploadPictureForDragItemChange();
@@ -448,7 +448,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const questionUpdatedSpy = sinon.spy(component.questionUpdated, 'emit');
         const newPath = 'alwaysGoYourPath';
         const mockReturnValue = Promise.resolve({ path: newPath } as FileUploadResponse);
-        spyOn(uploadService, 'uploadFile').and.returnValue(mockReturnValue);
+        jest.spyOn(uploadService, 'uploadFile').mockReturnValue(mockReturnValue);
         const item = new DragItem();
         component.dragItemFile = new File([], 'file');
         component.dragItemPicture = 'picturePath';

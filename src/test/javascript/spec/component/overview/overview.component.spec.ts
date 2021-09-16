@@ -106,16 +106,16 @@ describe('Overview Component', () => {
                         navBarComponent.currAccount = user;
                     });
 
-                    spyOn<any>(guidedTourComponent, 'subscribeToDotChanges').and.returnValue(of());
+                    jest.spyOn<any, any>(guidedTourComponent, 'subscribeToDotChanges').and.returnValue(of());
 
                     spyOn(exerciseService, 'getNextExercisesForDays').and.returnValue(of());
                     spyOn(guidedTourService, 'init').and.returnValue(of());
-                    spyOn<any>(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
+                    jest.spyOn<any, any>(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
 
-                    spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(true);
-                    spyOn<any>(guidedTourService, 'checkSelectorValidity').and.returnValue(true);
+                    jest.spyOn<any, any>(guidedTourService, 'checkTourState').and.returnValue(true);
+                    jest.spyOn<any, any>(guidedTourService, 'checkSelectorValidity').and.returnValue(true);
 
-                    spyOn<any>(guidedTourService, 'enableTour').and.callFake(() => {
+                    jest.spyOn<any, any>(guidedTourService, 'enableTour').and.callFake(() => {
                         guidedTourService['availableTourForComponent'] = courseOverviewTour;
                         guidedTourService.currentTour = courseOverviewTour;
                     });

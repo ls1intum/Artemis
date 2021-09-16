@@ -180,16 +180,16 @@ describe('AssessmentHeaderComponent', () => {
         const overrideAssessmentButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=overrideAssessment]'));
         expect(overrideAssessmentButtonSpan).toBeFalsy();
 
-        spyOn(component.save, 'emit');
+        jest.spyOn(component.save, 'emit');
         saveButtonSpan.nativeElement.click();
         expect(component.save.emit).toHaveBeenCalledTimes(1);
 
-        spyOn(component.submit, 'emit');
+        jest.spyOn(component.submit, 'emit');
         submitButtonSpan.nativeElement.click();
         expect(component.submit.emit).toHaveBeenCalledTimes(1);
 
         const cancelButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=cancel]'));
-        spyOn(component.cancel, 'emit');
+        jest.spyOn(component.cancel, 'emit');
         cancelButtonSpan.nativeElement.click();
         expect(component.cancel.emit).toHaveBeenCalledTimes(1);
     });
@@ -214,13 +214,13 @@ describe('AssessmentHeaderComponent', () => {
         overrideAssessmentButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=overrideAssessment]'));
         expect(overrideAssessmentButtonSpan).toBeTruthy();
 
-        spyOn(component.submit, 'emit');
+        jest.spyOn(component.submit, 'emit');
         overrideAssessmentButtonSpan.nativeElement.click();
         expect(component.submit.emit).toHaveBeenCalledTimes(1);
     });
 
     it('should show next submission if assessor or instructor, result is present and no complaint', () => {
-        spyOn(component.nextSubmission, 'emit');
+        jest.spyOn(component.nextSubmission, 'emit');
         component.isLoading = false;
         component.isAssessor = false;
         component.hasComplaint = false;
@@ -283,7 +283,7 @@ describe('AssessmentHeaderComponent', () => {
 
     it('should set highlightDifferences to true', () => {
         component.highlightDifferences = false;
-        spyOn(component.highlightDifferencesChange, 'emit');
+        jest.spyOn(component.highlightDifferencesChange, 'emit');
 
         component.toggleHighlightDifferences();
 
@@ -293,7 +293,7 @@ describe('AssessmentHeaderComponent', () => {
 
     it('should set highlightDifferences to false', () => {
         component.highlightDifferences = true;
-        spyOn(component.highlightDifferencesChange, 'emit');
+        jest.spyOn(component.highlightDifferencesChange, 'emit');
 
         component.toggleHighlightDifferences();
 
@@ -305,7 +305,7 @@ describe('AssessmentHeaderComponent', () => {
         component.exercise = {
             type: ExerciseType.TEXT,
         } as Exercise;
-        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.sendAssessNextEventToAnalytics();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION);
@@ -315,7 +315,7 @@ describe('AssessmentHeaderComponent', () => {
         component.exercise = {
             type: ExerciseType.FILE_UPLOAD,
         } as Exercise;
-        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.sendAssessNextEventToAnalytics();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledTimes(0);
@@ -325,7 +325,7 @@ describe('AssessmentHeaderComponent', () => {
         component.exercise = {
             type: ExerciseType.TEXT,
         } as Exercise;
-        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.sendSubmitAssessmentEventToAnalytics();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.SUBMIT_ASSESSMENT);
@@ -335,7 +335,7 @@ describe('AssessmentHeaderComponent', () => {
         component.exercise = {
             type: ExerciseType.FILE_UPLOAD,
         } as Exercise;
-        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.sendSubmitAssessmentEventToAnalytics();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledTimes(0);

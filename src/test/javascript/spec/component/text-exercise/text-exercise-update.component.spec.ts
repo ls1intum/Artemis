@@ -58,7 +58,7 @@ describe('TextExercise Management Update Component', () => {
                 comp.ngOnInit();
 
                 const entity = { ...textExercise };
-                spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
+                jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN
                 comp.save();
@@ -85,7 +85,7 @@ describe('TextExercise Management Update Component', () => {
                 comp.ngOnInit();
 
                 const entity = { ...textExercise };
-                spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
+                jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN
                 comp.save();
@@ -113,7 +113,7 @@ describe('TextExercise Management Update Component', () => {
                 comp.isImport = true;
 
                 const entity = { ...textExercise };
-                spyOn(service, 'import').and.returnValue(of(new HttpResponse({ body: entity })));
+                jest.spyOn(service, 'import').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN
                 comp.save();

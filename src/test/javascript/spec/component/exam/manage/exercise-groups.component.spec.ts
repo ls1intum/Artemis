@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router, RouterModule } from '@angular/router';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { Exam } from 'app/entities/exam.model';
@@ -112,7 +112,7 @@ describe('Exercise Groups Component', () => {
     it('loads the exercise groups', fakeAsync(() => {
         const mockResponse = new HttpResponse<Exam>({ body: exam });
 
-        spyOn(examManagementService, 'find').and.returnValue(of(mockResponse));
+        jest.spyOn(examManagementService, 'find').mockReturnValue(of(mockResponse));
 
         comp.loadExerciseGroups().subscribe((response) => {
             expect(response.body).not.toBeNull();
@@ -126,7 +126,7 @@ describe('Exercise Groups Component', () => {
         const latestIndividualEndDate = dayjs();
         const mockResponse = new HttpResponse<ExamInformationDTO>({ body: { latestIndividualEndDate } });
 
-        spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').and.returnValue(of(mockResponse));
+        jest.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(of(mockResponse));
 
         comp.loadLatestIndividualEndDateOfExam().subscribe((response) => {
             expect(response).not.toBeNull();
@@ -148,8 +148,8 @@ describe('Exercise Groups Component', () => {
     it('deletes an exercise group', fakeAsync(() => {
         comp.exerciseGroups = groups;
 
-        spyOn(exerciseGroupService, 'delete').and.returnValue(of({}));
-        spyOn(eventManager, 'broadcast');
+        jest.spyOn(exerciseGroupService, 'delete').mockReturnValue(of());
+        jest.spyOn(eventManager, 'broadcast');
 
         comp.deleteExerciseGroup(0, {});
         tick();
@@ -194,8 +194,8 @@ describe('Exercise Groups Component', () => {
     });
 
     it('opens the import modal for programming exercises', fakeAsync(() => {
-        const mockReturnValue = { result: Promise.resolve({ id: 1 } as ProgrammingExercise) };
-        spyOn(modalService, 'open').and.returnValue(mockReturnValue);
+        const mockReturnValue = { result: Promise.resolve({ id: 1 } as ProgrammingExercise) } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
         comp.openImportModal(groups[0], ExerciseType.PROGRAMMING);
         tick();
@@ -205,8 +205,8 @@ describe('Exercise Groups Component', () => {
     }));
 
     it('opens the import modal for text exercises', fakeAsync(() => {
-        const mockReturnValue = { result: Promise.resolve({ id: 1 } as TextExercise) };
-        spyOn(modalService, 'open').and.returnValue(mockReturnValue);
+        const mockReturnValue = { result: Promise.resolve({ id: 1 } as TextExercise) } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
         comp.openImportModal(groups[0], ExerciseType.TEXT);
         tick();
@@ -216,8 +216,8 @@ describe('Exercise Groups Component', () => {
     }));
 
     it('opens the import modal for modeling exercises', fakeAsync(() => {
-        const mockReturnValue = { result: Promise.resolve({ id: 1 } as ModelingExercise) };
-        spyOn(modalService, 'open').and.returnValue(mockReturnValue);
+        const mockReturnValue = { result: Promise.resolve({ id: 1 } as ModelingExercise) } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
         comp.openImportModal(groups[0], ExerciseType.MODELING);
         tick();

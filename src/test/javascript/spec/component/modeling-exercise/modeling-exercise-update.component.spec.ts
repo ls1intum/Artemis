@@ -67,7 +67,7 @@ describe('ModelingExercise Management Update Component', () => {
                 comp.ngOnInit();
 
                 const entity = { ...modelingExercise };
-                spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
+                jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN
                 comp.save();
@@ -96,7 +96,7 @@ describe('ModelingExercise Management Update Component', () => {
                 comp.ngOnInit();
 
                 const entity = { ...modelingExercise };
-                spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
+                jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN
                 comp.save();
@@ -126,7 +126,7 @@ describe('ModelingExercise Management Update Component', () => {
         });
 
         it('Should set isImport and remove all dates', fakeAsync(() => {
-            spyOn(courseService, 'findAllCategoriesOfCourse').and.returnValue(of(new HttpResponse({ body: categoriesStringified })));
+            jest.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: categoriesStringified })));
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async
@@ -161,7 +161,7 @@ describe('ModelingExercise Management Update Component', () => {
         });
 
         it('Should set isImport and remove all dates', fakeAsync(() => {
-            spyOn(courseService, 'findAllCategoriesOfCourse').and.returnValue(of(new HttpResponse({ body: categoriesStringified })));
+            jest.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: categoriesStringified })));
 
             // WHEN
             comp.ngOnInit();
@@ -247,7 +247,7 @@ describe('ModelingExercise Management Update Component', () => {
     it('should call exercise service to validate date', () => {
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         comp.modelingExercise = modelingExercise;
-        spyOn(exerciseService, 'validateDate');
+        jest.spyOn(exerciseService, 'validateDate');
         comp.validateDate();
         expect(exerciseService.validateDate).toHaveBeenCalledWith(modelingExercise);
     });

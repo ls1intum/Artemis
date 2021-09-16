@@ -280,17 +280,17 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should not log error on sentry when correct participant score calculation', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
-        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         const errorSpy = sinon.spy(component, 'logErrorOnSentry');
         fixture.detectChanges();
         expect(errorSpy).to.not.have.been.called;
     });
 
     it('should log error on sentry when missing participant score calculation', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
-        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
-        spyOn(gradingSystemService, 'findGradingScaleForCourse').and.returnValue(of(new HttpResponse({ status: 404 })));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
         findCourseScoresSpy.returns(of(new HttpResponse({ body: [] })));
         const errorSpy = sinon.spy(component, 'logErrorOnSentry');
         fixture.detectChanges();
@@ -298,9 +298,9 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should log error on sentry when wrong points score calculation', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
-        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
-        spyOn(gradingSystemService, 'findGradingScaleForCourse').and.returnValue(of(new HttpResponse({ status: 404 })));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
         const cs1 = new ScoresDTO();
         cs1.studentId = user1.id;
         cs1.pointsAchieved = 99;
@@ -318,9 +318,9 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should log error on sentry when wrong score calculation', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
-        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
-        spyOn(gradingSystemService, 'findGradingScaleForCourse').and.returnValue(of(new HttpResponse({ status: 404 })));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
         const cs1 = new ScoresDTO();
         cs1.studentId = user1.id;
         cs1.pointsAchieved = 40;
@@ -337,7 +337,7 @@ describe('CourseScoresComponent', () => {
         expect(errorSpy).to.have.been.calledTwice;
     });
     it('should filter and sort exercises', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         fixture.detectChanges();
 
         expect(component.course).to.equal(course);
@@ -350,15 +350,15 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should make duplicated titles unique', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         fixture.detectChanges();
         expect(quizIncludedWith10Points0BonusPoints.title).to.equal(`exercise (id=2)`);
         expect(textIncludedWith10Points10BonusPoints.title).to.equal(`exercise (id=1)`);
     });
 
     it('should group exercises and calculate exercise max score', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
-        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         fixture.detectChanges();
 
         expect(component.allParticipationsOfCourse).to.equal(participations);
@@ -367,8 +367,8 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should calculate per student score', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
-        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         fixture.detectChanges();
 
         expect(component.students[0].pointsPerExerciseType).to.deep.equal(pointsOfStudent1);
@@ -385,8 +385,8 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should generate csv correctly', () => {
-        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
-        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         fixture.detectChanges();
         const exportAsCsvStub = sinon.stub(component, 'exportAsCsv');
         component.exportResults();
@@ -412,9 +412,9 @@ describe('CourseScoresComponent', () => {
             gradeType: GradeType.GRADE,
             gradeSteps: [gradeStep],
         };
-        spyOn(gradingSystemService, 'sortGradeSteps').and.returnValue([gradeStep]);
-        spyOn(gradingSystemService, 'maxGrade').and.returnValue('A');
-        spyOn(gradingSystemService, 'findMatchingGradeStep').and.returnValue(gradeStep);
+        jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue([gradeStep]);
+        jest.spyOn(gradingSystemService, 'maxGrade').mockReturnValue('A');
+        jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradeStep);
 
         component.calculateGradingScaleInformation(gradingScale);
 

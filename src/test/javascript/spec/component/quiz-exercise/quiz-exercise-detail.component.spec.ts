@@ -797,7 +797,7 @@ describe('QuizExercise Management Detail Component', () => {
                 const { question, dragItem1, dragItem2, dropLocation } = createValidDnDQuestion();
 
                 // mock fileUploaderService
-                spyOn(fileUploaderService, 'duplicateFile').and.returnValue(Promise.resolve({ path: 'test' }));
+                jest.spyOn(fileUploaderService, 'duplicateFile').mockReturnValue(Promise.resolve({ path: 'test' }));
                 await importQuestionAndExpectOneMoreQuestionInQuestions(question);
                 const lastAddedQuestion = comp.quizExercise.quizQuestions![comp.quizExercise.quizQuestions!.length - 1] as DragAndDropQuestion;
                 expect(lastAddedQuestion.type).to.equal(QuizQuestionType.DRAG_AND_DROP);

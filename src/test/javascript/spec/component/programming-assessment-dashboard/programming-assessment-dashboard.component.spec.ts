@@ -99,7 +99,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         // setup
         const exerciseServiceFind = stub(exerciseService, 'find');
         exerciseServiceFind.returns(of(new HttpResponse({ body: programmingExercise1 })));
-        spyOn<any>(component, 'setPermissions');
+        jest.spyOn<any, any>(component, 'setPermissions');
         // test for init values
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
@@ -125,8 +125,8 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         exerciseServiceFind.returns(of(new HttpResponse({ body: programmingExercise1 })));
         getProgrammingSubmissionsForExerciseByCorrectionRoundStub.returns(of(new HttpResponse({ body: [programmingSubmission1] })));
         isAtLeastInstructorInCourseStub.returns(true);
-        spyOn<any>(component, 'setPermissions');
-        const getSubmissionSpy = spyOn<any>(component, 'getSubmissions');
+        jest.spyOn<any, any>(component, 'setPermissions');
+        const getSubmissionSpy = jest.spyOn<any, any>(component, 'getSubmissions');
         getSubmissionSpy.and.callThrough();
         // call
         component.ngOnInit();
@@ -151,7 +151,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         isAtLeastInstructorInCourseStub.returns(true);
         // findExerciseStub.returns(of(new HttpResponse({ body: fileUploadExercise, headers: new HttpHeaders() })));
         exerciseServiceFind.returns(of(new HttpResponse({ body: programmingExercise2, headers: new HttpHeaders() })));
-        const getSubmissionSpy = spyOn<any>(component, 'getSubmissions');
+        const getSubmissionSpy = jest.spyOn<any, any>(component, 'getSubmissions');
         getSubmissionSpy.and.callThrough();
         component.exercise = programmingExercise2;
 

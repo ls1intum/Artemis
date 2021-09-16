@@ -98,7 +98,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         exerciseServiceFind.returns(of(new HttpResponse({ body: fileUploadExercise1 })));
         const getFileUploadSubmissionStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
         getFileUploadSubmissionStub.returns(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
-        spyOn<any>(component, 'setPermissions');
+        jest.spyOn<any, any>(component, 'setPermissions');
         // test for init values
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
@@ -124,7 +124,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         getFileUploadSubmissionStub.returns(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
         const isAtLeastInstructorInCourseStub = stub(accountService, 'isAtLeastInstructorInCourse');
         isAtLeastInstructorInCourseStub.returns(true);
-        spyOn<any>(component, 'setPermissions');
+        jest.spyOn<any, any>(component, 'setPermissions');
 
         // call
         component.ngOnInit();
@@ -166,8 +166,8 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
     it('should cancelAssessment', fakeAsync(() => {
         // test cancelAssessment
-        const windowSpy = spyOn(window, 'confirm').and.returnValue(true);
-        const modelAssServiceCancelAssSpy = spyOn(fileUploadAssessmentService, 'cancelAssessment').and.returnValue(of(1));
+        const windowSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+        const modelAssServiceCancelAssSpy = jest.spyOn(fileUploadAssessmentService, 'cancelAssessment').mockReturnValue(of());
         component.exercise = fileUploadExercise2;
         // call
         component.cancelAssessment(fileUploadSubmission2);
@@ -180,7 +180,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
     it('should sortRows', () => {
         // test cancelAssessment
-        const sortServiceSpy = spyOn(sortService, 'sortByProperty');
+        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
         component.predicate = 'predicate';
         component.reverse = false;
         component.submissions = [fileUploadSubmission2];
