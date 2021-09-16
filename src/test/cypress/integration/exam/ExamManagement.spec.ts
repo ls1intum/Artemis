@@ -17,8 +17,6 @@ const programmingCreation = artemis.pageobjects.programmingExerciseCreation;
 
 // Common primitives
 const uid = generateUUID();
-const courseName = 'Cypress course' + uid;
-const courseShortName = 'cypress' + uid;
 const examTitle = 'exam' + uid;
 
 describe('Exam management', () => {
@@ -26,7 +24,7 @@ describe('Exam management', () => {
 
     before(() => {
         cy.login(users.getAdmin());
-        courseManagementRequests.createCourse(courseName, courseShortName).then((response) => {
+        courseManagementRequests.createCourse().then((response) => {
             course = response.body;
             courseManagementRequests.addStudentToCourse(course.id, users.getStudentOne().username);
             const exam = new CypressExamBuilder(course).title(examTitle).build();
@@ -45,7 +43,7 @@ describe('Exam management', () => {
     it('Adds an exercise group with a programming exercise', () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
-        courseManagement.openExamsOfCourse(courseName, courseShortName);
+        courseManagement.openExamsOfCourse(course.title, course.shortName);
         examManagement.getExamRow(examTitle).openExerciseGroups();
         cy.contains('Number of exercise groups: 0').should('be.visible');
         // Create a new exercise group
@@ -95,8 +93,6 @@ describe('Exam management', () => {
     after(() => {
         if (!!course) {
             cy.login(users.getAdmin());
-            // Sometimes the backend fails with a ConstraintViolationError if we delete the course immediately
-            cy.wait(1000);
             courseManagementRequests.deleteCourse(course.id);
         }
     });
