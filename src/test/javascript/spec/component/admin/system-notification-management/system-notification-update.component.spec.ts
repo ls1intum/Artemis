@@ -72,7 +72,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
 
     it('should update if save is clicked', fakeAsync(() => {
         const saveSpy = spy(updateComponent, 'save');
-        spyOn(service, 'update').and.returnValue(of(new HttpResponse()));
+        jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse()));
         updateComponentFixture.detectChanges();
 
         const button = updateComponentFixture.debugElement.nativeElement.querySelector('#saveButton');
@@ -84,7 +84,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
 
     it('should create if save is clicked', fakeAsync(() => {
         const saveSpy = spy(updateComponent, 'save');
-        spyOn(service, 'create').and.returnValue(of(new HttpResponse()));
+        jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse()));
         updateComponentFixture.detectChanges();
 
         // Set to invalid id to emulate a new notification

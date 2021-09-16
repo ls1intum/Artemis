@@ -70,8 +70,8 @@ describe('QuizExercise Statistic Footer Component', () => {
     it('Should load Quiz on Init', fakeAsync(() => {
         // setup
         jest.useFakeTimers();
-        const loadSpy = spyOn(comp, 'loadQuiz').and.callThrough();
-        const updateDisplayedTimesSpy = spyOn(comp, 'updateDisplayedTimes');
+        const loadSpy = jest.spyOn(comp, 'loadQuiz').and.callThrough();
+        const updateDisplayedTimesSpy = jest.spyOn(comp, 'updateDisplayedTimes');
 
         // call
         comp.ngOnInit();

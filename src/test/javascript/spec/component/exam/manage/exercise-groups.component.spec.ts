@@ -148,7 +148,7 @@ describe('Exercise Groups Component', () => {
     it('deletes an exercise group', fakeAsync(() => {
         comp.exerciseGroups = groups;
 
-        jest.spyOn(exerciseGroupService, 'delete').mockReturnValue(of());
+        jest.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
         jest.spyOn(eventManager, 'broadcast');
 
         comp.deleteExerciseGroup(0, {});

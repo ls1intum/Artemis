@@ -95,7 +95,7 @@ describe('ExamParticipationCoverComponent', () => {
 
     it('should initialize with ngOnInit', fakeAsync(() => {
         const user = { name: 'admin' } as User;
-        spyOn(accountService, 'identity').and.returnValue(Promise.resolve(user));
+        jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
 
         let now = dayjs();
         component.studentExam.workingTime = 1;
@@ -146,7 +146,7 @@ describe('ExamParticipationCoverComponent', () => {
         expect(saveStudentExamSpy).to.be.calledOnceWith(exam!.course!.id, exam!.id, studentExam);
 
         component.testRun = false;
-        spyOn(examParticipationService, 'loadStudentExamWithExercisesForConduction').and.returnValue(of(studentExam));
+        jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConduction').mockReturnValue(of(studentExam));
         component.exam.startDate = dayjs().subtract(1, 'days');
 
         component.startExam();
@@ -157,7 +157,7 @@ describe('ExamParticipationCoverComponent', () => {
         const startDate = dayjs();
         const now = dayjs();
         component.exam.startDate = startDate.add(1, 'hours');
-        spyOn(artemisServerDateService, 'now').and.returnValue(now);
+        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
         component.startExam();
         tick();
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
@@ -215,7 +215,7 @@ describe('ExamParticipationCoverComponent', () => {
         expect(component.startButtonEnabled).to.be.false;
 
         const now = dayjs();
-        spyOn(artemisServerDateService, 'now').and.returnValue(now);
+        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
         component.testRun = false;
         component.enteredName = 'admin';
         component.accountName = 'admin';
@@ -236,7 +236,7 @@ describe('ExamParticipationCoverComponent', () => {
         component.ngOnInit();
         component.testRun = false;
         const now = dayjs();
-        spyOn(artemisServerDateService, 'now').and.returnValue(now);
+        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
         component.enteredName = 'user';
         component.accountName = 'user';
         component.confirmed = true;
@@ -252,7 +252,7 @@ describe('ExamParticipationCoverComponent', () => {
         component.testRun = false;
         const startDate = dayjs();
         const now = dayjs();
-        spyOn(artemisServerDateService, 'now').and.returnValue(now);
+        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
         component.exam.startDate = startDate.subtract(2, 'hours');
         component.studentExam.workingTime = 3600;
         component.exam.gracePeriod = 1;

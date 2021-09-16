@@ -54,9 +54,9 @@ describe('SettingsComponent', () => {
         [AccountService],
         fakeAsync((service: AccountService) => {
             // GIVEN
-            spyOn(service, 'identity').and.returnValue(Promise.resolve(accountValues));
-            spyOn(service, 'save').and.returnValue(of({}));
-            spyOn(service, 'authenticate');
+            jest.spyOn(service, 'identity').mockReturnValue(Promise.resolve(accountValues));
+            jest.spyOn(service, 'save').mockReturnValue(of({}));
+            jest.spyOn(service, 'authenticate');
 
             const settingsFormValues = {
                 firstName: 'John',
@@ -83,8 +83,8 @@ describe('SettingsComponent', () => {
         [AccountService],
         fakeAsync((service: AccountService) => {
             // GIVEN
-            spyOn(service, 'identity').and.returnValue(Promise.resolve(accountValues));
-            spyOn(service, 'save').and.returnValue(of({}));
+            jest.spyOn(service, 'identity').mockReturnValue(Promise.resolve(accountValues));
+            jest.spyOn(service, 'save').mockReturnValue(of({}));
 
             // WHEN
             comp.ngOnInit();
@@ -101,8 +101,8 @@ describe('SettingsComponent', () => {
         [AccountService],
         fakeAsync((service: AccountService) => {
             // GIVEN
-            spyOn(service, 'identity').and.returnValue(Promise.resolve(accountValues));
-            spyOn(service, 'save').and.returnValue(throwError('ERROR'));
+            jest.spyOn(service, 'identity').mockReturnValue(Promise.resolve(accountValues));
+            jest.spyOn(service, 'save').mockReturnValue(throwError('ERROR'));
 
             // WHEN
             comp.ngOnInit();

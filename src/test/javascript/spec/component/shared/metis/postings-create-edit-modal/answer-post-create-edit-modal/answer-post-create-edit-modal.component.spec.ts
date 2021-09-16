@@ -77,7 +77,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
     });
 
     it('should invoke the modalService', () => {
-        const componentInstance = { title: string, content: string };
+        const componentInstance = { title: String, content: String };
         const result = new Promise((resolve) => resolve(true));
         const modalServiceOpenStub = sinon.stub(modal, 'open').returns(<NgbModalRef>{
             componentInstance,

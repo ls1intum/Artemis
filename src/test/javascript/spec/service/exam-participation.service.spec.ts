@@ -148,7 +148,7 @@ describe('Exam Participation Service', () => {
     });
     it('save examSessionToken to sessionStorage', async () => {
         service.saveExamSessionTokenToSessionStorage('token1');
-        spyOn(sessionStorage, 'setItem').and.callFake(() => {
+        jest.spyOn(sessionStorage, 'setItem').mockImplementation(() => {
             expect(sessionStorage['ExamSessionToken']).toBe('token1');
         });
     });
@@ -156,7 +156,7 @@ describe('Exam Participation Service', () => {
         const sendToService = Object.assign({ exercises: [] }, studentExam);
         const expected = Object.assign({}, sendToService);
         service.saveStudentExamToLocalStorage(1, 1, sendToService);
-        spyOn(localStorage, 'store').and.callFake(() => {
+        jest.spyOn(localStorage, 'store').mockImplementation(() => {
             expect(localStorage['artemis_student_exam_1_1'].toBe(expected));
         });
     });
@@ -165,7 +165,7 @@ describe('Exam Participation Service', () => {
         service.saveStudentExamToLocalStorage(1, 1, studentExam);
 
         const stored = Object.assign({}, studentExam);
-        spyOn(localStorage, 'retrieve').and.returnValues(JSON.stringify(stored));
+        jest.spyOn(localStorage, 'retrieve').mockReturnValue(JSON.stringify(stored));
 
         service.loadStudentExamWithExercisesForConductionFromLocalStorage(1, 1).subscribe((localExam: StudentExam) => {
             expect(localExam).toEqual(studentExam);

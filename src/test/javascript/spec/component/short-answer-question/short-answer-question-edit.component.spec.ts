@@ -331,7 +331,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     it('should add spot at cursor visual mode', () => {
         const textParts = [['0'], ['0']];
         const shortAnswerQuestionUtil = TestBed.inject(ShortAnswerQuestionUtil);
-        spyOn(shortAnswerQuestionUtil, 'divideQuestionTextIntoTextParts').and.returnValue(textParts);
+        jest.spyOn(shortAnswerQuestionUtil, 'divideQuestionTextIntoTextParts').mockReturnValue(textParts);
 
         const node = {} as Node;
 
@@ -393,7 +393,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 return '';
             },
         } as string;
-        spyOn(artemisMarkdown, 'markdownForHtml').and.returnValue(markdownHelper);
+        jest.spyOn(artemisMarkdown, 'markdownForHtml').mockReturnValue(markdownHelper);
         const questionUpdated = sinon.spy(component.questionUpdated, 'emit');
 
         component.shortAnswerQuestion.spots = [spot1, spot2];

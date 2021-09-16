@@ -67,8 +67,8 @@ describe('Team Exercise Search Component', () => {
         const exercise = new TextExercise(undefined, undefined);
         exercise.title = title;
 
-        spyOn(comp.selectExercise, 'emit');
-        spyOn(comp, 'searchResultFormatter').and.returnValue(title);
+        jest.spyOn(comp.selectExercise, 'emit');
+        jest.spyOn(comp, 'searchResultFormatter').mockReturnValue(title);
 
         comp.onAutocompleteSelect(exercise);
 

@@ -54,7 +54,7 @@ describe('Component Tests', () => {
                 focus(): void {},
             };
             comp.newPassword = new ElementRef(node);
-            spyOn(node, 'focus');
+            jest.spyOn(node, 'focus');
 
             comp.ngAfterViewInit();
 
@@ -75,7 +75,7 @@ describe('Component Tests', () => {
         it('should update success to true after resetting password', inject(
             [PasswordResetFinishService],
             fakeAsync((service: PasswordResetFinishService) => {
-                spyOn(service, 'save').and.returnValue(of({}));
+                jest.spyOn(service, 'save').mockReturnValue(of({}));
                 comp.passwordForm.patchValue({
                     newPassword: 'password',
                     confirmPassword: 'password',
@@ -92,7 +92,7 @@ describe('Component Tests', () => {
         it('should notify of generic error', inject(
             [PasswordResetFinishService],
             fakeAsync((service: PasswordResetFinishService) => {
-                spyOn(service, 'save').and.returnValue(throwError('ERROR'));
+                jest.spyOn(service, 'save').mockReturnValue(throwError('ERROR'));
                 comp.passwordForm.patchValue({
                     newPassword: 'password',
                     confirmPassword: 'password',

@@ -98,9 +98,9 @@ describe('CourseExercisesComponent', () => {
                 exercise.dueDate = dayjs('2021-01-13T16:11:00+01:00').add(1, 'days');
                 exercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00').subtract(1, 'days');
                 course.exercises = [exercise];
-                spyOn(service, 'getCourseUpdates').and.returnValue(of(course));
-                spyOn(translateService, 'onLangChange').and.returnValue(of(new Subject()));
-                spyOn(localStorageService, 'retrieve').and.returnValue('OVERDUE,NEEDS_WORK');
+                jest.spyOn(service, 'getCourseUpdates').mockReturnValue(of(course));
+                jest.spyOn(translateService, 'onLangChange').mockReturnValue(of(new Subject()));
+                jest.spyOn(localStorageService, 'retrieve').mockReturnValue('OVERDUE,NEEDS_WORK');
                 courseCalculationSpy = stub(courseCalculation, 'getCourse').returns(course);
 
                 fixture.detectChanges();
@@ -126,7 +126,7 @@ describe('CourseExercisesComponent', () => {
     });
 
     it('should react to changes', () => {
-        spyOn(exerciseService, 'getNextExerciseForHours').and.returnValue(exercise);
+        jest.spyOn(exerciseService, 'getNextExerciseForHours').mockReturnValue(exercise);
         component.ngOnChanges();
         expect(component.nextRelevantExercise).to.deep.equal(exercise);
     });

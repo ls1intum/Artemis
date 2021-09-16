@@ -60,7 +60,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             comp.newProgrammingExercise = newProgrammingExercise;
             comp.notificationText = 'A Notification Text';
 
-            spyOn(programmingExerciseService, 'updateTimeline').and.returnValue(of(new HttpResponse({ body: entityOne })));
+            jest.spyOn(programmingExerciseService, 'updateTimeline').mockReturnValue(of(new HttpResponse({ body: entityOne })));
 
             // WHEN
             comp.saveAll();
@@ -89,8 +89,8 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             comp.selectedProgrammingExercises = selectedProgrammingExercises;
             comp.newProgrammingExercise = newProgrammingExercise;
 
-            spyOn(programmingExerciseService, 'updateTimeline').and.returnValue(throwError(new HttpErrorResponse({ status: 500 })));
-            spyOn(comp, 'closeModal');
+            jest.spyOn(programmingExerciseService, 'updateTimeline').mockReturnValue(throwError(new HttpErrorResponse({ status: 500 })));
+            jest.spyOn(comp, 'closeModal');
             // WHEN
             comp.saveAll();
             tick(); // simulate async

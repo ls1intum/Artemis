@@ -80,8 +80,8 @@ describe('ModelingAssessmentDashboardComponent', () => {
                 modelingSubmissionService = fixture.debugElement.injector.get(ModelingSubmissionService);
                 modelingAssessmentService = fixture.debugElement.injector.get(ModelingAssessmentService);
                 sortService = fixture.debugElement.injector.get(SortService);
-                exerciseFindSpy = spyOn(exerciseService, 'find').and.returnValue(of(new HttpResponse({ body: modelingExercise })));
-                courseFindSpy = spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
+                exerciseFindSpy = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
+                courseFindSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
                 fixture.detectChanges();
             });
     }));
@@ -92,8 +92,8 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
     it('should set parameters and call functions on init', () => {
         // setup
-        const getSubmissionsSpy = spyOn(component, 'getSubmissions');
-        const registerChangeInResultsSpy = spyOn(component, 'registerChangeInResults');
+        const getSubmissionsSpy = jest.spyOn(component, 'getSubmissions');
+        const registerChangeInResultsSpy = jest.spyOn(component, 'registerChangeInResults');
 
         // test for init values
         expect(component).toBeTruthy();
@@ -116,9 +116,9 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
     it('should get Submissions', () => {
         // test getSubmissions
-        const modelingSubmissionServiceSpy = spyOn(modelingSubmissionService, 'getModelingSubmissionsForExerciseByCorrectionRound').and.returnValue(
-            of(new HttpResponse({ body: [modelingSubmission] })),
-        );
+        const modelingSubmissionServiceSpy = jest
+            .spyOn(modelingSubmissionService, 'getModelingSubmissionsForExerciseByCorrectionRound')
+            .mockReturnValue(of(new HttpResponse({ body: [modelingSubmission] })));
 
         // call
         component.ngOnInit();
@@ -140,10 +140,10 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
     it('should cancelAssessment', fakeAsync(() => {
         // test cancelAssessment
-        const windowSpy = spyOn(window, 'confirm').and.returnValue(true);
-        const getSubmissionsSpy = spyOn(component, 'getSubmissions');
+        const windowSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+        const getSubmissionsSpy = jest.spyOn(component, 'getSubmissions');
 
-        const modelAssServiceCancelAssSpy = spyOn(modelingAssessmentService, 'cancelAssessment').and.returnValue(of(1));
+        const modelAssServiceCancelAssSpy = jest.spyOn(modelingAssessmentService, 'cancelAssessment').mockReturnValue(of(1));
 
         // call
         component.cancelAssessment(modelingSubmission);
@@ -157,7 +157,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
     it('should sortRows', () => {
         // test cancelAssessment
-        const sortServiceSpy = spyOn(sortService, 'sortByProperty');
+        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
         component.filteredSubmissions = [modelingSubmission];
         component.predicate = 'predicate';
         component.reverse = false;
@@ -170,7 +170,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
     it('ngOnDestroy', () => {
         // setup
         component.paramSub = new Subscription();
-        const paramSubSpy = spyOn(component.paramSub, 'unsubscribe');
+        const paramSubSpy = jest.spyOn(component.paramSub, 'unsubscribe');
 
         // call
         component.ngOnDestroy();

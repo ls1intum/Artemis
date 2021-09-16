@@ -126,7 +126,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should fetch the plagiarism detection results for modeling exercises', () => {
         comp.exercise = modelingExercise;
-        spyOn(modelingExerciseService, 'checkPlagiarism').and.returnValue(of(plagiarismResult));
+        jest.spyOn(modelingExerciseService, 'checkPlagiarism').mockReturnValue(of(plagiarismResult));
 
         comp.checkPlagiarism();
 
@@ -135,7 +135,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should fetch the plagiarism detection results for programming exercises', () => {
         comp.exercise = programmingExercise;
-        spyOn(programmingExerciseService, 'checkPlagiarism').and.returnValue(of(plagiarismResult));
+        jest.spyOn(programmingExerciseService, 'checkPlagiarism').mockReturnValue(of(plagiarismResult));
 
         comp.checkPlagiarism();
 
@@ -144,7 +144,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should fetch the plagiarism detection results for text exercises', () => {
         comp.exercise = textExercise;
-        spyOn(textExerciseService, 'checkPlagiarism').and.returnValue(of(plagiarismResult));
+        jest.spyOn(textExerciseService, 'checkPlagiarism').mockReturnValue(of(plagiarismResult));
 
         comp.checkPlagiarism();
 
@@ -185,8 +185,8 @@ describe('Plagiarism Inspector Component', () => {
         comp.exercise = modelingExercise;
 
         const mockResult = {} as ModelingPlagiarismResult;
-        spyOn(modelingExerciseService, 'getLatestPlagiarismResult').and.returnValue(of(mockResult));
-        spyOn(comp, 'handlePlagiarismResult');
+        jest.spyOn(modelingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(mockResult));
+        jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
         expect(comp.detectionInProgress).toBe(true);
@@ -201,8 +201,8 @@ describe('Plagiarism Inspector Component', () => {
         comp.exercise = programmingExercise;
 
         const mockResult = {} as TextPlagiarismResult;
-        spyOn(programmingExerciseService, 'getLatestPlagiarismResult').and.returnValue(of(mockResult));
-        spyOn(comp, 'handlePlagiarismResult');
+        jest.spyOn(programmingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(mockResult));
+        jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
         expect(comp.detectionInProgress).toBe(true);
@@ -217,8 +217,8 @@ describe('Plagiarism Inspector Component', () => {
         comp.exercise = textExercise;
 
         const mockResult = {} as TextPlagiarismResult;
-        spyOn(textExerciseService, 'getLatestPlagiarismResult').and.returnValue(of(mockResult));
-        spyOn(comp, 'handlePlagiarismResult');
+        jest.spyOn(textExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(mockResult));
+        jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
         expect(comp.detectionInProgress).toBe(true);

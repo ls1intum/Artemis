@@ -55,7 +55,7 @@ describe('StatisticsGraphComponent', () => {
         component.graphType = Graphs.SUBMISSIONS;
         component.statisticsView = StatisticsView.ARTEMIS;
         let arrayLength = 0;
-        const spy = spyOn(service, 'getChartData');
+        const spy = jest.spyOn(service, 'getChartData');
 
         for (const span of Object.values(SpanType)) {
             component.currentSpan = span;
@@ -81,7 +81,7 @@ describe('StatisticsGraphComponent', () => {
             for (let i = 0; i < arrayLength; i++) {
                 graphData[i] = i + 1;
             }
-            spy.and.returnValue(of(graphData));
+            spy.mockReturnValue(of(graphData));
 
             const changes = { currentSpan: { currentValue: span } as SimpleChange };
             component.ngOnChanges(changes);
@@ -116,7 +116,7 @@ describe('StatisticsGraphComponent', () => {
         component.currentSpan = SpanType.WEEK;
         component.statisticsView = StatisticsView.ARTEMIS;
         const graphData = [1, 2, 3, 4, 5, 6, 8];
-        spyOn(service, 'getChartData').and.returnValue(of(graphData));
+        jest.spyOn(service, 'getChartData').mockReturnValue(of(graphData));
 
         fixture.detectChanges();
 

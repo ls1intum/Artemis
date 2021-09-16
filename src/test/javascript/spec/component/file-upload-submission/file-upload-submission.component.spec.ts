@@ -138,7 +138,7 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.detectChanges();
 
         let submitFileButton = debugElement.query(By.css('jhi-button'));
-        spyOn(fileUploaderService, 'uploadFile').and.returnValue(Promise.resolve({ path: 'test' }));
+        jest.spyOn(fileUploaderService, 'uploadFile').mockReturnValue(Promise.resolve({ path: 'test' }));
         submitFileButton.nativeElement.click();
         comp.submission!.submitted = true;
         comp.result = new Result();

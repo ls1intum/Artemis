@@ -77,11 +77,11 @@ describe('Test Run Management Component', () => {
                 examManagementService = TestBed.inject(ExamManagementService);
                 accountService = TestBed.inject(AccountService);
                 modalService = modalService = TestBed.inject(NgbModal);
-                spyOn(examManagementService, 'find').and.returnValue(of(new HttpResponse({ body: exam })));
-                spyOn(examManagementService, 'findAllTestRunsForExam').and.returnValue(of(new HttpResponse({ body: studentExams })));
-                spyOn(accountService, 'fetch').and.returnValue(of(new HttpResponse({ body: user })));
-                spyOn(accountService, 'isAtLeastInstructorInCourse').and.returnValue(true);
-                spyOn(examManagementService, 'deleteTestRun').and.returnValue(of(new HttpResponse({ body: {} })));
+                jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
+                jest.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
+                jest.spyOn(accountService, 'fetch').mockReturnValue(of(new HttpResponse({ body: user })));
+                jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
+                jest.spyOn(examManagementService, 'deleteTestRun').mockReturnValue(of(new HttpResponse({ body: {} })));
             });
     });
 
@@ -124,10 +124,10 @@ describe('Test Run Management Component', () => {
             const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
             exam.exerciseGroups = [exerciseGroup];
 
-            const componentInstance = { title: string, text: string };
+            const componentInstance = { title: String, text: String };
             const result = new Promise((resolve) => resolve({} as StudentExam));
-            spyOn(modalService, 'open').and.returnValue(<NgbModalRef>{ componentInstance, result });
-            spyOn(examManagementService, 'createTestRun').and.returnValue(of(new HttpResponse({ body: { id: 3, user: { id: 90 }, exercises: [exercise] } as StudentExam })));
+            jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
+            jest.spyOn(examManagementService, 'createTestRun').mockReturnValue(of(new HttpResponse({ body: { id: 3, user: { id: 90 }, exercises: [exercise] } as StudentExam })));
             fixture.detectChanges();
 
             expect(component.examContainsExercises).toBeTruthy();
@@ -145,11 +145,11 @@ describe('Test Run Management Component', () => {
             exam.exerciseGroups = [exerciseGroup];
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
 
-            const componentInstance = { title: string, text: string };
+            const componentInstance = { title: String, text: String };
             const result = new Promise((resolve) => resolve({} as StudentExam));
-            spyOn(modalService, 'open').and.returnValue(<NgbModalRef>{ componentInstance, result });
-            spyOn(examManagementService, 'createTestRun').and.returnValue(throwError(httpError));
-            spyOn(alertService, 'error');
+            jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
+            jest.spyOn(examManagementService, 'createTestRun').mockReturnValue(throwError(httpError));
+            jest.spyOn(alertService, 'error');
             fixture.detectChanges();
 
             expect(component.examContainsExercises).toBeTruthy();
@@ -178,7 +178,7 @@ describe('Test Run Management Component', () => {
     describe('sort rows', () => {
         it('should forward request to ', fakeAsync(() => {
             const sortService = TestBed.inject(SortService);
-            spyOn(sortService, 'sortByProperty').and.returnValue(studentExams);
+            jest.spyOn(sortService, 'sortByProperty').mockReturnValue(studentExams);
             fixture.detectChanges();
 
             component.sortRows();

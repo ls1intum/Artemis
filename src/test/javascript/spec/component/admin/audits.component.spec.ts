@@ -125,7 +125,7 @@ describe('Audit Component Tests', () => {
                 // GIVEN
                 const headers = new HttpHeaders().append('X-Total-Count', '1');
                 const audit = new Audit({ remoteAddress: '127.0.0.1', sessionId: '123' }, 'user', '20140101', 'AUTHENTICATION_SUCCESS');
-                spyOn(service, 'query').and.returnValue(
+                jest.spyOn(service, 'query').mockReturnValue(
                     of(
                         new HttpResponse({
                             body: [audit],
@@ -146,7 +146,7 @@ describe('Audit Component Tests', () => {
 
         describe('Create sort object', () => {
             beforeEach(() => {
-                spyOn(service, 'query').and.returnValue(of(new HttpResponse({ body: null })));
+                jest.spyOn(service, 'query').mockReturnValue(of(new HttpResponse({ body: null })));
             });
 
             it('Should sort only by id asc', () => {

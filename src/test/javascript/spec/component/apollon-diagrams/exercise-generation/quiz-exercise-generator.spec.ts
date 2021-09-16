@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { Selection, UMLModel } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/utils/svg/text';
@@ -78,7 +78,7 @@ describe('QuizExercise Generator', () => {
         sandbox.restore();
     });
 
-    it('generateDragAndDropExercise for Class Diagram', async (done) => {
+    it('generateDragAndDropExercise for Class Diagram', async () => {
         const svgRenderer = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         configureServices();
         const examplePath = '/path/to/file';
@@ -100,6 +100,5 @@ describe('QuizExercise Generator', () => {
         expect(dragAndDropQuestion.dropLocations).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
         // if there are no similar elements -> amount of correct mappings = interactive elements
         expect(dragAndDropQuestion.correctMappings).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
-        done();
     });
 });

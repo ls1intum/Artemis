@@ -201,7 +201,7 @@ describe('Grading System Service', () => {
     }));
 
     it('should match a grade step for to a percentage when no grading scale exists', fakeAsync(() => {
-        spyOn(service, 'matchPercentageToGradeStepForExam').and.returnValue(of(new HttpErrorResponse({ error: 'Not found', status: 404 })));
+        jest.spyOn(service, 'matchPercentageToGradeStepForExam').mockReturnValue(of(new HttpErrorResponse({ error: 'Not found', status: 404 })));
 
         service
             .matchPercentageToGradeStep(50, 189, 256)

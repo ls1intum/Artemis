@@ -530,7 +530,7 @@ describe('CodeEditorContainerIntegration', () => {
 
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
         const guidedTourMapping = {} as GuidedTourMapping;
-        jest.spyOn<any, any>(guidedTourService, 'checkTourState').and.returnValue(true);
+        jest.spyOn<any, any>(guidedTourService, 'checkTourState').mockReturnValue(true);
         guidedTourService.guidedTourMapping = guidedTourMapping;
 
         const successfulResult = { id: 3, successful: false };

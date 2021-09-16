@@ -206,7 +206,7 @@ describe('TextFeedbackConflictsComponent', () => {
 
     beforeEach(() => {
         router = TestBed.inject(Router);
-        spyOn(router, 'getCurrentNavigation').and.returnValues({ extras: { state: { submission: textSubmission } } } as any);
+        jest.spyOn(router, 'getCurrentNavigation').mockReturnValue({ extras: { state: { submission: textSubmission } } } as any);
         fixture = TestBed.createComponent(TextFeedbackConflictsComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
@@ -260,7 +260,7 @@ describe('TextFeedbackConflictsComponent', () => {
         expect(component.leftTotalScore).toBe(2);
         expect(component.isOverrideDisabled).toBe(false);
 
-        spyOn(textAssessmentService, 'submit').and.returnValue(
+        jest.spyOn(textAssessmentService, 'submit').mockReturnValue(
             of(
                 new HttpResponse({
                     body: component.leftSubmission!.latestResult,
@@ -318,7 +318,7 @@ describe('TextFeedbackConflictsComponent', () => {
         textBlockAssessmentAreas.forEach((textBlockAssessmentCardArea) => {
             const textBlockAssessmentCardComponent = textBlockAssessmentCardArea.componentInstance as TextblockAssessmentCardComponent;
             if (textBlockAssessmentCardComponent.textBlockRef === component.leftTextBlockRefs[0]) {
-                spyOn(textBlockAssessmentCardComponent, 'didSelect');
+                jest.spyOn(textBlockAssessmentCardComponent, 'didSelect');
                 textBlockAssessmentCardComponent.select();
                 expect(textBlockAssessmentCardComponent.didSelect).toHaveBeenCalledTimes(0);
             }
@@ -338,7 +338,7 @@ describe('TextFeedbackConflictsComponent', () => {
         const feedbackConflict = textSubmission.latestResult!.feedbacks![0].conflictingTextAssessments![0];
         feedbackConflict.conflict = false;
         feedbackConflict.discard = true;
-        spyOn(textAssessmentService, 'solveFeedbackConflict').and.returnValue(
+        jest.spyOn(textAssessmentService, 'solveFeedbackConflict').mockReturnValue(
             of(
                 new HttpResponse({
                     body: feedbackConflict,

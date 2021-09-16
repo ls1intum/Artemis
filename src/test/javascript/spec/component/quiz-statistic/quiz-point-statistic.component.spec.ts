@@ -81,8 +81,8 @@ describe('QuizExercise Point Statistic Component', () => {
             // setup
             jest.useFakeTimers();
             accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(true);
-            const loadQuizSuccessSpy = spyOn(comp, 'loadQuizSuccess');
-            const updateDisplayedTimesSpy = spyOn(comp, 'updateDisplayedTimes');
+            const loadQuizSuccessSpy = jest.spyOn(comp, 'loadQuizSuccess');
+            const updateDisplayedTimesSpy = jest.spyOn(comp, 'updateDisplayedTimes');
             comp.quizExerciseChannel = '';
             comp.waitingForQuizStart = true;
 
@@ -102,7 +102,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
         it('should not load QuizSuccess if not authorised', fakeAsync(() => {
             accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(false);
-            const loadQuizSuccessSpy = spyOn(comp, 'loadQuizSuccess');
+            const loadQuizSuccessSpy = jest.spyOn(comp, 'loadQuizSuccess');
 
             comp.ngOnInit();
             tick();
@@ -207,7 +207,7 @@ describe('QuizExercise Point Statistic Component', () => {
     describe('loadData', function () {
         it('should set data', () => {
             // setup
-            const loadDataInDiagramSpy = spyOn(comp, 'loadDataInDiagram');
+            const loadDataInDiagramSpy = jest.spyOn(comp, 'loadDataInDiagram');
             comp.quizPointStatistic = new QuizPointStatistic();
             comp.quizPointStatistic.pointCounters = pointCounters;
 

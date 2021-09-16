@@ -74,7 +74,7 @@ describe('Exam Navigation Bar Component', () => {
         // Create an exam session, which is not an initial session.
         comp.examSessions = [{ initialSession: false } as ExamSession];
         const exerciseToBeSynced = comp.exercises[0];
-        spyOn(repositoryService, 'getStatus').and.returnValue(of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }));
+        jest.spyOn(repositoryService, 'getStatus').mockReturnValue(of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }));
 
         // When
         expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toEqual(true);
@@ -85,8 +85,8 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('trigger when the exam is about to end', () => {
-        spyOn(comp, 'saveExercise');
-        spyOn(comp.examAboutToEnd, 'emit');
+        jest.spyOn(comp, 'saveExercise');
+        jest.spyOn(comp.examAboutToEnd, 'emit');
 
         comp.triggerExamAboutToEnd();
 
@@ -95,8 +95,8 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should change the exercise', () => {
-        spyOn(comp.onPageChanged, 'emit');
-        spyOn(comp, 'setExerciseButtonStatus');
+        jest.spyOn(comp.onPageChanged, 'emit');
+        jest.spyOn(comp, 'setExerciseButtonStatus');
 
         expect(comp.exerciseIndex).toEqual(0);
 
@@ -111,8 +111,8 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should not change the exercise with invalid index', () => {
-        spyOn(comp.onPageChanged, 'emit');
-        spyOn(comp, 'setExerciseButtonStatus');
+        jest.spyOn(comp.onPageChanged, 'emit');
+        jest.spyOn(comp, 'setExerciseButtonStatus');
 
         expect(comp.exerciseIndex).toEqual(0);
 
@@ -145,7 +145,7 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('save the exercise with changeExercise', () => {
-        spyOn(comp, 'changePage');
+        jest.spyOn(comp, 'changePage');
         const changeExercise = true;
 
         comp.saveExercise(changeExercise);
@@ -154,7 +154,7 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('save the exercise without changeExercise', () => {
-        spyOn(comp, 'changePage');
+        jest.spyOn(comp, 'changePage');
         const changeExercise = false;
 
         comp.saveExercise(changeExercise);
@@ -163,8 +163,8 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should hand in the exam early', () => {
-        spyOn(comp, 'saveExercise');
-        spyOn(comp.onExamHandInEarly, 'emit');
+        jest.spyOn(comp, 'saveExercise');
+        jest.spyOn(comp.onExamHandInEarly, 'emit');
 
         comp.handInEarly();
 
@@ -243,7 +243,7 @@ describe('Exam Navigation Bar Component', () => {
 
     it('should navigate to other Exercise', () => {
         const updatedExerciseId = 2;
-        spyOn(comp, 'changeExerciseById');
+        jest.spyOn(comp, 'changeExerciseById');
         examExerciseIdForNavigationSourceMock.next(updatedExerciseId);
         expect(comp.changeExerciseById).toHaveBeenCalled();
     });

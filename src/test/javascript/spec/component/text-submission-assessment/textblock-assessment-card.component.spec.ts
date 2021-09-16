@@ -81,7 +81,7 @@ describe('TextblockAssessmentCardComponent', () => {
         component.textBlockRef.initFeedback();
         fixture.detectChanges();
 
-        spyOn(component.didDelete, 'emit');
+        jest.spyOn(component.didDelete, 'emit');
         const feedbackEditor = fixture.debugElement.query(By.directive(TextblockFeedbackEditorComponent));
         const feedbackEditorComponent = feedbackEditor.componentInstance as TextblockFeedbackEditorComponent;
         feedbackEditorComponent.dismiss();

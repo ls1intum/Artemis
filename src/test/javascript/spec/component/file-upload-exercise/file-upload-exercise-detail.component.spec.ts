@@ -105,7 +105,7 @@ describe('FileUploadExercise Management Detail Component', () => {
     describe('Title should contain exercise id and description list', () => {
         it('Should call load all on init', fakeAsync(() => {
             const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'find').and.returnValue(
+            jest.spyOn(service, 'find').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: fileUploadExerciseWithCourse,
@@ -138,7 +138,7 @@ describe('FileUploadExercise Management Detail Component', () => {
         it('Should call load on init and be not in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'find').and.returnValue(
+            jest.spyOn(service, 'find').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: fileUploadExerciseWithCourse,
@@ -171,7 +171,7 @@ describe('FileUploadExercise Management Detail Component', () => {
         it('Should call load on init and be in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'find').and.returnValue(
+            jest.spyOn(service, 'find').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: fileUploadExerciseWithExerciseGroup,

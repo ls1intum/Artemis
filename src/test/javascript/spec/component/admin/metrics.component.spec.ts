@@ -40,7 +40,7 @@ describe('MetricsComponent', () => {
                     unrelatedKey: 'test',
                 },
             };
-            spyOn(service, 'getMetrics').and.returnValue(of(response));
+            jest.spyOn(service, 'getMetrics').mockReturnValue(of(response));
 
             // WHEN
             comp.ngOnInit();

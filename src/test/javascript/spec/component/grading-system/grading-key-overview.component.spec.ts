@@ -67,9 +67,9 @@ describe('GradeKeyOverviewComponent', () => {
     });
 
     it('should initialize', () => {
-        spyOn(gradingSystemService, 'findGradeSteps').and.returnValue(of(gradeStepsDto));
-        spyOn(gradingSystemService, 'sortGradeSteps').and.returnValue([gradeStep1, gradeStep2]);
-        const gradePointsSpy = spyOn(gradingSystemService, 'setGradePoints').and.stub();
+        jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDto));
+        jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue([gradeStep1, gradeStep2]);
+        const gradePointsSpy = jest.spyOn(gradingSystemService, 'setGradePoints').and.stub();
 
         fixture.detectChanges();
 
@@ -86,7 +86,7 @@ describe('GradeKeyOverviewComponent', () => {
     });
 
     it('should print PDF', fakeAsync(() => {
-        const windowSpy = spyOn(window, 'print');
+        const windowSpy = jest.spyOn(window, 'print');
 
         comp.printPDF();
 

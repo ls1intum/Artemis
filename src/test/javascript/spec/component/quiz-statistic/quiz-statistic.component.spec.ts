@@ -140,7 +140,7 @@ describe('QuizExercise Statistic Component', () => {
         it('should call navigate to courses if called by student', () => {
             // setup
             accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(false);
-            const routerSpy = spyOn(router, 'navigate');
+            const routerSpy = jest.spyOn(router, 'navigate');
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -189,7 +189,7 @@ describe('QuizExercise Statistic Component', () => {
 
         it('should use values of quizExercise and rated data', () => {
             // setup
-            const updateChartSpy = spyOn(comp, 'updateChart');
+            const updateChartSpy = jest.spyOn(comp, 'updateChart');
             comp.rated = true;
             comp.maxScore = 1;
 
@@ -219,7 +219,7 @@ describe('QuizExercise Statistic Component', () => {
 
         it('should use defaults if no quizQuestions are not set', () => {
             // setup
-            const updateChartSpy = spyOn(comp, 'updateChart');
+            const updateChartSpy = jest.spyOn(comp, 'updateChart');
             quizExercise.quizQuestions = [];
             comp.rated = true;
             comp.maxScore = 1;

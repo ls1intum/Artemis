@@ -51,7 +51,7 @@ describe('User Management Update Component', () => {
             [],
             fakeAsync(() => {
                 // GIVEN
-                spyOn(service, 'authorities').and.returnValue(of(['USER']));
+                jest.spyOn(service, 'authorities').mockReturnValue(of(['USER']));
 
                 // WHEN
                 comp.ngOnInit();
@@ -70,7 +70,7 @@ describe('User Management Update Component', () => {
             fakeAsync(() => {
                 // GIVEN
                 const entity = new User(123);
-                spyOn(service, 'update').and.returnValue(
+                jest.spyOn(service, 'update').mockReturnValue(
                     of(
                         new HttpResponse({
                             body: entity,
@@ -94,7 +94,7 @@ describe('User Management Update Component', () => {
             fakeAsync(() => {
                 // GIVEN
                 const entity = new User();
-                spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
+                jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
                 comp.user = entity;
                 // WHEN
                 comp.save();

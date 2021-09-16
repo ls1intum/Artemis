@@ -178,8 +178,8 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
     it('should cancelAssessment', fakeAsync(() => {
         // test cancelAssessment
-        const windowSpy = spyOn(window, 'confirm').and.returnValue(true);
-        const modelAssServiceCancelAssSpy = spyOn(programmingAssessmentService, 'cancelAssessment').and.returnValue(of(1));
+        const windowSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+        const modelAssServiceCancelAssSpy = jest.spyOn(programmingAssessmentService, 'cancelAssessment').mockReturnValue(of(1));
         component.exercise = programmingExercise2;
         // call
         component.cancelAssessment(programmingSubmission2);
@@ -192,7 +192,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
     it('should sortRows', () => {
         // test cancelAssessment
-        const sortServiceSpy = spyOn(sortService, 'sortByProperty');
+        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
         component.predicate = 'predicate';
         component.reverse = false;
         component.submissions = [programmingSubmission2];

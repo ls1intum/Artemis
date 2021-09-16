@@ -55,7 +55,7 @@ describe('OrganizationManagementUpdateComponent', () => {
             organization1.shortName = 'oO1';
             organization1.emailPattern = '.*1';
 
-            spyOn(organizationService, 'getOrganizationById').and.returnValue(of(organization1));
+            jest.spyOn(organizationService, 'getOrganizationById').mockReturnValue(of(organization1));
 
             component.ngOnInit();
 
@@ -67,7 +67,7 @@ describe('OrganizationManagementUpdateComponent', () => {
         it('should update the current edited organization', fakeAsync(() => {
             organization1.name = 'updatedName';
             component.organization = organization1;
-            spyOn(organizationService, 'update').and.returnValue(of(organization1));
+            jest.spyOn(organizationService, 'update').mockReturnValue(of(organization1));
 
             component.save();
             tick();
@@ -83,7 +83,7 @@ describe('OrganizationManagementUpdateComponent', () => {
             newOrganization.emailPattern = '.*';
 
             component.organization = newOrganization;
-            spyOn(organizationService, 'add').and.returnValue(of(newOrganization));
+            jest.spyOn(organizationService, 'add').mockReturnValue(of(newOrganization));
 
             component.save();
             tick();

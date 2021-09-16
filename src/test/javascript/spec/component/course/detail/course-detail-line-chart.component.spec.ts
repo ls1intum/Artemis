@@ -53,11 +53,11 @@ describe('CourseDetailLineChartComponent', () => {
 
     it('should initialize', () => {
         const graphData: number[] = [];
-        const spy = spyOn(service, 'getStatisticsData');
+        const spy = jest.spyOn(service, 'getStatisticsData');
         for (let i = 0; i < 4; i++) {
             graphData[i] = 40 + 2 * i;
         }
-        spy.and.returnValue(of(graphData));
+        spy.mockReturnValue(of(graphData));
 
         component.ngOnChanges();
 

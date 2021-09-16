@@ -119,10 +119,10 @@ describe('InstructorCourseDashboardComponent', () => {
     });
 
     it('should initialize', fakeAsync(() => {
-        spyOn(service, 'findWithExercisesAndParticipations').and.returnValue(of(responseFakeCourse));
-        spyOn(service, 'getStatsForInstructors').and.returnValue(of(responseFakeStats));
+        jest.spyOn(service, 'findWithExercisesAndParticipations').mockReturnValue(of(responseFakeCourse));
+        jest.spyOn(service, 'getStatsForInstructors').mockReturnValue(of(responseFakeStats));
         const sortByPropertySpy = sinon.spy(sortService, 'sortByProperty');
-        spyOn(accountService, 'identity').and.returnValue(Promise.resolve(user));
+        jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
 
         component.ngOnInit();
         tick();
@@ -136,7 +136,7 @@ describe('InstructorCourseDashboardComponent', () => {
     describe('tests with failing server responses', () => {
         it('should initialize with failing server response for course fetching', () => {
             const error = { status: 404 };
-            spyOn(service, 'findWithExercisesAndParticipations').and.returnValue(throwError(new HttpErrorResponse(error)));
+            jest.spyOn(service, 'findWithExercisesAndParticipations').mockReturnValue(throwError(new HttpErrorResponse(error)));
             let alertServiceStub: SinonStub;
             alertServiceStub = stub(alertService, 'error');
 
@@ -146,10 +146,10 @@ describe('InstructorCourseDashboardComponent', () => {
 
         it('should initialize with failing server response for stats fetching', fakeAsync(() => {
             const error = { status: 404 };
-            spyOn(service, 'getStatsForInstructors').and.returnValue(throwError(new HttpErrorResponse(error)));
+            jest.spyOn(service, 'getStatsForInstructors').mockReturnValue(throwError(new HttpErrorResponse(error)));
             let alertServiceStub: SinonStub;
             alertServiceStub = stub(alertService, 'error');
-            spyOn(service, 'findWithExercisesAndParticipations').and.returnValue(of(responseFakeCourse));
+            jest.spyOn(service, 'findWithExercisesAndParticipations').mockReturnValue(of(responseFakeCourse));
 
             component.ngOnInit();
             tick();
@@ -169,9 +169,9 @@ describe('InstructorCourseDashboardComponent', () => {
     });
 
     it('should sort the exercises', fakeAsync(() => {
-        spyOn(service, 'findWithExercisesAndParticipations').and.returnValue(of(responseFakeCourse));
-        spyOn(service, 'getStatsForInstructors').and.returnValue(of(responseFakeStats));
-        spyOn(accountService, 'identity').and.returnValue(Promise.resolve(user));
+        jest.spyOn(service, 'findWithExercisesAndParticipations').mockReturnValue(of(responseFakeCourse));
+        jest.spyOn(service, 'getStatsForInstructors').mockReturnValue(of(responseFakeStats));
+        jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
         const sortSpy = sinon.spy(sortService, 'sortByProperty');
 
         component.ngOnInit();

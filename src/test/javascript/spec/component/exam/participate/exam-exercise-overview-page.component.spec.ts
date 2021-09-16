@@ -54,7 +54,7 @@ describe('Exam Exercise Overview Component', () => {
     }));
 
     it('should open the exercise', () => {
-        spyOn(comp.onPageChanged, 'emit');
+        jest.spyOn(comp.onPageChanged, 'emit');
 
         comp.openExercise(comp.studentExam.exercises![0]);
 

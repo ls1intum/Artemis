@@ -75,7 +75,7 @@ describe('Plagiarism Split View Component', () => {
     // TODO: for some reason this test does not work
     // it('should subscribe to the split control subject', () => {
     //     comp.exercise = textExercise;
-    //     spyOn(splitControlSubject, 'subscribe');
+    //     jest.spyOn(splitControlSubject, 'subscribe');
     //
     //     fixture.detectChanges();
     //     expect(comp.splitControlSubject.subscribe).toHaveBeenCalled();
@@ -129,7 +129,7 @@ describe('Plagiarism Split View Component', () => {
     });
 
     it('parses text matches', () => {
-        spyOn(comp, 'mapMatchesToElements').and.returnValue(new Map());
+        jest.spyOn(comp, 'mapMatchesToElements').mockReturnValue(new Map());
 
         const matches: PlagiarismMatch[] = [];
         comp.parseTextMatches({ submissionA, submissionB, matches } as PlagiarismComparison<TextSubmissionElement>);

@@ -36,7 +36,7 @@ describe('ExamTimerComponent', function () {
     });
 
     it('should call ngOnInit', () => {
-        spyOn(dateService, 'now').and.returnValue(now);
+        jest.spyOn(dateService, 'now').mockReturnValue(now);
         component.criticalTime = dayjs.duration(200);
         component.ngOnInit();
         expect(component).to.be.ok;
@@ -64,7 +64,7 @@ describe('ExamTimerComponent', function () {
     it('should update time in the template correctly', fakeAsync(() => {
         // 30 minutes left
         component.endDate = dayjs(now).add(30, 'minutes');
-        spyOn(dateService, 'now').and.returnValues(dayjs(now), dayjs(now), dayjs(now).add(5, 'minutes'));
+        jest.spyOn(dateService, 'now').mockReturnValue(dayjs(now), dayjs(now), dayjs(now).add(5, 'minutes'));
         fixture.detectChanges();
         tick();
         let timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();

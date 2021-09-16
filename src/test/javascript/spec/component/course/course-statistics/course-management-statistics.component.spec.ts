@@ -64,13 +64,13 @@ describe('CourseManagementStatisticsComponent', () => {
     });
 
     it('should initialize', () => {
-        spyOn(service, 'getCourseStatistics').and.returnValue(of(returnValue));
+        jest.spyOn(service, 'getCourseStatistics').mockReturnValue(of(returnValue));
         fixture.detectChanges();
         expect(component).to.be.ok;
     });
 
     it('should trigger when tab changed', fakeAsync(() => {
-        spyOn(service, 'getCourseStatistics').and.returnValue(of(returnValue));
+        jest.spyOn(service, 'getCourseStatistics').mockReturnValue(of(returnValue));
         const tabSpy = sinon.spy(component, 'onTabChanged');
         fixture.detectChanges();
 
