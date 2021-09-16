@@ -1,5 +1,4 @@
 import { artemis } from '../../support/ArtemisTesting';
-import { generateUUID } from '../../support/utils';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -11,22 +10,13 @@ const courseManagementRequest = artemis.requests.courseManagement;
 // Page objects
 const multipleChoiceQuiz = artemis.pageobjects.multipleChoiceQuiz;
 
-// Common primitives
-let uid: string;
-let courseName: string;
-let courseShortName: string;
-let quizExerciseName: string;
-
 describe('Quiz Exercise Management', () => {
     let course: any;
     let quizExercise: any;
 
     before('Set up course', () => {
-        uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
         cy.login(admin);
-        courseManagementRequest.createCourse(courseName, courseShortName).then((response) => {
+        courseManagementRequest.createCourse().then((response) => {
             course = response.body;
             courseManagementRequest.addStudentToCourse(course.id, student.username);
         });
@@ -44,10 +34,8 @@ describe('Quiz Exercise Management', () => {
 
     describe('Quiz exercise participation', () => {
         beforeEach('Create quiz exercise', () => {
-            uid = generateUUID();
-            quizExerciseName = 'Cypress Quiz ' + uid;
             cy.login(admin);
-            courseManagementRequest.createQuizExercise({ course }, quizExerciseName).then((quizResponse) => {
+            courseManagementRequest.createQuizExercise({ course }).then((quizResponse) => {
                 quizExercise = quizResponse.body;
             });
         });
