@@ -29,7 +29,7 @@ import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-use
     selector: 'jhi-user-settings-prototype',
     template: '',
 })
-class UserSettingsPrototypeComponentMock extends UserSettingsDirective {
+class UserSettingsMockComponent extends UserSettingsDirective {
     changeDetector: ChangeDetectorRef;
     alertService: JhiAlertService;
 
@@ -44,8 +44,8 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('User Settings Directive', () => {
-    let comp: UserSettingsPrototypeComponentMock;
-    let fixture: ComponentFixture<UserSettingsPrototypeComponentMock>;
+    let comp: UserSettingsMockComponent;
+    let fixture: ComponentFixture<UserSettingsMockComponent>;
 
     let userSettingsService: UserSettingsService;
     let httpMock: HttpTestingController;
@@ -70,7 +70,7 @@ describe('User Settings Directive', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, TranslateTestingModule],
-            declarations: [UserSettingsPrototypeComponentMock],
+            declarations: [UserSettingsMockComponent],
             providers: [
                 MockProvider(ChangeDetectorRef),
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
@@ -81,7 +81,7 @@ describe('User Settings Directive', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(UserSettingsPrototypeComponentMock);
+                fixture = TestBed.createComponent(UserSettingsMockComponent);
                 comp = fixture.componentInstance;
                 // can be any other category, it does not change the logic
                 comp.userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
