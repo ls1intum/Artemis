@@ -269,7 +269,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         blockedNotification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(blockedType));
         notificationRepository.save(blockedNotification);
 
-        List<Notification> notifications = request.getList("/api/notifications/filtered-by-settings", HttpStatus.OK, Notification.class);
+        List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
 
         assertThat(notifications).as("Notification that is allowed by Settings is returned").contains(allowedNotification);
         assertThat(notifications).as("Notification that is blocked by Settings is not returned").doesNotContain(blockedNotification);
