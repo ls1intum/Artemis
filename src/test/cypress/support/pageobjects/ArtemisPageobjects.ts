@@ -11,6 +11,7 @@ import { NavigationBar } from './NavigationBar';
 import { OnlineEditorPage } from './OnlineEditorPage';
 import { CreateModelingExercisePage } from './CreateModelingExercisePage';
 import { ModelingExerciseAssessmentEditor } from './ModelingExerciseAssessmentEditor';
+import { MultipleChoiceQuiz } from './MultipleChoiceQuiz';
 import { ModelingEditor } from './ModelingEditor';
 import { ExamStartEndPage } from './exam/ExamStartEndPage';
 import { QuizExerciseCreationPage } from './QuizExerciseCreationPage';
