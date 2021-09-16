@@ -17,7 +17,6 @@ import org.springframework.util.ObjectUtils;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
-//import io.jsonwebtoken.jackson.io.JacksonSerializer;
 import io.jsonwebtoken.security.Keys;
 import tech.jhipster.config.JHipsterProperties;
 
