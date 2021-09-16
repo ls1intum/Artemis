@@ -21,7 +21,7 @@
    * Add a new `X-OptionCore` that **extends** `OptionCore` and define the needed properties for `child-settings`
    * Add the new `category` to `user-settings.constants.ts` *(under webapp/shared/constants)*
                (look at `notification-settings.default.ts` for an example)<br>
-     ```js
+     ```
      // General Structure for child-settings.default.ts
      
      // define new concrete implementation for OptionCore
@@ -57,7 +57,7 @@
         * Example : <br> `{{ 'artemisApp.userSettings.optionGroupNames.' + optionGroup.name | artemisTranslate }}`<br>
         with `optionGroup.name` = *'Exercise Notifications'* <br>
           The structure of `userSettings.json` :
-          ```json
+          ```
            "artemisApp": {
            "userSettings": {
             ...
@@ -73,7 +73,7 @@
    * **Extend** from `user-settings-prototype.component` *(if you want to reuse its functionality)* and **implement** `OnInit`
    * Place the relevant Services for the parent(prototype) component in the constructor
    * Inside `ngOnInit()` call `super.ngOnInit()`, afterwards set the child specific `userSettingsCategory`*(same as in default.ts)* and `changeEventMessage`
-     ```js
+     ```
        //... constructor
      
        //important for polymorphism to work properly
