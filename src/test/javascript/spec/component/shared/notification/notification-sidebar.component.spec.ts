@@ -107,9 +107,9 @@ describe('Notification Sidebar Component', () => {
         });
 
         it('should query notifications', () => {
-            sinon.spy(notificationService, 'queryFiltered');
+            sinon.spy(notificationService, 'queryNotificationsFilteredBySettings');
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryFiltered).to.have.been.calledOnce;
+            expect(notificationService.queryNotificationsFilteredBySettings).to.have.been.calledOnce;
         });
 
         it('should subscribe to notification updates for user', () => {
@@ -198,25 +198,25 @@ describe('Notification Sidebar Component', () => {
         it('should not add already existing notifications', () => {
             notificationSidebarComponent.notifications = [notificationNow];
             const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
-            sinon.replace(notificationService, 'queryFiltered', fake);
+            sinon.replace(notificationService, 'queryNotificationsFilteredBySettings', fake);
             notificationSidebarComponent.ngOnInit();
             expect(notificationSidebarComponent.notifications.length).to.be.equal(notifications.length);
         });
 
         it('should update sorted notifications array after new notifications were loaded', () => {
             const fake = sinon.fake.returns(of(generateQueryResponse([notificationPast, notificationNow])));
-            sinon.replace(notificationService, 'queryFiltered', fake);
+            sinon.replace(notificationService, 'queryNotificationsFilteredBySettings', fake);
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryFiltered).to.have.been.calledOnce;
+            expect(notificationService.queryNotificationsFilteredBySettings).to.have.been.calledOnce;
             expect(notificationSidebarComponent.sortedNotifications[0]).to.be.equal(notificationNow);
             expect(notificationSidebarComponent.sortedNotifications[1]).to.be.equal(notificationPast);
         });
 
         it('should set total notification count to received X-Total-Count header', () => {
             const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
-            sinon.replace(notificationService, 'queryFiltered', fake);
+            sinon.replace(notificationService, 'queryNotificationsFilteredBySettings', fake);
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryFiltered).to.have.been.calledOnce;
+            expect(notificationService.queryNotificationsFilteredBySettings).to.have.been.calledOnce;
             expect(notificationSidebarComponent.totalNotifications).to.be.equal(notifications.length);
         });
 
@@ -239,9 +239,9 @@ describe('Notification Sidebar Component', () => {
         it('should load more notifications only if not all are already loaded', () => {
             notificationSidebarComponent.notifications = notifications;
             notificationSidebarComponent.totalNotifications = 2;
-            sinon.spy(notificationService, 'query');
+            sinon.spy(notificationService, 'queryNotificationsFilteredBySettings');
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.query).not.to.be.called;
+            expect(notificationService.queryNotificationsFilteredBySettings).not.to.be.called;
         });
     });
 
@@ -249,9 +249,9 @@ describe('Notification Sidebar Component', () => {
         it('should evaluate recent notifications correctly', () => {
             notificationSidebarComponent.lastNotificationRead = moment().subtract(1, 'day');
             const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
-            sinon.replace(notificationService, 'queryFiltered', fake);
+            sinon.replace(notificationService, 'queryNotificationsFilteredBySettings', fake);
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryFiltered).to.be.called;
+            expect(notificationService.queryNotificationsFilteredBySettings).to.be.called;
             expect(notificationSidebarComponent.recentNotificationCount).to.be.equal(1);
         });
 

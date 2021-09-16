@@ -89,27 +89,12 @@ public class NotificationResource {
     }
 
     /**
-     * GET /notifications : Get all notifications by pages.
-     *
-     * @param pageable Pagination information for fetching the notifications
-     * @return the list notifications
-     */
-    @GetMapping("/notifications")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUser(@ApiParam Pageable pageable) {
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        final Page<Notification> page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), pageable);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-    }
-
-    /**
-     * GET /notifications/filtered-by-settings : Get all notifications that align with the current user notification settings by pages.
+     * GET /notifications : Get all notifications that also align with the current user notification settings by pages.
      *
      * @param pageable Pagination information for fetching the notifications
      * @return the filtered list of notifications based on current user settings
      */
-    @GetMapping("/notifications/filtered-by-settings")
+    @GetMapping("/notifications")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();

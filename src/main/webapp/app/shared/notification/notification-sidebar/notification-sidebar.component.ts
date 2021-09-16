@@ -122,7 +122,7 @@ export class NotificationSidebarComponent implements OnInit {
         if (!this.loading && (this.totalNotifications === 0 || this.notifications.length < this.totalNotifications)) {
             this.loading = true;
             this.notificationService
-                .queryFiltered({
+                .queryNotificationsFilteredBySettings({
                     page: this.page,
                     size: this.notificationsPerPage,
                     sort: ['notificationDate,desc'],
