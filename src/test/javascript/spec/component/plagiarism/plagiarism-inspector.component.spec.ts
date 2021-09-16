@@ -47,28 +47,33 @@ describe('Plagiarism Inspector Component', () => {
     const activatedRoute = {
         data: of({ exercise: modelingExercise }),
     };
-    const plagiarismResult = {
-        comparisons: [
-            {
-                submissionA: { studentLogin: 'student1A' },
-                submissionB: { studentLogin: 'student1B' },
-                similarity: 0.5,
-                status: PlagiarismStatus.NONE,
-            },
-            {
-                submissionA: { studentLogin: 'student2A' },
-                submissionB: { studentLogin: 'student2B' },
-                similarity: 0.8,
-                status: PlagiarismStatus.NONE,
-            },
-            {
-                submissionA: { studentLogin: 'student3A' },
-                submissionB: { studentLogin: 'student3B' },
-                similarity: 0.7,
-                status: PlagiarismStatus.NONE,
-            },
-        ],
+    const comparisons = [
+        {
+            submissionA: { studentLogin: 'student1A' },
+            submissionB: { studentLogin: 'student1B' },
+            similarity: 0.5,
+            status: PlagiarismStatus.NONE,
+        },
+        {
+            submissionA: { studentLogin: 'student2A' },
+            submissionB: { studentLogin: 'student2B' },
+            similarity: 0.8,
+            status: PlagiarismStatus.NONE,
+        },
+        {
+            submissionA: { studentLogin: 'student3A' },
+            submissionB: { studentLogin: 'student3B' },
+            similarity: 0.7,
+            status: PlagiarismStatus.NONE,
+        },
+    ];
+    const modelingPlagiarismResult = {
+        comparisons,
     } as ModelingPlagiarismResult;
+
+    const textPlagiarismResult = {
+        comparisons,
+    } as TextPlagiarismResult;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -87,7 +92,7 @@ describe('Plagiarism Inspector Component', () => {
         const websocketService = TestBed.inject(JhiWebsocketService);
         const websocketServiceSpy = sinon.spy(websocketService, 'subscribe');
         sinon.stub(websocketService, 'receive').returns(of({ state: 'COMPLETED', messages: 'a message' } as PlagiarismCheckState));
-        sinon.stub(modelingExerciseService, 'getLatestPlagiarismResult').returns(of(plagiarismResult));
+        sinon.stub(modelingExerciseService, 'getLatestPlagiarismResult').returns(of(modelingPlagiarismResult));
 
         comp.ngOnInit();
         tick();
@@ -95,7 +100,7 @@ describe('Plagiarism Inspector Component', () => {
         expect(websocketServiceSpy).toHaveBeenCalledWith(comp.getPlagarismDetectionTopic());
         expect(comp.getPlagarismDetectionTopic()).toEqual(`/topic/modeling-exercises/${modelingExercise.id}/plagiarism-check`);
         expect(comp.detectionInProgress).toBe(false);
-        expect(comp.plagiarismResult).toBe(plagiarismResult);
+        expect(comp.plagiarismResult).toBe(modelingPlagiarismResult);
     }));
 
     it('should return the correct topic url', () => {
@@ -126,7 +131,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should fetch the plagiarism detection results for modeling exercises', () => {
         comp.exercise = modelingExercise;
-        jest.spyOn(modelingExerciseService, 'checkPlagiarism').mockReturnValue(of(plagiarismResult));
+        jest.spyOn(modelingExerciseService, 'checkPlagiarism').mockReturnValue(of(modelingPlagiarismResult));
 
         comp.checkPlagiarism();
 
@@ -135,7 +140,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should fetch the plagiarism detection results for programming exercises', () => {
         comp.exercise = programmingExercise;
-        jest.spyOn(programmingExerciseService, 'checkPlagiarism').mockReturnValue(of(plagiarismResult));
+        jest.spyOn(programmingExerciseService, 'checkPlagiarism').mockReturnValue(of(textPlagiarismResult));
 
         comp.checkPlagiarism();
 
@@ -144,7 +149,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should fetch the plagiarism detection results for text exercises', () => {
         comp.exercise = textExercise;
-        jest.spyOn(textExerciseService, 'checkPlagiarism').mockReturnValue(of(plagiarismResult));
+        jest.spyOn(textExerciseService, 'checkPlagiarism').mockReturnValue(of(textPlagiarismResult));
 
         comp.checkPlagiarism();
 
@@ -152,9 +157,9 @@ describe('Plagiarism Inspector Component', () => {
     });
 
     it('should comparisons by similarity', () => {
-        comp.sortComparisonsForResult(plagiarismResult);
+        comp.sortComparisonsForResult(modelingPlagiarismResult);
 
-        expect(plagiarismResult.comparisons[0].similarity).toEqual(0.8);
+        expect(modelingPlagiarismResult.comparisons[0].similarity).toEqual(0.8);
     });
 
     it('should select a comparison at the given index', () => {
@@ -166,7 +171,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should download the plagiarism detection results as JSON', () => {
         comp.exercise = modelingExercise;
-        comp.plagiarismResult = plagiarismResult;
+        comp.plagiarismResult = modelingPlagiarismResult;
         comp.downloadPlagiarismResultsJson();
 
         expect(downloadFile).toHaveBeenCalled();
@@ -174,7 +179,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should download the plagiarism detection results as CSV', () => {
         comp.exercise = modelingExercise;
-        comp.plagiarismResult = plagiarismResult;
+        comp.plagiarismResult = modelingPlagiarismResult;
         comp.downloadPlagiarismResultsCsv();
 
         expect(ExportToCsv).toHaveBeenCalled();
@@ -189,7 +194,7 @@ describe('Plagiarism Inspector Component', () => {
         jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
-        expect(comp.detectionInProgress).toBe(true);
+        expect(comp.detectionInProgress).toBe(false);
 
         tick();
 
@@ -205,7 +210,7 @@ describe('Plagiarism Inspector Component', () => {
         jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
-        expect(comp.detectionInProgress).toBe(true);
+        expect(comp.detectionInProgress).toBe(false);
 
         tick();
 
@@ -221,7 +226,7 @@ describe('Plagiarism Inspector Component', () => {
         jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
-        expect(comp.detectionInProgress).toBe(true);
+        expect(comp.detectionInProgress).toBe(false);
 
         tick();
 

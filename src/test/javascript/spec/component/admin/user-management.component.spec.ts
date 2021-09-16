@@ -85,7 +85,7 @@ describe('UserManagementComponent', () => {
                         }),
                     ),
                 );
-                jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ status: 200 })));
+                jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
 
                 // WHEN
                 comp.setActive(user, true);

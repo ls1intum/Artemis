@@ -190,7 +190,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
     getFileHeaders = (fileName: string) => {
         return this.http
-            .head<Observable<HttpResponse<Blob>>>(`${this.restResourceUrl}/file`, { observe: 'response', params: new HttpParams().set('file', fileName) })
+            .head<Blob>(`${this.restResourceUrl}/file`, { observe: 'response', params: new HttpParams().set('file', fileName) })
             .pipe(handleErrorResponse(this.conflictService));
     };
 

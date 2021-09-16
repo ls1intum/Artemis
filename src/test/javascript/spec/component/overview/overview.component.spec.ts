@@ -108,8 +108,8 @@ describe('Overview Component', () => {
 
                     jest.spyOn<any, any>(guidedTourComponent, 'subscribeToDotChanges').mockReturnValue(of());
 
-                    jest.spyOn(exerciseService, 'getNextExercisesForDays').mockReturnValue(of());
-                    jest.spyOn(guidedTourService, 'init').mockReturnValue(of());
+                    jest.spyOn(exerciseService, 'getNextExercisesForDays').mockReturnValue([]);
+                    jest.spyOn(guidedTourService, 'init').mockImplementation();
                     jest.spyOn<any, any>(guidedTourService, 'updateGuidedTourSettings').mockReturnValue(of());
 
                     jest.spyOn<any, any>(guidedTourService, 'checkTourState').mockReturnValue(true);
