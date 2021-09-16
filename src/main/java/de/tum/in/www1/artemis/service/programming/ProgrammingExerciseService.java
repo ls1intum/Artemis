@@ -594,33 +594,35 @@ public class ProgrammingExerciseService {
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
     public void replacePlaceholders(ProgrammingExercise programmingExercise, Repository repository) throws IOException {
-        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
-            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
-        }
-        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
-            if (programmingExercise.getProjectType() == ProjectType.PLAIN) {
-                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageName());
-                fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
-            }
-            if (programmingExercise.getProjectType() == ProjectType.XCODE) {
-                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
-                fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
-            }
-        }
-
         Map<String, String> replacements = new HashMap<>();
+        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
+        ProjectType projectType = programmingExercise.getProjectType();
 
-        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
-            replacements.put("${packageName}", programmingExercise.getPackageName());
-        }
-        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
-            if (programmingExercise.getProjectType() == ProjectType.PLAIN) {
+        switch (programmingLanguage) {
+            case JAVA, KOTLIN -> {
+                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
                 replacements.put("${packageName}", programmingExercise.getPackageName());
+                break;
             }
-            if (programmingExercise.getProjectType() == ProjectType.XCODE) {
-                replacements.put("${appName}", programmingExercise.getPackageName());
+            case SWIFT -> {
+                switch (projectType) {
+                    case PLAIN -> {
+                        fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageName());
+                        fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
+                        replacements.put("${packageName}", programmingExercise.getPackageName());
+                        break;
+                    }
+                    case XCODE -> {
+                        fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
+                        fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
+                        replacements.put("${appName}", programmingExercise.getPackageName());
+                        break;
+                    }
+                }
+                break;
             }
         }
+
         // there is no need in python to replace package names
 
         replacements.put("${exerciseNamePomXml}", programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
