@@ -9,6 +9,7 @@ import { OrionFilterDirective } from './orion-filter.directive';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 
 export function initOrionConnector(connector: OrionConnectorService) {
     return () => OrionConnectorService.initConnector(connector);
@@ -19,6 +20,6 @@ export function initOrionConnector(connector: OrionConnectorService) {
     entryComponents: [ModalConfirmAutofocusComponent],
     imports: [CommonModule, ArtemisSharedModule, MomentModule, TranslateModule, FeatureToggleModule],
     exports: [OrionButtonComponent, OrionFilterDirective],
-    providers: [{ provide: APP_INITIALIZER, useFactory: initOrionConnector, deps: [OrionConnectorService], multi: true }, OrionBuildAndTestService],
+    providers: [{ provide: APP_INITIALIZER, useFactory: initOrionConnector, deps: [OrionConnectorService], multi: true }, OrionBuildAndTestService, OrionAssessmentService],
 })
 export class OrionModule {}
