@@ -1,4 +1,5 @@
 import { artemis } from '../../support/ArtemisTesting';
+import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -35,7 +36,7 @@ describe('Quiz Exercise Management', () => {
     describe('Quiz exercise participation', () => {
         beforeEach('Create quiz exercise', () => {
             cy.login(admin);
-            courseManagementRequest.createQuizExercise({ course }).then((quizResponse) => {
+            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((quizResponse) => {
                 quizExercise = quizResponse.body;
             });
         });
