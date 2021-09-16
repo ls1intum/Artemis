@@ -14,6 +14,7 @@ import { ModelingExerciseAssessmentEditor } from './ModelingExerciseAssessmentEd
 import { ModelingEditor } from './ModelingEditor';
 import { AssessmentDashboard } from './AssessmentDashboard';
 import { ExamStartEndPage } from './exam/ExamStartEndPage';
+import { QuizExerciseCreationPage } from './QuizExerciseCreationPage';
 import { TextExerciseCreationPage } from './exercises/text/TextExerciseCreationPage';
 import { TextExerciseExampleSubmissionsPage } from './exercises/text/TextExerciseExampleSubmissionsPage';
 import { TextExerciseExampleSubmissionCreationPage } from './exercises/text/TextExerciseExampleSubmissionCreationPage';
@@ -38,6 +39,7 @@ export class ArtemisPageobjects {
     modelingEditor = new ModelingEditor();
     examStartEnd = new ExamStartEndPage();
     assessmentDashboard = new AssessmentDashboard();
+    quizExerciseCreation = new QuizExerciseCreationPage();
     textExercise = {
         creation: new TextExerciseCreationPage(),
         exampleSubmissions: new TextExerciseExampleSubmissionsPage(),
