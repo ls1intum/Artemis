@@ -50,7 +50,7 @@ jobs:
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Tests
-      run: ./gradlew --console=plain executeTests jacocoTestReport -x yarn -x webpack jacocoTestCoverageVerification
+      run: ./gradlew --console=plain executeTests jacocoTestReport -x npm -x webapp jacocoTestCoverageVerification
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
@@ -79,7 +79,7 @@ jobs:
     - name: Java Code Style
       run: ./gradlew spotlessCheck
     - name: Java Documentation
-      run: ./gradlew checkstyleMain -x yarn -x webpack
+      run: ./gradlew checkstyleMain -x npm -x webapp
       if: success() || failure()
 
   client-tests-fast:
@@ -91,11 +91,11 @@ jobs:
           uses: actions/setup-node@v2.4.0
           with:
               node-version: '${{ env.node }}'
-              cache: 'yarn'
+              cache: 'npm'
         - name: Install Dependencies
-          run: yarn install
+          run: npm install
         - name: Fast TypeScript Test without Typechecking
-          run: yarn test:ci --ci
+          run: npm run test:ci --ci
         - name: "Codacy: Report coverage"
           uses: codacy/codacy-coverage-reporter-action@master
           with:
@@ -119,11 +119,11 @@ jobs:
           uses: actions/setup-node@v2.4.0
           with:
               node-version: '${{ env.node }}'
-              cache: 'yarn'
+              cache: 'npm'
         - name: Install Dependencies
-          run: yarn install
+          run: npm install
         - name: TypeScript Test With Typechecking
-          run: yarn test --ci
+          run: npm run test --ci
         - name: Annotate Client Test Results
           uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
           if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
@@ -141,11 +141,11 @@ jobs:
       uses: actions/setup-node@v2.4.0
       with:
         node-version: '${{ env.node }}'
-        cache: 'yarn'
+        cache: 'npm'
     - name: Install Dependencies
-      run: yarn install
+      run: npm install
     - name: TypeScript Formatting
-      run: yarn prettier:check
+      run: npm run prettier:check
     - name: TypeScript Code Style
-      run: yarn lint
+      run: npm run lint
       if: success() || failure()

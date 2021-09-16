@@ -295,7 +295,7 @@ task cleanResources(type: Delete) {
 }
 
 task executeTests (type: Exec) {
-    commandLine "./gradlew", "test", "-x", "webpack"
+    commandLine "./gradlew", "test", "-x", "webapp"
 }
 
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
@@ -346,11 +346,11 @@ checkstyle {
 }
 
 task executeCheckstyle (type: Exec) {
-    commandLine "./gradlew", "checkstyleMain", "-x", "yarn", "-x", "webpack"
+    commandLine "./gradlew", "checkstyleMain", "-x", "npm", "-x", "webapp"
 }
 
 task buildJarForDocker (type: Exec) {
-    commandLine "./gradlew", "build", "-x", "webpack", "-x", "test", "-x", "jacocoTestCoverageVerification"
+    commandLine "./gradlew", "build", "-x", "webapp", "-x", "test", "-x", "jacocoTestCoverageVerification"
 }
 
 def isNonStable = { String version ->
@@ -382,13 +382,13 @@ tasks.named("dependencyUpdates").configure {
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests with coverage report:           ./gradlew executeTests jacocoTestReport -x yarn -x webpack
-// 2a) Execute tests without coverage report:       ./gradlew executeTests -x yarn -x webpack
+// 2) Execute tests with coverage report:           ./gradlew executeTests jacocoTestReport -x npm -x webapp
+// 2a) Execute tests without coverage report:       ./gradlew executeTests -x npm -x webapp
 // 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest or ./gradlew test --tests ExamIntegrationTest.testGetExamScore
-// 3) Check Java code format:                       ./gradlew spotlessCheck -x yarn -x webpack
-// 4) Apply Java code formatter:                    ./gradlew spotlessApply -x yarn -x webpack
+// 3) Check Java code format:                       ./gradlew spotlessCheck -x npm -x webapp
+// 4) Apply Java code formatter:                    ./gradlew spotlessApply -x npm -x webapp
 // 5) Find dependency updates:                      ./gradlew dependencyUpdates -Drevision=release
-// 6) Check JavaDoc:                                ./gradlew checkstyleMain -x yarn -x webpack
+// 6) Check JavaDoc:                                ./gradlew checkstyleMain -x npm -x webapp
 // 7) Generate Liquibase diff:                      ./gradlew liquibaseDiffChangelog
 // 8) Clear Liquibase checksums:                    ./gradlew liquibaseClearChecksums
 // 9) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
