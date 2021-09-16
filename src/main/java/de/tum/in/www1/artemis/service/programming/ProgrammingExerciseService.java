@@ -600,14 +600,16 @@ public class ProgrammingExerciseService {
 
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
-                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
+                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}",
+                        programmingExercise.getPackageFolderName());
                 replacements.put("${packageName}", programmingExercise.getPackageName());
                 break;
             }
             case SWIFT -> {
                 switch (projectType) {
                     case PLAIN -> {
-                        fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageName());
+                        fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}",
+                                programmingExercise.getPackageName());
                         fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
                         replacements.put("${packageName}", programmingExercise.getPackageName());
                         break;
