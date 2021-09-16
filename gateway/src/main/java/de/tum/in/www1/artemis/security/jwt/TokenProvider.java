@@ -17,7 +17,7 @@ import org.springframework.util.ObjectUtils;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.jackson.io.JacksonSerializer;
+//import io.jsonwebtoken.jackson.io.JacksonSerializer;
 import io.jsonwebtoken.security.Keys;
 import tech.jhipster.config.JHipsterProperties;
 
@@ -54,6 +54,12 @@ public class TokenProvider {
         this.tokenValidityInMillisecondsForRememberMe = 1000 * jHipsterProperties.getSecurity().getAuthentication().getJwt().getTokenValidityInSecondsForRememberMe();
     }
 
+    /**
+     * Create JWT Token a fully populated <code>Authentication</code> object.
+     * @param authentication Authentication Object
+     * @param rememberMe Determines Token lifetime (30 minutes vs 30 days)
+     * @return JWT Token
+     */
     public String createToken(Authentication authentication, boolean rememberMe) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
@@ -66,28 +72,40 @@ public class TokenProvider {
             validity = new Date(now + this.tokenValidityInMilliseconds);
         }
 
-        return Jwts.builder().setSubject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity)
-                .serializeToJsonWith(new JacksonSerializer()).compact();
+        return Jwts.builder().setSubject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
     }
 
+    /**
+     * Convert JWT Authorization Token into UsernamePasswordAuthenticationToken, including a USer object and its authorities
+     * @param token JWT Authorization Token
+     * @return UsernamePasswordAuthenticationToken
+     */
     public Authentication getAuthentication(String token) {
-        Claims claims = jwtParser.parseClaimsJws(token).getBody();
-
-        Collection<? extends GrantedAuthority> authorities = Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(",")).filter(auth -> !auth.trim().isEmpty())
-                .map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+        Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+        var authorityClaim = claims.get(AUTHORITIES_KEY);
+        if (authorityClaim == null) {
+            // leads to a 401 unauthorized error
+            return null;
+        }
+        Collection<? extends GrantedAuthority> authorities = Arrays.stream(authorityClaim.toString().split(",")).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
 
         User principal = new User(claims.getSubject(), "", authorities);
 
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
+    /**
+     * Validate an JWT Authorization Token
+     * @param authToken JWT Authorization Token
+     * @return boolean indicating if token is valid
+     */
     public boolean validateToken(String authToken) {
         try {
-            jwtParser.parseClaimsJws(authToken);
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken);
             return true;
         }
         catch (JwtException | IllegalArgumentException e) {
-            log.info("Invalid JWT token.");
+            log.info("Invalid JWT token: " + e.getMessage());
             log.trace("Invalid JWT token trace.", e);
         }
         return false;
