@@ -3,6 +3,7 @@ import { CypressExamBuilder } from '../../support/requests/CourseManagementReque
 import { artemis } from '../../support/ArtemisTesting';
 import dayjs from 'dayjs';
 import submission from '../../fixtures/programming_exercise_submissions/all_successful/submission.json';
+import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 
 // Requests
 const courseRequests = artemis.requests.courseManagement;
@@ -35,8 +36,8 @@ describe('Exam participation', () => {
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(2, 'days'))
                 .endDate(dayjs().add(3, 'days'))
-                .maxPoints(20)
-                .numberOfExercises(2)
+                .maxPoints(40)
+                .numberOfExercises(4)
                 .build();
             courseRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
@@ -47,11 +48,11 @@ describe('Exam participation', () => {
                 courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     courseRequests.createProgrammingExercise({ exerciseGroup: groupResponse.body });
                 });
-                courseRequests.addExerciseGroup(exam).then((groupResponse) => {
-                    courseRequests.createModelingExercise({ exerciseGroup: groupResponse.body }, modelingExerciseTemplate);
+                courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
+                    courseRequests.createModelingExercise({ exerciseGroup: groupResponse.body });
                 });
-                courseRequests.addExerciseGroup(exam).then((groupResponse) => {
-                    courseRequests.createQuizExercise({ exerciseGroup: groupResponse.body });
+                courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
+                    courseRequests.createQuizExercise({ exerciseGroup: groupResponse.body }, [multipleChoiceTemplate]);
                 });
                 courseRequests.generateMissingIndividualExams(exam);
                 courseRequests.prepareExerciseStartForExam(exam);
