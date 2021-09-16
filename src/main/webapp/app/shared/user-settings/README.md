@@ -7,7 +7,7 @@
 *Look at the `notification-settings` directory as a prime **example** for child-settings*
 
 **Steps :**
-1)  **Add a new route** for the new settings in `user-settings.route.ts`. *(under `children:`)*
+1)  **Add a new route** for the new settings in `user-settings.route.ts` *(under `children:`)*
     
     Add your option to the `user-settings-container.component.html` *(under `<!-- links to different settings -->`)*
 
