@@ -214,8 +214,7 @@ export class CourseManagementRequests {
         });
     }
 
-
-    createQuizExercise(body: { course: any } | { exerciseGroup: any }, title = 'Cypress quiz exercise' + generateUUID(), releaseDate = day(), quizQuestions: [any]) {
+    createQuizExercise(body: { course: any } | { exerciseGroup: any }, quizQuestions: [any], title = 'Cypress quiz exercise' + generateUUID(), releaseDate = day()) {
         const quizExercise: any = {
             ...quizTemplate,
             title,
