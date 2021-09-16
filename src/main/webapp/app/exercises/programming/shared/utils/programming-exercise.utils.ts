@@ -32,7 +32,7 @@ export const createCommitUrl = (
     template: string | undefined,
     projectKey: string | undefined,
     participation: Participation | undefined,
-    submission: ProgrammingSubmission,
+    submission: ProgrammingSubmission | undefined,
 ): string | undefined => {
     const projectKeyLowerCase = projectKey?.toLowerCase();
     let repoSlugPostfix: string | undefined = undefined;
@@ -52,7 +52,7 @@ export const createCommitUrl = (
         return template
             .replace('{projectKey}', projectKeyLowerCase)
             .replace('{repoSlug}', projectKeyLowerCase + '-' + repoSlugPostfix)
-            .replace('{commitHash}', submission.commitHash ?? '');
+            .replace('{commitHash}', submission?.commitHash ?? '');
     }
 };
 

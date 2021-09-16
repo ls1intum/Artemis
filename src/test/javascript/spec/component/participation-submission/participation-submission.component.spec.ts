@@ -36,8 +36,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/entities/participation/participation.model';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
@@ -153,29 +152,6 @@ describe('ParticipationSubmissionComponent', () => {
 
     afterEach(() => {
         restore();
-    });
-
-    it('Should return undefined commit url if participation has no repository url', () => {
-        const exercise: ProgrammingExercise = {
-            numberOfAssessmentsOfCorrectionRounds: [],
-            secondCorrectionEnabled: false,
-            studentAssignedTeamIdComputed: false,
-            projectKey: 'project-key',
-        };
-
-        const participation: ProgrammingExerciseStudentParticipation = { id: 1, type: ParticipationType.PROGRAMMING, participantIdentifier: 'identifier' };
-        const submission: ProgrammingSubmission = {
-            submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
-            id: 3,
-            submitted: true,
-            type: SubmissionType.MANUAL,
-            submissionDate: moment('2019-07-09T10:47:33.244Z'),
-            commitHash: '123456789',
-            participation,
-        };
-        comp.participation = participation;
-        comp.exercise = exercise;
-        expect(comp.getCommitUrl(submission)).to.be.undefined;
     });
 
     it('Submissions are correctly loaded from server', fakeAsync(() => {
