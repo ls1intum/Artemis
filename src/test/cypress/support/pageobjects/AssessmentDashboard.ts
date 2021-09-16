@@ -1,3 +1,5 @@
+import { BASE_API, POST, PUT } from '../constants';
+
 export class AssessmentDashboard {
     openExerciseDashboard() {
         cy.get('[jhitranslate="entity.action.exerciseDashboard"]').click();
@@ -28,8 +30,19 @@ export class AssessmentDashboard {
         cy.get('[jhitranslate="entity.action.save"]').click();
     }
 
+    submitModelingAssessment() {
+        cy.intercept(PUT, BASE_API + 'modeling-submissions/*/result/*/assessment*').as('submitAssessment');
+        this.submitAssessment();
+        return cy.wait('@submitAssessment');
+    }
+
+    submitTextAssessment() {
+        cy.intercept(POST, BASE_API + 'participations/*/results/*/submit-text-assessment').as('submitFeedback');
+        this.submitAssessment();
+        return cy.wait('@submitFeedback');
+    }
+
     submitAssessment() {
         cy.get('[jhitranslate="entity.action.submit"]').click();
-        cy.on('window:confirm', () => true);
     }
 }

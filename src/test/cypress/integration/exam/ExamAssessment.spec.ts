@@ -1,7 +1,7 @@
 import { generateUUID } from '../../support/utils';
 import { artemis } from '../../support/ArtemisTesting';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
-import { BASE_API, GROUP_SYNCHRONIZATION, PUT, POST } from '../../support/constants';
+import { BASE_API, GROUP_SYNCHRONIZATION, PUT } from '../../support/constants';
 import dayjs from 'dayjs';
 import { ProgrammingExerciseSubmission } from '../../support/pageobjects/OnlineEditorPage';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
@@ -86,8 +86,9 @@ describe('Exam Assessment', () => {
                 modelingAssessment.assessComponent(0, 'Neutral');
                 modelingAssessment.openAssessmentForComponent(3);
                 modelingAssessment.assessComponent(-1, 'Wrong');
-                assessmentDashboard.saveAssessment();
-                assessmentDashboard.submitAssessment();
+                assessmentDashboard.submitModelingAssessment().then((assessmentResponse) => {
+                    expect(assessmentResponse.response?.statusCode).to.equal(200);
+                });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                 cy.contains('2 of 10 points').should('be.visible');
             });
@@ -109,9 +110,9 @@ describe('Exam Assessment', () => {
             cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
             assessmentDashboard.startAssessing();
             assessmentDashboard.addNewFeedback(7, 'Good job');
-            cy.intercept(POST, BASE_API + 'participations/*/results/*/submit-text-assessment').as('submitFeedback');
-            assessmentDashboard.submitAssessment();
-            cy.wait('@submitFeedback');
+            assessmentDashboard.submitTextAssessment().then((assessmentResponse) => {
+                expect(assessmentResponse.response?.statusCode).to.equal(200);
+            });
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
             cy.get('.question-options').contains('7 of 10 points').should('be.visible');
         });
