@@ -5,7 +5,6 @@ import { generateUUID } from '../../support/utils';
 
 // Requests
 const courseManagementRequests = artemis.requests.courseManagement;
-const examManagementRequests = artemis.requests.examManagement;
 
 // page objects
 const examStartEnd = artemis.pageobjects.examStartEnd;
