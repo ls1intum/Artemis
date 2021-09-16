@@ -37,7 +37,6 @@ export class ArtemisPageobjects {
     createModelingExercise = new CreateModelingExercisePage();
     modelingExerciseAssessmentEditor = new ModelingExerciseAssessmentEditor();
     modelingEditor = new ModelingEditor();
-    examStartEnd = new ExamStartEndPage();
     assessmentDashboard = new AssessmentDashboard();
     quizExerciseCreation = new QuizExerciseCreationPage();
     textExercise = {
