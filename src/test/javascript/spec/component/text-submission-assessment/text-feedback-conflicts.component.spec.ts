@@ -318,9 +318,9 @@ describe('TextFeedbackConflictsComponent', () => {
         textBlockAssessmentAreas.forEach((textBlockAssessmentCardArea) => {
             const textBlockAssessmentCardComponent = textBlockAssessmentCardArea.componentInstance as TextblockAssessmentCardComponent;
             if (textBlockAssessmentCardComponent.textBlockRef === component.leftTextBlockRefs[0]) {
-                jest.spyOn(textBlockAssessmentCardComponent, 'didSelect');
+                jest.spyOn(textBlockAssessmentCardComponent.didSelect, 'emit');
                 textBlockAssessmentCardComponent.select();
-                expect(textBlockAssessmentCardComponent.didSelect).toHaveBeenCalledTimes(0);
+                expect(textBlockAssessmentCardComponent.didSelect.emit).toHaveBeenCalledTimes(0);
             }
         });
 

@@ -153,10 +153,10 @@ describe('GuidedTourService', () => {
         let participationService: ParticipationService;
         let courseService: CourseManagementService;
 
-        let findParticipationStub: SinonStub;
-        let deleteParticipationStub: SinonStub;
-        let deleteGuidedTourSettingStub: SinonStub;
-        let navigationStub: SinonStub;
+        let findParticipationStub: jest.SpyInstance;
+        let deleteParticipationStub: jest.SpyInstance;
+        let deleteGuidedTourSettingStub: jest.SpyInstance;
+        let navigationStub: jest.SpyInstance;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
@@ -192,11 +192,11 @@ describe('GuidedTourService', () => {
                     participationService = TestBed.inject(ParticipationService);
                     courseService = TestBed.inject(CourseManagementService);
 
-                    findParticipationStub = stub(participationService, 'findParticipation');
-                    deleteParticipationStub = stub(participationService, 'deleteForGuidedTour');
+                    findParticipationStub = jest.spyOn(participationService, 'findParticipation');
+                    deleteParticipationStub = jest.spyOn(participationService, 'deleteForGuidedTour');
                     // @ts-ignore
-                    deleteGuidedTourSettingStub = stub(guidedTourService, 'deleteGuidedTourSetting');
-                    navigationStub = stub(router, 'navigateByUrl');
+                    deleteGuidedTourSettingStub = jest.spyOn(guidedTourService, 'deleteGuidedTourSetting');
+                    navigationStub = jest.spyOn(router, 'navigateByUrl');
                 });
         });
 
@@ -217,7 +217,7 @@ describe('GuidedTourService', () => {
         async function startCourseOverviewTour(guidedTour: GuidedTour) {
             guidedTourComponent.ngAfterViewInit();
 
-            await guidedTourComponentFixture.ngZone!.run(() => {
+            guidedTourComponentFixture.ngZone!.run(() => {
                 router.navigateByUrl('/courses');
             });
 
@@ -406,13 +406,17 @@ describe('GuidedTourService', () => {
                 function prepareParticipation(exercise: Exercise, studentParticipation: StudentParticipation, httpResponse: HttpResponse<StudentParticipation>) {
                     exercise.course = course1;
                     exercise.studentParticipations = [studentParticipation];
-                    findParticipationStub.reset();
-                    deleteParticipationStub.reset();
-                    deleteGuidedTourSettingStub.reset();
-                    navigationStub.reset();
-                    findParticipationStub.returns(of(httpResponse));
-                    deleteParticipationStub.returns(of(undefined));
-                    deleteGuidedTourSettingStub.returns(of(undefined));
+
+                    navigationStub.mockClear();
+
+                    findParticipationStub.mockClear();
+                    findParticipationStub.mockReturnValue(of(httpResponse));
+
+                    deleteParticipationStub.mockClear();
+                    deleteParticipationStub.mockReturnValue(of(undefined));
+
+                    deleteGuidedTourSettingStub.mockClear();
+                    deleteGuidedTourSettingStub.mockReturnValue(of(undefined));
                 }
 
                 it('should find and delete the student participation for exercise', () => {
@@ -576,13 +580,14 @@ describe('GuidedTourService', () => {
             const htmlTarget = { addEventListener } as any;
             let observeMutationsStub: SinonStub;
             let handleWaitForSelectorEventSpy: jest.SpyInstance;
-            let querySelectorSpy: SinonStub;
+            let querySelectorSpy: jest.SpyInstance;
 
             beforeEach(() => {
                 guidedTourService.currentTour = tour;
                 observeMutationsStub = stub(guidedTourService, 'observeMutations');
                 handleWaitForSelectorEventSpy = jest.spyOn<any, any>(guidedTourService, 'handleWaitForSelectorEvent');
-                querySelectorSpy = sinon.stub(document, 'querySelector');
+                querySelectorSpy = jest.spyOn(document, 'querySelector');
+                querySelectorSpy.mockClear();
             });
             afterEach(() => {
                 jest.clearAllMocks();
@@ -784,7 +789,7 @@ describe('GuidedTourService', () => {
             const tourSettings = [{ guidedTourKey: 'test', guidedTourStep: 0 } as GuidedTourSetting];
             const authStateStub = jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of({ guidedTourSettings: tourSettings } as User));
             const tourMapping = { courseShortName: 'test-course' } as GuidedTourMapping;
-            const profileInfoStub = sinon.stub(profileService, 'getProfileInfo').returns(of({ guidedTourMapping: tourMapping } as ProfileInfo));
+            const profileInfoStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ guidedTourMapping: tourMapping } as ProfileInfo));
 
             // Fake mapping and settings to enable the tour. Should be overwritten by the return value of the profile service
             guidedTourService.guidedTourMapping = { courseShortName: 'test', tours: { tour_user_interaction: '' } } as GuidedTourMapping;
