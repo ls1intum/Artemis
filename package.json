@@ -135,7 +135,7 @@
         "lint-staged": "11.1.2",
         "merge-jsons-webpack-plugin": "2.0.0-alpha",
         "mini-css-extract-plugin": "2.3.0",
-        "ng-mocks": "12.5.0",
+        "ng-mocks": "12.3.1",
         "postcss": "8.3.6",
         "postcss-loader": "6.1.1",
         "prettier": "2.4.0",
