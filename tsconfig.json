@@ -42,6 +42,7 @@
         "src/main/webapp/app"
     ],
     "exclude": [
-        "node_modules"
+        "node_modules",
+        "src/main/webapp/app/shared/user-settings/README.md"
     ]
 }

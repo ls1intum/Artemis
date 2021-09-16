@@ -35,6 +35,9 @@ public class NotificationSettingsServiceTest {
 
     private static NotificationOption[] savedNotificationOptions;
 
+    /**
+     * Prepares the needed values and objects for testing
+     */
     @BeforeEach
     public void setup() {
         notificationSettingsService = new NotificationSettingsService();

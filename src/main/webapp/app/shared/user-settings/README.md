@@ -21,7 +21,7 @@
    * Add a new `X-OptionCore` that **extends** `OptionCore` and define the needed properties for `child-settings`
    * Add the new `category` to `user-settings.constants.ts` *(under webapp/shared/constants)*
                (look at `notification-settings.default.ts` for an example)<br>
-     ```
+     ```ts
      // General Structure for child-settings.default.ts
      
      // define new concrete implementation for OptionCore
@@ -35,9 +35,9 @@
         category: UserSettingsCategory.CHILD_SETTINGS,
         groups: [
            {
-              name: 'GroupNameA'
+              name: 'GroupNameA',
               restrictionLevel: Authority.USER,
-              options: [
+              options: [{
                  name: 'OptionA',
                  description: 'Description for OptionA',
                  optionCore: {
@@ -45,10 +45,10 @@
                     //... more properties with concretely set default values
                  }
               //... more Options
-              ]
+              }]
            }
            //... more OptionGroups
-     }
+     ]}
      ```
    c) Be **careful and precise** with the **naming** of new `optionSpecifiers`. Use them to create a mapping/correspondence to the actual changes in system-logic/behavior
    * These names correspond with other places where **mapping** and **translation** take place
@@ -57,15 +57,16 @@
         * Example : <br> `{{ 'artemisApp.userSettings.optionGroupNames.' + optionGroup.name | artemisTranslate }}`<br>
         with `optionGroup.name` = *'Exercise Notifications'* <br>
           The structure of `userSettings.json` :
-          ```
+          ```json
+          {
            "artemisApp": {
            "userSettings": {
-            ...
+            "...": "...",
            "optionGroupNames": {
            "Exercise Notifications": "Exercise Notifications",
-            ...
-           },
-           ...
+            "...": "..."
+           }}}
+          }
           ```
     
 
@@ -73,17 +74,21 @@
    * **Extend** from `user-settings-prototype.component` *(if you want to reuse its functionality)* and **implement** `OnInit`
    * Place the relevant Services for the parent(prototype) component in the constructor
    * Inside `ngOnInit()` call `super.ngOnInit()`, afterwards set the child specific `userSettingsCategory`*(same as in default.ts)* and `changeEventMessage`
-     ```
-       //... constructor
-     
-       //important for polymorphism to work properly
-       userSettings: UserSettings<ChildOptionCore>;
-       optionCores: Array<ChildOptionCore>;
-
-       ngOnInit(): void {
-        this.userSettingsCategory = UserSettingsCategory.CHILD_SETTINGS;
-        this.changeEventMessage = childChangeEventMessage;
-        super.ngOnInit();
+     ```ts
+        @Component
+        export class UserSettingsComponent extends UserSettingsPrototypeComponent implements OnInit {
+        constructor(userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: JhiAlertService) {
+        super(userSettingsService, alertService, changeDetector);
+        }
+        
+            userSettings: UserSettings<ChildOptionCore>;
+            optionCores: Array<ChildOptionCore>;
+        
+            ngOnInit(): void {
+                this.userSettingsCategory = UserSettingsCategory.CHILD_SETTINGS;
+                this.changeEventMessage = childSettingsChangeMessage;
+                super.ngOnInit();
+            }
         }
      ```
 5) For further child specific logic e.g. add a new `child-settings.service` file, new custom template/scss, etc.
