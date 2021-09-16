@@ -1,15 +1,11 @@
+
 # Prettier configuration
 
-printWidth: 140
+printWidth: 180
 singleQuote: true
-tabWidth: 2
-useTabs: false
-
-# js and ts rules:
-arrowParens: avoid
-
-# jsx and tsx rules:
-jsxBracketSameLine: false
+tabWidth: 4
+trailingComma: all
+endOfLine: auto
 
 # java rules:
 overrides:

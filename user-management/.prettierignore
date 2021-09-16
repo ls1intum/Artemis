@@ -6,3 +6,5 @@ package-lock.json
 .mvn
 gradle
 .gradle
+src/test/resources
+src/main/resources

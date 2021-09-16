@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.security;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.springframework.security.core.Authentication;
@@ -71,7 +72,57 @@ public final class SecurityUtils {
         return authentication != null && getAuthorities(authentication).anyMatch(authority::equals);
     }
 
+    /**
+     * This methods manually sets a dummy Authentication object that is always authenticated. When a request using a JpaRepository is made and the query associated with the method
+     * is not automatically generated but manually specified, the Spring Data JPA expects the user performing the request to be authenticated. If the request to the JpaRepository
+     * is made because of a REST-call from a server that is not authenticated within Spring, an InvalidDataAccessApiUsageException is raised. This method is a workaround for this
+     * behaviour. See https://jira.spring.io/browse/DATAJPA-1357 for more details.
+     */
+    public static void setAuthorizationObject() {
+        SecurityContext context = SecurityContextHolder.getContext();
+        Authentication authentication = new Authentication() {
+
+            @Override
+            public Collection<? extends GrantedAuthority> getAuthorities() {
+                return null;
+            }
+
+            @Override
+            public Object getCredentials() {
+                return null;
+            }
+
+            @Override
+            public Object getDetails() {
+                return null;
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return null;
+            }
+
+            @Override
+            public boolean isAuthenticated() {
+                return true;
+            }
+
+            @Override
+            public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
+
+            }
+
+            @Override
+            public String getName() {
+                return null;
+            }
+        };
+        context.setAuthentication(authentication);
+    }
+
     private static Stream<String> getAuthorities(Authentication authentication) {
         return authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority);
     }
+
+
 }
