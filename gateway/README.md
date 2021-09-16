@@ -65,25 +65,6 @@ To launch your application's tests, run:
 ```
 ./gradlew test jacocoTestReport -x yarn -x webpack -x copyClientBuildFiles
 ```
-### Code quality
-
-Sonar is used to analyse code quality. You can start a local Sonar server (accessible on http://localhost:9001) with:
-
-```
-docker-compose -f src/main/docker/sonar.yml up -d
-```
-
-Note: we have turned off authentication in [src/main/docker/sonar.yml](src/main/docker/sonar.yml) for out of the box experience while trying out SonarQube, for real use cases turn it back on.
-
-You can run a Sonar analysis with using the [sonar-scanner](https://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner) or by using the gradle plugin.
-
-Then, run a Sonar analysis:
-
-```
-./gradlew -Pprod clean check jacocoTestReport sonarqube
-```
-
-For more information, refer to the [Code quality page][].
 
 ## Using Docker to simplify development (optional)
 
@@ -113,7 +94,6 @@ To configure CI for your project, run the ci-cd sub-generator (`jhipster ci-cd`)
 [service discovery and configuration with the jhipster-registry]: https://www.jhipster.tech/documentation-archive/v7.1.0/microservices-architecture/#jhipster-registry
 [using docker and docker-compose]: https://www.jhipster.tech/documentation-archive/v7.1.0/docker-compose
 [using jhipster in production]: https://www.jhipster.tech/documentation-archive/v7.1.0/production/
-[code quality page]: https://www.jhipster.tech/documentation-archive/v7.1.0/code-quality/
 [setting up continuous integration]: https://www.jhipster.tech/documentation-archive/v7.1.0/setting-up-ci/
 [openapi-generator]: https://openapi-generator.tech
 [swagger-editor]: https://editor.swagger.io
