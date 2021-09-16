@@ -115,7 +115,7 @@ public class BambooBuildPlanService {
         Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName,
                 programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryName, auxiliaryRepositories)
                         .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
-                                programmingExercise.getShortName(), programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(),
+                                programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(),
                                 programmingExercise.getCheckoutSolutionRepository(), programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
 
         bambooServer.publish(plan);
@@ -146,7 +146,7 @@ public class BambooBuildPlanService {
         return new Project().key(key).name(name);
     }
 
-    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, ProjectType projectType, String packageName, String shortName, final boolean sequentialBuildRuns,
+    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, ProjectType projectType, String packageName, final boolean sequentialBuildRuns,
             Boolean staticCodeAnalysisEnabled, boolean checkoutSolutionRepository, List<AuxiliaryRepository> auxiliaryRepositories) {
         final var assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         final var testPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
