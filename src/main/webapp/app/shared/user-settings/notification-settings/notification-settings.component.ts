@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
 import { JhiAlertService } from 'ng-jhipster';
@@ -13,7 +13,7 @@ import { UserSettings } from 'app/shared/user-settings/user-settings.model';
     templateUrl: 'notification-settings.component.html',
     styleUrls: ['../user-settings.scss'],
 })
-export class NotificationSettingsComponent extends UserSettingsDirective {
+export class NotificationSettingsComponent extends UserSettingsDirective implements OnInit {
     constructor(notificationService: NotificationService, userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: JhiAlertService) {
         super(userSettingsService, alertService, changeDetector);
     }

@@ -67,12 +67,12 @@
           }
           ```
 4) Create a new `child-settings.component.ts` file :
-   * **Extend** from `user-settings.directive` *(if you want to reuse its functionality)*
+   * **Extend** from `user-settings.directive` *(if you want to reuse its functionality)* and implement `OnInit` 
    * Place the relevant Services for the parent(prototype) component in the constructor
    * Inside `ngOnInit()` call `super.ngOnInit()`, afterwards set the child specific `userSettingsCategory`*(same as in default.ts)* and `changeEventMessage`
      ```ts
         @Component
-        export class UserSettingsComponent extends UserSettingsDirective {
+        export class UserSettingsComponent extends UserSettingsDirective implements OnInit {
         constructor(userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: JhiAlertService) {
         super(userSettingsService, alertService, changeDetector);
         }
