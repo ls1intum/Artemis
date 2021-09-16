@@ -7,7 +7,9 @@ export class MultipleChoiceQuiz {
 
     tickAnswerOption(optionNumber: number) {
         this.getQuizBody()
-            .get('#answer-option-' + optionNumber).find('.svg-inline--fa').eq(0)
+            .get('#answer-option-' + optionNumber)
+            .find('.svg-inline--fa')
+            .eq(0)
             .click();
     }
 

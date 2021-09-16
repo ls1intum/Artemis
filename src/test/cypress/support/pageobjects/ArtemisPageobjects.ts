@@ -43,10 +43,10 @@ export class ArtemisPageobjects {
     modelingExercise = {
         creation: new CreateModelingExercisePage(),
         assessmentEditor: new ModelingExerciseAssessmentEditor(),
-        editor: new ModelingEditor()
+        editor: new ModelingEditor(),
     };
     quizExercise = {
-        creation : new QuizExerciseCreationPage(),
+        creation: new QuizExerciseCreationPage(),
         multipleChoice: new MultipleChoiceQuiz(),
     };
 }
