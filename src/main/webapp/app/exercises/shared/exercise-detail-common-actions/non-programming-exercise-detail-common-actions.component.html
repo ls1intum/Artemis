@@ -53,7 +53,7 @@
 
         <!-- Cluster Statistics  -->
         <a
-            *ngIf="exercise.isAtLeastInstructor && exercise.type === ExerciseType.TEXT"
+            *ngIf="exercise.isAtLeastInstructor && exercise.type === ExerciseType.TEXT && exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC"
             [routerLink]="baseResource + 'text-cluster-statistics'"
             class="btn btn-success btn-sm me-1 mb-2"
         >

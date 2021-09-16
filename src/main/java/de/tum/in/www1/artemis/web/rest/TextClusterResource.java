@@ -73,7 +73,6 @@ public class TextClusterResource {
 
     /**
      * Patch text-clusters/{clusterId}
-     * <p>
      * Sets a text cluster's disabled boolean value
      *
      * @param clusterId The id of the cluster to be disabled/enabled

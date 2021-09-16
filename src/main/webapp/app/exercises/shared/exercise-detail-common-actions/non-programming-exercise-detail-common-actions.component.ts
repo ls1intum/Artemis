@@ -8,6 +8,7 @@ import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
@@ -28,6 +29,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     baseResource: string;
     shortBaseResource: string;
     readonly ExerciseType = ExerciseType;
+    readonly AssessmentType = AssessmentType;
 
     constructor(
         private textExerciseService: TextExerciseService,
