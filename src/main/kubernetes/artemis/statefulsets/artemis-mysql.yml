@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    field.cattle.io/creatorId: user-nxxf9
+  labels:
+    cattle.io/creator: norman
+    workload.user.cattle.io/workloadselector: statefulSet-artemis-artemis-mysql
+  name: artemis-mysql
+spec:
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      workload.user.cattle.io/workloadselector: statefulSet-artemis-artemis-mysql
+  serviceName: artemis-mysql
+  template:
+    metadata:
+      labels:
+        workload.user.cattle.io/workloadselector: statefulSet-artemis-artemis-mysql
+    spec:
+      containers:
+      - args:
+        - mysqld
+        - --lower_case_table_names=1
+        - --skip-ssl
+        - --character_set_server=utf8mb4
+        - --explicit_defaults_for_timestamp
+        envFrom:
+        - configMapRef:
+            name: artemis-mysql
+        image: mysql:8.0.25
+        imagePullPolicy: IfNotPresent
+        name: artemis-mysql
+        ports:
+        - containerPort: 3306
+          name: 3306tcp2
+          protocol: TCP
+        resources: {}
+        securityContext:
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: false
+        stdin: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        tty: true
+        volumeMounts:
+        - mountPath: /var/lib/mysql/
+          name: artemis-data
+      dnsConfig: {}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: artemis-data
+        persistentVolumeClaim:
+          claimName: artemis-data
+  updateStrategy:
+    type: RollingUpdate
