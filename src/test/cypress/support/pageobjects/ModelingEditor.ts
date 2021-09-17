@@ -19,7 +19,7 @@ export class ModelingEditor {
 
     submit() {
         cy.intercept(PUT, BASE_API + 'exercises/*/modeling-submissions').as('createModelingSubmission');
-        cy.get('.btn-primary').eq(0).click();
+        cy.get('.btn-primary').first().click();
         cy.wait('@createModelingSubmission');
     }
 }
