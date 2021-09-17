@@ -17,9 +17,11 @@ const courses = artemis.pageobjects.courses;
 const courseOverview = artemis.pageobjects.courseOverview;
 const examStartEnd = artemis.pageobjects.examStartEnd;
 const examNavigation = artemis.pageobjects.examNavigationBar;
-const onlineEditor = artemis.pageobjects.onlineEditor;
+const onlineEditor = artemis.pageobjects.programmingExercise.editor;
 const modelingEditor = artemis.pageobjects.modelingExercise.editor;
 const multipleChoiceQuiz = artemis.pageobjects.quizExercise.multipleChoice;
+
+
 
 // Common primitives
 const textExerciseTitle = 'Cypress text exercise';

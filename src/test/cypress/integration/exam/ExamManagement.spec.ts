@@ -13,7 +13,7 @@ const users = artemis.users;
 const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagement = artemis.pageobjects.courseManagement;
 const examManagement = artemis.pageobjects.examManagement;
-const programmingCreation = artemis.pageobjects.programmingExerciseCreation;
+const programmingCreation = artemis.pageobjects.programmingExercise.creation;
 
 // Common primitives
 const uid = generateUUID();
