@@ -75,7 +75,7 @@ describe('Exam assessment', () => {
                     });
                     examNavigation.handInEarly();
                     examStartEnd.finishExam();
-               });
+                });
             });
 
             it('Assess a modeling exercise submission', () => {
