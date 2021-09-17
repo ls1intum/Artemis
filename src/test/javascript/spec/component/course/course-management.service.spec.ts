@@ -117,7 +117,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).to.deep.equal(course));
 
-        const req = httpMock.expectOne({ method: 'PUT', url: resourceUrl });
+        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/${course.id}` });
         req.flush(returnedFromService);
         tick();
     }));
@@ -384,7 +384,7 @@ describe('Course Management Service', () => {
 
     it('should archive the course', fakeAsync(() => {
         service.archiveCourse(course.id!).subscribe((res) => expect(res.body).to.deep.equal(course));
-        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/${course.id}/archive` });
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/archive` });
         req.flush(returnedFromService);
         tick();
     }));

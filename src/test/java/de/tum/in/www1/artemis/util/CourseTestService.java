@@ -1239,19 +1239,19 @@ public class CourseTestService {
 
     // Test
     public void testArchiveCourseAsStudent_forbidden() throws Exception {
-        request.post("/api/courses/" + 1 + "/archive", null, HttpStatus.FORBIDDEN);
+        request.postWithoutLocation("/api/courses/" + 1 + "/archive", null, HttpStatus.FORBIDDEN, null);
     }
 
     // Test
     public void testArchiveCourseAsTutor_forbidden() throws Exception {
-        request.post("/api/courses/" + 1 + "/archive", null, HttpStatus.FORBIDDEN);
+        request.postWithoutLocation("/api/courses/" + 1 + "/archive", null, HttpStatus.FORBIDDEN, null);
     }
 
     // Test
     public void testArchiveCourseWithTestModelingAndFileUploadExercises() throws Exception {
         var course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
 
-        request.post("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK, null);
 
         await().until(() -> courseRepo.findById(course.getId()).get().getCourseArchivePath() != null);
 

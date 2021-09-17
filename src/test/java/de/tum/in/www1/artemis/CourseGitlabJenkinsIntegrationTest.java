@@ -213,7 +213,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
         courseTestService.getUserRepo().save(user);
 
         gitlabRequestMockProvider.mockGetUserId(user.getLogin(), true, true);
-        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
