@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -38,8 +38,8 @@ public class NotificationSettingsServiceTest {
     /**
      * Prepares the needed values and objects for testing
      */
-    @BeforeEach
-    public void setup() {
+    @BeforeAll
+    public static void setUp() {
         notificationSettingsService = new NotificationSettingsService();
 
         student1 = new User();
