@@ -30,6 +30,7 @@ import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/cou
 import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { RouterTestingModule } from '@angular/router/testing';
+import { StudentsImportButtonComponent } from 'app/shared/import/students-import-button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -72,6 +73,7 @@ describe('Course Management Detail Component', () => {
             declarations: [
                 CourseDetailComponent,
                 MockComponent(SecuredImageComponent),
+                MockComponent(StudentsImportButtonComponent),
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(DeleteButtonDirective),
