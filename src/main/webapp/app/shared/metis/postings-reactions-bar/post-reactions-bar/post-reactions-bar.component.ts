@@ -1,7 +1,8 @@
 import { Component, OnChanges, OnInit } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { DisplayPriority, Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/entities/metis/post.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/postings-reactions-bar/postings-reactions-bar.component';
+import { DisplayPriority } from 'app/shared/metis/metis.util';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
@@ -12,7 +13,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     pinTooltip: string;
     archiveTooltip: string;
     displayPriority: DisplayPriority;
-    eDisplayPriority = DisplayPriority;
+    readonly DisplayPriority = DisplayPriority;
 
     /**
      * on initialization: call resetTooltipsAndPriority
@@ -51,6 +52,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         } else {
             this.displayPriority = DisplayPriority.PINNED;
         }
+        this.posting.displayPriority = this.displayPriority;
         this.metisService.updatePostDisplayPriority(this.posting.id!, this.displayPriority).subscribe();
     }
 
@@ -64,6 +66,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         } else {
             this.displayPriority = DisplayPriority.ARCHIVED;
         }
+        this.posting.displayPriority = this.displayPriority;
         this.metisService.updatePostDisplayPriority(this.posting.id!, this.displayPriority).subscribe();
     }
 
