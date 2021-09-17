@@ -3,13 +3,10 @@
 
 ### Checklist
 #### General
-<!-- You only need to choose one of the first four check items: Generally, test on the test servers. -->
-<!-- If testing it locally is acceptable, you may remove the first checkmark. If you are unsure, please test on the test servers. -->
-<!-- The check items for the local setups are only relevant for PRs that require programming exercises for testing -->
+<!-- You only need to choose one of the first two check items: Generally, test on the test servers. -->
+<!-- If it's only a small change, testing it locally is acceptable and you may remove the first checkmark. If you are unsure, please test on the test servers. -->
 - [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server.
-- [ ] I tested **all** changes and their related features with **all** corresponding user types locally.
-- [ ] I tested **all** changes and their related features with **all** corresponding user types locally (+ Atlassian Suite).
-- [ ] I tested **all** changes and their related features with **all** corresponding user types locally (+ Jenkins and Gitlab).
+- [ ] This is a small issue that I tested locally and was confirmed by another developer on a test server
 - [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://docs.artemis.ase.in.tum.de/dev/guidelines/language-guidelines/).
 #### Server
 - [ ] I followed the [coding and design guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/server/).
@@ -24,6 +21,9 @@
 - [ ] I documented the TypeScript code using JSDoc style.
 - [ ] I added multiple screenshots/screencasts of my UI changes.
 - [ ] I translated all newly inserted strings into English and German.
+#### Changes affecting Programming Exercises
+- [ ] I tested **all** changes and their related features with **all** corresponding user types on Test Server 1 (Atlassian Suite).
+- [ ] I tested **all** changes and their related features with **all** corresponding user types on Test Server 2 (Jenkins and Gitlab).
 
 ### Motivation and Context
 <!-- Why is this change required? What problem does it solve? -->
