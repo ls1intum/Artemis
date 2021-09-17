@@ -21,10 +21,10 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     ],
 })
 export class PostingsMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked {
-    @Input() content?: string;
     @Input() maxContentLength: number;
     @Output() valueChange = new EventEmitter();
     defaultCommands: Command[];
+    content?: string;
 
     constructor(private cdref: ChangeDetectorRef) {}
 

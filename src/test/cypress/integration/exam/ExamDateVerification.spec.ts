@@ -123,9 +123,10 @@ describe('Exam management', () => {
                         cy.contains('Welcome to ' + exam.title).should('be.visible');
                         examStartEnd.startExam();
                         cy.contains(textExercise.title).should('be.visible').click();
-                        cy.fixture('loremIpsum.txt').then((submission) => {
-                            textEditor.typeSubmission(submission);
+                        cy.fixture('loremIpsum.txt').then((submissionText) => {
+                            textEditor.typeSubmission(submissionText);
                         });
+                        cy.contains('Save').click();
                         cy.contains('This is the end of ' + exam.title, { timeout: 20000 });
                         examStartEnd.finishExam();
                         cy.get('.alert').contains('Your exam was submitted successfully.');
