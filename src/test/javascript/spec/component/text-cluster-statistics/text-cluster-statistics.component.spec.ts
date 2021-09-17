@@ -31,12 +31,12 @@ describe('TextClusterStatisticsComponent', () => {
             declarations: [ClusterStatisticsComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ProgressBarComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ActivatedRoute,
-                    useValue: new MockActivatedRoute({ exerciseId: 123 }),
+                    useValue: new MockActivatedRoute({ exerciseId: 222 }),
                 },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()

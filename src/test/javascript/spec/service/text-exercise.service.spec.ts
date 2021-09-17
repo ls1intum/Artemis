@@ -32,10 +32,10 @@ describe('TextExercise Service', () => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
             providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         });
         requestResult = {} as HttpResponse<TextExercise>;
@@ -132,8 +132,8 @@ describe('TextExercise Service', () => {
                 .subscribe((resp) => {
                     expect(resp.body).equal(textExerciseReturned);
                 });
-            const req = httpMock.expectOne({ method: 'PUT' });
-            req.flush(textExerciseReturned);
+            const request = httpMock.expectOne({ method: 'PUT' });
+            request.flush(textExerciseReturned);
         });
 
         it('should check plagiarism', () => {
