@@ -204,9 +204,9 @@ export class CourseManagementRequests {
         };
         let newModelingExercise;
         if (body.hasOwnProperty('course')) {
-            newModelingExercise = this.getCourseOrExamExercise(Object.assign({}, templateCopy, dates), body);
+            newModelingExercise = Object.assign({}, templateCopy, dates, body);
         } else {
-            newModelingExercise = this.getCourseOrExamExercise(templateCopy, body);
+            newModelingExercise = Object.assign({}, templateCopy, body);
         }
         return cy.request({
             url: MODELING_EXERCISE_BASE,
