@@ -151,7 +151,6 @@ describe('Exam assessment', () => {
 });
 
 function prepareExam(examEnd: dayjs.Dayjs) {
-    cy.log(examEnd.toString());
     cy.login(admin);
     const examContent = new CypressExamBuilder(course)
         .title(examTitle)
