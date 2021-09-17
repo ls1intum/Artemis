@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.TextBlockType;
@@ -34,7 +35,7 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
             WHERE textAssessmentEvent.courseId = :#{#courseId} AND
                 textAssessmentEvent.textExerciseId = :#{#exerciseId}
             """)
-    Integer getNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId(Long courseId, Long exerciseId);
+    Integer getNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId(@Param("courseId") Long courseId, @Param("exerciseId") Long exerciseId);
 
     /**
      * Query and find all events which do not have the respective fields empty. This fields are specifically needed non-empty
@@ -53,7 +54,7 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
                 textAssessmentEvent.courseId = :#{#courseId} AND
                 textAssessmentEvent.textExerciseId = :#{#textExerciseId}
             """)
-    List<TextAssessmentEvent> findAllNonEmptyEvents(Long courseId, Long textExerciseId);
+    List<TextAssessmentEvent> findAllNonEmptyEvents(@Param("courseId") Long courseId, @Param("textExerciseId") Long textExerciseId);
 
     /**
      * Finds the number of submissions assessed for each tutor listed in the assessment event list
@@ -71,7 +72,7 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
              textAssessmentEvent.textExerciseId = :#{#textExerciseId}
             GROUP BY textAssessmentEvent.userId
             """)
-    List<TutorAssessedSubmissionsCount> findNumberOfSubmissionsAssessedForTutor(Long courseId, Long textExerciseId);
+    List<TutorAssessedSubmissionsCount> findNumberOfSubmissionsAssessedForTutor(@Param("courseId") Long courseId, @Param("textExerciseId") Long textExerciseId);
 
     /**
      * An interface representing an intermediate form fitting the JPA query syntax.
