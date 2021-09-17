@@ -53,25 +53,30 @@ describe('Exam assessment', () => {
     });
 
     describe('Exam exercise assessment', () => {
-        beforeEach('Create exam', () => {
+        beforeEach('Generate new exam name', () => {
             prepareExam(dayjs().add(30, 'seconds'));
         });
 
-        it('Assess a modeling exercise submission', () => {
-            courseManagementRequests.createModelingExercise({ exerciseGroup }).then((modelingResponse) => {
-                courseManagementRequests.generateMissingIndividualExams(exam);
-                courseManagementRequests.prepareExerciseStartForExam(exam);
-                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                examStartEnd.startExam();
-                cy.contains(modelingResponse.body.title).should('be.visible').click();
-                modelingEditor.addComponentToModel(1);
-                modelingEditor.addComponentToModel(2);
-                modelingEditor.addComponentToModel(3);
-                cy.intercept(PUT, BASE_API + 'exercises/*/modeling-submissions').as('createModelingSubmission');
-                cy.contains('Save').click();
-                cy.wait('@createModelingSubmission');
-                cy.get('#exam-navigation-bar').find('.btn-danger').click();
-                examStartEnd.finishExam();
+        describe('Modeling exercise assessment', () => {
+            beforeEach('Create exercise and submission', () => {
+                courseManagementRequests.createModelingExercise({ exerciseGroup }).then((modelingResponse) => {
+                    courseManagementRequests.generateMissingIndividualExams(exam);
+                    courseManagementRequests.prepareExerciseStartForExam(exam);
+                    cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                    examStartEnd.startExam();
+                    cy.contains(modelingResponse.body.title).should('be.visible').click();
+                    modelingEditor.addComponentToModel(1);
+                    modelingEditor.addComponentToModel(2);
+                    modelingEditor.addComponentToModel(3);
+                    cy.intercept(PUT, BASE_API + 'exercises/*/modeling-submissions').as('createModelingSubmission');
+                    cy.contains('Save').click();
+                    cy.wait('@createModelingSubmission');
+                    cy.get('#exam-navigation-bar').find('.btn-danger').click();
+                    examStartEnd.finishExam();
+               });
+            });
+
+            it('Assess a modeling exercise submission', () => {
                 cy.login(tutor, '/course-management/' + course.id + '/exams');
                 cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
                 assessmentDashboard.startAssessing();
@@ -90,27 +95,32 @@ describe('Exam assessment', () => {
             });
         });
 
-        it('Assess a text exercise submission', () => {
-            const exerciseTitle = 'Cypress Text Exercise';
-            courseManagementRequests.createTextExercise({ exerciseGroup }, exerciseTitle);
-            courseManagementRequests.generateMissingIndividualExams(exam);
-            courseManagementRequests.prepareExerciseStartForExam(exam);
-            cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-            examStartEnd.startExam();
-            cy.contains(exerciseTitle).click();
-            cy.get('#text-editor-tab').type(textSubmission.text);
-            cy.contains('Save').click();
-            cy.get('#exam-navigation-bar').find('.btn-danger').click();
-            examStartEnd.finishExam();
-            cy.login(tutor, '/course-management/' + course.id + '/exams');
-            cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
-            assessmentDashboard.startAssessing();
-            assessmentDashboard.addNewFeedback(7, 'Good job');
-            assessmentDashboard.submitTextAssessment().then((assessmentResponse) => {
-                expect(assessmentResponse.response?.statusCode).to.equal(200);
+        describe('Text exercise assessment', () => {
+            beforeEach('Create exercise and submission', () => {
+                const exerciseTitle = 'Cypress Text Exercise';
+                courseManagementRequests.createTextExercise({ exerciseGroup }, exerciseTitle);
+                courseManagementRequests.generateMissingIndividualExams(exam);
+                courseManagementRequests.prepareExerciseStartForExam(exam);
+                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                examStartEnd.startExam();
+                cy.contains(exerciseTitle).click();
+                cy.get('#text-editor-tab').type(textSubmission.text);
+                cy.contains('Save').click();
+                cy.get('#exam-navigation-bar').find('.btn-danger').click();
+                examStartEnd.finishExam();
             });
-            cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-            cy.get('.question-options').contains('7 of 10 points').should('be.visible');
+
+            it('Assess a text exercise submission', () => {
+                cy.login(tutor, '/course-management/' + course.id + '/exams');
+                cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
+                assessmentDashboard.startAssessing();
+                assessmentDashboard.addNewFeedback(7, 'Good job');
+                assessmentDashboard.submitTextAssessment().then((assessmentResponse) => {
+                    expect(assessmentResponse.response?.statusCode).to.equal(200);
+                });
+                cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+                cy.get('.question-options').contains('7 of 10 points').should('be.visible');
+            });
         });
     });
 
