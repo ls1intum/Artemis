@@ -1,4 +1,3 @@
-import { generateUUID } from '../../support/utils';
 import { artemis } from '../../support/ArtemisTesting';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { BASE_API, GROUP_SYNCHRONIZATION, PUT } from '../../support/constants';
@@ -23,7 +22,6 @@ const tutor = artemis.users.getTutor();
 let exam: any;
 let exerciseGroup: any;
 let course: any;
-let examTitle: string;
 
 // This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
 Cypress.on('uncaught:exception', () => {
@@ -41,7 +39,6 @@ describe('Exam assessment', () => {
     });
 
     beforeEach('Generate new exam name', () => {
-        examTitle = 'exam' + generateUUID();
         cy.login(admin);
     });
 
@@ -153,7 +150,6 @@ describe('Exam assessment', () => {
 function prepareExam(examEnd: dayjs.Dayjs) {
     cy.login(admin);
     const examContent = new CypressExamBuilder(course)
-        .title(examTitle)
         .visibleDate(dayjs().subtract(1, 'day'))
         .startDate(dayjs())
         .endDate(examEnd)
