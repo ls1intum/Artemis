@@ -246,7 +246,7 @@ export class CourseManagementRequests {
 
     startQuizNow(quizId: number) {
         return cy.request({
-            url: QUIZ_EXERCISE_BASE + `${quizId}` + '/start-now',
+            url: `${QUIZ_EXERCISE_BASE}${quizId}/start-now`,
             method: PUT,
         });
     }
