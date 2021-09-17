@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, getTestBed, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement } from '@angular/core';
-import { DisplayPriority, Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/entities/metis/post.model';
 import * as sinon from 'sinon';
 import { SinonSpy, SinonStub, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -22,6 +22,9 @@ import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
+import { DisplayPriority } from 'app/shared/metis/metis.util';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,6 +51,7 @@ describe('PostReactionsBarComponent', () => {
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
             declarations: [PostReactionsBarComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip), MockComponent(FaIconComponent)],
         })

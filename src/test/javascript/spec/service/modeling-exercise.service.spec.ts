@@ -98,27 +98,6 @@ describe('ModelingExercise Service', () => {
         tick();
     }));
 
-    it('should get statistics', fakeAsync(() => {
-        const returnedFromService = {
-            numberModels: 1,
-            numberConflicts: 2,
-            totalConfidence: 3,
-            totalCoverage: 4,
-            uniqueElements: [{ id1: { name: 'statisticsName', apollonId: 'statisticsApollonId', conflict: true } }],
-            models: [{ idModel: { confidence: 23, coverage: 12, conflicts: 3 } }],
-        };
-
-        const expected = { ...returnedFromService };
-        const id = 332;
-        service
-            .getStatistics(id)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${id}/statistics` });
-        req.flush(returnedFromService);
-        tick();
-    }));
-
     it('should delete a ModelingExercise', fakeAsync(() => {
         service.delete(123).subscribe((resp) => expect(resp.ok));
 
