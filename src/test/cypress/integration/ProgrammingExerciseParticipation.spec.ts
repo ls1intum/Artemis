@@ -11,8 +11,6 @@ const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
 const editorPage = artemis.pageobjects.programmingExercise.editor;
-const exercisePath = '/exercises';
-const exerciseRow = '.course-exercise-row';
 
 describe('Programming exercise participations', () => {
     let course: any;
