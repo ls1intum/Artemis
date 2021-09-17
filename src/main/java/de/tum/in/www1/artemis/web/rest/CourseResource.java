@@ -245,6 +245,7 @@ public class CourseResource {
      * PUT courses/:courseId : Updates an existing updatedCourse.
      *
      * @param updatedCourse the course to update
+     * @param courseId the id of the course to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated course
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
