@@ -9,7 +9,6 @@ import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE } from 'app/shared/notific
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -20,6 +19,8 @@ export class NotificationPopupComponent implements OnInit {
     notifications: Notification[] = [];
 
     LiveExamExerciseUpdateNotificationTitleHtmlConst = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
+
+    private studentExamExerciseIds: number[];
 
     constructor(
         private accountService: AccountService,
@@ -147,16 +148,21 @@ export class NotificationPopupComponent implements OnInit {
             return;
         }
         const target = JSON.parse(notification.target);
-        const courseId = target.course;
-        const examId = target.exam;
         const exerciseId = target.exercise;
-        this.examParticipationService.loadStudentExamWithExercisesForSummary(courseId, examId).subscribe((studentExamWithExercises: StudentExam) => {
-            const updatedExerciseIsPartOfStudentExam = studentExamWithExercises?.exercises?.find((studentExamExercise) => studentExamExercise.id === exerciseId);
-            if (updatedExerciseIsPartOfStudentExam != undefined) {
-                this.addExamUpdateNotification(notification);
-                this.setRemovalTimeout(notification);
+
+        if (!this.studentExamExerciseIds) {
+            this.studentExamExerciseIds = this.examParticipationService.getExamExerciseIds();
+            if (!this.studentExamExerciseIds) {
+                // exercises were not loaded yet for current user -> exam update will be loaded when user starts/loads the exam
+                return;
             }
-        });
+        }
+
+        const updatedExerciseIsPartOfStudentExam = this.studentExamExerciseIds?.find((exerciseIdentifier) => exerciseIdentifier === exerciseId);
+        if (updatedExerciseIsPartOfStudentExam) {
+            this.addExamUpdateNotification(notification);
+            this.setRemovalTimeout(notification);
+        }
     }
 
     private setRemovalTimeout(notification: Notification): void {

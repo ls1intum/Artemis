@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    field.cattle.io/creatorId: user-gpcv5
+  labels:
+    cattle.io/creator: norman
+  name: artemis-app
+spec:
+  rules:
+  - host: artemis-app.artemis.rancher.localhost
+    http:
+      paths:
+      - backend:
+          serviceName: artemis
+          servicePort: 8080
+        pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - artemis-app.artemis.rancher.localhost

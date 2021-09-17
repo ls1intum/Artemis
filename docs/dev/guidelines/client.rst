@@ -95,10 +95,10 @@ Some general aspects:
 8. Use 4 spaces per indentation.
 
 We use ``prettier`` to style code automatically and ``eslint`` to find additional issues.
-You can find the corresponding commands to invoked those tools in ``package.json``.
+You can find the corresponding commands to invoke those tools in ``package.json``.
 
 10. Preventing Memory Leaks
-==========================
+===========================
 
 It is crucial that you try to prevent memory leaks in both your components and your tests.
 
@@ -109,7 +109,7 @@ A very good explanation that you should definitely read to understand the proble
 
 In essence:
 
-*  JS is a garbage collected language
+*  JS is a garbage-collected language
 *  Modern garbage collectors improve on this algorithm in different ways, but the essence is the same: **reachable pieces of memory are marked as such and the rest is considered garbage.**
 *  Unwanted references are references to pieces of memory that the developer knows he or she won't be needing
    anymore but that for some reason are kept inside the tree of an active root. **In the context of JavaScript, unwanted references are variables kept somewhere in the code that will not be used anymore and point to a piece of memory that could otherwise be freed.**

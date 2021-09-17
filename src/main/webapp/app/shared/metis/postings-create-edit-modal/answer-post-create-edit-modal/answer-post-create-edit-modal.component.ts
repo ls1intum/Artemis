@@ -33,6 +33,7 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
         this.posting.creationDate = dayjs();
         this.metisService.createAnswerPost(this.posting).subscribe({
             next: (answerPost: AnswerPost) => {
+                this.resetFormGroup();
                 this.isLoading = false;
                 this.onCreate.emit(answerPost);
                 this.modalRef?.close();

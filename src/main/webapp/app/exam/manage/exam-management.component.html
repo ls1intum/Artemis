@@ -14,8 +14,8 @@
     <div class="table-responsive" *ngIf="exams">
         <table class="table table-striped">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
-                    <th class="d-none d-md-table-cell" jhiSortBy="id">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" [callback]="sortRows.bind(this)">
+                    <th class="d-md-table-cell" jhiSortBy="id">
                         <span>{{ 'global.field.id' | artemisTranslate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -23,7 +23,7 @@
                         <span>{{ 'artemisApp.exam.title' | artemisTranslate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th class="d-none d-md-table-cell" jhiSortBy="visibleDate">
+                    <th class="d-md-table-cell" jhiSortBy="visibleDate">
                         <span>{{ 'artemisApp.exam.visible' | artemisTranslate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -59,7 +59,7 @@
             </thead>
             <tbody>
                 <tr *ngFor="let exam of exams; trackBy: trackId">
-                    <td class="d-none d-md-table-cell">
+                    <td class="d-md-table-cell">
                         <span *ngIf="isAtLeastInstructor">
                             <a [routerLink]="[exam.id]">{{ exam.id }}</a>
                         </span>
@@ -67,7 +67,7 @@
                             {{ exam.id }}
                         </span>
                     </td>
-                    <td class="d-none d-md-table-cell">
+                    <td class="d-md-table-cell">
                         <span class="bold" *ngIf="isAtLeastInstructor">
                             <a [routerLink]="[exam.id]">{{ exam.title }}</a>
                         </span>

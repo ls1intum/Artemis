@@ -8,7 +8,7 @@ import { Attachment } from 'app/entities/attachment.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { DiscussionComponent } from 'app/overview/discussion/discussion.component';
+import { PageDiscussionSectionComponent } from 'app/overview/page-discussion-section/page-discussion-section.component';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
@@ -24,7 +24,7 @@ export class CourseLectureDetailsComponent implements OnInit {
     lecture?: Lecture;
     isDownloadingLink?: string;
     lectureUnits: LectureUnit[] = [];
-    discussionComponent?: DiscussionComponent;
+    discussionComponent?: PageDiscussionSectionComponent;
     hasPdfLectureUnit: boolean;
 
     readonly LectureUnitType = LectureUnitType;
@@ -100,7 +100,7 @@ export class CourseLectureDetailsComponent implements OnInit {
      * used only for the DiscussionComponent
      * @param instance The component instance
      */
-    onChildActivate(instance: DiscussionComponent) {
+    onChildActivate(instance: PageDiscussionSectionComponent) {
         this.discussionComponent = instance; // save the reference to the component instance
         if (this.lecture) {
             instance.lecture = this.lecture;

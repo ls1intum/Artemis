@@ -9,9 +9,7 @@ import * as sinon from 'sinon';
 import { SinonStub, spy, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { User } from 'app/core/user/user.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { getElement } from '../../../../../helpers/utils/general.utils';
 import { AnswerPostHeaderComponent } from 'app/shared/metis/postings-header/answer-post-header/answer-post-header.component';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
@@ -22,6 +20,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
 import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
+import { metisAnswerPostUser1, metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -36,16 +35,7 @@ describe('AnswerPostHeaderComponent', () => {
     let metisServiceDeletePostStub: SinonStub;
     let modal: MockNgbModalService;
 
-    const user = { id: 1, name: 'username', login: 'login' } as User;
-
     const yesterday: dayjs.Dayjs = dayjs().subtract(1, 'day');
-
-    const answerPost = {
-        id: 1,
-        author: user,
-        creationDate: yesterday,
-        content: 'Answer Post Content',
-    } as AnswerPost;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -80,7 +70,8 @@ describe('AnswerPostHeaderComponent', () => {
                 metisServiceUserPostAuthorStub = stub(metisService, 'metisUserIsAuthorOfPosting');
                 metisServiceDeletePostStub = stub(metisService, 'deleteAnswerPost');
                 debugElement = fixture.debugElement;
-                component.posting = answerPost;
+                component.posting = metisAnswerPostUser1;
+                component.posting.creationDate = yesterday;
                 component.ngOnInit();
             });
     });
@@ -93,7 +84,7 @@ describe('AnswerPostHeaderComponent', () => {
         fixture.detectChanges();
         const headerAuthorAndDate = getElement(debugElement, '.posting-header.header-author-date');
         expect(headerAuthorAndDate).to.exist;
-        expect(headerAuthorAndDate.innerHTML).to.contain(user.name);
+        expect(headerAuthorAndDate.innerHTML).to.contain(metisUser1.name);
     });
 
     it('should set date information correctly for post of yesterday', () => {

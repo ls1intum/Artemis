@@ -32,33 +32,31 @@
     <div class="table-responsive" *ngIf="programmingExercises && programmingExercises.length > 0">
         <table class="table table-striped">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                    <th *ngIf="course.isAtLeastEditor" class="d-none d-md-table-cell">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
+                    <th *ngIf="course.isAtLeastEditor" class="d-md-table-cell">
                         <input type="checkbox" (change)="toggleAllProgrammingExercises()" />
                     </th>
-                    <th class="d-none d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th class="d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th class="d-none d-md-table-cell" jhiSortBy="shortName">
+                    <th class="d-md-table-cell" jhiSortBy="shortName">
                         <span jhiTranslate="artemisApp.exercise.shortName">Short Name</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th class="d-none d-md-table-cell" jhiSortBy="maxScore">
-                        <span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
-                    </th>
+                    <th class="d-md-table-cell" jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="includedInOverallScore">
                         <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.repositories">Repositories</span></th>
                     <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.buildplans">Build Plans</span>&nbsp;</th>
-                    <th class="d-none d-md-table-cell" jhiSortBy="publishBuildPlanUrl">
+                    <th class="d-md-table-cell" jhiSortBy="publishBuildPlanUrl">
                         <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th class="d-none d-md-table-cell">
+                    <th class="d-md-table-cell">
                         <span jhiTranslate="artemisApp.programmingExercise.participationMode">Participation Mode</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th class="d-none d-md-table-cell" jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
+                    <th class="d-md-table-cell" jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th></th>
@@ -67,10 +65,10 @@
 
             <tbody>
                 <tr *ngFor="let programmingExercise of programmingExercises; trackBy: trackId">
-                    <td *ngIf="programmingExercise.isAtLeastEditor" class="d-none d-md-table-cell">
+                    <td *ngIf="programmingExercise.isAtLeastEditor" class="d-md-table-cell">
                         <input type="checkbox" (change)="toggleProgrammingExercise(programmingExercise)" [ngModel]="isExerciseSelected(programmingExercise)" />
                     </td>
-                    <td class="d-none d-md-table-cell">
+                    <td class="d-md-table-cell">
                         <a [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]">{{ programmingExercise.id }}</a>
                     </td>
                     <td>
@@ -81,10 +79,10 @@
                             [hasUpdatedGradingConfigInitialValue]="!!programmingExercise.testCasesChanged"
                         ></jhi-programming-exercise-grading-dirty-warning>
                     </td>
-                    <td class="d-none d-md-table-cell">{{ programmingExercise.shortName }}</td>
+                    <td class="d-md-table-cell">{{ programmingExercise.shortName }}</td>
                     <td>{{ programmingExercise.releaseDate | artemisDate }}</td>
                     <td>{{ programmingExercise.dueDate | artemisDate }}</td>
-                    <td class="d-none d-md-table-cell">{{ programmingExercise.maxPoints }}</td>
+                    <td class="d-md-table-cell">{{ programmingExercise.maxPoints }}</td>
                     <td>{{ programmingExercise.bonusPoints }}</td>
                     <td>{{ exerciseService.isIncludedInScore(programmingExercise) }}</td>
                     <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">
@@ -177,8 +175,8 @@
                         <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template><br />
                     </td>
 
-                    <td class="d-none d-md-table-cell">{{ programmingExercise.publishBuildPlanUrl }}</td>
-                    <td class="d-none d-md-table-cell">
+                    <td class="d-md-table-cell">{{ programmingExercise.publishBuildPlanUrl }}</td>
+                    <td class="d-md-table-cell">
                         <div class="d-flex justify-content-between">
                             {{ 'artemisApp.programmingExercise.offlineIde' | artemisTranslate }}: {{ programmingExercise.allowOfflineIde }}
                         </div>
@@ -186,7 +184,7 @@
                             {{ 'artemisApp.programmingExercise.onlineEditor' | artemisTranslate }}: {{ programmingExercise.allowOnlineEditor }}
                         </div>
                     </td>
-                    <td class="d-none d-md-table-cell" *ngIf="course.presentationScore !== 0">{{ programmingExercise.presentationScoreEnabled }}</td>
+                    <td class="d-md-table-cell" *ngIf="course.presentationScore !== 0">{{ programmingExercise.presentationScoreEnabled }}</td>
                     <td *jhiExtensionPoint="overrideButtons; context: { exercise: programmingExercise }" class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical me-1 mb-1">

@@ -7,11 +7,13 @@ import { RepositoryService } from 'app/exercises/shared/result/repository.servic
 import dayjs from 'dayjs';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { hasParticipationChanged } from 'app/overview/participation-utils';
 import { Result } from 'app/entities/result.model';
+import { MissingResultInfo } from 'app/exercises/shared/result/result.component';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged in user.
@@ -37,6 +39,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
     result?: Result;
     isBuilding: boolean;
+    missingResultInfo = MissingResultInfo.NONE;
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
@@ -56,6 +59,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             const latestResult = this.participation.results && this.participation.results.find(({ rated }) => this.showUngradedResults || rated === true);
             // Make sure that the participation result is connected to the newest result.
             this.result = latestResult ? { ...latestResult, participation: this.participation } : undefined;
+            this.missingResultInfo = MissingResultInfo.NONE;
 
             this.subscribeForNewResults();
             // Currently submissions are only used for programming exercises to visualize the build process.
@@ -93,8 +97,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 filter((result) => !!result),
                 // Ignore ungraded results if ungraded results are supposed to be ignored.
                 filter((result: Result) => this.showUngradedResults || result.rated === true),
-                map((result) => ({ ...result, completionDate: result.completionDate ? dayjs(result.completionDate) : undefined, participation: this.participation })),
-                tap((result) => (this.result = result)),
+                map((result) => ({ ...result, completionDate: result.completionDate ? moment(result.completionDate) : undefined, participation: this.participation })),
+                tap((result) => {
+                    this.result = result;
+                }),
             )
             .subscribe();
     }
@@ -123,8 +129,23 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 ),
                 tap(({ submissionState }) => {
                     this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
+
+                    if (submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION) {
+                        this.missingResultInfo = this.generateMissingResultInfoForFailedProgrammingExerciseSubmission();
+                    } else {
+                        // everything ok, remove the warning
+                        this.missingResultInfo = MissingResultInfo.NONE;
+                    }
                 }),
             )
             .subscribe();
+    }
+
+    private generateMissingResultInfoForFailedProgrammingExerciseSubmission() {
+        // Students have more options to check their code if the offline IDE is activated, so we suggest different actions
+        if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
+            return MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
+        }
+        return MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE;
     }
 }
