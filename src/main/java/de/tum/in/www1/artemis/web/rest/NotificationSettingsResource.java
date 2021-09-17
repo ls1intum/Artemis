@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,8 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RestController
 @RequestMapping("/api")
 public class NotificationSettingsResource {
+
+    private final Logger log = LoggerFactory.getLogger(NotificationSettingsResource.class);
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -55,6 +59,7 @@ public class NotificationSettingsResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<NotificationOption>> getNotificationOptionsForCurrentUser() {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get all NotificationOptions for current user {}", currentUser);
         final Set<NotificationOption> notificationOptionSet = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
         return new ResponseEntity<>(notificationOptionSet, HttpStatus.OK);
     }
@@ -75,6 +80,7 @@ public class NotificationSettingsResource {
             return badRequest("notificationOptions", "400", "Can not save non existing Notification Options");
         }
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to save NotificationOptions : {} for current user {}", notificationOptions, currentUser);
         notificationSettingsService.setCurrentUser(notificationOptions, currentUser);
         List<NotificationOption> resultAsList = notificationOptionRepository.saveAll(Arrays.stream(notificationOptions).toList());
         if (resultAsList == null || resultAsList.isEmpty()) {
