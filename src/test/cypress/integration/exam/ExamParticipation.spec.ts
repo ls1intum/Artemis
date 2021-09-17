@@ -21,8 +21,6 @@ const onlineEditor = artemis.pageobjects.programmingExercise.editor;
 const modelingEditor = artemis.pageobjects.modelingExercise.editor;
 const multipleChoiceQuiz = artemis.pageobjects.quizExercise.multipleChoice;
 
-
-
 // Common primitives
 const textExerciseTitle = 'Cypress text exercise';
 
