@@ -3,6 +3,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { StudentsImportDialogComponent } from 'app/shared/import/students-import-dialog.component';
 import { CourseGroup } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
 
 @Component({
     selector: 'jhi-students-import-button',
@@ -22,7 +23,8 @@ export class StudentsImportButtonComponent {
 
     @Input() courseGroup: CourseGroup;
     @Input() courseId: number;
-    @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
+    @Input() buttonSize: ButtonSize = ButtonSize.MEDIUM;
+    @Input() exam: Exam;
 
     @Output() finish: EventEmitter<void> = new EventEmitter();
 
@@ -37,6 +39,7 @@ export class StudentsImportButtonComponent {
         const modalRef: NgbModalRef = this.modalService.open(StudentsImportDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.courseId = this.courseId;
         modalRef.componentInstance.courseGroup = this.courseGroup;
+        modalRef.componentInstance.exam = this.exam;
         modalRef.result.then(
             () => this.finish.emit(),
             () => {},

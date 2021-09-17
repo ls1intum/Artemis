@@ -6,9 +6,10 @@ import { HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Exam } from 'app/entities/exam.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import * as Papa from 'papaparse';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 const csvColumns = Object.freeze({
     registrationNumber: 'registrationnumber',
@@ -41,6 +42,7 @@ export class StudentsImportDialogComponent implements OnDestroy {
 
     @Input() courseId: number;
     @Input() courseGroup: String;
+    @Input() exam: Exam;
 
     studentsToImport: StudentDTO[] = [];
     notFoundStudents: StudentDTO[] = [];
@@ -53,7 +55,12 @@ export class StudentsImportDialogComponent implements OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(private activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService, private courseManagementService: CourseManagementService) {}
+    constructor(
+        private activeModal: NgbActiveModal,
+        private jhiAlertService: JhiAlertService,
+        private courseManagementService: CourseManagementService,
+        private examManagementService: ExamManagementService,
+    ) {}
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
@@ -179,10 +186,19 @@ export class StudentsImportDialogComponent implements OnDestroy {
      */
     importStudents() {
         this.isImporting = true;
-        this.courseManagementService.addStudentsToGroupInCourse(this.courseId, this.studentsToImport, this.courseGroup).subscribe(
-            (res) => this.onSaveSuccess(res),
-            () => this.onSaveError(),
-        );
+        if (this.courseGroup && !this.exam) {
+            console.log('studentsImport');
+            this.courseManagementService.addStudentsToGroupInCourse(this.courseId, this.studentsToImport, this.courseGroup).subscribe(
+                (res) => this.onSaveSuccess(res),
+                () => this.onSaveError(),
+            );
+        } else if (!this.courseGroup && this.exam) {
+            console.log('examImport');
+            this.examManagementService.addStudentsToExam(this.courseId, this.exam.id!, this.studentsToImport).subscribe(
+                (res) => this.onSaveSuccess(res),
+                () => this.onSaveError(),
+            );
+        }
     }
 
     /**

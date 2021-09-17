@@ -51,7 +51,6 @@ import { CourseManagementStatisticsComponent } from 'app/course/manage/course-ma
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
-import { StudentsImportButtonComponent } from 'app/shared/import/students-import-button.component';
 
 @NgModule({
     imports: [
@@ -108,7 +107,6 @@ import { StudentsImportButtonComponent } from 'app/shared/import/students-import
         CourseManagementOverviewStatisticsComponent,
         CourseDetailDoughnutChartComponent,
         CourseDetailLineChartComponent,
-        StudentsImportButtonComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}
