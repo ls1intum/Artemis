@@ -1,4 +1,4 @@
-import { DELETE } from './../support/constants';
+import { DELETE } from '../support/constants';
 import { artemis } from '../support/ArtemisTesting';
 import { generateUUID } from '../support/utils';
 
@@ -11,7 +11,7 @@ const artemisRequests = artemis.requests;
 // PageObjects
 const courseManagementPage = artemis.pageobjects.courseManagement;
 const navigationBar = artemis.pageobjects.navigationBar;
-const programmingCreation = artemis.pageobjects.programmingExerciseCreation;
+const programmingCreation = artemis.pageobjects.programmingExercise.creation;
 
 // Selectors
 const datepickerButtons = '.owl-dt-container-control-button';

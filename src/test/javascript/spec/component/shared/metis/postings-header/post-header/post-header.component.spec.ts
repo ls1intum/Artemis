@@ -4,16 +4,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { DebugElement } from '@angular/core';
-import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { Post } from 'app/entities/metis/post.model';
-import { User } from 'app/core/user/user.model';
 import { PostHeaderComponent } from 'app/shared/metis/postings-header/post-header/post-header.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { getElement } from '../../../../../helpers/utils/general.utils';
 import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -22,6 +18,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
 import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
+import { metisAnswerPosts, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -33,28 +30,6 @@ describe('PostHeaderComponent', () => {
     let metisService: MetisService;
     let metisServiceUserIsAtLeastTutorStub: SinonStub;
     let metisServiceDeletePostStub: SinonStub;
-
-    const user = { id: 1, name: 'username', login: 'login' } as User;
-
-    const post = {
-        id: 1,
-        author: user,
-        creationDate: moment(),
-        answers: [],
-        content: 'Post Content',
-    } as Post;
-
-    const answerPost1 = {
-        id: 1,
-        content: 'Some answer',
-    } as AnswerPost;
-
-    const answerPost2 = {
-        id: 2,
-        content: 'Some answer',
-    } as AnswerPost;
-
-    const answerPosts: AnswerPost[] = [answerPost1, answerPost2];
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -80,7 +55,7 @@ describe('PostHeaderComponent', () => {
                 metisServiceUserIsAtLeastTutorStub = stub(metisService, 'metisUserIsAtLeastTutorInCourse');
                 metisServiceDeletePostStub = stub(metisService, 'deletePost');
                 debugElement = fixture.debugElement;
-                component.posting = post;
+                component.posting = metisPostLectureUser1;
                 component.ngOnInit();
             });
     });
@@ -120,11 +95,11 @@ describe('PostHeaderComponent', () => {
     });
 
     it('should only display non clickable icon for post with answers', () => {
-        component.posting.answers = answerPosts;
+        component.posting.answers = metisAnswerPosts;
         component.ngOnChanges();
         fixture.detectChanges();
-        expect(component.numberOfAnswerPosts).to.be.equal(answerPosts.length);
-        expect(getElement(debugElement, '.answer-count').innerHTML).contains(answerPosts.length);
+        expect(component.numberOfAnswerPosts).to.be.equal(metisAnswerPosts.length);
+        expect(getElement(debugElement, '.answer-count').innerHTML).contains(metisAnswerPosts.length);
         expect(getElement(debugElement, '.answer-count .icon')).to.exist;
         expect(getElement(debugElement, '.toggle-answer-element.clickable')).to.exist;
     });
@@ -132,7 +107,7 @@ describe('PostHeaderComponent', () => {
     it('should call toggleAnswers method and emit event when answer count icon is clicked', () => {
         const toggleAnswersSpy = sinon.spy(component, 'toggleAnswers');
         const toggleAnswersChangeSpy = sinon.spy(component.toggleAnswersChange, 'emit');
-        component.posting.answers = answerPosts;
+        component.posting.answers = metisAnswerPosts;
         component.ngOnChanges();
         fixture.detectChanges();
         getElement(debugElement, '.toggle-answer-element.clickable').click();

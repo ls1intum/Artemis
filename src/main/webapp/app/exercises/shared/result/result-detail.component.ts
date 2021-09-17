@@ -60,6 +60,10 @@ export class ResultDetailComponent implements OnInit {
     @Input() showTestDetails = false;
     @Input() showScoreChart = false;
     @Input() exerciseType: ExerciseType;
+    /**
+     * Translate key for a HTML message that is displayed at the top of the result details, if defined.
+     */
+    @Input() messageKey?: string = undefined;
 
     isLoading = false;
     loadingFailed = false;

@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
@@ -101,7 +100,7 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
     }
 
     /**
-     * Tests the tutor training with example submission.
+     * Tests the tutor training with example submission in Text exercises.
      * In case tutor has provided a feedback which was not provided by the instructor, response is BAD_REQUEST.
      */
     @Test
@@ -121,21 +120,24 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * Tests the tutor training with example submission in Modelling exercises.
+     * In case tutor has provided a feedback which was not provided by the instructor, response is BAD_REQUEST.
+     */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testTutorParticipateInModelingExerciseWithExampleSubmissionTooHigh() throws Exception {
+    public void testTutorParticipateInModelingExerciseWithExampleSubmissionAddingUnnecessaryFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL));
-        var path = "/api/exercises/" + modelingExercise.getId() + "/assess-example-submission";
-        request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
-    }
 
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testTutorParticipateInModelingExerciseWithExampleSubmissionTooLow() throws Exception {
-        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createNegativeFeedback(FeedbackType.MANUAL));
-        var path = "/api/exercises/" + modelingExercise.getId() + "/assess-example-submission";
+        // Tutor reviewed the instructions.
+        var tutor = database.getUserByLogin("tutor1");
+        var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+        tutorParticipationService.createNewParticipation(textExercise, tutor);
+        exampleSubmission.addTutorParticipations(tutorParticipation);
+        exampleSubmissionService.save(exampleSubmission);
+
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createManualTextFeedback(1D, "6aba5764-d102-4740-9675-b2bd0a4f2680"));
+        var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
 

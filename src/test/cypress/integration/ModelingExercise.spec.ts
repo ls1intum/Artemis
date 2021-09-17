@@ -1,4 +1,4 @@
-import { POST, BASE_API } from './../support/constants';
+import { POST, BASE_API } from '../support/constants';
 import { dayjsToString } from '../support/utils';
 import { artemis } from '../support/ArtemisTesting';
 
@@ -135,7 +135,7 @@ describe('Modeling Exercise Spec', () => {
             cy.intercept(BASE_API + 'courses/*/exercises/*/participations').as('createModelingParticipation');
             cy.login(student, `/courses/${testCourse.id}`);
             cy.get('.col-lg-8').contains(modelingExercise.title).click();
-            cy.contains('Start exercise').click();
+            cy.get('.btn-sm').should('contain.text', 'Start exercise').click();
             cy.wait('@createModelingParticipation');
             cy.get('.btn').should('contain.text', 'Open modelling editor').click();
             modelingEditor.addComponentToModel(1);
@@ -174,7 +174,7 @@ describe('Modeling Exercise Spec', () => {
             modelingExerciseExampleSubmission.assessComponent(2, 'Good');
             modelingExerciseExampleSubmission.openAssessmentForComponent(3);
             modelingExerciseExampleSubmission.assessComponent(0, 'Unnecessary');
-            cy.get('.top-container > :nth-child(3) > :nth-child(4)').click();
+            cy.get('[jhitranslate="entity.action.submit"]').click();
             cy.get('.alerts').should('contain.text', 'Your assessment was submitted successfully!');
         });
 
