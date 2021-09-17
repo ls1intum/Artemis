@@ -15,6 +15,7 @@ const modelingAssessment = artemis.pageobjects.modelingExerciseAssessmentEditor;
 const editorPage = artemis.pageobjects.programmingExercise.editor;
 const assessmentDashboard = artemis.pageobjects.assessmentDashboard;
 const examNavigation = artemis.pageobjects.examNavigationBar;
+const textEditor = artemis.pageobjects.textExercise.editor;
 
 // Common primitives
 const admin = artemis.users.getAdmin();
@@ -105,8 +106,10 @@ describe('Exam assessment', () => {
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                 examStartEnd.startExam();
                 cy.contains(exerciseTitle).click();
-                cy.get('#text-editor-tab').type(textSubmission.text);
-                cy.contains('Save').click();
+                textEditor.typeSubmission(textSubmission.text);
+                textEditor.submit().then((submissionResponse) => {
+                    expect(submissionResponse.response?.statusCode).to.equal(200);
+                });
                 examNavigation.handInEarly();
                 examStartEnd.finishExam();
             });
