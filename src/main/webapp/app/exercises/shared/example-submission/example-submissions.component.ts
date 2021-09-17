@@ -4,7 +4,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
@@ -12,12 +11,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 export class ExampleSubmissionsComponent implements OnInit {
     exercise: Exercise;
 
-    constructor(
-        private jhiAlertService: JhiAlertService,
-        private exampleSubmissionService: ExampleSubmissionService,
-        private activatedRoute: ActivatedRoute,
-        private courseService: CourseManagementService,
-    ) {}
+    constructor(private jhiAlertService: JhiAlertService, private exampleSubmissionService: ExampleSubmissionService, private activatedRoute: ActivatedRoute) {}
 
     /**
      * Initializes all relevant data for the exercise
@@ -26,7 +20,6 @@ export class ExampleSubmissionsComponent implements OnInit {
         // Get the exercise
         this.activatedRoute.data.subscribe(({ exercise }) => {
             exercise.course = getCourseFromExercise(exercise);
-            this.courseService.checkAndSetCourseRights(exercise.course);
             this.exercise = exercise;
         });
     }
