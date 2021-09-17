@@ -14,7 +14,7 @@ const courseManagementRequests = artemis.requests.courseManagement;
 const examStartEnd = artemis.pageobjects.examStartEnd;
 const modelingEditor = artemis.pageobjects.modelingEditor;
 const modelingAssessment = artemis.pageobjects.modelingExerciseAssessmentEditor;
-const editorPage = artemis.pageobjects.onlineEditor;
+const editorPage = artemis.pageobjects.programmingExercise.editor;
 const assessmentDashboard = artemis.pageobjects.assessmentDashboard;
 
 // Common primitives
