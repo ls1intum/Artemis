@@ -8,7 +8,6 @@ import java.util.List;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -17,6 +16,7 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.ExamNotificationTargetWithoutProblemStatement;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -200,7 +200,7 @@ public class GroupNotificationService {
      * @param notification that should be saved and sent
      */
     private void saveAndSend(GroupNotification notification) {
-        if (Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
+        if (NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
             saveExamNotification(notification);
         }
         else {
