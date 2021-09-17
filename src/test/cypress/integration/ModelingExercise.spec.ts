@@ -1,6 +1,7 @@
 import { POST, BASE_API } from '../support/constants';
 import { dayjsToString } from '../support/utils';
 import { artemis } from '../support/ArtemisTesting';
+import { MODELING_SPACE } from '../support/pageobjects/ModelingEditor';
 
 // https://day.js.org/docs is a tool for date/time
 import dayjs from 'dayjs';
@@ -73,7 +74,7 @@ describe('Modeling Exercise Spec', () => {
             modelingEditor.addComponentToModel(1);
             createModelingExercise.save();
             cy.get('[jhitranslate="entity.action.export"]').should('be.visible');
-            cy.get('.sc-furvIG > :nth-child(1)').should('exist');
+            cy.get(`${ MODELING_SPACE } > :nth-child(1)`).should('exist');
         });
 
         it('Creates Example Submission', () => {
