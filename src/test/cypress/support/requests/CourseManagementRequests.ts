@@ -10,9 +10,10 @@ import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_t
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
 
-const COURSE_BASE = BASE_API + 'courses/';
-const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
-const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
+export const COURSE_BASE = BASE_API + 'courses/';
+export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
+export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
+export const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
 export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
 export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 
@@ -26,8 +27,8 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     deleteCourse(id: number) {
-        // Sometimes the backend fails with a ConstraintViolationError if we delete the course immediately after a login...
-        cy.wait(1000);
+        // Sometimes the backend fails with a ConstraintViolationError if we delete the course immediately after a login
+        cy.wait(100);
         return cy.request({ method: DELETE, url: COURSE_BASE + id });
     }
 
@@ -63,17 +64,20 @@ export class CourseManagementRequests {
      * @param title the title of the programming exercise
      * @param programmingShortName the short name of the programming exercise
      * @param packageName the package name of the programming exercise
+     * @param body an object containing either the course or exercise group the exercise will be added to
+     * @param scaMaxPenalty the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
      * @param releaseDate when the programming exercise should be available (default is now)
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
      * @returns <Chainable> request response
      */
     createProgrammingExercise(
         body: { course: any } | { exerciseGroup: any },
+        scaMaxPenalty?: number,
+        releaseDate = day(),
+        dueDate = day().add(1, 'day'),
         title = 'Cypress programming exercise ' + generateUUID(),
         programmingShortName = 'cypress' + generateUUID(),
         packageName = 'de.test',
-        releaseDate = day(),
-        dueDate = day().add(1, 'days'),
     ) {
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
         const programmingTemplate: any = this.getCourseOrExamExercise(programmingExerciseTemplate, body);
@@ -81,12 +85,16 @@ export class CourseManagementRequests {
         programmingTemplate.shortName = programmingShortName;
         programmingTemplate.packageName = packageName;
         if (!isExamExercise) {
-            programmingTemplate.releaseDate = releaseDate.toISOString();
-            programmingTemplate.dueDate = dueDate.toISOString();
+            programmingTemplate.releaseDate = dayjsToString(releaseDate);
+            programmingTemplate.dueDate = dayjsToString(dueDate);
         } else {
             programmingTemplate.allowComplaintsForAutomaticAssessments = true;
         }
 
+        if (scaMaxPenalty) {
+            programmingTemplate.staticCodeAnalysisEnabled = true;
+            programmingTemplate.maxStaticCodeAnalysisPenalty = scaMaxPenalty;
+        }
         const runsOnBamboo: boolean = Cypress.env('isBamboo');
         if (runsOnBamboo) {
             cy.waitForGroupSynchronization();

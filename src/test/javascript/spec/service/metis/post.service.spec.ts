@@ -2,11 +2,21 @@ import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import * as chai from 'chai';
 import { take } from 'rxjs/operators';
-import { DisplayPriority, Post } from 'app/entities/metis/post.model';
-import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
+import { CourseWideContext, DisplayPriority } from 'app/shared/metis/metis.util';
+import {
+    metisCourse,
+    metisCoursePosts,
+    metisCoursePostsWithCourseWideContext,
+    metisExercise,
+    metisExercisePosts,
+    metisLecture,
+    metisLecturePosts,
+    metisPostExerciseUser1,
+    metisPostToCreateUser1,
+    metisTags,
+} from '../../helpers/sample/metis-sample-data';
 
 const expect = chai.expect;
 
@@ -14,12 +24,6 @@ describe('Post Service', () => {
     let injector: TestBed;
     let service: PostService;
     let httpMock: HttpTestingController;
-    let elemDefault: Post;
-    let elem2: Post;
-    let courseDefault: Course;
-    let exerciseDefault: TextExercise;
-    let lectureDefault: Lecture;
-    let posts: Post[];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -28,41 +32,11 @@ describe('Post Service', () => {
         injector = getTestBed();
         service = injector.get(PostService);
         httpMock = injector.get(HttpTestingController);
-
-        elemDefault = new Post();
-        elemDefault.id = 0;
-        elemDefault.creationDate = undefined;
-        elemDefault.content = 'This is a test post';
-        elemDefault.title = 'title';
-        elemDefault.tags = ['tag1', 'tag2'];
-
-        elem2 = new Post();
-        elem2.id = 1;
-        elem2.creationDate = undefined;
-        elem2.content = 'This is a test post';
-        elem2.title = 'title';
-        elem2.tags = ['tag3', 'tag4'];
-
-        courseDefault = new Course();
-        courseDefault.id = 1;
-
-        exerciseDefault = new TextExercise(courseDefault, undefined);
-        exerciseDefault.id = 1;
-        exerciseDefault.posts = [elemDefault];
-
-        lectureDefault = new Lecture();
-        lectureDefault.id = 1;
-        lectureDefault.posts = [elem2];
-
-        courseDefault.exercises = [exerciseDefault];
-        courseDefault.lectures = [lectureDefault];
-
-        posts = [elemDefault, elem2];
     });
 
     describe('Service methods', () => {
         it('should create a Post', fakeAsync(() => {
-            const returnedFromService = { ...elemDefault, id: 0 };
+            const returnedFromService = { ...metisPostToCreateUser1 };
             const expected = { ...returnedFromService };
             service
                 .create(1, new Post())
@@ -74,8 +48,7 @@ describe('Post Service', () => {
         }));
 
         it('should update a Post', fakeAsync(() => {
-            const returnedFromService = { ...elemDefault, content: 'This is another test post' };
-
+            const returnedFromService = { ...metisPostExerciseUser1, content: 'This is another test post' };
             const expected = { ...returnedFromService };
             service
                 .update(1, expected)
@@ -88,11 +61,10 @@ describe('Post Service', () => {
 
         it('should pin a Post', fakeAsync(() => {
             const newDisplayPriority = DisplayPriority.PINNED;
-            const returnedFromService = { ...elemDefault, displayPriority: newDisplayPriority };
-
+            const returnedFromService = { ...metisPostExerciseUser1, displayPriority: newDisplayPriority };
             const expected = { ...returnedFromService };
             service
-                .updatePostDisplayPriority(1, elemDefault.id!, newDisplayPriority)
+                .updatePostDisplayPriority(1, metisPostExerciseUser1.id!, newDisplayPriority)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
@@ -102,11 +74,10 @@ describe('Post Service', () => {
 
         it('should archive a Post', fakeAsync(() => {
             const newDisplayPriority = DisplayPriority.ARCHIVED;
-            const returnedFromService = { ...elemDefault, displayPriority: newDisplayPriority };
-
+            const returnedFromService = { ...metisPostExerciseUser1, displayPriority: newDisplayPriority };
             const expected = { ...returnedFromService };
             service
-                .updatePostDisplayPriority(1, elemDefault.id!, newDisplayPriority)
+                .updatePostDisplayPriority(1, metisPostExerciseUser1.id!, newDisplayPriority)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
@@ -115,19 +86,29 @@ describe('Post Service', () => {
         }));
 
         it('should delete a Post', fakeAsync(() => {
-            service.delete(1, elemDefault).subscribe((resp) => expect(resp.ok).to.be.true);
-
+            service.delete(1, metisPostExerciseUser1).subscribe((resp) => expect(resp.ok).to.be.true);
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
             tick();
         }));
 
         it('should return all student posts for a course', fakeAsync(() => {
-            const returnedFromService = [...posts];
-
-            const expected = [...posts];
+            const returnedFromService = metisCoursePosts;
+            const expected = metisCoursePosts;
             service
-                .getAllPostsByCourseId(courseDefault.id!)
+                .getPosts(metisCourse.id!, {})
+                .pipe(take(2))
+                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(returnedFromService);
+            tick();
+        }));
+
+        it('should return all student posts for a course-wide context', fakeAsync(() => {
+            const returnedFromService = [metisCoursePostsWithCourseWideContext.filter((post) => post.courseWideContext === CourseWideContext.RANDOM)];
+            const expected = returnedFromService;
+            service
+                .getPosts(metisCourse.id!, { courseWideContext: CourseWideContext.RANDOM })
                 .pipe(take(2))
                 .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'GET' });
@@ -136,11 +117,10 @@ describe('Post Service', () => {
         }));
 
         it('should return all student posts for a lecture', fakeAsync(() => {
-            const returnedFromService = [elem2];
-
-            const expected = [elem2];
+            const returnedFromService = metisLecturePosts;
+            const expected = returnedFromService;
             service
-                .getAllPostsByLectureId(courseDefault.id!, lectureDefault.id!)
+                .getPosts(metisCourse.id!, { lectureId: metisLecture.id })
                 .pipe(take(2))
                 .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'GET' });
@@ -149,11 +129,10 @@ describe('Post Service', () => {
         }));
 
         it('should return all student posts for an exercise', fakeAsync(() => {
-            const returnedFromService = [elemDefault];
-
-            const expected = [elemDefault];
+            const returnedFromService = metisExercisePosts;
+            const expected = returnedFromService;
             service
-                .getAllPostsByExerciseId(courseDefault.id!, exerciseDefault.id!)
+                .getPosts(metisCourse.id!, { exerciseId: metisExercise.id })
                 .pipe(take(2))
                 .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'GET' });
@@ -162,11 +141,10 @@ describe('Post Service', () => {
         }));
 
         it('should return all post tags for a course', fakeAsync(() => {
-            const returnedFromService = ['tag1', 'tag2', 'tag3', 'tag4'];
-
-            const expected = ['tag1', 'tag2', 'tag3', 'tag4'];
+            const returnedFromService = metisTags;
+            const expected = returnedFromService;
             service
-                .getAllPostTagsByCourseId(courseDefault.id!)
+                .getAllPostTagsByCourseId(metisCourse.id!)
                 .pipe(take(2))
                 .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'GET' });
