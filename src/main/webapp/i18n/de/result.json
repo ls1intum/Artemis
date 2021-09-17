@@ -60,7 +60,16 @@
                 "points": "Punkte",
                 "deductions": "Abzüge",
                 "tooltip": "Deine Punktabzüge werden begrenzt um den Einfluss von Folgefehlern durch Code-Issues abzuschwächen. Beachte, dass du gegebenenfalls mehrere Code-Issues lösen musst, bevor sich deine Punkte erhöhen."
-            }
+            },
+            "missing": {
+                "viewPrevious": "Letztes Ergebnis anzeigen",
+                "programmingFailedSubmission": {
+                    "message": "Kein entsprechendes Ergebnis verfügbar.",
+                    "tooltipOfflineIde": "Für deine letzte Einreichung konnte kein Ergebnis gefunden / nicht rechtzeitig generiert werden. Bitte überprüfe deinen Code manuell in deiner IDE, z.B. überprüfe, ob dein Code lokal kompiliert und korrekt funktioniert.",
+                    "tooltipOnlineIde": "Für deine letzte Einreichung konnte kein Ergebnis gefunden / nicht rechtzeitig generiert werden. Bitte überprüfe deinen Code soweit möglich manuell."
+                }
+            },
+            "notLatestSubmission": "Hinweis: Dieses Ergebnis und Feedback bezieht sich <strong>nicht</strong> auf die letzte Einreichung."
         }
     }
 }
