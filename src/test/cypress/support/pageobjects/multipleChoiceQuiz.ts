@@ -9,7 +9,7 @@ export class MultipleChoiceQuiz {
         this.getQuizBody()
             .get('#answer-option-' + optionNumber)
             .find('.svg-inline--fa')
-            .eq(0)
+            .first()
             .click();
     }
 
