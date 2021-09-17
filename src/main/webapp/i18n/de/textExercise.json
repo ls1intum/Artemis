@@ -32,7 +32,7 @@
             "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
             "tutorEffortStatistics": {
                 "title": "Tutor Aufwand Statistik",
-                "numberOfSubmissionsAssessed": "Anzahl der insgesamt bewerteten Einreichungen beteiligt",
+                "numberOfSubmissionsAssessed": "Anzahl der bewerteten Einreichungen",
                 "totalTimeSpent": "Gesamtdauer der Benotung (in Minuten)",
                 "averageTime": "Bewertungsgeschwindigkeit (Submissions/Minuten)",
                 "noData": "Für diese Übung sind derzeit keine Datensätze vorhanden. Bitte versuchen Sie es später noch einmal.",
