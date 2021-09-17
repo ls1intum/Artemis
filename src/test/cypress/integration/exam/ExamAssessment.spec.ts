@@ -3,10 +3,9 @@ import { artemis } from '../../support/ArtemisTesting';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { BASE_API, GROUP_SYNCHRONIZATION, PUT } from '../../support/constants';
 import dayjs from 'dayjs';
-import { ProgrammingExerciseSubmission } from '../../support/pageobjects/OnlineEditorPage';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
-
+import { makeSubmissionAndVerifyResults } from '../../support/pageobjects/OnlineEditorPage';
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 
@@ -134,7 +133,7 @@ describe('Exam assessment', () => {
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
                 examStartEnd.startExam();
                 cy.contains(programmingExercise.title).should('be.visible').click();
-                makeSubmissionAndVerifyResults(partiallySuccessful, programmingExercise.packageName, () => {
+                makeSubmissionAndVerifyResults(editorPage, programmingExercise.packageName, partiallySuccessful, () => {
                     cy.get('#exam-navigation-bar').find('.btn-danger').click();
                     examStartEnd.finishExam();
                     cy.get('.alert').should('be.visible');
@@ -150,18 +149,6 @@ describe('Exam assessment', () => {
         });
     });
 });
-
-function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmission, packageName: string, verifyOutput: () => void) {
-    // We create an empty file so that the file browser does not create an extra subfolder when all files are deleted
-    editorPage.createFileInRootPackage('placeholderFile');
-    // We delete all existing files, so we can create new files and don't have to delete their already existing content
-    editorPage.deleteFile('Client.java');
-    editorPage.deleteFile('BubbleSort.java');
-    editorPage.deleteFile('MergeSort.java');
-    editorPage.typeSubmission(submission, packageName);
-    editorPage.submit();
-    verifyOutput();
-}
 
 function prepareExam(examEnd: dayjs.Dayjs) {
     cy.log(examEnd.toString());
