@@ -150,7 +150,6 @@ export class CourseManagementRequests {
     }
 
     /**
-
      * add exercise group to exam
      * @returns <Chainable> request response
      * */
