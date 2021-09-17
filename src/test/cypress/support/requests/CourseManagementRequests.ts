@@ -239,7 +239,7 @@ export class CourseManagementRequests {
 
     setQuizVisible(quizId: number) {
         return cy.request({
-            url: QUIZ_EXERCISE_BASE + `${quizId}` + '/set-visible',
+            url: `${QUIZ_EXERCISE_BASE}${quizId}/set-visible`,
             method: PUT,
         });
     }
