@@ -56,7 +56,7 @@ class SecurityUtilsUnitTest {
     void testAnonymousIsNotAuthenticated() {
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
         Collection<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(AuthoritiesConstants.ANONYMOUS));
+        authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
         securityContext.setAuthentication(new UsernamePasswordAuthenticationToken("anonymous", "anonymous", authorities));
         SecurityContextHolder.setContext(securityContext);
         boolean isAuthenticated = SecurityUtils.isAuthenticated();
@@ -67,11 +67,11 @@ class SecurityUtilsUnitTest {
     void testHasCurrentUserThisAuthority() {
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
         Collection<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(AuthoritiesConstants.USER));
+        authorities.add(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
         securityContext.setAuthentication(new UsernamePasswordAuthenticationToken("user", "user", authorities));
         SecurityContextHolder.setContext(securityContext);
 
-        assertThat(SecurityUtils.hasCurrentUserThisAuthority(AuthoritiesConstants.USER)).isTrue();
-        assertThat(SecurityUtils.hasCurrentUserThisAuthority(AuthoritiesConstants.ADMIN)).isFalse();
+        assertThat(SecurityUtils.hasCurrentUserThisAuthority(Role.STUDENT.getAuthority())).isTrue();
+        assertThat(SecurityUtils.hasCurrentUserThisAuthority(Role.ADMIN.getAuthority())).isFalse();
     }
 }
