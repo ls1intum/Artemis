@@ -178,7 +178,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 OR pe.templateParticipation.id = :#{#participationId}
                 OR pe.solutionParticipation.id = :#{#participationId}
             """)
-    Optional<ProgrammingExercise> findByParticipationId(Long participationId);
+    Optional<ProgrammingExercise> findByParticipationId(@Param("participationId") Long participationId);
 
     /**
      * Query which fetches all the programming exercises for which the user is instructor in the course and matching the search criteria.
@@ -457,10 +457,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Find the ProgrammingExercise where the given Participation is either a student, template or solution Participation
+     * Find the ProgrammingExercise of the given Participation, which can be either a student, template or solution Participation
      *
      * @param participation The programming participation
-     * @return The ProgrammingExercise where the given Participation is a student, template or solution Participation
+     * @return The ProgrammingExercise of the given Participation
      */
     default Optional<ProgrammingExercise> getExercise(ProgrammingExerciseParticipation participation) {
         return findByParticipationId(participation.getId());
