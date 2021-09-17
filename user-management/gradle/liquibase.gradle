@@ -1,0 +1,69 @@
+import org.gradle.internal.os.OperatingSystem
+
+configurations {
+    liquibase
+}
+
+dependencies {
+    liquibase "org.liquibase.ext:liquibase-hibernate5:4.4.2"
+}
+
+if (OperatingSystem.current().isWindows()) {
+    task pathingLiquibaseJar(type: Jar) {
+        dependsOn configurations.liquibase
+        appendix = 'pathingLiquibase'
+
+        doFirst {
+            manifest {
+                attributes 'Class-Path': sourceSets.main.runtimeClasspath.plus(configurations.liquibase).collect {
+                    it.toURI().toURL().toString().replaceFirst(/file:\/+/, '/')
+                }.join(' ')
+            }
+        }
+    }
+}
+
+task initPaths(dependsOn: compileJava) {
+    group = "liquibase"
+    if (OperatingSystem.current().isWindows()) {
+        dependsOn pathingLiquibaseJar
+    }
+}
+
+def liquibaseCommand(command) {
+    javaexec {
+        if (OperatingSystem.current().isWindows()) {
+            classpath files(pathingLiquibaseJar.archivePath)
+        } else {
+            classpath sourceSets.main.runtimeClasspath
+            classpath configurations.liquibase
+        }
+        main = "liquibase.integration.commandline.Main"
+
+        args "--changeLogFile=../src/main/resources/config/liquibase/changelog/" + buildTimestamp() +"_changelog.xml"
+        args "--referenceUrl=hibernate:spring:de.tum.in.www1.artemis.domain?dialect=org.hibernate.dialect.MySQL8Dialect&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy"
+        args "--username=root"
+        args "--password="
+        args "--url=jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
+        args "--driver=com.mysql.cj.jdbc.Driver"
+        args command
+    }
+}
+
+task liquibaseDiffChangeLog(dependsOn: initPaths) {
+    doLast {
+        liquibaseCommand("diffChangeLog")
+    }
+}
+
+task liquibaseClearChecksums(dependsOn: initPaths) {
+    doLast {
+        liquibaseCommand("clearChecksums")
+    }
+}
+
+def buildTimestamp() {
+    def date = new Date()
+    def formattedDate = date.format('yyyyMMddHHmmss')
+    return formattedDate
+}

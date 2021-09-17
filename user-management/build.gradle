@@ -20,6 +20,7 @@ plugins {
     id "com.diffplug.spotless" version "5.14.2"
     id "org.openapi.generator"
     id "io.spring.nohttp"
+    id "org.liquibase.gradle"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
@@ -182,6 +183,7 @@ dependencies {
     // Use ", version: jhipsterDependenciesVersion, changing: true" if you want
     // to use a SNAPSHOT release instead of a stable release
     implementation group: "tech.jhipster", name: "jhipster-framework"
+
     implementation "javax.annotation:javax.annotation-api"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
     implementation "io.dropwizard.metrics:metrics-core"
@@ -196,9 +198,11 @@ dependencies {
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-hibernate53:2.2.1"
     implementation "org.hibernate:hibernate-core"
+    implementation "com.zaxxer:HikariCP:5.0.0"
 
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.apache.commons:commons-lang3"
+    implementation "org.apache.commons:commons-text:1.9"
     implementation "org.hibernate:hibernate-core"
     implementation 'org.apache.commons:commons-math3:3.6.1'
 
@@ -206,17 +210,19 @@ dependencies {
     implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
     implementation "org.liquibase:liquibase-core:4.4.2"
-
+    implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
     implementation "org.apache.kafka:kafka-clients"
+    implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
     implementation ("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}") {
         exclude module: "spring-boot-starter-undertow"
     }
+    implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-undertow:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
@@ -232,6 +238,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
 
     implementation "io.jsonwebtoken:jjwt-api:0.11.2"
     implementation "org.bouncycastle:bcprov-jdk15on:1.69"
@@ -248,6 +255,8 @@ dependencies {
 
     implementation "org.apache.pdfbox:pdfbox:2.0.24"
     implementation "io.springfox:springfox-bean-validators:3.0.0"
+    implementation "mysql:mysql-connector-java:8.0.26"
+
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
         exclude group: "javax.ws.rs", module: "jsr311-api"
