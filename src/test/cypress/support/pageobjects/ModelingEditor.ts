@@ -2,7 +2,7 @@ import { BASE_API, PUT } from '../constants';
 
 // TODO: find or create better selectors for modeling objects
 export const MODELING_SPACE = '.sc-jrAFXE';
-       const COMPONENT_CONTAINER = '.sc-fFucqa';
+const COMPONENT_CONTAINER = '.sc-fFucqa';
 /**
  * This provides function for interacting with the modeling editor
  * */

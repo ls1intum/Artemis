@@ -74,7 +74,7 @@ describe('Modeling Exercise Spec', () => {
             modelingEditor.addComponentToModel(1);
             createModelingExercise.save();
             cy.get('[jhitranslate="entity.action.export"]').should('be.visible');
-            cy.get(`${ MODELING_SPACE } > :nth-child(1)`).should('exist');
+            cy.get(`${MODELING_SPACE} > :nth-child(1)`).should('exist');
         });
 
         it('Creates Example Submission', () => {
