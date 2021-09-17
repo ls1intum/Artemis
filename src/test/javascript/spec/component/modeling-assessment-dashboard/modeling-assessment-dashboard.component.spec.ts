@@ -1,5 +1,5 @@
-import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { Router } from '@angular/router';
 import { of, Subscription } from 'rxjs';
@@ -15,13 +15,13 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HttpResponse } from '@angular/common/http';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { routes } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.route';
+import { HttpResponse } from '@angular/common/http';
 
 const route = { params: of({ courseId: 3, exerciseId: 22 }) };
 const course = { id: 1 };
@@ -56,9 +56,9 @@ describe('ModelingAssessmentDashboardComponent', () => {
     let exerciseFindSpy: jest.SpyInstance;
     let courseFindSpy: jest.SpyInstance;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([routes[2]]), TranslateModule.forRoot(), ArtemisTestModule],
+            imports: [RouterTestingModule.withRoutes([routes[2]]), ArtemisTestModule],
             declarations: [ModelingAssessmentDashboardComponent],
             providers: [
                 JhiLanguageHelper,
@@ -84,7 +84,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
                 courseFindSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
                 fixture.detectChanges();
             });
-    }));
+    });
 
     afterEach(() => {
         component.ngOnDestroy();
@@ -143,7 +143,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         const windowSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
         const getSubmissionsSpy = jest.spyOn(component, 'getSubmissions');
 
-        const modelAssServiceCancelAssSpy = jest.spyOn(modelingAssessmentService, 'cancelAssessment').mockReturnValue(of());
+        const modelAssServiceCancelAssSpy = jest.spyOn(modelingAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
 
         // call
         component.cancelAssessment(modelingSubmission);

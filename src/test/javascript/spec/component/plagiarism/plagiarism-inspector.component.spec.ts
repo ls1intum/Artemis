@@ -19,7 +19,6 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockProvider } from 'ng-mocks';
-import * as sinon from 'sinon';
 import { TranslateService } from '@ngx-translate/core';
 
 jest.mock('app/shared/util/download.util', () => ({
@@ -90,9 +89,9 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should register to topic and fetch latest results on init', fakeAsync(() => {
         const websocketService = TestBed.inject(JhiWebsocketService);
-        const websocketServiceSpy = sinon.spy(websocketService, 'subscribe');
-        sinon.stub(websocketService, 'receive').returns(of({ state: 'COMPLETED', messages: 'a message' } as PlagiarismCheckState));
-        sinon.stub(modelingExerciseService, 'getLatestPlagiarismResult').returns(of(modelingPlagiarismResult));
+        const websocketServiceSpy = jest.spyOn(websocketService, 'subscribe');
+        jest.spyOn(websocketService, 'receive').mockReturnValue(of({ state: 'COMPLETED', messages: 'a message' } as PlagiarismCheckState));
+        jest.spyOn(modelingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(modelingPlagiarismResult));
 
         comp.ngOnInit();
         tick();

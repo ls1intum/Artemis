@@ -17,7 +17,6 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { QuizPointStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-point-statistic/quiz-point-statistic.component';
 import dayjs from 'dayjs';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
-import { SinonStub, stub } from 'sinon';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
@@ -40,10 +39,10 @@ describe('QuizExercise Point Statistic Component', () => {
     let fixture: ComponentFixture<QuizPointStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy: SinonStub;
+    let accountSpy: jest.SpyInstance;
     let router: Router;
     let translateService: TranslateService;
-    let quizServiceFindSpy: SinonStub;
+    let quizServiceFindSpy: jest.SpyInstance;
     Date.now = jest.fn(() => new Date(Date.UTC(2017, 0, 1)).valueOf());
 
     beforeEach(() => {
@@ -68,7 +67,7 @@ describe('QuizExercise Point Statistic Component', () => {
                 accountService = fixture.debugElement.injector.get(AccountService);
                 router = fixture.debugElement.injector.get(Router);
                 translateService = fixture.debugElement.injector.get(TranslateService);
-                quizServiceFindSpy = stub(quizService, 'find').returns(of(new HttpResponse({ body: quizExercise })));
+                quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });
 
@@ -80,11 +79,14 @@ describe('QuizExercise Point Statistic Component', () => {
         it('should call functions on Init', fakeAsync(() => {
             // setup
             jest.useFakeTimers();
-            accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(true);
+            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const loadQuizSuccessSpy = jest.spyOn(comp, 'loadQuizSuccess');
             const updateDisplayedTimesSpy = jest.spyOn(comp, 'updateDisplayedTimes');
             comp.quizExerciseChannel = '';
             comp.waitingForQuizStart = true;
+            comp.quizExercise = quizExercise;
+            comp.quizExercise.quizPointStatistic = new QuizPointStatistic();
+            comp.quizExercise.quizPointStatistic.pointCounters = pointCounters;
 
             // call
             comp.ngOnInit();
@@ -101,7 +103,7 @@ describe('QuizExercise Point Statistic Component', () => {
         }));
 
         it('should not load QuizSuccess if not authorised', fakeAsync(() => {
-            accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(false);
+            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
             const loadQuizSuccessSpy = jest.spyOn(comp, 'loadQuizSuccess');
 
             comp.ngOnInit();
@@ -153,22 +155,24 @@ describe('QuizExercise Point Statistic Component', () => {
     });
 
     describe('loadQuizSuccess', function () {
-        let loadDataSpy: SinonStub;
-        let routerSpy: SinonStub;
+        let loadDataSpy: jest.SpyInstance;
+        let routerSpy: jest.SpyInstance;
 
         beforeEach(() => {
-            loadDataSpy = stub(comp, 'loadData');
-            routerSpy = stub(router, 'navigate');
+            loadDataSpy = jest.spyOn(comp, 'loadData');
+            routerSpy = jest.spyOn(router, 'navigate');
         });
 
         afterEach(() => {
-            loadDataSpy.reset();
-            routerSpy.reset();
+            loadDataSpy.mockClear();
+            routerSpy.mockClear();
         });
 
         it('should call router if called by student', () => {
             // setup
-            accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(false);
+            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            quizExercise.quizPointStatistic = new QuizPointStatistic();
+            quizExercise.quizPointStatistic.pointCounters = pointCounters;
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -179,7 +183,9 @@ describe('QuizExercise Point Statistic Component', () => {
 
         it('should load the quiz', () => {
             // setup
-            accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(true);
+            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            quizExercise.quizPointStatistic = new QuizPointStatistic();
+            quizExercise.quizPointStatistic.pointCounters = pointCounters;
 
             // call
             comp.loadQuizSuccess(quizExercise);

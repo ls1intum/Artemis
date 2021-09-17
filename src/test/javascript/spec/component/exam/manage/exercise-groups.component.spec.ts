@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
@@ -32,6 +32,7 @@ import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-
 import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();
@@ -57,7 +58,7 @@ describe('Exercise Groups Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule],
+            imports: [ArtemisTestModule, RouterTestingModule],
             declarations: [
                 ExerciseGroupsComponent,
                 ExamExerciseRowButtonsComponent,
@@ -196,6 +197,7 @@ describe('Exercise Groups Component', () => {
     it('opens the import modal for programming exercises', fakeAsync(() => {
         const mockReturnValue = { result: Promise.resolve({ id: 1 } as ProgrammingExercise) } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+        const routerNavigateStub = jest.spyOn(router, 'navigate');
 
         comp.openImportModal(groups[0], ExerciseType.PROGRAMMING);
         tick();
@@ -207,17 +209,19 @@ describe('Exercise Groups Component', () => {
     it('opens the import modal for text exercises', fakeAsync(() => {
         const mockReturnValue = { result: Promise.resolve({ id: 1 } as TextExercise) } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+        const routerNavigateStub = jest.spyOn(router, 'navigate');
 
         comp.openImportModal(groups[0], ExerciseType.TEXT);
         tick();
 
         expect(modalService.open).toHaveBeenCalled();
-        expect(router.navigate).toHaveBeenCalled();
+        expect(routerNavigateStub).toHaveBeenCalled();
     }));
 
     it('opens the import modal for modeling exercises', fakeAsync(() => {
         const mockReturnValue = { result: Promise.resolve({ id: 1 } as ModelingExercise) } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+        const routerNavigateStub = jest.spyOn(router, 'navigate');
 
         comp.openImportModal(groups[0], ExerciseType.MODELING);
         tick();
