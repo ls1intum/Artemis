@@ -144,7 +144,7 @@ describe('Exam assessment', () => {
                 examStartEnd.startExam();
                 cy.contains(programmingExercise.title).should('be.visible').click();
                 makeSubmissionAndVerifyResults(editorPage, programmingExercise.packageName, partiallySuccessful, () => {
-                    cy.get('#exam-navigation-bar').find('.btn-danger').click();
+                    examNavigation.handInEarly();
                     examStartEnd.finishExam();
                     cy.get('.alert').should('be.visible');
                 });
