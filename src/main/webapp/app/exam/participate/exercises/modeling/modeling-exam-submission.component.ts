@@ -41,6 +41,15 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         this.updateViewFromSubmission();
     }
 
+    /**
+     * Updates the problem statement of the currently loaded modeling exercise which is part of the user's student exam.
+     * @param newProblemStatement is the updated problem statement that should be displayed to the user.
+     */
+    updateProblemStatement(newProblemStatement: string): void {
+        this.exercise.problemStatement = newProblemStatement;
+        this.changeDetectorReference.detectChanges();
+    }
+
     getSubmission(): Submission {
         return this.studentSubmission;
     }
