@@ -31,7 +31,7 @@ Cypress.on('uncaught:exception', () => {
     return false;
 });
 
-describe('Exam Assessment', () => {
+describe('Exam assessment', () => {
     before('Create a course', () => {
         cy.login(admin);
         courseManagementRequests.createCourse().then((response) => {
@@ -46,18 +46,18 @@ describe('Exam Assessment', () => {
         cy.login(admin);
     });
 
-    afterEach('Delete Exam', () => {
+    afterEach('Delete exam', () => {
         cy.login(admin);
         courseManagementRequests.deleteExam(exam);
     });
 
-    after('Delete Course', () => {
+    after('Delete course', () => {
         cy.login(admin);
         courseManagementRequests.deleteCourse(course.id);
     });
 
-    describe('Exam exercise Assessment', () => {
-        beforeEach('Create Exam', () => {
+    describe('Exam exercise assessment', () => {
+        beforeEach('Create exam', () => {
             prepareExam(dayjs().add(30, 'seconds'));
         });
 
@@ -118,10 +118,10 @@ describe('Exam Assessment', () => {
         });
     });
 
-    describe('Exam Programming Exercise Assessment', () => {
+    describe('Exam programming exercise assessment', () => {
         const examEnd = (Cypress.env('isBamboo') ? GROUP_SYNCHRONIZATION : 0) + 115000;
 
-        beforeEach('Create Exam', () => {
+        beforeEach('Create exam', () => {
             prepareExam(dayjs().add(examEnd, 'milliseconds'));
         });
 
