@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
@@ -261,7 +261,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             return;
         }
 
-        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.jhiAlertService, this);
+        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.alertService, this);
         command.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId);
     }
 

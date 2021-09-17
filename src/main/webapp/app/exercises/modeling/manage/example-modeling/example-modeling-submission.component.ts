@@ -406,7 +406,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         delete result.submission;
         getLatestSubmissionResult(exampleSubmission.submission)!.feedbacks = this.feedbacks;
 
-        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.jhiAlertService, this);
+        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.alertService, this);
         command.assessExampleSubmission(exampleSubmission, this.exerciseId);
     }
 

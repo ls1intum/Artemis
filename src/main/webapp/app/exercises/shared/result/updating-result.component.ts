@@ -97,7 +97,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 filter((result) => !!result),
                 // Ignore ungraded results if ungraded results are supposed to be ignored.
                 filter((result: Result) => this.showUngradedResults || result.rated === true),
-                map((result) => ({ ...result, completionDate: result.completionDate ? moment(result.completionDate) : undefined, participation: this.participation })),
+                map((result) => ({ ...result, completionDate: result.completionDate ? dayjs(result.completionDate) : undefined, participation: this.participation })),
                 tap((result) => {
                     this.result = result;
                 }),
