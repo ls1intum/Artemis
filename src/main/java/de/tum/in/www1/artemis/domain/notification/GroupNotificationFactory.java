@@ -215,7 +215,7 @@ public class GroupNotificationFactory {
      * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created
-     * @param archiveErrors         a list of errors that occured during archiving
+     * @param archiveErrors         a list of errors that occurred during archiving
      * @return an instance of GroupNotification
      */
     public static GroupNotification createNotification(Course course, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
@@ -253,7 +253,7 @@ public class GroupNotificationFactory {
      * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created
-     * @param archiveErrors         a list of errors that occured during archiving
+     * @param archiveErrors         a list of errors that occurred during archiving
      * @return an instance of GroupNotification
      */
     public static GroupNotification createNotification(Exam exam, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
