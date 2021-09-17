@@ -1,6 +1,5 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
-import { POST } from '../../support/constants';
 import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import { DELETE } from '../../support/constants';
 
