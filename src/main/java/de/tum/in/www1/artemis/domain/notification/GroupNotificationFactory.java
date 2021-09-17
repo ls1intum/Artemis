@@ -111,12 +111,7 @@ public class GroupNotificationFactory {
 
         // Exercises for exams
         if (exercise.isExamExercise()) {
-            if (exercise instanceof ProgrammingExercise) {
-                notification.setTarget(notification.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
-            }
-            else if (exercise instanceof TextExercise) {
-                notification.setTarget(notification.getExamExerciseTargetWithExerciseUpdate(exercise));
-            }
+            notification.setTarget(notification.getExamExerciseTargetWithExerciseUpdate(exercise));
             notification.setPriority(NotificationPriority.HIGH);
         }
         // Exercises for courses (not for exams)
