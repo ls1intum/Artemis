@@ -131,12 +131,11 @@ describe('Exam assessment', () => {
     describe('Exam programming exercise assessment', () => {
         const examEnd = (Cypress.env('isBamboo') ? GROUP_SYNCHRONIZATION : 0) + 115000;
 
-        beforeEach('Create exam', () => {
+        before('Prepare exam', () => {
             prepareExam(dayjs().add(examEnd, 'milliseconds'));
         });
 
-        it('Assess a programming exercise submission (MANUAL)', () => {
-            cy.login(admin);
+        beforeEach('Create exam, exercise and submission', () => {
             courseManagementRequests.createProgrammingExercise({ exerciseGroup }).then((progRespone) => {
                 const programmingExercise = progRespone.body;
                 courseManagementRequests.generateMissingIndividualExams(exam);
@@ -148,15 +147,18 @@ describe('Exam assessment', () => {
                     cy.get('#exam-navigation-bar').find('.btn-danger').click();
                     examStartEnd.finishExam();
                     cy.get('.alert').should('be.visible');
-                    cy.login(tutor, '/course-management/' + course.id + '/exams');
-                    cy.contains('Assessment Dashboard', { timeout: examEnd }).click();
-                    assessmentDashboard.startAssessing();
-                    assessmentDashboard.addNewFeedback(2, 'Good job');
-                    assessmentDashboard.submitAssessment();
-                    cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                    cy.get('.question-options').contains('6.6 of 10 points').should('be.visible');
                 });
             });
+        });
+
+        it('Assess a programming exercise submission (MANUAL)', () => {
+            cy.login(tutor, '/course-management/' + course.id + '/exams');
+            cy.contains('Assessment Dashboard', { timeout: examEnd }).click();
+            assessmentDashboard.startAssessing();
+            assessmentDashboard.addNewFeedback(2, 'Good job');
+            assessmentDashboard.submitAssessment();
+            cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
+            cy.get('.question-options').contains('6.6 of 10 points').should('be.visible');
         });
     });
 });
