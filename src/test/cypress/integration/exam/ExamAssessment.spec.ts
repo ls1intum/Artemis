@@ -1,6 +1,6 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
-import { BASE_API, GROUP_SYNCHRONIZATION, PUT } from '../../support/constants';
+import { GROUP_SYNCHRONIZATION } from '../../support/constants';
 import dayjs from 'dayjs';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
@@ -14,6 +14,7 @@ const modelingEditor = artemis.pageobjects.modelingEditor;
 const modelingAssessment = artemis.pageobjects.modelingExerciseAssessmentEditor;
 const editorPage = artemis.pageobjects.programmingExercise.editor;
 const assessmentDashboard = artemis.pageobjects.assessmentDashboard;
+const examNavigation = artemis.pageobjects.examNavigationBar;
 
 // Common primitives
 const admin = artemis.users.getAdmin();
@@ -68,10 +69,10 @@ describe('Exam assessment', () => {
                     modelingEditor.addComponentToModel(1);
                     modelingEditor.addComponentToModel(2);
                     modelingEditor.addComponentToModel(3);
-                    cy.intercept(PUT, BASE_API + 'exercises/*/modeling-submissions').as('createModelingSubmission');
-                    cy.contains('Save').click();
-                    cy.wait('@createModelingSubmission');
-                    cy.get('#exam-navigation-bar').find('.btn-danger').click();
+                    modelingEditor.save().then((modelResponse) => {
+                        expect(modelResponse.response?.statusCode).to.equal(200);
+                    });
+                    examNavigation.handInEarly();
                     examStartEnd.finishExam();
                });
             });
@@ -106,7 +107,7 @@ describe('Exam assessment', () => {
                 cy.contains(exerciseTitle).click();
                 cy.get('#text-editor-tab').type(textSubmission.text);
                 cy.contains('Save').click();
-                cy.get('#exam-navigation-bar').find('.btn-danger').click();
+                examNavigation.handInEarly();
                 examStartEnd.finishExam();
             });
 

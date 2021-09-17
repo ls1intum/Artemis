@@ -1,3 +1,5 @@
+import { BASE_API, PUT } from '../constants';
+
 /**
  * This provides function for interacting with the modeling editor
  * */
@@ -13,5 +15,11 @@ export class ModelingEditor {
             position: 'bottomLeft',
             force: true,
         });
+    }
+
+    save() {
+        cy.intercept(PUT, BASE_API + 'exercises/*/modeling-submissions').as('createModelingSubmission');
+        cy.contains('Save').click();
+        return cy.wait('@createModelingSubmission');
     }
 }
