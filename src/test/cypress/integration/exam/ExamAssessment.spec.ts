@@ -146,7 +146,6 @@ describe('Exam assessment', () => {
                 makeSubmissionAndVerifyResults(editorPage, programmingExercise.packageName, partiallySuccessful, () => {
                     examNavigation.handInEarly();
                     examStartEnd.finishExam();
-                    cy.get('.alert').should('be.visible');
                 });
             });
         });
