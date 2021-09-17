@@ -1,3 +1,5 @@
+import { ScaFeedbackModal } from './exercises/programming/ScaFeedbackModal';
+import { CodeAnalysisGradingPage } from './exercises/programming/CodeAnalysisGradingPage';
 import { TextEditorPage } from './exercises/text/TextEditorPage';
 import { ExamNavigationBar } from './exam/ExamNavigationBar';
 import { CourseOverviewPage } from './course/CourseOverviewPage';
@@ -28,16 +30,20 @@ export class ArtemisPageobjects {
     courseOverview = new CourseOverviewPage();
     courseManagementExercises = new CourseManagementExercisesPage();
     navigationBar = new NavigationBar();
-    onlineEditor = new OnlineEditorPage();
     examCreation = new ExamCreationPage();
     examManagement = new ExamManagementPage();
     examStartEnd = new ExamStartEndPage();
     examNavigationBar = new ExamNavigationBar();
-    programmingExerciseCreation = new ProgrammingExerciseCreationPage();
     createModelingExercise = new CreateModelingExercisePage();
     modelingExerciseAssessmentEditor = new ModelingExerciseAssessmentEditor();
     modelingEditor = new ModelingEditor();
     assessmentDashboard = new AssessmentDashboard();
+    programmingExercise = {
+        editor: new OnlineEditorPage(),
+        creation: new ProgrammingExerciseCreationPage(),
+        scaConfiguration: new CodeAnalysisGradingPage(),
+        scaFeedback: new ScaFeedbackModal(),
+    };
     quizExerciseCreation = new QuizExerciseCreationPage();
     textExercise = {
         creation: new TextExerciseCreationPage(),
