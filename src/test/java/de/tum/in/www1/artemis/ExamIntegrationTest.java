@@ -1738,7 +1738,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         course.setEndDate(ZonedDateTime.now().minusMinutes(5));
         course = courseRepo.save(course);
 
-        request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK, null);
 
         final var courseId = course.getId();
         await().until(() -> courseRepo.findById(courseId).get().getCourseArchivePath() != null);

@@ -58,7 +58,7 @@ export class CourseManagementService {
      */
     update(course: Course): Observable<EntityResponseType> {
         const copy = CourseManagementService.convertDateFromClient(course);
-        return this.http.put<Course>(this.resourceUrl, copy, { observe: 'response' }).pipe(
+        return this.http.put<Course>(`${this.resourceUrl}/${course.id}`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
             tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
         );
@@ -373,7 +373,7 @@ export class CourseManagementService {
      * @param courseId The id of the course to archive
      */
     archiveCourse(courseId: number): Observable<HttpResponse<any>> {
-        return this.http.put(`${this.resourceUrl}/${courseId}/archive`, {}, { observe: 'response' });
+        return this.http.post(`${this.resourceUrl}/${courseId}/archive`, {}, { observe: 'response' });
     }
 
     cleanupCourse(courseId: number): Observable<HttpResponse<void>> {
@@ -385,7 +385,7 @@ export class CourseManagementService {
      * @param {number} courseId - The id of the course to be searched for
      */
     findAllLockedSubmissionsOfCourse(courseId: number): Observable<HttpResponse<Submission[]>> {
-        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/lockedSubmissions`, { observe: 'response' }).pipe(
+        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/locked-submissions`, { observe: 'response' }).pipe(
             filter((res) => !!res.body),
             tap((res) =>
                 res.body!.forEach((submission: Submission) => {

@@ -162,7 +162,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
 
         gitlabRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName());
         jenkinsRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName(), false, false);
-        course = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+        course = request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.OK);
 
         assertThat(course.getInstructorGroupName()).isEqualTo("new-editor-group");
     }
@@ -194,7 +194,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
 
         gitlabRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, oldEditorGroup, oldTaGroup);
         jenkinsRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName(), false, false);
-        course = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+        course = request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.OK);
 
         assertThat(course.getInstructorGroupName()).isEqualTo("new-instructor-group");
         assertThat(course.getEditorGroupName()).isEqualTo("new-editor-group");
@@ -228,7 +228,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
         courseTestService.getUserRepo().save(user);
 
         gitlabRequestMockProvider.mockFailOnGetUserById(user.getLogin());
-        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -246,7 +246,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
         assertThat(user).isPresent();
 
         gitlabRequestMockProvider.mockFailToUpdateOldGroupMembers(exercise.get(), user.get());
-        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     /**
@@ -275,7 +275,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
         assertThat(user).isPresent();
 
         gitlabRequestMockProvider.mockFailToGetUserWhenUpdatingOldMembers(user.get());
-        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -291,7 +291,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
         assertThat(exercise).isPresent();
 
         gitlabRequestMockProvider.mockFailToRemoveOldMember(exercise.get(), user.get());
-        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test

@@ -960,7 +960,7 @@ public class ProgrammingExerciseTestService {
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
 
-        request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
+        request.post("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
         await().until(() -> courseRepository.findById(course.getId()).get().getCourseArchivePath() != null);
 
         var updatedCourse = courseRepository.findByIdElseThrow(course.getId());

@@ -401,7 +401,7 @@ describe('Course Management Service', () => {
         const submissions = [submission];
         returnedFromService = [...submissions];
         service.findAllLockedSubmissionsOfCourse(course.id!).subscribe((res) => expect(res.body).to.deep.equal(submissions));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/lockedSubmissions` });
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/locked-submissions` });
         req.flush(returnedFromService);
         tick();
     }));

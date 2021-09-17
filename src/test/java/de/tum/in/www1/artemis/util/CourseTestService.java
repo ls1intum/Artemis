@@ -289,7 +289,7 @@ public class CourseTestService {
         course.setMaxComplaintTimeDays(7);
         course.setPostsEnabled(true);
         course.setMaxRequestMoreFeedbackTimeDays(7);
-        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+        Course updatedCourse = request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.OK);
         assertThat(updatedCourse.getMaxComplaints()).as("maxComplaints Value updated successfully").isEqualTo(course.getMaxComplaints());
         assertThat(updatedCourse.getMaxComplaintTimeDays()).as("maxComplaintTimeDays Value updated successfully").isEqualTo(course.getMaxComplaintTimeDays());
         assertThat(updatedCourse.getPostsEnabled()).as("postsEnabled Value updated successfully").isTrue();
@@ -378,7 +378,8 @@ public class CourseTestService {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         course.setShortName("`badName~");
         courseRepo.save(course);
-        request.put("/api/courses", course, HttpStatus.BAD_REQUEST);
+        course.setShortName("`badName~1");
+        request.put("/api/courses/" + course.getId(), course, HttpStatus.BAD_REQUEST);
     }
 
     // Test
@@ -389,21 +390,19 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
-        request.put("/api/courses", course, HttpStatus.CREATED);
-        List<Course> repoContent = courseRepo.findAll();
-        assertThat(repoContent.size()).as("Course got stored").isEqualTo(1);
+        request.put("/api/courses/" + 1, course, HttpStatus.BAD_REQUEST);
     }
 
     // Test
     public void testUpdateCourseWithoutIdAsInstructor() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-        request.put("/api/courses", course, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + 1, course, HttpStatus.BAD_REQUEST);
     }
 
     // Test
     public void testUpdateCourseIsEmpty() throws Exception {
         Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
-        request.put("/api/courses", course, HttpStatus.NOT_FOUND);
+        request.put("/api/courses/" + course.getId(), course, HttpStatus.NOT_FOUND);
     }
 
     // Test
@@ -415,7 +414,7 @@ public class CourseTestService {
         course.setTitle("Test Course");
         course.setStartDate(ZonedDateTime.now().minusDays(5));
         course.setEndDate(ZonedDateTime.now().plusDays(5));
-        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+        Course updatedCourse = request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.OK);
         assertThat(updatedCourse.getShortName()).as("short name was changed correctly").isEqualTo(course.getShortName());
         assertThat(updatedCourse.getTitle()).as("title was changed correctly").isEqualTo(course.getTitle());
         assertThat(updatedCourse.getStartDate()).as("start date was changed correctly").isEqualTo(course.getStartDate());
@@ -444,7 +443,7 @@ public class CourseTestService {
         userRepo.save(user);
 
         mockDelegate.mockUpdateCoursePermissions(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup);
-        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+        Course updatedCourse = request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.OK);
 
         assertThat(updatedCourse.getInstructorGroupName()).isEqualTo("new-instructor-group");
         assertThat(updatedCourse.getEditorGroupName()).isEqualTo("new-editor-group");
@@ -463,7 +462,7 @@ public class CourseTestService {
         course.setTeachingAssistantGroupName("new-ta-group");
 
         mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, false, true);
-        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        Course updatedCourse = request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
 
         assertThat(updatedCourse).isNull();
     }
@@ -480,7 +479,7 @@ public class CourseTestService {
         course.setTeachingAssistantGroupName("new-ta-group");
 
         mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, true, false);
-        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        Course updatedCourse = request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
 
         assertThat(updatedCourse).isNull();
     }
@@ -1031,7 +1030,7 @@ public class CourseTestService {
         var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
-        request.put("/api/courses", course, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course.getId(), course, HttpStatus.FORBIDDEN);
     }
 
     // Test
@@ -1212,7 +1211,7 @@ public class CourseTestService {
         Course course = database.addCourseWithDifferentModelingExercises();
         ModelingExercise classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
 
-        List<Submission> lockedSubmissions = request.get("/api/courses/" + course.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        List<Submission> lockedSubmissions = request.get("/api/courses/" + course.getId() + "/locked-submissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
         assertThat(lockedSubmissions).as("Locked Submissions length is 0").hasSize(0);
 
@@ -1227,32 +1226,32 @@ public class CourseTestService {
         submission = ModelFactory.generateModelingSubmission(validModel, true);
         database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, "student3", "tutor1");
 
-        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/locked-submissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
         assertThat(lockedSubmissions).as("Locked Submissions length is 3").hasSize(3);
     }
 
     // Test
     public void testGetLockedSubmissionsForCourseAsStudent() throws Exception {
-        List<Submission> lockedSubmissions = request.get("/api/courses/1/lockedSubmissions", HttpStatus.FORBIDDEN, List.class);
+        List<Submission> lockedSubmissions = request.get("/api/courses/1/locked-submissions", HttpStatus.FORBIDDEN, List.class);
         assertThat(lockedSubmissions).as("Locked Submissions is null").isNull();
     }
 
     // Test
     public void testArchiveCourseAsStudent_forbidden() throws Exception {
-        request.put("/api/courses/" + 1 + "/archive", null, HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + 1 + "/archive", null, HttpStatus.FORBIDDEN);
     }
 
     // Test
     public void testArchiveCourseAsTutor_forbidden() throws Exception {
-        request.put("/api/courses/" + 1 + "/archive", null, HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + 1 + "/archive", null, HttpStatus.FORBIDDEN);
     }
 
     // Test
     public void testArchiveCourseWithTestModelingAndFileUploadExercises() throws Exception {
         var course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
 
-        request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
+        request.post("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
 
         await().until(() -> courseRepo.findById(course.getId()).get().getCourseArchivePath() != null);
 
