@@ -26,7 +26,7 @@ import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-use
  * needed for testing the abstract UserSettingsDirective
  */
 @Component({
-    selector: 'jhi-user-settings-prototype',
+    selector: 'jhi-user-settings-mock',
     template: '',
 })
 class UserSettingsMockComponent extends UserSettingsDirective {
