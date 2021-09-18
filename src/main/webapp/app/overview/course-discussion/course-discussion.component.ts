@@ -134,15 +134,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      * on changing the search text via input, the metis service is invoked to deliver the posts for the currently set context,
      * the sort will be done on the currently visible posts, so the forceReload flag is set to false
      */
-    onSearch(forceUpdate = false): void {
+    onSearch(): void {
         this.currentPostContentFilter.searchText = this.searchText;
-        this.router.navigate([], {
-            queryParams: {
-                searchText: this.searchText,
-            },
-            queryParamsHandling: 'merge',
-        });
-        this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate);
+        this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
     }
 
     /**
@@ -200,7 +194,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
      * -- in between pinned and archived posts --
      * 3. criterion: currently selected criterion in combination with currently selected order
-     * @return Post[] sorted array of posts
+     * @return number indicating the order of two elements
      */
     overviewSortFn = (postA: Post, postB: Post): number => {
         if (postA.displayPriority === DisplayPriority.PINNED && postB.displayPriority !== DisplayPriority.PINNED) {

@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "5.1.5",
+    "version": "5.1.6",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -23,7 +23,7 @@
         "@fortawesome/fontawesome-svg-core": "1.2.36",
         "@fortawesome/free-regular-svg-icons": "5.15.4",
         "@fortawesome/free-solid-svg-icons": "5.15.4",
-        "@ls1intum/apollon": "2.7.2",
+        "@ls1intum/apollon": "2.8.0",
         "@ng-bootstrap/ng-bootstrap": "11.0.0-beta.1",
         "@ngx-translate/core": "13.0.0",
         "@ngx-translate/http-loader": "6.0.0",

@@ -1,4 +1,4 @@
-import { POST, BASE_API } from './../support/constants';
+import { POST, BASE_API } from '../support/constants';
 import { dayjsToString } from '../support/utils';
 import { artemis } from '../support/ArtemisTesting';
 
@@ -7,9 +7,9 @@ import dayjs from 'dayjs';
 
 // pageobjects
 const courseManagement = artemis.pageobjects.courseManagement;
-const createModelingExercise = artemis.pageobjects.createModelingExercise;
-const modelingExerciseExampleSubmission = artemis.pageobjects.modelingExerciseAssessmentEditor;
-const modelingEditor = artemis.pageobjects.modelingEditor;
+const createModelingExercise = artemis.pageobjects.modelingExercise.creation;
+const modelingExerciseExampleSubmission = artemis.pageobjects.modelingExercise.assessmentEditor;
+const modelingEditor = artemis.pageobjects.modelingExercise.editor;
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;
 // Users

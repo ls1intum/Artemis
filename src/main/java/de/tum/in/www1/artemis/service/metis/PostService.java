@@ -103,7 +103,7 @@ public class PostService extends PostingService {
         preCheckPostValidity(existingPost);
         mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
 
-        // update: allow overwriting of values only for depicted fields if they are USERS
+        // update: allow overwriting of values only for depicted fields if user is at least student
         existingPost.setTitle(post.getTitle());
         existingPost.setContent(post.getContent());
         existingPost.setVisibleForStudents(post.isVisibleForStudents());

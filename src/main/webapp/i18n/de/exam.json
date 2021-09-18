@@ -76,8 +76,8 @@
                 "cannotRegisterInstructor": "Du kannst keine Personen aus der Lehr- oder Administrationsgruppe zu Klausuren anmelden."
             },
             "problemStatementUpdate": {
-                "showDiff": "zeige Unterschiede",
-                "showNew": "zeige nur neue Version"
+                "showDiff": "Zeige Unterschiede",
+                "showNew": "Zeige nur neue Version"
             }
         },
         "examScores": {

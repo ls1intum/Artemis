@@ -8,8 +8,8 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { AnswerPostHeaderComponent } from 'app/shared/metis/postings-header/answer-post-header/answer-post-header.component';
 import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
-import { metisAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
+import { metisAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
 
 chai.use(sinonChai);
 const expect = chai.expect;
