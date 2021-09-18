@@ -39,7 +39,7 @@ import io.swagger.annotations.ApiParam;
  * REST controller for managing Notification.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class NotificationResource {
 
     private final Logger log = LoggerFactory.getLogger(NotificationResource.class);
@@ -69,13 +69,13 @@ public class NotificationResource {
     }
 
     /**
-     * POST /notifications : Create a new notification.
+     * POST notifications : Create a new notification.
      *
      * @param notification the notification to create
      * @return the ResponseEntity with status 201 (Created) and with body the new notification, or with status 400 (Bad Request) if the notification has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/notifications")
+    @PostMapping("notifications")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Notification> createNotification(@RequestBody Notification notification) throws URISyntaxException {
         log.debug("REST request to save Notification : {}", notification);
@@ -89,12 +89,12 @@ public class NotificationResource {
     }
 
     /**
-     * GET /notifications : Get all notifications that also align with the current user notification settings by pages.
+     * GET notifications : Get all notifications that also align with the current user notification settings by pages.
      *
      * @param pageable Pagination information for fetching the notifications
      * @return the filtered list of notifications based on current user settings
      */
-    @GetMapping("/notifications")
+    @GetMapping("notifications")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -114,14 +114,14 @@ public class NotificationResource {
     }
 
     /**
-     * PUT /notifications : Updates an existing notification.
+     * PUT notifications : Updates an existing notification.
      *
      * @param notification the notification to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated notification, or with status 400 (Bad Request) if the notification is not valid, or with status 500
      *         (Internal Server Error) if the notification couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/notifications")
+    @PutMapping("notifications")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Notification> updateNotification(@RequestBody Notification notification) throws URISyntaxException {
         log.debug("REST request to update Notification : {}", notification);
@@ -134,12 +134,12 @@ public class NotificationResource {
     }
 
     /**
-     * GET /notifications/:id : get the "id" notification.
+     * GET notifications/:id : get the "id" notification.
      *
      * @param id the id of the notification to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
-    @GetMapping("/notifications/{id}")
+    @GetMapping("notifications/{id}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Notification> getNotification(@PathVariable Long id) {
         log.debug("REST request to get Notification : {}", id);
@@ -148,12 +148,12 @@ public class NotificationResource {
     }
 
     /**
-     * DELETE /notifications/:id : delete the "id" notification.
+     * DELETE notifications/:id : delete the "id" notification.
      *
      * @param id the id of the notification to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/notifications/{id}")
+    @DeleteMapping("notifications/{id}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
         log.debug("REST request to delete Notification : {}", id);

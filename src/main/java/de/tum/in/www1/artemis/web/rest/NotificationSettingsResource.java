@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing NotificationSettings (NotificationOptions).
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class NotificationSettingsResource {
 
     private final Logger log = LoggerFactory.getLogger(NotificationSettingsResource.class);
@@ -47,7 +47,7 @@ public class NotificationSettingsResource {
     }
 
     /**
-     * GET /notification-settings/fetch-options : Get all NotificationOptions for current user
+     * GET notification-settings/fetch-options : Get all NotificationOptions for current user
      *
      * Fetches the NotificationOptions for the current user from the server.
      * These are only the options that the user has already modified.
@@ -55,7 +55,7 @@ public class NotificationSettingsResource {
      *
      * @return the list of found NotificationOptions
      */
-    @GetMapping("/notification-settings/fetch-options")
+    @GetMapping("notification-settings/fetch-options")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<NotificationOption>> getNotificationOptionsForCurrentUser() {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -65,7 +65,7 @@ public class NotificationSettingsResource {
     }
 
     /**
-     * POST /notification-settings/save-options : Save NotificationOptions for current user
+     * POST notification-settings/save-options : Save NotificationOptions for current user
      *
      * Saves the provided NotificationOptions to the server.
      * @param notificationOptions which should be saved to the notificationOption database.
@@ -73,7 +73,7 @@ public class NotificationSettingsResource {
      * @return the UserOptions that just got saved for the current user as array
      * 200 for a successful execution, 400 if the user provided empty options to save, 500 if the save call returns empty options
      */
-    @PostMapping("/notification-settings/save-options")
+    @PostMapping("notification-settings/save-options")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<NotificationOption[]> saveNotificationOptionsForCurrentUser(@RequestBody NotificationOption[] notificationOptions) {
         if (notificationOptions == null || notificationOptions.length == 0) {

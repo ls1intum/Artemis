@@ -86,4 +86,17 @@ public class NotificationOption extends DomainObject {
     public int hashCode() {
         return Objects.hash(getOptionSpecifier(), getUser(), isWebapp(), isEmail());
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        NotificationOption providedOption = (NotificationOption) o;
+        return this.user.equals(providedOption.user) && this.optionSpecifier.equals(providedOption.optionSpecifier) && this.webapp == providedOption.webapp
+                && this.email == providedOption.email;
+    }
 }
