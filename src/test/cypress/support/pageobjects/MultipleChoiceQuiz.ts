@@ -15,7 +15,7 @@ export class MultipleChoiceQuiz {
 
     submit() {
         cy.intercept(POST, BASE_API + 'exercises/*/submissions/live').as('createQuizExercise');
-        cy.get('.jhi-btn').should('have.text', 'Submit').click();
+        cy.get('.jhi-btn').should('contain.text', 'Submit').click();
         return cy.wait('@createQuizExercise');
     }
 }
