@@ -2,6 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { User } from 'app/core/user/user.model';
 import { CourseScoresComponent, EMAIL_KEY, NAME_KEY, OVERALL_COURSE_POINTS_KEY, OVERALL_COURSE_SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -224,7 +225,7 @@ describe('CourseScoresComponent', () => {
         pointsOfStudent2.set(ExerciseType.PROGRAMMING, []);
         pointsOfStudent2.set(ExerciseType.TEXT, [Number.NaN]);
 
-        TestBed.configureTestingModule({
+        return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
                 CourseScoresComponent,
@@ -243,7 +244,7 @@ describe('CourseScoresComponent', () => {
                     provide: ActivatedRoute,
                     useValue: { params: of({ courseId: 1 }) },
                 },
-                MockProvider(TranslateService),
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ParticipantScoresService),
                 MockProvider(GradingSystemService, {
                     findGradingScaleForCourse: () => {

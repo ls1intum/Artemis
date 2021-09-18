@@ -64,7 +64,7 @@ describe('ExamTimerComponent', function () {
     it('should update time in the template correctly', fakeAsync(() => {
         // 30 minutes left
         component.endDate = dayjs(now).add(30, 'minutes');
-        jest.spyOn(dateService, 'now').mockReturnValue(dayjs(now), dayjs(now), dayjs(now).add(5, 'minutes'));
+        jest.spyOn(dateService, 'now').mockReturnValueOnce(dayjs(now)).mockReturnValueOnce(dayjs(now)).mockReturnValueOnce(dayjs(now).add(5, 'minutes'));
         fixture.detectChanges();
         tick();
         let timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();

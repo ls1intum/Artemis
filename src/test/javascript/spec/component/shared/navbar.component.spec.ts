@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { NgbCollapse, NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
@@ -79,7 +80,7 @@ describe('NavbarComponent', () => {
     } as MockBreadcrumb;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
+        return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
                 NavbarComponent,
@@ -99,7 +100,7 @@ describe('NavbarComponent', () => {
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                MockProvider(TranslateService),
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useValue: router },
             ],
         })

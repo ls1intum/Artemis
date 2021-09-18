@@ -44,13 +44,12 @@ describe('CourseExercisesComponent', () => {
     let component: CourseExercisesComponent;
     let service: CourseManagementService;
     let courseCalculation: CourseScoreCalculationService;
-    let translateService: TranslateService;
     let exerciseService: ExerciseService;
     let localStorageService: LocalStorageService;
 
     let course: Course;
     let exercise: Exercise;
-    let courseCalculationSpy: sinon.SinonStub;
+    let courseCalculationSpy: jest.SpyInstance;
 
     const parentRoute = { params: of({ courseId: '123' }) } as any as ActivatedRoute;
     const route = { parent: parentRoute } as any as ActivatedRoute;
@@ -88,7 +87,6 @@ describe('CourseExercisesComponent', () => {
                 component = fixture.componentInstance;
                 service = TestBed.inject(CourseManagementService);
                 courseCalculation = TestBed.inject(CourseScoreCalculationService);
-                translateService = TestBed.inject(TranslateService);
                 exerciseService = TestBed.inject(ExerciseService);
                 localStorageService = TestBed.inject(LocalStorageService);
 
@@ -99,9 +97,8 @@ describe('CourseExercisesComponent', () => {
                 exercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00').subtract(1, 'days');
                 course.exercises = [exercise];
                 jest.spyOn(service, 'getCourseUpdates').mockReturnValue(of(course));
-                jest.spyOn(translateService, 'onLangChange').mockReturnValue(new EventEmitter<LangChangeEvent>());
                 jest.spyOn(localStorageService, 'retrieve').mockReturnValue('OVERDUE,NEEDS_WORK');
-                courseCalculationSpy = stub(courseCalculation, 'getCourse').returns(course);
+                courseCalculationSpy = jest.spyOn(courseCalculation, 'getCourse').mockReturnValue(course);
 
                 fixture.detectChanges();
             });
@@ -109,13 +106,14 @@ describe('CourseExercisesComponent', () => {
 
     afterEach(() => {
         sinon.restore();
+        jest.clearAllMocks();
     });
 
     it('should initialize', () => {
         expect(component.course).to.deep.equal(course);
-        expect(courseCalculationSpy.callCount).to.equal(2);
-        expect(courseCalculationSpy.getCall(0).calledWithExactly(course.id)).to.be.true;
-        expect(courseCalculationSpy.getCall(1).calledWithExactly(course.id)).to.be.true;
+        expect(courseCalculationSpy.mock.calls.length).to.equal(2);
+        expect(courseCalculationSpy.mock.calls[0][0]).to.eq(course.id);
+        expect(courseCalculationSpy.mock.calls[1][0]).to.eq(course.id);
     });
 
     it('should invoke setSortingAttribute', () => {

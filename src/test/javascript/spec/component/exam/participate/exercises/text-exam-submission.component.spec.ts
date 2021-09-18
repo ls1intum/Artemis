@@ -54,7 +54,7 @@ describe('TextExamSubmissionComponent', () => {
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
             ],
-            providers: [MockProvider(TextEditorService), MockProvider(JhiAlertService), MockProvider(TranslateService), MockProvider(ArtemisMarkdownService)],
+            providers: [MockProvider(TextEditorService), MockProvider(AlertService), MockProvider(TranslateService), MockProvider(ArtemisMarkdownService)],
         })
             .compileComponents()
             .then(() => {

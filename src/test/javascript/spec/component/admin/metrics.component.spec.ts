@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -10,14 +10,14 @@ describe('MetricsComponent', () => {
     let fixture: ComponentFixture<MetricsComponent>;
     let service: MetricsService;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [MetricsComponent],
         })
             .overrideTemplate(MetricsComponent, '')
             .compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(MetricsComponent);
@@ -28,19 +28,7 @@ describe('MetricsComponent', () => {
     describe('refresh', () => {
         it('should call refresh on init', () => {
             // GIVEN
-            const response = {
-                timers: {
-                    service: 'test',
-                    unrelatedKey: 'test',
-                },
-                gauges: {
-                    'jcache.statistics': {
-                        value: 2,
-                    },
-                    unrelatedKey: 'test',
-                },
-            };
-            jest.spyOn(service, 'getMetrics').mockReturnValue(of(response));
+            jest.spyOn(service, 'getMetrics').mockReturnValue(of());
 
             // WHEN
             comp.ngOnInit();
