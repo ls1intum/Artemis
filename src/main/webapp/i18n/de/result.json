@@ -61,6 +61,7 @@
                 "deductions": "Abzüge",
                 "tooltip": "Deine Punktabzüge werden begrenzt um den Einfluss von Folgefehlern durch Code-Issues abzuschwächen. Beachte, dass du gegebenenfalls mehrere Code-Issues lösen musst, bevor sich deine Punkte erhöhen."
             },
+            "linkedCommit": "Dieses Ergebnis ist mit dem folgenden Commit verknüpft:",
             "missing": {
                 "viewPrevious": "Letztes Ergebnis anzeigen",
                 "programmingFailedSubmission": {
