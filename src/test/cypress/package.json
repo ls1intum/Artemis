@@ -7,7 +7,7 @@
         "node_modules"
     ],
     "devDependencies": {
-        "cypress": "8.4.0",
+        "cypress": "8.4.1",
         "uuid": "8.3.2",
         "@4tw/cypress-drag-drop": "1.8.0"
     },
