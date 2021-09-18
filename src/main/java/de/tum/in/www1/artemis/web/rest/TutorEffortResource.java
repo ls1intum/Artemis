@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.TutorEffortService;
  * REST controller for managing TutorEffortResource.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 @PreAuthorize("hasRole('INSTRUCTOR')")
 public class TutorEffortResource {
 
