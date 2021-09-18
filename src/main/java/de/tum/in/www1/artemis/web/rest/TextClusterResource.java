@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO;
  * REST controller for managing TextClusterResource.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class TextClusterResource {
 
     private final Logger log = LoggerFactory.getLogger(TextClusterResource.class);
