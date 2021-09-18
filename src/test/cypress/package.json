@@ -7,9 +7,10 @@
         "node_modules"
     ],
     "devDependencies": {
+        "@4tw/cypress-drag-drop": "1.8.0",
         "cypress": "8.4.1",
-        "uuid": "8.3.2",
-        "@4tw/cypress-drag-drop": "1.8.0"
+        "typescript": "4.4.3",
+        "uuid": "8.3.2"
     },
     "scripts": {
         "cypress:open": "yarn run cypress open ",
