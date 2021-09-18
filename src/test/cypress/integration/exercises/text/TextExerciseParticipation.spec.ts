@@ -1,5 +1,5 @@
-import { artemis } from 'src/test/cypress/support/ArtemisTesting';
-import { generateUUID } from 'src/test/cypress/support/utils';
+import { artemis } from '../../../support/ArtemisTesting';
+import { generateUUID } from '../../../support/utils';
 
 // The user management object
 const users = artemis.users;
