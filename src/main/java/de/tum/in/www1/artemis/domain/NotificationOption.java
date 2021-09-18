@@ -96,12 +96,28 @@ public class NotificationOption extends DomainObject {
             return false;
         }
         NotificationOption providedOption = (NotificationOption) object;
-        if (this.user == null && providedOption.user != null || this.user != null && providedOption.user == null) {
-            return false;
+        boolean userCheck = checkUser(this.user, providedOption.user);
+        boolean optionSpecifierCheck = checkOptionSpecifier(this.optionSpecifier, providedOption.optionSpecifier);
+        return userCheck && optionSpecifierCheck && this.webapp == providedOption.webapp && this.email == providedOption.email;
+    }
+
+    private boolean checkUser(User thisUser, User providedUser) {
+        if (thisUser == null && providedUser == null) {
+            return true;
         }
-        if (this.user != null && providedOption != null && !this.user.equals(providedOption.user)) {
-            return false;
+        if (thisUser != null && providedUser != null) {
+            return thisUser.equals(providedUser);
         }
-        return this.optionSpecifier.equals(providedOption.optionSpecifier) && this.webapp == providedOption.webapp && this.email == providedOption.email;
+        return false;
+    }
+
+    private boolean checkOptionSpecifier(String thisOptionSpecifier, String providedOptionSpecifier) {
+        if (thisOptionSpecifier == null && providedOptionSpecifier == null) {
+            return true;
+        }
+        if (thisOptionSpecifier != null) {
+            return thisOptionSpecifier.equals(providedOptionSpecifier);
+        }
+        return false;
     }
 }
