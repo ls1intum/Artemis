@@ -21,10 +21,9 @@ public class NotificationSettingsService {
      */
     private final static Map<String, NotificationType[]> NOTIFICATION_OPTION_SPECIFIER_TO_NOTIFICATION_TYPES_MAP = Map.of(
             "notification.exercise-notification.exercise-created-or-started", new NotificationType[] { EXERCISE_CREATED },
-            "notification.exercise-notification.exercise-open-for-practice", new NotificationType[] { EXERCISE_PRACTICE },
-            "notification.exercise-notification.new-post-exercises", new NotificationType[] { NEW_POST_FOR_EXERCISE },
-            "notification.exercise-notification.new-answer-post-exercises", new NotificationType[] { NEW_ANSWER_POST_FOR_EXERCISE },
-            "notification.lecture-notification.attachment-changes", new NotificationType[] { ATTACHMENT_CHANGE },
+            "notification.exercise-notification.exercise-open-for-practice", new NotificationType[] { EXERCISE_PRACTICE }, "notification.exercise-notification.new-post-exercises",
+            new NotificationType[] { NEW_POST_FOR_EXERCISE }, "notification.exercise-notification.new-answer-post-exercises",
+            new NotificationType[] { NEW_ANSWER_POST_FOR_EXERCISE }, "notification.lecture-notification.attachment-changes", new NotificationType[] { ATTACHMENT_CHANGE },
             "notification.lecture-notification.new-post-for-lecture", new NotificationType[] { NEW_POST_FOR_LECTURE },
             "notification.lecture-notification.new-answer-post-for-lecture", new NotificationType[] { NEW_ANSWER_POST_FOR_LECTURE },
             "notification.instructor-exclusive-notification.course-and-exam-archiving-started", new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED });
