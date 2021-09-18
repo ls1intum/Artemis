@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.service.metis.PostService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -81,36 +82,6 @@ public class PostResource {
     }
 
     /**
-     * GET /courses/{courseId}/exercises/{exerciseId}/posts : Get all posts for an exercise by its id
-     *
-     * @param courseId   id of the course the post belongs to
-     * @param exerciseId id of the exercise for which the posts should be retrieved
-     * @return ResponseEntity with status 200 (OK) containing the a list of posts in the response body,
-     * or 400 (Bad Request) if the checks on user, course, exercise or post validity fail
-     */
-    @GetMapping("courses/{courseId}/exercises/{exerciseId}/posts")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Post>> getAllPostsForExercise(@PathVariable Long courseId, @PathVariable Long exerciseId) {
-        List<Post> exercisePosts = postService.getAllExercisePosts(courseId, exerciseId);
-        return new ResponseEntity<>(exercisePosts, null, HttpStatus.OK);
-    }
-
-    /**
-     * GET /courses/{courseId}/lectures/{lectureId}/posts : Get all posts a lecture by its id
-     *
-     * @param courseId  id of the course the post belongs to
-     * @param lectureId id of the lecture for which the posts should be retrieved
-     * @return ResponseEntity with status 200 (OK) containing the a list of posts in the response body,
-     * or 400 (Bad Request) if the checks on user, course, lecture or post validity fail
-     */
-    @GetMapping("courses/{courseId}/lectures/{lectureId}/posts")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Post>> getAllPostsForLecture(@PathVariable Long courseId, @PathVariable Long lectureId) {
-        List<Post> lecturePosts = postService.getAllLecturePosts(courseId, lectureId);
-        return new ResponseEntity<>(lecturePosts, null, HttpStatus.OK);
-    }
-
-    /**
      * GET /courses/{courseId}/posts/tags : Get all tags for posts in a certain course
      *
      * @param courseId  id of the course the post belongs to
@@ -127,14 +98,18 @@ public class PostResource {
     /**
      * GET /courses/{courseId}/posts : Get all posts for a course by its id
      *
-     * @param courseId id of the course the post belongs to
-     * @return ResponseEntity with status 200 (OK) and with body all posts for course,
+     * @param courseId          id of the course the fetch posts for
+     * @param courseWideContext optional request param if a course-wide topic is the targeted context
+     * @param exerciseId        optional request param if a certain exercise is the targeted context
+     * @param lectureId         optional request param if a certain lecture is the targeted context
+     * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context
      * or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @GetMapping("courses/{courseId}/posts")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<List<Post>> getAllPostsForCourse(@PathVariable Long courseId) {
-        List<Post> coursePosts = postService.getAllCoursePosts(courseId);
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<Post>> getPostsInCourse(@PathVariable Long courseId, @RequestParam(required = false) CourseWideContext courseWideContext,
+            @RequestParam(required = false) Long exerciseId, @RequestParam(required = false) Long lectureId) {
+        List<Post> coursePosts = postService.getPostsInCourse(courseId, courseWideContext, exerciseId, lectureId);
         return new ResponseEntity<>(coursePosts, null, HttpStatus.OK);
     }
 
