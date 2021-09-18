@@ -71,6 +71,14 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     }
 
     /**
+     * opens the emoji selector overlay if user clicks the '.reaction-button'
+     * closes the emoji selector overly if user clicks the '.reaction-button' again or somewhere outside the overlay
+     */
+    toggleEmojiSelect() {
+        this.showReactionSelector = !this.showReactionSelector;
+    }
+
+    /**
      * provides the tooltip for the pin icon dependent on the user authority and the pin state of a posting
      *
      */
@@ -101,9 +109,5 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         this.displayPriority = this.posting.displayPriority!;
         this.pinTooltip = this.getPinTooltip();
         this.archiveTooltip = this.getArchiveTooltip();
-    }
-
-    toggleSelect() {
-        this.showReactionSelector = !this.showReactionSelector;
     }
 }
