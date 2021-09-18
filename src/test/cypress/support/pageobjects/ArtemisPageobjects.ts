@@ -16,6 +16,7 @@ import { ModelingExerciseAssessmentEditor } from './ModelingExerciseAssessmentEd
 import { MultipleChoiceQuiz } from './MultipleChoiceQuiz';
 import { ModelingEditor } from './ModelingEditor';
 import { ExamStartEndPage } from './exam/ExamStartEndPage';
+import { MultipleChoiceQuiz } from './multipleChoiceQuiz';
 import { QuizExerciseCreationPage } from './QuizExerciseCreationPage';
 import { TextExerciseCreationPage } from './exercises/text/TextExerciseCreationPage';
 import { TextExerciseExampleSubmissionsPage } from './exercises/text/TextExerciseExampleSubmissionsPage';
@@ -34,9 +35,6 @@ export class ArtemisPageobjects {
     examManagement = new ExamManagementPage();
     examStartEnd = new ExamStartEndPage();
     examNavigationBar = new ExamNavigationBar();
-    createModelingExercise = new CreateModelingExercisePage();
-    modelingExerciseAssessmentEditor = new ModelingExerciseAssessmentEditor();
-    modelingEditor = new ModelingEditor();
     programmingExercise = {
         editor: new OnlineEditorPage(),
         creation: new ProgrammingExerciseCreationPage(),
@@ -50,5 +48,14 @@ export class ArtemisPageobjects {
         exampleSubmissions: new TextExerciseExampleSubmissionsPage(),
         exampleSubmissionCreation: new TextExerciseExampleSubmissionCreationPage(),
         editor: new TextEditorPage(),
+    };
+    modelingExercise = {
+        creation: new CreateModelingExercisePage(),
+        assessmentEditor: new ModelingExerciseAssessmentEditor(),
+        editor: new ModelingEditor(),
+    };
+    quizExercise = {
+        creation: new QuizExerciseCreationPage(),
+        multipleChoice: new MultipleChoiceQuiz(),
     };
 }

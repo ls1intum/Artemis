@@ -12,7 +12,7 @@ const courseManagementRequest = artemis.requests.courseManagement;
 // PageObjects
 const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagement = artemis.pageobjects.courseManagement;
-const quizCreation = artemis.pageobjects.quizExerciseCreation;
+const quizCreation = artemis.pageobjects.quizExercise.creation;
 
 // Common primitives
 let uid: string;
@@ -74,8 +74,7 @@ describe('Quiz Exercise Management', () => {
         let quizExercise: any;
 
         beforeEach('Create Quiz Exercise', () => {
-            const mcQuestion: any = { ...multipleChoiceTemplate, title: 'Cypress MC' + uid };
-            courseManagementRequest.createQuizExercise({ course }, quizExerciseName, undefined, [mcQuestion]).then((quizResponse) => {
+            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceTemplate]).then((quizResponse) => {
                 quizExercise = quizResponse.body;
             });
         });
