@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -75,18 +77,18 @@ public class NotificationSettingsResource {
      */
     @PostMapping("notification-settings/save-options")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<NotificationOption[]> saveNotificationOptionsForCurrentUser(@RequestBody NotificationOption[] notificationOptions) {
-        if (notificationOptions == null || notificationOptions.length == 0) {
+    public ResponseEntity<NotificationOption[]> saveNotificationOptionsForCurrentUser(@NotNull @RequestBody NotificationOption[] notificationOptions) {
+        if (notificationOptions.length == 0) {
             return badRequest("notificationOptions", "400", "Can not save non existing Notification Options");
         }
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to save NotificationOptions : {} for current user {}", notificationOptions, currentUser);
         notificationSettingsService.setCurrentUser(notificationOptions, currentUser);
         List<NotificationOption> resultAsList = notificationOptionRepository.saveAll(Arrays.stream(notificationOptions).toList());
-        if (resultAsList == null || resultAsList.isEmpty()) {
+        if (resultAsList.isEmpty()) {
             return badRequest("notificationOptions", "500", "Error occurred during saving of Notification Options");
         }
-        NotificationOption[] resultAsArray = resultAsList.toArray(new NotificationOption[resultAsList.size()]);
+        NotificationOption[] resultAsArray = resultAsList.toArray(new NotificationOption[0]);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "notificationOption", "test")).body(resultAsArray);
     }
 }
