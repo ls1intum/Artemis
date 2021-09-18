@@ -17,7 +17,7 @@ import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { captureException } from '@sentry/browser';
+import * as Sentry from '@sentry/browser';
 import { cloneDeep } from 'lodash-es';
 
 chai.use(sinonChai);
@@ -124,7 +124,7 @@ describe('CourseLearningGoals', () => {
         getProgressStub.withArgs(sinon.match.any, sinon.match.any, false).returns(of(learningGoalProgressResponse));
         getProgressStub.withArgs(sinon.match.any, sinon.match.any, true).returns(of(learningGoalProgressParticipantScoreResponse));
 
-        const captureExceptionSpy = sinon.spy(captureException);
+        const captureExceptionSpy = sinon.spy(Sentry, 'captureException');
 
         courseLearningGoalsComponentFixture.detectChanges();
 

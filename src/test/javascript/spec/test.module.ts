@@ -20,7 +20,6 @@ import dayjs from 'dayjs';
 import { MockComponent } from 'ng-mocks';
 import { MockAlertService } from './helpers/mocks/service/mock-alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { MockLanguageHelper } from './helpers/mocks/service/mock-language.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ParseLinks } from 'app/core/util/parse-links.service';
@@ -32,10 +31,6 @@ import { MockTranslateService } from './helpers/mocks/service/mock-translate.ser
         DatePipe,
         CookieService,
         ParseLinks,
-        {
-            provide: JhiLanguageHelper,
-            useClass: MockLanguageHelper,
-        },
         {
             provide: EventManager,
             useClass: MockEventManager,

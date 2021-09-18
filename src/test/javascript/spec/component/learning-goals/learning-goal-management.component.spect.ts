@@ -21,7 +21,7 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseLearningGoalProgress, CourseLectureUnitProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 import { cloneDeep } from 'lodash-es';
-import { captureException } from '@sentry/browser';
+import * as Sentry from '@sentry/browser';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -117,7 +117,7 @@ describe('LearningGoalManagementComponent', () => {
         getProgressStub.withArgs(sinon.match.any, sinon.match.any, false).returns(of(learningGoalProgressResponse));
         getProgressStub.withArgs(sinon.match.any, sinon.match.any, true).returns(of(learningGoalProgressParticipantScoreResponse));
 
-        const captureExceptionSpy = sinon.stub(captureException);
+        const captureExceptionSpy = sinon.stub(Sentry, 'captureException');
 
         learningGoalManagementComponentFixture.detectChanges();
 

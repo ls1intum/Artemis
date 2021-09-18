@@ -102,10 +102,10 @@ describe('Directive: SortByDirective', () => {
 
         // THEN
         expect(sortByDirective.jhiSortBy).toEqual('name');
-        expect(component.predicate).toEqual('_score');
+        expect(component.predicate).toEqual('name');
         expect(component.ascending).toEqual(true);
-        expect(sortByDirective.iconComponent?.icon).toEqual('sort');
-        expect(component.transition).toHaveBeenCalledTimes(0);
+        expect(sortByDirective.iconComponent?.icon).toEqual(faSortUp.iconName);
+        expect(component.transition).toHaveBeenCalledTimes(1);
     });
 
     it('should update component predicate, order, icon when user clicks on column header', () => {
