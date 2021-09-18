@@ -19,14 +19,15 @@ public class NotificationSettingsService {
      * This is the place where the mapping between OptionSpecifiers and NotificationTypes happens on the server side
      * Each OptionSpecifiers can be based on multiple different NotificationTypes
      */
-    private final static Map<String, NotificationType[]> NOTIFICATION_OPTION_SPECIFIER_TO_NOTIFICATION_TYPES_MAP = Map.of(
-            "notification.exercise-notification.exercise-created-or-started", new NotificationType[] { EXERCISE_CREATED },
-            "notification.exercise-notification.exercise-open-for-practice", new NotificationType[] { EXERCISE_PRACTICE }, "notification.exercise-notification.new-post-exercises",
-            new NotificationType[] { NEW_POST_FOR_EXERCISE }, "notification.exercise-notification.new-answer-post-exercises",
-            new NotificationType[] { NEW_ANSWER_POST_FOR_EXERCISE }, "notification.lecture-notification.attachment-changes", new NotificationType[] { ATTACHMENT_CHANGE },
-            "notification.lecture-notification.new-post-for-lecture", new NotificationType[] { NEW_POST_FOR_LECTURE },
-            "notification.lecture-notification.new-answer-post-for-lecture", new NotificationType[] { NEW_ANSWER_POST_FOR_LECTURE },
-            "notification.instructor-exclusive-notification.course-and-exam-archiving-started", new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED });
+    private final static Map<String, NotificationType[]> NOTIFICATION_OPTION_SPECIFIER_TO_NOTIFICATION_TYPES_MAP = Map.ofEntries(
+            Map.entry("notification.exercise-notification.exercise-created-or-started", new NotificationType[] { EXERCISE_CREATED }),
+            Map.entry("notification.exercise-notification.exercise-open-for-practice", new NotificationType[] { EXERCISE_PRACTICE }),
+            Map.entry("notification.exercise-notification.new-post-exercises", new NotificationType[] { NEW_POST_FOR_EXERCISE }),
+            Map.entry("notification.exercise-notification.new-answer-post-exercises", new NotificationType[] { NEW_ANSWER_POST_FOR_EXERCISE }),
+            Map.entry("notification.lecture-notification.attachment-changes", new NotificationType[] { ATTACHMENT_CHANGE }),
+            Map.entry("notification.lecture-notification.new-post-for-lecture", new NotificationType[] { NEW_POST_FOR_LECTURE }),
+            Map.entry("notification.lecture-notification.new-answer-post-for-lecture", new NotificationType[] { NEW_ANSWER_POST_FOR_LECTURE }),
+            Map.entry("notification.instructor-exclusive-notification.course-and-exam-archiving-started", new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED }));
 
     /**
      * Finds the deactivated NotificationTypes based on the user's NotificationOptions
