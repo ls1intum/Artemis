@@ -16,7 +16,6 @@ import { ModelingExerciseAssessmentEditor } from './ModelingExerciseAssessmentEd
 import { MultipleChoiceQuiz } from './MultipleChoiceQuiz';
 import { ModelingEditor } from './ModelingEditor';
 import { ExamStartEndPage } from './exam/ExamStartEndPage';
-import { MultipleChoiceQuiz } from './multipleChoiceQuiz';
 import { QuizExerciseCreationPage } from './QuizExerciseCreationPage';
 import { TextExerciseCreationPage } from './exercises/text/TextExerciseCreationPage';
 import { TextExerciseExampleSubmissionsPage } from './exercises/text/TextExerciseExampleSubmissionsPage';
