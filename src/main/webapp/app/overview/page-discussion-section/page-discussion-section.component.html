@@ -1,6 +1,6 @@
 <!-- uncollapsed posts -->
-<div *ngIf="course">
-    <div *ngIf="!collapsed; else collapsedPosts" class="postings-container expanded-discussion">
+<div *ngIf="course" class="postings-container expanded-discussion">
+    <div *ngIf="!collapsed; else collapsedPosts">
         <div class="draggable-left">
             <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
         </div>
