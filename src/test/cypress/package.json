@@ -12,7 +12,7 @@
         "@4tw/cypress-drag-drop": "1.8.0"
     },
     "scripts": {
-        "cypress:open": "npx cypress open ",
-        "cypress:run": "npx cypress run --browser=chrome"
+        "cypress:open": "yarn run cypress open ",
+        "cypress:run": "yarn run cypress run --browser=chrome"
     }
 }
