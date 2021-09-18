@@ -96,7 +96,12 @@ public class NotificationOption extends DomainObject {
             return false;
         }
         NotificationOption providedOption = (NotificationOption) object;
-        return this.user.equals(providedOption.user) && this.optionSpecifier.equals(providedOption.optionSpecifier) && this.webapp == providedOption.webapp
-                && this.email == providedOption.email;
+        if (this.user == null && providedOption.user != null || this.user != null && providedOption.user == null) {
+            return false;
+        }
+        if (this.user != null && providedOption != null && !this.user.equals(providedOption.user)) {
+            return false;
+        }
+        return this.optionSpecifier.equals(providedOption.optionSpecifier) && this.webapp == providedOption.webapp && this.email == providedOption.email;
     }
 }
