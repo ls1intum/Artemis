@@ -7,7 +7,7 @@
     "text": "A longer more detailed question",
     "hint": "A general hint",
     "scoringType": "ALL_OR_NOTHING",
-    "points": 1,
+    "points": 10,
     "answerOptions": [
         {
             "isCorrect": true,
