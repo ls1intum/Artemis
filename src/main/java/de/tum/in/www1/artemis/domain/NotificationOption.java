@@ -95,10 +95,15 @@ public class NotificationOption extends DomainObject {
         if (object == null || getClass() != object.getClass()) {
             return false;
         }
+        DomainObject domainObject = (DomainObject) object;
+        if (domainObject.getId() == null || getId() == null) {
+            return false;
+        }
+        boolean domainObjectCheck = Objects.equals(getId(), domainObject.getId());
         NotificationOption providedOption = (NotificationOption) object;
         boolean userCheck = checkUser(this.user, providedOption.user);
         boolean optionSpecifierCheck = checkOptionSpecifier(this.optionSpecifier, providedOption.optionSpecifier);
-        return userCheck && optionSpecifierCheck && this.webapp == providedOption.webapp && this.email == providedOption.email;
+        return domainObjectCheck && userCheck && optionSpecifierCheck && this.webapp == providedOption.webapp && this.email == providedOption.email;
     }
 
     private boolean checkUser(User thisUser, User providedUser) {
