@@ -203,12 +203,20 @@ export class ParticipationService {
         combinedParticipation.initializationDate = participations[0].initializationDate;
         combinedParticipation.presentationScore = participations[0].presentationScore;
         combinedParticipation.exercise = participations[0].exercise;
+        combinedParticipation.type = participations[0].type;
+        combinedParticipation.testRun = participations[0].testRun;
 
         if (participations[0].student) {
             combinedParticipation.student = participations[0].student;
         }
         if (participations[0].team) {
             combinedParticipation.team = participations[0].team;
+        }
+        if (participations[0].participantIdentifier) {
+            combinedParticipation.participantIdentifier = participations[0].participantIdentifier;
+        }
+        if (participations[0].participantName) {
+            combinedParticipation.participantName = participations[0].participantName;
         }
 
         participations.forEach((participation) => {

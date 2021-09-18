@@ -1,4 +1,4 @@
-import { BASE_API, DELETE, POST } from '../constants';
+import { BASE_API, DELETE, POST, PUT } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import { dayjsToString, generateUUID } from '../utils';
@@ -229,7 +229,7 @@ export class CourseManagementRequests {
         });
     }
 
-    createQuizExercise(body: { course: any } | { exerciseGroup: any }, title = 'Cypress quiz exercise' + generateUUID(), releaseDate = day(), quizQuestions: [any]) {
+    createQuizExercise(body: { course: any } | { exerciseGroup: any }, quizQuestions: [any], title = 'Cypress quiz exercise' + generateUUID(), releaseDate = day()) {
         const quizExercise: any = {
             ...quizTemplate,
             title,
@@ -241,6 +241,20 @@ export class CourseManagementRequests {
             url: QUIZ_EXERCISE_BASE,
             method: POST,
             body: newQuizExercise,
+        });
+    }
+
+    setQuizVisible(quizId: number) {
+        return cy.request({
+            url: `${QUIZ_EXERCISE_BASE}${quizId}/set-visible`,
+            method: PUT,
+        });
+    }
+
+    startQuizNow(quizId: number) {
+        return cy.request({
+            url: `${QUIZ_EXERCISE_BASE}${quizId}/start-now`,
+            method: PUT,
         });
     }
 

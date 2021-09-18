@@ -69,6 +69,12 @@
     <ng-template #noFeedbacksContainer>
         <pre jhiTranslate="artemisApp.result.noResultDetails">No result details available</pre>
     </ng-template>
+    <!-- Show and link to the commit hash in case of programming exercise results -->
+    <p *ngIf="exerciseType === ExerciseType.PROGRAMMING && result.submission">
+        <span>{{ 'artemisApp.result.linkedCommit' | artemisTranslate }}</span>
+        <a *ngIf="commitUrl; else commitWithoutLink" href="{{ commitUrl }}" target="_blank" rel="noopener noreferrer">{{ commitHash }}</a>
+        <ng-template #commitWithoutLink>{{ commitHash }}</ng-template>
+    </p>
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
