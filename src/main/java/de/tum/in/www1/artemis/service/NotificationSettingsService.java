@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -12,6 +14,19 @@ import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants
 
 @Service
 public class NotificationSettingsService {
+
+    /**
+     * This is the place where the mapping between OptionSpecifiers and NotificationTypes happens on the server side
+     * Each OptionSpecifiers can be based on multiple different NotificationTypes
+     */
+    private final static Map<String, NotificationType[]> NOTIFICATION_OPTION_SPECIFIER_TO_NOTIFICATION_TYPES_MAP = Map.of(
+            "notification.exercise-notification.exercise-created-or-started", new NotificationType[] { EXERCISE_CREATED },
+            "notification.exercise-notification.exercise-open-for-practice", new NotificationType[] { EXERCISE_PRACTICE }, "notification.exercise-notification.new-post-exercises",
+            new NotificationType[] { NEW_POST_FOR_EXERCISE }, "notification.exercise-notification.new-answer-post-exercises",
+            new NotificationType[] { NEW_ANSWER_POST_FOR_EXERCISE }, "notification.lecture-notification.attachment-changes", new NotificationType[] { ATTACHMENT_CHANGE },
+            "notification.lecture-notification.new-post-for-lecture", new NotificationType[] { NEW_POST_FOR_LECTURE },
+            "notification.lecture-notification.new-answer-post-for-lecture", new NotificationType[] { NEW_ANSWER_POST_FOR_LECTURE },
+            "notification.instructor-exclusive-notification.course-and-exam-archiving-started", new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED });
 
     /**
      * Finds the deactivated NotificationTypes based on the user's NotificationOptions
@@ -46,50 +61,14 @@ public class NotificationSettingsService {
     private Map<NotificationType, Boolean> convertNotificationOptionsToNotificationTypesWithActivationStatus(Set<NotificationOption> notificationOptions) {
         Map<NotificationType, Boolean> resultingMap = new HashMap<>();
         for (NotificationOption option : notificationOptions) {
-            NotificationType[] tmpNotificationTypes = this.findCorrespondingNotificationTypesForNotificationOption(option);
-            for (NotificationType type : tmpNotificationTypes) {
-                resultingMap.put(type, option.isWebapp());
+            NotificationType[] tmpNotificationTypes = NOTIFICATION_OPTION_SPECIFIER_TO_NOTIFICATION_TYPES_MAP.get(option.getOptionSpecifier());
+            if (tmpNotificationTypes != null) {
+                for (NotificationType type : tmpNotificationTypes) {
+                    resultingMap.put(type, option.isWebapp());
+                }
             }
         }
         return resultingMap;
-    }
-
-    /**
-     * This is the place where the mapping between NotificationOptions and NotificationType happens on the server side
-     * Each NotificationOption can be based on multiple different NotificationTypes
-     * @param notificationOption which corresponding NotificationTypes should be found
-     * @return the corresponding NotificationType(s)
-     */
-    private NotificationType[] findCorrespondingNotificationTypesForNotificationOption(NotificationOption notificationOption) {
-        switch (notificationOption.getOptionSpecifier()) {
-            case "notification.exercise-notification.exercise-created-or-started": {
-                return new NotificationType[] { NotificationType.EXERCISE_CREATED };
-            }
-            case "notification.exercise-notification.exercise-open-for-practice": {
-                return new NotificationType[] { NotificationType.EXERCISE_PRACTICE };
-            }
-            case "notification.exercise-notification.new-post-exercises": {
-                return new NotificationType[] { NotificationType.NEW_POST_FOR_EXERCISE };
-            }
-            case "notification.exercise-notification.new-answer-post-exercises": {
-                return new NotificationType[] { NotificationType.NEW_ANSWER_POST_FOR_EXERCISE };
-            }
-            case "notification.lecture-notification.attachment-changes": {
-                return new NotificationType[] { NotificationType.ATTACHMENT_CHANGE };
-            }
-            case "notification.lecture-notification.new-post-for-lecture": {
-                return new NotificationType[] { NotificationType.NEW_POST_FOR_LECTURE };
-            }
-            case "notification.lecture-notification.new-answer-post-for-lecture": {
-                return new NotificationType[] { NotificationType.NEW_ANSWER_POST_FOR_LECTURE };
-            }
-            case "notification.instructor-exclusive-notification.course-and-exam-archiving-started": {
-                return new NotificationType[] { NotificationType.EXAM_ARCHIVE_STARTED, NotificationType.COURSE_ARCHIVE_STARTED };
-            }
-            default: {
-                return new NotificationType[0];
-            }
-        }
     }
 
     /**

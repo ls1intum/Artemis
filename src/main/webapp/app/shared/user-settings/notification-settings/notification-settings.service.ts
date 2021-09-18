@@ -19,6 +19,21 @@ import { OptionSpecifier } from 'app/shared/constants/user-settings.constants';
 @Injectable({ providedIn: 'root' })
 export class NotificationSettingsService {
     /**
+     * This is the place where the mapping between OptionSpecifiers and notification titles happens on the client side
+     * Each OptionSpecifiers can be based on multiple different notification titles (based on NotificationTypes)
+     */
+    private static NOTIFICATION_OPTION_SPECIFIER_TO_NOTIFICATION_TITLE_MAP: Map<OptionSpecifier, string[]> = new Map([
+        [OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED, [EXERCISE_CREATED_TITLE]],
+        [OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE, [EXERCISE_PRACTICE_TITLE]],
+        [OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_POST_EXERCISES, [NEW_POST_FOR_EXERCISE_TITLE]],
+        [OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES, [NEW_ANSWER_POST_FOR_EXERCISE_TITLE]],
+        [OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES, [ATTACHMENT_CHANGE_TITLE]],
+        [OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__NEW_POST_FOR_LECTURE, [NEW_POST_FOR_LECTURE_TITLE]],
+        [OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE, [NEW_ANSWER_POST_FOR_LECTURE_TITLE]],
+        [OptionSpecifier.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED, [EXAM_ARCHIVE_STARTED_TITLE, COURSE_ARCHIVE_STARTED_TITLE]],
+    ]);
+
+    /**
      * Creates an updates map that indicates which notifications (titles) are (de)activated in the current notification settings
      * @param notificationOptionCores will be mapped to their respective title and create a new updated map
      * @return the updated map
@@ -28,10 +43,12 @@ export class NotificationSettingsService {
         let tmpNotificationTitles: string[];
 
         for (let i = 0; i < notificationOptionCores.length; i++) {
-            tmpNotificationTitles = NotificationSettingsService.findCorrespondingNotificationTypesForNotificationOptionCore(notificationOptionCores[i]);
-            tmpNotificationTitles.forEach((tmpNotificationTitle) => {
-                updatedMap.set(tmpNotificationTitle, notificationOptionCores[i].webapp);
-            });
+            tmpNotificationTitles = NotificationSettingsService.NOTIFICATION_OPTION_SPECIFIER_TO_NOTIFICATION_TITLE_MAP.get(notificationOptionCores[i].optionSpecifier) ?? [];
+            if (tmpNotificationTitles.length > 0) {
+                tmpNotificationTitles.forEach((tmpNotificationTitle) => {
+                    updatedMap.set(tmpNotificationTitle, notificationOptionCores[i].webapp);
+                });
+            }
         }
         return updatedMap;
     }
@@ -49,43 +66,5 @@ export class NotificationSettingsService {
             }
         }
         return true;
-    }
-
-    /**
-     * This is the place where the mapping between NotificationOptionCores and NotificationTypes happens on the client side
-     * Each NotificationOptionCore can be based on multiple different NotificationTypes
-     * @param notificationOptionCore which corresponding NotificationTypes should be found
-     * @return the corresponding NotificationType(s)
-     */
-    private static findCorrespondingNotificationTypesForNotificationOptionCore(notificationOptionCore: NotificationOptionCore): string[] {
-        switch (notificationOptionCore.optionSpecifier) {
-            case OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED: {
-                return [EXERCISE_CREATED_TITLE];
-            }
-            case OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE: {
-                return [EXERCISE_PRACTICE_TITLE];
-            }
-            case OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_POST_EXERCISES: {
-                return [NEW_POST_FOR_EXERCISE_TITLE];
-            }
-            case OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES: {
-                return [NEW_ANSWER_POST_FOR_EXERCISE_TITLE];
-            }
-            case OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES: {
-                return [ATTACHMENT_CHANGE_TITLE];
-            }
-            case OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__NEW_POST_FOR_LECTURE: {
-                return [NEW_POST_FOR_LECTURE_TITLE];
-            }
-            case OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE: {
-                return [NEW_ANSWER_POST_FOR_LECTURE_TITLE];
-            }
-            case OptionSpecifier.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED: {
-                return [EXAM_ARCHIVE_STARTED_TITLE, COURSE_ARCHIVE_STARTED_TITLE];
-            }
-            default: {
-                return [];
-            }
-        }
     }
 }
