@@ -90,7 +90,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col pe-0 flex-grow-1">
+        <div class="col-6 pe-0 flex-grow-1">
             <!-- EXERCISE ACTIONS END -->
             <!-- PROBLEM STATEMENT START -->
             <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="mb-4">
@@ -231,7 +231,7 @@
                 <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult"></jhi-rating>
             </div>
         </div>
-        <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
+        <div class="col-3 d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
             <router-outlet *ngIf="exercise.course && exercise.course.postsEnabled" (activate)="onChildActivate($event)"></router-outlet>
         </div>
     </div>

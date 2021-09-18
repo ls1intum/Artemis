@@ -62,7 +62,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     ) {}
 
     /**
-     * on initialization: initializes the metis service, fetches the posts for the course, resets all user inputs and selects to defaults,
+     * on initialization: initializes the metis service, fetches the posts for the course, resets all user inputs and selects the defaults,
      * creates the subscription to posts to stay updated on any changes of posts in this course
      */
     ngOnInit(): void {
