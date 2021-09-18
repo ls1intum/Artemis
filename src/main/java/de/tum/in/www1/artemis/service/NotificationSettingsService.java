@@ -35,7 +35,7 @@ public class NotificationSettingsService {
      * @return the converted String Set
      */
     public Set<String> convertNotificationTypesToTitles(Set<NotificationType> types) {
-        return types.stream().map(type -> NotificationTitleTypeConstants.findCorrespondingNotificationTitle(type)).collect(Collectors.toSet());
+        return types.stream().map(NotificationTitleTypeConstants::findCorrespondingNotificationTitle).collect(Collectors.toSet());
     }
 
     /**
