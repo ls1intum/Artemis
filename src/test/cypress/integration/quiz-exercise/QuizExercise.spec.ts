@@ -88,7 +88,9 @@ describe('Quiz Exercise Management', () => {
             cy.get('.form-control').type(quizExercise.title);
             cy.intercept(DELETE, '/api/quiz-exercises/*').as('deleteQuizQuery');
             cy.get('.modal-footer').find('.btn-danger').click();
-            cy.wait('@deleteQuizQuery');
+            cy.wait('@deleteQuizQuery').then((deleteResponse) => {
+                expect(deleteResponse?.response?.statusCode).to.eq(200);
+            });
         });
     });
 });
