@@ -29,12 +29,10 @@ import './utils';
 /*eslint-disable */
 Cypress.on('window:before:load', (win) => {
     cy.stub(win.console, 'error').callsFake((msg) => {
-        // @ts-ignore
         cy.now('task', 'error', msg);
     });
 
     cy.stub(win.console, 'warn').callsFake((msg) => {
-        // @ts-ignore
         cy.now('task', 'warn', msg);
     });
 });
