@@ -88,14 +88,14 @@ public class NotificationOption extends DomainObject {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object object) {
+        if (this == object) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        NotificationOption providedOption = (NotificationOption) o;
+        NotificationOption providedOption = (NotificationOption) object;
         return this.user.equals(providedOption.user) && this.optionSpecifier.equals(providedOption.optionSpecifier) && this.webapp == providedOption.webapp
                 && this.email == providedOption.email;
     }
