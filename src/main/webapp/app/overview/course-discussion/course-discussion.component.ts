@@ -85,7 +85,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
                     this.createEmptyPost();
                     this.resetFormGroup();
                     if (this.searchText) {
-                        this.onSearch(true);
+                        this.onSearch();
                     }
                 }
             });
