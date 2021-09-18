@@ -1,5 +1,7 @@
+import { BASE_API, PUT } from '../constants';
+
 /**
- * This provides function for interacting with the modeling editor
+ * This provides functions for interacting with the modeling editor
  * */
 export class ModelingEditor {
     MODELING_SPACE = '.sc-furvIG';
@@ -13,5 +15,11 @@ export class ModelingEditor {
             position: 'bottomLeft',
             force: true,
         });
+    }
+
+    submit() {
+        cy.intercept(PUT, BASE_API + 'exercises/*/modeling-submissions').as('createModelingSubmission');
+        cy.get('.btn-primary').first().click();
+        cy.wait('@createModelingSubmission');
     }
 }
