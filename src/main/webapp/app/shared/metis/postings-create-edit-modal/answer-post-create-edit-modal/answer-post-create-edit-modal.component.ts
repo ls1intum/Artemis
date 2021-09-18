@@ -3,7 +3,6 @@ import { PostingsCreateEditModalDirective } from 'app/shared/metis/postings-crea
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
-import * as moment from 'moment';
 import { FormBuilder, Validators } from '@angular/forms';
 
 @Component({
