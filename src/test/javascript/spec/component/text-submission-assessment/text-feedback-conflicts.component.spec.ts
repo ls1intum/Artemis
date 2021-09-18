@@ -7,7 +7,7 @@ import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { TextFeedbackConflictsComponent } from 'app/exercises/text/assess/conflicts/text-feedback-conflicts.component';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/text-submission-assessment.component';
@@ -174,6 +174,7 @@ describe('TextFeedbackConflictsComponent', () => {
                 TextFeedbackConflictsHeaderComponent,
                 MockComponent(ScoreDisplayComponent),
                 MockComponent(FaIconComponent),
+                MockComponent(FaLayersComponent),
                 MockTranslateValuesDirective,
                 MockComponent(AssessmentLayoutComponent),
                 MockComponent(AssessmentInstructionsComponent),
@@ -197,8 +198,8 @@ describe('TextFeedbackConflictsComponent', () => {
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {
-                    declarations: [MockComponent(FaIconComponent)],
-                    exports: [MockComponent(FaIconComponent)],
+                    declarations: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
+                    exports: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
                 },
             })
             .compileComponents();
