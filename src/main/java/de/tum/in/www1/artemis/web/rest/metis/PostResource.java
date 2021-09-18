@@ -129,11 +129,11 @@ public class PostResource {
     }
 
     /**
-     * POST /courses/{courseId}/posts/similarity-check : Create a new post
+     * POST /courses/{courseId}/posts/similarity-check : trigger a similarity check for post to be created
      *
-     * @param courseId id of the course the post belongs to
+     * @param courseId id of the course the post should be published in
      * @param post     post to create
-     * @return ResponseEntity with status 201 (Created) containing the created post in the response body,
+     * @return ResponseEntity with status 200 (OK) and with body most similar posts in the course,
      * or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PostMapping("courses/{courseId}/posts/similarity-check")
