@@ -29,7 +29,8 @@
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken",
                 "lectures": "Vorlesungen",
-                "exams": "Klausuren"
+                "exams": "Klausuren",
+                "discussion": "Diskussion"
             },
             "exerciseList": {
                 "fullScore": "Keine mit voller Punktzahl",
