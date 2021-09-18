@@ -45,14 +45,14 @@ describe('ExampleTextSubmissionComponent', () => {
     let submission: TextSubmission;
     let activatedRouteSnapshot: ActivatedRouteSnapshot;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         const route: ActivatedRoute = {
             snapshot: {
                 paramMap: convertToParamMap({}),
                 queryParamMap: convertToParamMap({}),
             },
         } as any;
-        await TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
             declarations: [
                 ExampleTextSubmissionComponent,

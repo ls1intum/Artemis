@@ -23,7 +23,7 @@ const routes: Routes = [
             {
                 path: '',
                 pathMatch: 'full',
-                loadChildren: () => import('../discussion/discussion.module').then((m) => m.DiscussionModule),
+                loadChildren: () => import('../page-discussion-section/page-discussion-section.module').then((m) => m.PageDiscussionSectionModule),
             },
         ],
     },

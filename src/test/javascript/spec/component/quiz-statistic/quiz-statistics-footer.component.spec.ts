@@ -29,10 +29,10 @@ describe('QuizExercise Statistic Footer Component', () => {
     let fixture: ComponentFixture<QuizStatisticsFooterComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy: SinonStub;
-    let routerSpy: SinonStub;
+    let accountSpy: jest.SpyInstance;
+    let routerSpy: jest.SpyInstance;
     let router: Router;
-    let quizServiceFindSpy: SinonStub;
+    let quizServiceFindSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -55,9 +55,9 @@ describe('QuizExercise Statistic Footer Component', () => {
                 quizService = fixture.debugElement.injector.get(QuizExerciseService);
                 accountService = fixture.debugElement.injector.get(AccountService);
                 router = fixture.debugElement.injector.get(Router);
-                routerSpy = stub(router, 'navigateByUrl');
-                accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(true);
-                quizServiceFindSpy = stub(quizService, 'find').returns(of(new HttpResponse({ body: quizExercise })));
+                routerSpy = jest.spyOn(router, 'navigateByUrl');
+                accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+                quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });
 

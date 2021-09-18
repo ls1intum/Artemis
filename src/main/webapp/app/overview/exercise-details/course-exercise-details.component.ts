@@ -33,7 +33,7 @@ import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { DiscussionComponent } from 'app/overview/discussion/discussion.component';
+import { PageDiscussionSectionComponent } from 'app/overview/page-discussion-section/page-discussion-section.component';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
@@ -77,7 +77,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     allowComplaintsForAutomaticAssessments: boolean;
     public gradingCriteria: GradingCriterion[];
     showWelcomeAlert = false;
-    private discussionComponent?: DiscussionComponent;
+    private discussionComponent?: PageDiscussionSectionComponent;
     baseResource: string;
     isExamExercise: boolean;
 
@@ -446,7 +446,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * used only for the DiscussionComponent
      * @param instance The component instance
      */
-    onChildActivate(instance: DiscussionComponent) {
+    onChildActivate(instance: PageDiscussionSectionComponent) {
         this.discussionComponent = instance; // save the reference to the component instance
         if (this.exercise) {
             instance.exercise = this.exercise;

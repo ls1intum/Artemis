@@ -17,12 +17,14 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/ex
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { Result } from 'app/entities/result.model';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MissingResultInfo } from 'app/exercises/shared/result/result.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -171,21 +173,42 @@ describe('UpdatingResultComponent', () => {
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).to.be.true;
+        expect(comp.missingResultInfo).to.equal(MissingResultInfo.NONE);
     });
 
     it('should set the isBuilding attribute to false if exerciseType is PROGRAMMING and there is no pending submission anymore', () => {
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         comp.isBuilding = true;
-        getLatestPendingSubmissionStub.returns(of([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, undefined]));
+        getLatestPendingSubmissionStub.returns(of({ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 3 }));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
-        expect(comp.isBuilding).to.equal(false);
+        expect(comp.isBuilding).to.be.false;
+        expect(comp.missingResultInfo).to.equal(MissingResultInfo.NONE);
+    });
+
+    it('should set missingResultInfo attribute if the exerciseType is PROGRAMMING and the latest submission failed (offline IDE)', () => {
+        comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING, allowOfflineIde: true } as ProgrammingExercise;
+        comp.isBuilding = true;
+        getLatestPendingSubmissionStub.returns(of({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 3 }));
+        cleanInitializeGraded();
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
+        expect(comp.isBuilding).to.be.false;
+        expect(comp.missingResultInfo).to.equal(MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE);
+    });
+
+    it('should set missingResultInfo attribute if the exerciseType is PROGRAMMING and the latest submission failed (online IDE)', () => {
+        comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING, allowOfflineIde: false } as ProgrammingExercise;
+        getLatestPendingSubmissionStub.returns(of({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 3 }));
+        cleanInitializeGraded();
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
+        expect(comp.missingResultInfo).to.equal(MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE);
     });
 
     it('should not set the isBuilding attribute to true if the exerciseType is not PROGRAMMING', () => {
-        getLatestPendingSubmissionStub.returns(of([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]));
+        getLatestPendingSubmissionStub.returns(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).not.to.have.been.called;
         expect(comp.isBuilding).to.equal(undefined);
+        expect(comp.missingResultInfo).to.equal(MissingResultInfo.NONE);
     });
 });

@@ -10,7 +10,7 @@ import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor
 import { UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -20,13 +20,15 @@ import { concatMap, tap } from 'rxjs/operators';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 import { onError } from 'app/shared/util/global.utils';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
     templateUrl: './example-modeling-submission.component.html',
     styleUrls: ['./example-modeling-submission.component.scss'],
 })
-export class ExampleModelingSubmissionComponent implements OnInit {
+export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarker {
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
     @ViewChild(ModelingAssessmentComponent, { static: false })
@@ -53,6 +55,33 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     toComplete: boolean;
     assessmentExplanation: string;
     isExamMode: boolean;
+
+    legend = [
+        {
+            text: 'artemisApp.exampleSubmission.legend.positiveScore',
+            icon: 'check' as IconProp,
+            color: 'green',
+            size: '2em',
+        },
+        {
+            text: 'artemisApp.exampleSubmission.legend.negativeScore',
+            icon: 'times' as IconProp,
+            color: 'red',
+            size: '2em',
+        },
+        {
+            text: 'artemisApp.exampleSubmission.legend.feedbackWithoutScore',
+            icon: 'exclamation' as IconProp,
+            color: 'blue',
+            size: '1.66em',
+        },
+        {
+            text: 'artemisApp.exampleSubmission.legend.incorrectAssessment',
+            icon: 'exclamation-triangle' as IconProp,
+            color: 'yellow',
+            size: '2em',
+        },
+    ];
 
     private exampleSubmissionId: number;
 
@@ -377,22 +406,25 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         delete result.submission;
         getLatestSubmissionResult(exampleSubmission.submission)!.feedbacks = this.feedbacks;
 
-        this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
-            () => {
-                this.alertService.success('artemisApp.exampleSubmission.assessScore.success');
-            },
-            (error: HttpErrorResponse) => {
-                const errorType = error.headers.get('x-artemisapp-error');
+        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.alertService, this);
+        command.assessExampleSubmission(exampleSubmission, this.exerciseId);
+    }
 
-                if (errorType === 'error.tooLow') {
-                    this.alertService.error('artemisApp.exampleSubmission.assessScore.tooLow');
-                } else if (errorType === 'error.tooHigh') {
-                    this.alertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
-                } else {
-                    onError(this.alertService, error);
-                }
-            },
-        );
+    markAllFeedbackToCorrect() {
+        this.feedbacks.forEach((feedback) => {
+            feedback.correctionStatus = 'CORRECT';
+        });
+        this.assessmentEditor.resultFeedbacks = this.feedbacks;
+    }
+
+    markWrongFeedback(correctionErrors: FeedbackCorrectionError[]) {
+        correctionErrors.forEach((correctionError) => {
+            const validatedFeedback = this.feedbacks.find((feedback) => feedback.reference === correctionError.reference);
+            if (validatedFeedback != undefined) {
+                validatedFeedback.correctionStatus = correctionError.type;
+            }
+        });
+        this.assessmentEditor.resultFeedbacks = this.feedbacks;
     }
 
     readAndUnderstood() {

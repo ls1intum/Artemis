@@ -25,6 +25,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -62,6 +63,7 @@ describe('FileUploadExamSubmissionComponent', () => {
                 MockPipe(HtmlForMarkdownPipe, (markdown) => markdown as SafeHtml),
                 MockDirective(NgbTooltip),
                 MockComponent(IncludedInScoreBadgeComponent),
+                MockComponent(ExamExerciseUpdateHighlighterComponent),
             ],
             providers: [MockProvider(ChangeDetectorRef), { provide: TranslateService, useClass: MockTranslateService }],
         })
@@ -145,6 +147,17 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
         it('should return exercise', () => {
             expect(comp.getExercise()).to.deep.equal(mockExercise);
+        });
+    });
+
+    describe('updateProblemStatement', () => {
+        beforeEach(() => {
+            resetComponent();
+        });
+        it('should update problem statement', () => {
+            const newProblemStatement = 'new problem statement';
+            comp.updateProblemStatement(newProblemStatement);
+            expect(comp.getExercise().problemStatement).to.equal(newProblemStatement);
         });
     });
 

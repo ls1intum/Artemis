@@ -1,5 +1,5 @@
-import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
@@ -19,7 +19,6 @@ import { SortService } from 'app/shared/service/sort.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { stub } from 'sinon';
 
 const route = { params: of({ courseId: 3, exerciseId: 22 }) };
 const fileUploadExercise1 = {
@@ -55,9 +54,9 @@ describe('FileUploadAssessmentDashboardComponent', () => {
     let accountService: AccountService;
     let sortService: SortService;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule, TranslateModule.forRoot(), ArtemisTestModule],
+            imports: [RouterTestingModule, ArtemisTestModule],
             declarations: [FileUploadAssessmentDashboardComponent],
             providers: [
                 JhiLanguageHelper,
@@ -90,14 +89,14 @@ describe('FileUploadAssessmentDashboardComponent', () => {
                 accountService = fixture.debugElement.injector.get(AccountService);
                 sortService = fixture.debugElement.injector.get(SortService);
             });
-    }));
+    });
 
     it('should set parameters and call functions on init', fakeAsync(() => {
         // setup
-        const exerciseServiceFind = stub(exerciseService, 'find');
-        exerciseServiceFind.returns(of(new HttpResponse({ body: fileUploadExercise1 })));
-        const getFileUploadSubmissionStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
-        getFileUploadSubmissionStub.returns(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
+        const exerciseServiceFind = jest.spyOn(exerciseService, 'find');
+        exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise1 })));
+        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+        getFileUploadSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
         jest.spyOn<any, any>(component, 'setPermissions');
         // test for init values
         expect(component).toBeTruthy();
@@ -111,19 +110,19 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         tick(500);
 
         // check
-        expect(getFileUploadSubmissionStub).toHaveBeenCalledWith(fileUploadExercise1.id);
+        expect(getFileUploadSubmissionStub).toHaveBeenCalledWith(fileUploadExercise2.id, { submittedOnly: true });
         expect(component['setPermissions']).toHaveBeenCalled();
         expect(component.exercise).toEqual(fileUploadExercise1 as FileUploadExercise);
     }));
 
     it('should get Submissions', fakeAsync(() => {
         // test getSubmissions
-        const exerciseServiceFind = stub(exerciseService, 'find');
-        exerciseServiceFind.returns(of(new HttpResponse({ body: fileUploadExercise1 })));
-        const getFileUploadSubmissionStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
-        getFileUploadSubmissionStub.returns(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
-        const isAtLeastInstructorInCourseStub = stub(accountService, 'isAtLeastInstructorInCourse');
-        isAtLeastInstructorInCourseStub.returns(true);
+        const exerciseServiceFind = jest.spyOn(exerciseService, 'find');
+        exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise1 })));
+        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+        getFileUploadSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
+        const isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
+        isAtLeastInstructorInCourseStub.mockReturnValue(true);
         jest.spyOn<any, any>(component, 'setPermissions');
 
         // call
@@ -137,12 +136,12 @@ describe('FileUploadAssessmentDashboardComponent', () => {
     }));
 
     it('should not get Submissions', () => {
-        const getFileUploadSubmissionStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
-        getFileUploadSubmissionStub.returns(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
-        const isAtLeastInstructorInCourseStub = stub(accountService, 'isAtLeastInstructorInCourse');
-        isAtLeastInstructorInCourseStub.returns(true);
-        const findExerciseStub = stub(exerciseService, 'find');
-        findExerciseStub.returns(of(new HttpResponse({ body: fileUploadExercise2, headers: new HttpHeaders() })));
+        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+        getFileUploadSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
+        const isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
+        isAtLeastInstructorInCourseStub.mockReturnValue(true);
+        const findExerciseStub = jest.spyOn(exerciseService, 'find');
+        findExerciseStub.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise2, headers: new HttpHeaders() })));
         component.exercise = fileUploadExercise2;
         // call
         component.ngOnInit();

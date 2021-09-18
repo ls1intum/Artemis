@@ -5,10 +5,10 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
-import { Post } from 'app/entities/metis/post.model';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { PostFooterComponent } from 'app/shared/metis/postings-footer/post-footer/post-footer.component';
 import { PostHeaderComponent } from 'app/shared/metis/postings-header/post-header/post-header.component';
+import { metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -17,14 +17,6 @@ describe('PostComponent', () => {
     let component: PostComponent;
     let fixture: ComponentFixture<PostComponent>;
     let debugElement: DebugElement;
-
-    const post = {
-        id: 2,
-        creationDate: undefined,
-        content: 'content',
-        title: 'title',
-        tags: ['tag'],
-    } as Post;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -54,8 +46,8 @@ describe('PostComponent', () => {
     });
 
     it('should have correct content', () => {
-        component.posting = post;
+        component.posting = metisPostExerciseUser1;
         component.ngOnInit();
-        expect(component.content).to.be.equal(post.content);
+        expect(component.content).to.be.equal(metisPostExerciseUser1.content);
     });
 });
