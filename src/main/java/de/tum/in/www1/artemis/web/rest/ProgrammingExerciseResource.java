@@ -1283,8 +1283,9 @@ public class ProgrammingExerciseResource {
 
     private void validateAndUpdateExistingAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise,
             List<AuxiliaryRepository> updatedAuxiliaryRepositories, ProgrammingExercise updatedExercise) {
-        List<AuxiliaryRepository> auxiliaryRepositories = Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>()).stream()
-                .filter(existingRepo -> updatedAuxiliaryRepositories.stream().noneMatch((updatedRepo -> existingRepo.getId().equals(updatedRepo.getId())))).toList();
+        List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>(
+                Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>()).stream()
+                        .filter(existingRepo -> updatedAuxiliaryRepositories.stream().noneMatch((updatedRepo -> existingRepo.getId().equals(updatedRepo.getId())))).toList());
         for (AuxiliaryRepository repo : updatedAuxiliaryRepositories) {
             validateAuxiliaryRepository(repo, auxiliaryRepositories,
                     programmingExercise.getAuxiliaryRepositories().stream().noneMatch(existingRepo -> existingRepo.getId().equals(repo.getId())));
