@@ -69,7 +69,7 @@
                             [class.btn-lifecycle--disabled]="readOnly"
                             (click)="!readOnly && toggleAssessmentType()"
                         >
-                            <fa-icon class="icon-static" [icon]="'user-check'" size="lg"></fa-icon>
+                            <fa-icon [icon]="'user-check'" size="lg"></fa-icon>
                         </div>
                         <div>
                             {{ 'artemisApp.programmingExercise.timeline.manualAssessment' | artemisTranslate }}
@@ -85,7 +85,7 @@
                             [class.btn-lifecycle--disabled]="readOnly"
                             (click)="!readOnly && toggleAssessmentType()"
                         >
-                            <fa-icon class="icon-static" [icon]="'user-cog'" size="lg"></fa-icon>
+                            <fa-icon [icon]="'user-cog'" size="lg"></fa-icon>
                         </div>
                         <div>
                             {{ 'artemisApp.programmingExercise.timeline.complaintsAllowed' | artemisTranslate }}
