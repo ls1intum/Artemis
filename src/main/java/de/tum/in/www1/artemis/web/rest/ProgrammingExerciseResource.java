@@ -1255,7 +1255,8 @@ public class ProgrammingExerciseResource {
 
     private void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> newAuxiliaryRepositories,
             ProgrammingExercise updatedExercise) {
-        List<AuxiliaryRepository> auxiliaryRepositories = Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>());
+        List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>(Objects
+                .requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>()).stream().filter(repo -> repo.getId() != null).toList());
         for (AuxiliaryRepository repo : newAuxiliaryRepositories) {
             validateAuxiliaryRepository(repo, auxiliaryRepositories);
             auxiliaryRepositories.add(repo);
@@ -1265,33 +1266,33 @@ public class ProgrammingExerciseResource {
     }
 
     private void handleAuxiliaryRepositoriesWhenUpdatingExercises(ProgrammingExercise programmingExercise, ProgrammingExercise updatedExercise) {
-        List<AuxiliaryRepository> newOrEditedAuxiliaryRepositories = updatedExercise.getAuxiliaryRepositories().stream().filter(repo -> {
+        List<AuxiliaryRepository> newOrEditedAuxiliaryRepositories = new ArrayList<>(updatedExercise.getAuxiliaryRepositories().stream().filter(repo -> {
             if (repo.getId() == null) {
                 return true;
             }
             AuxiliaryRepository auxiliaryRepositoryBeforeUpdate = auxiliaryRepositoryRepository.findById(repo.getId())
                     .orElseThrow(() -> new IllegalStateException("Edited an existing repository that is not in the data base!"));
             return !repo.containsSameStringValues(auxiliaryRepositoryBeforeUpdate);
-        }).toList();
+        }).toList());
         validateAndUpdateExistingAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, newOrEditedAuxiliaryRepositories, updatedExercise);
 
         List<AuxiliaryRepository> removedAuxiliaryRepositories = programmingExercise.getAuxiliaryRepositories().stream()
                 .filter(repo -> updatedExercise.getAuxiliaryRepositories().stream().noneMatch(updatedRepo -> repo.getId().equals(updatedRepo.getId()))).toList();
 
-        removedAuxiliaryRepositories.forEach(repo -> auxiliaryRepositoryRepository.delete(repo));
+        auxiliaryRepositoryRepository.deleteAll(removedAuxiliaryRepositories);
     }
 
     private void validateAndUpdateExistingAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise,
             List<AuxiliaryRepository> updatedAuxiliaryRepositories, ProgrammingExercise updatedExercise) {
         List<AuxiliaryRepository> auxiliaryRepositories = Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>()).stream()
-                .filter(existingRepo -> updatedAuxiliaryRepositories.stream().noneMatch((updatedRepo -> updatedRepo.getId().equals(existingRepo.getId())))).toList();
+                .filter(existingRepo -> updatedAuxiliaryRepositories.stream().noneMatch((updatedRepo -> existingRepo.getId().equals(updatedRepo.getId())))).toList();
         for (AuxiliaryRepository repo : updatedAuxiliaryRepositories) {
             validateAuxiliaryRepository(repo, auxiliaryRepositories);
             auxiliaryRepositories.add(repo);
         }
         updatedExercise.setAuxiliaryRepositories(new ArrayList<>());
         auxiliaryRepositories.forEach(updatedRepo -> {
-            auxiliaryRepositoryRepository.save(updatedRepo);
+            // auxiliaryRepositoryRepository.save(updatedRepo);
             updatedExercise.addAuxiliaryRepository(updatedRepo);
         });
     }
