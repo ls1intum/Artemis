@@ -8,6 +8,9 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
+import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,12 +70,14 @@ public class ProgrammingExerciseGradingService {
 
     private final ExamDateService examDateService;
 
+    private final SubmissionPolicyService submissionPolicyService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
-            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExamDateService examDateService) {
+                                             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
+                                             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
+                                             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+                                             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+                                             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExamDateService examDateService, SubmissionPolicyService submissionPolicyService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -88,6 +93,7 @@ public class ProgrammingExerciseGradingService {
         this.groupNotificationService = groupNotificationService;
         this.resultService = resultService;
         this.examDateService = examDateService;
+        this.submissionPolicyService = submissionPolicyService;
     }
 
     /**
@@ -130,6 +136,10 @@ public class ProgrammingExerciseGradingService {
             if (isSolutionParticipation) {
                 // This method will return without triggering the build if the submission is not of type TEST.
                 triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), programmingSubmission);
+            }
+
+            if (!isTemplateParticipation && !isSolutionParticipation && programmingExercise.getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
+                submissionPolicyService.handleLockRepositoryPolicy(newResult, policy);
             }
 
             if (!isSolutionParticipation && !isTemplateParticipation && programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual()) {
@@ -524,6 +534,15 @@ public class ProgrammingExerciseGradingService {
 
             // The score is calculated as a percentage of the maximum points
             double score = successfulTestPoints / programmingExercise.getMaxPoints() * 100.0;
+
+            // When a submission penalty policy is active, the score must be capped at the
+            // maximum achievable score. The maximum achievable score depends on the policy
+            // settings and number of unique submissions in the participation.
+            if (programmingExercise.getSubmissionPolicy() instanceof SubmissionPenaltyPolicy policy) {
+                double achievableScore = submissionPolicyService.calculateAchievableScoreForParticipation(result.getParticipation(), policy);
+                score = Math.min(score, achievableScore);
+            }
+
             result.setScore(score);
         }
     }
