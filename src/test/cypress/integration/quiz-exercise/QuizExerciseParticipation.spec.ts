@@ -1,5 +1,6 @@
 import { artemis } from '../../support/ArtemisTesting';
 import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
+import shortAnswerQuizTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerQuiz_template.json';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -9,11 +10,16 @@ const student = artemis.users.getStudentOne();
 const courseManagementRequest = artemis.requests.courseManagement;
 
 // Page objects
-const multipleChoiceQuiz = artemis.pageobjects.multipleChoiceQuiz;
+const multipleChoiceQuiz = artemis.pageobjects.quizExercise.multipleChoice;
+const shortAnswerQuiz = artemis.pageobjects.quizExercise.shortAnswer;
+const quizCreation = artemis.pageobjects.quizExercise.creation;
+const dragAndDropQuiz = artemis.pageobjects.quizExercise.dragAndDrop;
+
+// Common primitives
+let course: any;
+let quizExercise: any;
 
 describe('Quiz Exercise Management', () => {
-    let course: any;
-    let quizExercise: any;
 
     before('Set up course', () => {
         cy.login(admin);
@@ -91,8 +97,8 @@ describe('Quiz Exercise Management', () => {
             // TODO: it would be great to create the quiz via request. Once the file upload request works it should be easy
             cy.login(admin, '/course-management/' + course.id + '/exercises');
             cy.get('#create-quiz-button').should('be.visible').click();
-            quizCreation.setTitle(quizExerciseName);
-            quizCreation.addDragAndDropQuestion('DnD Quiz' + uid);
+            quizCreation.setTitle('Cypress Quiz');
+            quizCreation.addDragAndDropQuestion('DnD Quiz');
             quizCreation.saveQuiz().then((quizResponse) => {
                 quizExercise = quizResponse.response?.body;
                 courseManagementRequest.setQuizVisible(quizExercise.id);
@@ -110,9 +116,10 @@ describe('Quiz Exercise Management', () => {
     });
 });
 
-function createQuiz(quizQuestions?: any) {
-    cy.login(admin);
-    return courseManagementRequest.createQuizExercise({ course }, quizExerciseName, dayjs().subtract(1, 'minute'), quizQuestions).then((quizResponse) => {
-            quizExercise = quizResponse.body;
+function createQuiz(quizQuestions: any = multipleChoiceQuizTemplate) {
+    return courseManagementRequest.createQuizExercise({ course }, [quizQuestions]).then((quizResponse) => {
+        quizExercise = quizResponse.body;
+        courseManagementRequest.setQuizVisible(quizExercise.id);
+        courseManagementRequest.startQuizNow(quizExercise.id);
     });
 }

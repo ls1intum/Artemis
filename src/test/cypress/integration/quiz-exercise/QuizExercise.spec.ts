@@ -16,19 +16,15 @@ const quizCreation = artemis.pageobjects.quizExercise.creation;
 
 // Common primitives
 let uid: string;
-let courseName: string;
-let courseShortName: string;
 let quizExerciseName: string;
+let course: any;
 
 describe('Quiz Exercise Management', () => {
-    let course: any;
 
     before('Set up course', () => {
         uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
         cy.login(admin);
-        courseManagementRequest.createCourse(courseName, courseShortName).then((response) => {
+        courseManagementRequest.createCourse().then((response) => {
             course = response.body;
         });
     });
@@ -92,7 +88,7 @@ describe('Quiz Exercise Management', () => {
         it('Deletes a Quiz Exercise', () => {
             cy.login(admin, '/');
             navigationBar.openCourseManagement();
-            courseManagement.openExercisesOfCourse(courseName, courseShortName);
+            courseManagement.openExercisesOfCourse(course.title, course.shortName);
             cy.get('#delete-quiz-' + quizExercise.id).click();
             cy.get('.form-control').type(quizExercise.title);
             cy.intercept(DELETE, '/api/quiz-exercises/*').as('deleteQuizQuery');
@@ -107,7 +103,7 @@ describe('Quiz Exercise Management', () => {
 function beginQuizCreation() {
     cy.login(admin, '/');
     navigationBar.openCourseManagement();
-    courseManagement.openExercisesOfCourse(courseName, courseShortName);
+    courseManagement.openExercisesOfCourse(course.title, course.shortName);
     cy.get('#create-quiz-button').click();
     quizCreation.setTitle(quizExerciseName);
 }
