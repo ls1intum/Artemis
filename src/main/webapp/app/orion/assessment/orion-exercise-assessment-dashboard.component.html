@@ -1,5 +1,5 @@
 <!-- If the exercise is not loaded or not programming, show regular component-->
-<jhi-exercise-assessment-dashboard *ngIf="!exercise || exercise.type !== ExerciseType.PROGRAMMING; else withOrionButtons"></jhi-exercise-assessment-dashboard>
+<jhi-exercise-assessment-dashboard *ngIf="!exercise || exercise.type !== ExerciseType.PROGRAMMING || !orionState; else withOrionButtons"></jhi-exercise-assessment-dashboard>
 
 <!-- If the exercise is programming, but not opened in Orion, show Orion open button-->
 <ng-template #withOrionButtons>

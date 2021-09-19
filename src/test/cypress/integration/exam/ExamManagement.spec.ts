@@ -1,4 +1,3 @@
-import { GROUP_SYNCHRONIZATION } from './../../support/constants';
 import { POST } from '../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
@@ -14,12 +13,10 @@ const users = artemis.users;
 const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagement = artemis.pageobjects.courseManagement;
 const examManagement = artemis.pageobjects.examManagement;
-const programmingCreation = artemis.pageobjects.programmingExerciseCreation;
+const programmingCreation = artemis.pageobjects.programmingExercise.creation;
 
 // Common primitives
 const uid = generateUUID();
-const courseName = 'Cypress course' + uid;
-const courseShortName = 'cypress' + uid;
 const examTitle = 'exam' + uid;
 
 describe('Exam management', () => {
@@ -27,12 +24,16 @@ describe('Exam management', () => {
 
     before(() => {
         cy.login(users.getAdmin());
-        courseManagementRequests.createCourse(courseName, courseShortName).then((response) => {
+        courseManagementRequests.createCourse().then((response) => {
             course = response.body;
             courseManagementRequests.addStudentToCourse(course.id, users.getStudentOne().username);
             const exam = new CypressExamBuilder(course).title(examTitle).build();
             courseManagementRequests.createExam(exam);
         });
+        const runsOnBamboo: boolean = Cypress.env('isBamboo');
+        if (runsOnBamboo) {
+            cy.waitForGroupSynchronization();
+        }
     });
 
     beforeEach(() => {
@@ -40,10 +41,9 @@ describe('Exam management', () => {
     });
 
     it('Adds an exercise group with a programming exercise', () => {
-        cy.wait(GROUP_SYNCHRONIZATION);
         cy.visit('/');
         navigationBar.openCourseManagement();
-        courseManagement.openExamsOfCourse(courseName, courseShortName);
+        courseManagement.openExamsOfCourse(course.title, course.shortName);
         examManagement.getExamRow(examTitle).openExerciseGroups();
         cy.contains('Number of exercise groups: 0').should('be.visible');
         // Create a new exercise group
@@ -93,8 +93,6 @@ describe('Exam management', () => {
     after(() => {
         if (!!course) {
             cy.login(users.getAdmin());
-            // Sometimes the backend fails with a ConstraintViolationError if we delete the course immediately
-            cy.wait(1000);
             courseManagementRequests.deleteCourse(course.id);
         }
     });

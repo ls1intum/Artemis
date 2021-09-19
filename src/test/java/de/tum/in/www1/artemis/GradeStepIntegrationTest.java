@@ -107,10 +107,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(gradeStepsDTO.gradeType).isEqualTo(GradeType.GRADE);
         assertThat(gradeStepsDTO.title).isEqualTo(course.getTitle());
 
-        GradeStep[] gradeStepArray = new GradeStep[gradeSteps.size()];
-        gradeSteps.toArray(gradeStepArray);
-
-        assertThat(gradeStepsDTO.gradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeStepArray);
+        assertThat(gradeStepsDTO.gradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeSteps);
     }
 
     private void createGradeScale() {
@@ -187,10 +184,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(gradeStepsDTO.gradeType).isEqualTo(GradeType.BONUS);
         assertThat(gradeStepsDTO.title).isEqualTo(exam.getTitle());
 
-        GradeStep[] gradeStepArray = new GradeStep[gradeSteps.size()];
-        gradeSteps.toArray(gradeStepArray);
-
-        assertThat(gradeStepsDTO.gradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeStepArray);
+        assertThat(gradeStepsDTO.gradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeSteps);
     }
 
     /**

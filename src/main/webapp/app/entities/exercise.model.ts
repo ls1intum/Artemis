@@ -16,6 +16,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 export enum DifficultyLevel {
     EASY = 'EASY',
@@ -194,4 +195,25 @@ export function getCourseId(exercise: Exercise): number | undefined {
  */
 export function getCourseFromExercise(exercise: Exercise): Course | undefined {
     return exercise.course || exercise.exerciseGroup?.exam?.course;
+}
+
+/**
+ * In order to create an ExerciseType enum, we take the ExerciseInfo (which can be fetched from the server) and map it to the ExerciseType
+ * @param exerciseInfo the exercise information which is given by the server java class
+ * @return ExerciseType or undefined if the exerciseInfo does not match
+ */
+export function declareExerciseType(exerciseInfo: ExerciseInfo): ExerciseType | undefined {
+    switch (exerciseInfo.exerciseType) {
+        case 'TextExercise':
+            return ExerciseType.TEXT;
+        case 'ModelingExercise':
+            return ExerciseType.MODELING;
+        case 'ProgrammingExercise':
+            return ExerciseType.PROGRAMMING;
+        case 'FileUploadExercise':
+            return ExerciseType.FILE_UPLOAD;
+        case 'QuizExercise':
+            return ExerciseType.QUIZ;
+    }
+    return undefined;
 }
