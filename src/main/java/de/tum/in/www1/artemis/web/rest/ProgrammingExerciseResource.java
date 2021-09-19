@@ -349,7 +349,7 @@ public class ProgrammingExerciseResource {
 
         exerciseService.validateGeneralSettings(programmingExercise);
         validateProgrammingSettings(programmingExercise);
-        validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories(), programmingExercise);
+        validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
@@ -1253,16 +1253,15 @@ public class ProgrammingExerciseResource {
         return ResponseEntity.ok().build();
     }
 
-    private void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> newAuxiliaryRepositories,
-            ProgrammingExercise updatedExercise) {
+    private void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> newAuxiliaryRepositories) {
         List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>(Objects
                 .requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>()).stream().filter(repo -> repo.getId() != null).toList());
         for (AuxiliaryRepository repo : newAuxiliaryRepositories) {
-            validateAuxiliaryRepository(repo, auxiliaryRepositories);
+            validateAuxiliaryRepository(repo, auxiliaryRepositories, true);
             auxiliaryRepositories.add(repo);
         }
-        updatedExercise.setAuxiliaryRepositories(new ArrayList<>());
-        auxiliaryRepositories.forEach(updatedExercise::addAuxiliaryRepository);
+        programmingExercise.setAuxiliaryRepositories(new ArrayList<>());
+        auxiliaryRepositories.forEach(programmingExercise::addAuxiliaryRepository);
     }
 
     private void handleAuxiliaryRepositoriesWhenUpdatingExercises(ProgrammingExercise programmingExercise, ProgrammingExercise updatedExercise) {
@@ -1287,7 +1286,8 @@ public class ProgrammingExerciseResource {
         List<AuxiliaryRepository> auxiliaryRepositories = Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>()).stream()
                 .filter(existingRepo -> updatedAuxiliaryRepositories.stream().noneMatch((updatedRepo -> existingRepo.getId().equals(updatedRepo.getId())))).toList();
         for (AuxiliaryRepository repo : updatedAuxiliaryRepositories) {
-            validateAuxiliaryRepository(repo, auxiliaryRepositories);
+            validateAuxiliaryRepository(repo, auxiliaryRepositories,
+                    programmingExercise.getAuxiliaryRepositories().stream().noneMatch(existingRepo -> existingRepo.getId().equals(repo.getId())));
             auxiliaryRepositories.add(repo);
         }
         updatedExercise.setAuxiliaryRepositories(new ArrayList<>());
@@ -1367,10 +1367,11 @@ public class ProgrammingExerciseResource {
         }
     }
 
-    private void validateAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository, List<AuxiliaryRepository> otherRepositories) {
-
-        // Id of the auxiliary repository must not be set, because the id is set by the database.
-        validateAuxiliaryRepositoryId(auxiliaryRepository);
+    private void validateAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository, List<AuxiliaryRepository> otherRepositories, boolean checkID) {
+        if (checkID) {
+            // Id of the auxiliary repository must not be set, because the id is set by the database.
+            validateAuxiliaryRepositoryId(auxiliaryRepository);
+        }
 
         // We want to force the user to set a name of the auxiliary repository, otherwise we
         // cannot determine which name we should use for setting up the repo on the VCS.
