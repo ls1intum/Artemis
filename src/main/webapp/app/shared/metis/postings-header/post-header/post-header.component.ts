@@ -1,15 +1,17 @@
-import { Component, EventEmitter, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, OnChanges, OnDestroy, Output, ViewChild } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsHeaderDirective } from 'app/shared/metis/postings-header/postings-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 
 @Component({
     selector: 'jhi-post-header',
     templateUrl: './post-header.component.html',
     styleUrls: ['../posting-header.component.scss'],
 })
-export class PostHeaderComponent extends PostingsHeaderDirective<Post> implements OnChanges {
+export class PostHeaderComponent extends PostingsHeaderDirective<Post> implements OnChanges, OnDestroy {
     @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
+    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     numberOfAnswerPosts: number;
     showAnswers = false;
 
@@ -22,6 +24,13 @@ export class PostHeaderComponent extends PostingsHeaderDirective<Post> implement
      */
     ngOnChanges(): void {
         this.numberOfAnswerPosts = this.getNumberOfAnswerPosts();
+    }
+
+    /**
+     * on leaving the page, the modal should be closed
+     */
+    ngOnDestroy(): void {
+        this.postCreateEditModal?.modalRef?.close();
     }
 
     /**

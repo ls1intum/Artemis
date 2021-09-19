@@ -66,6 +66,15 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     }
 
     /**
+     * Updates the problem statement of the currently loaded file upload exercise which is part of the user's student exam.
+     * @param newProblemStatement is the updated problem statement that should be displayed to the user.
+     */
+    updateProblemStatement(newProblemStatement: string): void {
+        this.exercise.problemStatement = newProblemStatement;
+        this.changeDetectorReference.detectChanges();
+    }
+
+    /**
      * Sets file submission for exercise
      * Here the file selected with the -browse- button is handeled.
      * @param event {object} Event object which contains the uploaded file

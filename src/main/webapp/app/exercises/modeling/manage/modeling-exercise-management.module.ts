@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ArtemisExampleModelingSubmissionModule } from 'app/exercises/modeling/manage/example-modeling/example-modeling-submission.module';
 import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
-import { ArtemisModelingStatisticsModule } from 'app/exercises/modeling/manage/modeling-statistics/modeling-statistics.module';
 import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
@@ -12,7 +11,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
     imports: [
         ArtemisExampleModelingSubmissionModule,
         ArtemisModelingExerciseModule,
-        ArtemisModelingStatisticsModule,
         ArtemisSharedCommonModule,
         ArtemisSharedComponentModule,
         ArtemisSharedPipesModule,

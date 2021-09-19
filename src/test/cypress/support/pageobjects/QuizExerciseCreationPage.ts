@@ -1,7 +1,7 @@
-import { BASE_API, POST } from '../constants';
+import { POST } from '../constants';
 
 export class QuizExerciseCreationPage {
-    setTitle(title = 'Cypress Quiz') {
+    setTitle(title: string) {
         cy.get('#quiz-title').type(title);
     }
 
@@ -51,9 +51,12 @@ export class QuizExerciseCreationPage {
         return cy.wait('@uploadBackground');
     }
 
+    /**
+     * @return <Chainable>  the response of the request
+     */
     saveQuiz() {
         cy.intercept(POST, '/api/quiz-exercises').as('createQuizExercise');
-        cy.get('#quiz-save').click();
+        cy.contains('Save').click();
         return cy.wait('@createQuizExercise');
     }
 }
