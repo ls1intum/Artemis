@@ -1,5 +1,4 @@
 import { artemis } from '../../support/ArtemisTesting';
-import { generateUUID } from '../../support/utils';
 import shortAnswerQuizTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerQuiz_template.json';
 import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 
@@ -12,29 +11,17 @@ const student = artemis.users.getStudentOne();
 const courseManagementRequest = artemis.requests.courseManagement;
 
 // Common primitives
-let uid: string;
-let courseName: string;
-let courseShortName: string;
-let quizExerciseName: string;
 let course: any;
 let quizExercise: any;
 
 describe('Quiz Exercise Assessment', () => {
     before('Set up course', () => {
-        uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
         cy.login(admin);
-        courseManagementRequest.createCourse(courseName, courseShortName).then((response) => {
+        courseManagementRequest.createCourse().then((response) => {
             course = response.body;
             courseManagementRequest.addStudentToCourse(course.id, student.username);
             courseManagementRequest.addTutorToCourse(course, tutor);
         });
-    });
-
-    beforeEach('New UID', () => {
-        uid = generateUUID();
-        quizExerciseName = 'Cypress Quiz ' + uid;
     });
 
     afterEach('Delete Quiz', () => {
@@ -48,7 +35,7 @@ describe('Quiz Exercise Assessment', () => {
 
     describe('MC Quiz assessment', () => {
         before('Creates a quiz and a submission', () => {
-           createQuiz();
+            createQuiz();
         });
 
         it('Assesses a mc quiz submission automatically', () => {
@@ -80,7 +67,7 @@ describe('Quiz Exercise Assessment', () => {
 });
 
 function createQuiz(quizQuestions: any = multipleChoiceQuizTemplate) {
-    courseManagementRequest.createQuizExercise({course}, [quizQuestions], undefined, undefined, 1).then((quizResponse) => {
+    courseManagementRequest.createQuizExercise({ course }, [quizQuestions], undefined, undefined, 1).then((quizResponse) => {
         quizExercise = quizResponse.body;
         courseManagementRequest.setQuizVisible(quizExercise.id);
         courseManagementRequest.startQuizNow(quizExercise.id);

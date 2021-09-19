@@ -228,14 +228,14 @@ export class CourseManagementRequests {
         quizQuestions: [any],
         title = 'Cypress quiz exercise' + generateUUID(),
         releaseDate = day(),
-        duration = 600
+        duration = 600,
     ) {
         const quizExercise: any = {
             ...quizTemplate,
             title,
             releaseDate: dayjsToString(releaseDate),
             quizQuestions,
-            duration
+            duration,
         };
         const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
         return cy.request({
@@ -267,44 +267,48 @@ export class CourseManagementRequests {
     createMultipleChoiceSubmission(quizExercise: any, tickOptions: number[]) {
         const multipleChoiceSubmission = {
             ...multipleChoiceSubmissionTemplate,
-            submittedAnswers: [{
-                ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
-                quizQuestion: quizExercise.quizQuestions[0],
-                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option])
-            }]
+            submittedAnswers: [
+                {
+                    ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
+                    quizQuestion: quizExercise.quizQuestions[0],
+                    selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
+                },
+            ],
         };
         return cy.request({
             url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
             method: POST,
-            body: multipleChoiceSubmission
+            body: multipleChoiceSubmission,
         });
     }
 
     createShortAnswerSubmission(quizExercise: any, textAnswers: string[]) {
         const shortAnswerSubmission = {
             ...shortAnswerSubmissionTemplate,
-            submittedAnswers: [{
-                ...shortAnswerSubmissionTemplate.submittedAnswers[0],
-                quizQuestion: quizExercise.quizQuestions[0],
-                submittedTexts: textAnswers.map((answer, index) => {
-                    return {
-                        text: answer,
-                        spot: quizExercise.quizQuestions[0].spots[index]
-                    };
-                })
-            }]
+            submittedAnswers: [
+                {
+                    ...shortAnswerSubmissionTemplate.submittedAnswers[0],
+                    quizQuestion: quizExercise.quizQuestions[0],
+                    submittedTexts: textAnswers.map((answer, index) => {
+                        return {
+                            text: answer,
+                            spot: quizExercise.quizQuestions[0].spots[index],
+                        };
+                    }),
+                },
+            ],
         };
         return cy.request({
             url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
             method: POST,
-            body: shortAnswerSubmission
+            body: shortAnswerSubmission,
         });
     }
 
     getExerciseParticipation(exerciseId: number) {
         return cy.request({
             url: EXERCISE_BASE + exerciseId + '/participation',
-            method: GET
+            method: GET,
         });
     }
 
