@@ -45,7 +45,7 @@ describe('Quiz Exercise Assessment', () => {
             cy.wait(5000);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
             cy.contains(quizExercise.title);
-            cy.contains('Score');
+            cy.contains('Score 50%');
         });
     });
 
@@ -57,16 +57,17 @@ describe('Quiz Exercise Assessment', () => {
         it('Assesses a sa quiz submission automatically', () => {
             cy.login(student);
             courseManagementRequest.startExerciseParticipation(course.id, quizExercise.id);
-            courseManagementRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert', 'cry', 'goodbye']);
+            courseManagementRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
             cy.wait(5000);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
             cy.contains(quizExercise.title);
-            cy.contains('Score');
+            cy.contains('Score 67%');
         });
     });
 });
 
 function createQuiz(quizQuestions: any = multipleChoiceQuizTemplate) {
+    cy.login(admin);
     courseManagementRequest.createQuizExercise({ course }, [quizQuestions], undefined, undefined, 1).then((quizResponse) => {
         quizExercise = quizResponse.body;
         courseManagementRequest.setQuizVisible(quizExercise.id);
