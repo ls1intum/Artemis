@@ -67,6 +67,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
+    Optional<ProgrammingExercise> findWithSubmissionPolicyById(Long exerciseId);
+
     /**
      * Get a programmingExercise with template and solution participation, each with the latest result and feedbacks.
      *
@@ -175,6 +178,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     ProgrammingExercise findOneByTemplateParticipationId(Long templateParticipationId);
 
     ProgrammingExercise findOneBySolutionParticipationId(Long solutionParticipationId);
+
+    ProgrammingExercise findOneBySubmissionPolicyId(Long submissionPolicyId);
 
     /**
      * Query which fetches all the programming exercises for which the user is instructor in the course and matching the search criteria.
