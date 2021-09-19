@@ -1,6 +1,7 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
 import shortAnswerQuizTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerQuiz_template.json';
+import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -61,9 +62,9 @@ describe('Quiz Exercise Assessment', () => {
         });
     });
 
-    describe.only('SA Quiz assessment', () => {
+    describe('SA Quiz assessment', () => {
         before('Creates a quiz and a submission', () => {
-            createQuiz([shortAnswerQuizTemplate]);
+            createQuiz(shortAnswerQuizTemplate);
         });
 
         it('Assesses a sa quiz submission automatically', () => {
@@ -78,8 +79,8 @@ describe('Quiz Exercise Assessment', () => {
     });
 });
 
-function createQuiz(quizQuestions?: any) {
-    courseManagementRequest.createQuizExercise({course}, [quizQuestions]).then((quizResponse) => {
+function createQuiz(quizQuestions: any = multipleChoiceQuizTemplate) {
+    courseManagementRequest.createQuizExercise({course}, [quizQuestions], undefined, undefined, 1).then((quizResponse) => {
         quizExercise = quizResponse.body;
         courseManagementRequest.setQuizVisible(quizExercise.id);
         courseManagementRequest.startQuizNow(quizExercise.id);

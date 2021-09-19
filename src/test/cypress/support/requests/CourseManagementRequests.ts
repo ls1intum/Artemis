@@ -223,12 +223,19 @@ export class CourseManagementRequests {
         });
     }
 
-    createQuizExercise(body: { course: any } | { exerciseGroup: any }, quizQuestions: [any], title = 'Cypress quiz exercise' + generateUUID(), releaseDate = day()) {
+    createQuizExercise(
+        body: { course: any } | { exerciseGroup: any },
+        quizQuestions: [any],
+        title = 'Cypress quiz exercise' + generateUUID(),
+        releaseDate = day(),
+        duration = 600
+    ) {
         const quizExercise: any = {
             ...quizTemplate,
             title,
             releaseDate: dayjsToString(releaseDate),
             quizQuestions,
+            duration
         };
         const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
         return cy.request({
