@@ -10,8 +10,8 @@ const courseManagementRequests = artemis.requests.courseManagement;
 
 // page objects
 const examStartEnd = artemis.pageobjects.examStartEnd;
-const modelingEditor = artemis.pageobjects.modelingEditor;
-const modelingAssessment = artemis.pageobjects.modelingExerciseAssessmentEditor;
+const modelingEditor = artemis.pageobjects.modelingExercise.editor;
+const modelingAssessment = artemis.pageobjects.modelingExercise.assessmentEditor;
 const editorPage = artemis.pageobjects.programmingExercise.editor;
 const assessmentDashboard = artemis.pageobjects.assessmentDashboard;
 const examNavigation = artemis.pageobjects.examNavigationBar;
