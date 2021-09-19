@@ -6,11 +6,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import de.tum.in.www1.artemis.config.KafkaProperties;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -25,9 +25,12 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.testcontainers.containers.KafkaContainer;
 
+import de.tum.in.www1.artemis.config.KafkaProperties;
+
 class UserManagementKafkaResourceIT {
 
     private static boolean started = false;
+
     private static KafkaContainer kafkaContainer;
 
     private MockMvc restMockMvc;
@@ -64,10 +67,8 @@ class UserManagementKafkaResourceIT {
 
     @Test
     void producesMessages() throws Exception {
-        restMockMvc
-            .perform(post("/api/user-management-kafka/publish/topic-produce?message=value-produce"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+        restMockMvc.perform(post("/api/user-management-kafka/publish/topic-produce?message=value-produce")).andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         Map<String, Object> consumerProps = new HashMap<>(getConsumerProps("group-produce"));
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
@@ -86,11 +87,8 @@ class UserManagementKafkaResourceIT {
 
         producer.send(new ProducerRecord<>("topic-consume", "value-consume"));
 
-        MvcResult mvcResult = restMockMvc
-            .perform(get("/api/user-management-kafka/consume?topic=topic-consume"))
-            .andExpect(status().isOk())
-            .andExpect(request().asyncStarted())
-            .andReturn();
+        MvcResult mvcResult = restMockMvc.perform(get("/api/user-management-kafka/consume?topic=topic-consume")).andExpect(status().isOk()).andExpect(request().asyncStarted())
+                .andReturn();
 
         for (int i = 0; i < 100; i++) {
             Thread.sleep(100);

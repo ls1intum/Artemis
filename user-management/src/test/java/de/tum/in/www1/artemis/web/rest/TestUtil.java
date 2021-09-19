@@ -2,20 +2,22 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
+
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.springframework.format.datetime.standard.DateTimeFormatterRegistrar;
 import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.format.support.FormattingConversionService;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * Utility class for testing REST controllers.
@@ -77,7 +79,8 @@ public final class TestUtil {
                     return false;
                 }
                 return true;
-            } catch (DateTimeParseException e) {
+            }
+            catch (DateTimeParseException e) {
                 mismatchDescription.appendText("was ").appendValue(item).appendText(", which could not be parsed as a ZonedDateTime");
                 return false;
             }
@@ -126,15 +129,20 @@ public final class TestUtil {
             }
             if (item instanceof BigDecimal) {
                 return (BigDecimal) item;
-            } else if (item instanceof Long) {
+            }
+            else if (item instanceof Long) {
                 return BigDecimal.valueOf((Long) item);
-            } else if (item instanceof Integer) {
+            }
+            else if (item instanceof Integer) {
                 return BigDecimal.valueOf((Integer) item);
-            } else if (item instanceof Double) {
+            }
+            else if (item instanceof Double) {
                 return BigDecimal.valueOf((Double) item);
-            } else if (item instanceof Float) {
+            }
+            else if (item instanceof Float) {
                 return BigDecimal.valueOf((Float) item);
-            } else {
+            }
+            else {
                 return BigDecimal.valueOf(item.doubleValue());
             }
         }
@@ -178,5 +186,6 @@ public final class TestUtil {
         return dfcs;
     }
 
-    private TestUtil() {}
+    private TestUtil() {
+    }
 }
