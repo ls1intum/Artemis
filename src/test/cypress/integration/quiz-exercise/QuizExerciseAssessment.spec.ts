@@ -1,7 +1,6 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
 import shortAnswerQuizTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerQuiz_template.json';
-import dayjs from 'dayjs';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -79,8 +78,8 @@ describe('Quiz Exercise Assessment', () => {
     });
 });
 
-function createQuiz(quizQuestions?: any, duration = 1) {
-    courseManagementRequest.createQuizExercise({course}, 'Quiz', dayjs().subtract(1, 'minute'), duration, quizQuestions).then((quizResponse) => {
+function createQuiz(quizQuestions?: any) {
+    courseManagementRequest.createQuizExercise({course}, [quizQuestions]).then((quizResponse) => {
         quizExercise = quizResponse.body;
         courseManagementRequest.setQuizVisible(quizExercise.id);
         courseManagementRequest.startQuizNow(quizExercise.id);
