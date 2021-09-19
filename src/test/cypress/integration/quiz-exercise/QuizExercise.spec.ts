@@ -1,6 +1,7 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
-import { POST } from '../../support/constants';
+import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
+import { DELETE } from '../../support/constants';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -11,7 +12,7 @@ const courseManagementRequest = artemis.requests.courseManagement;
 // PageObjects
 const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagement = artemis.pageobjects.courseManagement;
-const quizCreation = artemis.pageobjects.quizExerciseCreation;
+const quizCreation = artemis.pageobjects.quizExercise.creation;
 
 // Common primitives
 let uid: string;
@@ -35,7 +36,6 @@ describe('Quiz Exercise Management', () => {
     beforeEach('New UID', () => {
         uid = generateUUID();
         quizExerciseName = 'Cypress Quiz ' + uid;
-        cy.intercept(POST, '/api/quiz-exercises').as('createQuizExercise');
     });
 
     after('Delete Course', () => {
@@ -52,9 +52,8 @@ describe('Quiz Exercise Management', () => {
         it('Creates a Quiz with Multiple Choice', () => {
             beginQuizCreation();
             quizCreation.addMultipleChoiceQuestion('MC Quiz' + uid);
-            quizCreation.saveQuiz();
-            cy.wait('@createQuizExercise').then((quizResponse) => {
-                quizExercise = quizResponse?.response?.body;
+            quizCreation.saveQuiz().then((quizResponse) => {
+                quizExercise = quizResponse.response?.body;
                 cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
                 cy.contains('MC Quiz' + uid).should('be.visible');
             });
@@ -63,9 +62,8 @@ describe('Quiz Exercise Management', () => {
         it('Creates a Quiz with Short Answer', () => {
             beginQuizCreation();
             quizCreation.addShortAnswerQuestion('SA Quiz' + uid);
-            quizCreation.saveQuiz();
-            cy.wait('@createQuizExercise').then((quizResponse) => {
-                quizExercise = quizResponse?.response?.body;
+            quizCreation.saveQuiz().then((quizResponse) => {
+                quizExercise = quizResponse.response?.body;
                 cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizExercise.id + '/preview');
                 cy.contains('SA Quiz' + uid).should('be.visible');
             });
@@ -76,8 +74,8 @@ describe('Quiz Exercise Management', () => {
         let quizExercise: any;
 
         beforeEach('Create Quiz Exercise', () => {
-            courseManagementRequest.createQuizExercise({ course }, quizExerciseName).then((quizResponse) => {
-                quizExercise = quizResponse?.body;
+            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceTemplate]).then((quizResponse) => {
+                quizExercise = quizResponse.body;
             });
         });
 
@@ -87,8 +85,8 @@ describe('Quiz Exercise Management', () => {
             courseManagement.openExercisesOfCourse(courseName, courseShortName);
             cy.get('#delete-quiz-' + quizExercise.id).click();
             cy.get('.form-control').type(quizExercise.title);
-            cy.intercept('DELETE', '/api/quiz-exercises/*').as('deleteQuizQuery');
-            cy.get('.modal-footer').contains('Delete').click();
+            cy.intercept(DELETE, '/api/quiz-exercises/*').as('deleteQuizQuery');
+            cy.get('.modal-footer').find('.btn-danger').click();
             cy.wait('@deleteQuizQuery').then((deleteResponse) => {
                 expect(deleteResponse?.response?.statusCode).to.eq(200);
             });
@@ -100,6 +98,6 @@ function beginQuizCreation() {
     cy.login(admin, '/');
     navigationBar.openCourseManagement();
     courseManagement.openExercisesOfCourse(courseName, courseShortName);
-    cy.get('#create-quiz-button').should('be.visible').click();
+    cy.get('#create-quiz-button').click();
     quizCreation.setTitle(quizExerciseName);
 }

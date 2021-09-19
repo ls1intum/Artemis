@@ -1,4 +1,4 @@
-import { EXERCISE_BASE, POST } from '../constants';
+import { BASE_API, POST } from '../constants';
 
 export class MultipleChoiceQuiz {
     getQuizBody() {
@@ -7,13 +7,15 @@ export class MultipleChoiceQuiz {
 
     tickAnswerOption(optionNumber: number) {
         this.getQuizBody()
-            .get('#answer-option-' + optionNumber + ' > .selection > .ng-fa-icon > .svg-inline--fa')
+            .get('#answer-option-' + optionNumber)
+            .find('.svg-inline--fa')
+            .first()
             .click();
     }
 
     submit() {
-        cy.intercept(POST, EXERCISE_BASE + '*/submissions/live').as('createSubmission');
-        cy.get('.jhi-btn').contains('Submit').click();
-        return cy.wait('@createSubmission');
+        cy.intercept(POST, BASE_API + 'exercises/*/submissions/live').as('createQuizExercise');
+        cy.get('.jhi-btn').should('contain.text', 'Submit').click();
+        return cy.wait('@createQuizExercise');
     }
 }

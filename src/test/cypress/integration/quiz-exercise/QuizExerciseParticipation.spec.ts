@@ -1,5 +1,5 @@
 import { artemis } from '../../support/ArtemisTesting';
-import { generateUUID } from '../../support/utils';
+import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -11,22 +11,13 @@ const courseManagementRequest = artemis.requests.courseManagement;
 // Page objects
 const multipleChoiceQuiz = artemis.pageobjects.multipleChoiceQuiz;
 
-// Common primitives
-let uid: string;
-let courseName: string;
-let courseShortName: string;
-let quizExerciseName: string;
-
 describe('Quiz Exercise Management', () => {
     let course: any;
     let quizExercise: any;
 
     before('Set up course', () => {
-        uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
         cy.login(admin);
-        courseManagementRequest.createCourse(courseName, courseShortName).then((response) => {
+        courseManagementRequest.createCourse().then((response) => {
             course = response.body;
             courseManagementRequest.addStudentToCourse(course.id, student.username);
         });
@@ -44,10 +35,8 @@ describe('Quiz Exercise Management', () => {
 
     describe('Quiz exercise participation', () => {
         beforeEach('Create quiz exercise', () => {
-            uid = generateUUID();
-            quizExerciseName = 'Cypress Quiz ' + uid;
             cy.login(admin);
-            courseManagementRequest.createQuizExercise( { course }, quizExerciseName).then((quizResponse) => {
+            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((quizResponse) => {
                 quizExercise = quizResponse.body;
             });
         });
@@ -60,8 +49,8 @@ describe('Quiz Exercise Management', () => {
         it('Student can see a visible quiz', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
-            cy.contains(quizExercise.title).should('be.visible').click();
-            cy.get('.btn').contains('Open quiz').click();
+            cy.contains(quizExercise.title).should('be.visible');
+            cy.get('.course-exercise-row').first().find('.btn-primary').click();
             cy.get('.quiz-waiting-for-start-overlay > span').should('contain.text', 'This page will refresh automatically, when the quiz starts.');
         });
 
@@ -69,8 +58,8 @@ describe('Quiz Exercise Management', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             courseManagementRequest.startQuizNow(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
-            cy.contains(quizExercise.title).should('be.visible').click();
-            cy.get('.btn').contains('Start quiz').click();
+            cy.contains(quizExercise.title).should('be.visible');
+            cy.get('.course-exercise-row').first().find('.btn-primary').click();
             multipleChoiceQuiz.tickAnswerOption(0);
             multipleChoiceQuiz.tickAnswerOption(2);
             multipleChoiceQuiz.submit();

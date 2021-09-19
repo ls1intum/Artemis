@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
@@ -12,7 +12,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -21,16 +21,17 @@ import { Result } from 'app/entities/result.model';
 import { setLatestSubmissionResult } from 'app/entities/submission.model';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { notUndefined, onError } from 'app/shared/util/global.utils';
+import { notUndefined } from 'app/shared/util/global.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
 import { filter } from 'rxjs/operators';
+import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
 
 @Component({
     selector: 'jhi-example-text-submission',
     templateUrl: './example-text-submission.component.html',
     styleUrls: ['./example-text-submission.component.scss'],
 })
-export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context {
+export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context, FeedbackMarker {
     isNewSubmission: boolean;
     areNewAssessments = true;
     unsavedChanges = false;
@@ -259,24 +260,27 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
-        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId).subscribe(
-            () => this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success'),
-            (error: HttpErrorResponse) => {
-                const errorType = error.headers.get('x-artemisapp-error');
 
-                switch (errorType) {
-                    case 'error.tooLow':
-                        this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooLow');
-                        break;
-                    case 'error.tooHigh':
-                        this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
-                        break;
-                    default:
-                        onError(this.jhiAlertService, error);
-                        break;
-                }
-            },
-        );
+        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.jhiAlertService, this);
+        command.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId);
+    }
+
+    markAllFeedbackToCorrect() {
+        this.textBlockRefs
+            .map((ref) => ref.feedback)
+            .filter((feedback) => feedback != undefined)
+            .forEach((feedback) => {
+                feedback!.correctionStatus = 'CORRECT';
+            });
+    }
+
+    markWrongFeedback(correctionErrors: FeedbackCorrectionError[]) {
+        correctionErrors.forEach((correctionError) => {
+            const textBlockRef = this.textBlockRefs.find((ref) => ref.feedback?.reference === correctionError.reference);
+            if (textBlockRef != undefined && textBlockRef.feedback != undefined) {
+                textBlockRef.feedback.correctionStatus = correctionError.type;
+            }
+        });
     }
 
     private exampleSubmissionForNetwork() {

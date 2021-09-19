@@ -27,6 +27,7 @@ import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagram
 import { LectureService } from 'app/lecture/lecture.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -76,6 +77,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private apollonDiagramService: ApollonDiagramService,
         private lectureService: LectureService,
         private examService: ExamManagementService,
+        private organisationService: OrganizationManagementService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
@@ -161,7 +163,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         goal_management: 'artemisApp.learningGoal.manageLearningGoals.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
         apollon_diagrams: 'artemisApp.apollonDiagram.home.title',
-        posts: 'artemisApp.metis.overview.title',
+        discussion: 'artemisApp.metis.discussion.label',
         scores: 'entity.action.scores',
         assessment: 'artemisApp.assessment.assessment',
         export: 'artemisApp.quizExercise.export.export',
@@ -281,6 +283,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'exams':
                 this.routeExamId = Number(segment);
                 this.addResolvedTitleAsCrumb(this.examService.getTitle(this.routeExamId), currentPath, segment);
+                break;
+            case 'organization-management':
+                this.addResolvedTitleAsCrumb(this.organisationService.getTitle(Number(segment)), currentPath, segment);
                 break;
             case 'import':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
