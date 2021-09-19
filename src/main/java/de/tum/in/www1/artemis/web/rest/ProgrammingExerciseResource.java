@@ -1283,9 +1283,13 @@ public class ProgrammingExerciseResource {
 
     private void validateAndUpdateExistingAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise,
             List<AuxiliaryRepository> updatedAuxiliaryRepositories, ProgrammingExercise updatedExercise) {
+        // Get all repositories that are unchanged and are still present in the updated exercise
         List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>(
                 Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>()).stream()
-                        .filter(existingRepo -> updatedAuxiliaryRepositories.stream().noneMatch((updatedRepo -> existingRepo.getId().equals(updatedRepo.getId())))).toList());
+                        .filter(existingRepo -> updatedAuxiliaryRepositories.stream().noneMatch((updatedRepo -> existingRepo.getId().equals(updatedRepo.getId())))
+                                && updatedExercise.getAuxiliaryRepositories().stream().anyMatch(updatedRepo -> existingRepo.getId().equals(updatedRepo.getId())))
+                        .toList());
+
         for (AuxiliaryRepository repo : updatedAuxiliaryRepositories) {
             validateAuxiliaryRepository(repo, auxiliaryRepositories,
                     programmingExercise.getAuxiliaryRepositories().stream().noneMatch(existingRepo -> existingRepo.getId().equals(repo.getId())));
@@ -1293,7 +1297,6 @@ public class ProgrammingExerciseResource {
         }
         updatedExercise.setAuxiliaryRepositories(new ArrayList<>());
         auxiliaryRepositories.forEach(updatedRepo -> {
-            // auxiliaryRepositoryRepository.save(updatedRepo);
             updatedExercise.addAuxiliaryRepository(updatedRepo);
         });
     }
