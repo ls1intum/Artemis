@@ -292,20 +292,25 @@ export class CourseManagementRequests {
         });
     }
 
+    /**
+     * Creates a submission for a Quiz with only one short-answer quiz question
+     * @param quizExercise the response body of the quiz exercise
+     * @param textAnswers a list containing the answers to be filled into the gaps. In numerical order.
+     */
     createShortAnswerSubmission(quizExercise: any, textAnswers: string[]) {
         const submittedTexts = textAnswers.map((answer, index) => {
                         return {
                             text: answer,
                             spot: quizExercise.quizQuestions[0].spots[index],
                         };
-                    }),
+                    });
         const submittedAnswers = [
                 {
                     ...shortAnswerSubmissionTemplate.submittedAnswers[0],
                     quizQuestion: quizExercise.quizQuestions[0],
                     submittedTexts,
                 },
-            ]            
+            ];
         const shortAnswerSubmission = {
             ...shortAnswerSubmissionTemplate,
             submittedAnswers,
