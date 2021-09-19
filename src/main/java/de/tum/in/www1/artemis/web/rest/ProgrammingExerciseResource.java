@@ -1265,6 +1265,7 @@ public class ProgrammingExerciseResource {
     }
 
     private void handleAuxiliaryRepositoriesWhenUpdatingExercises(ProgrammingExercise programmingExercise, ProgrammingExercise updatedExercise) {
+        // Get all new (ID is still null) and changed (some string value is changed) auxiliary repositories
         List<AuxiliaryRepository> newOrEditedAuxiliaryRepositories = new ArrayList<>(updatedExercise.getAuxiliaryRepositories().stream().filter(repo -> {
             if (repo.getId() == null) {
                 return true;
@@ -1296,9 +1297,7 @@ public class ProgrammingExerciseResource {
             auxiliaryRepositories.add(repo);
         }
         updatedExercise.setAuxiliaryRepositories(new ArrayList<>());
-        auxiliaryRepositories.forEach(updatedRepo -> {
-            updatedExercise.addAuxiliaryRepository(updatedRepo);
-        });
+        auxiliaryRepositories.forEach(updatedExercise::addAuxiliaryRepository);
     }
 
     private void validateAuxiliaryRepositoryId(AuxiliaryRepository auxiliaryRepository) {
