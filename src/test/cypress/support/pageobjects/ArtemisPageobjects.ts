@@ -42,8 +42,6 @@ export class ArtemisPageobjects {
         scaConfiguration: new CodeAnalysisGradingPage(),
         scaFeedback: new ScaFeedbackModal(),
     };
-    quizExerciseCreation = new QuizExerciseCreationPage();
-    multipleChoiceQuiz = new MultipleChoiceQuiz();
     textExercise = {
         creation: new TextExerciseCreationPage(),
         exampleSubmissions: new TextExerciseExampleSubmissionsPage(),
@@ -58,7 +56,7 @@ export class ArtemisPageobjects {
     quizExercise = {
         creation: new QuizExerciseCreationPage(),
         multipleChoice: new MultipleChoiceQuiz(),
-        shortAnswer: new ShortAnswerQuiz();
-        dragAndDrop: new DragAndDropQuiz();
+        shortAnswer: new ShortAnswerQuiz(),
+        dragAndDrop: new DragAndDropQuiz(),
     };
 }
