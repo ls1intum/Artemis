@@ -36,11 +36,8 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
     toggleAssessmentType() {
         if (this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
-            if (this.isExamMode || this.exercise.course?.complaintsEnabled) {
-                this.exercise.allowComplaintsForAutomaticAssessments = true;
-            } else {
-                this.exercise.allowComplaintsForAutomaticAssessments = false;
-            }
+            // A manual assessment only after a complaint is possible when it's an exam exercise or when the course allows
+            this.exercise.allowComplaintsForAutomaticAssessments = !!(this.isExamMode || this.exercise.course?.complaintsEnabled);
         } else if (this.exercise.allowComplaintsForAutomaticAssessments) {
             this.exercise.allowComplaintsForAutomaticAssessments = false;
         } else {
