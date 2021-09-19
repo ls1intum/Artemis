@@ -223,6 +223,15 @@ export class CourseManagementRequests {
         });
     }
 
+    /**
+     * Creates a quiz exercise
+     * @param body an object containing either the course or exercise group the exercise will be added to
+     * @param quizQuestions list of quizQuestion objects that make up the Quiz. Can be multiple choice, short answer or drag and drop quizzes.
+     * @param title the title for the Quiz
+     * @param releaseDate time of release for the quiz
+     * @param duration the duration in seconds that the student gets to complete the quiz
+     * @returns <Chainable> request response
+     */
     createQuizExercise(
         body: { course: any } | { exerciseGroup: any },
         quizQuestions: [any],
