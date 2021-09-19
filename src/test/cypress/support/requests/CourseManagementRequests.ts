@@ -274,15 +274,16 @@ export class CourseManagementRequests {
      * @param tickOptions a list describing which of the 0..n boxes are to be ticked in the submission
      */
     createMultipleChoiceSubmission(quizExercise: any, tickOptions: number[]) {
-        const multipleChoiceSubmission = {
-            ...multipleChoiceSubmissionTemplate,
-            submittedAnswers: [
+        const submittedAnswers = [
                 {
                     ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
                     quizQuestion: quizExercise.quizQuestions[0],
                     selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
                 },
-            ],
+            ];
+        const multipleChoiceSubmission = {
+            ...multipleChoiceSubmissionTemplate,
+            submittedAnswers,
         };
         return cy.request({
             url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
@@ -292,20 +293,22 @@ export class CourseManagementRequests {
     }
 
     createShortAnswerSubmission(quizExercise: any, textAnswers: string[]) {
-        const shortAnswerSubmission = {
-            ...shortAnswerSubmissionTemplate,
-            submittedAnswers: [
-                {
-                    ...shortAnswerSubmissionTemplate.submittedAnswers[0],
-                    quizQuestion: quizExercise.quizQuestions[0],
-                    submittedTexts: textAnswers.map((answer, index) => {
+        const submittedTexts = textAnswers.map((answer, index) => {
                         return {
                             text: answer,
                             spot: quizExercise.quizQuestions[0].spots[index],
                         };
                     }),
+        const submittedAnswers = [
+                {
+                    ...shortAnswerSubmissionTemplate.submittedAnswers[0],
+                    quizQuestion: quizExercise.quizQuestions[0],
+                    submittedTexts,
                 },
-            ],
+            ]            
+        const shortAnswerSubmission = {
+            ...shortAnswerSubmissionTemplate,
+            submittedAnswers,
         };
         return cy.request({
             url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
