@@ -23,6 +23,11 @@ public class KafkaProperties {
         this.bootStrapServers = bootStrapServers;
     }
 
+    /**
+     * Get properties for Kafka cosnumer.
+     *
+     * @return map containing consumer's properties
+     */
     public Map<String, Object> getConsumerProps() {
         Map<String, Object> properties = new HashMap<>(this.consumer);
         if (!properties.containsKey("bootstrap.servers")) {
@@ -35,6 +40,11 @@ public class KafkaProperties {
         this.consumer = consumer;
     }
 
+    /**
+     * Get properties for Kafka producer.
+     *
+     * @return map containing producer's properties
+     */
     public Map<String, Object> getProducerProps() {
         Map<String, Object> properties = new HashMap<>(this.producer);
         if (!properties.containsKey("bootstrap.servers")) {
