@@ -9,7 +9,6 @@ import org.springframework.data.util.Pair;
 
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.web.rest.TeamResource;
 
 /**
  * Exception that will be thrown if the user tries to create a team that contains students who are already assigned to a different team for the exercise. The error response will
@@ -24,7 +23,7 @@ public class StudentsAlreadyAssignedException extends BadRequestAlertException {
     private static final String ERROR_KEY = "studentsAlreadyAssignedToTeams";
 
     public StudentsAlreadyAssignedException(List<Pair<User, Team>> conflicts) {
-        super(ErrorConstants.STUDENT_ALREADY_ASSIGNED_TYPE, "Student(s) have already been assigned to other teams.", TeamResource.ENTITY_NAME, ERROR_KEY, getParameters(conflicts));
+        super(ErrorConstants.STUDENT_ALREADY_ASSIGNED_TYPE, "Student(s) have already been assigned to other teams.", "team", ERROR_KEY, getParameters(conflicts));
     }
 
     private static Map<String, Object> getParameters(List<Pair<User, Team>> conflicts) {
