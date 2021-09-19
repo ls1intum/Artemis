@@ -1,25 +1,28 @@
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType, FeedbackCorrectionErrorType } from 'app/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
-import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
+import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockProvider } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
-import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
+import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { ChangeDetectorRef } from '@angular/core';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { JhiTranslateDirective } from 'ng-jhipster';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgModel } from '@angular/forms';
 
 describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;
@@ -28,10 +31,21 @@ describe('TextblockFeedbackEditorComponent', () => {
 
     const textBlock = { id: 'f6773c4b3c2d057fd3ac11f02df31c0a3e75f800' } as TextBlock;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, TranslateModule.forRoot(), ArtemisConfirmIconModule, ArtemisGradingInstructionLinkIconModule],
-            declarations: [TextblockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), TranslateTestingModule],
+            declarations: [
+                TextblockFeedbackEditorComponent,
+                AssessmentCorrectionRoundBadgeComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(ConfirmIconComponent),
+                MockComponent(FaIconComponent),
+                MockComponent(FaLayersComponent),
+                MockComponent(GradingInstructionLinkIconComponent),
+                MockDirective(JhiTranslateDirective),
+                MockDirective(NgbTooltip),
+                MockDirective(NgModel),
+            ],
             providers: [
                 MockProvider(ChangeDetectorRef),
                 { provide: NgbModal, useClass: MockNgbModalService },
@@ -42,8 +56,8 @@ describe('TextblockFeedbackEditorComponent', () => {
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {
-                    declarations: [MockComponent(FaIconComponent)],
-                    exports: [MockComponent(FaIconComponent)],
+                    declarations: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
+                    exports: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
                 },
             })
             .compileComponents();
@@ -238,5 +252,28 @@ describe('TextblockFeedbackEditorComponent', () => {
         component.mouseEnteredWarningLabel();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
+    });
+
+    it('should set correctionStatus of the feedback to undefined on score click', () => {
+        // given
+        component.feedback.correctionStatus = FeedbackCorrectionErrorType.UNNECESSARY_FEEDBACK;
+
+        // when
+        component.onScoreClick(new MouseEvent(''));
+
+        // then
+        expect(component.feedback.correctionStatus).toBeUndefined();
+    });
+
+    it('should set correctionStatus of the feedback to undefined on connection of feedback with the grading instruction', () => {
+        // given
+        component.feedback.correctionStatus = FeedbackCorrectionErrorType.MISSING_GRADING_INSTRUCTION;
+        spyOn(component.structuredGradingCriterionService, 'updateFeedbackWithStructuredGradingInstructionEvent');
+
+        // when
+        component.connectFeedbackWithInstruction(new Event(''));
+
+        // then
+        expect(component.feedback.correctionStatus).toBeUndefined();
     });
 });

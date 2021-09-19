@@ -1,5 +1,4 @@
 import { HttpResponse } from '@angular/common/http';
-import { Directive, Input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -30,15 +29,10 @@ import { ArtemisTestModule } from '../../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep } from 'app/entities/grade-step.model';
+import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
-
-// tslint:disable-next-line:directive-selector
-@Directive({ selector: '[translateValues]' })
-export class MockTranslateValuesDirective {
-    @Input('translateValues') data: any;
-}
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
