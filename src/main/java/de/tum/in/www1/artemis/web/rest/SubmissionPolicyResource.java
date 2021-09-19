@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.SubmissionPolicyRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
@@ -30,12 +31,15 @@ public class SubmissionPolicyResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final SubmissionPolicyRepository submissionPolicyRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final SubmissionPolicyService submissionPolicyService;
 
-    public SubmissionPolicyResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authorizationCheckService, SubmissionPolicyService submissionPolicyService) {
+    public SubmissionPolicyResource(ProgrammingExerciseRepository programmingExerciseRepository, SubmissionPolicyRepository submissionPolicyRepository, AuthorizationCheckService authorizationCheckService, SubmissionPolicyService submissionPolicyService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.submissionPolicyRepository = submissionPolicyRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.submissionPolicyService = submissionPolicyService;
     }
@@ -60,7 +64,7 @@ public class SubmissionPolicyResource {
         log.debug("REST request to add submission policy to programming exercise {}", exerciseId);
 
         HttpHeaders responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, submissionPolicy.getId() + "");
-        SubmissionPolicy addedSubmissionPolicy = null;
+        SubmissionPolicy addedSubmissionPolicy;
 
         var optionalProgrammingExercise = programmingExerciseRepository.findById(exerciseId);
         if (optionalProgrammingExercise.isEmpty()) {
@@ -91,9 +95,9 @@ public class SubmissionPolicyResource {
     }
 
     @DeleteMapping(Endpoints.PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
-    @PreAuthorize("hasRole('EDITOR')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<SubmissionPolicy> removeSubmissionPolicyFromProgrammingExercise(@PathVariable long exerciseId) {
+    public ResponseEntity<Void> removeSubmissionPolicyFromProgrammingExercise(@PathVariable long exerciseId) {
         log.debug("REST request to remove submission policy from programming exercise {}", exerciseId);
         HttpHeaders responseHeaders;
         var optionalProgrammingExercise = programmingExerciseRepository.findById(exerciseId);
@@ -104,7 +108,7 @@ public class SubmissionPolicyResource {
         }
 
         ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         SubmissionPolicy submissionPolicy = programmingExercise.getSubmissionPolicy();
         if (submissionPolicy == null) {
@@ -118,6 +122,94 @@ public class SubmissionPolicyResource {
         return ResponseEntity.ok().headers(responseHeaders).build();
     }
 
+    @PutMapping(Endpoints.ENABLE_SUBMISSION_POLICY)
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<SubmissionPolicy> enableSubmissionPolicy(@PathVariable long submissionPolicyId) {
+        log.debug("REST request to enable the submission policy {}", submissionPolicyId);
+        HttpHeaders responseHeaders;
+
+        SubmissionPolicy submissionPolicy = submissionPolicyRepository.findByIdWithProgrammingExercise(submissionPolicyId);
+        ProgrammingExercise exercise = submissionPolicy.getProgrammingExercise();
+        if (exercise == null) {
+            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingExerciseNotFound",
+                "The submission policy could not be enabled, because it does not belong to a programming exercise");
+            return ResponseEntity.notFound().headers(responseHeaders).build();
+        }
+
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+        if (submissionPolicy.isActive()) {
+            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "submissionPolicyAlreadyEnabled",
+                "The submission policy could not be enabled, because it is already active.");
+            return ResponseEntity.badRequest().headers(responseHeaders).build();
+        }
+
+        submissionPolicyService.enableSubmissionPolicy(submissionPolicy);
+        responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, submissionPolicyId + "");
+        return ResponseEntity.ok().headers(responseHeaders).build();
+    }
+
+    @PutMapping(Endpoints.DISABLE_SUBMISSION_POLICY)
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<SubmissionPolicy> disableSubmissionPolicy(@PathVariable long submissionPolicyId) {
+        log.debug("REST request to disable the submission policy {}", submissionPolicyId);
+        HttpHeaders responseHeaders;
+
+        SubmissionPolicy submissionPolicy = submissionPolicyRepository.findByIdWithProgrammingExercise(submissionPolicyId);
+        ProgrammingExercise exercise = submissionPolicy.getProgrammingExercise();
+        if (exercise == null) {
+            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingExerciseNotFound",
+                "The submission policy could not be disabled, because it does not belong to a programming exercise");
+            return ResponseEntity.notFound().headers(responseHeaders).build();
+        }
+
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+        if (submissionPolicy.isActive()) {
+            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "submissionPolicyAlreadyDisabled",
+                "The submission policy could not be disabled, because it is already inactive.");
+            return ResponseEntity.badRequest().headers(responseHeaders).build();
+        }
+
+        submissionPolicyService.disableSubmissionPolicy(submissionPolicy);
+        responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, submissionPolicyId + "");
+        return ResponseEntity.ok().headers(responseHeaders).build();
+    }
+
+    @PatchMapping(Endpoints.UPDATE_SUBMISSION_POLICY)
+    @PreAuthorize("hasRole('EDITOR')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<SubmissionPolicy> updateSubmissionPolicy(@PathVariable long submissionPolicyId, @RequestBody SubmissionPolicy newSubmissionPolicy) {
+        log.debug("REST request to update the submission policy {}", submissionPolicyId);
+        HttpHeaders responseHeaders;
+
+        SubmissionPolicy submissionPolicy = submissionPolicyRepository.findByIdWithProgrammingExercise(submissionPolicyId);
+        ProgrammingExercise exercise = submissionPolicy.getProgrammingExercise();
+        if (exercise == null) {
+            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingExerciseNotFound",
+                "The submission policy could not be updated, because it does not belong to a programming exercise");
+            return ResponseEntity.notFound().headers(responseHeaders).build();
+        }
+
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
+        if (!submissionPolicy.getClass().getTypeName().equals(newSubmissionPolicy.getClass().getTypeName())) {
+            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "updatedSubmissionPolicyIncorrectType",
+                "The submission policy could not be updated, because the new type is different from the old type.");
+            return ResponseEntity.badRequest().headers(responseHeaders).build();
+        }
+
+        submissionPolicyService.validateSubmissionPolicy(newSubmissionPolicy);
+
+        submissionPolicyService.updateSubmissionPolicy(exercise, newSubmissionPolicy);
+
+        responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, submissionPolicyId + "");
+        return ResponseEntity.ok().headers(responseHeaders).build();
+    }
+
+
     public static final class Endpoints {
 
         public static final String ROOT = "/api";
@@ -125,6 +217,12 @@ public class SubmissionPolicyResource {
         public static final String PROGRAMMING_EXERCISE_SUBMISSION_POLICY = ROOT + "/programming-exercises/{exerciseId}/submission-policy";
 
         public static final String SUBMISSION_POLICY =  ROOT + "/submission-policies/{submissionPolicyId}";
+
+        public static final String ENABLE_SUBMISSION_POLICY =  SUBMISSION_POLICY + "/enable";
+
+        public static final String DISABLE_SUBMISSION_POLICY =  SUBMISSION_POLICY + "/disable";
+
+        public static final String UPDATE_SUBMISSION_POLICY =  SUBMISSION_POLICY + "/update";
 
     }
 }

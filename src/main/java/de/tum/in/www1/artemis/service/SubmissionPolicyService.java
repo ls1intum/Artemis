@@ -44,7 +44,9 @@ public class SubmissionPolicyService {
         programmingExercise.setSubmissionPolicy(submissionPolicy);
         submissionPolicy.setProgrammingExercise(programmingExercise);
         programmingExerciseRepository.save(programmingExercise);
-        return submissionPolicyRepository.save(submissionPolicy);
+        SubmissionPolicy addedSubmissionPolicy = submissionPolicyRepository.save(submissionPolicy);
+        enableSubmissionPolicy(addedSubmissionPolicy);
+        return addedSubmissionPolicy;
     }
 
     public void validateSubmissionPolicy(SubmissionPolicy submissionPolicy) {
@@ -79,19 +81,21 @@ public class SubmissionPolicyService {
     }
 
     public void removeSubmissionPolicyFromProgrammingExercise(ProgrammingExercise programmingExercise) {
+        disableSubmissionPolicy(programmingExercise.getSubmissionPolicy());
         programmingExercise.setSubmissionPolicy(null);
         programmingExerciseRepository.save(programmingExercise);
     }
 
-    public void enableSubmissionPolicy(SubmissionPolicy policy, ProgrammingExercise programmingExercise) {
+    public void enableSubmissionPolicy(SubmissionPolicy policy) {
         if (policy instanceof LockRepositoryPolicy lockRepositoryPolicy) {
-            enableLockRepositoryPolicy(lockRepositoryPolicy, programmingExercise);
+            enableLockRepositoryPolicy(lockRepositoryPolicy);
         } else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
-            enableSubmissionPenaltyPolicy(submissionPenaltyPolicy, programmingExercise);
+            enableSubmissionPenaltyPolicy(submissionPenaltyPolicy);
         }
     }
 
-    private void enableLockRepositoryPolicy(LockRepositoryPolicy policy, ProgrammingExercise exercise) {
+    private void enableLockRepositoryPolicy(LockRepositoryPolicy policy) {
+        ProgrammingExercise exercise = policy.getProgrammingExercise();
         for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
             if (studentParticipation.getResults().size() >= policy.getSubmissionLimit()) {
                 programmingExerciseParticipationService.lockStudentRepository(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
@@ -101,19 +105,20 @@ public class SubmissionPolicyService {
         submissionPolicyRepository.save(policy);
     }
 
-    private void enableSubmissionPenaltyPolicy(SubmissionPenaltyPolicy policy, ProgrammingExercise ignored) {
+    private void enableSubmissionPenaltyPolicy(SubmissionPenaltyPolicy policy) {
         toggleSubmissionPolicy(policy, true);
     }
 
-    public void disableSubmissionPolicy(SubmissionPolicy policy, ProgrammingExercise exercise) {
+    public void disableSubmissionPolicy(SubmissionPolicy policy) {
         if (policy instanceof LockRepositoryPolicy lockRepositoryPolicy) {
-            disableLockRepositoryPolicy(lockRepositoryPolicy, exercise);
+            disableLockRepositoryPolicy(lockRepositoryPolicy);
         } else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
-            disableSubmissionPenaltyPolicy(submissionPenaltyPolicy, exercise);
+            disableSubmissionPenaltyPolicy(submissionPenaltyPolicy);
         }
     }
 
-    private void disableLockRepositoryPolicy(LockRepositoryPolicy policy, ProgrammingExercise exercise) {
+    private void disableLockRepositoryPolicy(LockRepositoryPolicy policy) {
+        ProgrammingExercise exercise = policy.getProgrammingExercise();
         for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
             if (studentParticipation.getResults().size() >= policy.getSubmissionLimit()) {
                 programmingExerciseParticipationService.unlockStudentRepository(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
@@ -122,8 +127,41 @@ public class SubmissionPolicyService {
         toggleSubmissionPolicy(policy, false);
     }
 
-    private void disableSubmissionPenaltyPolicy(SubmissionPenaltyPolicy policy, ProgrammingExercise ignored) {
+    private void disableSubmissionPenaltyPolicy(SubmissionPenaltyPolicy policy) {
         toggleSubmissionPolicy(policy, false);
+    }
+
+    public void updateSubmissionPolicy(ProgrammingExercise exercise, SubmissionPolicy newPolicy) {
+        SubmissionPolicy originalPolicy = exercise.getSubmissionPolicy();
+        if (originalPolicy instanceof LockRepositoryPolicy) {
+            updateLockRepositoryPolicy(originalPolicy, newPolicy);
+        } else if (originalPolicy instanceof SubmissionPenaltyPolicy) {
+            updateSubmissionPenaltyPolicy((SubmissionPenaltyPolicy) originalPolicy, (SubmissionPenaltyPolicy) newPolicy);
+        }
+        submissionPolicyRepository.save(originalPolicy);
+    }
+
+    private void updateLockRepositoryPolicy(SubmissionPolicy originalPolicy, SubmissionPolicy newPolicy) {
+        ProgrammingExercise exercise = originalPolicy.getProgrammingExercise();
+        if (originalPolicy.getSubmissionLimit() < newPolicy.getSubmissionLimit()) {
+            for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
+                if (studentParticipation.getResults().size() >= originalPolicy.getSubmissionLimit()) {
+                    programmingExerciseParticipationService.unlockStudentRepository(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
+                }
+            }
+        } else if (originalPolicy.getSubmissionLimit() > newPolicy.getSubmissionLimit()) {
+            for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
+                if (studentParticipation.getResults().size() >= newPolicy.getSubmissionLimit()) {
+                    programmingExerciseParticipationService.lockStudentRepository(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
+                }
+            }
+        }
+        originalPolicy.setSubmissionLimit(newPolicy.getSubmissionLimit());
+    }
+
+    private void updateSubmissionPenaltyPolicy(SubmissionPenaltyPolicy originalPolicy, SubmissionPenaltyPolicy newPolicy) {
+        originalPolicy.setSubmissionLimit(newPolicy.getSubmissionLimit());
+        originalPolicy.setExceedingPenalty(newPolicy.getExceedingPenalty());
     }
 
     /**
@@ -142,23 +180,6 @@ public class SubmissionPolicyService {
             }
         }
         return 100;
-    }
-
-    public void handleLockRepositoryPolicyChange(SubmissionPolicy originalPolicy, SubmissionPolicy newPolicy) {
-        ProgrammingExercise exercise = originalPolicy.getProgrammingExercise();
-        if (originalPolicy.getSubmissionLimit() < newPolicy.getSubmissionLimit()) {
-            for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
-                if (studentParticipation.getResults().size() >= originalPolicy.getSubmissionLimit()) {
-                    programmingExerciseParticipationService.unlockStudentRepository(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
-                }
-            }
-        } else if (originalPolicy.getSubmissionLimit() > newPolicy.getSubmissionLimit()) {
-            for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
-                if (studentParticipation.getResults().size() >= newPolicy.getSubmissionLimit()) {
-                    programmingExerciseParticipationService.lockStudentRepository(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
-                }
-            }
-        }
     }
 
     public void handleLockRepositoryPolicy(Result result, LockRepositoryPolicy policy) {
