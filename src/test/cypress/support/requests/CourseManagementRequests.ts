@@ -275,12 +275,12 @@ export class CourseManagementRequests {
      */
     createMultipleChoiceSubmission(quizExercise: any, tickOptions: number[]) {
         const submittedAnswers = [
-                {
-                    ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
-                    quizQuestion: quizExercise.quizQuestions[0],
-                    selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
-                },
-            ];
+            {
+                ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
+                quizQuestion: quizExercise.quizQuestions[0],
+                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
+            },
+        ];
         const multipleChoiceSubmission = {
             ...multipleChoiceSubmissionTemplate,
             submittedAnswers,
@@ -299,18 +299,18 @@ export class CourseManagementRequests {
      */
     createShortAnswerSubmission(quizExercise: any, textAnswers: string[]) {
         const submittedTexts = textAnswers.map((answer, index) => {
-                        return {
-                            text: answer,
-                            spot: quizExercise.quizQuestions[0].spots[index],
-                        };
-                    });
+            return {
+                text: answer,
+                spot: quizExercise.quizQuestions[0].spots[index],
+            };
+        });
         const submittedAnswers = [
-                {
-                    ...shortAnswerSubmissionTemplate.submittedAnswers[0],
-                    quizQuestion: quizExercise.quizQuestions[0],
-                    submittedTexts,
-                },
-            ];
+            {
+                ...shortAnswerSubmissionTemplate.submittedAnswers[0],
+                quizQuestion: quizExercise.quizQuestions[0],
+                submittedTexts,
+            },
+        ];
         const shortAnswerSubmission = {
             ...shortAnswerSubmissionTemplate,
             submittedAnswers,
