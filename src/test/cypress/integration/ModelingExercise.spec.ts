@@ -135,10 +135,10 @@ describe('Modeling Exercise Spec', () => {
         it('Student can start and submit their model', () => {
             cy.intercept(BASE_API + 'courses/*/exercises/*/participations').as('createModelingParticipation');
             cy.login(student, `/courses/${testCourse.id}`);
-            cy.get('.col-lg-8').contains(modelingExercise.title).click();
+            cy.get('.col-lg-8').contains(modelingExercise.title);
             cy.get('.btn-sm').should('contain.text', 'Start exercise').click();
             cy.wait('@createModelingParticipation');
-            cy.get('.btn').should('contain.text', 'Open modelling editor').click();
+            cy.get('.course-exercise-row').find('.btn-primary').click();
             modelingEditor.addComponentToModel(1);
             modelingEditor.addComponentToModel(2);
             modelingEditor.addComponentToModel(3);

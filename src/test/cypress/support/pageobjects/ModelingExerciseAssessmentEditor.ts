@@ -2,6 +2,7 @@ import { MODELING_SPACE } from './ModelingEditor';
 
 // TODO: find or create better selectors for this
 const FEEDBACK_CONTAINER = '.sc-lcuiOb';
+
 /**
  * A class which encapsulates UI selectors and actions for the Modeling Exercise Assessment editor
  */
