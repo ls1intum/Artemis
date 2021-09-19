@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.net.MalformedURLException;
+import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -176,5 +177,9 @@ public class AuxiliaryRepository extends DomainObject {
      * Used in Bamboo Service to map the name of an auxiliary repository to its repository slug.
      */
     public record AuxRepoNameWithSlug(String name, String repositorySlug) {
+    }
+
+    public boolean containsSameStringValues(AuxiliaryRepository other) {
+        return Objects.equals(name, other.name) && Objects.equals(checkoutDirectory, other.checkoutDirectory) && Objects.equals(description, other.description);
     }
 }

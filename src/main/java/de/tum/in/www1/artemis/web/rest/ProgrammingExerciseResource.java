@@ -608,8 +608,15 @@ public class ProgrammingExerciseResource {
         }
 
         List<AuxiliaryRepository> newAuxiliaryRepositories = updatedProgrammingExercise.getAuxiliaryRepositories().stream().filter(repo -> repo.getId() == null).toList();
-
         validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExerciseBeforeUpdate, newAuxiliaryRepositories, updatedProgrammingExercise);
+
+        List<AuxiliaryRepository> editedAuxiliaryRepositories = updatedProgrammingExercise.getAuxiliaryRepositories().stream().filter(repo -> repo.getId() != null)
+                .filter(editedRepo -> {
+                    AuxiliaryRepository auxiliaryRepositoryBeforeUpdate = auxiliaryRepositoryRepository.findById(editedRepo.getId())
+                            .orElseThrow(() -> new IllegalStateException("Edited an existing repository that is not in the data base!"));
+                    return !editedRepo.containsSameStringValues(auxiliaryRepositoryBeforeUpdate);
+                }).toList();
+        validateAndUpdateExistingAuxiliaryRepositoriesOfProgrammingExercise(programmingExerciseBeforeUpdate, editedAuxiliaryRepositories, updatedProgrammingExercise);
 
         if (updatedProgrammingExercise.getBonusPoints() == null) {
             // make sure the default value is set properly
@@ -1257,9 +1264,20 @@ public class ProgrammingExerciseResource {
 
     private void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> newAuxiliaryRepositories,
             ProgrammingExercise updatedExercise) {
-        final List<AuxiliaryRepository> auxiliaryRepositories = Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>())
-                .stream().filter(repo -> repo.getId() != null).collect(Collectors.toList());
+        List<AuxiliaryRepository> auxiliaryRepositories = Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>());
         for (AuxiliaryRepository repo : newAuxiliaryRepositories) {
+            validateAuxiliaryRepository(repo, auxiliaryRepositories);
+            auxiliaryRepositories.add(repo);
+        }
+        updatedExercise.setAuxiliaryRepositories(new ArrayList<>());
+        auxiliaryRepositories.forEach(updatedExercise::addAuxiliaryRepository);
+    }
+
+    private void validateAndUpdateExistingAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise,
+            List<AuxiliaryRepository> updatedAuxiliaryRepositories, ProgrammingExercise updatedExercise) {
+        List<AuxiliaryRepository> auxiliaryRepositories = Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>()).stream()
+                .filter(existingRepo -> !updatedAuxiliaryRepositories.stream().anyMatch((updatedRepo -> updatedRepo.getId().equals(existingRepo.getId())))).toList();
+        for (AuxiliaryRepository repo : updatedAuxiliaryRepositories) {
             validateAuxiliaryRepository(repo, auxiliaryRepositories);
             auxiliaryRepositories.add(repo);
         }
@@ -1339,8 +1357,7 @@ public class ProgrammingExerciseResource {
 
     private void validateAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository, List<AuxiliaryRepository> otherRepositories) {
 
-        // Id of the auxiliary repository must not be set, because the id is set
-        // by the database.
+        // Id of the auxiliary repository must not be set, because the id is set by the database.
         validateAuxiliaryRepositoryId(auxiliaryRepository);
 
         // We want to force the user to set a name of the auxiliary repository, otherwise we

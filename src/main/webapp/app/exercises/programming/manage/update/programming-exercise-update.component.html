@@ -100,7 +100,6 @@
                 <ngx-datatable-column name="RemoveButton" prop="removeButton">
                     <ng-template ngx-datatable-cell-template let-row="row">
                         <jhi-remove-auxiliary-repository-button
-                            *ngIf="!row.id"
                             placement="right"
                             [programmingExercise]="programmingExercise"
                             [row]="row"
