@@ -19,11 +19,6 @@ const textAssessment = artemis.pageobjects.assessment.text;
 const exerciseResult = artemis.pageobjects.exerciseResult;
 const textFeedback = artemis.pageobjects.textExercise.feedback;
 
-// Common primitives
-const uid = generateUUID();
-const courseName = 'Cypress course' + uid;
-const courseShortName = 'cypress' + uid;
-
 // This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
 Cypress.on('uncaught:exception', () => {
     return false;
@@ -100,7 +95,7 @@ describe('Text exercise assessment', () => {
 
     function createCourseWithTextExercise() {
         cy.login(admin);
-        return courseManagement.createCourse(courseName, courseShortName).then((response) => {
+        return courseManagement.createCourse(course.title, course.shortName).then((response) => {
             course = response.body;
             courseManagement.addStudentToCourse(course.id, student.username);
             courseManagement.addTutorToCourse(course, tutor);
