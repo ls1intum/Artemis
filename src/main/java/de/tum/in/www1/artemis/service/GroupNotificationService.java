@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -20,6 +19,7 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.auxiliary.ExamNotificationTargetWithoutProblemStatement;
+import de.tum.in.www1.artemis.domain.notification.auxiliary.ExerciseStartedNotificationTimerTask;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -92,30 +92,20 @@ public class GroupNotificationService {
      *
      * @param exercise that has been created
      */
-    public void notifyStudentAndTutorGroupAboutExerciseCreated(Exercise exercise) {
+    public void prepareNotificationForStudentAndTutorGroupAboutStartedExercise(Exercise exercise) {
         Date releaseDate = Date.from(exercise.getReleaseDate().toInstant());
-        new Timer().schedule(new ExerciseStartedNotificationTimerTask(exercise, userRepository.getUser()), releaseDate);
+        new Timer().schedule(new ExerciseStartedNotificationTimerTask(exercise, userRepository.getUser(), this), releaseDate);
     }
 
     /**
-     * Auxiliary class used for properly timing the sending of notifications based on created/started exercises
+     * Notify student and tutor groups about the creation/start of an exercise at the moment of its release date.
+     *
+     * @param exercise that has been created
+     * @param author who created the notification
      */
-    private class ExerciseStartedNotificationTimerTask extends TimerTask {
-
-        private Exercise exercise;
-
-        private User author;
-
-        public ExerciseStartedNotificationTimerTask(Exercise exercise, User author) {
-            this.exercise = exercise;
-            this.author = author;
-        }
-
-        @Override
-        public void run() {
-            saveAndSend(createNotification(exercise, author, GroupNotificationType.STUDENT, NotificationType.EXERCISE_CREATED, null));
-            saveAndSend(createNotification(exercise, author, GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
-        }
+    public void notifyStudentAndTutorGroupAboutStartedExercise(Exercise exercise, User author) {
+        saveAndSend(createNotification(exercise, author, GroupNotificationType.STUDENT, NotificationType.EXERCISE_CREATED, null));
+        saveAndSend(createNotification(exercise, author, GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
     }
 
     /**

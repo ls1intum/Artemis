@@ -130,7 +130,7 @@ public class ModelingExerciseResource {
 
         modelingExerciseService.scheduleOperations(result.getId());
 
-        groupNotificationService.notifyStudentAndTutorGroupAboutExerciseCreated(modelingExercise);
+        groupNotificationService.prepareNotificationForStudentAndTutorGroupAboutStartedExercise(modelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }

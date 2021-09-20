@@ -126,7 +126,7 @@ public class QuizExerciseResource {
         if (quizExercise.isCourseExercise()) {
             // notify websocket channel of changes to the quiz exercise
             quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
-            groupNotificationService.notifyStudentAndTutorGroupAboutExerciseCreated(quizExercise);
+            groupNotificationService.prepareNotificationForStudentAndTutorGroupAboutStartedExercise(quizExercise);
         }
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))

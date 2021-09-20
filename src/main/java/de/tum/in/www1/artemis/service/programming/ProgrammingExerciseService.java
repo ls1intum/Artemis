@@ -153,7 +153,7 @@ public class ProgrammingExerciseService {
 
         // Notify students and tutors only if this a course exercise
         if (programmingExercise.isCourseExercise()) {
-            groupNotificationService.notifyStudentAndTutorGroupAboutExerciseCreated(programmingExercise);
+            groupNotificationService.prepareNotificationForStudentAndTutorGroupAboutStartedExercise(programmingExercise);
         }
 
         return programmingExercise;

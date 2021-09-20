@@ -164,7 +164,7 @@ public class TextExerciseResource {
 
         // Only notify students and tutors when the exercise is created for a course
         if (textExercise.isCourseExercise()) {
-            groupNotificationService.notifyStudentAndTutorGroupAboutExerciseCreated(textExercise);
+            groupNotificationService.prepareNotificationForStudentAndTutorGroupAboutStartedExercise(textExercise);
         }
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);

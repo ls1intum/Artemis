@@ -109,7 +109,7 @@ public class FileUploadExerciseResource {
 
         // Only notify students and tutors when the exercise is created for a course
         if (fileUploadExercise.isCourseExercise()) {
-            groupNotificationService.notifyStudentAndTutorGroupAboutExerciseCreated(fileUploadExercise);
+            groupNotificationService.prepareNotificationForStudentAndTutorGroupAboutStartedExercise(fileUploadExercise);
         }
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);

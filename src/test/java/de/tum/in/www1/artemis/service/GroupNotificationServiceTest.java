@@ -71,15 +71,14 @@ public class GroupNotificationServiceTest {
     }
 
     /**
-     * Tests the ExerciseStartedNotificationTimerTask.
      * (Exercise Created) Notifications should be saved/send only at their release date.
      */
     @Test
-    public void testExerciseStartedNotificationTimerTask() {
+    public void testPrepareNotificationForStudentAndTutorGroupAboutStartedExercise() {
         ZonedDateTime releaseDate = ZonedDateTime.now().plusSeconds(1);
         when(exercise.getReleaseDate()).thenReturn(releaseDate);
 
-        groupNotificationService.notifyStudentAndTutorGroupAboutExerciseCreated(exercise);
+        groupNotificationService.prepareNotificationForStudentAndTutorGroupAboutStartedExercise(exercise);
 
         verify(groupNotificationRepository, times(0)).save(any());
         try {
