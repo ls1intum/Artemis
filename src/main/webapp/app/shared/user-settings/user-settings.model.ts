@@ -15,9 +15,10 @@ export interface UserSettings<T> {
 /**
  * OptionGroup is a simple group of options that have something in common,
  * e.g. they control notifications related to exercises
+ * key will be replaced with the actual name during the translation
  */
 export interface OptionGroup<T> {
-    name: string;
+    key: string;
     restrictionLevel: Authority;
     options: Option<T>[];
 }
@@ -25,12 +26,13 @@ export interface OptionGroup<T> {
 /**
  * Option represents one specific toggleable property the user can modify.
  * To make the database and server communication more lightweight and reduce redundant information
- * the constant properties of an option (name, description) are stored in x-settings.default.ts files
+ * the constant properties of an option (name, description) are stored in x-settings.default.ts files,
+ * i.e. their respective keys, the full string is located in the translation jsons
  * whereas the changeable properties (webapp, email : on/off) are encapsulated in an OptionCore
  */
 export interface Option<T> {
-    name: string;
-    description: string;
+    key: string;
+    descriptionKey: string;
     // can not replace T with OptionCore due to shadowing rules of TSLint
     // generic is needed to make OptionCore polymorphic (e.g. for default setting) otherwise compiler errors occur
     optionCore: T; // concrete OptionCore Implementation

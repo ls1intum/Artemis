@@ -15,16 +15,16 @@
             <h3>
                 <!--GroupName-->
                 <!-- please look at the README.md file to understand how the translation works -->
-                {{ 'artemisApp.userSettings.optionGroupNames.' + optionGroup.name | artemisTranslate }}
+                {{ 'artemisApp.userSettings.optionGroupNames.' + optionGroup.key | artemisTranslate }}
             </h3>
             <div *ngFor="let option of optionGroup.options">
                 <dt>
                     <!--OptionName-->
-                    {{ 'artemisApp.userSettings.optionNames.' + option.name | artemisTranslate }}
+                    {{ 'artemisApp.userSettings.optionNames.' + option.key | artemisTranslate }}
                 </dt>
                 <span>
                     <!--OptionDescription-->
-                    {{ 'artemisApp.userSettings.optionDescriptions.' + option.description | artemisTranslate }}
+                    {{ 'artemisApp.userSettings.optionDescriptions.' + option.descriptionKey | artemisTranslate }}
                 </span>
                 <!--OptionCore-->
                 <div class="form-check border-bottom">

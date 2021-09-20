@@ -11,12 +11,12 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
     category: UserSettingsCategory.NOTIFICATION_SETTINGS,
     groups: [
         {
-            name: 'Exercise Notifications',
+            key: 'exerciseNotifications',
             restrictionLevel: Authority.USER,
             options: [
                 {
-                    name: 'Exercise created or started',
-                    description: 'Get notified if a new exercise has been created or started',
+                    key: 'exerciseCreatedOrStarted',
+                    descriptionKey: 'exerciseCreatedOrStartedDescription',
                     optionCore: {
                         webapp: true,
                         email: false,
@@ -24,8 +24,8 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
                     },
                 },
                 {
-                    name: 'Exercise open for Practice',
-                    description: 'Get notified if an exercise has been opened for practice',
+                    key: 'exerciseOpenForPractice',
+                    descriptionKey: 'exerciseOpenForPracticeDescription',
                     optionCore: {
                         webapp: true,
                         email: false,
@@ -33,8 +33,8 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
                     },
                 },
                 {
-                    name: 'New Post for Exercises',
-                    description: 'Get notified if a new post about an exercise has been created',
+                    key: 'newPostForExercises',
+                    descriptionKey: 'newPostForExercisesDescription',
                     optionCore: {
                         webapp: true,
                         email: false,
@@ -42,8 +42,8 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
                     },
                 },
                 {
-                    name: 'New Reply for Exercises',
-                    description: 'Get notified if a new reply about an exercise has been created',
+                    key: 'newReplyForExercises',
+                    descriptionKey: 'newReplyForExercisesDescription',
                     optionCore: {
                         webapp: true,
                         email: false,
@@ -53,12 +53,12 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
             ],
         },
         {
-            name: 'Lecture Notifications',
+            key: 'lectureNotifications',
             restrictionLevel: Authority.USER,
             options: [
                 {
-                    name: 'Attachment Changes',
-                    description: 'Receive a notification when an attachment was changed',
+                    key: 'attachmentChanges',
+                    descriptionKey: 'attachmentChangesDescription',
                     optionCore: {
                         webapp: true,
                         email: false,
@@ -66,8 +66,8 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
                     },
                 },
                 {
-                    name: 'New Post for Lecture',
-                    description: 'Get notified when a new post about an exercise has been created',
+                    key: 'newPostForLecture',
+                    descriptionKey: 'newPostForLectureDescription',
                     optionCore: {
                         webapp: true,
                         email: false,
@@ -75,8 +75,8 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
                     },
                 },
                 {
-                    name: 'New Reply for Lecture',
-                    description: 'Get notified when a new reply about an exercise has been created',
+                    key: 'newReplyForLecture',
+                    descriptionKey: 'newReplyForLectureDescription',
                     optionCore: {
                         webapp: true,
                         email: false,
@@ -86,12 +86,12 @@ export const defaultNotificationSettings: UserSettings<NotificationOptionCore> =
             ],
         },
         {
-            name: 'Instructor Exclusive Notifications',
+            key: 'instructorExclusiveNotifications',
             restrictionLevel: Authority.INSTRUCTOR,
             options: [
                 {
-                    name: 'Course and Exam Archiving Started',
-                    description: 'Receive a notification when the process of archiving a course or exam has been started',
+                    key: 'courseAndExamArchivingStarted',
+                    descriptionKey: 'courseAndExamArchivingStartedDescriptions',
                     optionCore: {
                         webapp: true,
                         email: false,

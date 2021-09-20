@@ -17,29 +17,29 @@
                 "NOTIFICATION_SETTINGS": "Notification Settings"
             },
             "optionGroupNames": {
-                "Exercise Notifications": "Exercise Notifications",
-                "Lecture Notifications": "Lecture Notifications",
-                "Instructor Exclusive Notifications": "Instructor Exclusive Notifications"
+                "exerciseNotifications": "Exercise Notifications",
+                "lectureNotifications": "Lecture Notifications",
+                "instructorExclusiveNotifications": "Instructor Exclusive Notifications"
             },
             "optionNames": {
-                "Exercise created or started": "Exercise created or started",
-                "Exercise open for Practice": "Exercise open for Practice",
-                "New Post for Exercises": "New Post for Exercises",
-                "New Reply for Exercises": "New Reply for Exercises",
-                "Attachment Changes": "Attachment Changes",
-                "New Post for Lecture": "New Post for Lecture",
-                "New Reply for Lecture": "New Reply for Lecture",
-                "Course and Exam Archiving Started": "Course & Exam Archiving Started"
+                "exerciseCreatedOrStarted": "Exercise created or started",
+                "exerciseOpenForPractice": "Exercise open for Practice",
+                "newPostForExercises": "New Post for Exercises",
+                "newReplyForExercises": "New Reply for Exercises",
+                "attachmentChanges": "Attachment Changes",
+                "newPostForLecture": "New Post for Lecture",
+                "newReplyForLecture": "New Reply for Lecture",
+                "courseAndExamArchivingStarted": "Course & Exam Archiving Started"
             },
             "optionDescriptions": {
-                "Get notified if a new exercise has been created or started": "Get notified when a (new) exercise has been created or started",
-                "Get notified if an exercise has been opened for practice": "Get notified when an exercise has been opened for practice (e.g. Quiz)",
-                "Get notified if a new post about an exercise has been created": "Get notified when a new post about an exercise has been created",
-                "Get notified if a new reply about an exercise has been created": "Get notified when a new reply about an exercise has been created",
-                "Receive a notification when an attachment was changed": "Receive a notification when an attachment was changed",
-                "Get notified when a new post about an exercise has been created": "Get notified when a new post about an exercise has been created",
-                "Get notified when a new reply about an exercise has been created": "Get notified when a new reply about an exercise has been created",
-                "Receive a notification when the process of archiving a course or exam has been started": "Receive a notification when the process of archiving a course or exam has been started"
+                "exerciseCreatedOrStartedDescription": "Get notified when a (new) exercise has been created or started",
+                "exerciseOpenForPracticeDescription": "Get notified when an exercise has been opened for practice (e.g. Quiz)",
+                "newPostForExercisesDescription": "Get notified when a new post about an exercise has been created",
+                "newReplyForExercisesDescription": "Get notified when a new reply about an exercise has been created",
+                "attachmentChangesDescription": "Receive a notification when an attachment was changed",
+                "newPostForLectureDescription": "Get notified when a new post about an exercise has been created",
+                "newReplyForLectureDescription": "Get notified when a new reply about an exercise has been created",
+                "courseAndExamArchivingStartedDescription": "Receive a notification when the process of archiving a course or exam has been started"
             }
         }
     }
