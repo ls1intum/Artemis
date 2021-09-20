@@ -21,6 +21,8 @@ import '@4tw/cypress-drag-drop';
 import './utils';
 // Imports file upload capabilities
 import 'cypress-file-upload';
+// Imports cy.waitUntil https://github.com/NoriSte/cypress-wait-until
+import 'cypress-wait-until';
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
