@@ -12,7 +12,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import dayjs from 'dayjs';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,6 +26,7 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { createCommitUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-participation-submission',
