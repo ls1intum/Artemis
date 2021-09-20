@@ -2,13 +2,13 @@
     id="instructor-status-template"
     [icon]="'exclamation-triangle'"
     class="text-warning"
-    *ngIf="participationType === ProgrammingExerciseParticipationType.TEMPLATE && latestResult && latestResult.score! > 0 && !latestResult.successful && submissionState !== ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION"
+    *ngIf="participationType === ProgrammingExerciseParticipationType.TEMPLATE && latestResult && latestResult.score! > 0"
     [ngbTooltip]="'artemisApp.programmingExercise.status.templateFulfillsTest' | artemisTranslate"
 ></fa-icon>
 <fa-icon
     id="instructor-status-solution"
     [icon]="'exclamation-triangle'"
     class="text-warning"
-    *ngIf="participationType === ProgrammingExerciseParticipationType.SOLUTION && latestResult && !latestResult.successful && submissionState !== ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION"
+    *ngIf="participationType === ProgrammingExerciseParticipationType.SOLUTION && latestResult && !latestResult.successful"
     [ngbTooltip]="'artemisApp.programmingExercise.status.solutionFailsTest' | artemisTranslate"
 ></fa-icon>
