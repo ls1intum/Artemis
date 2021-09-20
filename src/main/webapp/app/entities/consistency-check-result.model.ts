@@ -13,6 +13,4 @@ export class ConsistencyCheckError implements BaseEntity {
     public id?: number;
     public type?: ErrorType;
     public programmingExercise?: ProgrammingExercise;
-
-    constructor() {}
 }
