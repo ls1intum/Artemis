@@ -18,5 +18,8 @@
         "cypress:open": "yarn run cypress open ",
         "cypress:run": "yarn run cypress run --browser=chrome",
         "update": "yarn upgrade-interactive --latest"
+    },
+    "dependencies": {
+        "cypress-file-upload": "^5.0.8"
     }
 }

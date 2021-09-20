@@ -39,7 +39,6 @@
         "core-js": "3.16.0",
         "crypto-browserify": "3.12.0",
         "css-minimizer-webpack-plugin": "3.0.2",
-        "cypress-file-upload": "5.0.8",
         "diff-match-patch-typescript": "1.0.8",
         "dompurify": "2.3.0",
         "export-to-csv": "0.2.1",
