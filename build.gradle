@@ -28,7 +28,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.1.6"
+version = "5.2.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=16
@@ -190,7 +190,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.7.3"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.7.4"
     implementation "net.logstash.logback:logstash-logback-encoder:6.6"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -257,7 +257,7 @@ dependencies {
     implementation "com.github.seancfoley:ipaddress:5.3.3"
     implementation "org.apache.maven:maven-model:3.8.2"
     implementation "org.apache.pdfbox:pdfbox:2.0.24"
-    implementation "com.google.protobuf:protobuf-java:3.17.3"
+    implementation "com.google.protobuf:protobuf-java:3.18.0"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
@@ -273,7 +273,7 @@ dependencies {
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.20.2"
+    testImplementation "org.assertj:assertj-core:3.21.0"
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation "com.tngtech.archunit:archunit-junit5-api:0.21.0"
     testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:0.21.0"
