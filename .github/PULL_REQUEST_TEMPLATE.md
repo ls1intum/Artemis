@@ -34,6 +34,10 @@
 
 ### Steps for Testing
 <!-- Please describe in detail how the reviewer can test your changes. -->
+Prerequisites:
+- 1 Instructor
+- 2 Students
+- 1 Programming Exercise with Complaints enabled
 
 1. Log in to Artemis
 2. Navigate to Course Administration
@@ -47,7 +51,7 @@
 
 #### Code Review
 - [ ] Review 1
-- [ ] Review 2 
+- [ ] Review 2
 #### Manual Tests
 - [ ] Test 1
 - [ ] Test 2
