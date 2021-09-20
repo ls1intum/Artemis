@@ -34,7 +34,6 @@ $border-radius-sm: 0.1rem;
 // Body:
 // Settings for the `<body>` element.
 
-@import '~bootstrap/scss/bootstrap.scss';
 $body-bg: #e4e5e6;
 
 // Typography:
@@ -45,3 +44,4 @@ $font-size-base: 0.9rem;
 // Popovers:
 
 $popover-max-width: 100%;
+@import '~bootstrap/scss/bootstrap.scss';
