@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 
 /**
- * Auxiliary class used for properly timing the sending of notifications based on created/started exercises
+ * Auxiliary class used for properly timing the sending of (group) notifications based on created/started exercises
  */
 public class ExerciseStartedNotificationTimerTask extends TimerTask {
 
