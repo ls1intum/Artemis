@@ -30,7 +30,7 @@ public class Reaction extends DomainObject {
     private User user;
 
     @Column(name = "creation_date")
-    private ZonedDateTime creationDate;
+    private ZonedDateTime creationDate = ZonedDateTime.now();
 
     /**
      * Unique, identifying name of the emoji, such as "smiley"

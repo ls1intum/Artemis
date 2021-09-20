@@ -31,7 +31,7 @@ public abstract class Posting extends DomainObject {
     private User author;
 
     @Column(name = "creation_date")
-    private ZonedDateTime creationDate;
+    private ZonedDateTime creationDate = ZonedDateTime.now();
 
     @Lob
     @Column(name = "content")

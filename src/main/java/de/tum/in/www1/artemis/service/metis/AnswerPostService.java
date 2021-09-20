@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.time.ZonedDateTime;
-
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -75,9 +73,6 @@ public class AnswerPostService extends PostingService {
 
         // set author to current user
         answerPost.setAuthor(user);
-
-        // set creation date to now
-        answerPost.setCreationDate(ZonedDateTime.now());
 
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
 
