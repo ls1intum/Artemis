@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.util.RequestUtilService.parameters;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -41,6 +42,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.util.GitUtilService;
@@ -596,6 +598,65 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
+    public void testBuildLogsFromDatabaseForSpecificResults() throws Exception {
+        // FIRST SUBMISSION
+        var submission1 = new ProgrammingSubmission();
+        submission1.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
+        submission1.setSubmitted(true);
+        submission1.setCommitHash("A");
+        submission1.setType(SubmissionType.MANUAL);
+        submission1.setBuildFailed(true);
+
+        var submission1Logs = new ArrayList<BuildLogEntry>();
+        submission1Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 1 - Log 1", submission1));
+        submission1Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 1 - Log 2", submission1));
+
+        submission1.setBuildLogEntries(submission1Logs);
+        database.addProgrammingSubmission(programmingExercise, submission1, "student1");
+        var result1 = database.addResultToSubmission(submission1, AssessmentType.AUTOMATIC).getFirstResult();
+
+        // SECOND SUBMISSION
+        var submission2 = new ProgrammingSubmission();
+        submission2.setSubmissionDate(ZonedDateTime.now().minusMinutes(2));
+        submission2.setSubmitted(true);
+        submission2.setCommitHash("B");
+        submission2.setType(SubmissionType.MANUAL);
+        submission2.setBuildFailed(true);
+
+        var submission2Logs = new ArrayList<BuildLogEntry>();
+        submission2Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 2 - Log 1", submission2));
+        submission2Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 2 - Log 2", submission2));
+
+        submission2.setBuildLogEntries(submission2Logs);
+        database.addProgrammingSubmission(programmingExercise, submission2, "student1");
+        var result2 = database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC).getFirstResult();
+
+        // Specify to use result1
+        var receivedLogs1 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
+                parameters(Map.of("resultId", result1.getId())));
+        assertThat(receivedLogs1).isEqualTo(submission1Logs);
+
+        // Specify to use result2
+        var receivedLogs2 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
+                parameters(Map.of("resultId", result2.getId())));
+        assertThat(receivedLogs2).isEqualTo(submission2Logs);
+
+        // Without parameters, the latest submission must be used
+        var receivedLogsLatest = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
+        assertThat(receivedLogsLatest).isEqualTo(submission2Logs);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testBuildLogsFromDatabaseForSpecificResults_otherParticipation() throws Exception {
+        var result = database.addProgrammingParticipationWithResultForExercise(programmingExercise, "tutor1");
+        database.addProgrammingSubmissionToResultAndParticipation(result, (StudentParticipation) result.getParticipation(), "xyz");
+
+        request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.BAD_REQUEST, BuildLogEntry.class, parameters(Map.of("resultId", result.getId())));
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     public void testCommitChangesAllowedForAutomaticallyAssessedAfterDueDate() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
@@ -812,6 +873,24 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         programmingExercise.getTemplateParticipation().setProgrammingExercise(null);
 
         checkCanAccessParticipation(programmingExercise, participation, true, true);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCanAccessParticipation_asInstructor_edgeCase_programmingExercise_unknownId() {
+        // Set solution and template participation
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        // Check with programmingExercise null and an non-existent participation id
+        participation.setProgrammingExercise(null);
+        participation.setId(123456L);
+        programmingExercise.getSolutionParticipation().setProgrammingExercise(null);
+        programmingExercise.getSolutionParticipation().setId(123456L);
+        programmingExercise.getTemplateParticipation().setProgrammingExercise(null);
+        programmingExercise.getTemplateParticipation().setId(123456L);
+
+        checkCanAccessParticipation(programmingExercise, participation, false, false);
     }
 
     @Test

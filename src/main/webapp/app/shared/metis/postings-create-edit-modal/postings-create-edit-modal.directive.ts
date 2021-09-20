@@ -3,18 +3,12 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { PostingEditType } from 'app/shared/metis/metis.util';
 
 const MAX_CONTENT_LENGTH = 1000;
 
-enum EditType {
-    CREATE,
-    UPDATE,
-}
-
 @Directive()
 export abstract class PostingsCreateEditModalDirective<T extends Posting> implements OnInit, OnChanges {
-    readonly EditType = EditType;
-
     @Input() posting: T;
     @ViewChild('postingEditor') postingEditor: TemplateRef<any>;
     @Output() onCreate: EventEmitter<T> = new EventEmitter<T>();
@@ -24,11 +18,12 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
     maxContentLength = MAX_CONTENT_LENGTH;
     content: string;
     formGroup: FormGroup;
+    readonly EditType = PostingEditType;
 
     protected constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {}
 
-    get editType(): EditType {
-        return this.posting.id ? EditType.UPDATE : EditType.CREATE;
+    get editType(): PostingEditType {
+        return this.posting.id ? PostingEditType.UPDATE : PostingEditType.CREATE;
     }
 
     /**
@@ -57,16 +52,25 @@ export abstract class PostingsCreateEditModalDirective<T extends Posting> implem
         if (this.formGroup.valid) {
             this.isLoading = true;
             this.posting.content = this.formGroup.get('content')?.value;
-            if (this.editType === EditType.UPDATE) {
+            if (this.editType === PostingEditType.UPDATE) {
                 this.updatePosting();
-            } else if (this.editType === EditType.CREATE) {
+            } else if (this.editType === PostingEditType.CREATE) {
                 this.createPosting();
             }
         }
     }
 
     open(): void {
-        this.modalRef = this.modalService.open(this.postingEditor, { size: 'lg' });
+        this.modalRef = this.modalService.open(this.postingEditor, {
+            size: 'lg',
+            backdrop: 'static',
+            beforeDismiss: () => {
+                // when cancelling the create/update action, we do not want to store the current values
+                // but rather reset the formGroup values so when re-opening the modal we do not show the previously unsaved changes
+                this.resetFormGroup();
+                return true;
+            },
+        });
     }
 
     abstract updateModalTitle(): void;
