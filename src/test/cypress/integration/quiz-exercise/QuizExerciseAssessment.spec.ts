@@ -42,8 +42,8 @@ describe('Quiz Exercise Assessment', () => {
             cy.login(student);
             courseManagementRequest.startExerciseParticipation(course.id, quizExercise.id);
             courseManagementRequest.createMultipleChoiceSubmission(quizExercise, [0, 2]);
-            cy.wait(5000);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
+            waitUntilBackendAssessmentIsAvailable();
             cy.contains(quizExercise.title);
             cy.contains('Score 50%').should('be.visible');
         });
@@ -58,8 +58,8 @@ describe('Quiz Exercise Assessment', () => {
             cy.login(student);
             courseManagementRequest.startExerciseParticipation(course.id, quizExercise.id);
             courseManagementRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
-            cy.wait(5000);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
+            waitUntilBackendAssessmentIsAvailable();
             cy.contains(quizExercise.title);
             cy.contains('Score 67%').should('be.visible');
         });
@@ -78,4 +78,21 @@ function createQuiz(quizQuestions: any = multipleChoiceQuizTemplate) {
 function deleteQuiz() {
     cy.login(admin);
     courseManagementRequest.deleteQuizExercise(quizExercise.id);
+}
+
+function waitUntilBackendAssessmentIsAvailable() {
+    cy.waitUntil(
+        () => {
+            const found = Cypress.$('[jhitranslate="artemisApp.result.score"]').length > 0;
+            if (!found) {
+                cy.reload();
+            }
+            return found;
+        },
+        {
+            interval: 2000,
+            timeout: 20000,
+            errorMsg: 'Timed out finding the score',
+        },
+    );
 }
