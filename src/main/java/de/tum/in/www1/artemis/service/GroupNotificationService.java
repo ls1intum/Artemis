@@ -18,8 +18,8 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.notification.ExamNotificationTargetWithoutProblemStatement;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.auxiliary.ExamNotificationTargetWithoutProblemStatement;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -93,16 +93,29 @@ public class GroupNotificationService {
      * @param exercise that has been created
      */
     public void notifyStudentAndTutorGroupAboutExerciseCreated(Exercise exercise) {
-        TimerTask timerTask = new TimerTask() {
-
-            @Override
-            public void run() {
-                saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_CREATED, null));
-                saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
-            }
-        };
         Date releaseDate = Date.from(exercise.getReleaseDate().toInstant());
-        new Timer().schedule(timerTask, releaseDate);
+        new Timer().schedule(new ExerciseStartedNotificationTimerTask(exercise, userRepository.getUser()), releaseDate);
+    }
+
+    /**
+     * Auxiliary class used for properly timing the sending of notifications based on created/started exercises
+     */
+    private class ExerciseStartedNotificationTimerTask extends TimerTask {
+
+        private Exercise exercise;
+
+        private User author;
+
+        public ExerciseStartedNotificationTimerTask(Exercise exercise, User author) {
+            this.exercise = exercise;
+            this.author = author;
+        }
+
+        @Override
+        public void run() {
+            saveAndSend(createNotification(exercise, author, GroupNotificationType.STUDENT, NotificationType.EXERCISE_CREATED, null));
+            saveAndSend(createNotification(exercise, author, GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+        }
     }
 
     /**
