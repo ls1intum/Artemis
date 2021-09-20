@@ -10,6 +10,7 @@ import { ProgrammingExerciseParticipationType } from 'app/entities/programming-e
 import { findLatestResult } from 'app/shared/util/utils';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { ProgrammingSubmissionState } from "app/exercises/programming/participate/programming-submission.service";
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',
@@ -17,9 +18,12 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 })
 export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, OnDestroy {
     ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
+    ProgrammingSubmissionState = ProgrammingSubmissionState;
 
     @Input()
     participationType: ProgrammingExerciseParticipationType;
+    @Input()
+    submissionState: ProgrammingSubmissionState;
     @Input()
     participation: SolutionProgrammingExerciseParticipation | TemplateProgrammingExerciseParticipation | Participation;
     @Input()
