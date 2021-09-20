@@ -50,7 +50,7 @@ export class TutorLeaderboardComponent implements OnInit {
             return `${averageScore}`;
         }
 
-        // Round up to the last two digits after comma.
-        return averageScore.toFixed(2);
+        // Round up to the single digit after comma.
+        return averageScore.toFixed(1);
     }
 }
