@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createNotification;
 
 import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -85,12 +88,21 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify tutor groups about the creation of an exercise.
+     * Notify student and tutor groups about the creation/start of an exercise at the moment of its release date.
      *
      * @param exercise that has been created
      */
-    public void notifyTutorGroupAboutExerciseCreated(Exercise exercise) {
-        saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+    public void notifyStudentAndTutorGroupAboutExerciseCreated(Exercise exercise) {
+        TimerTask timerTask = new TimerTask() {
+
+            @Override
+            public void run() {
+                saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_CREATED, null));
+                saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+            }
+        };
+        Date releaseDate = Date.from(exercise.getReleaseDate().toInstant());
+        new Timer().schedule(timerTask, releaseDate);
     }
 
     /**

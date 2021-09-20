@@ -151,9 +151,9 @@ public class ProgrammingExerciseService {
 
         scheduleOperations(programmingExercise.getId());
 
-        // Notify tutors only if this a course exercise
+        // Notify students and tutors only if this a course exercise
         if (programmingExercise.isCourseExercise()) {
-            groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
+            groupNotificationService.notifyStudentAndTutorGroupAboutExerciseCreated(programmingExercise);
         }
 
         return programmingExercise;
