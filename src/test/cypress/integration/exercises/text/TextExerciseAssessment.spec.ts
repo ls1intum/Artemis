@@ -1,5 +1,4 @@
 import { artemis } from 'src/test/cypress/support/ArtemisTesting';
-import { generateUUID } from 'src/test/cypress/support/utils';
 
 // The user management object
 const users = artemis.users;
@@ -95,7 +94,7 @@ describe('Text exercise assessment', () => {
 
     function createCourseWithTextExercise() {
         cy.login(admin);
-        return courseManagement.createCourse(course.title, course.shortName).then((response) => {
+        return courseManagement.createCourse().then((response) => {
             course = response.body;
             courseManagement.addStudentToCourse(course.id, student.username);
             courseManagement.addTutorToCourse(course, tutor);
