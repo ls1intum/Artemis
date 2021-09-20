@@ -1,14 +1,16 @@
+import { BASE_API, POST, PUT } from '../constants';
+
 export class AssessmentDashboard {
     openExerciseDashboard() {
-        cy.get('[jhitranslate="entity.action.exerciseDashboard"]').should('be.visible').click();
+        cy.get('[jhitranslate="entity.action.exerciseDashboard"]').click();
     }
 
     confirmInstruction() {
-        cy.contains(/I have read and understood the instructions|Start participating in the exercise/).click();
+        cy.get('.guided-tour-instructions-button').click();
     }
 
     startNewAssessment() {
-        cy.contains('Start new assessment').should('be.visible').click();
+        cy.get('.guided-tour-new-assessment-btn').click();
     }
 
     startAssessing() {
@@ -24,8 +26,23 @@ export class AssessmentDashboard {
         cy.get('.col-lg-6 >>>> :nth-child(2) > :nth-child(2)').type(feedback);
     }
 
+    saveAssessment() {
+        cy.get('[jhitranslate="entity.action.save"]').click();
+    }
+
+    submitModelingAssessment() {
+        cy.intercept(PUT, BASE_API + 'modeling-submissions/*/result/*/assessment*').as('submitAssessment');
+        this.submitAssessment();
+        return cy.wait('@submitAssessment');
+    }
+
+    submitTextAssessment() {
+        cy.intercept(POST, BASE_API + 'participations/*/results/*/submit-text-assessment').as('submitFeedback');
+        this.submitAssessment();
+        return cy.wait('@submitFeedback');
+    }
+
     submitAssessment() {
-        cy.contains('Submit').click();
-        cy.on('window:confirm', () => true);
+        cy.get('[jhitranslate="entity.action.submit"]').click();
     }
 }

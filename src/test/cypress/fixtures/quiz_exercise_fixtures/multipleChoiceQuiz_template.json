@@ -3,7 +3,7 @@
     "randomizeOrder": true,
     "invalid": false,
     "exportQuiz": false,
-    "title": "Cypress MC",
+    "title": "<Some title>",
     "text": "A longer more detailed question",
     "hint": "A general hint",
     "scoringType": "ALL_OR_NOTHING",

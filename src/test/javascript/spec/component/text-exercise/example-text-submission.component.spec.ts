@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -6,7 +6,7 @@ import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angu
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionErrorType } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -24,9 +24,10 @@ import { ResizeableContainerComponent } from 'app/shared/resizeable-container/re
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
+import { TextBlockRef } from 'app/entities/text-block-ref.model';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -44,14 +45,14 @@ describe('ExampleTextSubmissionComponent', () => {
     let submission: TextSubmission;
     let activatedRouteSnapshot: ActivatedRouteSnapshot;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         const route: ActivatedRoute = {
             snapshot: {
                 paramMap: convertToParamMap({}),
                 queryParamMap: convertToParamMap({}),
             },
         } as any;
-        await TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
             declarations: [
                 ExampleTextSubmissionComponent,
@@ -262,6 +263,50 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
         expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalled();
     });
+
+    it('when wrong tutor assessment, upon backend response should mark feedback as incorrect', fakeAsync(() => {
+        // GIVEN
+        const textBlockRefA = TextBlockRef.new();
+        textBlockRefA.block!.id = 'ID';
+        const feedbackA = new Feedback();
+        feedbackA.reference = textBlockRefA.block!.id;
+        feedbackA.detailText = 'feedbackA';
+        textBlockRefA.feedback = feedbackA;
+
+        const textBlockRefB = TextBlockRef.new();
+        const feedbackB = new Feedback();
+        feedbackB.detailText = 'feebbackB';
+        textBlockRefB.feedback = feedbackB;
+
+        comp.textBlockRefs = [textBlockRefA, textBlockRefB];
+
+        expect(feedbackA.correctionStatus).toBeUndefined;
+        expect(feedbackB.correctionStatus).toBeUndefined;
+
+        const tutorParticipationService = fixture.debugElement.injector.get(TutorParticipationService);
+        const feedbackError = {
+            reference: feedbackA.reference,
+            type: FeedbackCorrectionErrorType.INCORRECT_SCORE,
+        };
+        const errorResponse = new HttpErrorResponse({
+            error: { title: JSON.stringify({ errors: [feedbackError] }) },
+            headers: new HttpHeaders().append('x-artemisapp-error', 'error.invalid_assessment'),
+            status: 400,
+        });
+
+        spyOn(tutorParticipationService, 'assessExampleSubmission').and.returnValue(throwError(() => errorResponse));
+
+        // WHEN
+        comp.ngOnInit();
+        tick();
+
+        comp.checkAssessment();
+        tick();
+
+        // THEN
+        expect(feedbackA.correctionStatus).toEqual(FeedbackCorrectionErrorType.INCORRECT_SCORE);
+        expect(feedbackB.correctionStatus).toEqual('CORRECT');
+    }));
 
     const httpResponse = (body: any) => of(new HttpResponse({ body }));
 });

@@ -1,0 +1,8 @@
+apiVersion: v1
+data:
+  MYSQL_ROOT_PASSWORD: ""
+  MYSQL_DATABASE: Artemis
+  MYSQL_ALLOW_EMPTY_PASSWORD: yes
+kind: ConfigMap
+metadata:
+  name: artemis-mysql
