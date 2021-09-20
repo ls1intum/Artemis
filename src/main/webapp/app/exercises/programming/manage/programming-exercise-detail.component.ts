@@ -89,12 +89,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     if (latestTemplateResult) {
                         this.programmingExercise.templateParticipation.results = [latestTemplateResult];
                     }
+                    // This is needed to access the exercise in the result details
+                    this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
                 }
                 if (this.programmingExercise.solutionParticipation) {
                     const latestSolutionResult = this.getLatestResult(this.programmingExercise.solutionParticipation.submissions);
                     if (latestSolutionResult) {
                         this.programmingExercise.solutionParticipation.results = [latestSolutionResult];
                     }
+                    // This is needed to access the exercise in the result details
+                    this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
                 }
                 this.loadingTemplateParticipationResults = false;
                 this.loadingSolutionParticipationResults = false;
