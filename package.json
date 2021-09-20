@@ -80,7 +80,6 @@
         "zone.js": "0.11.4"
     },
     "devDependencies": {
-        "@4tw/cypress-drag-drop": "1.8.0",
         "@angular/cdk": "12.2.0",
         "@angular/cli": "12.2.0",
         "@angular/compiler-cli": "12.2.0",
@@ -119,8 +118,6 @@
         "copy-webpack-plugin": "9.0.1",
         "cross-env": "7.0.3",
         "css-loader": "6.2.0",
-        "cypress": "8.2.0",
-        "cypress-wait-until": "^1.7.1",
         "eslint": "7.32.0",
         "eslint-config-prettier": "8.3.0",
         "eslint-plugin-chai-friendly": "0.7.2",
@@ -199,9 +196,9 @@
         "start-tls": "yarn run webpack:dev --hot --env.tls",
         "serve": "yarn run start",
         "build": "yarn run webpack:prod",
-        "test": "node --expose-gc ./node_modules/.bin/jest --logHeapUsage --config ./src/test/javascript/jest.config.js --env=jsdom -w=4",
-        "test:ci": "node --expose-gc ./node_modules/.bin/jest --logHeapUsage --config ./src/test/javascript/jest.config.ci.js --env=jsdom -w=1 --coverage",
-        "test:coverage": "node --expose-gc ./node_modules/.bin/jest --logHeapUsage --config ./src/test/javascript/jest.config.js --env=jsdom -w=4 --coverage",
+        "test": "node --expose-gc ./node_modules/jest/bin/jest.js --logHeapUsage --config ./src/test/javascript/jest.config.js --env=jsdom -w=4",
+        "test:ci": "node --expose-gc ./node_modules/jest/bin/jest.js --logHeapUsage --config ./src/test/javascript/jest.config.ci.js --env=jsdom -w=1 --coverage",
+        "test:coverage": "node --expose-gc ./node_modules/jest/bin/jest.js --logHeapUsage --config ./src/test/javascript/jest.config.js --env=jsdom -w=4 --coverage",
         "test:leaks": "jest --logHeapUsage --config=src/test/javascript/jest.config.js --env=jsdom --detectLeaks",
         "test:server-api-tests": "`pwd`/src/test/k6/api_tests.sh",
         "update": "yarn upgrade-interactive --latest",
@@ -211,8 +208,6 @@
         "webpack:build": "yarn run cleanup && yarn run webpack:build:main",
         "webpack:prod:main": "yarn run webpack-ts --config webpack/webpack.prod.ts --progress",
         "webpack:prod": "yarn run cleanup && yarn run webpack:prod:main && yarn run clean-www",
-        "cypress:open": "yarn run cypress open ",
-        "cypress:run": "yarn run cypress run --browser=chrome",
         "webpack-dev-server": "node node_modules/webpack-dev-server/bin/webpack-dev-server.js",
         "webpack": "node --report-on-fatalerror node_modules/webpack/bin/webpack.js",
         "webpack-ts": "cross-env NODE_OPTIONS=--max_old_space_size=4096 TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack"

@@ -197,11 +197,18 @@ export class CourseManagementRequests {
         const templateCopy = {
             ...modelingExerciseTemplate,
             title,
+        };
+        const dates = {
             releaseDate: dayjsToString(releaseDate),
             dueDate: dayjsToString(dueDate),
             assessmentDueDate: dayjsToString(assessmentDueDate),
         };
-        const newModelingExercise = Object.assign({}, templateCopy, body);
+        let newModelingExercise;
+        if (body.hasOwnProperty('course')) {
+            newModelingExercise = Object.assign({}, templateCopy, dates, body);
+        } else {
+            newModelingExercise = Object.assign({}, templateCopy, body);
+        }
         return cy.request({
             url: MODELING_EXERCISE_BASE,
             method: POST,
