@@ -275,44 +275,6 @@ export class CourseManagementRequests {
         });
     }
 
-    createQuizExercise(
-        body: { course: any } | { exerciseGroup: any },
-        title = 'Cypress Quiz',
-        releaseDate = dayjs(),
-        duration = 600,
-        quizQuestions: any = [multipleChoiceTemplate]
-    ) {
-    const quizExercise = {
-        ...quizTemplate,
-        title,
-        releaseDate: dayjsToString(releaseDate),
-        duration,
-        quizQuestions,
-    };
-    const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
-    return cy.request({
-                          url: QUIZ_EXERCISE_BASE,
-                          method: POST,
-                          body: newQuizExercise,
-                      });
-    }
-
-    createMultipleChoiceSubmission(quizExercise: any, tickOptions: number[]) {
-        const multipleChoiceSubmission = {
-            ...multipleChoiceSubmissionTemplate,
-            submittedAnswers: [{
-                ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
-                quizQuestion: quizExercise.quizQuestions[0],
-                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option])
-            }]
-        };
-        return cy.request({
-            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
-            method: POST,
-            body: multipleChoiceSubmission
-        });
-    }
-
     /**
      * Creates a submission for a Quiz with only one multiple-choice quiz question
      * @param quizExercise the response body of a quiz exercise
