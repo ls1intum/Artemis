@@ -1,6 +1,7 @@
 import { POST, BASE_API } from '../support/constants';
 import { dayjsToString } from '../support/utils';
 import { artemis } from '../support/ArtemisTesting';
+import { MODELING_SPACE } from '../support/pageobjects/ModelingEditor';
 
 // https://day.js.org/docs is a tool for date/time
 import dayjs from 'dayjs';
@@ -73,7 +74,7 @@ describe('Modeling Exercise Spec', () => {
             modelingEditor.addComponentToModel(1);
             createModelingExercise.save();
             cy.get('[jhitranslate="entity.action.export"]').should('be.visible');
-            cy.get('.sc-furvIG > :nth-child(1)').should('exist');
+            cy.get(`${MODELING_SPACE} > :nth-child(1)`).should('exist');
         });
 
         it('Creates Example Submission', () => {
@@ -134,10 +135,10 @@ describe('Modeling Exercise Spec', () => {
         it('Student can start and submit their model', () => {
             cy.intercept(BASE_API + 'courses/*/exercises/*/participations').as('createModelingParticipation');
             cy.login(student, `/courses/${testCourse.id}`);
-            cy.get('.col-lg-8').contains(modelingExercise.title).click();
+            cy.get('.col-lg-8').contains(modelingExercise.title);
             cy.get('.btn-sm').should('contain.text', 'Start exercise').click();
             cy.wait('@createModelingParticipation');
-            cy.get('.btn').should('contain.text', 'Open modelling editor').click();
+            cy.get('.course-exercise-row').find('.btn-primary').click();
             modelingEditor.addComponentToModel(1);
             modelingEditor.addComponentToModel(2);
             modelingEditor.addComponentToModel(3);
