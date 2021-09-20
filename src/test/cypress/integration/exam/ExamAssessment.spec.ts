@@ -13,7 +13,7 @@ const examStartEnd = artemis.pageobjects.examStartEnd;
 const modelingEditor = artemis.pageobjects.modelingExercise.editor;
 const modelingAssessment = artemis.pageobjects.modelingExercise.assessmentEditor;
 const editorPage = artemis.pageobjects.programmingExercise.editor;
-const assessmentDashboard = artemis.pageobjects.assessmentDashboard;
+const assessmentDashboard = artemis.pageobjects.assessment.dashboard;
 const examNavigation = artemis.pageobjects.examNavigationBar;
 const textEditor = artemis.pageobjects.textExercise.editor;
 
