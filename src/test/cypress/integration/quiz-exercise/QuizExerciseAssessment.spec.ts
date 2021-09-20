@@ -45,7 +45,7 @@ describe('Quiz Exercise Assessment', () => {
             cy.wait(5000);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
             cy.contains(quizExercise.title);
-            cy.contains('Score 50%');
+            cy.contains('Score 50%').should('be.visible');
         });
     });
 
@@ -61,7 +61,7 @@ describe('Quiz Exercise Assessment', () => {
             cy.wait(5000);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
             cy.contains(quizExercise.title);
-            cy.contains('Score 67%');
+            cy.contains('Score 67%').should('be.visible');
         });
     });
 });
