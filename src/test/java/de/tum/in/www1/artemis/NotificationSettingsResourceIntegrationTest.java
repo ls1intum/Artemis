@@ -60,7 +60,7 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
         notificationOptionRepository.save(optionA);
         notificationOptionRepository.save(optionB);
 
-        List<NotificationOption> notificationOptions = request.getList("/api/notification-settings/fetch-options", HttpStatus.OK, NotificationOption.class);
+        List<NotificationOption> notificationOptions = request.getList("/api/notification-settings", HttpStatus.OK, NotificationOption.class);
 
         assertThat(notificationOptions).as("NotificationOption A with recipient equal to current user is returned").contains(optionA);
         assertThat(notificationOptions).as("NotificationOption B with recipient equal to current user is returned").contains(optionB);
@@ -74,8 +74,8 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
     public void testSaveNotificationOptionsForCurrentUser_OK() throws Exception {
         NotificationOption[] newlyChangedOptionsToSave = { optionA, optionB };
 
-        NotificationOption[] notificationOptionsResponse = request.postWithResponseBody("/api/notification-settings/save-options", newlyChangedOptionsToSave,
-                NotificationOption[].class, HttpStatus.OK);
+        NotificationOption[] notificationOptionsResponse = request.putWithResponseBody("/api/notification-settings", newlyChangedOptionsToSave, NotificationOption[].class,
+                HttpStatus.OK);
 
         boolean foundA = false;
         boolean foundB = false;
@@ -97,6 +97,6 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testSaveNotificationOptionsForCurrentUser_BAD_REQUEST() throws Exception {
-        request.postWithResponseBody("/api/notification-settings/save-options", null, NotificationOption[].class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/notification-settings", null, NotificationOption[].class, HttpStatus.BAD_REQUEST);
     }
 }

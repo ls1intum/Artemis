@@ -49,7 +49,7 @@ public class NotificationSettingsResource {
     }
 
     /**
-     * GET notification-settings/fetch-options : Get all NotificationOptions for current user
+     * GET notification-settings : Get all NotificationOptions for current user
      *
      * Fetches the NotificationOptions for the current user from the server.
      * These are only the options that the user has already modified.
@@ -57,7 +57,7 @@ public class NotificationSettingsResource {
      *
      * @return the list of found NotificationOptions
      */
-    @GetMapping("notification-settings/fetch-options")
+    @GetMapping("notification-settings")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<NotificationOption>> getNotificationOptionsForCurrentUser() {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -67,7 +67,7 @@ public class NotificationSettingsResource {
     }
 
     /**
-     * POST notification-settings/save-options : Save NotificationOptions for current user
+     * PUT notification-settings : Save NotificationOptions for current user
      *
      * Saves the provided NotificationOptions to the server.
      * @param notificationOptions which should be saved to the notificationOption database.
@@ -75,7 +75,7 @@ public class NotificationSettingsResource {
      * @return the UserOptions that just got saved for the current user as array
      * 200 for a successful execution, 400 if the user provided empty options to save, 500 if the save call returns empty options
      */
-    @PostMapping("notification-settings/save-options")
+    @PutMapping("notification-settings")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<NotificationOption[]> saveNotificationOptionsForCurrentUser(@NotNull @RequestBody NotificationOption[] notificationOptions) {
         if (notificationOptions.length == 0) {

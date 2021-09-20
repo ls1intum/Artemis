@@ -26,7 +26,7 @@ export class UserSettingsService {
     public loadUserOptions(category: UserSettingsCategory): Observable<HttpResponse<OptionCore[]>> {
         switch (category) {
             case UserSettingsCategory.NOTIFICATION_SETTINGS: {
-                return this.http.get<NotificationOptionCore[]>(this.notificationSettingsResourceUrl + '/fetch-options', { observe: 'response' });
+                return this.http.get<NotificationOptionCore[]>(this.notificationSettingsResourceUrl, { observe: 'response' });
             }
         }
     }
@@ -77,7 +77,7 @@ export class UserSettingsService {
         const changedOptionCores = optionCores.filter((optionCore) => optionCore.changed);
         switch (category) {
             case UserSettingsCategory.NOTIFICATION_SETTINGS: {
-                return this.http.post<OptionCore[]>(this.notificationSettingsResourceUrl + '/save-options', changedOptionCores, { observe: 'response' });
+                return this.http.post<OptionCore[]>(this.notificationSettingsResourceUrl, changedOptionCores, { observe: 'response' });
             }
         }
     }

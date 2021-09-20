@@ -137,8 +137,7 @@ describe('User Settings Service', () => {
             it('should call correct URL to fetch all option cores', () => {
                 userSettingsService.loadUserOptions(userSettingsCategory).subscribe();
                 const req = httpMock.expectOne({ method: 'GET' });
-                const infoUrl = notificationSettingsResourceUrl + '/fetch-options';
-                expect(req.request.url).to.equal(infoUrl);
+                expect(req.request.url).to.equal(notificationSettingsResourceUrl);
             });
 
             it('should load correct default settings as foundation', () => {
@@ -175,8 +174,7 @@ describe('User Settings Service', () => {
             it('should call correct URL to save option cores', () => {
                 userSettingsService.saveUserOptions(notificationOptionCoresForTesting, userSettingsCategory).subscribe();
                 const req = httpMock.expectOne({ method: 'POST' });
-                const infoUrl = notificationSettingsResourceUrl + '/save-options';
-                expect(req.request.url).to.equal(infoUrl);
+                expect(req.request.url).to.equal(notificationSettingsResourceUrl);
             });
 
             it('server response should contain inputted options', fakeAsync(() => {
