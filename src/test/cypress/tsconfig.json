@@ -1,8 +1,9 @@
 {
     "extends": "../../../tsconfig.json",
     "include": ["**/**/**/*.ts"],
+    "exclude": ["node_modules"],
     "compilerOptions": {
         "sourceMap": false,
-        "types": ["cypress", "@4tw/cypress-drag-drop"]
+        "types": ["cypress", "@4tw/cypress-drag-drop", "node"]
     }
 }

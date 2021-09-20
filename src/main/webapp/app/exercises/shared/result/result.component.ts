@@ -25,13 +25,52 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
  * the status of the result's template can be in.
  */
 enum ResultTemplateStatus {
+    /**
+     * An automatic result is currectly being generated and should be available soon.
+     * This is currently only relevant for programming exercises.
+     */
     IS_BUILDING = 'IS_BUILDING',
+    /**
+     * A regular, finished result is available.
+     * Can be rated (counts toward the score) or not rated (after the dealine for pratice).
+     */
     HAS_RESULT = 'HAS_RESULT',
+    /**
+     * There is no result or submission status that could be shown, e.g. because the student just started with the exercise.
+     */
     NO_RESULT = 'NO_RESULT',
-    SUBMITTED = 'SUBMITTED', // submitted and can still continue to submit
-    SUBMITTED_WAITING_FOR_GRADING = 'SUBMITTED_WAITING_FOR_GRADING', // submitted and can no longer submit, not yet graded
-    LATE_NO_FEEDBACK = 'LATE_NO_FEEDBACK', // started, submitted too late, not graded
-    LATE = 'LATE', // submitted too late, graded
+    /**
+     * Submitted and the student can still continue to submit.
+     */
+    SUBMITTED = 'SUBMITTED',
+    /**
+     * Submitted and the student can no longer submit, but a result is not yet available.
+     */
+    SUBMITTED_WAITING_FOR_GRADING = 'SUBMITTED_WAITING_FOR_GRADING',
+    /**
+     * The student started the exercise but submitted too late.
+     * Feedback is not yet available, and a future result will not count toward the score.
+     */
+    LATE_NO_FEEDBACK = 'LATE_NO_FEEDBACK',
+    /**
+     * The student started the exercise and submitted too late, but feedback is available.
+     */
+    LATE = 'LATE',
+    /**
+     * No latest result available, e.g. because building took too long and the webapp did not receive it in time.
+     * This is a distinct state because we want the student to know about this problematic state
+     * and not confuse them by showing a previous result that does not match the latest submission.
+     */
+    MISSING = 'MISSING',
+}
+
+/**
+ * Information about a missing result to communicate problems and give hints how to respond.
+ */
+export enum MissingResultInfo {
+    NONE = 'NONE',
+    FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE = 'FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE',
+    FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE = 'FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE',
 }
 
 @Component({
@@ -47,6 +86,7 @@ enum ResultTemplateStatus {
 export class ResultComponent implements OnInit, OnChanges {
     // make constants available to html for comparison
     readonly ResultTemplateStatus = ResultTemplateStatus;
+    readonly MissingResultInfo = MissingResultInfo;
     readonly round = round;
 
     @Input() participation: Participation;
@@ -56,6 +96,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge = false;
     @Input() showTestDetails = false;
+    @Input() missingResultInfo = MissingResultInfo.NONE;
 
     ParticipationType = ParticipationType;
     textColorClass: string;
@@ -124,6 +165,8 @@ export class ResultComponent implements OnInit, OnChanges {
         if (changes.participation || changes.result) {
             this.ngOnInit();
             // If is building, we change the templateStatus to building regardless of any other settings.
+        } else if (changes.missingResultInfo) {
+            this.evaluate();
         } else if (changes.isBuilding && changes.isBuilding.currentValue) {
             this.templateStatus = ResultTemplateStatus.IS_BUILDING;
             // When the result was building and is not building anymore, we evaluate the result status.
@@ -148,7 +191,7 @@ export class ResultComponent implements OnInit, OnChanges {
             this.resultIconClass = this.getResultIconClass();
             this.resultString = this.buildResultString();
             this.resultTooltip = this.buildResultTooltip();
-        } else {
+        } else if (this.templateStatus !== ResultTemplateStatus.MISSING) {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
             // this state is only possible if no rated results are available at all, so we show the info that no graded result is available
             this.templateStatus = ResultTemplateStatus.NO_RESULT;
@@ -165,6 +208,11 @@ export class ResultComponent implements OnInit, OnChanges {
             } else {
                 return ResultTemplateStatus.HAS_RESULT;
             }
+        }
+
+        // If there is a problem, it has priority and we show that instead
+        if (this.missingResultInfo !== MissingResultInfo.NONE) {
+            return ResultTemplateStatus.MISSING;
         }
 
         // Evaluate status for modeling, text and file-upload exercises
@@ -194,6 +242,7 @@ export class ResultComponent implements OnInit, OnChanges {
                     return ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING;
                 } else {
                     // the due date is over, further submissions are no longer possible, no result after assessment due date
+                    // TODO why is this distinct from the case above? The submission can still be graded and often is.
                     return ResultTemplateStatus.NO_RESULT;
                 }
             } else if (initializedResultWithScore(this.result) && (!assessmentDueDate || assessmentDueDate.isBefore())) {
@@ -252,9 +301,10 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
+     * Gets the tooltip text that should displayed next to the result string. Not required.
      */
     buildResultTooltip() {
+        // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         const programmingExercise = getExercise(this.participation) as ProgrammingExercise;
         if (this.participation && isProgrammingExerciseStudentParticipation(this.participation) && isResultPreliminary(this.result!, programmingExercise)) {
             if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {
@@ -292,6 +342,9 @@ export class ResultComponent implements OnInit, OnChanges {
         if (exercise) {
             componentInstance.exerciseType = exercise.type!;
             componentInstance.showScoreChart = true;
+        }
+        if (this.templateStatus === ResultTemplateStatus.MISSING) {
+            componentInstance.messageKey = 'artemisApp.result.notLatestSubmission';
         }
     }
 

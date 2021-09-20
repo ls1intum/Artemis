@@ -876,6 +876,24 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCanAccessParticipation_asInstructor_edgeCase_programmingExercise_unknownId() {
+        // Set solution and template participation
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        // Check with programmingExercise null and an non-existent participation id
+        participation.setProgrammingExercise(null);
+        participation.setId(123456L);
+        programmingExercise.getSolutionParticipation().setProgrammingExercise(null);
+        programmingExercise.getSolutionParticipation().setId(123456L);
+        programmingExercise.getTemplateParticipation().setProgrammingExercise(null);
+        programmingExercise.getTemplateParticipation().setId(123456L);
+
+        checkCanAccessParticipation(programmingExercise, participation, false, false);
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testCanAccessParticipation_asStudent() {
         // Set solution and template participation

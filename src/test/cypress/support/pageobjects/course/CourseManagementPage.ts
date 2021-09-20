@@ -1,4 +1,4 @@
-import { CypressCredentials } from 'src/test/cypress/support/users';
+import { CypressCredentials } from '../../users';
 
 /**
  * A class which encapsulates UI selectors and actions for the course management page.
