@@ -68,7 +68,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * POST exercises/{exerciseId}/file-upload-submissions : Create a new fileUploadSubmission
+     * POST exercises/:exerciseId/file-upload-submissions : Create a new fileUploadSubmission
      *
      * @param exerciseId of the file upload exercise a submission should be created for
      * @param principal the identity of the logged in user - provided by Spring
