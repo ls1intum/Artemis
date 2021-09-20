@@ -3,7 +3,8 @@
         "consistencyCheck": {
             "button": "Konsistenzprüfung",
             "title": "Konsistenzprüfung",
-            "text": "Die Überprüfung der Programmieraufgaben wird durchgeführt. Gefundene Inkonsistenzen werden nachfolgend angezeigt.<br><small>Bei Kursen mit vielen Programmierübungen wird dies einige Zeit in Anspruch nehmen.</small>",
+            "text": "Die Überprüfung der Programmieraufgaben wird durchgeführt. Gefundene Inkonsistenzen werden nachfolgend angezeigt.",
+            "warning": "Bei Kursen mit vielen Programmierübungen wird dies einige Zeit in Anspruch nehmen.",
             "error": {
                 "type": "Fehlertyp",
                 "TEMPLATE_REPO_MISSING": "Fehlendes Vorlagen-Repository",
