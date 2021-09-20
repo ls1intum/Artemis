@@ -1,0 +1,31 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet author="argertboja" id="20210920225828">
+        <sql>
+            CREATE TEMPORARY TABLE feedbacks_to_migrate
+            SELECT f.reference AS text,
+            POSITION(f.reference IN s.text) AS start_index,
+            POSITION(f.reference IN s.text) + LENGTH(f.reference) AS end_index,
+            r.submission_id,
+            'MANUAL' AS type,
+            f.id AS feedback_id,
+            SHA1(CONCAT(r.submission_id,';', POSITION(f.reference IN s.text),'-',POSITION(f.reference IN s.text) + LENGTH(f.reference),';',f.reference)) AS tb_id
+            FROM exercise e
+            INNER JOIN participation p ON e.id = p.exercise_id
+            INNER JOIN submission s ON p.id = s.participation_id
+            INNER JOIN result r ON p.id = r.participation_id and r.submission_id = s.id
+            INNER JOIN feedback f ON r.id = f.result_id
+            LEFT JOIN text_block b ON s.id = b.submission_id AND f.reference = b.id
+            WHERE e.discriminator = 'T' AND f.reference IS NOT NULL AND f.reference NOT IN (SELECT id FROM text_block);
+
+            INSERT INTO text_block (id, text, start_index, end_index, submission_id, type)
+            SELECT ftm.tb_id, ftm.text, ftm.start_index, ftm.end_index, ftm.submission_id, ftm.type
+            FROM feedbacks_to_migrate ftm;
+
+            UPDATE feedback f
+            INNER JOIN feedbacks_to_migrate ftm ON f.id = ftm.feedback_id
+            SET f.reference = ftm.tb_id
+            WHERE f.id = ftm.feedback_id;
+        </sql>
+    </changeSet>
+</databaseChangeLog>
