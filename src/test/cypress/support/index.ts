@@ -19,7 +19,7 @@ import './commands';
 import '@4tw/cypress-drag-drop';
 // Imports utility functions
 import './utils';
-// Imports cy.waitUntil
+// Imports cy.waitUntil https://github.com/NoriSte/cypress-wait-until
 import 'cypress-wait-until';
 
 // Alternatively you can use CommonJS syntax:
