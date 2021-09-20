@@ -55,7 +55,7 @@ export class ArtemisPageobjects {
         feedback: new TextExerciseFeedbackPage(),
     };
     assessment = {
-        dashboard: new ExamAssessmentPage(),
+        exam: new ExamAssessmentPage(),
         course: new CourseAssessmentDashboardPage(),
         exercise: new ExerciseAssessmentDashboardPage(),
         text: new TextExerciseAssessmentPage(),
