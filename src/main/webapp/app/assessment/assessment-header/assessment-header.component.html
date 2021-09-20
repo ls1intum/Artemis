@@ -125,7 +125,7 @@
                 <span jhiTranslate="artemisApp.assessment.button.nextSubmission">Next Submission</span>
             </button>
             <button
-                class="btn ms-2 btn-primary"
+                class="btn m-1 btn-primary"
                 id="importExampleSubmission"
                 *ngIf="result?.completionDate && isAtLeastInstructor && (exercise!.type === exerciseType.MODELING || exercise!.type === exerciseType.TEXT)"
                 (click)="importExampleSubmission.emit()"
