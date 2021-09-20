@@ -1,4 +1,4 @@
-import { BASE_API, DELETE, POST, PUT } from '../constants';
+import { BASE_API, DELETE, POST, PUT, EXERCISE_BASE, GET } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import { dayjsToString, generateUUID } from '../utils';
@@ -9,7 +9,8 @@ import textExerciseTemplate from '../../fixtures/requests/textExercise_template.
 import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_template.json';
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
-
+import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceSubmission_template.json';
+import shortAnswerSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerSubmission_template.json';
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
 export const EXERCISE_BASE = BASE_API + 'exercises/';
@@ -252,12 +253,28 @@ export class CourseManagementRequests {
         });
     }
 
-    createQuizExercise(body: { course: any } | { exerciseGroup: any }, quizQuestions: [any], title = 'Cypress quiz exercise' + generateUUID(), releaseDate = day()) {
+    /**
+     * Creates a quiz exercise
+     * @param body an object containing either the course or exercise group the exercise will be added to
+     * @param quizQuestions list of quizQuestion objects that make up the Quiz. Can be multiple choice, short answer or drag and drop quizzes.
+     * @param title the title for the Quiz
+     * @param releaseDate time of release for the quiz
+     * @param duration the duration in seconds that the student gets to complete the quiz
+     * @returns <Chainable> request response
+     */
+    createQuizExercise(
+        body: { course: any } | { exerciseGroup: any },
+        quizQuestions: [any],
+        title = 'Cypress quiz exercise' + generateUUID(),
+        releaseDate = day(),
+        duration = 600,
+    ) {
         const quizExercise: any = {
             ...quizTemplate,
             title,
             releaseDate: dayjsToString(releaseDate),
             quizQuestions,
+            duration,
         };
         const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
         return cy.request({
@@ -311,6 +328,74 @@ export class CourseManagementRequests {
             url: TEXT_EXERCISE_BASE,
             method: PUT,
             body: exercise,
+        });
+    }
+
+    /**
+     * Creates a submission for a Quiz with only one multiple-choice quiz question
+     * @param quizExercise the response body of a quiz exercise
+     * @param tickOptions a list describing which of the 0..n boxes are to be ticked in the submission
+     */
+    createMultipleChoiceSubmission(quizExercise: any, tickOptions: number[]) {
+        const submittedAnswers = [
+            {
+                ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
+                quizQuestion: quizExercise.quizQuestions[0],
+                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
+            },
+        ];
+        const multipleChoiceSubmission = {
+            ...multipleChoiceSubmissionTemplate,
+            submittedAnswers,
+        };
+        return cy.request({
+            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            method: POST,
+            body: multipleChoiceSubmission,
+        });
+    }
+
+    /**
+     * Creates a submission for a Quiz with only one short-answer quiz question
+     * @param quizExercise the response body of the quiz exercise
+     * @param textAnswers a list containing the answers to be filled into the gaps. In numerical order.
+     */
+    createShortAnswerSubmission(quizExercise: any, textAnswers: string[]) {
+        const submittedTexts = textAnswers.map((answer, index) => {
+            return {
+                text: answer,
+                spot: quizExercise.quizQuestions[0].spots[index],
+            };
+        });
+        const submittedAnswers = [
+            {
+                ...shortAnswerSubmissionTemplate.submittedAnswers[0],
+                quizQuestion: quizExercise.quizQuestions[0],
+                submittedTexts,
+            },
+        ];
+        const shortAnswerSubmission = {
+            ...shortAnswerSubmissionTemplate,
+            submittedAnswers,
+        };
+        return cy.request({
+            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            method: POST,
+            body: shortAnswerSubmission,
+        });
+    }
+
+    getExerciseParticipation(exerciseId: number) {
+        return cy.request({
+            url: EXERCISE_BASE + exerciseId + '/participation',
+            method: GET,
+        });
+    }
+
+    startExerciseParticipation(courseId: number, exerciseId: number) {
+        return cy.request({
+            url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/participations`,
+            method: POST,
         });
     }
 
