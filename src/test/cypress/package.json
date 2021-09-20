@@ -20,6 +20,6 @@
         "update": "yarn upgrade-interactive --latest"
     },
     "dependencies": {
-        "cypress-file-upload": "^5.0.8"
+        "cypress-file-upload": "5.0.8"
     }
 }
