@@ -212,6 +212,7 @@
                 [(ngModel)]="programmingExercise.packageName"
                 [readonly]="programmingExercise.id"
                 #packageName="ngModel"
+                [disabled]="isImport || !!programmingExercise.id"
             />
             <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
                 <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
@@ -232,6 +233,7 @@
                 [(ngModel)]="programmingExercise.packageName"
                 [readonly]="programmingExercise.id"
                 #packageName="ngModel"
+                [disabled]="isImport || !!programmingExercise.id"
             />
             <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
                 <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
