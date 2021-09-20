@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -9,8 +9,9 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-cr
     templateUrl: './postings-thread.component.html',
     styleUrls: ['./postings-thread.component.scss'],
 })
-export class PostingsThreadComponent implements OnInit, OnChanges {
+export class PostingsThreadComponent implements OnInit, OnChanges, OnDestroy {
     @Input() post: Post;
+    @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
     showAnswers: boolean;
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
@@ -34,6 +35,13 @@ export class PostingsThreadComponent implements OnInit, OnChanges {
      */
     ngOnChanges(): void {
         this.sortAnswerPosts();
+    }
+
+    /**
+     * on leaving the page, the modal should be closed
+     */
+    ngOnDestroy(): void {
+        this.answerPostCreateEditModal?.modalRef?.close();
     }
 
     /**

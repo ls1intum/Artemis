@@ -5,7 +5,9 @@ export const DELETE = 'DELETE';
 export const POST = 'POST';
 export const GET = 'GET';
 export const PUT = 'PUT';
+export const PATCH = 'PATCH';
 export const BASE_API = 'api/';
+export const EXERCISE_BASE = BASE_API + 'exercises/';
 
 // Authentication
 export const authTokenKey = 'jhi-authenticationtoken';

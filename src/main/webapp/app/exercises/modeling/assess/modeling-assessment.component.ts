@@ -173,24 +173,24 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * Returns an array containing all feedback entries from the mapping.
      */
     private generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
+        const newElementFeedback = new Map();
         for (const assessment of assessments) {
-            const existingFeedback = this.elementFeedback.get(assessment.modelElementId);
-            if (existingFeedback) {
-                if (existingFeedback.credits !== assessment.score && existingFeedback.gradingInstruction) {
-                    existingFeedback.gradingInstruction = undefined;
+            let feedback = this.elementFeedback.get(assessment.modelElementId);
+            if (feedback) {
+                if (feedback.credits !== assessment.score && feedback.gradingInstruction) {
+                    feedback.gradingInstruction = undefined;
                 }
-                existingFeedback.credits = assessment.score;
-                existingFeedback.text = assessment.feedback;
+                feedback.credits = assessment.score;
+                feedback.text = assessment.feedback;
                 if (assessment.dropInfo && assessment.dropInfo.instruction.id) {
-                    existingFeedback.gradingInstruction = assessment.dropInfo.instruction;
+                    feedback.gradingInstruction = assessment.dropInfo.instruction;
                 }
             } else {
-                this.elementFeedback.set(
-                    assessment.modelElementId,
-                    Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo),
-                );
+                feedback = Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo);
             }
+            newElementFeedback.set(assessment.modelElementId, feedback);
         }
+        this.elementFeedback = newElementFeedback;
         return [...this.elementFeedback.values()];
     }
 
@@ -307,14 +307,18 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (!feedbacks || !this.model) {
             return;
         }
-        this.model.assessments = feedbacks.map<Assessment>((feedback) => ({
-            modelElementId: feedback.referenceId!,
-            elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
-            score: feedback.credits!,
-            feedback: feedback.text || undefined,
-            label: this.calculateLabel(feedback),
-            labelColor: this.calculateLabelColor(feedback),
-        }));
+
+        this.model.assessments = feedbacks.map<Assessment>((feedback) => {
+            return {
+                modelElementId: feedback.referenceId!,
+                elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
+                score: feedback.credits!,
+                feedback: feedback.text || undefined,
+                label: this.calculateLabel(feedback),
+                labelColor: this.calculateLabelColor(feedback),
+                correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
+            };
+        });
         if (this.apollonEditor) {
             this.apollonEditor!.model = this.model;
         }
@@ -342,5 +346,31 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
 
         return undefined;
+    }
+
+    private calculateCorrectionStatusForFeedback(feedback: Feedback) {
+        let correctionStatusDescription = feedback.correctionStatus
+            ? this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.feedback.' + feedback.correctionStatus)
+            : feedback.correctionStatus;
+        if (feedback.correctionStatus && feedback.correctionStatus !== 'CORRECT') {
+            // Adding a missing warning icon to the translation strings of incorrect feedbacks.
+            correctionStatusDescription += ' ⚠️';
+        }
+        let correctionStatus: 'CORRECT' | 'INCORRECT' | 'NOT_VALIDATED';
+        switch (feedback.correctionStatus) {
+            case 'CORRECT':
+                correctionStatus = 'CORRECT';
+                break;
+            case undefined:
+                correctionStatus = 'NOT_VALIDATED';
+                break;
+            default:
+                correctionStatus = 'INCORRECT';
+        }
+
+        return {
+            description: correctionStatusDescription,
+            status: correctionStatus,
+        };
     }
 }
