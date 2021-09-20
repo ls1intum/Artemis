@@ -17,6 +17,7 @@ import { MultipleChoiceQuiz } from './MultipleChoiceQuiz';
 import { ModelingEditor } from './ModelingEditor';
 import { ShortAnswerQuiz } from './ShortAnswerQuiz';
 import { DragAndDropQuiz } from './DragAndDropQuiz';
+import { AssessmentDashboard } from './AssessmentDashboard';
 import { ExamStartEndPage } from './exam/ExamStartEndPage';
 import { QuizExerciseCreationPage } from './QuizExerciseCreationPage';
 import { TextExerciseCreationPage } from './exercises/text/TextExerciseCreationPage';
@@ -36,6 +37,7 @@ export class ArtemisPageobjects {
     examManagement = new ExamManagementPage();
     examStartEnd = new ExamStartEndPage();
     examNavigationBar = new ExamNavigationBar();
+    assessmentDashboard = new AssessmentDashboard();
     programmingExercise = {
         editor: new OnlineEditorPage(),
         creation: new ProgrammingExerciseCreationPage(),
