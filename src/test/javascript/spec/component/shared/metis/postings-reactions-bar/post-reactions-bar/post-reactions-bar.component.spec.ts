@@ -5,7 +5,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import * as sinon from 'sinon';
-import { SinonSpy, SinonStub, stub } from 'sinon';
+import { SinonSpy } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
@@ -79,7 +79,7 @@ describe('PostReactionsBarComponent', () => {
             });
     });
 
-    afterEach(function() {
+    afterEach(function () {
         jest.clearAllMocks();
         sinon.restore();
     });
