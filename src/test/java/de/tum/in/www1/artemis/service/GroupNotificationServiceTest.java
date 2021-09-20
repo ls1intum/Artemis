@@ -7,6 +7,8 @@ import java.time.ZonedDateTime;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
@@ -21,6 +23,8 @@ import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
 public class GroupNotificationServiceTest {
+
+    private final Logger log = LoggerFactory.getLogger(GroupNotificationServiceTest.class);
 
     @Autowired
     private static GroupNotificationService groupNotificationService;
@@ -43,7 +47,7 @@ public class GroupNotificationServiceTest {
     @Mock
     private static Course course;
 
-    private static final Long courseId = 42L;
+    private static final Long COURSE_ID = 42L;
 
     @Mock
     private static GroupNotification notification;
@@ -56,7 +60,7 @@ public class GroupNotificationServiceTest {
         author = mock(User.class);
         notification = mock(GroupNotification.class);
         course = mock(Course.class);
-        when(course.getId()).thenReturn(courseId);
+        when(course.getId()).thenReturn(COURSE_ID);
         exercise = mock(Exercise.class);
         when(exercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(course);
 
@@ -84,15 +88,15 @@ public class GroupNotificationServiceTest {
         try {
             Thread.sleep(500);
         }
-        catch (InterruptedException e) {
-            e.printStackTrace();
+        catch (InterruptedException error) {
+            log.error(error.getMessage());
         }
         verify(groupNotificationRepository, times(0)).save(any());
         try {
             Thread.sleep(600);
         }
-        catch (InterruptedException e) {
-            e.printStackTrace();
+        catch (InterruptedException error) {
+            log.error(error.getMessage());
         }
         // (more) than one second later (after release date) the notifications should have been send/saved
         verify(groupNotificationRepository, times(2)).save(any());
