@@ -1,3 +1,4 @@
+import { BASE_API } from '../../../constants';
 import { POST } from '../../../constants';
 
 /**
@@ -9,7 +10,7 @@ export class TextExerciseExampleSubmissionCreationPage {
     }
 
     clickCreateNewExampleSubmission() {
-        cy.intercept(POST, 'api/exercises/*/example-submissions/*/example-results').as('createExampleSubmission');
+        cy.intercept(POST, BASE_API + 'exercises/*/example-submissions/*/example-results').as('createExampleSubmission');
         cy.get('[data-icon="save"]').click();
         return cy.wait('@createExampleSubmission');
     }

@@ -7,6 +7,9 @@ import * as moment from 'moment';
 import { isMoment } from 'moment';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { SubmissionType } from 'app/entities/submission.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
@@ -22,6 +25,34 @@ export const isLegacyResult = (result: Result) => {
 export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string): string | undefined => {
     if (template && projectKey && buildPlanId) {
         return template.replace('{buildPlanId}', buildPlanId).replace('{projectKey}', projectKey);
+    }
+};
+
+export const createCommitUrl = (
+    template: string | undefined,
+    projectKey: string | undefined,
+    participation: Participation | undefined,
+    submission: ProgrammingSubmission | undefined,
+): string | undefined => {
+    const projectKeyLowerCase = projectKey?.toLowerCase();
+    let repoSlugPostfix: string | undefined = undefined;
+    if (participation?.type === ParticipationType.PROGRAMMING) {
+        const studentParticipation = participation as ProgrammingExerciseStudentParticipation;
+        if (studentParticipation.repositoryUrl) {
+            repoSlugPostfix = studentParticipation.participantIdentifier;
+        }
+    } else if (participation?.type === ParticipationType.TEMPLATE) {
+        // In case of a test submisson, we need to use the test repository
+        repoSlugPostfix = submission?.type === SubmissionType.TEST ? 'tests' : 'exercise';
+    } else if (participation?.type === ParticipationType.SOLUTION) {
+        // In case of a test submisson, we need to use the test repository
+        repoSlugPostfix = submission?.type === SubmissionType.TEST ? 'tests' : 'solution';
+    }
+    if (repoSlugPostfix && template && projectKeyLowerCase) {
+        return template
+            .replace('{projectKey}', projectKeyLowerCase)
+            .replace('{repoSlug}', projectKeyLowerCase + '-' + repoSlugPostfix)
+            .replace('{commitHash}', submission?.commitHash ?? '');
     }
 };
 

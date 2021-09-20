@@ -41,8 +41,11 @@ export class TextExerciseCreationPage {
         this.typeText('#sampleSolution', statement);
     }
 
+    typeAssessmentInstructions(statement: string) {
+        this.typeText('#gradingInstructions', statement);
+    }
+
     create() {
-        cy.get('[jhitranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise"]').should('be.visible');
         cy.intercept(POST, BASE_API + 'text-exercises').as('textExerciseCreation');
         cy.get('#submit-entity').click();
         return cy.wait('@textExerciseCreation');

@@ -3,15 +3,13 @@
     <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()"></button>
 </div>
 <div class="modal-body" id="result-detail-body" style="position: relative">
-    <!--
-    Loading state
--->
+    <!-- Message, if defined -->
+    <div *ngIf="messageKey" class="mb-3"><h6 [innerHTML]="messageKey | artemisTranslate"></h6></div>
+    <!-- Loading state -->
     <div *ngIf="isLoading; else feedbackContainer" class="text-muted d-flex justify-content-center" id="result-detail-spinner">
         <fa-icon [spin]="true" size="lg" [icon]="'circle-notch'"></fa-icon>
     </div>
-    <!--
-    Feedbacks container
--->
+    <!-- Feedbacks container -->
     <ng-template #feedbackContainer>
         <div *ngIf="!loadingFailed && resultIsPreliminary()">
             <div class="d-flex justify-content-end m-1">
@@ -47,9 +45,7 @@
             </div>
         </div>
     </ng-template>
-    <!--
-    Build logs container
--->
+    <!-- Build logs container -->
     <ng-template #buildLogsContainer>
         <ng-container *ngIf="buildLogs?.length; else noFeedbacksContainer">
             <h4 jhiTranslate="artemisApp.result.buildError">Build Error:</h4>
@@ -69,12 +65,16 @@
             </dl>
         </ng-container>
     </ng-template>
-    <!--
-    No content fallback
--->
+    <!-- No content fallback -->
     <ng-template #noFeedbacksContainer>
         <pre jhiTranslate="artemisApp.result.noResultDetails">No result details available</pre>
     </ng-template>
+    <!-- Show and link to the commit hash in case of programming exercise results -->
+    <p *ngIf="exerciseType === ExerciseType.PROGRAMMING && result.submission">
+        <span>{{ 'artemisApp.result.linkedCommit' | artemisTranslate }}</span>
+        <a *ngIf="commitUrl; else commitWithoutLink" href="{{ commitUrl }}" target="_blank" rel="noopener noreferrer">{{ commitHash }}</a>
+        <ng-template #commitWithoutLink>{{ commitHash }}</ng-template>
+    </p>
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
