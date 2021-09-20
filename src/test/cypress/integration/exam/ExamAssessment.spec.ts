@@ -13,9 +13,10 @@ const examStartEnd = artemis.pageobjects.examStartEnd;
 const modelingEditor = artemis.pageobjects.modelingExercise.editor;
 const modelingAssessment = artemis.pageobjects.modelingExercise.assessmentEditor;
 const editorPage = artemis.pageobjects.programmingExercise.editor;
-const assessmentDashboard = artemis.pageobjects.assessment.dashboard;
+const examAssessment = artemis.pageobjects.assessment.dashboard;
 const examNavigation = artemis.pageobjects.examNavigationBar;
 const textEditor = artemis.pageobjects.textExercise.editor;
+const exerciseAssessment = artemis.pageobjects.assessment.exercise;
 
 // Common primitives
 const admin = artemis.users.getAdmin();
@@ -81,7 +82,7 @@ describe('Exam assessment', () => {
             it('Assess a modeling exercise submission', () => {
                 cy.login(tutor, '/course-management/' + course.id + '/exams');
                 cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
-                assessmentDashboard.startAssessing();
+                startAssessing();
                 modelingAssessment.addNewFeedback(2, 'Noice');
                 modelingAssessment.openAssessmentForComponent(1);
                 modelingAssessment.assessComponent(1, 'Good');
@@ -89,7 +90,7 @@ describe('Exam assessment', () => {
                 modelingAssessment.assessComponent(0, 'Neutral');
                 modelingAssessment.openAssessmentForComponent(3);
                 modelingAssessment.assessComponent(-1, 'Wrong');
-                assessmentDashboard.submitModelingAssessment().then((assessmentResponse) => {
+                examAssessment.submitModelingAssessment().then((assessmentResponse) => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
@@ -117,9 +118,9 @@ describe('Exam assessment', () => {
             it('Assess a text exercise submission', () => {
                 cy.login(tutor, '/course-management/' + course.id + '/exams');
                 cy.contains('Assessment Dashboard', { timeout: 60000 }).click();
-                assessmentDashboard.startAssessing();
-                assessmentDashboard.addNewFeedback(7, 'Good job');
-                assessmentDashboard.submitTextAssessment().then((assessmentResponse) => {
+                startAssessing();
+                examAssessment.addNewFeedback(7, 'Good job');
+                examAssessment.submitTextAssessment().then((assessmentResponse) => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
@@ -153,14 +154,21 @@ describe('Exam assessment', () => {
         it('Assess a programming exercise submission (MANUAL)', () => {
             cy.login(tutor, '/course-management/' + course.id + '/exams');
             cy.contains('Assessment Dashboard', { timeout: examEnd }).click();
-            assessmentDashboard.startAssessing();
-            assessmentDashboard.addNewFeedback(2, 'Good job');
-            assessmentDashboard.submitAssessment();
+            startAssessing();
+            examAssessment.addNewFeedback(2, 'Good job');
+            examAssessment.submit();
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
             cy.get('.question-options').contains('6.6 of 10 points').should('be.visible');
         });
     });
 });
+
+function startAssessing() {
+    artemis.pageobjects.assessment.course.clickExerciseDashboardButton();
+    exerciseAssessment.clickHaveReadInstructionsButton();
+    exerciseAssessment.clickStartNewAssessment();
+    cy.contains('You have the lock for this assessment').should('be.visible');
+}
 
 function prepareExam(examEnd: dayjs.Dayjs) {
     cy.login(admin);

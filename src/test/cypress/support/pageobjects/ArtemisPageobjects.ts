@@ -20,12 +20,12 @@ import { MultipleChoiceQuiz } from './MultipleChoiceQuiz';
 import { ModelingEditor } from './ModelingEditor';
 import { TextExerciseAssessmentPage } from './assessment/TextExerciseAssessmentPage';
 import { TextExerciseFeedbackPage } from './exercises/text/TextExerciseFeedbackPage';
-import { AssessmentDashboard } from './AssessmentDashboard';
 import { ExamStartEndPage } from './exam/ExamStartEndPage';
 import { QuizExerciseCreationPage } from './QuizExerciseCreationPage';
 import { TextExerciseCreationPage } from './exercises/text/TextExerciseCreationPage';
 import { TextExerciseExampleSubmissionsPage } from './exercises/text/TextExerciseExampleSubmissionsPage';
 import { TextExerciseExampleSubmissionCreationPage } from './exercises/text/TextExerciseExampleSubmissionCreationPage';
+import { ExamAssessmentPage } from './assessment/ExamAssessmentPage';
 
 /**
  * A class which encapsulates all pageobjects, which can be used to automate the Artemis UI.
@@ -55,7 +55,7 @@ export class ArtemisPageobjects {
         feedback: new TextExerciseFeedbackPage(),
     };
     assessment = {
-        dashboard: new AssessmentDashboard(),
+        dashboard: new ExamAssessmentPage(),
         course: new CourseAssessmentDashboardPage(),
         exercise: new ExerciseAssessmentDashboardPage(),
         text: new TextExerciseAssessmentPage(),
