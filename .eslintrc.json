@@ -23,7 +23,7 @@
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
         "ecmaVersion": 2018,
-        "project": ["./tsconfig.json", "./tsconfig.app.json", "./tsconfig.spec.json", "./tsconfig.webpack.json", "./tsconfig.cypress.json"],
+        "project": ["./tsconfig.json", "./tsconfig.app.json", "./tsconfig.spec.json", "./tsconfig.webpack.json", "src/test/cypress/tsconfig.json"],
         "sourceType": "module",
         "ecmaFeatures": {
             "modules": true

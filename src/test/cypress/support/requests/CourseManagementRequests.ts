@@ -1,4 +1,4 @@
-import { BASE_API, DELETE, POST } from '../constants';
+import { BASE_API, DELETE, POST, PUT } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import { dayjsToString, generateUUID } from '../utils';
@@ -196,11 +196,18 @@ export class CourseManagementRequests {
         const templateCopy = {
             ...modelingExerciseTemplate,
             title,
+        };
+        const dates = {
             releaseDate: dayjsToString(releaseDate),
             dueDate: dayjsToString(dueDate),
             assessmentDueDate: dayjsToString(assessmentDueDate),
         };
-        const newModelingExercise = Object.assign({}, templateCopy, body);
+        let newModelingExercise;
+        if (body.hasOwnProperty('course')) {
+            newModelingExercise = Object.assign({}, templateCopy, dates, body);
+        } else {
+            newModelingExercise = Object.assign({}, templateCopy, body);
+        }
         return cy.request({
             url: MODELING_EXERCISE_BASE,
             method: POST,
@@ -222,7 +229,7 @@ export class CourseManagementRequests {
         });
     }
 
-    createQuizExercise(body: { course: any } | { exerciseGroup: any }, title = 'Cypress quiz exercise' + generateUUID(), releaseDate = day(), quizQuestions: [any]) {
+    createQuizExercise(body: { course: any } | { exerciseGroup: any }, quizQuestions: [any], title = 'Cypress quiz exercise' + generateUUID(), releaseDate = day()) {
         const quizExercise: any = {
             ...quizTemplate,
             title,
@@ -234,6 +241,20 @@ export class CourseManagementRequests {
             url: QUIZ_EXERCISE_BASE,
             method: POST,
             body: newQuizExercise,
+        });
+    }
+
+    setQuizVisible(quizId: number) {
+        return cy.request({
+            url: `${QUIZ_EXERCISE_BASE}${quizId}/set-visible`,
+            method: PUT,
+        });
+    }
+
+    startQuizNow(quizId: number) {
+        return cy.request({
+            url: `${QUIZ_EXERCISE_BASE}${quizId}/start-now`,
+            method: PUT,
         });
     }
 
