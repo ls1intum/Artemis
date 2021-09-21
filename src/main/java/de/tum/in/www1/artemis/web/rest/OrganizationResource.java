@@ -78,9 +78,9 @@ public class OrganizationResource {
      * @param organizationId the id of the organization from with the course should be removed
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
-    @DeleteMapping("organizations/{organizationId}/courses/{courseId}") // TODO: should be organizations/{organizationId}/courses/{courseId}
+    @DeleteMapping("organizations/{organizationId}/courses/{courseId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> removeCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
+    public ResponseEntity<Void> removeCourseFromOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
         Organization organization = organizationRepository.findOneOrElseThrow(organizationId);
         courseRepository.removeOrganizationFromCourse(courseId, organization);
 
@@ -261,7 +261,7 @@ public class OrganizationResource {
     }
 
     /**
-     * GET organizations/course/:courseId : Get all organizations currently containing a given course
+     * GET organizations/courses/:courseId : Get all organizations currently containing a given course
      *
      * @param courseId the id of the course that the organizations should contain
      * @return ResponseEntity containing a set of organizations containing the given course
@@ -275,7 +275,7 @@ public class OrganizationResource {
     }
 
     /**
-     * GET organizations/user/:userId : Get all organizations currently containing a given user
+     * GET organizations/users/:userId : Get all organizations currently containing a given user
      *
      * @param userId the id of the user that the organizations should contain
      * @return ResponseEntity containing a set of organizations containing the given user
