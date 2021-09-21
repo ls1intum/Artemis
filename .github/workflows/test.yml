@@ -82,34 +82,6 @@ jobs:
       run: ./gradlew checkstyleMain -x npm -x webapp
       if: success() || failure()
 
-  client-tests-fast:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-        - uses: actions/checkout@v2
-        - name: Setup Node.js
-          uses: actions/setup-node@v2.4.0
-          with:
-              node-version: '${{ env.node }}'
-              cache: 'npm'
-        - name: Install Dependencies
-          run: npm install
-        - name: Fast TypeScript Test without Typechecking
-          run: npm run test:ci --ci
-        - name: "Codacy: Report coverage"
-          uses: codacy/codacy-coverage-reporter-action@master
-          with:
-              project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-              coverage-reports: coverage/lcov.info
-          if: (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (success() || failure()) && github.event.pull_request.user.login != 'dependabot[bot]'
-        - name: Annotate Client Test Results
-          uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
-          if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
-          with:
-              access-token: ${{ secrets.GITHUB_TOKEN }}
-              path: junit.xml
-              numFailures: 99
-
   client-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -123,7 +95,7 @@ jobs:
         - name: Install Dependencies
           run: npm install
         - name: TypeScript Test With Typechecking
-          run: npm run test --ci
+          run: npm run test:ci
         - name: Annotate Client Test Results
           uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
           if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
