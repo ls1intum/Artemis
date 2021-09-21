@@ -50,7 +50,7 @@ describe('NotificationSettingsComponent', () => {
         const settingId = SettingId.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES;
         const webappStatus = true;
         const notificationSettingA: NotificationSetting = {
-            settingId: settingId,
+            settingId,
             webapp: webappStatus,
             email: false,
             changed: false,

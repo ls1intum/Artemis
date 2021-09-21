@@ -104,7 +104,7 @@ describe('User Settings Directive', () => {
         const notificationSettingsForTesting: NotificationSetting[] = [notificationSettingA, notificationSettingB];
 
         describe('test loadSettings', () => {
-            it('should call userSettingsService to load OptionsCores', () => {
+            it('should call userSettingsService to load Settings', () => {
                 stub(userSettingsService, 'loadSettings').returns(of(new HttpResponse({ body: notificationSettingsForTesting })));
                 const loadSettingsSuccessAsSettingsStructureSpy = sinon.spy(userSettingsService, 'loadSettingsSuccessAsSettingsStructure');
                 const extractIndividualSettingsFromSettingsStructureSpy = sinon.spy(userSettingsService, 'extractIndividualSettingsFromSettingsStructure');
@@ -128,7 +128,7 @@ describe('User Settings Directive', () => {
         });
 
         describe('test savingSettings', () => {
-            it('should call userSettingsService to save OptionsCores', () => {
+            it('should call userSettingsService to save Settings', () => {
                 stub(userSettingsService, 'saveSettings').returns(of(new HttpResponse({ body: notificationSettingsForTesting })));
                 const saveSettingsSuccessSpy = sinon.spy(userSettingsService, 'saveSettingsSuccess');
                 const extractIndividualSettingsFromSettingsStructureSpy = sinon.spy(userSettingsService, 'extractIndividualSettingsFromSettingsStructure');
