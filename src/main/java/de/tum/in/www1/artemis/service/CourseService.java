@@ -170,6 +170,7 @@ public class CourseService {
      * Deletes all elements associated with the course including:
      * <ul>
      *     <li>The Course</li>
+     *     <li>All Posts in that course{@link PostRepository#delete}</li>
      *     <li>All Exercises including:
      *      submissions, participations, results, repositories and build plans, see {@link ExerciseService#delete}</li>
      *     <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
