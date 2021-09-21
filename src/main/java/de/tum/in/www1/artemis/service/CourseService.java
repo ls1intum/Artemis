@@ -25,9 +25,11 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.user.UserService;
@@ -75,10 +77,13 @@ public class CourseService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
+    private final PostRepository postRepository;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository,
             LectureService lectureService, GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository,
             AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService,
-            ExamService examService, ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository) {
+            ExamService examService, ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
+            PostRepository postRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -94,6 +99,7 @@ public class CourseService {
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
         this.gradingScaleRepository = gradingScaleRepository;
+        this.postRepository = postRepository;
     }
 
     /**
@@ -178,6 +184,7 @@ public class CourseService {
     public void delete(Course course) {
         log.debug("Request to delete Course : {}", course.getTitle());
 
+        deleteAllPostsOfCourse(course);
         deleteLearningGoalsOfCourse(course);
         deleteExercisesOfCourse(course);
         deleteLecturesOfCourse(course);
@@ -186,6 +193,11 @@ public class CourseService {
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
         courseRepository.deleteById(course.getId());
+    }
+
+    private void deleteAllPostsOfCourse(Course course) {
+        List<Post> postsInCourse = postRepository.findPostsForCourse(course.getId());
+        postRepository.deleteAllInBatch(postsInCourse);
     }
 
     private void deleteGradingScaleOfCourse(Course course) {
