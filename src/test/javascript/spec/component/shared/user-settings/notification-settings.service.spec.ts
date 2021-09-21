@@ -2,24 +2,24 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
-import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { ATTACHMENT_CHANGE_TITLE, COURSE_ARCHIVE_STARTED_TITLE, EXAM_ARCHIVE_STARTED_TITLE, EXERCISE_PRACTICE_TITLE, NotificationType } from 'app/entities/notification.model';
-import { OptionSpecifier } from 'app/shared/constants/user-settings.constants';
+import { SettingId } from 'app/shared/constants/user-settings.constants';
 
-export const notificationOptionCoreA: NotificationOptionCore = {
-    optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
+export const notificationOptionCoreA: NotificationSetting = {
+    settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
     webapp: false,
     email: false,
 };
-export const notificationOptionCoreB: NotificationOptionCore = {
-    optionSpecifier: OptionSpecifier.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
+export const notificationOptionCoreB: NotificationSetting = {
+    settingId: SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
     webapp: true,
     email: false,
 };
 
-export const notificationOptionCoresForTesting: NotificationOptionCore[] = [notificationOptionCoreA, notificationOptionCoreB];
+export const notificationOptionCoresForTesting: NotificationSetting[] = [notificationOptionCoreA, notificationOptionCoreB];
 
 chai.use(sinonChai);
 const expect = chai.expect;

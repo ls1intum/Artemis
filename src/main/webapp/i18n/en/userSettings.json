@@ -16,12 +16,12 @@
             "categories": {
                 "NOTIFICATION_SETTINGS": "Notification Settings"
             },
-            "optionGroupNames": {
+            "settingGroupNames": {
                 "exerciseNotifications": "Exercise Notifications",
                 "lectureNotifications": "Lecture Notifications",
                 "instructorExclusiveNotifications": "Instructor Exclusive Notifications"
             },
-            "optionNames": {
+            "settingNames": {
                 "exerciseCreatedOrStarted": "Exercise created or started",
                 "exerciseOpenForPractice": "Exercise open for Practice",
                 "newPostForExercises": "New Post for Exercises",
@@ -31,7 +31,7 @@
                 "newReplyForLecture": "New Reply for Lecture",
                 "courseAndExamArchivingStarted": "Course & Exam Archiving Started"
             },
-            "optionDescriptions": {
+            "settingDescriptions": {
                 "exerciseCreatedOrStartedDescription": "Get notified when a (new) exercise has been created or started",
                 "exerciseOpenForPracticeDescription": "Get notified when an exercise has been opened for practice (e.g. Quiz)",
                 "newPostForExercisesDescription": "Get notified when a new post about an exercise has been created",

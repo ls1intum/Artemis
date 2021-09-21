@@ -16,12 +16,12 @@
             "categories": {
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen"
             },
-            "optionGroupNames": {
+            "settingGroupNames": {
                 "exerciseNotifications": "Aufgabenbenachrichtigungen",
                 "lectureNotifications": "Vorlesungsbenachrichtigungen",
                 "instructorExclusiveNotifications": "Exklusive Benachrichtigungen für Lehrende"
             },
-            "optionNames": {
+            "settingNames": {
                 "exerciseCreatedOrStarted": "(Neue) Aufgabe erstellt oder gestartet",
                 "exerciseOpenForPractice": "Aufgabe zum Üben freigegeben",
                 "newPostForExercises": "Neue Beiträge für Aufgaben",
@@ -31,7 +31,7 @@
                 "newReplyForLecture": "Neue Antworten für Vorlesungen",
                 "courseAndExamArchivingStarted": "Kurs und Klausur Archivierungsstart"
             },
-            "optionDescriptions": {
+            "settingDescriptions": {
                 "exerciseCreatedOrStartedDescription": "Erhalte eine Mitteilung wenn eine (neue) Aufgabe erstellt oder gestartet wurde",
                 "exerciseOpenForPracticeDescription": "Erhalte eine Mitteilung wenn eine Aufgabe zum Üben freigeschalten wurde (bsp. Quiz)",
                 "newPostForExercisesDescription": "Erhalte eine Mitteilung wenn ein neuer Beitrag zu einer Aufgabe erstellt wurde",

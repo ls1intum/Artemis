@@ -41,7 +41,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     private SystemNotificationRepository systemNotificationRepository;
 
     @Autowired
-    private NotificationOptionRepository notificationOptionRepository;
+    private NotificationSettingRepository notificationSettingRepository;
 
     private Exercise exercise;
 
@@ -258,8 +258,8 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         NotificationOption allowedOption = new NotificationOption(users.get(0), true, false, "notification.lecture-notification.attachment-changes");
         NotificationOption blockedOption = new NotificationOption(users.get(0), false, false, "notification.exercise-notification.exercise-open-for-practice");
 
-        notificationOptionRepository.save(allowedOption);
-        notificationOptionRepository.save(blockedOption);
+        notificationSettingRepository.save(allowedOption);
+        notificationSettingRepository.save(blockedOption);
 
         GroupNotification allowedNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
         allowedNotification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(allowedType));

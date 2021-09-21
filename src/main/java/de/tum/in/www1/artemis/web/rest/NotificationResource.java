@@ -23,8 +23,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
-import de.tum.in.www1.artemis.repository.NotificationOptionRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
+import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.NotificationSettingsService;
@@ -53,17 +53,17 @@ public class NotificationResource {
 
     private final UserRepository userRepository;
 
-    private final NotificationOptionRepository notificationOptionRepository;
+    private final NotificationSettingRepository notificationSettingRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
     private final NotificationSettingsService notificationSettingsService;
 
-    public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, NotificationOptionRepository notificationOptionRepository,
+    public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, NotificationSettingRepository notificationSettingRepository,
             AuthorizationCheckService authorizationCheckService, NotificationSettingsService notificationSettingsService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
-        this.notificationOptionRepository = notificationOptionRepository;
+        this.notificationSettingRepository = notificationSettingRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.notificationSettingsService = notificationSettingsService;
     }
@@ -99,7 +99,7 @@ public class NotificationResource {
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all Notifications for current user {} filtered by settings", currentUser);
-        Set<NotificationOption> notificationOptions = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
+        Set<NotificationOption> notificationOptions = notificationSettingRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
         Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(notificationOptions);
         Set<String> deactivatedTitles = notificationSettingsService.convertNotificationTypesToTitles(deactivatedTypes);
         final Page<Notification> page;

@@ -16,13 +16,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Each user can only set one specific option once.
  */
 @Entity
-@Table(name = "notification_option", uniqueConstraints = { @UniqueConstraint(columnNames = { "user_id", "option_specifier" }) })
+@Table(name = "notification_setting", uniqueConstraints = { @UniqueConstraint(columnNames = { "user_id", "setting_id" }) })
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class NotificationOption extends DomainObject {
 
-    @Column(name = "option_specifier", nullable = false)
-    private String optionSpecifier;
+    @Column(name = "setting_id", nullable = false)
+    private String settingId;
 
     @Column(name = "webapp", columnDefinition = "boolean default true", nullable = false)
     private boolean webapp = true;
@@ -31,26 +31,26 @@ public class NotificationOption extends DomainObject {
     private boolean email = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("notificationOption")
+    @JsonIgnoreProperties("notificationSetting")
     private User user;
 
     public NotificationOption() {
         // Default empty constructor
     }
 
-    public NotificationOption(User user, boolean webapp, boolean email, String optionSpecifier) {
+    public NotificationOption(User user, boolean webapp, boolean email, String settingId) {
         this.setUser(user);
         this.setWebapp(webapp);
         this.setEmail(email);
-        this.setOptionSpecifier(optionSpecifier);
+        this.setSettingId(settingId);
     }
 
-    public String getOptionSpecifier() {
-        return optionSpecifier;
+    public String getSettingId() {
+        return settingId;
     }
 
-    public void setOptionSpecifier(String optionSpecifier) {
-        this.optionSpecifier = optionSpecifier;
+    public void setSettingId(String settingId) {
+        this.settingId = settingId;
     }
 
     public boolean isWebapp() {
@@ -79,12 +79,12 @@ public class NotificationOption extends DomainObject {
 
     @Override
     public String toString() {
-        return "NotificationOption{" + ", optionSpecifier='" + optionSpecifier + '\'' + ", webapp=" + webapp + ", email=" + email + ", user=" + user + '}';
+        return "NotificationOption{" + ", settingId='" + settingId + '\'' + ", webapp=" + webapp + ", email=" + email + ", user=" + user + '}';
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getOptionSpecifier(), getUser(), isWebapp(), isEmail());
+        return Objects.hash(getSettingId(), getUser(), isWebapp(), isEmail());
     }
 
     @Override
@@ -102,8 +102,8 @@ public class NotificationOption extends DomainObject {
         boolean domainObjectCheck = Objects.equals(getId(), domainObject.getId());
         NotificationOption providedOption = (NotificationOption) object;
         boolean userCheck = checkUser(this.user, providedOption.user);
-        boolean optionSpecifierCheck = checkOptionSpecifier(this.optionSpecifier, providedOption.optionSpecifier);
-        return domainObjectCheck && userCheck && optionSpecifierCheck && this.webapp == providedOption.webapp && this.email == providedOption.email;
+        boolean settingIdCheck = checkSettingId(this.settingId, providedOption.settingId);
+        return domainObjectCheck && userCheck && settingIdCheck && this.webapp == providedOption.webapp && this.email == providedOption.email;
     }
 
     private boolean checkUser(User thisUser, User providedUser) {
@@ -116,12 +116,12 @@ public class NotificationOption extends DomainObject {
         return false;
     }
 
-    private boolean checkOptionSpecifier(String thisOptionSpecifier, String providedOptionSpecifier) {
-        if (thisOptionSpecifier == null && providedOptionSpecifier == null) {
+    private boolean checkSettingId(String thisSettingId, String providedSettingId) {
+        if (thisSettingId == null && providedSettingId == null) {
             return true;
         }
-        if (thisOptionSpecifier != null) {
-            return thisOptionSpecifier.equals(providedOptionSpecifier);
+        if (thisSettingId != null) {
+            return thisSettingId.equals(providedSettingId);
         }
         return false;
     }

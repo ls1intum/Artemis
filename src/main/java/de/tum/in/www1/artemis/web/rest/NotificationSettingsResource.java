@@ -18,13 +18,13 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.NotificationOption;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.NotificationOptionRepository;
+import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.NotificationSettingsService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
- * REST controller for managing NotificationSettings (NotificationOptions).
+ * REST controller for managing NotificationSettings (NotificationSettings).
  */
 @RestController
 @RequestMapping("api/")
@@ -35,34 +35,33 @@ public class NotificationSettingsResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final NotificationOptionRepository notificationOptionRepository;
+    private final NotificationSettingRepository notificationSettingRepository;
 
     private final UserRepository userRepository;
 
     private final NotificationSettingsService notificationSettingsService;
 
-    public NotificationSettingsResource(NotificationOptionRepository notificationOptionRepository, UserRepository userRepository,
+    public NotificationSettingsResource(NotificationSettingRepository notificationSettingRepository, UserRepository userRepository,
             NotificationSettingsService notificationSettingsService) {
-        this.notificationOptionRepository = notificationOptionRepository;
+        this.notificationSettingRepository = notificationSettingRepository;
         this.userRepository = userRepository;
         this.notificationSettingsService = notificationSettingsService;
     }
 
     /**
-     * GET notification-settings : Get all NotificationOptions for current user
+     * GET notification-settings : Get all NotificationSettings for current user
      *
-     * Fetches the NotificationOptions for the current user from the server.
-     * These are only the options that the user has already modified.
-     * NotificationOptions (Server) corresponds to NotificationOptionCores (Client)#
+     * Fetches the NotificationSettings for the current user from the server.
+     * These are only the settings that the user has already modified.
      *
-     * @return the list of found NotificationOptions
+     * @return the list of found NotificationSettings
      */
     @GetMapping("notification-settings")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<NotificationOption>> getNotificationOptionsForCurrentUser() {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all NotificationOptions for current user {}", currentUser);
-        final Set<NotificationOption> notificationOptionSet = notificationOptionRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
+        final Set<NotificationOption> notificationOptionSet = notificationSettingRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
         return new ResponseEntity<>(notificationOptionSet, HttpStatus.OK);
     }
 
@@ -84,7 +83,7 @@ public class NotificationSettingsResource {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to save NotificationOptions : {} for current user {}", notificationOptions, currentUser);
         notificationSettingsService.setCurrentUser(notificationOptions, currentUser);
-        List<NotificationOption> resultAsList = notificationOptionRepository.saveAll(Arrays.stream(notificationOptions).toList());
+        List<NotificationOption> resultAsList = notificationSettingRepository.saveAll(Arrays.stream(notificationOptions).toList());
         if (resultAsList.isEmpty()) {
             return badRequest("notificationOptions", "500", "Error occurred during saving of Notification Options");
         }

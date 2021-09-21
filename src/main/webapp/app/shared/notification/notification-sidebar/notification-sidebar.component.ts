@@ -9,11 +9,11 @@ import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification } from 'app/
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { Subscription } from 'rxjs';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { OptionCore } from 'app/shared/user-settings/user-settings.model';
+import { Setting } from 'app/shared/user-settings/user-settings.model';
 
 export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificationSideBar';
 
@@ -38,7 +38,7 @@ export class NotificationSidebarComponent implements OnInit {
     error?: string;
 
     // notification settings related
-    notificationOptionCores: NotificationOptionCore[] = [];
+    notificationSettings: NotificationSetting[] = [];
     notificationTitleActivationMap: Map<string, boolean> = new Map<string, boolean>();
     subscriptionToNotificationSettingsChanges: Subscription;
 
@@ -59,7 +59,7 @@ export class NotificationSidebarComponent implements OnInit {
                 if (user.lastNotificationRead) {
                     this.lastNotificationRead = user.lastNotificationRead;
                 }
-                this.loadNotificationSetting();
+                this.loadNotificationSettings();
                 this.listenForNotificationSettingsChanges();
                 this.loadNotifications();
                 this.subscribeToNotificationUpdates();
@@ -198,9 +198,9 @@ export class NotificationSidebarComponent implements OnInit {
      */
     private resetNotificationSidebars(): void {
         // reset notification settings
-        this.notificationOptionCores = [];
+        this.notificationSettings = [];
         this.notificationTitleActivationMap = new Map<string, boolean>();
-        this.loadNotificationSetting();
+        this.loadNotificationSettings();
 
         // reset notifications
         this.notifications = [];
@@ -216,14 +216,11 @@ export class NotificationSidebarComponent implements OnInit {
     /**
      * Loads the notifications settings, i.e. the respective option cores
      */
-    private loadNotificationSetting(): void {
-        this.userSettingsService.loadUserOptions(UserSettingsCategory.NOTIFICATION_SETTINGS).subscribe(
-            (res: HttpResponse<OptionCore[]>) => {
-                this.notificationOptionCores = this.userSettingsService.loadUserOptionCoresSuccessAsOptionCores(
-                    res.body!,
-                    UserSettingsCategory.NOTIFICATION_SETTINGS,
-                ) as NotificationOptionCore[];
-                this.notificationTitleActivationMap = this.notificationSettingsService.createUpdatedNotificationTitleActivationMap(this.notificationOptionCores);
+    private loadNotificationSettings(): void {
+        this.userSettingsService.loadSettings(UserSettingsCategory.NOTIFICATION_SETTINGS).subscribe(
+            (res: HttpResponse<Setting[]>) => {
+                this.notificationSettings = this.userSettingsService.loadSettingsSuccessAsSettings(res.body!, UserSettingsCategory.NOTIFICATION_SETTINGS) as NotificationSetting[];
+                this.notificationTitleActivationMap = this.notificationSettingsService.createUpdatedNotificationTitleActivationMap(this.notificationSettings);
             },
             (res: HttpErrorResponse) => (this.error = res.message),
         );

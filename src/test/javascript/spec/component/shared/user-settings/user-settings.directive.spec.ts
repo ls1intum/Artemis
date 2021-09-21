@@ -6,11 +6,11 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { OptionSpecifier, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
-import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
 import { JhiAlertService } from 'ng-jhipster';
@@ -56,13 +56,13 @@ describe('User Settings Directive', () => {
 
     const router = new MockRouter();
 
-    const notificationOptionCoreA: NotificationOptionCore = {
-        optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
+    const notificationOptionCoreA: NotificationSetting = {
+        settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
         webapp: false,
         email: false,
     };
-    const notificationOptionCoreB: NotificationOptionCore = {
-        optionSpecifier: OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES,
+    const notificationOptionCoreB: NotificationSetting = {
+        settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES,
         webapp: false,
         email: false,
     };
@@ -101,7 +101,7 @@ describe('User Settings Directive', () => {
     });
 
     describe('Service methods with Category Notification Settings', () => {
-        const notificationOptionCoresForTesting: NotificationOptionCore[] = [notificationOptionCoreA, notificationOptionCoreB];
+        const notificationOptionCoresForTesting: NotificationSetting[] = [notificationOptionCoreA, notificationOptionCoreB];
 
         describe('test loadSettings', () => {
             it('should call userSettingsService to load OptionsCores', () => {
@@ -135,7 +135,7 @@ describe('User Settings Directive', () => {
                 const createApplyChangesEventSpy = sinon.spy(userSettingsService, 'sendApplyChangesEvent');
                 const alertServiceSuccessSpy = sinon.spy(alertService, 'success');
 
-                comp.saveOptions();
+                comp.saveSettings();
 
                 expect(saveUserOptionCoresSuccessSpy).to.be.calledOnce;
                 expect(extractOptionCoresFromSettingsSpy).to.be.calledOnce;

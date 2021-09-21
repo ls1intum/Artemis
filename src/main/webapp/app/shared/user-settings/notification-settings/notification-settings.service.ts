@@ -13,40 +13,40 @@ import {
     NotificationType,
 } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
-import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
-import { OptionSpecifier } from 'app/shared/constants/user-settings.constants';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { SettingId } from 'app/shared/constants/user-settings.constants';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationSettingsService {
     /**
-     * This is the place where the mapping between OptionSpecifiers and notification titles happens on the client side
-     * Each OptionSpecifiers can be based on multiple different notification titles (based on NotificationTypes)
+     * This is the place where the mapping between SettingIds and notification titles happens on the client side
+     * Each SettingIds can be based on multiple different notification titles (based on NotificationTypes)
      */
-    private static NOTIFICATION_OPTION_SPECIFIER_TO_NOTIFICATION_TITLE_MAP: Map<OptionSpecifier, string[]> = new Map([
-        [OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED, [EXERCISE_CREATED_TITLE]],
-        [OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE, [EXERCISE_PRACTICE_TITLE]],
-        [OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_POST_EXERCISES, [NEW_POST_FOR_EXERCISE_TITLE]],
-        [OptionSpecifier.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES, [NEW_ANSWER_POST_FOR_EXERCISE_TITLE]],
-        [OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES, [ATTACHMENT_CHANGE_TITLE]],
-        [OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__NEW_POST_FOR_LECTURE, [NEW_POST_FOR_LECTURE_TITLE]],
-        [OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE, [NEW_ANSWER_POST_FOR_LECTURE_TITLE]],
-        [OptionSpecifier.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED, [EXAM_ARCHIVE_STARTED_TITLE, COURSE_ARCHIVE_STARTED_TITLE]],
+    private static NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TITLE_MAP: Map<SettingId, string[]> = new Map([
+        [SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED, [EXERCISE_CREATED_TITLE]],
+        [SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE, [EXERCISE_PRACTICE_TITLE]],
+        [SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_POST_EXERCISES, [NEW_POST_FOR_EXERCISE_TITLE]],
+        [SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES, [NEW_ANSWER_POST_FOR_EXERCISE_TITLE]],
+        [SettingId.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES, [ATTACHMENT_CHANGE_TITLE]],
+        [SettingId.NOTIFICATION__LECTURE_NOTIFICATION__NEW_POST_FOR_LECTURE, [NEW_POST_FOR_LECTURE_TITLE]],
+        [SettingId.NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE, [NEW_ANSWER_POST_FOR_LECTURE_TITLE]],
+        [SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED, [EXAM_ARCHIVE_STARTED_TITLE, COURSE_ARCHIVE_STARTED_TITLE]],
     ]);
 
     /**
      * Creates an updates map that indicates which notifications (titles) are (de)activated in the current notification settings
-     * @param notificationOptionCores will be mapped to their respective title and create a new updated map
+     * @param notificationSettings will be mapped to their respective title and create a new updated map
      * @return the updated map
      */
-    public createUpdatedNotificationTitleActivationMap(notificationOptionCores: NotificationOptionCore[]): Map<string, boolean> {
+    public createUpdatedNotificationTitleActivationMap(notificationSettings: NotificationSetting[]): Map<string, boolean> {
         const updatedMap: Map<string, boolean> = new Map<string, boolean>();
         let tmpNotificationTitles: string[];
 
-        for (let i = 0; i < notificationOptionCores.length; i++) {
-            tmpNotificationTitles = NotificationSettingsService.NOTIFICATION_OPTION_SPECIFIER_TO_NOTIFICATION_TITLE_MAP.get(notificationOptionCores[i].optionSpecifier) ?? [];
+        for (let i = 0; i < notificationSettings.length; i++) {
+            tmpNotificationTitles = NotificationSettingsService.NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TITLE_MAP.get(notificationSettings[i].settingId) ?? [];
             if (tmpNotificationTitles.length > 0) {
                 tmpNotificationTitles.forEach((tmpNotificationTitle) => {
-                    updatedMap.set(tmpNotificationTitle, notificationOptionCores[i].webapp);
+                    updatedMap.set(tmpNotificationTitle, notificationSettings[i].webapp);
                 });
             }
         }

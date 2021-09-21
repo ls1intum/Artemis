@@ -21,7 +21,7 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
     private UserRepository userRepository;
 
     @Autowired
-    private NotificationOptionRepository notificationOptionRepository;
+    private NotificationSettingRepository notificationSettingRepository;
 
     private NotificationOption optionA;
 
@@ -48,7 +48,7 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
-        notificationOptionRepository.deleteAll();
+        notificationSettingRepository.deleteAll();
     }
 
     /**
@@ -57,8 +57,8 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetNotificationOptionsForCurrentUser() throws Exception {
-        notificationOptionRepository.save(optionA);
-        notificationOptionRepository.save(optionB);
+        notificationSettingRepository.save(optionA);
+        notificationSettingRepository.save(optionB);
 
         List<NotificationOption> notificationOptions = request.getList("/api/notification-settings", HttpStatus.OK, NotificationOption.class);
 
@@ -80,10 +80,10 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
         boolean foundA = false;
         boolean foundB = false;
         for (NotificationOption option : notificationOptionsResponse) {
-            if (option.getOptionSpecifier().equals(optionA.getOptionSpecifier())) {
+            if (option.getSettingId().equals(optionA.getSettingId())) {
                 foundA = true;
             }
-            if (option.getOptionSpecifier().equals(optionA.getOptionSpecifier())) {
+            if (option.getSettingId().equals(optionA.getSettingId())) {
                 foundB = true;
             }
         }

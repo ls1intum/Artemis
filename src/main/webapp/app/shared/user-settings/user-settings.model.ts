@@ -1,4 +1,4 @@
-import { OptionSpecifier, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 /**
@@ -7,9 +7,9 @@ import { Authority } from 'app/shared/constants/authority.constants';
  * The OptionCores are uses as generics to support different implementations
  * Look at a x-settings.default.ts file for an example of the full UserSettings hierarchy
  */
-export interface UserSettings<T> {
+export interface UserSettingsStructure<T> {
     category: UserSettingsCategory;
-    groups: OptionGroup<T>[];
+    groups: SettingGroup<T>[];
 }
 
 /**
@@ -17,10 +17,10 @@ export interface UserSettings<T> {
  * e.g. they control notifications related to exercises
  * key will be replaced with the actual name during the translation
  */
-export interface OptionGroup<T> {
+export interface SettingGroup<T> {
     key: string;
     restrictionLevel: Authority;
-    options: Option<T>[];
+    settings: T[];
 }
 
 /**
@@ -30,19 +30,11 @@ export interface OptionGroup<T> {
  * i.e. their respective keys, the full string is located in the translation jsons
  * whereas the changeable properties (webapp, email : on/off) are encapsulated in an OptionCore
  */
-export interface Option<T> {
-    key: string;
-    descriptionKey: string;
+export abstract class Setting {
+    key?: string;
+    descriptionKey?: string;
     // can not replace T with OptionCore due to shadowing rules of TSLint
     // generic is needed to make OptionCore polymorphic (e.g. for default setting) otherwise compiler errors occur
-    optionCore: T; // concrete OptionCore Implementation
-}
-
-/**
- * OptionCores are used for client server communication and option (de)selection
- * Correspond to UserOptions (Server)
- */
-export abstract class OptionCore {
-    optionSpecifier: OptionSpecifier;
+    settingId: SettingId;
     changed?: boolean;
 }

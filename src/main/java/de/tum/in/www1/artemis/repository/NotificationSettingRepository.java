@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.NotificationOption;
  * Spring Data repository for the NotificationOption entity.
  */
 @Repository
-public interface NotificationOptionRepository extends JpaRepository<NotificationOption, Long> {
+public interface NotificationSettingRepository extends JpaRepository<NotificationOption, Long> {
 
     @Query("""
             SELECT notificationOption

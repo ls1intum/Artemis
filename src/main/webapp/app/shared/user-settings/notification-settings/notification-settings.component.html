@@ -4,39 +4,39 @@
         <!--UserSettingsCategory-->
         {{ 'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate }}
     </h1>
-    <button type="button" class="btn btn-primary" *ngIf="optionsChanged" id="apply-changes-button" (click)="this.saveOptions()">
+    <button type="button" class="btn btn-primary" *ngIf="settingsChanged" id="apply-changes-button" (click)="this.saveSettings()">
         <fa-icon [icon]="'save'"></fa-icon>
         {{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}
     </button>
 </div>
 <div class="list-group d-block" *ngIf="userSettings">
-    <div *ngFor="let optionGroup of userSettings.groups">
-        <div *jhiHasAnyAuthority="[optionGroup.restrictionLevel]" class="list-group-item">
+    <div *ngFor="let settingGroup of userSettings.groups">
+        <div *jhiHasAnyAuthority="[settingGroup.restrictionLevel]" class="list-group-item">
             <h3>
                 <!--GroupName-->
                 <!-- please look at the README.md file to understand how the translation works -->
-                {{ 'artemisApp.userSettings.optionGroupNames.' + optionGroup.key | artemisTranslate }}
+                {{ 'artemisApp.userSettings.settingGroupNames.' + settingGroup.key | artemisTranslate }}
             </h3>
-            <div *ngFor="let option of optionGroup.options">
+            <div *ngFor="let setting of settingGroup.settings">
                 <dt>
-                    <!--OptionName-->
-                    {{ 'artemisApp.userSettings.optionNames.' + option.key | artemisTranslate }}
+                    <!--SettingName-->
+                    {{ 'artemisApp.userSettings.settingNames.' + setting.key | artemisTranslate }}
                 </dt>
                 <span>
-                    <!--OptionDescription-->
-                    {{ 'artemisApp.userSettings.optionDescriptions.' + option.descriptionKey | artemisTranslate }}
+                    <!--SettingDescription-->
+                    {{ 'artemisApp.userSettings.settingDescriptions.' + setting.descriptionKey | artemisTranslate }}
                 </span>
-                <!--OptionCore-->
+                <!--Setting Specific Properties-->
                 <div class="form-check border-bottom">
                     <input
                         type="checkbox"
                         class="form-check-input"
-                        [checked]="option.optionCore.webapp"
-                        id="{{ option.optionCore.optionSpecifier }}"
-                        value="{{ option.optionCore.webapp }}"
-                        (click)="toggleOption($event)"
+                        [checked]="setting.webapp"
+                        id="{{ setting.settingId }}"
+                        value="{{ setting.webapp }}"
+                        (click)="toggleSetting($event)"
                     />
-                    <label class="form-check-label" for="{{ option.optionCore.optionSpecifier }}">WebApp</label>
+                    <label class="form-check-label" for="{{ setting.settingId }}">WebApp</label>
                 </div>
             </div>
         </div>

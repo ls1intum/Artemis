@@ -13,8 +13,8 @@ import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-tran
 import { JhiAlertService } from 'ng-jhipster';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { MockComponent } from 'ng-mocks';
-import { OptionSpecifier } from 'app/shared/constants/user-settings.constants';
-import { NotificationOptionCore } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { SettingId } from 'app/shared/constants/user-settings.constants';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings.default';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -47,28 +47,28 @@ describe('NotificationSettingsComponent', () => {
     });
 
     it('should toggle option', () => {
-        const optionId = OptionSpecifier.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES;
+        const optionId = SettingId.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES;
         const webappStatus = true;
-        const notificationOptionCoreA: NotificationOptionCore = {
-            optionSpecifier: optionId,
+        const notificationOptionCoreA: NotificationSetting = {
+            settingId: optionId,
             webapp: webappStatus,
             email: false,
             changed: false,
         };
-        comp.optionCores = [notificationOptionCoreA];
+        comp.settings = [notificationOptionCoreA];
         const event = {
             currentTarget: {
                 id: optionId,
             },
         };
 
-        expect(comp.optionsChanged).to.be.false;
+        expect(comp.settingsChanged).to.be.false;
         expect(notificationOptionCoreA.changed).to.be.false;
 
-        comp.toggleOption(event);
+        comp.toggleSetting(event);
 
         expect(notificationOptionCoreA.webapp).not.to.be.equal(webappStatus);
         expect(notificationOptionCoreA.changed).to.be.true;
-        expect(comp.optionsChanged).to.be.true;
+        expect(comp.settingsChanged).to.be.true;
     });
 });
