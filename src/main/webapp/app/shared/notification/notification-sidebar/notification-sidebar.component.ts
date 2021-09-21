@@ -214,7 +214,7 @@ export class NotificationSidebarComponent implements OnInit {
     // notification settings related methods
 
     /**
-     * Loads the notifications settings, i.e. the respective option cores
+     * Loads the notifications settings
      */
     private loadNotificationSettings(): void {
         this.userSettingsService.loadSettings(UserSettingsCategory.NOTIFICATION_SETTINGS).subscribe(

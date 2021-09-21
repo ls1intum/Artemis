@@ -3,7 +3,7 @@ export enum UserSettingsCategory {
 }
 
 /**
- * UserSettings Category__OptionGroup__OptionSpecifier
+ * UserSettings Category__SettingsGroup__SettingId
  */
 export enum SettingId {
     // notification settings settingIds

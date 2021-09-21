@@ -255,11 +255,11 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         NotificationType allowedType = NotificationType.ATTACHMENT_CHANGE;
         NotificationType blockedType = NotificationType.EXERCISE_PRACTICE;
 
-        NotificationSetting allowedOption = new NotificationSetting(users.get(0), true, false, "notification.lecture-notification.attachment-changes");
-        NotificationSetting blockedOption = new NotificationSetting(users.get(0), false, false, "notification.exercise-notification.exercise-open-for-practice");
+        NotificationSetting allowedSetting = new NotificationSetting(users.get(0), true, false, "notification.lecture-notification.attachment-changes");
+        NotificationSetting blockedSetting = new NotificationSetting(users.get(0), false, false, "notification.exercise-notification.exercise-open-for-practice");
 
-        notificationSettingRepository.save(allowedOption);
-        notificationSettingRepository.save(blockedOption);
+        notificationSettingRepository.save(allowedSetting);
+        notificationSettingRepository.save(blockedSetting);
 
         GroupNotification allowedNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
         allowedNotification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(allowedType));

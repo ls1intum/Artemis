@@ -11,9 +11,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * Individual Notification Option which combined make the Notification Settings
+ * Individual Notification Setting which combined make the Notification Settings (inside the hierarchical structure on the client side)
  * The unique constraint is needed to avoid duplications.
- * Each user can only set one specific option once.
  */
 @Entity
 @Table(name = "notification_setting", uniqueConstraints = { @UniqueConstraint(columnNames = { "user_id", "setting_id" }) })
@@ -86,7 +85,7 @@ public class NotificationSetting extends DomainObject {
 
     @Override
     public String toString() {
-        return "NotificationOption{" + ", settingId='" + settingId + '\'' + ", webapp=" + webapp + ", email=" + email + ", user=" + user + '}';
+        return "NotificationSetting{" + ", settingId='" + settingId + '\'' + ", webapp=" + webapp + ", email=" + email + ", user=" + user + '}';
     }
 
     @Override
@@ -107,10 +106,10 @@ public class NotificationSetting extends DomainObject {
             return false;
         }
         boolean domainObjectCheck = Objects.equals(getId(), domainObject.getId());
-        NotificationSetting providedOption = (NotificationSetting) object;
-        boolean userCheck = checkUser(this.user, providedOption.user);
-        boolean settingIdCheck = checkSettingId(this.settingId, providedOption.settingId);
-        return domainObjectCheck && userCheck && settingIdCheck && this.webapp == providedOption.webapp && this.email == providedOption.email;
+        NotificationSetting providedSetting = (NotificationSetting) object;
+        boolean userCheck = checkUser(this.user, providedSetting.user);
+        boolean settingIdCheck = checkSettingId(this.settingId, providedSetting.settingId);
+        return domainObjectCheck && userCheck && settingIdCheck && this.webapp == providedSetting.webapp && this.email == providedSetting.email;
     }
 
     private boolean checkUser(User thisUser, User providedUser) {

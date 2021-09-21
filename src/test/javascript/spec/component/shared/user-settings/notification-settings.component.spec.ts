@@ -46,11 +46,11 @@ describe('NotificationSettingsComponent', () => {
         expect(comp).to.be.ok;
     });
 
-    it('should toggle option', () => {
-        const optionId = SettingId.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES;
+    it('should toggle setting', () => {
+        const settingId = SettingId.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES;
         const webappStatus = true;
         const notificationSettingA: NotificationSetting = {
-            settingId: optionId,
+            settingId: settingId,
             webapp: webappStatus,
             email: false,
             changed: false,
@@ -58,7 +58,7 @@ describe('NotificationSettingsComponent', () => {
         comp.settings = [notificationSettingA];
         const event = {
             currentTarget: {
-                id: optionId,
+                id: settingId,
             },
         };
 

@@ -25,7 +25,7 @@ export interface SettingGroup<T> {
 
 /**
  * One Settings represents a specific property the user can modify.
- * To avoid redundant entries in the database the constant properties of an option
+ * To avoid redundant entries in the database the constant properties of a setting
  * (name, description) are stored in x-settings-structure.ts files,
  * i.e. their respective keys, the full string is located in the translation jsons
  * whereas the changeable properties (e.g. webapp, email : on/off) are saved in the DB

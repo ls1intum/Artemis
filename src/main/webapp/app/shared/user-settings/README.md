@@ -35,14 +35,14 @@
            {
               name: 'GroupNameA',
               restrictionLevel: Authority.USER,
-              options: [{
-                 name: 'OptionA',
-                 description: 'Description for OptionA',
+              settings: [{
+                 name: 'SettingA',
+                 description: 'Description for SettingA',
                  //... do not put the child specific properties here! The default values have to be stored on the server side!
-              //... more Options
+              //... more Settings
               }]
            }
-           //... more OptionGroups
+           //... more SettingGroups
      ]}
      ```
    c) Be **careful and precise** with the **naming** of new `SettingsIds`. Use them to create a mapping/correspondence to the actual changes in system-logic/behavior
@@ -57,7 +57,7 @@
        "artemisApp": {
          "userSettings": {
            "...": "...",
-           "optionGroupNames": {
+           "settingGroupNames": {
              "exerciseNotifications": "Exercise Notifications",
              "...": "..."
            },

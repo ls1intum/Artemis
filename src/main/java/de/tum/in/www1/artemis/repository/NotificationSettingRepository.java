@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 
 /**
- * Spring Data repository for the NotificationOption entity.
+ * Spring Data repository for the NotificationSetting entity.
  */
 @Repository
 public interface NotificationSettingRepository extends JpaRepository<NotificationSetting, Long> {

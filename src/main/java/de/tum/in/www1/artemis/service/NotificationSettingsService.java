@@ -49,10 +49,10 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED)));
 
     /**
-     * This is the place where the mapping between OptionSpecifiers and NotificationTypes happens on the server side
-     * Each OptionSpecifiers can be based on multiple different NotificationTypes
+     * This is the place where the mapping between SettingId and NotificationTypes happens on the server side
+     * Each SettingId can be based on multiple different NotificationTypes
      */
-    private final static Map<String, NotificationType[]> NOTIFICATION_OPTION_SPECIFIER_TO_NOTIFICATION_TYPES_MAP = Map.ofEntries(
+    private final static Map<String, NotificationType[]> NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TYPES_MAP = Map.ofEntries(
             Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED, new NotificationType[] { EXERCISE_CREATED }),
             Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE, new NotificationType[] { EXERCISE_PRACTICE }),
             Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__NEW_POST_EXERCISES, new NotificationType[] { NEW_POST_FOR_EXERCISE }),
@@ -63,14 +63,14 @@ public class NotificationSettingsService {
                     NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED, new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED }));
 
     /**
-     * Finds the deactivated NotificationTypes based on the user's NotificationOptions
-     * @param notificationOptions which should be mapped to their respective NotificationTypes and filtered by activation status
+     * Finds the deactivated NotificationTypes based on the user's NotificationSettings
+     * @param notificationSettings which should be mapped to their respective NotificationTypes and filtered by activation status
      * @return a set of NotificationTypes which are deactivated by the current user's notification settings
      */
-    public Set<NotificationType> findDeactivatedNotificationTypes(Set<NotificationSetting> notificationOptions) {
-        Map<NotificationType, Boolean> notificationOptionWitchActivationStatusMap = convertNotificationOptionsToNotificationTypesWithActivationStatus(notificationOptions);
+    public Set<NotificationType> findDeactivatedNotificationTypes(Set<NotificationSetting> notificationSettings) {
+        Map<NotificationType, Boolean> notificationSettingWithActivationStatusMap = convertNotificationSettingsToNotificationTypesWithActivationStatus(notificationSettings);
         Set<NotificationType> deactivatedNotificationTypes = new HashSet<>();
-        notificationOptionWitchActivationStatusMap.forEach((notificationType, isActivated) -> {
+        notificationSettingWithActivationStatusMap.forEach((notificationType, isActivated) -> {
             if (!isActivated) {
                 deactivatedNotificationTypes.add(notificationType);
             }
@@ -88,29 +88,29 @@ public class NotificationSettingsService {
     }
 
     /**
-     * Converts the provided NotificationOptions to a map of corresponding NotificationTypes and activation status.
-     * @param notificationOptions which will be mapped to their respective NotificationTypes with respect to their activation status
+     * Converts the provided NotificationSetting to a map of corresponding NotificationTypes and activation status.
+     * @param notificationSettings which will be mapped to their respective NotificationTypes with respect to their activation status
      * @return a map with key of NotificationType and value Boolean indicating which types are (de)activated by the user's notification settings
      */
-    private Map<NotificationType, Boolean> convertNotificationOptionsToNotificationTypesWithActivationStatus(Set<NotificationSetting> notificationOptions) {
+    private Map<NotificationType, Boolean> convertNotificationSettingsToNotificationTypesWithActivationStatus(Set<NotificationSetting> notificationSettings) {
         Map<NotificationType, Boolean> resultingMap = new HashMap<>();
-        for (NotificationSetting option : notificationOptions) {
-            NotificationType[] tmpNotificationTypes = NOTIFICATION_OPTION_SPECIFIER_TO_NOTIFICATION_TYPES_MAP.getOrDefault(option.getSettingId(), new NotificationType[0]);
+        for (NotificationSetting setting : notificationSettings) {
+            NotificationType[] tmpNotificationTypes = NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TYPES_MAP.getOrDefault(setting.getSettingId(), new NotificationType[0]);
             for (NotificationType type : tmpNotificationTypes) {
-                resultingMap.put(type, option.isWebapp());
+                resultingMap.put(type, setting.isWebapp());
             }
         }
         return resultingMap;
     }
 
     /**
-     * Updates the notificationOptions by setting the current user
-     * @param notificationOptions which might be saved the very first time and have no user set yet
+     * Updates the notificationSettings by setting the current user
+     * @param notificationSettings which might be saved the very first time and have no user set yet
      * @param currentUser who should be set
      */
-    public void setCurrentUser(NotificationSetting[] notificationOptions, User currentUser) {
-        for (NotificationSetting notificationOption : notificationOptions) {
-            notificationOption.setUser(currentUser);
+    public void setCurrentUser(NotificationSetting[] notificationSettings, User currentUser) {
+        for (NotificationSetting notificationSetting : notificationSettings) {
+            notificationSetting.setUser(currentUser);
         }
     }
 }
