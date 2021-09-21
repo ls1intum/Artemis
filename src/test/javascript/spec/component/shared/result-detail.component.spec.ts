@@ -4,8 +4,10 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SinonStub, spy, stub } from 'sinon';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -15,11 +17,15 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { SubmissionType } from 'app/entities/submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ChartComponent } from 'app/shared/chart/chart.component';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ParticipationType } from 'app/entities/participation/participation.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -32,8 +38,12 @@ describe('ResultDetailComponent', () => {
     let exercise: ProgrammingExercise;
     let buildLogService: BuildLogService;
     let resultService: ResultService;
+    let profileService: ProfileService;
     let buildlogsStub: SinonStub;
     let getFeedbackDetailsForResultStub: SinonStub;
+
+    // Template for Bitbucket commit hash url
+    const commitHashURLTemplate = 'https://bitbucket.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
 
     const makeFeedback = (fb: Feedback) => {
         return Object.assign({ type: FeedbackType.AUTOMATIC, text: '', detailText: '', credits: 0 } as Feedback, fb);
@@ -149,7 +159,11 @@ describe('ResultDetailComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisResultModule],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -163,6 +177,7 @@ describe('ResultDetailComponent', () => {
                     type: ExerciseType.PROGRAMMING,
                     staticCodeAnalysisEnabled: true,
                     maxStaticCodeAnalysisPenalty: 20,
+                    projectKey: 'somekey',
                 } as ProgrammingExercise;
 
                 comp.result = {
@@ -170,15 +185,39 @@ describe('ResultDetailComponent', () => {
                     participation: {
                         id: 55,
                         exercise,
+                        type: ParticipationType.PROGRAMMING,
+                        participantIdentifier: 'student42',
+                        repositoryUrl: 'https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42',
                     },
                 } as Result;
 
                 buildLogService = debugElement.injector.get(BuildLogService);
                 resultService = debugElement.injector.get(ResultService);
+                profileService = debugElement.injector.get(ProfileService);
 
                 buildlogsStub = stub(buildLogService, 'getBuildLogs').returns(of([]));
                 getFeedbackDetailsForResultStub = stub(resultService, 'getFeedbackDetailsForResult').returns(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
+
+                // Set profile info
+                const profileInfo = new ProfileInfo();
+                profileInfo.commitHashURLTemplate = commitHashURLTemplate;
+                stub(profileService, 'getProfileInfo').returns(new BehaviorSubject(profileInfo));
             });
+    });
+
+    it('should generate commit link for programming exercise result with submission, participation and exercise', () => {
+        const { feedbacks } = generateFeedbacksAndExpectedItems();
+        comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.result.feedbacks = feedbacks;
+        comp.result.submission = {
+            type: SubmissionType.MANUAL,
+            commitHash: '123456789ab',
+        } as ProgrammingSubmission;
+
+        comp.ngOnInit();
+
+        expect(comp.getCommitHash()).to.equal('123456789ab');
+        expect(comp.getCommitUrl()).to.equal('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/123456789ab');
     });
 
     it('should not try to retrieve the feedbacks from the server if provided result has feedbacks', () => {
