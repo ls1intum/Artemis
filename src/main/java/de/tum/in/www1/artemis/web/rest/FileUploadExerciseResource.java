@@ -179,8 +179,7 @@ public class FileUploadExerciseResource {
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
 
-        // Only notify students about changes if a regular exercise was updated
-        if (notificationText != null && fileUploadExercise.isCourseExercise()) {
+        if ((notificationText != null && fileUploadExercise.isCourseExercise()) || fileUploadExercise.isExamExercise()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(fileUploadExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).body(updatedExercise);

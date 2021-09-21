@@ -20,12 +20,11 @@ import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exe
 @Component({
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html',
-    styleUrls: ['./file-upload-exercise-update.component.scss'],
+    styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
 export class FileUploadExerciseUpdateComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
-    checkedFlag: boolean;
     isExamMode: boolean;
     fileUploadExercise: FileUploadExercise;
     backupExercise: FileUploadExercise;
@@ -33,9 +32,9 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     EditorMode = EditorMode;
+    notificationText?: string;
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
-    domainCommandsGradingInstructions = [new KatexCommand()];
 
     saveCommand: SaveExerciseCommand<FileUploadExercise>;
 
@@ -58,8 +57,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      * Initializes information relevant to file upload exercise
      */
     ngOnInit() {
-        this.checkedFlag = false; // default value of grading instructions toggle
-
         // This is used to scroll page to the top of the page, because the routing keeps the position for the
         // new page from previous page.
         window.scroll(0, 0);
@@ -93,7 +90,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
 
-        this.saveCommand.save(this.fileUploadExercise).subscribe(
+        this.saveCommand.save(this.fileUploadExercise, this.notificationText).subscribe(
             () => this.onSaveSuccess(),
             (res: HttpErrorResponse) => this.onSaveError(res),
             () => {
@@ -127,12 +124,5 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         const jhiAlert = this.jhiAlertService.error(errorMessage);
         jhiAlert.msg = errorMessage;
         this.isSaving = false;
-    }
-
-    /**
-     * gets the flag of the structured grading instructions slide toggle
-     */
-    getCheckedFlag(event: boolean) {
-        this.checkedFlag = event;
     }
 }

@@ -20,7 +20,8 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
      */
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength)]],
+            // the pattern ensures that the content must include at least one non-whitespace character
+            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
         });
     }
 
@@ -32,6 +33,7 @@ export class AnswerPostCreateEditModalComponent extends PostingsCreateEditModalD
         this.posting.creationDate = moment();
         this.metisService.createAnswerPost(this.posting).subscribe({
             next: (answerPost: AnswerPost) => {
+                this.resetFormGroup();
                 this.isLoading = false;
                 this.onCreate.emit(answerPost);
                 this.modalRef?.close();

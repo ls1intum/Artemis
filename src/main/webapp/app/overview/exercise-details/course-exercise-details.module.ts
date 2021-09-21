@@ -9,7 +9,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
@@ -38,7 +37,7 @@ const routes: Routes = [
             {
                 path: '',
                 pathMatch: 'full',
-                loadChildren: () => import('../discussion/discussion.module').then((m) => m.DiscussionModule),
+                loadChildren: () => import('../page-discussion-section/page-discussion-section.module').then((m) => m.PageDiscussionSectionModule),
             },
         ],
     },
@@ -60,7 +59,6 @@ const routes: Routes = [
         OrionModule,
         ArtemisComplaintsModule,
         FeatureToggleModule,
-        ProgrammingExerciseUtilsModule,
         ArtemisTeamModule,
         RatingModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
