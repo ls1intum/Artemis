@@ -15,7 +15,6 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { SinonStub, stub } from 'sinon';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 const question = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as QuizQuestion;

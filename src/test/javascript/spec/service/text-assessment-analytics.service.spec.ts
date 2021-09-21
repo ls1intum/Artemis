@@ -46,7 +46,7 @@ describe('TextAssessmentAnalytics Service', () => {
     }));
 
     it('should subscribe to route parameters if artemis analytics is enabled', fakeAsync(() => {
-        const subscribeToRouteParameters = jest.spyOn<any, any>(service, 'subscribeToRouteParameters').mockImplementation(() => { });
+        const subscribeToRouteParameters = jest.spyOn<any, any>(service, 'subscribeToRouteParameters').mockImplementation(() => {});
         service.analyticsEnabled = true;
         service.setComponentRoute(new ActivatedRoute());
         expect(subscribeToRouteParameters).toHaveBeenCalledTimes(1);

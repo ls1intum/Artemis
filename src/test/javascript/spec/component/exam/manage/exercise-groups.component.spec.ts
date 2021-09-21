@@ -197,7 +197,7 @@ describe('Exercise Groups Component', () => {
     it('opens the import modal for programming exercises', fakeAsync(() => {
         const mockReturnValue = { result: Promise.resolve({ id: 1 } as ProgrammingExercise) } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-        const routerNavigateStub = jest.spyOn(router, 'navigate');
+        jest.spyOn(router, 'navigate');
 
         comp.openImportModal(groups[0], ExerciseType.PROGRAMMING);
         tick();
@@ -221,7 +221,7 @@ describe('Exercise Groups Component', () => {
     it('opens the import modal for modeling exercises', fakeAsync(() => {
         const mockReturnValue = { result: Promise.resolve({ id: 1 } as ModelingExercise) } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-        const routerNavigateStub = jest.spyOn(router, 'navigate');
+        jest.spyOn(router, 'navigate');
 
         comp.openImportModal(groups[0], ExerciseType.MODELING);
         tick();

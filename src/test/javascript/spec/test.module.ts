@@ -3,8 +3,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ElementRef, NgModule, Renderer2 } from '@angular/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgbActiveModal, NgbModal, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
-
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from './helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from './helpers/mocks/activated-route/mock-activated-route';

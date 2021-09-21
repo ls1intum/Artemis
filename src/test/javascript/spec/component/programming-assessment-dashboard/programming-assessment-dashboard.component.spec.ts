@@ -125,8 +125,8 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
         getProgrammingSubmissionsForExerciseByCorrectionRoundStub.mockReturnValue(of(new HttpResponse({ body: [programmingSubmission1] })));
         isAtLeastInstructorInCourseStub.mockReturnValue(true);
         jest.spyOn<any, any>(component, 'setPermissions');
-        const getSubmissionSpy = jest.spyOn<any, any>(component, 'getSubmissions');
-        getSubmissionSpy;
+        jest.spyOn<any, any>(component, 'getSubmissions');
+
         // call
         component.ngOnInit();
         tick(500);
@@ -150,8 +150,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
         isAtLeastInstructorInCourseStub.mockReturnValue(true);
         // findExerciseStub.returns(of(new HttpResponse({ body: fileUploadExercise, headers: new HttpHeaders() })));
         exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: programmingExercise2, headers: new HttpHeaders() })));
-        const getSubmissionSpy = jest.spyOn<any, any>(component, 'getSubmissions');
-        getSubmissionSpy;
+        jest.spyOn<any, any>(component, 'getSubmissions');
         component.exercise = programmingExercise2;
 
         // call
