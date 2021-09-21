@@ -27,8 +27,8 @@ group = "de.tum.in.www1.artemis"
 version = "5.1.4"
 description = "Interactive Learning with Individual Feedback"
 
-sourceCompatibility=16
-targetCompatibility=16
+sourceCompatibility = 16
+targetCompatibility = 16
 
 apply from: "gradle/docker.gradle"
 apply from: "gradle/swagger.gradle"
@@ -108,6 +108,9 @@ dependencies {
     implementation group: "tech.jhipster", name: "jhipster-framework", {
         exclude group: "org.springframework", module: "spring-webmvc"
     }
+    // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
+    implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
+    implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
     implementation "javax.annotation:javax.annotation-api"
     implementation "io.dropwizard.metrics:metrics-core"
     implementation "io.micrometer:micrometer-registry-prometheus:1.7.2"
@@ -127,7 +130,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
     implementation "io.projectreactor.kafka:reactor-kafka"
     implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
-    implementation ("org.springframework.boot:spring-boot-starter-webflux:${spring_boot_version}") {
+    implementation("org.springframework.boot:spring-boot-starter-webflux:${spring_boot_version}") {
         exclude module: "spring-boot-starter-tomcat"
     }
     implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
@@ -148,21 +151,20 @@ dependencies {
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
     implementation "org.springframework.data:spring-data-jpa"
 
-//    implementation "io.jsonwebtoken:jjwt-api"
     implementation "io.jsonwebtoken:jjwt-api:0.11.2"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.2"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.2"
-    implementation ("io.springfox:springfox-oas")
-    implementation ("io.springfox:springfox-swagger2:3.0.0") {
+    implementation("io.springfox:springfox-oas")
+    implementation("io.springfox:springfox-swagger2:3.0.0") {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
 
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
-    annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
-    testImplementation ("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
+    testImplementation("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
         exclude module: "junit"
         exclude group: "org.junit.vintage", module: "junit-vintage-engine"
         exclude group: "com.vaadin.external.google", module: "android-json"
@@ -182,7 +184,7 @@ task cleanResources(type: Delete) {
 }
 
 wrapper {
-    gradleVersion = "7.0.2"
+    gradleVersion = "7.1.1"
 }
 
 
