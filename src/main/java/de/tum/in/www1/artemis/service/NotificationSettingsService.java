@@ -35,22 +35,18 @@ public class NotificationSettingsService {
     // lecture notification setting group
     private final static String NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED = "notification.instructor-exclusive-notification.course-and-exam-archiving-started";
 
-    public final static Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>() {
-
-        {
+    public final static Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>(Arrays.asList(
             // exercise notification setting group
-            add(new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED));
-            add(new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE));
-            add(new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_POST_EXERCISES));
-            add(new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES));
+            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED),
+            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE),
+            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_POST_EXERCISES),
+            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES),
             // lecture notification settings group
-            add(new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES));
-            add(new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_POST_FOR_LECTURE));
-            add(new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE));
+            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES),
+            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_POST_FOR_LECTURE),
+            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_ANSWER_POST_FOR_LECTURE),
             // lecture notification setting group
-            add(new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED));
-        }
-    };
+            new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED)));
 
     /**
      * This is the place where the mapping between OptionSpecifiers and NotificationTypes happens on the server side
