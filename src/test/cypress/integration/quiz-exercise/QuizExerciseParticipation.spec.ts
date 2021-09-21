@@ -9,7 +9,7 @@ const student = artemis.users.getStudentOne();
 const courseManagementRequest = artemis.requests.courseManagement;
 
 // Page objects
-const multipleChoiceQuiz = artemis.pageobjects.multipleChoiceQuiz;
+const multipleChoiceQuiz = artemis.pageobjects.quizExercise.multipleChoice;
 
 describe('Quiz Exercise Management', () => {
     let course: any;
