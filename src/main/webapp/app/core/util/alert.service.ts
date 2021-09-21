@@ -84,59 +84,47 @@ export class AlertService {
     }
 
     success(message: string, translationParams?: { [key: string]: unknown }, position?: string): Alert {
-        return this.addAlert(
-            {
-                type: 'success',
-                message,
-                translationParams,
-                timeout: this.timeout,
-                toast: this.isToast(),
-                position,
-            },
-            [],
-        );
+        return this.addAlert({
+            type: 'success',
+            message,
+            translationParams,
+            timeout: this.timeout,
+            toast: this.isToast(),
+            position,
+        });
     }
 
     error(message: string, translationParams?: { [key: string]: unknown }, position?: string): Alert {
-        return this.addAlert(
-            {
-                type: 'danger',
-                message,
-                translationParams,
-                timeout: this.timeout,
-                toast: this.isToast(),
-                position,
-            },
-            [],
-        );
+        return this.addAlert({
+            type: 'danger',
+            message,
+            translationParams,
+            timeout: this.timeout,
+            toast: this.isToast(),
+            position,
+        });
     }
 
     warning(message: string, translationParams?: { [key: string]: unknown }, position?: string): Alert {
-        return this.addAlert(
-            {
-                type: 'warning',
-                message,
-                translationParams,
-                timeout: this.timeout,
-                toast: this.isToast(),
-                position,
-            },
-            [],
-        );
+        return this.addAlert({
+            type: 'warning',
+            message,
+            translationParams,
+            timeout: this.timeout,
+            toast: this.isToast(),
+            position,
+        });
     }
 
     info(message: string, translationParams?: { [key: string]: unknown }, position?: string): Alert {
-        return this.addAlert(
-            {
-                type: 'info',
-                message,
-                translationParams,
-                timeout: this.timeout,
-                toast: this.isToast(),
-                position,
-            },
-            [],
-        );
+        return this.addAlert({
+            type: 'info',
+            message,
+            translationParams,
+            timeout: this.timeout,
+            toast: this.isToast(),
+            position,
+        });
     }
 
     isToast(): boolean {
