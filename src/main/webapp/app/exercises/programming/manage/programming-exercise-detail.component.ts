@@ -256,15 +256,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.lockingOrUnlockingRepositories = true;
         this.programmingExerciseService.unlockAllRepositories(this.programmingExercise.id!).subscribe(
             (res) => {
-                this.alertService.addAlert(
-                    {
-                        type: 'success',
-                        message: 'artemisApp.programmingExercise.unlockAllRepositoriesSuccess',
-                        translationParams: { number: res?.body },
-                        timeout: 10000,
-                    },
-                    [],
-                );
+                this.alertService.addAlert({
+                    type: 'success',
+                    message: 'artemisApp.programmingExercise.unlockAllRepositoriesSuccess',
+                    translationParams: { number: res?.body },
+                    timeout: 10000,
+                });
                 this.lockingOrUnlockingRepositories = false;
             },
             (err: HttpErrorResponse) => {
@@ -293,15 +290,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.lockingOrUnlockingRepositories = true;
         this.programmingExerciseService.lockAllRepositories(this.programmingExercise.id!).subscribe(
             (res) => {
-                this.alertService.addAlert(
-                    {
-                        type: 'success',
-                        message: 'artemisApp.programmingExercise.lockAllRepositoriesSuccess',
-                        translationParams: { number: res?.body },
-                        timeout: 10000,
-                    },
-                    [],
-                );
+                this.alertService.addAlert({
+                    type: 'success',
+                    message: 'artemisApp.programmingExercise.lockAllRepositoriesSuccess',
+                    translationParams: { number: res?.body },
+                    timeout: 10000,
+                });
                 this.lockingOrUnlockingRepositories = false;
             },
             (err: HttpErrorResponse) => {
