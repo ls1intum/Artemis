@@ -14,12 +14,4 @@ import java.util.List;
 @Repository
 public interface SubmissionPolicyRepository extends JpaRepository<SubmissionPolicy, Long> {
 
-    SubmissionPolicy findByExerciseId(Long exerciseId);
-
-    @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = {"programmingExercise"})
-    SubmissionPolicy findByIdWithProgrammingExercise(Long submissionPolicyId);
-
-    @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = {"programmingExercise"})
-    SubmissionPolicy findByExerciseIdWithProgrammingExercise(Long exerciseId);
-
 }

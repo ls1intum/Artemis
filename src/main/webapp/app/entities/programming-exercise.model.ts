@@ -5,6 +5,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import {SubmissionPolicy} from "app/entities/submission-policy.model";
 
 export enum ProgrammingLanguage {
     JAVA = 'JAVA',
@@ -44,6 +45,7 @@ export class ProgrammingExercise extends Exercise {
     public allowComplaintsForAutomaticAssessments?: boolean;
     public checkoutSolutionRepository?: boolean;
     public auxiliaryRepositories?: AuxiliaryRepository[];
+    public submissionPolicy?: SubmissionPolicy;
 
     public buildAndTestStudentSubmissionsAfterDueDate?: Moment;
     public testCasesChanged?: boolean;

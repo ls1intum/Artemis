@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,10 +50,12 @@ public class ProgrammingExerciseSimulationService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final SubmissionPolicyService submissionPolicyService;
+
     public ProgrammingExerciseSimulationService(ProgrammingExerciseRepository programmingExerciseRepository, GroupNotificationService groupNotificationService,
-            ProgrammingExerciseService programmingExerciseService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ResultRepository resultRepository, InstanceMessageSendService instanceMessageSendService) {
+                                                ProgrammingExerciseService programmingExerciseService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+                                                SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+                                                ResultRepository resultRepository, InstanceMessageSendService instanceMessageSendService, SubmissionPolicyService submissionPolicyService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -61,6 +64,7 @@ public class ProgrammingExerciseSimulationService {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.submissionPolicyService = submissionPolicyService;
     }
 
     /**
@@ -77,6 +81,7 @@ public class ProgrammingExerciseSimulationService {
         setURLsAndBuildPlanIDsForNewExerciseWithoutVersionControlAndContinuousIntegrationAvailable(programmingExercise);
 
         programmingExerciseService.connectBaseParticipationsToExerciseAndSave(programmingExercise);
+        submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // The creation of the webhooks must occur after the initial push, because the participation is

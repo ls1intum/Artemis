@@ -1,31 +1,36 @@
-import { ActivatedRoute, Params } from '@angular/router';
-import { Component, OnInit } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
-import { Observable, Subject } from 'rxjs';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseService } from '../services/programming-exercise.service';
-import { FileService } from 'app/shared/http/file.service';
-import { TranslateService } from '@ngx-translate/core';
-import { switchMap, tap } from 'rxjs/operators';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { shortNamePattern } from 'app/shared/constants/input.constants';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { cloneDeep } from 'lodash';
-import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { onError } from 'app/shared/util/global.utils';
-import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import {ActivatedRoute, Params} from '@angular/router';
+import {Component, OnInit} from '@angular/core';
+import {HttpErrorResponse, HttpResponse} from '@angular/common/http';
+import {JhiAlertService} from 'ng-jhipster';
+import {Observable, Subject} from 'rxjs';
+import {CourseManagementService} from 'app/course/manage/course-management.service';
+import {ProgrammingExercise, ProgrammingLanguage, ProjectType} from 'app/entities/programming-exercise.model';
+import {ProgrammingExerciseService} from '../services/programming-exercise.service';
+import {FileService} from 'app/shared/http/file.service';
+import {TranslateService} from '@ngx-translate/core';
+import {switchMap, tap} from 'rxjs/operators';
+import {FeatureToggle} from 'app/shared/feature-toggle/feature-toggle.service';
+import {ExerciseService} from 'app/exercises/shared/exercise/exercise.service';
+import {AssessmentType} from 'app/entities/assessment-type.model';
+import {Exercise, IncludedInOverallScore} from 'app/entities/exercise.model';
+import {EditorMode} from 'app/shared/markdown-editor/markdown-editor.component';
+import {ProfileService} from 'app/shared/layouts/profiles/profile.service';
+import {ProgrammingExerciseSimulationService} from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
+import {ExerciseGroupService} from 'app/exam/manage/exercise-groups/exercise-group.service';
+import {ProgrammingLanguageFeatureService} from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
+import {ArtemisNavigationUtilService} from 'app/utils/navigation.utils';
+import {shortNamePattern} from 'app/shared/constants/input.constants';
+import {ExerciseCategory} from 'app/entities/exercise-category.model';
+import {cloneDeep} from 'lodash';
+import {ExerciseUpdateWarningService} from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
+import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import {onError} from 'app/shared/util/global.utils';
+import {AuxiliaryRepository} from 'app/entities/programming-exercise-auxiliary-repository-model';
+import {
+    LockRepositoryPolicy,
+    SubmissionPenaltyPolicy,
+    SubmissionPolicyType
+} from "app/entities/submission-policy.model";
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -62,6 +67,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue: ProjectType;
+
+    private selectedSubmissionPolicyType: SubmissionPolicyType;
+
+    submissionLimit: number;
+    exceedingPenalty: number;
+
+    isSubmissionPolicyNone: boolean;
+    isSubmissionPolicyLockRepository: boolean;
+    isSubmissionPolicySubmissionPenalty: boolean;
 
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
@@ -136,7 +150,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Updates the checkouDirectory name of the editedAuxiliaryRepository.
+     * Updates the checkoutDirectory name of the editedAuxiliaryRepository.
      *
      * @param editedAuxiliaryRepository
      */
@@ -202,6 +216,22 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return this.selectedProgrammingLanguageValue;
     }
 
+    get selectedSubmissionPolicy() {
+        return this.selectedSubmissionPolicyType;
+    }
+
+    updateSubmissionLimit(limit: number) {
+        this.submissionLimit = limit;
+        this.programmingExercise!.submissionPolicy!.submissionLimit = limit;
+        return limit;
+    }
+
+    updateExceedingPenalty(penalty: number) {
+        this.exceedingPenalty = penalty;
+        (this.programmingExercise!.submissionPolicy! as SubmissionPenaltyPolicy).exceedingPenalty = penalty;
+        return penalty;
+    }
+
     /**
      * Will also trigger loading the corresponding project type template.
      *
@@ -245,6 +275,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             this.selectedProjectTypeValue = this.programmingExercise.projectType!;
+            this.selectedSubmissionPolicyType = this.programmingExercise.submissionPolicy?.type ?? SubmissionPolicyType.NONE;
         });
 
         // If it is an import, just get the course, otherwise handle the edit and new cases
@@ -296,6 +327,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
         // Select the correct pattern
         this.setPackageNamePattern(this.selectedProgrammingLanguage);
+
+        this.onSubmissionPolicyTypeChanged(this.programmingExercise.submissionPolicy?.type ?? SubmissionPolicyType.NONE);
 
         // Checks if the current environment is production
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -463,6 +496,21 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         window.scrollTo(0, 0);
     }
 
+    private setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType: SubmissionPolicyType) {
+        this.isSubmissionPolicyNone = this.isSubmissionPolicyLockRepository = this.isSubmissionPolicySubmissionPenalty = false;
+        switch (submissionPolicyType) {
+            case SubmissionPolicyType.NONE:
+                this.isSubmissionPolicyNone = true;
+                break;
+            case SubmissionPolicyType.LOCK_REPOSITORY:
+                this.isSubmissionPolicyLockRepository = true;
+                break;
+            case SubmissionPolicyType.SUBMISSION_PENALTY:
+                this.isSubmissionPolicySubmissionPenalty = true;
+                break;
+        }
+    }
+
     /**
      * When setting the programming language, a change guard is triggered.
      * This is because we want to reload the instructions template for a different language, but don't want the user to loose unsaved changes.
@@ -526,6 +574,27 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
+    }
+
+    onSubmissionPolicyTypeChanged(submissionPolicyType: SubmissionPolicyType) {
+        const previousSubmissionPolicyType = this.programmingExercise?.submissionPolicy ?? SubmissionPolicyType.NONE;
+        if (submissionPolicyType === SubmissionPolicyType.NONE) {
+            this.programmingExercise.submissionPolicy = undefined;
+        } else if (submissionPolicyType === SubmissionPolicyType.LOCK_REPOSITORY) {
+            const newPolicy = new LockRepositoryPolicy();
+            if (previousSubmissionPolicyType === SubmissionPolicyType.SUBMISSION_PENALTY) {
+                newPolicy.submissionLimit = this.programmingExercise.submissionPolicy?.submissionLimit;
+            }
+            this.programmingExercise.submissionPolicy = newPolicy;
+        } else if (submissionPolicyType === SubmissionPolicyType.SUBMISSION_PENALTY) {
+            const newPolicy = new LockRepositoryPolicy();
+            if (previousSubmissionPolicyType === SubmissionPolicyType.LOCK_REPOSITORY) {
+                newPolicy.submissionLimit = this.programmingExercise.submissionPolicy?.submissionLimit;
+            }
+            this.programmingExercise.submissionPolicy = newPolicy;
+        }
+        this.setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType);
+        return submissionPolicyType!;
     }
 
     onRecreateBuildPlanOrUpdateTemplateChange() {

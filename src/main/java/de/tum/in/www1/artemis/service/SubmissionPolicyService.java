@@ -41,12 +41,24 @@ public class SubmissionPolicyService {
     }
 
     public SubmissionPolicy addSubmissionPolicyToProgrammingExercise(SubmissionPolicy submissionPolicy, ProgrammingExercise programmingExercise) {
-        programmingExercise.setSubmissionPolicy(submissionPolicy);
         submissionPolicy.setProgrammingExercise(programmingExercise);
         programmingExerciseRepository.save(programmingExercise);
         SubmissionPolicy addedSubmissionPolicy = submissionPolicyRepository.save(submissionPolicy);
+        programmingExercise.setSubmissionPolicy(addedSubmissionPolicy);
         enableSubmissionPolicy(addedSubmissionPolicy);
         return addedSubmissionPolicy;
+    }
+
+    public void validateSubmissionPolicyCreation(ProgrammingExercise programmingExercise) {
+        SubmissionPolicy submissionPolicy = programmingExercise.getSubmissionPolicy();
+        if (submissionPolicy == null) {
+            return;
+        }
+        validateSubmissionPolicy(submissionPolicy);
+        submissionPolicy.setProgrammingExercise(programmingExercise);
+        submissionPolicy.setActive(true);
+        submissionPolicy = submissionPolicyRepository.save(submissionPolicy);
+        programmingExercise.setSubmissionPolicy(submissionPolicy);
     }
 
     public void validateSubmissionPolicy(SubmissionPolicy submissionPolicy) {

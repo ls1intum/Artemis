@@ -32,14 +32,6 @@ public abstract class SubmissionPolicy extends DomainObject {
     @Column(name = "active")
     private Boolean active;
 
-    public ProgrammingExercise getProgrammingExercise() {
-        return programmingExercise;
-    }
-
-    public void setProgrammingExercise(ProgrammingExercise programmingExercise) {
-        this.programmingExercise = programmingExercise;
-    }
-
     public Integer getSubmissionLimit() {
         return submissionLimit;
     }
@@ -54,5 +46,13 @@ public abstract class SubmissionPolicy extends DomainObject {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public ProgrammingExercise getProgrammingExercise() {
+        return programmingExercise;
+    }
+
+    public void setProgrammingExercise(ProgrammingExercise programmingExercise) {
+        this.programmingExercise = programmingExercise;
     }
 }
