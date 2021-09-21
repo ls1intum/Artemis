@@ -16,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.NotificationOption;
+import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -52,42 +52,45 @@ public class NotificationSettingsResource {
      * GET notification-settings : Get all NotificationSettings for current user
      *
      * Fetches the NotificationSettings for the current user from the server.
-     * These are only the settings that the user has already modified.
+     * If the user has not yet modified the settings there will be none in the database, then 
      *
      * @return the list of found NotificationSettings
      */
     @GetMapping("notification-settings")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Set<NotificationOption>> getNotificationOptionsForCurrentUser() {
+    public ResponseEntity<Set<NotificationSetting>> getNotificationSettingsForCurrentUser() {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get all NotificationOptions for current user {}", currentUser);
-        final Set<NotificationOption> notificationOptionSet = notificationSettingRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
-        return new ResponseEntity<>(notificationOptionSet, HttpStatus.OK);
+        log.debug("REST request to get all NotificationSettings for current user {}", currentUser);
+        Set<NotificationSetting> notificationSettingSet = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
+        if (notificationSettingSet.isEmpty()) {
+            notificationSettingSet = NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS;
+        }
+        return new ResponseEntity<>(notificationSettingSet, HttpStatus.OK);
     }
 
     /**
-     * PUT notification-settings : Save NotificationOptions for current user
+     * PUT notification-settings : Save NotificationSettings for current user
      *
-     * Saves the provided NotificationOptions to the server.
-     * @param notificationOptions which should be saved to the notificationOption database.
+     * Saves the provided NotificationSettings to the server.
+     * @param notificationSettings which should be saved to the notificationSetting database.
      *
-     * @return the UserOptions that just got saved for the current user as array
-     * 200 for a successful execution, 400 if the user provided empty options to save, 500 if the save call returns empty options
+     * @return the NotificationSettings that just got saved for the current user as array
+     * 200 for a successful execution, 400 if the user provided empty settings to save, 500 if the save call returns empty settings
      */
     @PutMapping("notification-settings")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<NotificationOption[]> saveNotificationOptionsForCurrentUser(@NotNull @RequestBody NotificationOption[] notificationOptions) {
-        if (notificationOptions.length == 0) {
-            return badRequest("notificationOptions", "400", "Can not save non existing Notification Options");
+    public ResponseEntity<NotificationSetting[]> saveNotificationSettingsForCurrentUser(@NotNull @RequestBody NotificationSetting[] notificationSettings) {
+        if (notificationSettings.length == 0) {
+            return badRequest("notificationSettings", "400", "Can not save non existing Notification Settings");
         }
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to save NotificationOptions : {} for current user {}", notificationOptions, currentUser);
-        notificationSettingsService.setCurrentUser(notificationOptions, currentUser);
-        List<NotificationOption> resultAsList = notificationSettingRepository.saveAll(Arrays.stream(notificationOptions).toList());
+        log.debug("REST request to save NotificationSettings : {} for current user {}", notificationSettings, currentUser);
+        notificationSettingsService.setCurrentUser(notificationSettings, currentUser);
+        List<NotificationSetting> resultAsList = notificationSettingRepository.saveAll(Arrays.stream(notificationSettings).toList());
         if (resultAsList.isEmpty()) {
-            return badRequest("notificationOptions", "500", "Error occurred during saving of Notification Options");
+            return badRequest("notificationSettings", "500", "Error occurred during saving of Notification Settings");
         }
-        NotificationOption[] resultAsArray = resultAsList.toArray(new NotificationOption[0]);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "notificationOption", "test")).body(resultAsArray);
+        NotificationSetting[] resultAsArray = resultAsList.toArray(new NotificationSetting[0]);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "notificationSetting", "test")).body(resultAsArray);
     }
 }

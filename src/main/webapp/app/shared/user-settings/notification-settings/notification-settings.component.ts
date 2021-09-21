@@ -4,7 +4,7 @@ import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.di
 import { JhiAlertService } from 'ng-jhipster';
 import { reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 

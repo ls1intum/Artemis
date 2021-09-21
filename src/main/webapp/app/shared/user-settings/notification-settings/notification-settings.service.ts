@@ -13,7 +13,7 @@ import {
     NotificationType,
 } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 
 @Injectable({ providedIn: 'root' })
@@ -46,7 +46,7 @@ export class NotificationSettingsService {
             tmpNotificationTitles = NotificationSettingsService.NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TITLE_MAP.get(notificationSettings[i].settingId) ?? [];
             if (tmpNotificationTitles.length > 0) {
                 tmpNotificationTitles.forEach((tmpNotificationTitle) => {
-                    updatedMap.set(tmpNotificationTitle, notificationSettings[i].webapp);
+                    updatedMap.set(tmpNotificationTitle, notificationSettings[i].webapp!);
                 });
             }
         }

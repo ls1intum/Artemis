@@ -18,7 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.NotificationOption;
+import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
@@ -99,7 +99,7 @@ public class NotificationResource {
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all Notifications for current user {} filtered by settings", currentUser);
-        Set<NotificationOption> notificationOptions = notificationSettingRepository.findAllNotificationOptionsForRecipientWithId(currentUser.getId());
+        Set<NotificationSetting> notificationOptions = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
         Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(notificationOptions);
         Set<String> deactivatedTitles = notificationSettingsService.convertNotificationTypesToTitles(deactivatedTypes);
         final Page<Notification> page;

@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "notification_setting", uniqueConstraints = { @UniqueConstraint(columnNames = { "user_id", "setting_id" }) })
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class NotificationOption extends DomainObject {
+public class NotificationSetting extends DomainObject {
 
     @Column(name = "setting_id", nullable = false)
     private String settingId;
@@ -34,11 +34,18 @@ public class NotificationOption extends DomainObject {
     @JsonIgnoreProperties("notificationSetting")
     private User user;
 
-    public NotificationOption() {
+    public NotificationSetting() {
         // Default empty constructor
     }
 
-    public NotificationOption(User user, boolean webapp, boolean email, String settingId) {
+    // used to creat default settings
+    public NotificationSetting(boolean webapp, boolean email, String settingId) {
+        this.setWebapp(webapp);
+        this.setEmail(email);
+        this.setSettingId(settingId);
+    }
+
+    public NotificationSetting(User user, boolean webapp, boolean email, String settingId) {
         this.setUser(user);
         this.setWebapp(webapp);
         this.setEmail(email);
@@ -100,7 +107,7 @@ public class NotificationOption extends DomainObject {
             return false;
         }
         boolean domainObjectCheck = Objects.equals(getId(), domainObject.getId());
-        NotificationOption providedOption = (NotificationOption) object;
+        NotificationSetting providedOption = (NotificationSetting) object;
         boolean userCheck = checkUser(this.user, providedOption.user);
         boolean settingIdCheck = checkSettingId(this.settingId, providedOption.settingId);
         return domainObjectCheck && userCheck && settingIdCheck && this.webapp == providedOption.webapp && this.email == providedOption.email;

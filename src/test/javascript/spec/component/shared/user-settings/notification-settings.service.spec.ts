@@ -2,24 +2,24 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { ATTACHMENT_CHANGE_TITLE, COURSE_ARCHIVE_STARTED_TITLE, EXAM_ARCHIVE_STARTED_TITLE, EXERCISE_PRACTICE_TITLE, NotificationType } from 'app/entities/notification.model';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 
-export const notificationOptionCoreA: NotificationSetting = {
+export const notificationSettingA: NotificationSetting = {
     settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
     webapp: false,
     email: false,
 };
-export const notificationOptionCoreB: NotificationSetting = {
+export const notificationSettingB: NotificationSetting = {
     settingId: SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
     webapp: true,
     email: false,
 };
 
-export const notificationOptionCoresForTesting: NotificationSetting[] = [notificationOptionCoreA, notificationOptionCoreB];
+export const notificationSettingsForTesting: NotificationSetting[] = [notificationSettingA, notificationSettingB];
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -67,20 +67,20 @@ describe('User Settings Service', () => {
             });
         });
 
-        it('should update notificationTitleActivationMap & map between NotificationType and OptionCore', () => {
+        it('should update notificationTitleActivationMap & map between NotificationType and Settings', () => {
             const type1 = EXERCISE_PRACTICE_TITLE;
-            const type1ActivationStatus = notificationOptionCoreA.webapp;
+            const type1ActivationStatus = notificationSettingA.webapp!;
             const type2 = EXAM_ARCHIVE_STARTED_TITLE;
-            const type2ActivationStatus = notificationOptionCoreB.webapp;
+            const type2ActivationStatus = notificationSettingB.webapp!;
             const type3 = COURSE_ARCHIVE_STARTED_TITLE;
-            const type3ActivationStatus = notificationOptionCoreB.webapp;
+            const type3ActivationStatus = notificationSettingB.webapp!;
 
             const expectedMap: Map<string, boolean> = new Map<string, boolean>();
             expectedMap.set(type1, type1ActivationStatus);
             expectedMap.set(type2, type2ActivationStatus);
             expectedMap.set(type3, type3ActivationStatus);
 
-            const resultMap = notificationSettingsService.createUpdatedNotificationTitleActivationMap(notificationOptionCoresForTesting);
+            const resultMap = notificationSettingsService.createUpdatedNotificationTitleActivationMap(notificationSettingsForTesting);
 
             expect(resultMap.has(type1)).to.be.true;
             expect(resultMap.has(type2)).to.be.true;

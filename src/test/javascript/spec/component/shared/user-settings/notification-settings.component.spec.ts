@@ -14,7 +14,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { MockComponent } from 'ng-mocks';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -49,13 +49,13 @@ describe('NotificationSettingsComponent', () => {
     it('should toggle option', () => {
         const optionId = SettingId.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES;
         const webappStatus = true;
-        const notificationOptionCoreA: NotificationSetting = {
+        const notificationSettingA: NotificationSetting = {
             settingId: optionId,
             webapp: webappStatus,
             email: false,
             changed: false,
         };
-        comp.settings = [notificationOptionCoreA];
+        comp.settings = [notificationSettingA];
         const event = {
             currentTarget: {
                 id: optionId,
@@ -63,12 +63,12 @@ describe('NotificationSettingsComponent', () => {
         };
 
         expect(comp.settingsChanged).to.be.false;
-        expect(notificationOptionCoreA.changed).to.be.false;
+        expect(notificationSettingA.changed).to.be.false;
 
         comp.toggleSetting(event);
 
-        expect(notificationOptionCoreA.webapp).not.to.be.equal(webappStatus);
-        expect(notificationOptionCoreA.changed).to.be.true;
+        expect(notificationSettingA.webapp).not.to.be.equal(webappStatus);
+        expect(notificationSettingA.changed).to.be.true;
         expect(comp.settingsChanged).to.be.true;
     });
 });

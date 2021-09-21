@@ -15,7 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.NotificationOption;
+import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -255,8 +255,8 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         NotificationType allowedType = NotificationType.ATTACHMENT_CHANGE;
         NotificationType blockedType = NotificationType.EXERCISE_PRACTICE;
 
-        NotificationOption allowedOption = new NotificationOption(users.get(0), true, false, "notification.lecture-notification.attachment-changes");
-        NotificationOption blockedOption = new NotificationOption(users.get(0), false, false, "notification.exercise-notification.exercise-open-for-practice");
+        NotificationSetting allowedOption = new NotificationSetting(users.get(0), true, false, "notification.lecture-notification.attachment-changes");
+        NotificationSetting blockedOption = new NotificationSetting(users.get(0), false, false, "notification.exercise-notification.exercise-open-for-practice");
 
         notificationSettingRepository.save(allowedOption);
         notificationSettingRepository.save(blockedOption);

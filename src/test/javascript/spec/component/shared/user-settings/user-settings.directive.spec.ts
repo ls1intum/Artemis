@@ -10,7 +10,7 @@ import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-setti
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
 import { JhiAlertService } from 'ng-jhipster';
@@ -56,12 +56,12 @@ describe('User Settings Directive', () => {
 
     const router = new MockRouter();
 
-    const notificationOptionCoreA: NotificationSetting = {
+    const notificationSettingA: NotificationSetting = {
         settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
         webapp: false,
         email: false,
     };
-    const notificationOptionCoreB: NotificationSetting = {
+    const notificationSettingB: NotificationSetting = {
         settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_ANSWER_POST_EXERCISES,
         webapp: false,
         email: false,
@@ -101,25 +101,25 @@ describe('User Settings Directive', () => {
     });
 
     describe('Service methods with Category Notification Settings', () => {
-        const notificationOptionCoresForTesting: NotificationSetting[] = [notificationOptionCoreA, notificationOptionCoreB];
+        const notificationSettingsForTesting: NotificationSetting[] = [notificationSettingA, notificationSettingB];
 
         describe('test loadSettings', () => {
             it('should call userSettingsService to load OptionsCores', () => {
-                stub(userSettingsService, 'loadUserOptions').returns(of(new HttpResponse({ body: notificationOptionCoresForTesting })));
-                const loadUserOptionCoresSuccessAsSettingsSpy = sinon.spy(userSettingsService, 'loadUserOptionCoresSuccessAsSettings');
-                const extractOptionCoresFromSettingsSpy = sinon.spy(userSettingsService, 'extractOptionCoresFromSettings');
+                stub(userSettingsService, 'loadSettings').returns(of(new HttpResponse({ body: notificationSettingsForTesting })));
+                const loadSettingsSuccessAsSettingsStructureSpy = sinon.spy(userSettingsService, 'loadSettingsSuccessAsSettingsStructure');
+                const extractIndividualSettingsFromSettingsStructureSpy = sinon.spy(userSettingsService, 'extractIndividualSettingsFromSettingsStructure');
 
                 comp.ngOnInit();
 
-                expect(loadUserOptionCoresSuccessAsSettingsSpy).to.be.calledOnce;
-                expect(extractOptionCoresFromSettingsSpy).to.be.calledOnce;
+                expect(loadSettingsSuccessAsSettingsStructureSpy).to.be.calledOnce;
+                expect(extractIndividualSettingsFromSettingsStructureSpy).to.be.calledOnce;
                 expect(changeDetectorDetectChangesStub).to.have.been.called;
             });
 
             it('should handle error correctly when loading fails', () => {
                 const alertServiceSpy = sinon.spy(comp.alertService, 'error');
                 const errorResponse = new HttpErrorResponse({ status: 403 });
-                stub(userSettingsService, 'loadUserOptions').returns(throwError(errorResponse));
+                stub(userSettingsService, 'loadSettings').returns(throwError(errorResponse));
 
                 comp.ngOnInit();
 
@@ -129,16 +129,16 @@ describe('User Settings Directive', () => {
 
         describe('test savingSettings', () => {
             it('should call userSettingsService to save OptionsCores', () => {
-                stub(userSettingsService, 'saveUserOptions').returns(of(new HttpResponse({ body: notificationOptionCoresForTesting })));
-                const saveUserOptionCoresSuccessSpy = sinon.spy(userSettingsService, 'saveUserOptionsSuccess');
-                const extractOptionCoresFromSettingsSpy = sinon.spy(userSettingsService, 'extractOptionCoresFromSettings');
+                stub(userSettingsService, 'saveSettings').returns(of(new HttpResponse({ body: notificationSettingsForTesting })));
+                const saveSettingsSuccessSpy = sinon.spy(userSettingsService, 'saveSettingsSuccess');
+                const extractIndividualSettingsFromSettingsStructureSpy = sinon.spy(userSettingsService, 'extractIndividualSettingsFromSettingsStructure');
                 const createApplyChangesEventSpy = sinon.spy(userSettingsService, 'sendApplyChangesEvent');
                 const alertServiceSuccessSpy = sinon.spy(alertService, 'success');
 
                 comp.saveSettings();
 
-                expect(saveUserOptionCoresSuccessSpy).to.be.calledOnce;
-                expect(extractOptionCoresFromSettingsSpy).to.be.calledOnce;
+                expect(saveSettingsSuccessSpy).to.be.calledOnce;
+                expect(extractIndividualSettingsFromSettingsStructureSpy).to.be.calledOnce;
                 expect(createApplyChangesEventSpy).to.be.calledOnce;
                 expect(alertServiceSuccessSpy).to.have.been.called;
             });

@@ -7,19 +7,19 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.NotificationOption;
+import de.tum.in.www1.artemis.domain.NotificationSetting;
 
 /**
  * Spring Data repository for the NotificationOption entity.
  */
 @Repository
-public interface NotificationSettingRepository extends JpaRepository<NotificationOption, Long> {
+public interface NotificationSettingRepository extends JpaRepository<NotificationSetting, Long> {
 
     @Query("""
-            SELECT notificationOption
-            FROM NotificationOption notificationOption
-            LEFT JOIN FETCH notificationOption.user user
+            SELECT notificationSetting
+            FROM NotificationSetting notificationSetting
+            LEFT JOIN FETCH notificationSetting.user user
             WHERE user.id = :#{#userId}
             """)
-    Set<NotificationOption> findAllNotificationOptionsForRecipientWithId(@Param("userId") long userId);
+    Set<NotificationSetting> findAllNotificationSettingsForRecipientWithId(@Param("userId") long userId);
 }

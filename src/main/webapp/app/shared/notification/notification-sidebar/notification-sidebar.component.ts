@@ -9,7 +9,7 @@ import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification } from 'app/
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { Subscription } from 'rxjs';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
@@ -219,7 +219,10 @@ export class NotificationSidebarComponent implements OnInit {
     private loadNotificationSettings(): void {
         this.userSettingsService.loadSettings(UserSettingsCategory.NOTIFICATION_SETTINGS).subscribe(
             (res: HttpResponse<Setting[]>) => {
-                this.notificationSettings = this.userSettingsService.loadSettingsSuccessAsSettings(res.body!, UserSettingsCategory.NOTIFICATION_SETTINGS) as NotificationSetting[];
+                this.notificationSettings = this.userSettingsService.loadSettingsSuccessAsIndividualSettings(
+                    res.body!,
+                    UserSettingsCategory.NOTIFICATION_SETTINGS,
+                ) as NotificationSetting[];
                 this.notificationTitleActivationMap = this.notificationSettingsService.createUpdatedNotificationTitleActivationMap(this.notificationSettings);
             },
             (res: HttpErrorResponse) => (this.error = res.message),

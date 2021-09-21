@@ -26,7 +26,7 @@ import { MockRouterLinkDirective } from '../../lecture-unit/lecture-unit-managem
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings.default';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 
 chai.use(sinonChai);
@@ -44,19 +44,19 @@ describe('Notification Sidebar Component', () => {
     const notificationPast = { id: 2, notificationDate: moment().subtract(2, 'day') } as Notification;
     const notifications = [notificationNow, notificationPast] as Notification[];
 
-    const notificationOptionCoreA: NotificationSetting = {
+    const notificationSettingA: NotificationSetting = {
         webapp: true,
         email: false,
         changed: false,
         settingId: SettingId.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES,
     };
-    const notificationOptionCoreB: NotificationSetting = {
+    const notificationSettingB: NotificationSetting = {
         webapp: true,
         email: false,
         changed: false,
         settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_CREATED_OR_STARTED,
     };
-    const receivedNotificationOptionCores: NotificationSetting[] = [notificationOptionCoreA, notificationOptionCoreB];
+    const receivedNotificationSettings: NotificationSetting[] = [notificationSettingA, notificationSettingB];
 
     const generateQueryResponse = (ns: Notification[]) => {
         return {
@@ -91,8 +91,8 @@ describe('Notification Sidebar Component', () => {
                 userService = TestBed.inject(UserService);
                 userSettingsService = TestBed.inject(UserSettingsService);
 
-                const fake2 = sinon.fake.returns(of(receivedNotificationOptionCores));
-                sinon.replace(userSettingsService, 'loadUserOptions', fake2);
+                const fake2 = sinon.fake.returns(of(receivedNotificationSettings));
+                sinon.replace(userSettingsService, 'loadSettings', fake2);
             });
     });
 

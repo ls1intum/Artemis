@@ -33,13 +33,13 @@ export abstract class UserSettingsDirective implements OnInit {
     // methods related to loading
 
     /**
-     * Fetches the settings based on the settings category, updates the currently loaded userSettingsStructure, settings, and HTML template
+     * Fetches the settings based on the settings category, updates the currently loaded userSettingsStructure, individual settings, and HTML template
      */
     protected loadSetting(): void {
         this.userSettingsService.loadSettings(this.userSettingsCategory).subscribe(
             (res: HttpResponse<Setting[]>) => {
                 this.userSettings = this.userSettingsService.loadSettingsSuccessAsSettingsStructure(res.body!, this.userSettingsCategory);
-                this.settings = this.userSettingsService.extractSettingsFromSettingsStructure(this.userSettings);
+                this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
                 this.changeDetector.detectChanges();
                 this.alertService.clear();
             },
@@ -57,7 +57,7 @@ export abstract class UserSettingsDirective implements OnInit {
         this.userSettingsService.saveSettings(this.settings, this.userSettingsCategory).subscribe(
             (res: HttpResponse<Setting[]>) => {
                 this.userSettings = this.userSettingsService.saveSettingsSuccess(this.userSettings, res.body!);
-                this.settings = this.userSettingsService.extractSettingsFromSettingsStructure(this.userSettings);
+                this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
                 this.finishSaving();
             },
             (res: HttpErrorResponse) => this.onError(res),
