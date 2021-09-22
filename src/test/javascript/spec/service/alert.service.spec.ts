@@ -6,6 +6,21 @@ import { Alert, AlertService } from 'app/core/util/alert.service';
 describe('Alert service test', () => {
     describe('Alert Service Test', () => {
         let extAlerts: Alert[];
+        const alertSample = {
+            type: 'success',
+            message: 'Hello Jhipster',
+            timeout: 3000,
+            toast: true,
+            position: 'top left',
+        };
+        const alertSampleWithId = {
+            type: 'success',
+            message: 'Hello Jhipster',
+            id: 0,
+            timeout: 3000,
+            toast: true,
+            position: 'top left',
+        };
 
         beforeEach(() => {
             TestBed.configureTestingModule({
@@ -25,72 +40,15 @@ describe('Alert service test', () => {
         });
 
         it('should produce a proper alert object and fetch it', inject([AlertService], (service: AlertService) => {
-            expect(
-                service.addAlert({
-                    type: 'success',
-                    message: 'Hello Jhipster',
-                    timeout: 3000,
-                    toast: true,
-                    position: 'top left',
-                }),
-            ).toEqual(
-                expect.objectContaining({
-                    type: 'success',
-                    message: 'Hello Jhipster',
-                    id: 0,
-                    timeout: 3000,
-                    toast: true,
-                    position: 'top left',
-                } as Alert),
-            );
-
+            expect(service.addAlert(alertSample)).toEqual(expect.objectContaining(alertSampleWithId as Alert));
             expect(service.get().length).toBe(1);
-            expect(service.get()[0]).toEqual(
-                expect.objectContaining({
-                    type: 'success',
-                    message: 'Hello Jhipster',
-                    id: 0,
-                    timeout: 3000,
-                    toast: true,
-                    position: 'top left',
-                } as Alert),
-            );
+            expect(service.get()[0]).toEqual(expect.objectContaining(alertSampleWithId as Alert));
         }));
 
         it('should produce a proper alert object and add it to external alert objects array', inject([AlertService], (service: AlertService) => {
-            expect(
-                service.addAlert(
-                    {
-                        type: 'success',
-                        message: 'Hello Jhipster',
-                        timeout: 3000,
-                        toast: true,
-                        position: 'top left',
-                    },
-                    extAlerts,
-                ),
-            ).toEqual(
-                expect.objectContaining({
-                    type: 'success',
-                    message: 'Hello Jhipster',
-                    id: 0,
-                    timeout: 3000,
-                    toast: true,
-                    position: 'top left',
-                } as Alert),
-            );
-
+            expect(service.addAlert(alertSample, extAlerts)).toEqual(expect.objectContaining(alertSampleWithId as Alert));
             expect(extAlerts.length).toBe(1);
-            expect(extAlerts[0]).toEqual(
-                expect.objectContaining({
-                    type: 'success',
-                    message: 'Hello Jhipster',
-                    id: 0,
-                    timeout: 3000,
-                    toast: true,
-                    position: 'top left',
-                } as Alert),
-            );
+            expect(extAlerts[0]).toEqual(expect.objectContaining(alertSampleWithId as Alert));
         }));
 
         it('should produce an alert object with correct id', inject([AlertService], (service: AlertService) => {
@@ -168,28 +126,7 @@ describe('Alert service test', () => {
         }));
 
         it('should produce a scoped alert', inject([AlertService], (service: AlertService) => {
-            expect(
-                service.addAlert(
-                    {
-                        type: 'success',
-                        message: 'Hello Jhipster',
-                        timeout: 3000,
-                        toast: true,
-                        position: 'top left',
-                    },
-                    [],
-                ),
-            ).toEqual(
-                expect.objectContaining({
-                    type: 'success',
-                    message: 'Hello Jhipster',
-                    id: 0,
-                    timeout: 3000,
-                    toast: true,
-                    position: 'top left',
-                } as Alert),
-            );
-
+            expect(service.addAlert(alertSample, [])).toEqual(expect.objectContaining(alertSampleWithId as Alert));
             expect(service.get().length).toBe(0);
         }));
 
