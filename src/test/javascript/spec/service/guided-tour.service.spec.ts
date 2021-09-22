@@ -787,9 +787,9 @@ describe('GuidedTourService', () => {
 
         it('should initialize', fakeAsync(() => {
             const tourSettings = [{ guidedTourKey: 'test', guidedTourStep: 0 } as GuidedTourSetting];
-            const authStateStub = jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of({ guidedTourSettings: tourSettings } as User));
+            const authStateMock = jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of({ guidedTourSettings: tourSettings } as User));
             const tourMapping = { courseShortName: 'test-course' } as GuidedTourMapping;
-            const profileInfoStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ guidedTourMapping: tourMapping } as ProfileInfo));
+            const profileInfoMock = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ guidedTourMapping: tourMapping } as ProfileInfo));
 
             // Fake mapping and settings to enable the tour. Should be overwritten by the return value of the profile service
             guidedTourService.guidedTourMapping = { courseShortName: 'test', tours: { tour_user_interaction: '' } } as GuidedTourMapping;
@@ -802,9 +802,9 @@ describe('GuidedTourService', () => {
             // guidedTourService.init() is called via the component initialization
             guidedTourComponentFixture.detectChanges();
 
-            expect(authStateStub).toHaveBeenCalledTimes(1);
+            expect(authStateMock).toHaveBeenCalledTimes(1);
             expect(guidedTourService.guidedTourSettings).toEqual(tourSettings);
-            expect(profileInfoStub).toHaveBeenCalledTimes(1);
+            expect(profileInfoMock).toHaveBeenCalledTimes(1);
             expect(guidedTourService.guidedTourMapping).toEqual(tourMapping);
         }));
     });

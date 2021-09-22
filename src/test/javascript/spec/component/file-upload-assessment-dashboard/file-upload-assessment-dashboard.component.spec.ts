@@ -93,8 +93,8 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
     it('should set parameters and call functions on init', fakeAsync(() => {
         // setup
-        const exerciseServiceFind = jest.spyOn(exerciseService, 'find');
-        exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise1 })));
+        const exerciseServiceFindMock = jest.spyOn(exerciseService, 'find');
+        exerciseServiceFindMock.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise1 })));
         const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
         getFileUploadSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
         jest.spyOn<any, any>(component, 'setPermissions');

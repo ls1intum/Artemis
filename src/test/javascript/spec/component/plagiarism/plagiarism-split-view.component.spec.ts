@@ -73,13 +73,13 @@ describe('Plagiarism Split View Component', () => {
     });
 
     // TODO: for some reason this test does not work
-    // it('should subscribe to the split control subject', () => {
-    //     comp.exercise = textExercise;
-    //     jest.spyOn(splitControlSubject, 'subscribe');
-    //
-    //     fixture.detectChanges();
-    //     expect(comp.splitControlSubject.subscribe).toHaveBeenCalled();
-    // });
+    it.skip('should subscribe to the split control subject', () => {
+        comp.exercise = textExercise;
+        jest.spyOn(splitControlSubject, 'subscribe');
+
+        fixture.detectChanges();
+        expect(comp.splitControlSubject.subscribe).toHaveBeenCalled();
+    });
 
     it('should collapse the left pane', () => {
         comp.exercise = textExercise;

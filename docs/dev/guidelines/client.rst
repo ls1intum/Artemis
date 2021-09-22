@@ -221,7 +221,7 @@ Use ``placeholder="{{ 'global.form.newpassword.placeholder' | artemisTranslate }
 
 Use ArtemisTimeAgoPipe instead of TimeAgoPipe
 *********************************************
-Do not use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>``
+Do not use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | amTimeAgo }}</span>``
 
 Use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>``
 

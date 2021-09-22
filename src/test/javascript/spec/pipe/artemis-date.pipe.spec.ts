@@ -23,10 +23,10 @@ describe('ArtemisDatePipe', () => {
         pipe = new ArtemisDatePipe(translateService);
     });
 
-    it('Return empty string if given date time is null', () => {
+    it('Return empty string if given date time is null or undefined', () => {
         let localizedDateTime = pipe.transform(null);
         expect(localizedDateTime).to.be.equal('');
-        localizedDateTime = pipe.transform(dayjs(null));
+        localizedDateTime = pipe.transform(undefined);
         expect(localizedDateTime).to.be.equal('');
     });
 

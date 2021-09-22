@@ -39,7 +39,6 @@ describe('OrionAssessmentService', () => {
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(ProgrammingAssessmentRepoExportService),
                 MockProvider(ProgrammingAssessmentManualResultService),
-                // AlertService,
             ],
         })
             .compileComponents()
@@ -95,7 +94,7 @@ describe('OrionAssessmentService', () => {
         expect(downloadSubmissionSpy).to.have.been.calledOnceWithExactly(11, 0, 'testBase64');
     });
     it('sendSubmissionToOrion should convert and report error', () => {
-        const alertErrorSTub = stub(alertService, 'error');
+        const alertErrorStub = stub(alertService, 'error');
 
         // mock FileReader
         const mockReader = {
@@ -109,7 +108,7 @@ describe('OrionAssessmentService', () => {
 
         testConversion(mockReader as any);
 
-        expect(alertErrorSTub).to.have.been.calledOnceWithExactly('artemisApp.assessmentDashboard.orion.downloadFailed');
+        expect(alertErrorStub).to.have.been.calledOnceWithExactly('artemisApp.assessmentDashboard.orion.downloadFailed');
     });
 
     /**

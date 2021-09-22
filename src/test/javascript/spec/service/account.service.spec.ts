@@ -25,7 +25,7 @@ describe('AccountService', () => {
     const user = { id: 1, groups: ['USER'] } as User;
     const user2 = { id: 2, groups: ['USER'] } as User;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
@@ -36,7 +36,7 @@ describe('AccountService', () => {
         accountService = new AccountService(translateService, new MockSyncStorage(), httpService, new MockWebsocketService(), new MockFeatureToggleService());
         getStub = stub(httpService, 'get');
 
-        expect(accountService.userIdentity).to.deep.equal(undefined);
+        expect(accountService.userIdentity).to.be.undefined;
         expect(accountService.isAuthenticated()).to.be.false;
     });
 

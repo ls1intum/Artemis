@@ -117,7 +117,7 @@ describe('LearningGoalManagementComponent', () => {
         getProgressStub.withArgs(sinon.match.any, sinon.match.any, false).returns(of(learningGoalProgressResponse));
         getProgressStub.withArgs(sinon.match.any, sinon.match.any, true).returns(of(learningGoalProgressParticipantScoreResponse));
 
-        const captureExceptionSpy = sinon.stub(Sentry, 'captureException');
+        const captureExceptionStub = sinon.stub(Sentry, 'captureException');
 
         learningGoalManagementComponentFixture.detectChanges();
 
@@ -125,6 +125,6 @@ describe('LearningGoalManagementComponent', () => {
         expect(learningGoalCards).to.have.lengthOf(2);
         expect(getAllForCourseStub).to.have.been.calledOnce;
         expect(getProgressStub).to.have.callCount(4);
-        expect(captureExceptionSpy).to.have.been.calledOnce;
+        expect(captureExceptionStub).to.have.been.calledOnce;
     });
 });

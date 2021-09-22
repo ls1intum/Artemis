@@ -55,7 +55,7 @@ describe('StatisticsGraphComponent', () => {
         component.graphType = Graphs.SUBMISSIONS;
         component.statisticsView = StatisticsView.ARTEMIS;
         let arrayLength = 0;
-        const spy = jest.spyOn(service, 'getChartData');
+        const getChartDataMock = jest.spyOn(service, 'getChartData');
 
         for (const span of Object.values(SpanType)) {
             component.currentSpan = span;
@@ -81,7 +81,7 @@ describe('StatisticsGraphComponent', () => {
             for (let i = 0; i < arrayLength; i++) {
                 graphData[i] = i + 1;
             }
-            spy.mockReturnValue(of(graphData));
+            getChartDataMock.mockReturnValue(of(graphData));
 
             const changes = { currentSpan: { currentValue: span } as SimpleChange };
             component.ngOnChanges(changes);

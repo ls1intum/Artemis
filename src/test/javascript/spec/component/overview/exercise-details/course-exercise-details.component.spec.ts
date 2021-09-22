@@ -45,7 +45,6 @@ import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of } from 'rxjs';
-import { restore, SinonStub, stub } from 'sinon';
 import sinonChai from 'sinon-chai';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
@@ -89,16 +88,16 @@ describe('CourseExerciseDetailsComponent', () => {
     let teamService: TeamService;
     let participationService: ParticipationService;
     let participationWebsocketService: ParticipationWebsocketService;
-    let getProfileInfoStub: SinonStub;
-    let getExerciseDetailsStub: SinonStub;
-    let getTeamPayloadStub: SinonStub;
-    let mergeStudentParticipationStub: SinonStub;
-    let subscribeForParticipationChangesStub: SinonStub;
+    let getProfileInfoMock: jest.SpyInstance;
+    let getExerciseDetailsMock: jest.SpyInstance;
+    let getTeamPayloadMock: jest.SpyInstance;
+    let mergeStudentParticipationMock: jest.SpyInstance;
+    let subscribeForParticipationChangesMock: jest.SpyInstance;
     let complaintService: ComplaintService;
     const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [] } as unknown as Exercise;
     const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
-    beforeEach(fakeAsync(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [
@@ -153,39 +152,39 @@ describe('CourseExerciseDetailsComponent', () => {
                 fixture = TestBed.createComponent(CourseExerciseDetailsComponent);
                 comp = fixture.componentInstance;
 
-                // stub profileService
+                // mock profileService
                 profileService = fixture.debugElement.injector.get(ProfileService);
-                getProfileInfoStub = stub(profileService, 'getProfileInfo');
+                getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
                 const profileInfo = { inProduction: false } as ProfileInfo;
                 const profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
-                getProfileInfoStub.returns(profileInfoSubject);
+                getProfileInfoMock.mockReturnValue(profileInfoSubject);
 
-                // stub exerciseService
+                // mock exerciseService
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
-                getExerciseDetailsStub = stub(exerciseService, 'getExerciseDetails');
-                getExerciseDetailsStub.returns(of({ body: exercise }));
+                getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
+                getExerciseDetailsMock.mockReturnValue(of({ body: exercise }));
 
-                // stub teamService, needed for team assignment
+                // mock teamService, needed for team assignment
                 teamService = fixture.debugElement.injector.get(TeamService);
-                getTeamPayloadStub = stub(teamService, 'teamAssignmentUpdates');
+                getTeamPayloadMock = jest.spyOn(teamService, 'teamAssignmentUpdates', 'get');
                 const teamAssignmentPayload = { exerciseId: 2, teamId: 2, studentParticipations: [] } as TeamAssignmentPayload;
-                getTeamPayloadStub.get(() => Promise.resolve(of(teamAssignmentPayload)));
+                getTeamPayloadMock.mockReturnValue(() => Promise.resolve(of(teamAssignmentPayload)));
 
-                // stub participationService, needed for team assignment
+                // mock participationService, needed for team assignment
                 participationService = fixture.debugElement.injector.get(ParticipationService);
-                mergeStudentParticipationStub = stub(participationService, 'mergeStudentParticipations');
+                mergeStudentParticipationMock = jest.spyOn(participationService, 'mergeStudentParticipations');
 
-                // stub participationService, needed for team assignment
+                // mock participationService, needed for team assignment
                 participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
-                subscribeForParticipationChangesStub = stub(participationWebsocketService, 'subscribeForParticipationChanges');
-                subscribeForParticipationChangesStub.returns(new BehaviorSubject<Participation | undefined>(undefined));
+                subscribeForParticipationChangesMock = jest.spyOn(participationWebsocketService, 'subscribeForParticipationChanges');
+                subscribeForParticipationChangesMock.mockReturnValue(new BehaviorSubject<Participation | undefined>(undefined));
 
                 complaintService = TestBed.inject(ComplaintService);
             });
-    }));
+    });
 
     afterEach(() => {
-        restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', fakeAsync(() => {
@@ -211,24 +210,24 @@ describe('CourseExerciseDetailsComponent', () => {
         studentParticipation.exercise = exercise;
 
         const exerciseDetail = { ...exercise, studentParticipations: [studentParticipation] };
-        const exerciseDetailReponse = of({ body: exerciseDetail });
+        const exerciseDetailResponse = of({ body: exerciseDetail });
 
         // return initial participation for websocketService
-        stub(participationWebsocketService, 'getParticipationForExercise').returns(studentParticipation);
-        stub(complaintService, 'findBySubmissionId').returns(of({} as EntityResponseType));
+        jest.spyOn(participationWebsocketService, 'getParticipationForExercise').mockReturnValue(studentParticipation);
+        jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({} as EntityResponseType));
 
-        mergeStudentParticipationStub.returns(studentParticipation);
+        mergeStudentParticipationMock.mockReturnValue(studentParticipation);
         const changedParticipation = cloneDeep(studentParticipation);
         const changedResult = { ...result, id: 2 };
         changedParticipation.results = [changedResult];
-        subscribeForParticipationChangesStub.returns(new BehaviorSubject<Participation | undefined>(changedParticipation));
+        subscribeForParticipationChangesMock.mockReturnValue(new BehaviorSubject<Participation | undefined>(changedParticipation));
 
         fixture.detectChanges();
         tick(500);
         expect(comp).to.be.ok;
 
-        // override stub to return exercise with participation
-        getExerciseDetailsStub.returns(exerciseDetailReponse);
+        // override mock to return exercise with participation
+        getExerciseDetailsMock.mockReturnValue(exerciseDetailResponse);
         comp.loadExercise();
         fixture.detectChanges();
         expect(comp.courseId).to.equal(1);
@@ -252,7 +251,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should simulate a submission', () => {
         const courseExerciseSubmissionResultSimulationService = fixture.debugElement.injector.get(CourseExerciseSubmissionResultSimulationService);
-        stub(courseExerciseSubmissionResultSimulationService, 'simulateSubmission').returns(
+        jest.spyOn(courseExerciseSubmissionResultSimulationService, 'simulateSubmission').mockReturnValue(
             of(
                 new HttpResponse({
                     body: new ProgrammingSubmission(),
@@ -269,7 +268,7 @@ describe('CourseExerciseDetailsComponent', () => {
         result.participation = new StudentParticipation();
         comp.exercise = { id: 2 } as Exercise;
         const courseExerciseSubmissionResultSimulationService = fixture.debugElement.injector.get(CourseExerciseSubmissionResultSimulationService);
-        stub(courseExerciseSubmissionResultSimulationService, 'simulateResult').returns(of({ body: result } as HttpResponse<Result>));
+        jest.spyOn(courseExerciseSubmissionResultSimulationService, 'simulateResult').mockReturnValue(of({ body: result } as HttpResponse<Result>));
         comp.simulateResult();
         tick();
         flush();

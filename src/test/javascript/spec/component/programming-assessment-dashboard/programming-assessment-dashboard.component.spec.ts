@@ -96,8 +96,8 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
 
     it('should set parameters and call functions on init', fakeAsync(() => {
         // setup
-        const exerciseServiceFind = jest.spyOn(exerciseService, 'find');
-        exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
+        const exerciseServiceFindMock = jest.spyOn(exerciseService, 'find');
+        exerciseServiceFindMock.mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
         jest.spyOn<any, any>(component, 'setPermissions');
         // test for init values
         expect(component).toBeTruthy();
@@ -111,17 +111,17 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
         tick(500);
 
         // check
-        expect(exerciseServiceFind).toHaveBeenCalledWith(programmingExercise2.id);
+        expect(exerciseServiceFindMock).toHaveBeenCalledWith(programmingExercise2.id);
         expect(component['setPermissions']).toHaveBeenCalled();
         expect(component.exercise).toEqual(programmingExercise1 as ProgrammingExercise);
     }));
 
     it('should get Submissions', fakeAsync(() => {
         // test getSubmissions
-        const exerciseServiceFind = jest.spyOn(exerciseService, 'find');
+        const exerciseServiceFindMock = jest.spyOn(exerciseService, 'find');
         const getProgrammingSubmissionsForExerciseByCorrectionRoundStub = jest.spyOn(programmingSubmissionService, 'getProgrammingSubmissionsForExerciseByCorrectionRound');
         const isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
-        exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
+        exerciseServiceFindMock.mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
         getProgrammingSubmissionsForExerciseByCorrectionRoundStub.mockReturnValue(of(new HttpResponse({ body: [programmingSubmission1] })));
         isAtLeastInstructorInCourseStub.mockReturnValue(true);
         jest.spyOn<any, any>(component, 'setPermissions');
@@ -135,7 +135,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
         expect(component['getSubmissions']).toHaveBeenCalled();
         expect(getProgrammingSubmissionsForExerciseByCorrectionRoundStub).toHaveBeenCalled();
         expect(getProgrammingSubmissionsForExerciseByCorrectionRoundStub).toHaveBeenCalledWith(programmingExercise2.id, { submittedOnly: true });
-        expect(exerciseServiceFind).toHaveBeenCalledWith(programmingExercise2.id);
+        expect(exerciseServiceFindMock).toHaveBeenCalledWith(programmingExercise2.id);
         expect(component.submissions).toEqual([programmingSubmission1]);
         expect(component.filteredSubmissions).toEqual([programmingSubmission1]);
     }));
