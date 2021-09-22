@@ -14,4 +14,4 @@ jobs:
         with:
           working-directory: src/test/cypress
           browser: chrome
-          install-command: yarn install --frozen-lockfile
+          install-command: yarn install #--frozen-lockfile
