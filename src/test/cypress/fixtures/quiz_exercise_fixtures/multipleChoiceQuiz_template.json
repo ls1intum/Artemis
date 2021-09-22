@@ -1,12 +1,12 @@
 {
     "type": "multiple-choice",
-    "randomizeOrder": true,
+    "randomizeOrder": false,
     "invalid": false,
     "exportQuiz": false,
     "title": "<Some title>",
     "text": "A longer more detailed question",
     "hint": "A general hint",
-    "scoringType": "ALL_OR_NOTHING",
+    "scoringType": "PROPORTIONAL_WITHOUT_PENALTY",
     "points": 10,
     "answerOptions": [
         {
