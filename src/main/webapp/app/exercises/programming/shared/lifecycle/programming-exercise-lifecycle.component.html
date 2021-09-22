@@ -42,8 +42,8 @@
                     tooltipText="artemisApp.programmingExercise.timeline.afterDueDateTooltip"
                 >
                 </jhi-programming-exercise-test-schedule-date-picker>
-                <div *ngIf="isExamMode || exercise.dueDate" class="test-schedule-date me-2">
-                    <ng-container *ngIf="!exercise.assessmentType || (exercise.assessmentType === assessmentType.AUTOMATIC && !exercise.allowComplaintsForAutomaticAssessments)">
+                <div class="test-schedule-date me-2">
+                    <ng-container *ngIf="!exercise.assessmentType || exercise.assessmentType === assessmentType.AUTOMATIC">
                         <div class="mb-2">
                             <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.assessmentType"> Assessment Type </span>
                             <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.assessmentTypeTooltipAutomaticAssessment"></jhi-help-icon>
@@ -75,22 +75,6 @@
                             {{ 'artemisApp.programmingExercise.timeline.manualAssessment' | artemisTranslate }}
                         </div>
                     </ng-container>
-                    <ng-container *ngIf="exercise.assessmentType === assessmentType.AUTOMATIC && exercise.allowComplaintsForAutomaticAssessments">
-                        <div class="mb-2">
-                            <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.assessmentType"> Assessment Type </span>
-                            <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.assessmentTypeTooltipComplaintsAllowed"></jhi-help-icon>
-                        </div>
-                        <div
-                            class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle calendar-event-toggle"
-                            [class.btn-lifecycle--disabled]="readOnly"
-                            (click)="!readOnly && toggleAssessmentType()"
-                        >
-                            <fa-icon [icon]="'user-cog'" size="lg"></fa-icon>
-                        </div>
-                        <div>
-                            {{ 'artemisApp.programmingExercise.timeline.complaintsAllowed' | artemisTranslate }}
-                        </div>
-                    </ng-container>
                 </div>
                 <jhi-programming-exercise-test-schedule-date-picker
                     *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode"
@@ -102,6 +86,40 @@
                     label="artemisApp.programmingExercise.timeline.assessmentDueDate"
                     tooltipText="artemisApp.programmingExercise.timeline.assessmentDueDateTooltip"
                 ></jhi-programming-exercise-test-schedule-date-picker>
+                <div *ngIf="exercise.assessmentType === assessmentType.AUTOMATIC && exercise.course.complaintsEnabled" class="test-schedule-date me-2">
+                    <ng-container *ngIf="!exercise.allowComplaintsForAutomaticAssessments">
+                        <div class="mb-2">
+                            <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"> Complaints </span>
+                            <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.allowComplaintOnAutomaticAssessmentTooltip"></jhi-help-icon>
+                        </div>
+                        <div
+                            class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle calendar-event-toggle"
+                            [class.btn-lifecycle--disabled]="readOnly"
+                            (click)="!readOnly && toggleComplaintsType()"
+                        >
+                            <fa-icon [icon]="'user-slash'" size="lg"></fa-icon>
+                        </div>
+                        <div>
+                            {{ 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentDisabled' | artemisTranslate }}
+                        </div>
+                    </ng-container>
+                    <ng-container *ngIf="exercise.allowComplaintsForAutomaticAssessments">
+                        <div class="mb-2">
+                            <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"> Complaints </span>
+                            <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.disallowComplaintOnAutomaticAssessmentTooltip"></jhi-help-icon>
+                        </div>
+                        <div
+                            class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle calendar-event-toggle"
+                            [class.btn-lifecycle--disabled]="readOnly"
+                            (click)="!readOnly && toggleComplaintsType()"
+                        >
+                            <fa-icon [icon]="'user-check'" size="lg"></fa-icon>
+                        </div>
+                        <div>
+                            {{ 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentEnabled' | artemisTranslate }}
+                        </div>
+                    </ng-container>
+                </div>
             </div>
         </div>
     </div>

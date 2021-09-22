@@ -36,19 +36,20 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
     toggleAssessmentType() {
         if (this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
-            // A manual assessment only after a complaint is possible when it's an exam exercise or when the course allows
-            this.exercise.allowComplaintsForAutomaticAssessments = !!(this.isExamMode || this.exercise.course?.complaintsEnabled);
-        } else if (this.exercise.allowComplaintsForAutomaticAssessments) {
-            this.exercise.allowComplaintsForAutomaticAssessments = false;
+            this.exercise.assessmentDueDate = undefined;
         } else {
             this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
             this.exercise.allowComplaintsForAutomaticAssessments = false;
         }
+    }
 
-        // when the new value is AssessmentType.AUTOMATIC, we need to reset assessment due date
-        if (this.exercise.assessmentType === AssessmentType.AUTOMATIC) {
-            this.exercise.assessmentDueDate = undefined;
-        }
+    /**
+     * Toggles the assessment type between AUTOMATIC (only tests in repo will be run using build plans) and
+     * SEMI_AUTOMATIC (After all automatic tests have been run, the tutors will have to make a final manual assessment)
+     *
+     */
+    toggleComplaintsType() {
+        this.exercise.allowComplaintsForAutomaticAssessments = !this.exercise.allowComplaintsForAutomaticAssessments;
     }
 
     /**
