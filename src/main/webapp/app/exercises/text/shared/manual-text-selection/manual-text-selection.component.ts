@@ -21,12 +21,11 @@ export class ManualTextSelectionComponent {
     public hostRectangle: SelectionRectangle | undefined;
     public selectedText: string | undefined;
 
-    constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute, private translateService: TranslateService) {
-        textAssessmentAnalytics.setComponentRoute(route);
-    }
+    assessText: string;
 
-    get assessText(): string {
-        return this.translateService.instant('artemisApp.textAssessment.editor.assess');
+    constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute, translateService: TranslateService) {
+        textAssessmentAnalytics.setComponentRoute(route);
+        this.assessText = translateService.instant('artemisApp.textAssessment.editor.assess');
     }
 
     /**
