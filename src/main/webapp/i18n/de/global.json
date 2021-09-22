@@ -293,7 +293,6 @@
         "userexists": "Login bereits vergeben!",
         "emailexists": "E-Mail wird bereits verwendet!",
         "idexists": "Ein neuer {{entityName}} kann noch keine ID haben",
-        "duplicatedReaction": "Eine neue {{entityName}} darf kein Duplikat sein",
         "ambiguousContext": "Ein neuer {{entityName}} muss einen eindeutigen Kontext haben",
         "invalid.template.build.plan.id": "Die Vorlagen-Build-Plan-ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
         "missingname": "Ein neues {{entityName}} braucht einen namen",

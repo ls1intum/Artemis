@@ -60,34 +60,21 @@ public class ReactionService {
         // we query the repository dependent on the type of posting and update this posting
         Reaction savedReaction;
         if (posting instanceof Post) {
-            postService.preCheckUserAndCourse(user, courseId);
             Post post = postService.findById(posting.getId());
             reaction.setPost(post);
-            // check if the user already reacted with the reaction to add (-> avoid duplicated reactions) before saving
-            reactionRepository.findNoReactionsByPostIdAndEmojiIdAndUserIdElseThrow(post.getId(), reaction.getEmojiId(), user.getId());
             // save reaction
             savedReaction = reactionRepository.save(reaction);
             // save post
             postService.updateWithReaction(post, reaction);
-            // protect sample solution, grading instructions
-            if (post.getExercise() != null) {
-                post.getExercise().filterSensitiveInformation();
-            }
         }
         else {
             answerPostService.preCheckUserAndCourse(user, courseId);
             AnswerPost answerPost = answerPostService.findById(posting.getId());
             reaction.setAnswerPost(answerPost);
-            // check if the user already reacted with the reaction to add (-> avoid duplicated reactions) before saving
-            reactionRepository.findNoReactionsByAnswerPostIdAndEmojiIdAndUserIdElseThrow(answerPost.getId(), reaction.getEmojiId(), user.getId());
             // save reaction
             savedReaction = reactionRepository.save(reaction);
             // save answer post
             answerPostService.updateWithReaction(answerPost, reaction);
-            // protect sample solution, grading instructions, etc.
-            if (answerPost.getPost().getExercise() != null) {
-                answerPost.getPost().getExercise().filterSensitiveInformation();
-            }
         }
         return savedReaction;
     }

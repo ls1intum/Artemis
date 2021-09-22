@@ -86,7 +86,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateMultipleOwnPostReaction_badRequest() throws Exception {
+    public void testCreateMultipleOwnPostReaction_internalServerError() throws Exception {
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
         Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);
@@ -96,7 +96,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         assertThat(postReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size());
 
         // try again
-        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -113,7 +113,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateMultipleOwnAnswerPostReaction_badRequest() throws Exception {
+    public void testCreateMultipleOwnAnswerPostReaction_internalServerError() throws Exception {
         // student 1 is the author of the answer post and reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
         Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
@@ -123,7 +123,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         assertThat(answerPostReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size());
 
         // try again
-        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
