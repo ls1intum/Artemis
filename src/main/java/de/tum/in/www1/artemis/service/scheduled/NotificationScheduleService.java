@@ -76,6 +76,10 @@ public class NotificationScheduleService implements IExerciseScheduleService<Exe
         }
     }
 
+    /**
+     * The actual timer with its timer task that should be run when the exercise release time comes
+     * @param exercise which will be announced by a notifications at release date
+     */
     public void scheduleNotificationForExercise(Exercise exercise) {
         try {
             if (!SecurityUtils.isAuthenticated()) {
