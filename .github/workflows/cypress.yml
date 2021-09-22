@@ -1,0 +1,17 @@
+name: Run Cypress E2E Tests
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Run Cypress Tests
+        uses: cypress-io/github-action@v2
+        with:
+          working-directory: src/test/cypress
+          browser: chrome
+          install-command: yarn install --frozen-lockfile
