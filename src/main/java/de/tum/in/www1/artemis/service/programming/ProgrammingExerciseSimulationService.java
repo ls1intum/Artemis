@@ -82,7 +82,7 @@ public class ProgrammingExerciseSimulationService {
         // The creation of the webhooks must occur after the initial push, because the participation is
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
         instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
-        groupNotificationService.prepareNotificationForStudentAndTutorGroupAboutStartedExercise(programmingExercise);
+        instanceMessageSendService.sendExerciseReleaseNotificationSchedule(programmingExercise.getId());
 
         return programmingExercise;
     }

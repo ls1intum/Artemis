@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createNotification;
 
 import java.time.ZonedDateTime;
-import java.util.Date;
 import java.util.List;
-import java.util.Timer;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -19,7 +17,6 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.auxiliary.ExamNotificationTargetWithoutProblemStatement;
-import de.tum.in.www1.artemis.domain.notification.auxiliary.ExerciseStartedNotificationTimerTask;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -92,20 +89,9 @@ public class GroupNotificationService {
      *
      * @param exercise that has been created
      */
-    public void prepareNotificationForStudentAndTutorGroupAboutStartedExercise(Exercise exercise) {
-        Date releaseDate = Date.from(exercise.getReleaseDate().toInstant());
-        new Timer().schedule(new ExerciseStartedNotificationTimerTask(exercise, userRepository.getUser(), this), releaseDate);
-    }
-
-    /**
-     * Notify student and tutor groups about the creation/start of an exercise at the moment of its release date.
-     *
-     * @param exercise that has been created
-     * @param author who created the notification
-     */
-    public void notifyStudentAndTutorGroupAboutStartedExercise(Exercise exercise, User author) {
-        saveAndSend(createNotification(exercise, author, GroupNotificationType.STUDENT, NotificationType.EXERCISE_CREATED, null));
-        saveAndSend(createNotification(exercise, author, GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+    public void notifyStudentAndTutorGroupAboutStartedExercise(Exercise exercise) {
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.STUDENT, NotificationType.EXERCISE_CREATED, null));
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
     }
 
     /**
