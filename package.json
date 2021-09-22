@@ -182,6 +182,7 @@
         "start-tls": "npm run webapp:dev-ssl",
         "serve": "npm run start --",
         "build": "npm run webapp:prod --",
+        "jest": "jest --coverage --log-heap-usage --max-workers=4 --config jest.config.js",
         "test": "ng test --coverage --log-heap-usage -w=4",
         "test:ci": "ng test --coverage --log-heap-usage -w=4 --ci --reporters=default --reporters=jest-junit",
         "test:leaks": "ng test --log-heap-usage --detect-leaks",
