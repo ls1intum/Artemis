@@ -27,10 +27,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should be increase to at least 80%
-            statements: 77.4,
+            statements: 76.97,
             branches: 58.7,
             functions: 67.1,
-            lines: 76.9,
+            lines: 76.46,
         },
     },
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-sinon'],
