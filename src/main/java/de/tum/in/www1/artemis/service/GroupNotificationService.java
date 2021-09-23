@@ -90,8 +90,22 @@ public class GroupNotificationService {
      * @param exercise that has been created
      */
     public void notifyStudentAndTutorGroupAboutStartedExercise(Exercise exercise) {
-        saveAndSend(createNotification(exercise, null, GroupNotificationType.STUDENT, NotificationType.EXERCISE_CREATED, null));
-        saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+
+        // if(ZonedDateTime.now().compareTo())
+        /*
+         * ZonedDateTime before = exercise.getReleaseDate().minusMinutes(1); ZonedDateTime after = exercise.getReleaseDate().plusMinutes(1); new Interval(before.toEpochSecond(),
+         * after.toEpochSecond()).containsNow();
+         */
+        /*
+         * boolean isAfter = ZonedDateTime.now().isAfter(exercise.getReleaseDate().plusMinutes(2)); boolean isBefore =
+         * ZonedDateTime.now().isBefore(exercise.getReleaseDate().minusMinutes(2));
+         */
+
+        // only send notification if ReleaseDate is now (i.e. in the range [now-2 minutes, now]) (due to possible delays in scheduling)
+        if (!exercise.getReleaseDate().isBefore(ZonedDateTime.now().minusMinutes(2)) && !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            saveAndSend(createNotification(exercise, null, GroupNotificationType.STUDENT, NotificationType.EXERCISE_CREATED, null));
+            saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
+        }
     }
 
     /**

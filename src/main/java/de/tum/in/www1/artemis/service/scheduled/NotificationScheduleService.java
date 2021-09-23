@@ -66,9 +66,9 @@ public class NotificationScheduleService implements IExerciseScheduleService<Exe
 
     @Override
     public void updateScheduling(Exercise exercise) {
-        if (ZonedDateTime.now().isAfter(exercise.getReleaseDate())) {
-            // TODO NEED HELP Not sure if this might break more important tasks
-            scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.RELEASE);
+        if (exercise.getReleaseDate() == null || ZonedDateTime.now().isAfter(exercise.getReleaseDate())) {
+            // to avoid canceling more important tasks we simply return here.
+            // to make sure no wrong notification is sent out the date is checked again in the concrete notification method
             return;
         }
         if (exercise.isCourseExercise()) {
