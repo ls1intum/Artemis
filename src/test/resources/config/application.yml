@@ -179,10 +179,6 @@ jhipster:
     mail: # specific JHipster mail property, for standard properties see MailProperties
         from: Artemis@localhost
         base-url: http://127.0.0.1:8080
-    metrics:
-        logs: # Reports metrics in the logs
-            enabled: false
-            report-frequency: 60 # in seconds
     security:
         authentication:
             jwt:
