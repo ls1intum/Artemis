@@ -171,10 +171,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 getTeamPayloadMock.mockReturnValue(() => Promise.resolve(of(teamAssignmentPayload)));
 
                 // mock participationService, needed for team assignment
-                participationService = fixture.debugElement.injector.get(ParticipationService);
-                mergeStudentParticipationMock = jest.spyOn(participationService, 'mergeStudentParticipations');
-
-                // mock participationService, needed for team assignment
                 participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
                 subscribeForParticipationChangesMock = jest.spyOn(participationWebsocketService, 'subscribeForParticipationChanges');
                 subscribeForParticipationChangesMock.mockReturnValue(new BehaviorSubject<Participation | undefined>(undefined));
@@ -216,6 +212,9 @@ describe('CourseExerciseDetailsComponent', () => {
         jest.spyOn(participationWebsocketService, 'getParticipationForExercise').mockReturnValue(studentParticipation);
         jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({} as EntityResponseType));
 
+        // mock participationService, needed for team assignment
+        participationService = TestBed.inject(ParticipationService);
+        mergeStudentParticipationMock = jest.spyOn(participationService, 'mergeStudentParticipations');
         mergeStudentParticipationMock.mockReturnValue(studentParticipation);
         const changedParticipation = cloneDeep(studentParticipation);
         const changedResult = { ...result, id: 2 };
