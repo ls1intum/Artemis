@@ -27,9 +27,8 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
      * Removes the auxiliary repository of the selected row from the respective programming exercise and activates the angular change detection.
      */
     removeAuxiliaryRepository() {
-        // TODO Niclas Schümann: fix this implementation or remove unused variables
-        // const auxRepoIndex = this.programmingExercise.auxiliaryRepositories?.indexOf(this.row)!;
-        // const removedRepository = this.programmingExercise.auxiliaryRepositories?.splice(auxRepoIndex, 1)!;
+        const auxRepoIndex = this.programmingExercise.auxiliaryRepositories?.indexOf(this.row)!;
+        this.programmingExercise.auxiliaryRepositories?.splice(auxRepoIndex, 1);
         this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories!];
     }
 }
