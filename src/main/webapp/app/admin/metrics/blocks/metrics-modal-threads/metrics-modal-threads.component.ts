@@ -9,7 +9,7 @@ import { Thread, ThreadState } from '../../metrics.model';
 })
 export class MetricsModalThreadsComponent implements OnInit {
     ThreadState = ThreadState;
-    threadStateFilter?: ThreadState;
+    threadStateFilter?: string;
     threads?: Thread[];
     threadDumpAll = 0;
     threadDumpBlocked = 0;
@@ -36,20 +36,22 @@ export class MetricsModalThreadsComponent implements OnInit {
     }
 
     getBadgeClass(threadState: ThreadState): string {
-        if (threadState === ThreadState.Runnable) {
-            return 'badge-success';
-        } else if (threadState === ThreadState.Waiting) {
-            return 'badge-info';
-        } else if (threadState === ThreadState.TimedWaiting) {
-            return 'badge-warning';
-        } else if (threadState === ThreadState.Blocked) {
-            return 'badge-danger';
+        switch (threadState) {
+            case ThreadState.Runnable:
+                return 'bg-success';
+            case ThreadState.Waiting:
+                return 'bg-info';
+            case ThreadState.TimedWaiting:
+                return 'bg-warning';
+            case ThreadState.Blocked:
+                return 'bg-danger';
+            default:
+                return '';
         }
-        return '';
     }
 
     getThreads(): Thread[] {
-        return this.threads?.filter((thread) => !this.threadStateFilter || thread.threadState === this.threadStateFilter) ?? [];
+        return this.threads?.filter((thread) => !this.threadStateFilter || thread.lockName?.includes(this.threadStateFilter)) ?? [];
     }
 
     dismiss(): void {
