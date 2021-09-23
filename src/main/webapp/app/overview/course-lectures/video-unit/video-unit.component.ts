@@ -17,10 +17,20 @@ export class VideoUnitComponent implements OnInit {
 
     isCollapsed = true;
 
+    // List of regexes that should not be blocked by js-video-url-parser
+    videoProvidersAllowList = [RegExp('^https://live.rbg.tum.de/w/[a-zA-Z0-9]+/[0-9]+(/(CAM|COMB|PRES))?\\?video_only=1$')];
+
     constructor(private safeResourceUrlPipe: SafeResourceUrlPipe) {}
 
     ngOnInit() {
         if (this.videoUnit?.source) {
+            // check if url is validated by allowlist
+            for (let regExp of this.videoProvidersAllowList) {
+                if (regExp.test(this.videoUnit.source)) {
+                    this.videoUrl = this.safeResourceUrlPipe.transform(this.videoUnit.source);
+                    return;
+                }
+            }
             // Validate the URL before displaying it
             if (!urlParser || urlParser.parse(this.videoUnit.source)) {
                 this.videoUrl = this.safeResourceUrlPipe.transform(this.videoUnit.source);
