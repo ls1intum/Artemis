@@ -81,17 +81,12 @@ public class NotificationScheduleService implements IExerciseScheduleService<Exe
      * @param exercise which will be announced by a notifications at release date
      */
     private void scheduleNotificationForExercise(Exercise exercise) {
-        try {
-            if (!SecurityUtils.isAuthenticated()) {
-                SecurityUtils.setAuthorizationObject();
-            }
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, () -> {
-                groupNotificationService.notifyStudentAndTutorGroupAboutStartedExercise(exercise);
-            });
-            log.debug("Scheduled notify about started exercise after due date for exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getReleaseDate());
+        if (!SecurityUtils.isAuthenticated()) {
+            SecurityUtils.setAuthorizationObject();
         }
-        catch (IllegalArgumentException exception) {
-            log.error("Failed to schedule notification for exercise " + exercise.getId(), exception);
-        }
+        scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, () -> {
+            groupNotificationService.notifyStudentAndTutorGroupAboutStartedExercise(exercise);
+        });
+        log.debug("Scheduled notify about started exercise after due date for exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getReleaseDate());
     }
 }
