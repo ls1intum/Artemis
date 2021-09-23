@@ -76,7 +76,7 @@ describe('Alert Service Test', () => {
         );
     });
 
-    it('should close an alert correctly', inject([AlertService], (service: AlertService) => {
+    it('should close an alert correctly', () => {
         const alert0 = service.addAlert({ type: 'info', message: 'Hello Jhipster info' });
         const alert1 = service.addAlert({ type: 'info', message: 'Hello Jhipster info 2' });
         const alert2 = service.addAlert({ type: 'success', message: 'Hello Jhipster success' });
@@ -109,7 +109,7 @@ describe('Alert Service Test', () => {
         );
         alert0.close?.(service.get());
         expect(service.get().length).toBe(0);
-    }));
+    });
 
     it('should close an alert on timeout correctly', () => {
         service.addAlert({ type: 'info', message: 'Hello Jhipster info' });
