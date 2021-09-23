@@ -18,7 +18,10 @@ export class VideoUnitComponent implements OnInit {
     isCollapsed = true;
 
     // List of regexes that should not be blocked by js-video-url-parser
-    videoProvidersAllowList = [RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$')];
+    videoProvidersAllowList = [
+        // TUM-Live. Example: 'https://live.rbg.tum.de/w/test/26?video_only=1'
+        RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'),
+    ];
 
     constructor(private safeResourceUrlPipe: SafeResourceUrlPipe) {}
 
