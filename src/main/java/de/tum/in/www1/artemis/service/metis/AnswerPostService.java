@@ -70,10 +70,8 @@ public class AnswerPostService extends PostingService {
         answerPost.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
         // use post from database rather than user input
         answerPost.setPost(post);
-
         // set author to current user
         answerPost.setAuthor(user);
-
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
 
         sendNotification(savedAnswerPost);

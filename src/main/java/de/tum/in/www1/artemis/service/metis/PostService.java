@@ -63,7 +63,6 @@ public class PostService extends PostingService {
 
         // set author to current user
         post.setAuthor(user);
-
         // set default value display priority -> NONE
         post.setDisplayPriority(DisplayPriority.NONE);
         Post savedPost = postRepository.save(post);
