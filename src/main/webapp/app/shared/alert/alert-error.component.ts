@@ -18,7 +18,7 @@ export class AlertErrorComponent implements OnDestroy {
     constructor(private alertService: AlertService, private eventManager: EventManager, private translateService: TranslateService) {
         this.errorListener = eventManager.subscribe('artemisApp.error', (response: EventWithContent<unknown> | string) => {
             const errorResponse = (response as EventWithContent<AlertError>).content;
-            this.addErrorAlert(errorResponse.message, errorResponse.key, errorResponse.params);
+            this.addErrorAlert(errorResponse.message, errorResponse.translationKey, errorResponse.translationParams);
         });
 
         this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: any) => {
