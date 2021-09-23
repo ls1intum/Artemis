@@ -15,7 +15,7 @@
         "uuid": "8.3.2"
     },
     "scripts": {
-        "cypress:open": "npm run cypress open ",
+        "cypress:open": "npm run cypress open",
         "cypress:run": "npm run cypress run --browser=chrome"
     }
 }
