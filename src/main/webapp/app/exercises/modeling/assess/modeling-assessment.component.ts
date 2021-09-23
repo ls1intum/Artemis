@@ -314,6 +314,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             feedback: feedback.text || undefined,
             label: this.calculateLabel(feedback),
             labelColor: this.calculateLabelColor(feedback),
+            dropInfo: feedback.gradingInstruction || undefined,
         }));
         if (this.apollonEditor) {
             this.apollonEditor!.model = this.model;
