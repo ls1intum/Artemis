@@ -18,7 +18,7 @@ export class VideoUnitComponent implements OnInit {
     isCollapsed = true;
 
     // List of regexes that should not be blocked by js-video-url-parser
-    videoProvidersAllowList = [
+    videoUrlAllowList = [
         // TUM-Live. Example: 'https://live.rbg.tum.de/w/test/26?video_only=1'
         RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'),
     ];
@@ -27,15 +27,8 @@ export class VideoUnitComponent implements OnInit {
 
     ngOnInit() {
         if (this.videoUnit?.source) {
-            // check if url is validated by allowlist
-            for (let regExp of this.videoProvidersAllowList) {
-                if (regExp.test(this.videoUnit.source)) {
-                    this.videoUrl = this.safeResourceUrlPipe.transform(this.videoUnit.source);
-                    return;
-                }
-            }
             // Validate the URL before displaying it
-            if (!urlParser || urlParser.parse(this.videoUnit.source)) {
+            if (this.videoUrlAllowList.some((r) => r.test(this.videoUnit.source!)) || !urlParser || urlParser.parse(this.videoUnit.source)) {
                 this.videoUrl = this.safeResourceUrlPipe.transform(this.videoUnit.source);
             }
         }
