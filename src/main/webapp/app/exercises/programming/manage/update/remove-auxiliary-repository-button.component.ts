@@ -24,11 +24,12 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
     @Input() row: AuxiliaryRepository;
 
     /**
-     * Removes the auxiliary repository of the selected row from the respective programming exercise and activates the angular change detection.
+     * Removes the auxiliary repository of the selected row from the respective programming exercise.
      */
     removeAuxiliaryRepository() {
         const auxRepoIndex = this.programmingExercise.auxiliaryRepositories?.indexOf(this.row)!;
         this.programmingExercise.auxiliaryRepositories?.splice(auxRepoIndex, 1);
+        // This activates the angular change detection
         this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories!];
     }
 }
