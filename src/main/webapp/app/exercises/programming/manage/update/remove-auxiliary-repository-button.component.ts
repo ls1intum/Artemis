@@ -28,7 +28,7 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
      */
     removeAuxiliaryRepository() {
         const auxRepoIndex = this.programmingExercise.auxiliaryRepositories?.indexOf(this.row)!;
-        this.programmingExercise.auxiliaryRepositories?.splice(auxRepoIndex, 1);
+        this.programmingExercise.auxiliaryRepositories?.splice(auxRepoIndex, 1); // Note: splice changes the array auxiliaryRepositories in place
         // This activates the angular change detection
         this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories!];
     }
