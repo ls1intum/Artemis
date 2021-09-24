@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ArtemisExampleModelingSubmissionRoutingModule } from 'app/exercises/modeling/manage/example-modeling/example-modeling-submission.route';
 import { ExampleModelingSubmissionComponent } from 'app/exercises/modeling/manage/example-modeling/example-modeling-submission.component';
@@ -18,7 +17,6 @@ import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling
         ModelingAssessmentModule,
         AssessmentInstructionsModule,
         ClipboardModule,
-        MomentModule,
     ],
     declarations: [ExampleModelingSubmissionComponent],
 })

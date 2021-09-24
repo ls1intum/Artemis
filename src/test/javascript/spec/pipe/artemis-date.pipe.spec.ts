@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as moment from 'moment';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import sinonChai from 'sinon-chai';
+import dayjs from 'dayjs';
+import { ArtemisDatePipe, GERMAN_SHORT_DATE_FORMAT } from 'app/shared/pipes/artemis-date.pipe';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
 chai.use(sinonChai);
@@ -12,14 +12,7 @@ const expect = chai.expect;
 describe('ArtemisDatePipe', () => {
     let pipe: ArtemisDatePipe;
     let translateService: TranslateService;
-    const dateTime = moment({
-        year: 2020,
-        month: 3,
-        day: 14,
-        hour: 9,
-        minute: 27,
-        seconds: 3,
-    }); // 2020-04-14 09:27:03
+    const dateTime = dayjs().year(2020).month(3).date(14).hour(9).minute(27).second(3); // 2020-03-14 09:27:03
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -30,20 +23,16 @@ describe('ArtemisDatePipe', () => {
         pipe = new ArtemisDatePipe(translateService);
     });
 
-    it('Return empty string if given date time is null', () => {
+    it('Return empty string if given date time is null or undefined', () => {
         let localizedDateTime = pipe.transform(null);
         expect(localizedDateTime).to.be.equal('');
-        localizedDateTime = pipe.transform(moment(null));
+        localizedDateTime = pipe.transform(undefined);
         expect(localizedDateTime).to.be.equal('');
     });
 
-    it('Return empty string if given date time is invalid moment object', () => {
-        const invalidMoment = moment({
-            year: 2019,
-            month: 2,
-            day: 333,
-        }); // 2019-02-333
-        const localizedDateTime = pipe.transform(invalidMoment);
+    it('Return empty string if given date time is invalid dayjs object', () => {
+        const invalidDayjs = dayjs('1993-51-11', 'YYYY-MM-DD', true);
+        const localizedDateTime = pipe.transform(invalidDayjs);
         expect(localizedDateTime).to.be.equal('');
     });
 
@@ -155,7 +144,7 @@ describe('ArtemisDatePipe', () => {
 
             it('Should return format equal to "14. Apr. 2020 09:27" with format parameter set to "long"', () => {
                 const localizedDateTime = pipe.transform(dateTime, 'long');
-                const format = 'll HH:mm';
+                const format = GERMAN_SHORT_DATE_FORMAT + ' HH:mm';
                 expect(ArtemisDatePipe.format('de', 'long')).to.be.equal(format);
                 expect(localizedDateTime).to.be.equal(dateTime.format(format));
                 expect(localizedDateTime).to.be.equal('14. Apr. 2020 09:27');
@@ -171,7 +160,7 @@ describe('ArtemisDatePipe', () => {
 
             it('Should return format equal to "14. Apr. 2020" with format parameter set to "long-date"', () => {
                 const localizedDateTime = pipe.transform(dateTime, 'long-date');
-                const format = 'll';
+                const format = GERMAN_SHORT_DATE_FORMAT;
                 expect(ArtemisDatePipe.format('de', 'long-date')).to.be.equal(format);
                 expect(localizedDateTime).to.be.equal(dateTime.format(format));
                 expect(localizedDateTime).to.be.equal('14. Apr. 2020');
@@ -197,7 +186,7 @@ describe('ArtemisDatePipe', () => {
 
             it('Should return format equal to "14. Apr. 2020 09:27:03" with format parameter set to "long"', () => {
                 const localizedDateTime = pipe.transform(dateTime, 'long', true);
-                const format = 'll HH:mm:ss';
+                const format = GERMAN_SHORT_DATE_FORMAT + ' HH:mm:ss';
                 expect(ArtemisDatePipe.format('de', 'long', true)).to.be.equal(format);
                 expect(localizedDateTime).to.be.equal(dateTime.format(format));
                 expect(localizedDateTime).to.be.equal('14. Apr. 2020 09:27:03');
@@ -213,7 +202,7 @@ describe('ArtemisDatePipe', () => {
 
             it('Should return format equal to "14. Apr. 2020" with format parameter set to "long-date"', () => {
                 const localizedDateTime = pipe.transform(dateTime, 'long-date', true);
-                const format = 'll';
+                const format = GERMAN_SHORT_DATE_FORMAT;
                 expect(ArtemisDatePipe.format('de', 'long-date', true)).to.be.equal(format);
                 expect(localizedDateTime).to.be.equal(dateTime.format(format));
                 expect(localizedDateTime).to.be.equal('14. Apr. 2020');

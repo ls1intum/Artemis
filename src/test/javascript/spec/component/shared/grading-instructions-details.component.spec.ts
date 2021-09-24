@@ -8,7 +8,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { Exercise } from 'app/entities/exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';

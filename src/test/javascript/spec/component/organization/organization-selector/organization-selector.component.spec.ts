@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { ArtemisTestModule } from '../../../test.module';
 import { of } from 'rxjs';
@@ -47,7 +47,7 @@ describe('OrganizationSelectorComponent', () => {
         organization2.name = 'orgTwo';
 
         component.organizations = [organization1];
-        spyOn(organizationService, 'getOrganizations').and.returnValue(of([organization1, organization2]));
+        jest.spyOn(organizationService, 'getOrganizations').mockReturnValue(of([organization1, organization2]));
 
         fixture.detectChanges();
         expect(component).to.be.ok;

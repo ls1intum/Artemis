@@ -3,7 +3,7 @@ import * as chai from 'chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { of, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { IWebsocketService } from 'app/core/websocket/websocket.service';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';

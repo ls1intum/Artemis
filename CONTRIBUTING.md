@@ -99,7 +99,7 @@ For convenience purposes we have [Sinon](https://sinonjs.org/) and [Chai](https:
 
 Location of test files: `src/test/javascript`
 
-Execution command:      `yarn test`
+Execution command:      `npm run test`
 
 The folder structure is further divided into:
 

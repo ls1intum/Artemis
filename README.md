@@ -8,7 +8,7 @@
 [![Code Quality Status](https://app.codacy.com/project/badge/Grade/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ls1intum/Artemis&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://app.codacy.com/project/badge/Coverage/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&utm_medium=referral&utm_content=ls1intum/Artemis&utm_campaign=Badge_Coverage)
 
-Artemis was initially generated using JHipster 6.10.3. ([Documentation and help](http://www.jhipster.tech/documentation-archive/v6.10.3))
+Artemis was initially generated using JHipster 7.2.0. ([Documentation and help](http://www.jhipster.tech/documentation-archive/v7.2.0))
 
 [![Latest version)](https://img.shields.io/github/v/tag/ls1intum/Artemis?label=%20Latest%20version&sort=semver)](https://github.com/ls1intum/Artemis/releases/latest)
 

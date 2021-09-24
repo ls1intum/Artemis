@@ -6,6 +6,9 @@ import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-ed
 import { stringifyCircular } from 'app/shared/util/utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { Feedback } from 'app/entities/feedback.model';
+import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 /**
  * Return the global native browser window object with any type to prevent type errors
@@ -34,7 +37,9 @@ export class OrionConnectorService implements ArtemisOrionConnector {
     private orionState: OrionState;
     private orionStateSubject: BehaviorSubject<OrionState>;
 
-    constructor(private injector: Injector) {}
+    activeAssessmentComponent: OrionTutorAssessmentComponent | undefined = undefined;
+
+    constructor(private injector: Injector, private alertService: AlertService) {}
 
     static initConnector(connector: OrionConnectorService) {
         theWindow().artemisClientConnector = connector;
@@ -195,6 +200,20 @@ export class OrionConnectorService implements ArtemisOrionConnector {
     }
 
     /**
+     * Updates the assessment of the currently open submission
+     * @param submissionId Id of the open submission, for validation
+     * @param feedback all inline feedback, as JSON
+     */
+    updateAssessment(submissionId: number, feedback: string) {
+        if (this.activeAssessmentComponent) {
+            const feedbackAsArray = JSON.parse(feedback) as Feedback[];
+            this.activeAssessmentComponent!.updateFeedback(submissionId, feedbackAsArray);
+        } else {
+            this.alertService.error('artemisApp.orion.assessment.updateFailed');
+        }
+    }
+
+    /**
      * Edit the given exercise in the IDE as an instructor. This will trigger the import of the exercise
      * (if it is not already imported) and opens the created project afterwards.
      *
@@ -239,7 +258,17 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * @param correctionRound correction round, also needed to navigate to the correct URL
      * @param base64data the student's submission as base64
      */
-    downloadSubmission(submissionId: number, correctionRound: number, base64data: String) {
+    downloadSubmission(submissionId: number, correctionRound: number, base64data: string) {
         theWindow().orionExerciseConnector.downloadSubmission(String(submissionId), String(correctionRound), base64data);
+    }
+
+    /**
+     * Initializes the feedback comments.
+     *
+     * @param submissionId if of the submission, for validation purposes
+     * @param feedback current feedback
+     */
+    initializeAssessment(submissionId: number, feedback: Array<Feedback>) {
+        theWindow().orionExerciseConnector.initializeAssessment(String(submissionId), stringifyCircular(feedback));
     }
 }

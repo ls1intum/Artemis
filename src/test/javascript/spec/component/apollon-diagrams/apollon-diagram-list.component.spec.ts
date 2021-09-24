@@ -7,16 +7,18 @@ import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ApollonDiagramListComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-list.component';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
-import * as _ from 'lodash';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { isEqual } from 'lodash-es';
 
 describe('ApollonDiagramList Component', () => {
     let apollonDiagramService: ApollonDiagramService;
@@ -32,11 +34,12 @@ describe('ApollonDiagramList Component', () => {
             imports: [HttpClientTestingModule],
             declarations: [ApollonDiagramListComponent],
             providers: [
-                JhiAlertService,
+                AlertService,
                 ApollonDiagramService,
                 MockProvider(SortService),
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(CourseManagementService),
                 MockProvider(AccountService),
             ],
@@ -66,7 +69,7 @@ describe('ApollonDiagramList Component', () => {
 
         // test
         fixture.componentInstance.ngOnInit();
-        expect(_.isEqual(fixture.componentInstance.apollonDiagrams, apollonDiagrams)).toBeTruthy();
+        expect(isEqual(fixture.componentInstance.apollonDiagrams, apollonDiagrams)).toBeTruthy();
     });
 
     it('delete', () => {

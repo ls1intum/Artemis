@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
@@ -47,7 +47,7 @@ describe('CreateAttachmentUnitComponent', () => {
                 MockProvider(AttachmentService),
                 MockProvider(AttachmentUnitService),
                 MockProvider(FileUploaderService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
@@ -108,7 +108,7 @@ describe('CreateAttachmentUnitComponent', () => {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
-                releaseDate: moment({ years: 2010, months: 3, date: 5 }),
+                releaseDate: dayjs().year(2010).month(3).date(5),
                 version: 2,
                 updateNotificationText: 'lorem ipsum',
             },
