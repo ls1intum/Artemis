@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
@@ -40,7 +40,7 @@ export class ListOfComplaintsComponent implements OnInit {
 
     constructor(
         private complaintService: ComplaintService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private route: ActivatedRoute,
         private router: Router,
         private location: Location,
@@ -95,7 +95,7 @@ export class ListOfComplaintsComponent implements OnInit {
                     this.hasStudentInformation = true;
                 }
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
             () => (this.loading = false),
         );
     }
@@ -152,7 +152,7 @@ export class ListOfComplaintsComponent implements OnInit {
 
         const complaintSubmittedTime = complaint.submittedTime;
         if (complaintSubmittedTime) {
-            return moment().diff(complaintSubmittedTime, 'days') > 7; // We highlight complaints older than a week
+            return dayjs().diff(complaintSubmittedTime, 'days') > 7; // We highlight complaints older than a week
         }
 
         return false;

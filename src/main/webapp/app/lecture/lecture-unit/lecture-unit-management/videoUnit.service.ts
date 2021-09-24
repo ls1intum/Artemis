@@ -1,7 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
-import { SERVER_API_URL } from 'app/app.constants';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';

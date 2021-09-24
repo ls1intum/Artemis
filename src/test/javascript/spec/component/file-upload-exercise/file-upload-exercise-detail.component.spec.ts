@@ -6,11 +6,11 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-detail.component';
 import { By } from '@angular/platform-browser';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { fileUploadExercise, MockFileUploadExerciseService } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
@@ -82,7 +82,7 @@ describe('FileUploadExercise Management Detail Component', () => {
             ],
             providers: [
                 JhiLanguageHelper,
-                JhiAlertService,
+                AlertService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -105,7 +105,7 @@ describe('FileUploadExercise Management Detail Component', () => {
     describe('Title should contain exercise id and description list', () => {
         it('Should call load all on init', fakeAsync(() => {
             const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'find').and.returnValue(
+            jest.spyOn(service, 'find').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: fileUploadExerciseWithCourse,
@@ -138,7 +138,7 @@ describe('FileUploadExercise Management Detail Component', () => {
         it('Should call load on init and be not in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'find').and.returnValue(
+            jest.spyOn(service, 'find').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: fileUploadExerciseWithCourse,
@@ -171,7 +171,7 @@ describe('FileUploadExercise Management Detail Component', () => {
         it('Should call load on init and be in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'find').and.returnValue(
+            jest.spyOn(service, 'find').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: fileUploadExerciseWithExerciseGroup,

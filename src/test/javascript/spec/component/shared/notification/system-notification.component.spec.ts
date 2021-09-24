@@ -1,7 +1,7 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { of } from 'rxjs';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -30,8 +30,8 @@ describe('System Notification Component', () => {
             title: 'Maintenance',
             text: 'Artemis will be unavailable',
             type,
-            notificationDate: moment().subtract(1, 'days'),
-            expireDate: moment().add(1, 'days'),
+            notificationDate: dayjs().subtract(1, 'days'),
+            expireDate: dayjs().add(1, 'days'),
         } as SystemNotification;
     };
 
@@ -125,7 +125,7 @@ describe('System Notification Component', () => {
 
         it('should not add notification when non-active notification is received via websocket', fakeAsync(() => {
             const notification = createActiveNotification(SystemNotificationType.WARNING);
-            notification.expireDate = moment().subtract(5, 'minutes');
+            notification.expireDate = dayjs().subtract(5, 'minutes');
             sinon.spy(jhiWebsocketService, 'subscribe');
             sinon.replace(jhiWebsocketService, 'receive', sinon.fake.returns(of(notification)));
             sinon.replace(systemNotificationService, 'getActiveNotification', sinon.fake.returns(of()));
@@ -157,8 +157,8 @@ describe('System Notification Component', () => {
             const notification = createActiveNotification(SystemNotificationType.WARNING);
             const newNotification = createActiveNotification(SystemNotificationType.INFO);
             newNotification.id = 2;
-            newNotification.notificationDate = moment().subtract(2, 'days');
-            newNotification.expireDate = moment().add(2, 'days');
+            newNotification.notificationDate = dayjs().subtract(2, 'days');
+            newNotification.expireDate = dayjs().add(2, 'days');
             sinon.spy(jhiWebsocketService, 'subscribe');
             sinon.replace(jhiWebsocketService, 'receive', sinon.fake.returns(of(newNotification)));
             sinon.replace(systemNotificationService, 'getActiveNotification', sinon.fake.returns(of(notification)));

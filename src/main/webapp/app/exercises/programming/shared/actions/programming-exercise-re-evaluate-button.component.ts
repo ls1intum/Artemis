@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -35,7 +35,7 @@ export class ProgrammingExerciseReEvaluateButtonComponent {
 
     isReEvaluationRunning = false;
 
-    constructor(private testCaseService: ProgrammingExerciseGradingService, private alertService: JhiAlertService) {}
+    constructor(private testCaseService: ProgrammingExerciseGradingService, private alertService: AlertService) {}
 
     /**
      * Triggers the re-evaluation of the programming exercise and displays the result in the end using an alert.

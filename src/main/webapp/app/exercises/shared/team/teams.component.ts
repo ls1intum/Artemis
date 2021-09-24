@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { Team } from 'app/entities/team.model';
@@ -11,6 +10,8 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 export enum FilterProp {
     ALL = 'all',
@@ -42,8 +43,8 @@ export class TeamsComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private router: Router,
         private participationService: ParticipationService,
-        private jhiAlertService: JhiAlertService,
-        private eventManager: JhiEventManager,
+        private alertService: AlertService,
+        private eventManager: EventManager,
         private exerciseService: ExerciseService,
         private teamService: TeamService,
         private accountService: AccountService,

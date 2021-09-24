@@ -19,15 +19,15 @@ import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -85,7 +85,7 @@ describe('ExamChecklistComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockComponent(AlertComponent),
                 MockComponent(AlertErrorComponent),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 ExamChecklistCheckComponent,
                 ExamChecklistExerciseGroupTableComponent,
