@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Post } from 'app/entities/metis/post.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Observable } from 'rxjs';
@@ -19,7 +19,7 @@ export abstract class PostingsService<T extends Posting> {
     protected convertDateFromClient(posting: T): T {
         return {
             ...posting,
-            creationDate: posting.creationDate && moment(posting.creationDate).isValid() ? moment(posting.creationDate).toJSON() : undefined,
+            creationDate: posting.creationDate && dayjs(posting.creationDate).isValid() ? dayjs(posting.creationDate).toJSON() : undefined,
         };
     }
 
@@ -30,7 +30,7 @@ export abstract class PostingsService<T extends Posting> {
      */
     protected convertDateFromServer(res: HttpResponse<T>): HttpResponse<T> {
         if (res.body) {
-            res.body.creationDate = res.body.creationDate ? moment(res.body.creationDate) : undefined;
+            res.body.creationDate = res.body.creationDate ? dayjs(res.body.creationDate) : undefined;
         }
         return res;
     }
@@ -43,7 +43,7 @@ export abstract class PostingsService<T extends Posting> {
     protected convertDateArrayFromServer(res: HttpResponse<T[]>): HttpResponse<T[]> {
         if (res.body) {
             res.body.forEach((post: Post) => {
-                post.creationDate = post.creationDate ? moment(post.creationDate) : undefined;
+                post.creationDate = post.creationDate ? dayjs(post.creationDate) : undefined;
             });
         }
         return res;

@@ -5,11 +5,11 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { concatMap, finalize } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { combineLatest } from 'rxjs';
 
@@ -34,7 +34,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
         private attachmentService: AttachmentService,
         private fileUploaderService: FileUploaderService,
         private attachmentUnitService: AttachmentUnitService,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit() {
@@ -63,7 +63,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
         }
         this.attachmentToCreate.attachmentType = AttachmentType.FILE;
         this.attachmentToCreate.version = 1;
-        this.attachmentToCreate.uploadDate = moment();
+        this.attachmentToCreate.uploadDate = dayjs();
 
         // === Setting attachmentUnit ===
         if (description) {

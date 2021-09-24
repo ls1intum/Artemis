@@ -21,7 +21,7 @@ export class TeamUpdateButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
-    @Input() team: Team | null;
+    @Input() team: Team | undefined;
     @Input() exercise: Exercise;
     @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
 

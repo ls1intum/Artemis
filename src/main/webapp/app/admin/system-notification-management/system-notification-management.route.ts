@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Route } from '@angular/router';
-import { JhiResolvePagingParams } from 'ng-jhipster';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
@@ -27,9 +26,6 @@ export const systemNotificationManagementRoute: Route[] = [
     {
         path: 'system-notification-management',
         component: SystemNotificationManagementComponent,
-        resolve: {
-            pagingParams: JhiResolvePagingParams,
-        },
         data: {
             pageTitle: 'artemisApp.systemNotification.systemNotifications',
             defaultSort: 'id,asc',

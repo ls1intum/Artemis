@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MomentModule } from 'ngx-moment';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
@@ -9,7 +8,7 @@ import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, of } from 'rxjs';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -44,10 +43,10 @@ describe('UpdatingResultComponent', () => {
 
     const exercise = { id: 20 } as Exercise;
     const student = { id: 99 };
-    const gradedResult1 = { id: 10, rated: true, completionDate: moment('2019-06-06T22:15:29.203+02:00') } as Result;
-    const gradedResult2 = { id: 11, rated: true, completionDate: moment('2019-06-06T22:17:29.203+02:00') } as Result;
-    const ungradedResult1 = { id: 12, rated: false, completionDate: moment('2019-06-06T22:25:29.203+02:00') } as Result;
-    const ungradedResult2 = { id: 13, rated: false, completionDate: moment('2019-06-06T22:32:29.203+02:00') } as Result;
+    const gradedResult1 = { id: 10, rated: true, completionDate: dayjs('2019-06-06T22:15:29.203+02:00') } as Result;
+    const gradedResult2 = { id: 11, rated: true, completionDate: dayjs('2019-06-06T22:17:29.203+02:00') } as Result;
+    const ungradedResult1 = { id: 12, rated: false, completionDate: dayjs('2019-06-06T22:25:29.203+02:00') } as Result;
+    const ungradedResult2 = { id: 13, rated: false, completionDate: dayjs('2019-06-06T22:32:29.203+02:00') } as Result;
     const results = [gradedResult2, ungradedResult1, gradedResult1, ungradedResult2] as Result[];
     const initialParticipation = { id: 1, exercise, results, student } as any;
     const newGradedResult = { id: 14, rated: true } as Result;
@@ -57,7 +56,7 @@ describe('UpdatingResultComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, MomentModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
             declarations: [UpdatingResultComponent, ResultComponent],
             providers: [
                 JhiLanguageHelper,

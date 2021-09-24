@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { SERVER_API_URL } from 'app/app.constants';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise } from 'app/entities/exercise.model';

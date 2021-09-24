@@ -1,12 +1,12 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { JhiLanguageService } from 'ng-jhipster';
 
 import { RegisterService } from 'app/account/register/register.service';
 import { User } from 'app/core/user/user.model';
 import { ACCOUNT_REGISTRATION_BLOCKED, EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/constants/error.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FormBuilder, Validators } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-register',
@@ -37,22 +37,13 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     allowedEmailPattern?: string;
     allowedEmailPatternReadable?: string;
 
-    constructor(private languageService: JhiLanguageService, private registerService: RegisterService, private fb: FormBuilder, private profileService: ProfileService) {}
+    constructor(private translateService: TranslateService, private registerService: RegisterService, private fb: FormBuilder, private profileService: ProfileService) {}
 
     ngAfterViewInit(): void {
         if (this.login) {
             this.login.nativeElement.focus();
         }
     }
-
-    // TEST CODE BEGIN
-    // updateAllowedEmailPattern() {
-    //     if (this.allowedEmailPattern) {
-    //         this.registerForm.get('email')!
-    //         .setValidators([Validators.required, Validators.minLength(4), Validators.maxLength(100), Validators.pattern(this.allowedEmailPattern)]);
-    //     }
-    // }
-    // TEST CODE END
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -88,7 +79,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
             user.login = this.registerForm.get(['login'])!.value;
             user.email = this.registerForm.get(['email'])!.value;
             user.password = password;
-            user.langKey = this.languageService.getCurrentLanguage();
+            user.langKey = this.translateService.currentLang;
             this.registerService.save(user).subscribe(
                 () => (this.success = true),
                 (response) => this.processError(response),
