@@ -1,5 +1,5 @@
 import { Account } from 'app/core/user/account.model';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { Organization } from 'app/entities/organization.model';
 
 export class User extends Account {
@@ -10,7 +10,7 @@ export class User extends Account {
     public createdDate?: Date;
     public lastModifiedBy?: string;
     public lastModifiedDate?: Date;
-    public lastNotificationRead?: Moment;
+    public lastNotificationRead?: dayjs.Dayjs;
     public visibleRegistrationNumber?: string;
     public password?: string;
 
@@ -29,7 +29,7 @@ export class User extends Account {
         createdDate?: Date,
         lastModifiedBy?: string,
         lastModifiedDate?: Date,
-        lastNotificationRead?: Moment,
+        lastNotificationRead?: dayjs.Dayjs,
         password?: string,
         imageUrl?: string,
     ) {

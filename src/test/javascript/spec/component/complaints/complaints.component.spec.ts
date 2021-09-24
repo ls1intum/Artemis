@@ -4,7 +4,6 @@ import { By } from '@angular/platform-browser';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintResponse, MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 
-import { MomentModule } from 'ngx-moment';
 import { DebugElement } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ComplaintsComponent } from 'app/complaints/complaints.component';
@@ -21,7 +20,7 @@ describe('ComplaintsComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, MomentModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
             declarations: [ComplaintsComponent],
             providers: [
                 {

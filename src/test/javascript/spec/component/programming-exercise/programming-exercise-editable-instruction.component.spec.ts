@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';

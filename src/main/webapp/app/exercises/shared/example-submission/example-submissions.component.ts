@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -13,7 +13,7 @@ export class ExampleSubmissionsComponent implements OnInit {
     exercise: Exercise;
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
         private courseService: CourseManagementService,
@@ -42,7 +42,7 @@ export class ExampleSubmissionsComponent implements OnInit {
                 this.exercise.exampleSubmissions!.splice(index, 1);
             },
             (error: HttpErrorResponse) => {
-                this.jhiAlertService.error(error.message);
+                this.alertService.error(error.message);
             },
         );
     }

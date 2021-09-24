@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
-import { JhiEventManager } from 'ng-jhipster';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
@@ -10,8 +9,9 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
@@ -22,7 +22,7 @@ export class ExamExerciseRowButtonsComponent {
     @Input() exercise: Exercise;
     @Input() exam: Exam;
     @Input() exerciseGroupId: number;
-    @Input() latestIndividualEndDate: moment.Moment | undefined;
+    @Input() latestIndividualEndDate: dayjs.Dayjs | undefined;
     @Output() onDeleteExercise = new EventEmitter<void>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -34,21 +34,21 @@ export class ExamExerciseRowButtonsComponent {
         private programmingExerciseService: ProgrammingExerciseService,
         private modelingExerciseService: ModelingExerciseService,
         private quizExerciseService: QuizExerciseService,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
     ) {}
 
     /**
      * Checks whether the exam is over using the latestIndividualEndDate
      */
     isExamOver() {
-        return this.latestIndividualEndDate ? this.latestIndividualEndDate.isBefore(moment()) : false;
+        return this.latestIndividualEndDate ? this.latestIndividualEndDate.isBefore(dayjs()) : false;
     }
 
     /**
      * Checks whether the exam has started
      */
     hasExamStarted() {
-        return this.exam.startDate ? this.exam.startDate.isBefore(moment()) : false;
+        return this.exam.startDate ? this.exam.startDate.isBefore(dayjs()) : false;
     }
 
     /**

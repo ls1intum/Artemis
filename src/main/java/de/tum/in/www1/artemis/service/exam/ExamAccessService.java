@@ -29,16 +29,13 @@ public class ExamAccessService {
 
     private final ExamRepository examRepository;
 
-    private final ExerciseGroupRepository exerciseGroupRepository;
-
     private final StudentExamRepository studentExamRepository;
 
     private final CourseRepository courseRepository;
 
-    public ExamAccessService(ExamRepository examRepository, ExerciseGroupRepository exerciseGroupRepository, StudentExamRepository studentExamRepository,
-            AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository) {
+    public ExamAccessService(ExamRepository examRepository, StudentExamRepository studentExamRepository, AuthorizationCheckService authorizationCheckService,
+            UserRepository userRepository, CourseRepository courseRepository) {
         this.examRepository = examRepository;
-        this.exerciseGroupRepository = exerciseGroupRepository;
         this.studentExamRepository = studentExamRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
@@ -52,6 +49,7 @@ public class ExamAccessService {
      * @param examId   The id of the exam
      * @return a ResponseEntity with the exam
      */
+    // TODO: in the future this method should throw and return void
     public ResponseEntity<StudentExam> checkAndGetCourseAndExamAccessForConduction(Long courseId, Long examId) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -94,6 +92,7 @@ public class ExamAccessService {
      * @param <T>      The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
+    // TODO: in the future this method should throw and return void
     public <T> Optional<ResponseEntity<T>> checkCourseAccessForEditor(Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastEditorInCourse(course, null)) {
@@ -109,6 +108,7 @@ public class ExamAccessService {
      * @param <T>      The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
+    // TODO: in the future this method should throw and return void
     public <T> Optional<ResponseEntity<T>> checkCourseAccessForInstructor(Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
@@ -124,6 +124,7 @@ public class ExamAccessService {
      * @param <T>      The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
+    // TODO: in the future this method should throw and return void
     public <T> Optional<ResponseEntity<T>> checkCourseAccessForTeachingAssistant(Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
@@ -141,6 +142,7 @@ public class ExamAccessService {
      * @param <X>      The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
+    // TODO: in the future this method should throw and return void
     public <X> Optional<ResponseEntity<X>> checkCourseAndExamAccessForEditor(Long courseId, Long examId) {
         Optional<ResponseEntity<X>> courseAccessFailure = checkCourseAccessForEditor(courseId);
         if (courseAccessFailure.isPresent()) {
@@ -158,6 +160,7 @@ public class ExamAccessService {
      * @param <X>      The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
+    // TODO: in the future this method should throw and return void
     public <X> Optional<ResponseEntity<X>> checkCourseAndExamAccessForInstructor(Long courseId, Long examId) {
         Optional<ResponseEntity<X>> courseAccessFailure = checkCourseAccessForInstructor(courseId);
         if (courseAccessFailure.isPresent()) {
@@ -175,6 +178,7 @@ public class ExamAccessService {
      * @param <X>      The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
+    // TODO: in the future this method should throw and return void
     public <X> Optional<ResponseEntity<X>> checkCourseAndExamAccessForInstructor(Long courseId, Exam exam) {
         Optional<ResponseEntity<X>> courseAccessFailure = checkCourseAccessForInstructor(courseId);
         if (courseAccessFailure.isPresent()) {
@@ -192,6 +196,7 @@ public class ExamAccessService {
      * @param <X>      The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
+    // TODO: in the future this method should throw and return void
     public <X> Optional<ResponseEntity<X>> checkCourseAndExamAccessForTeachingAssistant(Long courseId, Long examId) {
         Optional<ResponseEntity<X>> courseAccessFailure = checkCourseAccessForTeachingAssistant(courseId);
         if (courseAccessFailure.isPresent()) {
@@ -200,6 +205,7 @@ public class ExamAccessService {
         return checkCourseAndExamAccess(courseId, examId);
     }
 
+    // TODO: in the future this method should throw and return void
     private <X> Optional<ResponseEntity<X>> checkCourseAndExamAccess(Long courseId, Long examId) {
         Optional<Exam> exam = examRepository.findById(examId);
         if (exam.isEmpty()) {
@@ -211,6 +217,7 @@ public class ExamAccessService {
         return Optional.empty();
     }
 
+    // TODO: in the future this method should throw and return void
     private <X> Optional<ResponseEntity<X>> checkCourseAndExamAccess(Long courseId, Exam exam) {
         if (!exam.getCourse().getId().equals(courseId)) {
             return Optional.of(conflict());
@@ -230,6 +237,7 @@ public class ExamAccessService {
      *                        response can be returned there
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
+    // TODO: in the future this method should throw and return void
     public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndExerciseGroupAccess(Role role, Long courseId, Long examId, ExerciseGroup exerciseGroup) {
         Optional<ResponseEntity<X>> courseAndExamAccessFailure = switch (role) {
             case INSTRUCTOR -> checkCourseAndExamAccessForInstructor(courseId, examId);
@@ -257,6 +265,7 @@ public class ExamAccessService {
      *                      response can be returned there
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
+    // TODO: in the future this method should throw and return void
     public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndStudentExamAccess(Long courseId, Long examId, Long studentExamId) {
         Optional<ResponseEntity<X>> courseAndExamAccessFailure = checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {

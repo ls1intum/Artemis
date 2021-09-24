@@ -1,4 +1,4 @@
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -47,7 +47,7 @@ export class ProgrammingExercise extends Exercise {
     public checkoutSolutionRepository?: boolean;
     public auxiliaryRepositories?: AuxiliaryRepository[];
 
-    public buildAndTestStudentSubmissionsAfterDueDate?: Moment;
+    public buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
     public testCasesChanged?: boolean;
 
     public projectType?: ProjectType;

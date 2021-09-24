@@ -1,7 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import { SERVER_API_URL } from 'app/app.constants';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { lastValueFrom } from 'rxjs';
 
@@ -37,7 +36,7 @@ export class FileService {
         const normalizedDownloadUrl = restOfUrl + '/' + encodeURIComponent(fileName);
         const newWindow = window.open('about:blank');
         lastValueFrom(this.http.get('api/files/attachments/access-token/' + fileName, { observe: 'response', responseType: 'text' })).then(
-            (result: HttpResponse<String>) => {
+            (result: HttpResponse<string>) => {
                 newWindow!.location.href = `${normalizedDownloadUrl}?access_token=${result.body}`;
             },
             () => {
@@ -56,7 +55,7 @@ export class FileService {
     downloadMergedFileWithAccessToken(courseId: number, lectureId: number) {
         const newWindow = window.open('about:blank');
         lastValueFrom(this.http.get(`api/files/attachments/course/${courseId}/access-token`, { observe: 'response', responseType: 'text' })).then(
-            (result: HttpResponse<String>) => {
+            (result: HttpResponse<string>) => {
                 newWindow!.location.href = `api/files/attachments/lecture/${lectureId}/merge-pdf?access_token=${result.body}`;
             },
             () => {

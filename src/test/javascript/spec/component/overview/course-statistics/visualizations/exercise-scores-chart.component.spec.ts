@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import * as chai from 'chai';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import 'chart.js';
 import { CustomChartPoint, ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { ChartsModule } from 'ng2-charts';
@@ -14,8 +14,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { HttpResponse } from '@angular/common/http';
 
 chai.use(sinonChai);
@@ -46,7 +45,7 @@ describe('ExerciseScoresChartComponent', () => {
             imports: [ChartsModule, RouterTestingModule.withRoutes([])],
             declarations: [ExerciseScoresChartComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(TranslateService),
                 MockProvider(ExerciseScoresChartService),
 
@@ -74,8 +73,8 @@ describe('ExerciseScoresChartComponent', () => {
     });
 
     it('should load exercise scores and generate chart', () => {
-        const firstExercise = generateExerciseScoresDTO(ExerciseType.TEXT, 1, 50, 70, 100, moment(), 'First Exercise');
-        const secondExercise = generateExerciseScoresDTO(ExerciseType.QUIZ, 1, 40, 80, 90, moment().add(5, 'days'), 'Second Exercise');
+        const firstExercise = generateExerciseScoresDTO(ExerciseType.TEXT, 1, 50, 70, 100, dayjs(), 'First Exercise');
+        const secondExercise = generateExerciseScoresDTO(ExerciseType.QUIZ, 1, 40, 80, 90, dayjs().add(5, 'days'), 'Second Exercise');
 
         const exerciseScoresChartService = TestBed.inject(ExerciseScoresChartService);
         const exerciseScoresResponse: HttpResponse<ExerciseScoresDTO[]> = new HttpResponse({
@@ -138,7 +137,7 @@ function generateExerciseScoresDTO(
     scoreOfStudent: number,
     averageScore: number,
     maxScore: number,
-    releaseDate: Moment,
+    releaseDate: dayjs.Dayjs,
     exerciseTitle: string,
 ) {
     const dto = new ExerciseScoresDTO();
