@@ -94,17 +94,14 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
             backdrop: 'static',
         });
         exampleSubmissionImportModalRef.componentInstance.exercise = this.exercise;
-        exampleSubmissionImportModalRef.result.then(
-            (selectedSubmission: Submission) => {
-                this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise.id!).subscribe(
-                    () => {
-                        this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
-                        location.reload();
-                    },
-                    (error: HttpErrorResponse) => onError(this.alertService, error),
-                );
-            },
-            () => {},
-        );
+        exampleSubmissionImportModalRef.result.then((selectedSubmission: Submission) => {
+            this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise.id!).subscribe(
+                () => {
+                    this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
+                    location.reload();
+                },
+                (error: HttpErrorResponse) => onError(this.alertService, error),
+            );
+        });
     }
 }
