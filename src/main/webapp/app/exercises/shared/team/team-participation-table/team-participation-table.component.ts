@@ -2,12 +2,12 @@ import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { Router } from '@angular/router';
 import { Team } from 'app/entities/team.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Course } from 'app/entities/course.model';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { get } from 'lodash';
+import { get } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -39,7 +39,7 @@ class ExerciseForTeam extends Exercise {
 })
 export class TeamParticipationTableComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
-    readonly moment = moment;
+    readonly dayjs = dayjs;
 
     @Input() team: Team;
     @Input() course: Course;
@@ -53,7 +53,7 @@ export class TeamParticipationTableComponent implements OnInit {
     constructor(
         private teamService: TeamService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private router: Router,
         private accountService: AccountService,
     ) {}
@@ -176,7 +176,7 @@ export class TeamParticipationTableComponent implements OnInit {
         // Programming exercises can only be assessed by anyone / all other exercises can be assessed by tutors
         // if the exercise due date has passed
         if (exercise.type === ExerciseType.PROGRAMMING || !exercise.isAtLeastInstructor) {
-            if (exercise.dueDate.isBefore(moment())) {
+            if (exercise.dueDate.isBefore(dayjs())) {
                 return false;
             }
         } else if (exercise.isAtLeastInstructor) {
@@ -186,7 +186,7 @@ export class TeamParticipationTableComponent implements OnInit {
     }
 
     private onError(error: HttpErrorResponse) {
-        onError(this.jhiAlertService, error);
+        onError(this.alertService, error);
         this.isLoading = false;
     }
 }

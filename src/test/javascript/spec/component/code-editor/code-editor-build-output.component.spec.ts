@@ -5,7 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';
@@ -29,6 +29,8 @@ import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { MockPipe } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -94,7 +96,7 @@ describe('CodeEditorBuildOutputComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, ArtemisSharedModule],
-            declarations: [CodeEditorBuildOutputComponent],
+            declarations: [CodeEditorBuildOutputComponent, MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },

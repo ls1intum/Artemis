@@ -1,6 +1,6 @@
 import { ApplicationRef, ComponentFactoryResolver, EmbeddedViewRef, Injectable, Injector } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
-import * as showdown from 'showdown';
+import { ShowdownExtension } from 'showdown';
 // tslint:disable-next-line:max-line-length
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { Result } from 'app/entities/result.model';
@@ -93,7 +93,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
      * Creates and returns an extension to current exercise.
      */
     getExtension() {
-        const extension: showdown.ShowdownExtension = {
+        const extension: ShowdownExtension = {
             type: 'lang',
             filter: (text: string) => {
                 const idPlaceholder = '%idPlaceholder%';

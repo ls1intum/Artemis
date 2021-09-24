@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Location } from '@angular/common';
 
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
@@ -17,7 +17,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 import interact from 'interactjs';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { lastValueFrom } from 'rxjs';
 
 @Component({
@@ -55,10 +55,10 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         private location: Location,
         protected accountService: AccountService,
         protected assessmentsService: TextAssessmentService,
-        protected jhiAlertService: JhiAlertService,
+        protected alertService: AlertService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
-        super(jhiAlertService, accountService, assessmentsService, structuredGradingCriterionService);
+        super(alertService, accountService, assessmentsService, structuredGradingCriterionService);
         const state = router.getCurrentNavigation()?.extras.state as { submission: TextSubmission };
         this.leftFeedbackId = Number(activatedRoute.snapshot.paramMap.get('feedbackId'));
         this.leftSubmission = state?.submission;
@@ -173,7 +173,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.exercise.assessmentDueDate) {
-                isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
+                isBeforeAssessmentDueDate = dayjs().isBefore(this.exercise.assessmentDueDate!);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
             return this.isAssessor(result) && isBeforeAssessmentDueDate;
@@ -256,7 +256,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
     }
 
     private handleSolveConflictsSuccessWithAlert(response: FeedbackConflict, translationKey: string): void {
-        this.jhiAlertService.success(translationKey);
+        this.alertService.success(translationKey);
         this.markBusy = false;
         this.isMarkingDisabled = true;
         this.location.back();

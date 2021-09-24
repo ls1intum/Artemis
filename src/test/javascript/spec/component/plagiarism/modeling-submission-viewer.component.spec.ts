@@ -45,7 +45,7 @@ describe('Modeling Submission Viewer Component', () => {
     });
 
     it('should fetch the submission', () => {
-        spyOn(modelingSubmissionService, 'getSubmissionWithoutLock').and.returnValue(of(modelingSubmission));
+        jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutLock').mockReturnValue(of(modelingSubmission));
 
         comp.ngOnChanges({
             plagiarismSubmission: {

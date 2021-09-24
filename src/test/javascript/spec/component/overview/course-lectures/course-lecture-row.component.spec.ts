@@ -10,10 +10,10 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -64,7 +64,7 @@ describe('CourseLectureRow', () => {
         const lecture = new Lecture();
         lecture.id = 1;
         lecture.title = 'exampleLecture';
-        lecture.startDate = moment().add(1, 'd');
+        lecture.startDate = dayjs().add(1, 'd');
         const course = new Course();
         course.id = 1;
 
@@ -80,7 +80,7 @@ describe('CourseLectureRow', () => {
         const lecture = new Lecture();
         lecture.id = 1;
         lecture.title = 'exampleLecture';
-        lecture.startDate = moment().add(9, 'd');
+        lecture.startDate = dayjs().add(9, 'd');
         const course = new Course();
         course.id = 1;
 

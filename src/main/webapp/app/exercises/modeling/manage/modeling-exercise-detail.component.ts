@@ -3,7 +3,6 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@ls1intum/apollon';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
@@ -11,15 +10,18 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
     templateUrl: './modeling-exercise-detail.component.html',
 })
 export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
+    readonly dayjs = dayjs;
     modelingExercise: ModelingExercise;
     course: Course | undefined;
     private subscription: Subscription;
@@ -31,18 +33,17 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     numberOfClusters: number;
 
     readonly ExerciseType = ExerciseType;
-    readonly moment = moment;
     doughnutStats: ExerciseManagementStatisticsDto;
     isExamExercise: boolean;
 
     isAdmin = false;
 
     constructor(
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
         private modelingExerciseService: ModelingExerciseService,
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private statisticsService: StatisticsService,
         private accountService: AccountService,
     ) {}
@@ -81,7 +82,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             this.modelingExerciseService.convertToPdf(model, `${this.modelingExercise.title}-example-solution`).subscribe(
                 () => {},
                 () => {
-                    this.jhiAlertService.error('artemisApp.modelingExercise.apollonConversion.error');
+                    this.alertService.error('artemisApp.modelingExercise.apollonConversion.error');
                 },
             );
         }
@@ -102,10 +103,10 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         if (this.modelingExercise && this.modelingExercise.id) {
             this.modelingExerciseService.buildClusters(this.modelingExercise.id).subscribe(
                 () => {
-                    this.jhiAlertService.success('artemisApp.modelingExercise.buildClusters.success');
+                    this.alertService.success('artemisApp.modelingExercise.buildClusters.success');
                 },
                 () => {
-                    this.jhiAlertService.error('artemisApp.modelingExercise.buildClusters.error');
+                    this.alertService.error('artemisApp.modelingExercise.buildClusters.error');
                 },
             );
         }
@@ -115,10 +116,10 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         if (this.modelingExercise && this.modelingExercise.id) {
             this.modelingExerciseService.deleteClusters(this.modelingExercise.id).subscribe(
                 () => {
-                    this.jhiAlertService.success('artemisApp.modelingExercise.deleteClusters.success');
+                    this.alertService.success('artemisApp.modelingExercise.deleteClusters.success');
                 },
                 () => {
-                    this.jhiAlertService.error('artemisApp.modelingExercise.deleteClusters.error');
+                    this.alertService.error('artemisApp.modelingExercise.deleteClusters.error');
                 },
             );
         }
@@ -131,7 +132,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.numberOfClusters = res?.body || 0;
                 },
                 () => {
-                    this.jhiAlertService.error('artemisApp.modelingExercise.checkClusters.error');
+                    this.alertService.error('artemisApp.modelingExercise.checkClusters.error');
                 },
             );
         }

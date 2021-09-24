@@ -3,10 +3,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ElementRef, NgModule, Renderer2 } from '@angular/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgbActiveModal, NgbModal, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
-import { JhiAlertService, JhiDataUtils, JhiDateUtils, JhiEventManager, JhiLanguageService, JhiParseLinks } from 'ng-jhipster';
-
-import { MockLanguageHelper, MockLanguageService } from './helpers/mocks/service/mock-language.service';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from './helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from './helpers/mocks/activated-route/mock-activated-route';
@@ -18,28 +14,23 @@ import { FaIconLibrary, FontAwesomeModule, FaIconComponent } from '@fortawesome/
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import locale from '@angular/common/locales/en';
 import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockComponent } from 'ng-mocks';
 import { MockAlertService } from './helpers/mocks/service/mock-alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ParseLinks } from 'app/core/util/parse-links.service';
+import { MockTranslateService } from './helpers/mocks/service/mock-translate.service';
 
 @NgModule({
     imports: [HttpClientTestingModule, FontAwesomeModule],
     providers: [
         DatePipe,
-        JhiDataUtils,
-        JhiDateUtils,
-        JhiParseLinks,
         CookieService,
+        ParseLinks,
         {
-            provide: JhiLanguageService,
-            useClass: MockLanguageService,
-        },
-        {
-            provide: JhiLanguageHelper,
-            useClass: MockLanguageHelper,
-        },
-        {
-            provide: JhiEventManager,
+            provide: EventManager,
             useClass: MockEventManager,
         },
         {
@@ -59,8 +50,12 @@ import { MockAlertService } from './helpers/mocks/service/mock-alert.service';
             useClass: MockAccountService,
         },
         {
-            provide: JhiAlertService,
+            provide: AlertService,
             useClass: MockAlertService,
+        },
+        {
+            provide: TranslateService,
+            useClass: MockTranslateService,
         },
         {
             provide: ElementRef,
@@ -79,11 +74,11 @@ import { MockAlertService } from './helpers/mocks/service/mock-alert.service';
     exports: [MockComponent(FaIconComponent)],
 })
 export class ArtemisTestModule {
-    constructor(iconLibrary: FaIconLibrary, dpConfig: NgbDatepickerConfig, languageService: JhiLanguageService) {
+    constructor(iconLibrary: FaIconLibrary, dpConfig: NgbDatepickerConfig, translateService: TranslateService) {
         registerLocaleData(locale);
         iconLibrary.addIconPacks(fas);
         iconLibrary.addIcons(...fontAwesomeIcons);
-        dpConfig.minDate = { year: moment().year() - 100, month: 1, day: 1 };
-        languageService.init();
+        dpConfig.minDate = { year: dayjs().year() - 100, month: 1, day: 1 };
+        translateService.setDefaultLang('en');
     }
 }

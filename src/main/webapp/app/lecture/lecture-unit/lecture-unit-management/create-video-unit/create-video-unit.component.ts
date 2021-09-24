@@ -5,7 +5,7 @@ import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { onError } from 'app/shared/util/global.utils';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
 import { combineLatest } from 'rxjs';
 
@@ -20,7 +20,7 @@ export class CreateVideoUnitComponent implements OnInit {
     lectureId: number;
     courseId: number;
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private videoUnitService: VideoUnitService, private alertService: JhiAlertService) {}
+    constructor(private activatedRoute: ActivatedRoute, private router: Router, private videoUnitService: VideoUnitService, private alertService: AlertService) {}
 
     ngOnInit(): void {
         const lectureRoute = this.activatedRoute.parent!.parent!;

@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 
 describe('Alert Component Tests', () => {
     let comp: AlertComponent;
     let fixture: ComponentFixture<AlertComponent>;
-    let alertService: JhiAlertService;
+    let alertService: AlertService;
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
@@ -20,22 +20,26 @@ describe('Alert Component Tests', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(AlertComponent);
         comp = fixture.componentInstance;
-        alertService = TestBed.inject(JhiAlertService);
+        alertService = TestBed.inject(AlertService);
     });
 
     it('Should call alertService.get on init', () => {
+        const getStub = jest.spyOn(alertService, 'get');
+
         // WHEN
         comp.ngOnInit();
 
         // THEN
-        expect(alertService.get).toHaveBeenCalled();
+        expect(getStub).toHaveBeenCalled();
     });
 
     it('Should call alertService.clear on destroy', () => {
+        const clearStub = jest.spyOn(alertService, 'clear');
+
         // WHEN
         comp.ngOnDestroy();
 
         // THEN
-        expect(alertService.clear).toHaveBeenCalled();
+        expect(clearStub).toHaveBeenCalled();
     });
 });
