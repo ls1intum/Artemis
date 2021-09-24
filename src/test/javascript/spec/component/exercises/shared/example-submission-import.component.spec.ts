@@ -1,8 +1,5 @@
 import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import sinonChai from 'sinon-chai';
-import * as chai from 'chai';
-import * as sinon from 'sinon';
 import { of } from 'rxjs';
 import { ExampleSubmissionImportComponent } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -24,16 +21,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('ExampleSubmissionImportComponent', () => {
     let component: ExampleSubmissionImportComponent;
     let fixture: ComponentFixture<ExampleSubmissionImportComponent>;
     let pagingService: ExampleSubmissionImportPagingService;
     let sortService: SortService;
-    let searchForSubmissionsStub: sinon.SinonStub;
-    let sortByPropertyStub: sinon.SinonStub;
+    let searchForSubmissionsSpy: jest.SpyInstance;
+    let sortByPropertySpy: jest.SpyInstance;
     let searchResult: SearchResult<Submission>;
     let state: PageableSearch;
     let submission: Submission;
@@ -61,18 +55,18 @@ describe('ExampleSubmissionImportComponent', () => {
                 component = fixture.componentInstance;
                 pagingService = TestBed.inject(ExampleSubmissionImportPagingService);
                 sortService = TestBed.inject(SortService);
-                searchForSubmissionsStub = sinon.stub(pagingService, 'searchForSubmissions');
-                sortByPropertyStub = sinon.stub(sortService, 'sortByProperty');
+                searchForSubmissionsSpy = jest.spyOn(pagingService, 'searchForSubmissions');
+                sortByPropertySpy = jest.spyOn(sortService, 'sortByProperty');
             });
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.clearAllMocks();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(component).to.be.ok;
+        expect(component).toBeTruthy();
     });
 
     beforeEach(() => {
@@ -98,7 +92,7 @@ describe('ExampleSubmissionImportComponent', () => {
             sortedColumn: TableColumn.ID,
             ...searchResult,
         };
-        searchForSubmissionsStub.returns(of(searchResult));
+        searchForSubmissionsSpy.mockReturnValue(of(searchResult));
     });
 
     const setStateAndCallOnInit = (middleExpectation: () => void) => {
@@ -106,51 +100,51 @@ describe('ExampleSubmissionImportComponent', () => {
         component.exercise = exercise;
         component.ngOnInit();
         middleExpectation();
-        expect(component.content).to.deep.equal(searchResult);
+        expect(component.content).toEqual(searchResult);
         component.sortRows();
-        expect(sortByPropertyStub).to.have.been.calledWithExactly(searchResult.resultsOnPage, component.sortedColumn, component.listSorting);
+        expect(sortByPropertySpy).toHaveBeenCalledWith(searchResult.resultsOnPage, component.sortedColumn, component.listSorting);
     };
 
     it('should set content to paging result on sort', fakeAsync(() => {
-        expect(component.listSorting).to.equal(false);
+        expect(component.listSorting).toEqual(false);
         setStateAndCallOnInit(() => {
             component.listSorting = true;
             tick(10);
-            expect(searchForSubmissionsStub).to.have.been.calledWithExactly({ ...state, sortingOrder: SortingOrder.ASCENDING }, exercise.id);
-            expect(component.listSorting).to.equal(true);
+            expect(searchForSubmissionsSpy).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, exercise.id);
+            expect(component.listSorting).toEqual(true);
         });
     }));
 
     it('should set content to paging result on pageChange', fakeAsync(() => {
-        expect(component.page).to.equal(0);
+        expect(component.page).toEqual(0);
         setStateAndCallOnInit(() => {
             component.onPageChange(2);
             tick(10);
-            expect(searchForSubmissionsStub).to.have.been.calledWithExactly({ ...state, page: 2 }, exercise.id);
-            expect(component.page).to.equal(2);
+            expect(searchForSubmissionsSpy).toHaveBeenCalledWith({ ...state, page: 2 }, exercise.id);
+            expect(component.page).toEqual(2);
         });
     }));
 
     it('should set content to paging result on search', fakeAsync(() => {
-        expect(component.searchTerm).to.equal('');
+        expect(component.searchTerm).toEqual('');
         setStateAndCallOnInit(() => {
             const givenSearchTerm = 'givenTestSearchTerm';
             component.searchTerm = givenSearchTerm;
             tick(10);
-            expect(searchForSubmissionsStub).to.not.have.been.called;
+            expect(searchForSubmissionsSpy).not.toHaveBeenCalled();
             tick(290);
-            expect(searchForSubmissionsStub).to.have.been.calledWithExactly({ ...state, searchTerm: givenSearchTerm }, exercise.id);
-            expect(component.searchTerm).to.equal(givenSearchTerm);
+            expect(searchForSubmissionsSpy).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, exercise.id);
+            expect(component.searchTerm).toEqual(givenSearchTerm);
         });
     }));
 
     it('should set content to paging result on sortedColumn change', fakeAsync(() => {
-        expect(component.sortedColumn).to.equal(TableColumn.ID);
+        expect(component.sortedColumn).toEqual(TableColumn.ID);
         setStateAndCallOnInit(() => {
             component.sortedColumn = TableColumn.STUDENT_NAME;
             tick(10);
-            expect(searchForSubmissionsStub).to.have.been.calledWithExactly({ ...state, sortedColumn: TableColumn.STUDENT_NAME }, exercise.id);
-            expect(component.sortedColumn).to.equal(TableColumn.STUDENT_NAME);
+            expect(searchForSubmissionsSpy).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.STUDENT_NAME }, exercise.id);
+            expect(component.sortedColumn).toEqual(TableColumn.STUDENT_NAME);
         });
     }));
 });
