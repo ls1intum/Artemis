@@ -4,9 +4,9 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { take } from 'rxjs/operators';
 import { RouterTestingModule } from '@angular/router/testing';
-import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
+import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { of } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 
 describe('Grading System Service', () => {
     let injector: TestBed;
@@ -201,7 +201,7 @@ describe('Grading System Service', () => {
     }));
 
     it('should match a grade step for to a percentage when no grading scale exists', fakeAsync(() => {
-        spyOn(service, 'matchPercentageToGradeStepForExam').and.returnValue(of(new HttpErrorResponse({ error: 'Not found', status: 404 })));
+        jest.spyOn(service, 'matchPercentageToGradeStepForExam').mockReturnValue(of(new HttpResponse<GradeDTO>({ status: 404 })));
 
         service
             .matchPercentageToGradeStep(50, 189, 256)

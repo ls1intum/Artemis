@@ -18,7 +18,7 @@
     <div class="table-responsive" *ngIf="exportReady">
         <table class="table table-striped">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                     <th jhiSortBy="user.name">
                         <span jhiTranslate="instructorDashboard.name">Name</span>
                         <fa-icon [icon]="'sort'"></fa-icon>

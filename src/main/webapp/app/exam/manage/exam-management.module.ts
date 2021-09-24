@@ -21,7 +21,6 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { MomentModule } from 'ngx-moment';
 import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 import { StudentsExamImportDialogComponent } from 'app/exam/manage/students/students-exam-import-dialog/students-exam-import-dialog.component';
 import { StudentsExamImportButtonComponent } from 'app/exam/manage/students/students-exam-import-dialog/students-exam-import-button.component';
@@ -64,7 +63,6 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisFileUploadExerciseManagementModule,
         ArtemisProgrammingExerciseManagementModule,
         ArtemisQuizManagementModule,
-        MomentModule,
         ArtemisParticipationSummaryModule,
         ArtemisProgrammingExerciseStatusModule,
         ArtemisMarkdownModule,

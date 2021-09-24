@@ -29,12 +29,12 @@ import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -293,7 +293,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     it('should try to submit assessment', fakeAsync(() => {
         const course = new Course();
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-        component.modelingExercise.assessmentDueDate = moment().subtract(2, 'days');
+        component.modelingExercise.assessmentDueDate = dayjs().subtract(2, 'days');
 
         // make sure feedback is valid
         const feedback = new Feedback();

@@ -3,7 +3,6 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { SERVER_API_URL } from 'app/app.constants';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingsService } from 'app/shared/metis/postings.service';
 

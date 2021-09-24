@@ -14,7 +14,7 @@ logging:
     level:
         ROOT: INFO
         de.tum.in.www1.artemis: DEBUG
-        io.github.jhipster: INFO
+        tech.jhipster: INFO
 
 artemis:
     version: 1.3.3-beta7
@@ -45,7 +45,7 @@ spring:
     jmx:
         enabled: false
     jpa:
-#        database-platform: io.github.jhipster.domain.util.FixedH2Dialect
+#        database-platform: tech.jhipster.domain.util.FixedH2Dialect
         open-in-view: false
         show-sql: false
         hibernate:
@@ -179,10 +179,6 @@ jhipster:
     mail: # specific JHipster mail property, for standard properties see MailProperties
         from: Artemis@localhost
         base-url: http://127.0.0.1:8080
-    metrics:
-        logs: # Reports metrics in the logs
-            enabled: false
-            report-frequency: 60 # in seconds
     security:
         authentication:
             jwt:

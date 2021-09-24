@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PostFooterComponent } from 'app/shared/metis/postings-footer/post-footer/post-footer.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

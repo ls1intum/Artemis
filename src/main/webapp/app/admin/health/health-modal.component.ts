@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-
-import { HealthDetails, HealthKey } from './health.service';
+import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
 
 @Component({
     selector: 'jhi-health-modal',
@@ -10,25 +9,22 @@ import { HealthDetails, HealthKey } from './health.service';
 export class HealthModalComponent {
     health?: { key: HealthKey; value: HealthDetails };
 
-    constructor(public activeModal: NgbActiveModal) {}
+    constructor(private activeModal: NgbActiveModal) {}
 
     readableValue(value: any): string {
-        if (this.health && this.health.key === 'diskSpace') {
+        if (this.health?.key === 'diskSpace') {
             // Should display storage space in an human readable unit
             const val = value / 1073741824;
             if (val > 1) {
-                // Value
-                return val.toFixed(2) + ' GB';
-            } else {
-                return (value / 1048576).toFixed(2) + ' MB';
+                return `${val.toFixed(2)} GB`;
             }
+            return `${(value / 1048576).toFixed(2)} MB`;
         }
 
         if (typeof value === 'object') {
             return JSON.stringify(value);
-        } else {
-            return value.toString();
         }
+        return String(value);
     }
 
     dismiss(): void {
