@@ -1,5 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { DebugElement, Directive, Input } from '@angular/core';
@@ -12,10 +10,6 @@ import { metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { SinonSpy, spy } from 'sinon';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: '[routerLink]' })
@@ -34,8 +28,8 @@ describe('PostComponent', () => {
     let fixture: ComponentFixture<PostComponent>;
     let debugElement: DebugElement;
     let metisService: MetisService;
-    let metisServiceGetLinkSpy: SinonSpy;
-    let metisServiceGetQueryParamsSpy: SinonSpy;
+    let metisServiceGetLinkMock: jest.SpyInstance;
+    let metisServiceGetQueryParamsMock: jest.SpyInstance;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -59,40 +53,44 @@ describe('PostComponent', () => {
             });
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('should contain a post header', () => {
         const header = getElement(debugElement, 'jhi-post-header');
-        expect(header).to.exist;
+        expect(header).toBeDefined();
     });
 
     it('should contain a title with referencable id', () => {
-        metisServiceGetLinkSpy = spy(metisService, 'getLinkForPost');
-        metisServiceGetQueryParamsSpy = spy(metisService, 'getQueryParamsForPost');
+        metisServiceGetLinkMock = jest.spyOn(metisService, 'getLinkForPost');
+        metisServiceGetQueryParamsMock = jest.spyOn(metisService, 'getQueryParamsForPost');
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
         fixture.detectChanges();
         const title = getElement(debugElement, 'p.post-title');
-        expect(title).to.exist;
+        expect(title).toBeDefined();
         const clickableId = getElement(debugElement, 'a.reference-hash');
-        expect(clickableId).to.exist;
-        expect(clickableId.innerHTML).to.be.equal(`#${metisPostExerciseUser1.id}`);
-        expect(metisServiceGetLinkSpy).to.have.been.calledWith(metisPostExerciseUser1);
-        expect(metisServiceGetQueryParamsSpy).to.have.been.calledWith(metisPostExerciseUser1);
+        expect(clickableId).toBeDefined();
+        expect(clickableId.innerHTML).toEqual(`#${metisPostExerciseUser1.id}`);
+        expect(metisServiceGetLinkMock).toHaveBeenCalledWith(metisPostExerciseUser1);
+        expect(metisServiceGetQueryParamsMock).toHaveBeenCalledWith(metisPostExerciseUser1);
     });
 
     it('should contain the posting content', () => {
         const header = getElement(debugElement, 'jhi-posting-content');
-        expect(header).to.exist;
+        expect(header).toBeDefined();
     });
 
     it('should contain a post footer', () => {
         const footer = getElement(debugElement, 'jhi-post-footer');
-        expect(footer).to.exist;
+        expect(footer).toBeDefined();
     });
 
     it('should have correct content and title', () => {
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
-        expect(component.content).to.be.equal(metisPostExerciseUser1.content);
-        expect(component.posting.title).to.be.equal(metisPostExerciseUser1.title);
+        expect(component.content).toEqual(metisPostExerciseUser1.content);
+        expect(component.posting.title).toEqual(metisPostExerciseUser1.title);
     });
 });
