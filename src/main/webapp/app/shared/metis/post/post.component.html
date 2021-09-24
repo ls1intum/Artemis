@@ -2,7 +2,7 @@
 <div class="row align-items-center">
     <div class="col">
         <div class="row">
-            <b>{{ posting.title }}</b>
+            <p class="m-0 post-title">{{ posting.title }}</p>
         </div>
         <div class="markdown-preview" [innerHTML]="posting.content ? (posting.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"></div>
     </div>

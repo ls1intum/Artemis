@@ -1,4 +1,4 @@
-import * as $ from 'jquery';
+import $ from 'jquery';
 import { AfterViewInit, Component, ContentChild, ElementRef, ViewEncapsulation, EventEmitter, Output, Input } from '@angular/core';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';

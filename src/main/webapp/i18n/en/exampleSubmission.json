@@ -5,6 +5,13 @@
                 "title": "Example Submissions Board",
                 "editor": "Example Submission Editor"
             },
+            "legend": {
+                "title": "Legend",
+                "positiveScore": "Positive score",
+                "negativeScore": "Negative score",
+                "incorrectAssessment": "Incorrect assessment️",
+                "feedbackWithoutScore": "Feedback without score"
+            },
             "feedback": {
                 "CORRECT": "Correct assessment 👍",
                 "INCORRECT_SCORE": "Incorrect score",

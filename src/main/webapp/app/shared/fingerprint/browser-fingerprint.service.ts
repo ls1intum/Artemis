@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { LocalStorageService } from 'ngx-webstorage';
-const FingerprintJS = require('@fingerprintjs/fingerprintjs');
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import { v4 as uuid } from 'uuid';
 
 @Injectable({ providedIn: 'root' })

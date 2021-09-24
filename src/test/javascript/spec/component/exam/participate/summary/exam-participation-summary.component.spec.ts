@@ -1,7 +1,7 @@
 import * as sinon from 'sinon';
 import * as chai from 'chai';
-import * as moment from 'moment';
-import * as sinonChai from 'sinon-chai';
+import dayjs from 'dayjs';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
@@ -11,7 +11,6 @@ import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testi
 import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
 import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
@@ -39,6 +38,7 @@ import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,12 +48,12 @@ let component: ExamParticipationSummaryComponent;
 
 const user = { id: 1, name: 'Test User' } as User;
 
-const visibleDate = moment().subtract(6, 'hours');
-const startDate = moment().subtract(5, 'hours');
-const endDate = moment().subtract(4, 'hours');
-const publishResultsDate = moment().subtract(3, 'hours');
-const reviewStartDate = moment().subtract(2, 'hours');
-const reviewEndDate = moment().add(1, 'hours');
+const visibleDate = dayjs().subtract(6, 'hours');
+const startDate = dayjs().subtract(5, 'hours');
+const endDate = dayjs().subtract(4, 'hours');
+const publishResultsDate = dayjs().subtract(3, 'hours');
+const reviewStartDate = dayjs().subtract(2, 'hours');
+const reviewEndDate = dayjs().add(1, 'hours');
 
 const exam = {
     id: 1,
@@ -101,7 +101,7 @@ function sharedSetup(url: string[]) {
                 MockComponent(TextExamSummaryComponent),
                 MockComponent(FileUploadExamSummaryComponent),
                 MockComponent(ComplaintInteractionsComponent),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(IncludedInScoreBadgeComponent),

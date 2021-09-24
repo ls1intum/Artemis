@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MomentModule } from 'ngx-moment';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
@@ -9,7 +8,7 @@ import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, of } from 'rxjs';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -18,12 +17,14 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/ex
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { Result } from 'app/entities/result.model';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MissingResultInfo } from 'app/exercises/shared/result/result.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -42,10 +43,10 @@ describe('UpdatingResultComponent', () => {
 
     const exercise = { id: 20 } as Exercise;
     const student = { id: 99 };
-    const gradedResult1 = { id: 10, rated: true, completionDate: moment('2019-06-06T22:15:29.203+02:00') } as Result;
-    const gradedResult2 = { id: 11, rated: true, completionDate: moment('2019-06-06T22:17:29.203+02:00') } as Result;
-    const ungradedResult1 = { id: 12, rated: false, completionDate: moment('2019-06-06T22:25:29.203+02:00') } as Result;
-    const ungradedResult2 = { id: 13, rated: false, completionDate: moment('2019-06-06T22:32:29.203+02:00') } as Result;
+    const gradedResult1 = { id: 10, rated: true, completionDate: dayjs('2019-06-06T22:15:29.203+02:00') } as Result;
+    const gradedResult2 = { id: 11, rated: true, completionDate: dayjs('2019-06-06T22:17:29.203+02:00') } as Result;
+    const ungradedResult1 = { id: 12, rated: false, completionDate: dayjs('2019-06-06T22:25:29.203+02:00') } as Result;
+    const ungradedResult2 = { id: 13, rated: false, completionDate: dayjs('2019-06-06T22:32:29.203+02:00') } as Result;
     const results = [gradedResult2, ungradedResult1, gradedResult1, ungradedResult2] as Result[];
     const initialParticipation = { id: 1, exercise, results, student } as any;
     const newGradedResult = { id: 14, rated: true } as Result;
@@ -55,7 +56,7 @@ describe('UpdatingResultComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, MomentModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
             declarations: [UpdatingResultComponent, ResultComponent],
             providers: [
                 JhiLanguageHelper,
@@ -172,21 +173,42 @@ describe('UpdatingResultComponent', () => {
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).to.be.true;
+        expect(comp.missingResultInfo).to.equal(MissingResultInfo.NONE);
     });
 
     it('should set the isBuilding attribute to false if exerciseType is PROGRAMMING and there is no pending submission anymore', () => {
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         comp.isBuilding = true;
-        getLatestPendingSubmissionStub.returns(of([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, undefined]));
+        getLatestPendingSubmissionStub.returns(of({ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 3 }));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
-        expect(comp.isBuilding).to.equal(false);
+        expect(comp.isBuilding).to.be.false;
+        expect(comp.missingResultInfo).to.equal(MissingResultInfo.NONE);
+    });
+
+    it('should set missingResultInfo attribute if the exerciseType is PROGRAMMING and the latest submission failed (offline IDE)', () => {
+        comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING, allowOfflineIde: true } as ProgrammingExercise;
+        comp.isBuilding = true;
+        getLatestPendingSubmissionStub.returns(of({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 3 }));
+        cleanInitializeGraded();
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
+        expect(comp.isBuilding).to.be.false;
+        expect(comp.missingResultInfo).to.equal(MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE);
+    });
+
+    it('should set missingResultInfo attribute if the exerciseType is PROGRAMMING and the latest submission failed (online IDE)', () => {
+        comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING, allowOfflineIde: false } as ProgrammingExercise;
+        getLatestPendingSubmissionStub.returns(of({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 3 }));
+        cleanInitializeGraded();
+        expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
+        expect(comp.missingResultInfo).to.equal(MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE);
     });
 
     it('should not set the isBuilding attribute to true if the exerciseType is not PROGRAMMING', () => {
-        getLatestPendingSubmissionStub.returns(of([ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission]));
+        getLatestPendingSubmissionStub.returns(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).not.to.have.been.called;
         expect(comp.isBuilding).to.equal(undefined);
+        expect(comp.missingResultInfo).to.equal(MissingResultInfo.NONE);
     });
 });
