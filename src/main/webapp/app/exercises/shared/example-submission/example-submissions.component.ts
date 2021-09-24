@@ -98,10 +98,10 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
             (selectedSubmission: Submission) => {
                 this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise.id!).subscribe(
                     () => {
-                        this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
+                        this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
                         location.reload();
                     },
-                    (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                    (error: HttpErrorResponse) => onError(this.alertService, error),
                 );
             },
             () => {},

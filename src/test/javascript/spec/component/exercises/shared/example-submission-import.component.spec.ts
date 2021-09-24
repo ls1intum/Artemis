@@ -1,6 +1,6 @@
 import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import { of } from 'rxjs';
@@ -10,7 +10,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -22,6 +21,8 @@ import { TableColumn } from 'app/exercises/shared/example-submission/example-sub
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -45,8 +46,8 @@ describe('ExampleSubmissionImportComponent', () => {
                 ExampleSubmissionImportComponent,
                 MockComponent(ResultComponent),
                 MockDirective(NgbPagination),
-                MockDirective(JhiSortByDirective),
-                MockDirective(JhiSortDirective),
+                MockDirective(SortByDirective),
+                MockDirective(SortDirective),
                 MockDirective(ButtonComponent),
                 MockDirective(NgModel),
                 MockPipe(ArtemisDatePipe),

@@ -6,7 +6,6 @@ import { Submission } from 'app/entities/submission.model';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { JhiAlertService } from 'ng-jhipster';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExampleSubmissionImportPagingService } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import-paging.service';
 
@@ -42,7 +41,6 @@ export class ExampleSubmissionImportComponent implements OnInit {
     constructor(
         private sortService: SortService,
         private activeModal: NgbActiveModal,
-        protected jhiAlertService: JhiAlertService,
         private exampleSubmissionService: ExampleSubmissionService,
         private pagingService: ExampleSubmissionImportPagingService,
     ) {}

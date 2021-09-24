@@ -19,7 +19,7 @@
         <div *ngIf="content.resultsOnPage && content.resultsOnPage.length > 0; else emptyTable" class="table-responsive">
             <table class="table table-striped">
                 <thead class="thead-dark">
-                    <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" [callback]="sortRows.bind(this)">
+                    <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()">
                         <th jhiSortBy="{{ column.ID }}">
                             <span>#</span>
                         </th>
