@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
@@ -32,7 +32,7 @@ export class ExamPointsSummaryComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        if (this.exam && this.exam.publishResultsDate && moment(this.exam.publishResultsDate).isBefore(this.serverDateService.now())) {
+        if (this.exam && this.exam.publishResultsDate && dayjs(this.exam.publishResultsDate).isBefore(this.serverDateService.now())) {
             this.calculateExamGrade();
         }
     }
@@ -44,7 +44,7 @@ export class ExamPointsSummaryComponent implements OnInit {
      * - at least one exercise has a result
      */
     show(): boolean {
-        return !!(this.exam && this.exam.publishResultsDate && moment(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) && this.hasAtLeastOneResult());
+        return !!(this.exam && this.exam.publishResultsDate && dayjs(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) && this.hasAtLeastOneResult());
     }
 
     /**

@@ -7,7 +7,7 @@ import { Notification } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE } from 'app/shared/notification/notification.constants';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 @Component({
@@ -27,7 +27,7 @@ export class NotificationPopupComponent implements OnInit {
         private notificationService: NotificationService,
         private router: Router,
         private examExerciseUpdateService: ExamExerciseUpdateService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private examParticipationService: ExamParticipationService,
     ) {}
 
@@ -130,7 +130,7 @@ export class NotificationPopupComponent implements OnInit {
             const target = JSON.parse(notification.target!);
             this.examExerciseUpdateService.updateLiveExamExercise(target.exercise, target.problemStatement);
         } catch (error) {
-            this.jhiAlertService.error(error);
+            this.alertService.error(error);
         }
         // only show pop-up if explicit notification text was set and only inside exam mode
         if (notification.text != undefined && this.router.isActive(this.notificationTargetRoute(notification), true)) {
