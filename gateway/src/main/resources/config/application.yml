@@ -123,10 +123,6 @@ spring:
                                 regexp: "'/services/' + serviceId.toLowerCase() + '/(?<remaining>.*)'"
                                 replacement: "'/${remaining}'"
             routes:
-                -   id: user-management-api-route
-                    uri: lb://usermanagement
-                    predicates:
-                        - Path=/api/users, /api/users/search, /api/users/authorities
                 -   id: artemis-api-route
                     uri: lb://artemis
                     predicates:
