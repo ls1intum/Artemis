@@ -1,9 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { forkJoin, of, Subscription, zip } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { DifferencePipe } from 'ngx-moment';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
@@ -72,7 +70,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     constructor(
         private route: ActivatedRoute,
-        private momentDiff: DifferencePipe,
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
         private accountService: AccountService,
@@ -297,8 +294,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise);
     }
 
-    formatDate(date: Moment | Date | undefined) {
+    formatDate(date: dayjs.Dayjs | Date | undefined) {
         // TODO: we should try to use the artemis date pipe here
-        return date ? moment(date).format(defaultLongDateTimeFormat) : '';
+        return date ? dayjs(date).format(defaultLongDateTimeFormat) : '';
     }
 }

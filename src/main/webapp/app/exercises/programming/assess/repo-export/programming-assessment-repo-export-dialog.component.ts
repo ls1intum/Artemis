@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -38,7 +38,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         private exerciseService: ExerciseService,
         private repoExportService: ProgrammingAssessmentRepoExportService,
         public activeModal: NgbActiveModal,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private accountService: AccountService,
     ) {}
 
@@ -68,7 +68,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                         this.isAtLeastInstructor = this.exercise.isAtLeastInstructor;
                     }),
                     catchError((err) => {
-                        this.jhiAlertService.error(err);
+                        this.alertService.error(err);
                         this.clear();
                         return of(undefined);
                     }),
@@ -119,7 +119,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     }
 
     handleExportRepoResponse = (response: HttpResponse<Blob>) => {
-        this.jhiAlertService.success('artemisApp.programmingExercise.export.successMessageRepos');
+        this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
         this.activeModal.dismiss(true);
         this.exportInProgress = false;
         downloadZipFileFromResponse(response);

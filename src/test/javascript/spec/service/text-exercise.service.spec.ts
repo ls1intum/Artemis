@@ -12,7 +12,7 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 const expect = chai.expect;
@@ -40,9 +40,9 @@ describe('TextExercise Service', () => {
         httpMock = injector.get(HttpTestingController);
 
         elemDefault = new TextExercise(new Course(), undefined);
-        elemDefault.assessmentDueDate = moment();
-        elemDefault.dueDate = moment();
-        elemDefault.releaseDate = moment();
+        elemDefault.assessmentDueDate = dayjs();
+        elemDefault.dueDate = dayjs();
+        elemDefault.releaseDate = dayjs();
         elemDefault.studentParticipations = new Array<StudentParticipation>();
     });
 
