@@ -198,21 +198,16 @@ public class BambooBuildPlanService {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "test-reports/*results.xml");
             }
             case C -> {
-                if (ProjectType.FACT.equals(projectType)) {
-                    throw new UnsupportedOperationException("FACT template is not available for Bamboo yet.");
-                }
-                else {
-                    // Default tasks:
-                    var tasks = readScriptTasksFromTemplate(programmingLanguage, "", sequentialBuildRuns, false, null);
-                    tasks.add(0, checkoutTask);
-                    defaultJob.tasks(tasks.toArray(new Task[0]));
-                    // Final tasks:
-                    final TestParserTask testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
-                    final ScriptTask cleanupTask = new ScriptTask().description("cleanup").inlineBody("sudo rm -rf tests/\nsudo rm -rf assignment/\nsudo rm -rf test-reports/");
-                    defaultJob.finalTasks(testParserTask, cleanupTask);
-                    defaultStage.jobs(defaultJob);
-                    return defaultStage;
-                }
+                // Default tasks:
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, projectType.name(), sequentialBuildRuns, false, null);
+                tasks.add(0, checkoutTask);
+                defaultJob.tasks(tasks.toArray(new Task[0]));
+                // Final tasks:
+                final TestParserTask testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
+                final ScriptTask cleanupTask = new ScriptTask().description("cleanup").inlineBody("sudo rm -rf tests/\nsudo rm -rf assignment/\nsudo rm -rf test-reports/");
+                defaultJob.finalTasks(testParserTask, cleanupTask);
+                defaultStage.jobs(defaultJob);
+                return defaultStage;
             }
             case HASKELL, OCAML -> {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "**/test-reports/*.xml");
