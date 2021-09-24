@@ -55,8 +55,7 @@ describe('ApollonDiagramCreateForm Component', () => {
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         sandbox.stub(apollonDiagramService, 'create').returns(of(response));
         const ngbModalSpy = sandbox.spy(ngbModal, 'dismiss');
-        const previousDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, 999);
-        fixture.componentInstance.apollonDiagram = previousDiagram;
+        fixture.componentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, 999);
 
         // test
         fixture.componentInstance.save();

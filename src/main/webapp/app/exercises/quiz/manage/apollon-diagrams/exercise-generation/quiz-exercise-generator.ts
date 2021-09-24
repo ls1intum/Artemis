@@ -1,5 +1,5 @@
 import { ApollonEditor, SVG, UMLElementType, UMLModel, UMLModelElement, UMLRelationshipType } from '@ls1intum/apollon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Course } from 'app/entities/course.model';
 import { convertRenderedSVGToPNG } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
@@ -86,7 +86,7 @@ function createDragAndDropQuizExercise(course: Course, title: string, question: 
     const quizExercise = new QuizExercise(course, undefined);
     quizExercise.title = title;
     quizExercise.duration = 600;
-    quizExercise.releaseDate = moment();
+    quizExercise.releaseDate = dayjs();
     quizExercise.quizQuestions = [question];
     return quizExercise;
 }

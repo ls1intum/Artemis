@@ -1,2 +1,2 @@
-/* after changing this file run 'yarn run webpack:build' */
+/* after changing this file run 'npm run webapp:build' */
 import '../content/scss/vendor.scss';

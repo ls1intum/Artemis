@@ -25,7 +25,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findPostsByLectureId(Long lectureId);
 
     @Query("select distinct post from Post post left join post.lecture lecture left join post.exercise exercise where ( post.courseWideContext = :#{#courseWideContext} and (lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} or post.course.id = :#{#courseId} ))")
-    List<Post> findPostsForCourseWideContext(@Param("courseId") Long courseId, CourseWideContext courseWideContext);
+    List<Post> findPostsForCourseWideContext(@Param("courseId") Long courseId, @Param("courseWideContext") CourseWideContext courseWideContext);
 
     @Query("select distinct post from Post post left join post.lecture lecture left join post.exercise exercise where ( lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} or post.course.id = :#{#courseId} )")
     List<Post> findPostsForCourse(@Param("courseId") Long courseId);

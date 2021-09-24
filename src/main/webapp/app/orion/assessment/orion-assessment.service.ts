@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { JhiAlertService } from 'ng-jhipster';
 import { Submission } from 'app/entities/submission.model';
 import { OrionState } from 'app/shared/orion/orion';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Injectable({ providedIn: 'root' })
 export class OrionAssessmentService {
@@ -18,7 +18,7 @@ export class OrionAssessmentService {
         private programmingSubmissionService: ProgrammingSubmissionService,
         private repositoryExportService: ProgrammingAssessmentRepoExportService,
         private manualAssessmentService: ProgrammingAssessmentManualResultService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
     ) {
         this.orionConnectorService.state().subscribe((state) => {
             if (this.orionState?.cloning && !state.cloning && this.activeSubmissionId !== undefined) {
@@ -83,7 +83,7 @@ export class OrionAssessmentService {
                     this.orionConnectorService.downloadSubmission(submissionId, correctionRound, base64data);
                 };
                 reader.onerror = () => {
-                    this.jhiAlertService.error('artemisApp.assessmentDashboard.orion.downloadFailed');
+                    this.alertService.error('artemisApp.assessmentDashboard.orion.downloadFailed');
                 };
                 reader.readAsDataURL(response.body!);
             });

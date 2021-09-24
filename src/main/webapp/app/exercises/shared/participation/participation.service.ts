@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { SERVER_API_URL } from 'app/app.constants';
 import { map } from 'rxjs/operators';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -106,13 +105,13 @@ export class ParticipationService {
     protected convertDateFromClient(participation: StudentParticipation): StudentParticipation {
         // return a copy of the object
         return Object.assign({}, participation, {
-            initializationDate: participation.initializationDate && moment(participation.initializationDate).isValid() ? participation.initializationDate.toJSON() : undefined,
+            initializationDate: participation.initializationDate && dayjs(participation.initializationDate).isValid() ? participation.initializationDate.toJSON() : undefined,
         });
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.initializationDate = res.body.initializationDate ? moment(res.body.initializationDate) : undefined;
+            res.body.initializationDate = res.body.initializationDate ? dayjs(res.body.initializationDate) : undefined;
             res.body.results = this.submissionService.convertResultsDateFromServer(res.body.results);
             res.body.submissions = this.submissionService.convertSubmissionsDateFromServer(res.body.submissions);
             res.body.exercise = this.convertExerciseDateFromServer(res.body.exercise);
@@ -131,15 +130,15 @@ export class ParticipationService {
 
     protected convertExerciseDateFromServer(exercise?: Exercise) {
         if (exercise != undefined) {
-            exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : undefined;
-            exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : undefined;
+            exercise.releaseDate = exercise.releaseDate ? dayjs(exercise.releaseDate) : undefined;
+            exercise.dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
         }
         return exercise;
     }
 
     protected convertParticipationDateFromServer(participation?: StudentParticipation) {
         if (participation != undefined) {
-            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : undefined;
+            participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
             participation.results = this.submissionService.convertResultsDateFromServer(participation.results);
             participation.submissions = this.submissionService.convertSubmissionsDateFromServer(participation.submissions);
         }

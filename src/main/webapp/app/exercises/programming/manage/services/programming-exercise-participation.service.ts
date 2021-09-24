@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { createRequestOption } from 'app/shared/util/request-util';
-import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
