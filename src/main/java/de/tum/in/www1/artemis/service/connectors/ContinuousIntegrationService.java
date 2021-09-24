@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 
@@ -292,11 +293,12 @@ public interface ContinuousIntegrationService {
      * @param language The programming language for which the docker image name is requested
      * @return The name of the image (published on hub.docker.com)
      */
-    static String getDockerImageName(ProgrammingLanguage language) {
+    static String getDockerImageName(ProgrammingLanguage language, Optional<ProjectType> projectType) {
         return switch (language) {
             case JAVA, KOTLIN, EMPTY -> "ls1tum/artemis-maven-template:java16-4";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
-            case C -> "ls1tum/artemis-c-docker:latest";
+            case C -> (projectType.isPresent() && projectType.get().equals(ProjectType.FACT)) ? "codeability/test-frameworks/fact/fact_artemis:latest"
+                    : "ls1tum/artemis-c-docker:latest";
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";
             case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
             case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";

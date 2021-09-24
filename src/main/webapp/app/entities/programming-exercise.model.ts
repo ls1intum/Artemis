@@ -24,6 +24,8 @@ export enum ProjectType {
     ECLIPSE = 'ECLIPSE',
     PLAIN = 'PLAIN',
     XCODE = 'XCODE',
+    FACT = 'FACT',
+    ARTEMIS_C = 'ARTEMIS_C',
 }
 
 export class ProgrammingExercise extends Exercise {
