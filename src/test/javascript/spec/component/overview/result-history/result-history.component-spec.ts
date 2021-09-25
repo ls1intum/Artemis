@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Result } from 'app/entities/result.model';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
 import { MockModule } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';

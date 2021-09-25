@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.domain.enumeration.DiagramType.CommunicationDiagram;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
@@ -23,6 +22,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -30,13 +30,13 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
-
-    @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
     @Autowired
     private ModelingExerciseRepository modelingExerciseRepository;
+
+    @Autowired
+    private DatabaseUtilService databaseUtilService;
 
     @Autowired
     private UserRepository userRepo;
@@ -148,24 +148,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetModelingExerciseStatistics_asTA() throws Exception {
-        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
-        // request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.OK, String.class);
-        request.get("/api/modeling-exercises/" + classExercise.getId() + 1 + "/statistics", HttpStatus.NOT_FOUND, String.class);
-
-        classExercise.setDiagramType(CommunicationDiagram);
-        exerciseRepo.save(classExercise);
-        request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.NOT_FOUND, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
-    public void testGetModelingExerciseStatistics_tutorNotInCourse() throws Exception {
-        request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.FORBIDDEN, String.class);
-    }
-
-    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -207,6 +189,26 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         // use an arbitrary course id that was not yet stored on the server to get a bad request in the PUT call
         modelingExercise = modelingExerciseUtilService.createModelingExercise(100L, classExercise.getId());
         request.put("/api/modeling-exercises", modelingExercise, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateModelingExercise_updatingCourseId_conflict() throws Exception {
+        // Create a modeling exercise.
+        ModelingExercise createdModelingExercise = classExercise;
+        Long oldCourseId = createdModelingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+
+        // Create a new course with different id.
+        Long newCourseId = oldCourseId + 1;
+        Course newCourse = databaseUtilService.createCourse(newCourseId);
+
+        // Assign new course to the modeling exercise.
+        ModelingExercise updatedModelingExercise = createdModelingExercise;
+        updatedModelingExercise.setCourse(newCourse);
+
+        // Modeling exercise update with the new course should fail.
+        ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling-exercises", createdModelingExercise, ModelingExercise.class, HttpStatus.CONFLICT);
+        assertThat(returnedModelingExercise).isNull();
     }
 
     @Test

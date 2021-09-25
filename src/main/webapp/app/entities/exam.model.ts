@@ -1,4 +1,4 @@
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { Course } from 'app/entities/course.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -8,12 +8,12 @@ import { User } from 'app/core/user/user.model';
 export class Exam implements BaseEntity {
     public id?: number;
     public title?: string;
-    public visibleDate?: Moment;
-    public startDate?: Moment;
-    public endDate?: Moment;
-    public publishResultsDate?: Moment;
-    public examStudentReviewStart?: Moment;
-    public examStudentReviewEnd?: Moment;
+    public visibleDate?: dayjs.Dayjs;
+    public startDate?: dayjs.Dayjs;
+    public endDate?: dayjs.Dayjs;
+    public publishResultsDate?: dayjs.Dayjs;
+    public examStudentReviewStart?: dayjs.Dayjs;
+    public examStudentReviewEnd?: dayjs.Dayjs;
     /**
      * grace period in seconds - time in which students can still submit even though working time is over
      */
@@ -43,7 +43,7 @@ export class Exam implements BaseEntity {
 
     public examArchivePath?: string;
 
-    public latestIndividualEndDate?: Moment;
+    public latestIndividualEndDate?: dayjs.Dayjs;
 
     constructor() {
         this.randomizeExerciseOrder = false; // default value (set by server)

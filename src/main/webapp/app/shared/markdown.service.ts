@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import * as showdown from 'showdown';
-import * as showdownKatex from 'showdown-katex';
-import * as showdownHighlight from 'showdown-highlight';
-import * as DOMPurify from 'dompurify';
+import showdown from 'showdown';
+import showdownKatex from 'showdown-katex';
+import showdownHighlight from 'showdown-highlight';
+import DOMPurify from 'dompurify';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';

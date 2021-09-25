@@ -358,8 +358,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         StudentParticipation participation = request.get(
                 "/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/for-text-assessment", HttpStatus.OK,
                 StudentParticipation.class);
-        final Result result = participation.getResults().iterator().next();
-        final Complaint complaint = request.get("/api/complaints/result/" + result.getId(), HttpStatus.OK, Complaint.class);
+        final Complaint complaint = request.get("/api/complaints/submissions/" + textSubmission.getId(), HttpStatus.OK, Complaint.class);
 
         // Accept Complaint and update Assessment
         ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);

@@ -57,6 +57,23 @@ export class ExampleSubmissionService {
         return this.http.delete<void>(`api/example-submissions/${exampleSubmissionId}`, { observe: 'response' });
     }
 
+    /**
+     * Imports an example submission
+     * @param submissionId the id od the submission to be imported as an example submission
+     * @param exerciseId the id of the corresponding exercise
+     */
+    import(submissionId: number, exerciseId: number): Observable<EntityResponseType> {
+        return this.http
+            .post<ExampleSubmission>(
+                `api/exercises/${exerciseId}/example-submissions/import/${submissionId}`,
+                {},
+                {
+                    observe: 'response',
+                },
+            )
+            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
+    }
+
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: ExampleSubmission = this.convertItemFromServer(res.body!);
         return res.clone({ body });

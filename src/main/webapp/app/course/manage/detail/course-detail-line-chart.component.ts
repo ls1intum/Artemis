@@ -2,7 +2,7 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { ChartDataSets, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { CourseManagementService } from '../course-management.service';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { round } from 'app/shared/util/utils';
@@ -35,7 +35,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
     lineChartLegend = false;
     // Data
     lineChartLabels: Label[] = [];
-    chartData: ChartDataSets[] = [];
+    chartData: ChartDataSets[] = [{ data: [] }];
     data: number[] = [];
     absoluteData: number[] = [];
 
@@ -98,11 +98,11 @@ export class CourseDetailLineChartComponent implements OnChanges {
 
     private createLabels() {
         const prefix = this.translateService.instant('calendar_week');
-        const startDate = moment().subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks');
-        const endDate = this.currentPeriod !== 0 ? moment().subtract(this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks') : moment();
+        const startDate = dayjs().subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks');
+        const endDate = this.currentPeriod !== 0 ? dayjs().subtract(this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks') : dayjs();
         let currentWeek;
         for (let i = 0; i < this.displayedNumberOfWeeks; i++) {
-            currentWeek = moment()
+            currentWeek = dayjs()
                 .subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod - i, 'weeks')
                 .isoWeekday(1)
                 .isoWeek();

@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -14,11 +14,11 @@ import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock
 import { MockCodeEditorBuildLogService } from '../helpers/mocks/service/mock-code-editor-build-log.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { MockOrionConnectorService } from '../helpers/mocks/service/mock-orion-connector.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ArtemisTestModule } from '../test.module';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockProvider } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -57,7 +57,7 @@ describe('IdeBuildAndTestService', () => {
                 OrionBuildAndTestService,
                 { provide: SubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: OrionConnectorService, useClass: MockOrionConnectorService },
+                MockProvider(OrionConnectorService),
                 { provide: BuildLogService, useClass: MockCodeEditorBuildLogService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

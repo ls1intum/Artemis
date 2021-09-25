@@ -2,7 +2,7 @@ import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
@@ -151,7 +151,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     constructor(
         private exerciseService: ExerciseService,
         private courseManagementService: CourseManagementService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private translateService: TranslateService,
         private accountService: AccountService,
         private route: ActivatedRoute,
@@ -268,12 +268,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithComplaints = res.body || [];
                 },
-                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                (error: HttpErrorResponse) => onError(this.alertService, error),
             );
 
             this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
                 (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
-                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                (error: HttpErrorResponse) => onError(this.alertService, error),
             );
 
             this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
@@ -324,7 +324,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         } else {
             this.complaintService.getComplaintsForTestRun(this.exerciseId).subscribe(
                 (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
-                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                (error: HttpErrorResponse) => onError(this.alertService, error),
             );
         }
     }
@@ -527,7 +527,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
             this.tutorParticipation = res.body!;
             this.tutorParticipationStatus = this.tutorParticipation.status!;
-            this.jhiAlertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
+            this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
         }, this.onError);
     }
 
@@ -540,7 +540,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error);
+        this.alertService.error(error);
     }
 
     calculateComplaintStatus(complaint: Complaint) {
@@ -598,47 +598,64 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Uses the router to navigate to the assessment editor for a given/new submission
+     * Generates and returns the link to the assessment editor without query parameters
      * @param submission Either submission or 'new'.
-     * @param correctionRound
      */
-    openAssessmentEditor(submission: Submission | 'new', correctionRound = 0): void {
-        if (!this.exercise || !this.exercise.type || !submission) {
-            return;
-        }
-
-        this.openingAssessmentEditorForNewSubmission = true;
-        const submissionId: number | 'new' = submission === 'new' ? 'new' : submission.id!;
+    getAssessmentLink(submission: Submission | 'new'): string[] {
+        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
         let participationId = undefined;
         if (submission !== 'new' && submission.participation !== undefined) {
             participationId = submission.participation!.id;
         }
-        const url = getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, submissionId, this.examId, this.exerciseGroupId);
-        if (this.isTestRun) {
-            this.router.navigate(url, { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
-        } else {
-            this.router.navigate(url, { queryParams: { 'correction-round': correctionRound } });
-        }
-        this.openingAssessmentEditorForNewSubmission = false;
+        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId!, this.exerciseId, participationId, submissionUrlParameter, this.examId, this.exerciseGroupId);
     }
 
     /**
-     * Show complaint depending on the exercise type
-     * @param complaint that we want to show
+     * Generates and returns the query parameters required for opening the assessment editor
+     * @param correctionRound
      */
-    viewComplaint(complaint: Complaint) {
+    getAssessmentQueryParams(correctionRound = 0): object {
+        if (this.isTestRun) {
+            return {
+                testRun: this.isTestRun,
+                'correction-round': correctionRound,
+            };
+        } else {
+            return { 'correction-round': correctionRound };
+        }
+    }
+
+    /**
+     * Generates and returns the query parameters required for opening a complaint
+     * @param complaint
+     */
+    getComplaintQueryParams(complaint: Complaint) {
         const submission: Submission = complaint.result?.submission!;
         // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
         if (complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
-            this.openAssessmentEditor(submission, this.numberOfAssessmentsOfCorrectionRounds.length - 1);
+            return this.getAssessmentQueryParams(this.numberOfAssessmentsOfCorrectionRounds.length - 1);
         }
-        const submissionToView = this.submissionsWithComplaints.filter((dto) => dto.submission.id === submission.id).pop()?.submission;
+        const result = this.getSubmissionToViewFromComplaintSubmission(submission);
+
+        if (result !== undefined) {
+            return this.getAssessmentQueryParams(result.results!.length - 1);
+        }
+    }
+
+    /**
+     * Returns either the corresponding submission to view or undefined.
+     * This complaint has to be a true complaint or else issues can arise.
+     * @param submission
+     */
+    getSubmissionToViewFromComplaintSubmission(submission: Submission): Submission | undefined {
+        const submissionToView = this.submissionsWithComplaints.find((dto) => dto.submission.id === submission.id)?.submission;
         if (submissionToView) {
-            if (!submissionToView.results) {
+            if (submissionToView.results) {
+                submissionToView.results = submissionToView.results.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC);
+            } else {
                 submissionToView.results = [];
             }
-            submissionToView.results = submissionToView.results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC);
-            this.openAssessmentEditor(submissionToView, submissionToView.results!.length - 1);
+            return submissionToView;
         }
     }
 

@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
@@ -14,7 +14,7 @@ import { Result } from 'app/entities/result.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockCourseService } from '../../../helpers/mocks/service/mock-course.service';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
@@ -85,42 +85,42 @@ describe('CourseExerciseRowComponent', () => {
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_STARTED if release date is in the past and not planned to start', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(false, moment(), moment().subtract(3, 'minutes'), true, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(false, dayjs(), dayjs().subtract(3, 'minutes'), true, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_NOT_STARTED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_STARTED if release date is in the future and planned to start', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment(), moment().add(3, 'minutes'), true, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs(), dayjs().add(3, 'minutes'), true, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_NOT_STARTED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_UNINITIALIZED', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'minutes'), moment(), true, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), true, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_UNINITIALIZED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_PARTICIPATED if there are no participations', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment(), moment(), true, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs(), dayjs(), true, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_NOT_PARTICIPATED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_ACTIVE', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'minutes'), moment(), true, true, InitializationState.INITIALIZED);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), true, true, InitializationState.INITIALIZED);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_ACTIVE);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_SUBMITTED', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'minutes'), moment(), true, true, InitializationState.FINISHED);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), true, true, InitializationState.FINISHED);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_SUBMITTED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_PARTICIPATED if there are no results', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'minutes'), moment(), false, true, InitializationState.UNINITIALIZED, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), false, true, InitializationState.UNINITIALIZED, false);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_NOT_PARTICIPATED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_FINISHED', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, moment().add(3, 'minutes'), moment(), false, true, InitializationState.UNINITIALIZED, true);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), false, true, InitializationState.UNINITIALIZED, true);
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.QUIZ_FINISHED);
     });
 
@@ -145,19 +145,19 @@ describe('CourseExerciseRowComponent', () => {
     });
 
     it('Participation status of programming exercise should evaluate to EXERCISE_MISSED', () => {
-        setupExercise(ExerciseType.PROGRAMMING, moment().subtract(1, 'day'));
+        setupExercise(ExerciseType.PROGRAMMING, dayjs().subtract(1, 'day'));
         comp.ngOnInit();
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.EXERCISE_MISSED);
     });
 
     it('Participation status of programming exercise should evaluate to UNINITIALIZED', () => {
-        setupExercise(ExerciseType.PROGRAMMING, moment().add(1, 'day'));
+        setupExercise(ExerciseType.PROGRAMMING, dayjs().add(1, 'day'));
         comp.ngOnInit();
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.UNINITIALIZED);
     });
 
     it('Participation status of programming exercise should evaluate to INITIALIZED', () => {
-        setupExercise(ExerciseType.PROGRAMMING, moment());
+        setupExercise(ExerciseType.PROGRAMMING, dayjs());
 
         const studentParticipation = {
             id: 1,
@@ -172,7 +172,7 @@ describe('CourseExerciseRowComponent', () => {
     });
 
     it('Participation status of programming exercise should evaluate to EXERCISE_MISSED', () => {
-        setupExercise(ExerciseType.PROGRAMMING, moment().subtract(1, 'day'));
+        setupExercise(ExerciseType.PROGRAMMING, dayjs().subtract(1, 'day'));
 
         const studentParticipation = {
             id: 1,
@@ -188,8 +188,8 @@ describe('CourseExerciseRowComponent', () => {
 
     const setupForTestingParticipationStatusExerciseTypeQuiz = (
         isPlannedToStart: boolean,
-        dueDate: moment.Moment,
-        releaseDate: moment.Moment,
+        dueDate: dayjs.Dayjs,
+        releaseDate: dayjs.Dayjs,
         visibleToStudents: boolean,
         hasParticipations: boolean,
         initializationState?: InitializationState,
@@ -223,7 +223,7 @@ describe('CourseExerciseRowComponent', () => {
     };
 
     const setupForTestingParticipationStatusExerciseTypeText = (exerciseType: ExerciseType, initializationState: InitializationState, inDueDate: boolean) => {
-        const dueDate = inDueDate ? moment().add(3, 'days') : moment().subtract(3, 'days');
+        const dueDate = inDueDate ? dayjs().add(3, 'days') : dayjs().subtract(3, 'days');
         setupExercise(exerciseType, dueDate);
 
         const studentParticipation = {
@@ -236,7 +236,7 @@ describe('CourseExerciseRowComponent', () => {
         comp.ngOnInit();
     };
 
-    const setupExercise = (exerciseType: ExerciseType, dueDate: moment.Moment) => {
+    const setupExercise = (exerciseType: ExerciseType, dueDate: dayjs.Dayjs) => {
         comp.exercise = {
             id: 1,
             type: exerciseType,

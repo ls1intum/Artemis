@@ -1,18 +1,18 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
 import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CreateVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-video-unit/create-video-unit.component';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { MockProvider } from 'ng-mocks';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 
@@ -42,7 +42,7 @@ describe('CreateVideoUnitComponent', () => {
             declarations: [VideoUnitFormStubComponent, LectureUnitLayoutStubComponent, CreateVideoUnitComponent],
             providers: [
                 MockProvider(VideoUnitService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
@@ -96,7 +96,7 @@ describe('CreateVideoUnitComponent', () => {
 
         const formDate: VideoUnitFormData = {
             name: 'Test',
-            releaseDate: moment({ years: 2010, months: 3, date: 5 }),
+            releaseDate: dayjs().year(2010).month(3).date(5),
             description: 'Lorem Ipsum',
             source: 'https://www.youtube.com/embed/8iU8LPEa4o0',
         };

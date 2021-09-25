@@ -4,6 +4,7 @@
         "target": "es2017",
         "module": "es2020",
         "moduleResolution": "node",
+        "esModuleInterop": true,
         "sourceMap": true,
         "emitDecoratorMetadata": true,
         "downlevelIteration": true,
@@ -42,6 +43,7 @@
         "src/main/webapp/app"
     ],
     "exclude": [
-        "node_modules"
+        "node_modules",
+        "webpack"
     ]
 }

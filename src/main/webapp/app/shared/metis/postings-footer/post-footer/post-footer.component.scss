@@ -1,6 +1,17 @@
 .post-tag {
-    max-width: 130px;
+    max-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
     background-color: darkblue;
+}
+
+.linked-context-information {
+    font-weight: 300 !important;
+    font-size: small;
+    color: #0f6ab4;
+}
+
+.context-information {
+    font-weight: 300 !important;
+    font-size: small;
 }

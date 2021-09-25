@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';

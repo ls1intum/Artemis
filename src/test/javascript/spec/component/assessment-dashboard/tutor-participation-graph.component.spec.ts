@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { SimpleChange } from '@angular/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';

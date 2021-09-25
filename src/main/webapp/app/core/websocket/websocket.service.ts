@@ -5,7 +5,7 @@ import { Observable, Observer, Subscription } from 'rxjs';
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 
 import { Client, ConnectionHeaders, over, Subscription as StompSubscription } from 'webstomp-client';
-import * as SockJS from 'sockjs-client';
+import SockJS from 'sockjs-client';
 
 export interface IWebsocketService {
     /**

@@ -1,21 +1,24 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsThreadComponent } from 'app/shared/metis/postings-thread/postings-thread.component';
-import { PostService } from 'app/shared/metis/post/post.service';
+import { PostService } from 'app/shared/metis/post.service';
 import { MockPostService } from '../../../../helpers/mocks/service/mock-post.service';
-import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
+import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { MockAnswerPostService } from '../../../../helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/shared/metis/metis.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { PostComponent } from 'app/shared/metis/post/post.component';
+import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -28,14 +31,14 @@ describe('PostingsThreadComponent', () => {
 
     const unApprovedAnswerPost1 = {
         id: 1,
-        creationDate: moment(),
+        creationDate: dayjs(),
         content: 'not approved most recent',
         tutorApproved: false,
     } as AnswerPost;
 
     const unApprovedAnswerPost2 = {
         id: 2,
-        creationDate: moment().subtract(1, 'day'),
+        creationDate: dayjs().subtract(1, 'day'),
         content: 'not approved',
         tutorApproved: false,
     } as AnswerPost;
@@ -56,16 +59,21 @@ describe('PostingsThreadComponent', () => {
         answers: unsortedAnswerArray,
     } as Post;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 { provide: PostService, useClass: MockPostService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: MetisService, useClass: MockMetisService },
             ],
-            declarations: [PostingsThreadComponent, MockPipe(ArtemisTranslatePipe)],
-            schemas: [NO_ERRORS_SCHEMA],
+            declarations: [
+                PostingsThreadComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(PostComponent),
+                MockComponent(AnswerPostComponent),
+                MockComponent(FaIconComponent),
+                MockComponent(AnswerPostCreateEditModalComponent),
+            ],
         })
             .compileComponents()
             .then(() => {

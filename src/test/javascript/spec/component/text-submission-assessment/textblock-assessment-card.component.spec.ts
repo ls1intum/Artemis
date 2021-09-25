@@ -81,7 +81,7 @@ describe('TextblockAssessmentCardComponent', () => {
         component.textBlockRef.initFeedback();
         fixture.detectChanges();
 
-        spyOn(component.didDelete, 'emit');
+        jest.spyOn(component.didDelete, 'emit');
         const feedbackEditor = fixture.debugElement.query(By.directive(TextblockFeedbackEditorComponent));
         const feedbackEditorComponent = feedbackEditor.componentInstance as TextblockFeedbackEditorComponent;
         feedbackEditorComponent.dismiss();
@@ -96,7 +96,7 @@ describe('TextblockAssessmentCardComponent', () => {
         component.textBlockRef.feedback = {
             type: FeedbackType.MANUAL,
         };
-        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.select();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);

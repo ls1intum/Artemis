@@ -1,9 +1,8 @@
 import * as chai from 'chai';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { CodeEditorInstructorAndEditorOrionContainerComponent } from 'app/orion/management/code-editor-instructor-and-editor-orion-container.component';
 import { ArtemisTestModule } from '../../test.module';
-import { OrionModule } from 'app/shared/orion/orion.module';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -20,6 +19,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject } from 'rxjs';
+import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -31,7 +31,7 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OrionModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 CodeEditorInstructorAndEditorOrionContainerComponent,
                 MockComponent(UpdatingResultComponent),
@@ -40,6 +40,7 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
                 MockComponent(ExerciseHintStudentComponent),
                 MockComponent(ProgrammingExerciseEditableInstructionComponent),
                 MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
+                MockComponent(OrionButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
