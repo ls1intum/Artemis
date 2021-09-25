@@ -16,6 +16,6 @@
     },
     "scripts": {
         "cypress:open": "npx cypress open",
-        "cypress:run": "npx cypress run -- --browser=chrome"
+        "cypress:run": "npx cypress run --browser=chrome"
     }
 }
