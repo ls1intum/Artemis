@@ -8,7 +8,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
@@ -20,9 +20,9 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;
@@ -37,12 +37,12 @@ describe('TextblockFeedbackEditorComponent', () => {
             declarations: [
                 TextblockFeedbackEditorComponent,
                 AssessmentCorrectionRoundBadgeComponent,
-
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ConfirmIconComponent),
                 MockComponent(FaIconComponent),
+                MockComponent(FaLayersComponent),
                 MockComponent(GradingInstructionLinkIconComponent),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockDirective(NgbTooltip),
                 MockDirective(NgModel),
             ],
@@ -56,8 +56,8 @@ describe('TextblockFeedbackEditorComponent', () => {
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {
-                    declarations: [MockComponent(FaIconComponent)],
-                    exports: [MockComponent(FaIconComponent)],
+                    declarations: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
+                    exports: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
                 },
             })
             .compileComponents();
@@ -137,7 +137,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         component.isLeftConflictingFeedback = true;
         fixture.detectChanges();
 
-        spyOn(component['textareaElement'], 'focus');
+        jest.spyOn(component['textareaElement'], 'focus');
         component.focus();
 
         expect(component['textareaElement'].focus).toHaveBeenCalled();
@@ -151,7 +151,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         component.isLeftConflictingFeedback = false;
         fixture.detectChanges();
 
-        spyOn(component['textareaElement'], 'focus');
+        jest.spyOn(component['textareaElement'], 'focus');
         component.focus();
 
         expect(component['textareaElement'].focus).toHaveBeenCalledTimes(0);
@@ -160,7 +160,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should call escKeyup when keyEvent', () => {
         component.feedback.credits = 0;
         component.feedback.detailText = '';
-        spyOn(component, 'escKeyup');
+        jest.spyOn(component, 'escKeyup');
         const event = new KeyboardEvent('keydown', {
             key: 'Esc',
         });
@@ -230,7 +230,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should send assessment event on conflict button click', () => {
         component.feedback.type = FeedbackType.AUTOMATIC;
         component.textBlock.type = TextBlockType.AUTOMATIC;
-        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.onConflictClicked(1);
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
@@ -239,7 +239,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should send assessment event on dismiss button click', () => {
         component.feedback.type = FeedbackType.MANUAL;
         component.textBlock.type = TextBlockType.MANUAL;
-        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.dismiss();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.MANUAL);
@@ -248,7 +248,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should send assessment event on hovering over warning', () => {
         component.feedback.type = FeedbackType.MANUAL;
         component.textBlock.type = TextBlockType.AUTOMATIC;
-        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.mouseEnteredWarningLabel();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
@@ -268,7 +268,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should set correctionStatus of the feedback to undefined on connection of feedback with the grading instruction', () => {
         // given
         component.feedback.correctionStatus = FeedbackCorrectionErrorType.MISSING_GRADING_INSTRUCTION;
-        spyOn(component.structuredGradingCriterionService, 'updateFeedbackWithStructuredGradingInstructionEvent');
+        jest.spyOn(component.structuredGradingCriterionService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
 
         // when
         component.connectFeedbackWithInstruction(new Event(''));

@@ -11,10 +11,12 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import * as chai from 'chai';
-import { JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -32,10 +34,10 @@ describe('LearningGoalDetailModalComponent', () => {
             imports: [RouterTestingModule.withRoutes([])],
             declarations: [
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(JhiTranslateDirective),
-                MockDirective(JhiSortDirective),
+                MockDirective(TranslateDirective),
+                MockDirective(SortDirective),
                 LearningGoalDetailModalComponent,
-                MockDirective(JhiSortByDirective),
+                MockDirective(SortByDirective),
                 MockComponent(FaIconComponent),
             ],
             providers: [

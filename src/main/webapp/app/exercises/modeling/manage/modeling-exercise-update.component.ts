@@ -1,7 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -14,13 +13,15 @@ import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ArtemisNavigationUtilService, navigateToExampleSubmissions } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise-utils';
 import { UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from '../shared/modeling-editor.component';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -53,14 +54,14 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     semiAutomaticAssessmentAvailable = true;
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private modelingExerciseService: ModelingExerciseService,
         private modalService: NgbModal,
         private popupService: ExerciseUpdateWarningService,
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
         private exerciseGroupService: ExerciseGroupService,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private navigationUtilService: ArtemisNavigationUtilService,
@@ -110,14 +111,14 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                                 (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                 },
-                                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                                (error: HttpErrorResponse) => onError(this.alertService, error),
                             );
                         } else {
                             this.courseService.findAllCategoriesOfCourse(this.modelingExercise.exerciseGroup!.exam!.course!.id!).subscribe(
                                 (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                 },
-                                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                                (error: HttpErrorResponse) => onError(this.alertService, error),
                             );
                         }
                     } else {
@@ -210,7 +211,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse): void {
-        onError(this.jhiAlertService, error);
+        onError(this.alertService, error);
         this.isSaving = false;
     }
 

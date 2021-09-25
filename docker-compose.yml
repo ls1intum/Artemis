@@ -22,10 +22,10 @@ services:
     working_dir: /server
 
   artemis-client:
-    command: sh -c "yarn install && yarn start-docker"
+    command: sh -c "npm install && npm run start-docker"
     depends_on:
       - artemis-server
-    image: node:14.16.1-alpine
+    image: node:14.17.6-alpine
     networks:
       - artemis
     ports:
@@ -40,7 +40,7 @@ services:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_ROOT_PASSWORD=
       - MYSQL_DATABASE=Artemis
-    image: mysql:8.0.23
+    image: mysql:8.0.26
     networks:
       - artemis
     ports:

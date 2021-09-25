@@ -2,8 +2,8 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as moment from 'moment';
+import sinonChai from 'sinon-chai';
+import dayjs from 'dayjs';
 import { restore, SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -36,8 +36,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/entities/participation/participation.model';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
@@ -155,29 +154,6 @@ describe('ParticipationSubmissionComponent', () => {
         restore();
     });
 
-    it('Should return empty commit url if participation has no repository url', () => {
-        const exercise: ProgrammingExercise = {
-            numberOfAssessmentsOfCorrectionRounds: [],
-            secondCorrectionEnabled: false,
-            studentAssignedTeamIdComputed: false,
-            projectKey: 'project-key',
-        };
-
-        const participation: ProgrammingExerciseStudentParticipation = { id: 1, type: ParticipationType.PROGRAMMING, participantIdentifier: 'identifier' };
-        const submission: ProgrammingSubmission = {
-            submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
-            id: 3,
-            submitted: true,
-            type: SubmissionType.MANUAL,
-            submissionDate: moment('2019-07-09T10:47:33.244Z'),
-            commitHash: '123456789',
-            participation,
-        };
-        comp.participation = participation;
-        comp.exercise = exercise;
-        expect(comp.getCommitUrl(submission)).to.be.empty;
-    });
-
     it('Submissions are correctly loaded from server', fakeAsync(() => {
         // set all attributes for comp
         const participation = new StudentParticipation();
@@ -189,7 +165,7 @@ describe('ParticipationSubmissionComponent', () => {
                 id: 2278,
                 submitted: true,
                 type: SubmissionType.MANUAL,
-                submissionDate: moment('2019-07-09T10:47:33.244Z'),
+                submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
                 text: 'My TextSubmission',
                 participation,
             },
@@ -230,7 +206,7 @@ describe('ParticipationSubmissionComponent', () => {
                 id: 3,
                 submitted: true,
                 type: SubmissionType.MANUAL,
-                submissionDate: moment('2019-07-09T10:47:33.244Z'),
+                submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
                 commitHash: '123456789',
                 participation: templateParticipation,
             },
@@ -267,7 +243,7 @@ describe('ParticipationSubmissionComponent', () => {
                 id: 4,
                 submitted: true,
                 type: SubmissionType.MANUAL,
-                submissionDate: moment('2019-07-09T10:47:33.244Z'),
+                submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
                 commitHash: '123456789',
                 participation: solutionParticipation,
             },

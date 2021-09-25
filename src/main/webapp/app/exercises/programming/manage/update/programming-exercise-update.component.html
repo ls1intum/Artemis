@@ -301,7 +301,8 @@
             <div class="col">
                 <ng-container *ngIf="isSubmissionPolicyLockRepository || isSubmissionPolicySubmissionPenalty">
                     <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle" for="field_submissionLimitExceededPenalty"
-                    >Submission Limit</label>
+                        >Submission Limit</label
+                    >
                     <fa-icon
                         icon="question-circle"
                         class="text-danger"
@@ -333,8 +334,12 @@
             </div>
             <div class="col">
                 <ng-container *ngIf="isSubmissionPolicySubmissionPenalty">
-                    <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldTitle" for="field_submissionLimitExceededPenalty"
-                    >Penalty after Exceeding Submission Limit</label>
+                    <label
+                        class="label-narrow"
+                        jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldTitle"
+                        for="field_submissionLimitExceededPenalty"
+                        >Penalty after Exceeding Submission Limit</label
+                    >
                     <fa-icon
                         icon="question-circle"
                         class="text-danger"
@@ -612,7 +617,7 @@
             </div>
         </div>
         <div class="pt-4"></div>
-        <div class="form-group" *ngIf="programmingExercise.id && !isImport && !isExamMode">
+        <div class="form-group" *ngIf="programmingExercise.id && !isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
             <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>

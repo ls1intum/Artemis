@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Observable } from 'rxjs';

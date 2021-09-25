@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -36,8 +36,8 @@ describe('Team Exercise Search Component', () => {
 
     it('formats the search result with release date', () => {
         const title = 'My exercise';
-        const releaseDate = moment();
-        const dateFormat = 'yyyy-MM-DD';
+        const releaseDate = dayjs();
+        const dateFormat = 'YYYY-MM-DD';
 
         const exercise = new TextExercise(undefined, undefined);
         exercise.title = title;
@@ -67,8 +67,8 @@ describe('Team Exercise Search Component', () => {
         const exercise = new TextExercise(undefined, undefined);
         exercise.title = title;
 
-        spyOn(comp.selectExercise, 'emit');
-        spyOn(comp, 'searchResultFormatter').and.returnValue(title);
+        jest.spyOn(comp.selectExercise, 'emit');
+        jest.spyOn(comp, 'searchResultFormatter').mockReturnValue(title);
 
         comp.onAutocompleteSelect(exercise);
 

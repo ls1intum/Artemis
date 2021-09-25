@@ -1,4 +1,4 @@
-import { BASE_API, DELETE, POST } from '../constants';
+import { BASE_API, DELETE, POST, PUT, EXERCISE_BASE, GET } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import { dayjsToString, generateUUID } from '../utils';
@@ -9,10 +9,12 @@ import textExerciseTemplate from '../../fixtures/requests/textExercise_template.
 import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_template.json';
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
-
-const COURSE_BASE = BASE_API + 'courses/';
-const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
-const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
+import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceSubmission_template.json';
+import shortAnswerSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerSubmission_template.json';
+export const COURSE_BASE = BASE_API + 'courses/';
+export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
+export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
+export const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
 export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
 export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 
@@ -26,8 +28,8 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     deleteCourse(id: number) {
-        // Sometimes the backend fails with a ConstraintViolationError if we delete the course immediately after a login...
-        cy.wait(1000);
+        // Sometimes the backend fails with a ConstraintViolationError if we delete the course immediately after a login
+        cy.wait(100);
         return cy.request({ method: DELETE, url: COURSE_BASE + id });
     }
 
@@ -63,17 +65,20 @@ export class CourseManagementRequests {
      * @param title the title of the programming exercise
      * @param programmingShortName the short name of the programming exercise
      * @param packageName the package name of the programming exercise
+     * @param body an object containing either the course or exercise group the exercise will be added to
+     * @param scaMaxPenalty the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
      * @param releaseDate when the programming exercise should be available (default is now)
      * @param dueDate when the programming exercise should be due (default is now + 1 day)
      * @returns <Chainable> request response
      */
     createProgrammingExercise(
         body: { course: any } | { exerciseGroup: any },
+        scaMaxPenalty?: number,
+        releaseDate = day(),
+        dueDate = day().add(1, 'day'),
         title = 'Cypress programming exercise ' + generateUUID(),
         programmingShortName = 'cypress' + generateUUID(),
         packageName = 'de.test',
-        releaseDate = day(),
-        dueDate = day().add(1, 'days'),
     ) {
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
         const programmingTemplate: any = this.getCourseOrExamExercise(programmingExerciseTemplate, body);
@@ -81,12 +86,16 @@ export class CourseManagementRequests {
         programmingTemplate.shortName = programmingShortName;
         programmingTemplate.packageName = packageName;
         if (!isExamExercise) {
-            programmingTemplate.releaseDate = releaseDate.toISOString();
-            programmingTemplate.dueDate = dueDate.toISOString();
+            programmingTemplate.releaseDate = dayjsToString(releaseDate);
+            programmingTemplate.dueDate = dayjsToString(dueDate);
         } else {
             programmingTemplate.allowComplaintsForAutomaticAssessments = true;
         }
 
+        if (scaMaxPenalty) {
+            programmingTemplate.staticCodeAnalysisEnabled = true;
+            programmingTemplate.maxStaticCodeAnalysisPenalty = scaMaxPenalty;
+        }
         const runsOnBamboo: boolean = Cypress.env('isBamboo');
         if (runsOnBamboo) {
             cy.waitForGroupSynchronization();
@@ -188,11 +197,18 @@ export class CourseManagementRequests {
         const templateCopy = {
             ...modelingExerciseTemplate,
             title,
+        };
+        const dates = {
             releaseDate: dayjsToString(releaseDate),
             dueDate: dayjsToString(dueDate),
             assessmentDueDate: dayjsToString(assessmentDueDate),
         };
-        const newModelingExercise = Object.assign({}, templateCopy, body);
+        let newModelingExercise;
+        if (body.hasOwnProperty('course')) {
+            newModelingExercise = Object.assign({}, templateCopy, dates, body);
+        } else {
+            newModelingExercise = Object.assign({}, templateCopy, body);
+        }
         return cy.request({
             url: MODELING_EXERCISE_BASE,
             method: POST,
@@ -214,18 +230,116 @@ export class CourseManagementRequests {
         });
     }
 
-    createQuizExercise(body: { course: any } | { exerciseGroup: any }, title = 'Cypress quiz exercise' + generateUUID(), releaseDate = day(), quizQuestions: [any]) {
+    /**
+     * Creates a quiz exercise
+     * @param body an object containing either the course or exercise group the exercise will be added to
+     * @param quizQuestions list of quizQuestion objects that make up the Quiz. Can be multiple choice, short answer or drag and drop quizzes.
+     * @param title the title for the Quiz
+     * @param releaseDate time of release for the quiz
+     * @param duration the duration in seconds that the student gets to complete the quiz
+     * @returns <Chainable> request response
+     */
+    createQuizExercise(
+        body: { course: any } | { exerciseGroup: any },
+        quizQuestions: [any],
+        title = 'Cypress quiz exercise' + generateUUID(),
+        releaseDate = day(),
+        duration = 600,
+    ) {
         const quizExercise: any = {
             ...quizTemplate,
             title,
             releaseDate: dayjsToString(releaseDate),
             quizQuestions,
+            duration,
         };
         const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
         return cy.request({
             url: QUIZ_EXERCISE_BASE,
             method: POST,
             body: newQuizExercise,
+        });
+    }
+
+    setQuizVisible(quizId: number) {
+        return cy.request({
+            url: `${QUIZ_EXERCISE_BASE}${quizId}/set-visible`,
+            method: PUT,
+        });
+    }
+
+    startQuizNow(quizId: number) {
+        return cy.request({
+            url: `${QUIZ_EXERCISE_BASE}${quizId}/start-now`,
+            method: PUT,
+        });
+    }
+
+    /**
+     * Creates a submission for a Quiz with only one multiple-choice quiz question
+     * @param quizExercise the response body of a quiz exercise
+     * @param tickOptions a list describing which of the 0..n boxes are to be ticked in the submission
+     */
+    createMultipleChoiceSubmission(quizExercise: any, tickOptions: number[]) {
+        const submittedAnswers = [
+            {
+                ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
+                quizQuestion: quizExercise.quizQuestions[0],
+                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
+            },
+        ];
+        const multipleChoiceSubmission = {
+            ...multipleChoiceSubmissionTemplate,
+            submittedAnswers,
+        };
+        return cy.request({
+            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            method: POST,
+            body: multipleChoiceSubmission,
+        });
+    }
+
+    /**
+     * Creates a submission for a Quiz with only one short-answer quiz question
+     * @param quizExercise the response body of the quiz exercise
+     * @param textAnswers a list containing the answers to be filled into the gaps. In numerical order.
+     */
+    createShortAnswerSubmission(quizExercise: any, textAnswers: string[]) {
+        const submittedTexts = textAnswers.map((answer, index) => {
+            return {
+                text: answer,
+                spot: quizExercise.quizQuestions[0].spots[index],
+            };
+        });
+        const submittedAnswers = [
+            {
+                ...shortAnswerSubmissionTemplate.submittedAnswers[0],
+                quizQuestion: quizExercise.quizQuestions[0],
+                submittedTexts,
+            },
+        ];
+        const shortAnswerSubmission = {
+            ...shortAnswerSubmissionTemplate,
+            submittedAnswers,
+        };
+        return cy.request({
+            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            method: POST,
+            body: shortAnswerSubmission,
+        });
+    }
+
+    getExerciseParticipation(exerciseId: number) {
+        return cy.request({
+            url: EXERCISE_BASE + exerciseId + '/participation',
+            method: GET,
+        });
+    }
+
+    startExerciseParticipation(courseId: number, exerciseId: number) {
+        return cy.request({
+            url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/participations`,
+            method: POST,
         });
     }
 

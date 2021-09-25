@@ -20,8 +20,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -175,9 +174,14 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations" })
     Optional<ProgrammingExercise> findWithAllParticipationsById(Long exerciseId);
 
-    ProgrammingExercise findOneByTemplateParticipationId(Long templateParticipationId);
-
-    ProgrammingExercise findOneBySolutionParticipationId(Long solutionParticipationId);
+    @Query("""
+            SELECT pe FROM ProgrammingExercise pe
+            LEFT JOIN pe.studentParticipations pep
+            WHERE pep.id = :#{#participationId}
+                OR pe.templateParticipation.id = :#{#participationId}
+                OR pe.solutionParticipation.id = :#{#participationId}
+            """)
+    Optional<ProgrammingExercise> findByParticipationId(@Param("participationId") Long participationId);
 
     ProgrammingExercise findOneBySubmissionPolicyId(Long submissionPolicyId);
 
@@ -458,23 +462,13 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Find the ProgrammingExercise where the given Participation is the template Participation
+     * Find the ProgrammingExercise of the given Participation, which can be either a student, template or solution Participation
      *
-     * @param participation The template participation
-     * @return The ProgrammingExercise where the given Participation is the template Participation
+     * @param participation The programming participation
+     * @return The ProgrammingExercise of the given Participation
      */
-    default ProgrammingExercise getExercise(TemplateProgrammingExerciseParticipation participation) {
-        return findOneByTemplateParticipationId(participation.getId());
-    }
-
-    /**
-     * Find the ProgrammingExercise where the given Participation is the solution Participation
-     *
-     * @param participation The solution participation
-     * @return The ProgrammingExercise where the given Participation is the solution Participation
-     */
-    default ProgrammingExercise getExercise(SolutionProgrammingExerciseParticipation participation) {
-        return findOneBySolutionParticipationId(participation.getId());
+    default Optional<ProgrammingExercise> getExercise(ProgrammingExerciseParticipation participation) {
+        return findByParticipationId(participation.getId());
     }
 
     /**
