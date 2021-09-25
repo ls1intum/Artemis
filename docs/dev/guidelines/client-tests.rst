@@ -167,7 +167,7 @@ Here are the improvements for the test above:
 
 More examples on test speed improvement can be found in the `following PR <https://github.com/ls1intum/Artemis/pull/3879/files>`_.
 
-   *  Services should be mocked if they simply return some data from the server. However, if the service has some form of logic included (for example converting dates to moments),
+   *  Services should be mocked if they simply return some data from the server. However, if the service has some form of logic included (for example converting dates to datejs instances),
       and this logic is important for the component, do not mock the service methods, but mock the HTTP requests and responses from the API. This allows us to test the interaction
       of the component with the service and in addition test that the service logic works correctly. A good explanation can be found in the `official angular documentation <https://angular.io/guide/http#testing-http-requests>`_.
 
