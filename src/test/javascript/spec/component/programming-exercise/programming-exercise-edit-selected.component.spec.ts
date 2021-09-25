@@ -3,7 +3,7 @@ import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -45,22 +45,22 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             // GIVEN
             // the exercise containing the values to update the selected ones
             const newProgrammingExercise = new ProgrammingExercise(new Course(), undefined);
-            newProgrammingExercise.releaseDate = moment();
-            newProgrammingExercise.dueDate = moment().add(7, 'days');
+            newProgrammingExercise.releaseDate = dayjs();
+            newProgrammingExercise.dueDate = dayjs().add(7, 'days');
             const selectedProgrammingExercises = [];
             const entityOne = new ProgrammingExercise(new Course(), undefined);
             entityOne.id = 123;
-            entityOne.releaseDate = moment().add(1, 'days');
+            entityOne.releaseDate = dayjs().add(1, 'days');
             const entityTwo = new ProgrammingExercise(new Course(), undefined);
             entityTwo.id = 123;
-            entityTwo.releaseDate = moment().add(1, 'days');
+            entityTwo.releaseDate = dayjs().add(1, 'days');
             selectedProgrammingExercises.push(entityOne);
             selectedProgrammingExercises.push(entityTwo);
             comp.selectedProgrammingExercises = selectedProgrammingExercises;
             comp.newProgrammingExercise = newProgrammingExercise;
             comp.notificationText = 'A Notification Text';
 
-            spyOn(programmingExerciseService, 'updateTimeline').and.returnValue(of(new HttpResponse({ body: entityOne })));
+            jest.spyOn(programmingExerciseService, 'updateTimeline').mockReturnValue(of(new HttpResponse({ body: entityOne })));
 
             // WHEN
             comp.saveAll();
@@ -79,18 +79,18 @@ describe('ProgrammingExercise Edit Selected Component', () => {
         it('Should display error and not close modal', fakeAsync(() => {
             // GIVEN
             const newProgrammingExercise = new ProgrammingExercise(new Course(), undefined);
-            newProgrammingExercise.releaseDate = moment();
-            newProgrammingExercise.dueDate = moment().add(7, 'days');
+            newProgrammingExercise.releaseDate = dayjs();
+            newProgrammingExercise.dueDate = dayjs().add(7, 'days');
             const selectedProgrammingExercises = [];
             const entityOne = new ProgrammingExercise(new Course(), undefined);
             entityOne.id = 123;
-            entityOne.releaseDate = moment().add(1, 'days');
+            entityOne.releaseDate = dayjs().add(1, 'days');
             selectedProgrammingExercises.push(entityOne);
             comp.selectedProgrammingExercises = selectedProgrammingExercises;
             comp.newProgrammingExercise = newProgrammingExercise;
 
-            spyOn(programmingExerciseService, 'updateTimeline').and.returnValue(throwError(new HttpErrorResponse({ status: 500 })));
-            spyOn(comp, 'closeModal');
+            jest.spyOn(programmingExerciseService, 'updateTimeline').mockReturnValue(throwError(new HttpErrorResponse({ status: 500 })));
+            jest.spyOn(comp, 'closeModal');
             // WHEN
             comp.saveAll();
             tick(); // simulate async

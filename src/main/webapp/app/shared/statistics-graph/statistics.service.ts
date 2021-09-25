@@ -1,13 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { SERVER_API_URL } from 'app/app.constants';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsDTO } from 'app/course/manage/course-management-statistics-dto';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { map } from 'rxjs/operators';
 import { round } from 'app/shared/util/utils';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
@@ -68,7 +67,7 @@ export class StatisticsService {
 
     private static convertDatesFromServer(dto: CourseManagementStatisticsDTO): CourseManagementStatisticsDTO {
         dto.averageScoresOfExercises.forEach((averageScores) => {
-            averageScores.releaseDate = averageScores.releaseDate !== null ? moment(averageScores.releaseDate) : undefined;
+            averageScores.releaseDate = averageScores.releaseDate !== null ? dayjs(averageScores.releaseDate) : undefined;
         });
         return dto;
     }

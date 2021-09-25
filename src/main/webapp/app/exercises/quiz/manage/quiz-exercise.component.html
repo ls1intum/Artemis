@@ -30,7 +30,7 @@
     <div class="table-responsive" *ngIf="quizExercises && quizExercises.length > 0">
         <table class="table table-striped">
             <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="status"><span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>

@@ -3,7 +3,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import * as Sentry from '@sentry/browser';
+import { captureException } from '@sentry/browser';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisQuizService {
@@ -30,7 +30,7 @@ export class ArtemisQuizService {
                         this.shuffle((question as DragAndDropQuestion).dragItems!);
                     } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
                     } else {
-                        Sentry.captureException(new Error('Unknown question type: ' + question));
+                        captureException(new Error('Unknown question type: ' + question));
                     }
                 }
             }, this);

@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { SERVER_API_URL } from 'app/app.constants';
 
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
@@ -178,15 +177,15 @@ export class ComplaintService implements IComplaintService {
 
     private convertDateFromClient(complaint: Complaint): Complaint {
         return Object.assign({}, complaint, {
-            submittedTime: complaint.submittedTime && moment(complaint.submittedTime).isValid ? complaint.submittedTime.toJSON() : undefined,
+            submittedTime: complaint.submittedTime && dayjs(complaint.submittedTime).isValid ? complaint.submittedTime.toJSON() : undefined,
         });
     }
 
     private convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.submittedTime = res.body.submittedTime ? moment(res.body.submittedTime) : undefined;
+            res.body.submittedTime = res.body.submittedTime ? dayjs(res.body.submittedTime) : undefined;
             if (res.body?.complaintResponse) {
-                this.complaintResponseService.convertDatesToMoment(res.body.complaintResponse);
+                this.complaintResponseService.convertDatesToDayjs(res.body.complaintResponse);
             }
         }
         return res;
@@ -195,9 +194,9 @@ export class ComplaintService implements IComplaintService {
     private convertDateFromServerArray(res: EntityResponseTypeArray): EntityResponseTypeArray {
         if (res.body) {
             res.body.forEach((complaint) => {
-                complaint.submittedTime = complaint.submittedTime ? moment(complaint.submittedTime) : undefined;
+                complaint.submittedTime = complaint.submittedTime ? dayjs(complaint.submittedTime) : undefined;
                 if (complaint.complaintResponse) {
-                    this.complaintResponseService.convertDatesToMoment(complaint.complaintResponse);
+                    this.complaintResponseService.convertDatesToDayjs(complaint.complaintResponse);
                 }
             });
         }

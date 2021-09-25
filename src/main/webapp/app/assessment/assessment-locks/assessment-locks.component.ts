@@ -8,7 +8,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
@@ -39,7 +39,7 @@ export class AssessmentLocksComponent implements OnInit {
 
     constructor(
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private modelingAssessmentService: ModelingAssessmentService,
         private textAssessmentService: TextAssessmentService,
         private fileUploadAssessmentService: FileUploadAssessmentService,
@@ -112,10 +112,10 @@ export class AssessmentLocksComponent implements OnInit {
     }
 
     /**
-     * Pass on an error to the browser console and the jhiAlertService.
+     * Pass on an error to the browser console and the alertService.
      * @param error
      */
     private onError(error: string) {
-        this.jhiAlertService.error(error);
+        this.alertService.error(error);
     }
 }

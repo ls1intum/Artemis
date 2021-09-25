@@ -10,6 +10,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -48,7 +49,7 @@ public class Lecture extends DomainObject {
 
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("lecture")
+    @JsonIncludeProperties({ "id" })
     private Set<Post> posts = new HashSet<>();
 
     @ManyToOne

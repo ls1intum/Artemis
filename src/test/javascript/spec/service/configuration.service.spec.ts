@@ -1,75 +1,73 @@
-import { TestBed, tick, fakeAsync } from '@angular/core/testing';
-
-import { JhiConfigurationService } from 'app/admin/configuration/configuration.service';
-import { SERVER_API_URL } from 'app/app.constants';
+import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
-describe('Logs Service', () => {
-    let service: JhiConfigurationService;
-    let httpMock: HttpTestingController;
+import { ConfigurationService } from 'app/admin/configuration/configuration.service';
+import { Bean, ConfigProps, Env, PropertySource } from 'app/admin/configuration/configuration.model';
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+describe('Service Tests', () => {
+    describe('Logs Service', () => {
+        let service: ConfigurationService;
+        let httpMock: HttpTestingController;
+        let expectedResult: Bean[] | PropertySource[] | null;
+
+        beforeEach(() => {
+            TestBed.configureTestingModule({
+                imports: [HttpClientTestingModule],
+            });
+
+            expectedResult = null;
+            service = TestBed.inject(ConfigurationService);
+            httpMock = TestBed.inject(HttpTestingController);
         });
 
-        service = TestBed.inject(JhiConfigurationService);
-        httpMock = TestBed.inject(HttpTestingController);
-    });
-
-    afterEach(() => {
-        httpMock.verify();
-    });
-
-    describe('Service methods', () => {
-        it('should call correct URL', () => {
-            service.get().subscribe(() => {});
-
-            const req = httpMock.expectOne({ method: 'GET' });
-            const resourceUrl = SERVER_API_URL + 'management/configprops';
-            expect(req.request.url).toEqual(resourceUrl);
+        afterEach(() => {
+            httpMock.verify();
         });
 
-        it('should get the config', fakeAsync(() => {
-            const angularConfig = {
-                contexts: {
-                    angular: {
-                        beans: ['test2'],
+        describe('Service methods', () => {
+            it('should get the config', () => {
+                const bean: Bean = {
+                    prefix: 'jhipster',
+                    properties: {
+                        clientApp: {
+                            name: 'jhipsterApp',
+                        },
                     },
-                },
-            };
+                };
+                const configProps: ConfigProps = {
+                    contexts: {
+                        jhipster: {
+                            beans: {
+                                'tech.jhipster.config.JHipsterProperties': bean,
+                            },
+                        },
+                    },
+                };
+                service.getBeans().subscribe((received) => (expectedResult = received));
 
-            const expected = angularConfig['contexts']['angular']['beans'];
-
-            service.get().subscribe((received) => {
-                expect(received).toEqual(expected);
+                const req = httpMock.expectOne({ method: 'GET' });
+                req.flush(configProps);
+                expect(expectedResult).toEqual([bean]);
             });
 
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(angularConfig);
-            tick();
-        }));
+            it('should get the env', () => {
+                const propertySources: PropertySource[] = [
+                    {
+                        name: 'server.ports',
+                        properties: {
+                            'local.server.port': {
+                                value: '8080',
+                            },
+                        },
+                    },
+                ];
+                const env: Env = { propertySources };
+                service.getPropertySources().subscribe((received) => (expectedResult = received));
 
-        it('should get the env', fakeAsync(() => {
-            const propertySources = {
-                propertySources: [
-                    { name: 'test1', properties: { testA: { value: 'AAA' } } },
-                    { name: 'test2', properties: { testB: { value: 'BBB' } } },
-                ],
-            };
-
-            const expectedResult = {
-                test1: [{ key: 'testA', val: 'AAA' }],
-                test2: [{ key: 'testB', val: 'BBB' }],
-            };
-
-            service.getEnv().subscribe((received) => {
-                expect(received).toEqual(expectedResult);
+                const req = httpMock.expectOne({ method: 'GET' });
+                req.flush(env);
+                expect(expectedResult).toEqual(propertySources);
             });
-
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(propertySources);
-            tick();
-        }));
+        });
     });
 });

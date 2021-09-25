@@ -1,9 +1,9 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { TranslateModule } from '@ngx-translate/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { TreeviewModule } from 'ngx-treeview';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -19,6 +19,7 @@ import { FileService } from 'app/shared/http/file.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockPipe } from 'ng-mocks';
 import { MockFileService } from '../../helpers/mocks/service/mock-file.service';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -33,8 +34,8 @@ describe('LectureAttachmentsComponent', () => {
         title: 'Second Test Lecture2',
         description:
             'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
-        startDate: moment('2019-04-15T14:00:19+02:00'),
-        endDate: moment('2019-04-15T15:30:20+02:00'),
+        startDate: dayjs('2019-04-15T14:00:19+02:00'),
+        endDate: dayjs('2019-04-15T15:30:20+02:00'),
         course: {
             id: 1,
             title: 'Refactoring CSS',
@@ -44,8 +45,8 @@ describe('LectureAttachmentsComponent', () => {
             studentGroupName: 'artemis-dev',
             teachingAssistantGroupName: 'tumuser',
             instructorGroupName: 'tumuser',
-            startDate: moment('2018-12-15T16:11:00+01:00'),
-            endDate: moment('2019-06-15T16:11:14+02:00'),
+            startDate: dayjs('2018-12-15T16:11:00+01:00'),
+            endDate: dayjs('2019-06-15T16:11:14+02:00'),
             onlineCourse: false,
             color: '#691b0b',
             registrationEnabled: false,
@@ -58,7 +59,7 @@ describe('LectureAttachmentsComponent', () => {
             name: 'test',
             link: '/api/files/attachments/lecture/4/Mein_Test_PDF4.pdf',
             version: 2,
-            uploadDate: moment('2019-05-05T10:05:25+02:00'),
+            uploadDate: dayjs('2019-05-05T10:05:25+02:00'),
             attachmentType: 'FILE',
         },
         {
@@ -66,7 +67,7 @@ describe('LectureAttachmentsComponent', () => {
             name: 'test2',
             link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
             version: 1,
-            uploadDate: moment('2019-05-07T08:49:59+02:00'),
+            uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
         },
     ] as Attachment[];
@@ -76,14 +77,14 @@ describe('LectureAttachmentsComponent', () => {
         name: 'TestFile',
         link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
         version: 1,
-        uploadDate: moment('2019-05-07T08:49:59+02:00'),
+        uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
         attachmentType: 'FILE',
     } as Attachment;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, TreeviewModule.forRoot(), RouterTestingModule.withRoutes([]), ArtemisSharedModule, FormDateTimePickerModule],
-            declarations: [LectureAttachmentsComponent, MockPipe(HtmlForMarkdownPipe)],
+            declarations: [LectureAttachmentsComponent, MockPipe(HtmlForMarkdownPipe), MockPipe(ArtemisDatePipe)],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -126,7 +127,7 @@ describe('LectureAttachmentsComponent', () => {
                                             name: 'TestFile',
                                             link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
                                             version: 2,
-                                            uploadDate: moment('2019-05-07T08:49:59+02:00'),
+                                            uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
                                             attachmentType: 'FILE',
                                         } as Attachment,
                                     }),
@@ -172,7 +173,7 @@ describe('LectureAttachmentsComponent', () => {
         expect(uploadAttachmentButton).to.exist;
         expect(comp.attachmentToBeCreated).to.exist;
         comp.attachmentToBeCreated!.name = 'Test File Name';
-        spyOn(fileUploaderService, 'uploadFile').and.returnValue(Promise.resolve({ path: 'test' }));
+        jest.spyOn(fileUploaderService, 'uploadFile').mockReturnValue(Promise.resolve({ path: 'test' }));
         uploadAttachmentButton.nativeElement.click();
 
         fixture.detectChanges();
@@ -222,7 +223,7 @@ describe('LectureAttachmentsComponent', () => {
             lecture: comp.lecture,
             attachmentType: AttachmentType.FILE,
             version: 1,
-            uploadDate: moment(),
+            uploadDate: dayjs(),
         } as Attachment;
         comp.notificationText = 'wow how did i get here';
         comp.saveAttachment();
@@ -245,7 +246,7 @@ describe('LectureAttachmentsComponent', () => {
             name: 'test2',
             link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
             version: 1,
-            uploadDate: moment('2019-05-07T08:49:59+02:00'),
+            uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
         } as Attachment;
         comp.deleteAttachment(toDelete);
@@ -259,7 +260,7 @@ describe('LectureAttachmentsComponent', () => {
             name: 'test34',
             link: '/api/files/attachments/lecture/4/Mein_Test_PDF34.pdf',
             version: 5,
-            uploadDate: moment('2019-05-07T08:49:59+02:00'),
+            uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
         } as Attachment;
         comp.attachmentBackup = toCancel;

@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
-import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { splitCamelCase } from 'app/shared/util/utils';
 import { map } from 'rxjs/operators';
 
@@ -14,7 +12,7 @@ export class ExerciseScoresDTO {
     public exerciseId?: number;
     public exerciseTitle?: string;
     public exerciseType?: string;
-    public releaseDate?: Moment;
+    public releaseDate?: dayjs.Dayjs;
     public scoreOfStudent?: number;
     public averageScoreAchieved?: number;
     public maxScoreAchieved?: number;
@@ -41,7 +39,7 @@ export class ExerciseScoresChartService {
             map((response: HttpResponse<ExerciseScoresDTO[]>) => {
                 if (response.body) {
                     for (const exerciseScoreDTO of response.body) {
-                        exerciseScoreDTO.releaseDate = exerciseScoreDTO.releaseDate ? moment(exerciseScoreDTO.releaseDate) : undefined;
+                        exerciseScoreDTO.releaseDate = exerciseScoreDTO.releaseDate ? dayjs(exerciseScoreDTO.releaseDate) : undefined;
                         exerciseScoreDTO.exerciseType = exerciseScoreDTO.exerciseType ? splitCamelCase(exerciseScoreDTO.exerciseType) : undefined;
                     }
                 }

@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockComponent, MockProvider, MockModule } from 'ng-mocks';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { TranslateModule } from '@ngx-translate/core';
 import * as sinon from 'sinon';
 import { Exam } from 'app/entities/exam.model';
@@ -23,7 +23,7 @@ describe('StudentsExamImportButtonComponent', () => {
         TestBed.configureTestingModule({
             imports: [MockModule(NgbModule), TranslateModule.forRoot()],
             declarations: [StudentsExamImportButtonComponent, MockComponent(ButtonComponent)],
-            providers: [MockProvider(JhiAlertService)],
+            providers: [MockProvider(AlertService)],
         })
             .compileComponents()
             .then(() => {

@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
@@ -69,7 +69,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
         } else if (this.isTestRun) {
             return true;
         }
-        return this.studentExam?.exam?.publishResultsDate && moment(this.studentExam.exam.publishResultsDate).isBefore(moment());
+        return this.studentExam?.exam?.publishResultsDate && dayjs(this.studentExam.exam.publishResultsDate).isBefore(dayjs());
     }
 
     /**

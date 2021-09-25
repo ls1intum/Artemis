@@ -3,6 +3,7 @@ import { Reaction } from 'app/entities/metis/reaction.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/postings-reactions-bar/postings-reactions-bar.component';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
+import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
@@ -14,6 +15,9 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     archiveTooltip: string;
     displayPriority: DisplayPriority;
     readonly DisplayPriority = DisplayPriority;
+    constructor(metisService: MetisService) {
+        super(metisService);
+    }
 
     /**
      * on initialization: call resetTooltipsAndPriority

@@ -1,8 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LoginService } from 'app/core/login/login.service';
-import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 import { Saml2Config } from 'app/home/saml2-login/saml2.config';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-saml2-login',
@@ -17,7 +18,7 @@ export class Saml2LoginComponent implements OnInit {
     @Input()
     saml2Profile: Saml2Config;
 
-    constructor(private loginService: LoginService, private eventManager: JhiEventManager, private alertService: JhiAlertService) {}
+    constructor(private loginService: LoginService, private eventManager: EventManager, private alertService: AlertService) {}
 
     ngOnInit(): void {
         // If SAML2 flow was started, retry login.
