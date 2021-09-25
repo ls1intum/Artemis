@@ -15,7 +15,7 @@
         "uuid": "8.3.2"
     },
     "scripts": {
-        "cypress:open": "yarn run cypress open",
-        "cypress:run": "yarn run cypress run --browser=chrome"
+        "cypress:open": "cypress open",
+        "cypress:run": "cypress run --browser=chrome"
     }
 }
