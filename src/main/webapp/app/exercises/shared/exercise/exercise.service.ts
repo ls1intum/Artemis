@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { SERVER_API_URL } from 'app/app.constants';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Exercise, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
@@ -170,7 +169,7 @@ export class ExerciseService {
                 }
 
                 const dueDate = exercise.dueDate!;
-                return moment().isBefore(dueDate) && moment().add(delayInDays, 'day').isSameOrAfter(dueDate);
+                return dayjs().isBefore(dueDate) && dayjs().add(delayInDays, 'day').isSameOrAfter(dueDate);
             })
             .sort((exerciseA: Exercise, exerciseB: Exercise) => {
                 if (!exerciseA.dueDate) {
@@ -202,7 +201,7 @@ export class ExerciseService {
             // 3rd priority is the next due exercise
             exercises?.find((exercise) => {
                 const dueDate = exercise.dueDate!;
-                return moment().isBefore(dueDate) && moment().add(delayInHours, 'hours').isSameOrAfter(dueDate);
+                return dayjs().isBefore(dueDate) && dayjs().add(delayInHours, 'hours').isSameOrAfter(dueDate);
             })
         );
     }
@@ -222,9 +221,9 @@ export class ExerciseService {
      */
     convertExerciseDateFromServer(exercise?: Exercise) {
         if (exercise) {
-            exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : undefined;
-            exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : undefined;
-            exercise.assessmentDueDate = exercise.assessmentDueDate ? moment(exercise.assessmentDueDate) : undefined;
+            exercise.releaseDate = exercise.releaseDate ? dayjs(exercise.releaseDate) : undefined;
+            exercise.dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
+            exercise.assessmentDueDate = exercise.assessmentDueDate ? dayjs(exercise.assessmentDueDate) : undefined;
             exercise.studentParticipations = this.participationService.convertParticipationsDateFromServer(exercise.studentParticipations);
         }
         return exercise;
@@ -254,9 +253,9 @@ export class ExerciseService {
      */
     convertDateFromClient<E extends Exercise>(exercise: E): E {
         return Object.assign({}, exercise, {
-            releaseDate: exercise.releaseDate && moment(exercise.releaseDate).isValid() ? moment(exercise.releaseDate).toJSON() : undefined,
-            dueDate: exercise.dueDate && moment(exercise.dueDate).isValid() ? moment(exercise.dueDate).toJSON() : undefined,
-            assessmentDueDate: exercise.assessmentDueDate && moment(exercise.assessmentDueDate).isValid() ? moment(exercise.assessmentDueDate).toJSON() : undefined,
+            releaseDate: exercise.releaseDate && dayjs(exercise.releaseDate).isValid() ? dayjs(exercise.releaseDate).toJSON() : undefined,
+            dueDate: exercise.dueDate && dayjs(exercise.dueDate).isValid() ? dayjs(exercise.dueDate).toJSON() : undefined,
+            assessmentDueDate: exercise.assessmentDueDate && dayjs(exercise.assessmentDueDate).isValid() ? dayjs(exercise.assessmentDueDate).toJSON() : undefined,
         });
     }
 
@@ -266,9 +265,9 @@ export class ExerciseService {
      */
     convertDateFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
         if (res.body) {
-            res.body.releaseDate = res.body.releaseDate ? moment(res.body.releaseDate) : undefined;
-            res.body.dueDate = res.body.dueDate ? moment(res.body.dueDate) : undefined;
-            res.body.assessmentDueDate = res.body.assessmentDueDate ? moment(res.body.assessmentDueDate) : undefined;
+            res.body.releaseDate = res.body.releaseDate ? dayjs(res.body.releaseDate) : undefined;
+            res.body.dueDate = res.body.dueDate ? dayjs(res.body.dueDate) : undefined;
+            res.body.assessmentDueDate = res.body.assessmentDueDate ? dayjs(res.body.assessmentDueDate) : undefined;
             res.body.studentParticipations = this.participationService.convertParticipationsDateFromServer(res.body.studentParticipations);
         }
         return res;

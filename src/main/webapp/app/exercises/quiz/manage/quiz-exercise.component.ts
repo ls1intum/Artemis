@@ -1,17 +1,18 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute } from '@angular/router';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -26,12 +27,12 @@ export class QuizExerciseComponent extends ExerciseComponent {
     constructor(
         private quizExerciseService: QuizExerciseService,
         private accountService: AccountService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private sortService: SortService,
         public exerciseService: ExerciseService,
         courseService: CourseManagementService,
         translateService: TranslateService,
-        eventManager: JhiEventManager,
+        eventManager: EventManager,
         route: ActivatedRoute,
     ) {
         super(courseService, translateService, route, eventManager);
@@ -68,7 +69,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.headers.get('X-artemisApp-error')!);
+        this.alertService.error(error.headers.get('X-artemisApp-error')!);
     }
 
     /**
@@ -78,8 +79,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
      */
     quizIsOver(quizExercise: QuizExercise) {
         if (quizExercise.isPlannedToStart) {
-            const plannedEndMoment = moment(quizExercise.releaseDate!).add(quizExercise.duration, 'seconds');
-            return plannedEndMoment.isBefore(moment());
+            const plannedEndMoment = dayjs(quizExercise.releaseDate!).add(quizExercise.duration!, 'seconds');
+            return plannedEndMoment.isBefore(dayjs());
             // the quiz is over
         }
         // the quiz hasn't started yet

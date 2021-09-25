@@ -1,6 +1,7 @@
 import { Component, ElementRef, EventEmitter, forwardRef, Input, Output, ViewChild } from '@angular/core';
-import { isDate, Moment } from 'moment';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import dayjs from 'dayjs';
+import { isDate } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-programming-exercise-test-schedule-date-picker',
@@ -17,9 +18,9 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 export class ProgrammingExerciseTestScheduleDatePickerComponent implements ControlValueAccessor {
     @ViewChild('dateInput', { static: false }) dateInput: ElementRef;
     @Input() selectedDate?: Date;
-    @Input() startAt?: Moment;
-    @Input() min?: Moment;
-    @Input() max?: Moment;
+    @Input() startAt?: dayjs.Dayjs;
+    @Input() min?: dayjs.Dayjs;
+    @Input() max?: dayjs.Dayjs;
     @Input() label: string;
     @Input() tooltipText: string;
     @Input() readOnly: boolean;

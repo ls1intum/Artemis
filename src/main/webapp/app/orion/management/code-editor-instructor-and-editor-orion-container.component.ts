@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
@@ -35,7 +35,7 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
-        jhiAlertService: JhiAlertService,
+        alertService: AlertService,
     ) {
         super(
             router,
@@ -47,7 +47,7 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
             location,
             participationService,
             route,
-            jhiAlertService,
+            alertService,
         );
     }
 
