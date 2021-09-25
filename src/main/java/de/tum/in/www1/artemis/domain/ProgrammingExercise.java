@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.persistence.*;
 
-import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 
 /**
  * A ProgrammingExercise.
@@ -101,7 +101,7 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties("exercise")
     private Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = new HashSet<>();
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "submission_policy_id")
     @JsonIgnoreProperties("programmingExercise")
     private SubmissionPolicy submissionPolicy;

@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
@@ -16,9 +20,6 @@ import de.tum.in.www1.artemis.repository.SubmissionPolicyRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.SubmissionPolicyResource;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
 @Service
 public class SubmissionPolicyService {
@@ -33,7 +34,8 @@ public class SubmissionPolicyService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    public SubmissionPolicyService(ProgrammingExerciseRepository programmingExerciseRepository, SubmissionPolicyRepository submissionPolicyRepository, ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionRepository programmingSubmissionRepository) {
+    public SubmissionPolicyService(ProgrammingExerciseRepository programmingExerciseRepository, SubmissionPolicyRepository submissionPolicyRepository,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -55,16 +57,17 @@ public class SubmissionPolicyService {
             return;
         }
         validateSubmissionPolicy(submissionPolicy);
-        submissionPolicy.setProgrammingExercise(programmingExercise);
         submissionPolicy.setActive(true);
         submissionPolicy = submissionPolicyRepository.save(submissionPolicy);
+        submissionPolicy.setProgrammingExercise(programmingExercise);
         programmingExercise.setSubmissionPolicy(submissionPolicy);
     }
 
     public void validateSubmissionPolicy(SubmissionPolicy submissionPolicy) {
         if (submissionPolicy instanceof LockRepositoryPolicy policy) {
             validateLockRepositoryPolicy(policy);
-        } else if (submissionPolicy instanceof SubmissionPenaltyPolicy policy) {
+        }
+        else if (submissionPolicy instanceof SubmissionPenaltyPolicy policy) {
             validateSubmissionPenaltyPolicy(policy);
         }
     }
@@ -72,8 +75,8 @@ public class SubmissionPolicyService {
     private void validateLockRepositoryPolicy(LockRepositoryPolicy lockRepositoryPolicy) {
         Integer submissionLimit = lockRepositoryPolicy.getSubmissionLimit();
         if (submissionLimit == null || submissionLimit < 1) {
-            throw new BadRequestAlertException("The submission limit of submission policies must be greater than 0.",
-                SubmissionPolicyResource.ENTITY_NAME, "submissionPolicyIllegalSubmissionLimit");
+            throw new BadRequestAlertException("The submission limit of submission policies must be greater than 0.", SubmissionPolicyResource.ENTITY_NAME,
+                    "submissionPolicyIllegalSubmissionLimit");
         }
     }
 
@@ -81,13 +84,13 @@ public class SubmissionPolicyService {
         Integer submissionLimit = submissionPenaltyPolicy.getSubmissionLimit();
         Double penalty = submissionPenaltyPolicy.getExceedingPenalty();
         if (submissionLimit == null || submissionLimit < 1) {
-            throw new BadRequestAlertException("The submission limit of submission policies must be greater than 0.",
-                SubmissionPolicyResource.ENTITY_NAME, "submissionPolicyIllegalSubmissionLimit");
+            throw new BadRequestAlertException("The submission limit of submission policies must be greater than 0.", SubmissionPolicyResource.ENTITY_NAME,
+                    "submissionPolicyIllegalSubmissionLimit");
         }
 
         if (penalty == null || penalty <= 0) {
-            throw new BadRequestAlertException("The penalty of submission penalty policies must be greater than 0.",
-                SubmissionPolicyResource.ENTITY_NAME, "submissionPenaltyPolicyIllegalPenalty");
+            throw new BadRequestAlertException("The penalty of submission penalty policies must be greater than 0.", SubmissionPolicyResource.ENTITY_NAME,
+                    "submissionPenaltyPolicyIllegalPenalty");
         }
 
     }
@@ -101,7 +104,8 @@ public class SubmissionPolicyService {
     public void enableSubmissionPolicy(SubmissionPolicy policy) {
         if (policy instanceof LockRepositoryPolicy lockRepositoryPolicy) {
             enableLockRepositoryPolicy(lockRepositoryPolicy);
-        } else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
+        }
+        else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
             enableSubmissionPenaltyPolicy(submissionPenaltyPolicy);
         }
     }
@@ -124,7 +128,8 @@ public class SubmissionPolicyService {
     public void disableSubmissionPolicy(SubmissionPolicy policy) {
         if (policy instanceof LockRepositoryPolicy lockRepositoryPolicy) {
             disableLockRepositoryPolicy(lockRepositoryPolicy);
-        } else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
+        }
+        else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
             disableSubmissionPenaltyPolicy(submissionPenaltyPolicy);
         }
     }
@@ -147,7 +152,8 @@ public class SubmissionPolicyService {
         SubmissionPolicy originalPolicy = exercise.getSubmissionPolicy();
         if (originalPolicy instanceof LockRepositoryPolicy) {
             updateLockRepositoryPolicy(originalPolicy, newPolicy);
-        } else if (originalPolicy instanceof SubmissionPenaltyPolicy) {
+        }
+        else if (originalPolicy instanceof SubmissionPenaltyPolicy) {
             updateSubmissionPenaltyPolicy((SubmissionPenaltyPolicy) originalPolicy, (SubmissionPenaltyPolicy) newPolicy);
         }
         submissionPolicyRepository.save(originalPolicy);
@@ -161,7 +167,8 @@ public class SubmissionPolicyService {
                     programmingExerciseParticipationService.unlockStudentRepository(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
                 }
             }
-        } else if (originalPolicy.getSubmissionLimit() > newPolicy.getSubmissionLimit()) {
+        }
+        else if (originalPolicy.getSubmissionLimit() > newPolicy.getSubmissionLimit()) {
             for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
                 if (studentParticipation.getResults().size() >= newPolicy.getSubmissionLimit()) {
                     programmingExerciseParticipationService.lockStudentRepository(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
@@ -216,7 +223,7 @@ public class SubmissionPolicyService {
 
     private int getParticipationSubmissionCount(Participation participation) {
         return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId()).stream()
-            .filter(submission -> submission.getType() == SubmissionType.MANUAL).map(ProgrammingSubmission::getCommitHash).distinct().count();
+                .filter(submission -> submission.getType() == SubmissionType.MANUAL).map(ProgrammingSubmission::getCommitHash).distinct().count();
     }
 
     private void toggleSubmissionPolicy(SubmissionPolicy policy, boolean active) {

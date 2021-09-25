@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.submissionpolicy;
 
 import javax.persistence.*;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
@@ -10,6 +9,7 @@ import org.hibernate.annotations.DiscriminatorOptions;
 import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 @Entity
 @Table(name = "submission_policy")
@@ -20,7 +20,8 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@JsonSubTypes({ @JsonSubTypes.Type(value = LockRepositoryPolicy.class, name = "lock_repository"), @JsonSubTypes.Type(value = SubmissionPenaltyPolicy.class, name = "submission_penalty")})
+@JsonSubTypes({ @JsonSubTypes.Type(value = LockRepositoryPolicy.class, name = "lock_repository"),
+        @JsonSubTypes.Type(value = SubmissionPenaltyPolicy.class, name = "submission_penalty") })
 public abstract class SubmissionPolicy extends DomainObject {
 
     @OneToOne(mappedBy = "submissionPolicy")

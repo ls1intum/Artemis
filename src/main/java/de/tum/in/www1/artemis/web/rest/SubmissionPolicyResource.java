@@ -1,5 +1,13 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -10,13 +18,6 @@ import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(SubmissionPolicyResource.Endpoints.ROOT)
@@ -37,7 +38,8 @@ public class SubmissionPolicyResource {
 
     private final SubmissionPolicyService submissionPolicyService;
 
-    public SubmissionPolicyResource(ProgrammingExerciseRepository programmingExerciseRepository, SubmissionPolicyRepository submissionPolicyRepository, AuthorizationCheckService authorizationCheckService, SubmissionPolicyService submissionPolicyService) {
+    public SubmissionPolicyResource(ProgrammingExerciseRepository programmingExerciseRepository, SubmissionPolicyRepository submissionPolicyRepository,
+            AuthorizationCheckService authorizationCheckService, SubmissionPolicyService submissionPolicyService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -45,17 +47,9 @@ public class SubmissionPolicyResource {
     }
 
     /*
-    Tests:
-    1. Auth Check (Student, Tutor, Editor)
-    2. Programming Exercise does not exist
-    3. Programming Exercise already has submission policy
-    4. Submission Policy already has an id
-    5. LRP: Null submission limit
-    6. LRP: Negative submission limit / 0 submission limit
-    7. SPP: Null submission limit
-    8. SPP: Negative submission limit / 0 submission limit
-    9. SPP: Null penalty
-    10. SPP: Negative penalty / 0 penalty
+     * Tests: 1. Auth Check (Student, Tutor, Editor) 2. Programming Exercise does not exist 3. Programming Exercise already has submission policy 4. Submission Policy already has
+     * an id 5. LRP: Null submission limit 6. LRP: Negative submission limit / 0 submission limit 7. SPP: Null submission limit 8. SPP: Negative submission limit / 0 submission
+     * limit 9. SPP: Null penalty 10. SPP: Negative penalty / 0 penalty
      */
     @PostMapping(Endpoints.PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
     @PreAuthorize("hasRole('EDITOR')")
@@ -69,7 +63,7 @@ public class SubmissionPolicyResource {
         var optionalProgrammingExercise = programmingExerciseRepository.findWithSubmissionPolicyById(exerciseId);
         if (optionalProgrammingExercise.isEmpty()) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingExerciseNotFound",
-                "The submission policy could not be added to the programming exercise, because it does not exist.");
+                    "The submission policy could not be added to the programming exercise, because it does not exist.");
             return ResponseEntity.notFound().headers(responseHeaders).build();
         }
 
@@ -78,13 +72,13 @@ public class SubmissionPolicyResource {
 
         if (programmingExercise.getSubmissionPolicy() != null) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingExercisePolicyPresent",
-                "The submission policy could not be added to the programming exercise, because it already has a submission policy.");
+                    "The submission policy could not be added to the programming exercise, because it already has a submission policy.");
             return ResponseEntity.badRequest().headers(responseHeaders).build();
         }
 
         if (submissionPolicy.getId() != null) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "submissionPolicyHasId",
-                "The submission policy could not be added to the programming exercise, because it already has an id.");
+                    "The submission policy could not be added to the programming exercise, because it already has an id.");
             return ResponseEntity.badRequest().headers(responseHeaders).build();
         }
         submissionPolicyService.validateSubmissionPolicy(submissionPolicy);
@@ -102,7 +96,7 @@ public class SubmissionPolicyResource {
         var optionalProgrammingExercise = programmingExerciseRepository.findWithSubmissionPolicyById(exerciseId);
         if (optionalProgrammingExercise.isEmpty()) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingExerciseNotFound",
-                "The submission policy could not be removed from the programming exercise, because it does not exist.");
+                    "The submission policy could not be removed from the programming exercise, because it does not exist.");
             return ResponseEntity.notFound().headers(responseHeaders).build();
         }
 
@@ -112,7 +106,7 @@ public class SubmissionPolicyResource {
         SubmissionPolicy submissionPolicy = programmingExercise.getSubmissionPolicy();
         if (submissionPolicy == null) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingExercisePolicyNotPresent",
-                "The submission policy could not be removed from the programming exercise, because it does not have a submission policy.");
+                    "The submission policy could not be removed from the programming exercise, because it does not have a submission policy.");
             return ResponseEntity.badRequest().headers(responseHeaders).build();
         }
 
@@ -132,7 +126,7 @@ public class SubmissionPolicyResource {
 
         if (optionalProgrammingExercise.isEmpty()) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingExerciseNotFound",
-                "The submission policy could not be enabled, because programming exercise could not be found.");
+                    "The submission policy could not be enabled, because programming exercise could not be found.");
             return ResponseEntity.notFound().headers(responseHeaders).build();
         }
         ProgrammingExercise exercise = optionalProgrammingExercise.get();
@@ -141,7 +135,7 @@ public class SubmissionPolicyResource {
 
         if (submissionPolicy.isActive()) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "submissionPolicyAlreadyEnabled",
-                "The submission policy could not be enabled, because it is already active.");
+                    "The submission policy could not be enabled, because it is already active.");
             return ResponseEntity.badRequest().headers(responseHeaders).build();
         }
 
@@ -161,7 +155,7 @@ public class SubmissionPolicyResource {
 
         if (optionalProgrammingExercise.isEmpty()) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingExerciseNotFound",
-                "The submission policy could not be disabled, because programming exercise could not be found.");
+                    "The submission policy could not be disabled, because programming exercise could not be found.");
             return ResponseEntity.notFound().headers(responseHeaders).build();
         }
         ProgrammingExercise exercise = optionalProgrammingExercise.get();
@@ -170,7 +164,7 @@ public class SubmissionPolicyResource {
 
         if (submissionPolicy.isActive()) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "submissionPolicyAlreadyDisabled",
-                "The submission policy could not be disabled, because it is already inactive.");
+                    "The submission policy could not be disabled, because it is already inactive.");
             return ResponseEntity.badRequest().headers(responseHeaders).build();
         }
 
@@ -190,7 +184,7 @@ public class SubmissionPolicyResource {
 
         if (optionalProgrammingExercise.isEmpty()) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingExerciseNotFound",
-                "The submission policy could not updated, because the programming exercise could not be found.");
+                    "The submission policy could not updated, because the programming exercise could not be found.");
             return ResponseEntity.notFound().headers(responseHeaders).build();
         }
         ProgrammingExercise exercise = optionalProgrammingExercise.get();
@@ -199,7 +193,7 @@ public class SubmissionPolicyResource {
 
         if (!submissionPolicy.getClass().getTypeName().equals(newSubmissionPolicy.getClass().getTypeName())) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "updatedSubmissionPolicyIncorrectType",
-                "The submission policy could not be updated, because the new type is different from the old type.");
+                    "The submission policy could not be updated, because the new type is different from the old type.");
             return ResponseEntity.badRequest().headers(responseHeaders).build();
         }
 
@@ -211,18 +205,17 @@ public class SubmissionPolicyResource {
         return ResponseEntity.ok().headers(responseHeaders).build();
     }
 
-
     public static final class Endpoints {
 
         public static final String ROOT = "/api";
 
         public static final String PROGRAMMING_EXERCISE_SUBMISSION_POLICY = ROOT + "/programming-exercises/{exerciseId}/submission-policy";
 
-        public static final String ENABLE_SUBMISSION_POLICY =  PROGRAMMING_EXERCISE_SUBMISSION_POLICY + "/enable";
+        public static final String ENABLE_SUBMISSION_POLICY = PROGRAMMING_EXERCISE_SUBMISSION_POLICY + "/enable";
 
-        public static final String DISABLE_SUBMISSION_POLICY =  PROGRAMMING_EXERCISE_SUBMISSION_POLICY + "/disable";
+        public static final String DISABLE_SUBMISSION_POLICY = PROGRAMMING_EXERCISE_SUBMISSION_POLICY + "/disable";
 
-        public static final String UPDATE_SUBMISSION_POLICY =  PROGRAMMING_EXERCISE_SUBMISSION_POLICY + "/update";
+        public static final String UPDATE_SUBMISSION_POLICY = PROGRAMMING_EXERCISE_SUBMISSION_POLICY + "/update";
 
     }
 }

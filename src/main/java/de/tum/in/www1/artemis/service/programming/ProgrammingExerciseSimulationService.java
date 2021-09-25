@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 
 import java.util.Optional;
 
-import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +18,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.VCSSimulationUtils;
 
@@ -53,9 +53,9 @@ public class ProgrammingExerciseSimulationService {
     private final SubmissionPolicyService submissionPolicyService;
 
     public ProgrammingExerciseSimulationService(ProgrammingExerciseRepository programmingExerciseRepository, GroupNotificationService groupNotificationService,
-                                                ProgrammingExerciseService programmingExerciseService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-                                                SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-                                                ResultRepository resultRepository, InstanceMessageSendService instanceMessageSendService, SubmissionPolicyService submissionPolicyService) {
+            ProgrammingExerciseService programmingExerciseService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ResultRepository resultRepository, InstanceMessageSendService instanceMessageSendService, SubmissionPolicyService submissionPolicyService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
         this.programmingExerciseService = programmingExerciseService;

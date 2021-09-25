@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.domain.submissionpolicy;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Entity
 @DiscriminatorValue("LRP")

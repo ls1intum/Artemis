@@ -324,7 +324,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         // Select the correct pattern
         this.setPackageNamePattern(this.selectedProgrammingLanguage);
 
+        // Initialize the submission policy of this exercise
         this.onSubmissionPolicyTypeChanged(this.programmingExercise.submissionPolicy?.type ?? SubmissionPolicyType.NONE);
+        console.log(this.programmingExercise.submissionPolicy);
+        if (!this.isSubmissionPolicyNone) {
+            this.updateSubmissionLimit(this.programmingExercise.submissionPolicy?.submissionLimit ?? 0);
+            if (this.isSubmissionPolicySubmissionPenalty) {
+                this.updateExceedingPenalty((this.programmingExercise.submissionPolicy as SubmissionPenaltyPolicy).exceedingPenalty ?? 0);
+            }
+        }
 
         // Checks if the current environment is production
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -578,14 +586,19 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.programmingExercise.submissionPolicy = undefined;
         } else if (submissionPolicyType === SubmissionPolicyType.LOCK_REPOSITORY) {
             const newPolicy = new LockRepositoryPolicy();
-            if (previousSubmissionPolicyType === SubmissionPolicyType.SUBMISSION_PENALTY) {
-                newPolicy.submissionLimit = this.programmingExercise.submissionPolicy?.submissionLimit;
+            if (this.programmingExercise.submissionPolicy) {
+                newPolicy.id = this.programmingExercise.submissionPolicy.id;
+                newPolicy.submissionLimit = this.programmingExercise.submissionPolicy.submissionLimit;
             }
             this.programmingExercise.submissionPolicy = newPolicy;
         } else if (submissionPolicyType === SubmissionPolicyType.SUBMISSION_PENALTY) {
-            const newPolicy = new LockRepositoryPolicy();
-            if (previousSubmissionPolicyType === SubmissionPolicyType.LOCK_REPOSITORY) {
-                newPolicy.submissionLimit = this.programmingExercise.submissionPolicy?.submissionLimit;
+            const newPolicy = new SubmissionPenaltyPolicy();
+            if (this.programmingExercise.submissionPolicy) {
+                newPolicy.id = this.programmingExercise.submissionPolicy.id;
+                newPolicy.submissionLimit = this.programmingExercise.submissionPolicy.submissionLimit;
+            }
+            if (previousSubmissionPolicyType === SubmissionPolicyType.SUBMISSION_PENALTY) {
+                newPolicy.exceedingPenalty = (this.programmingExercise.submissionPolicy as SubmissionPenaltyPolicy).exceedingPenalty;
             }
             this.programmingExercise.submissionPolicy = newPolicy;
         }
