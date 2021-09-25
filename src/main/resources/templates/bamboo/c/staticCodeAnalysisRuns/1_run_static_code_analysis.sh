@@ -6,8 +6,8 @@
 # ------------------------------
 
 # Artemis will look for SCA reports in target, specified in BambooBuildPlanService.java in Artemis
-rm -rf target
-mkdir target
+sudo rm -rf target
+sudo mkdir target
 sudo chown artemis_user:artemis_user target -R
 
 # Navigate into students assignment and save the SCA results in gcc.xml
