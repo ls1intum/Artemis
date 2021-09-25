@@ -9,19 +9,19 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { restore, stub } from 'sinon';
 import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
 import { ReEvaluateShortAnswerQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/short-answer-question/re-evaluate-short-answer-question.component';
-import { MockTranslateValuesDirective } from '../course/course-scores/course-scores.component.spec';
 import { NgModel } from '@angular/forms';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { QuizReEvaluateWarningComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate-warning.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -46,7 +46,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
                 MockComponent(ReEvaluateDragAndDropQuestionComponent),
                 MockComponent(ReEvaluateShortAnswerQuestionComponent),
                 MockTranslateValuesDirective,
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [NgbModal, NgbActiveModal, { provide: TranslateService, useClass: MockTranslateService }],

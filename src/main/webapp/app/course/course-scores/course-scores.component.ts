@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { forkJoin, of, Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
-import * as moment from 'moment';
-import { sum } from 'lodash';
+import dayjs from 'dayjs';
+import { sum } from 'lodash-es';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExportToCsv } from 'export-to-csv';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -14,7 +14,7 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { round } from 'app/shared/util/utils';
-import * as Sentry from '@sentry/browser';
+import { captureException } from '@sentry/browser';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
@@ -129,7 +129,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
                 this.exercisesOfCourseThatAreIncludedInScoreCalculation = this.course
                     .exercises!.filter((exercise) => {
-                        const isReleasedExercise = !exercise.releaseDate || exercise.releaseDate.isBefore(moment());
+                        const isReleasedExercise = !exercise.releaseDate || exercise.releaseDate.isBefore(dayjs());
                         const isExerciseThatCounts = exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED;
                         return isReleasedExercise && isExerciseThatCounts;
                     })
@@ -197,9 +197,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         for (const courseScoreDTO of courseScoreDTOs) {
             this.studentIdToCourseScoreDTOs.set(courseScoreDTO.studentId!, courseScoreDTO);
         }
-        let noOfScoreDifferencesFound = 0;
-        let noOfPointDifferencesFound = 0;
-        let noOfComparisons = 0;
         for (const student of this.students) {
             const overAllPoints = round(student.overallPoints, 1);
             const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100, 1);
@@ -216,7 +213,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 const errorMessage = `User scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
                 this.logErrorOnSentry(errorMessage);
             } else {
-                noOfComparisons += 1;
                 courseScoreDTO.scoreAchieved = round(courseScoreDTO.scoreAchieved, 1);
                 courseScoreDTO.pointsAchieved = round(courseScoreDTO.pointsAchieved, 1);
 
@@ -224,26 +220,20 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const errorMessage = `Different course points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
                         courseScoreDTO,
                     )}`;
-                    noOfPointDifferencesFound += 1;
                     this.logErrorOnSentry(errorMessage);
                 }
                 if (Math.abs(courseScoreDTO.scoreAchieved - regularCalculation.scoreAchieved) > 0.1) {
                     const errorMessage = `Different course score in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation : ${JSON.stringify(
                         courseScoreDTO,
                     )}`;
-                    noOfScoreDifferencesFound += 1;
                     this.logErrorOnSentry(errorMessage);
                 }
             }
         }
-        console.log(`Performed ${noOfComparisons} comparisons between old and new calculation method.`);
-        console.log(`Found ${noOfPointDifferencesFound} point differences between old and new calculation method.`);
-        console.log(`Found ${noOfScoreDifferencesFound} score differences between old and new calculation method.`);
     }
 
     logErrorOnSentry(errorMessage: string) {
-        console.log(errorMessage);
-        Sentry.captureException(new Error(errorMessage));
+        captureException(new Error(errorMessage));
     }
 
     /**
@@ -697,6 +687,6 @@ class Student {
  * Capitalize the first letter of a string.
  * @param string
  */
-function capitalizeFirstLetter(string: String) {
+function capitalizeFirstLetter(string: string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }

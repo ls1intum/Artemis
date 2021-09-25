@@ -5,7 +5,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import { stub } from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
@@ -64,8 +64,8 @@ describe('ProgrammingExercise Management Update Component', () => {
             // GIVEN
             const entity = new ProgrammingExercise(new Course(), undefined);
             entity.id = 123;
-            entity.releaseDate = moment(); // We will get a warning if we do not set a release date
-            spyOn(programmingExerciseService, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+            jest.spyOn(programmingExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
             comp.programmingExercise.course = course;
             // WHEN
@@ -80,8 +80,8 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
-            entity.releaseDate = moment(); // We will get a warning if we do not set a release date
-            spyOn(programmingExerciseService, 'automaticSetup').and.returnValue(of(new HttpResponse({ body: entity })));
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
             comp.programmingExercise.course = course;
             // WHEN
@@ -96,9 +96,9 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should trim the exercise title before saving', fakeAsync(() => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
-            entity.releaseDate = moment(); // We will get a warning if we do not set a release date
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             entity.title = 'My Exercise   ';
-            spyOn(programmingExerciseService, 'automaticSetup').and.returnValue(of(new HttpResponse({ body: entity })));
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
             comp.programmingExercise.course = course;
 
@@ -129,8 +129,8 @@ describe('ProgrammingExercise Management Update Component', () => {
 
         it('Should be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
-            spyOn(exerciseGroupService, 'find').and.returnValue(of(new HttpResponse({ body: exerciseGroup })));
-            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+            jest.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             // WHEN
             comp.ngOnInit();
@@ -157,8 +157,8 @@ describe('ProgrammingExercise Management Update Component', () => {
 
         it('Should not be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
-            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
-            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+            jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             // WHEN
             comp.ngOnInit();
@@ -178,8 +178,8 @@ describe('ProgrammingExercise Management Update Component', () => {
             route.params = of({ courseId });
             route.url = of([{ path: 'new' } as UrlSegment]);
             route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
-            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
-            spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').and.returnValue(true);
+            jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            jest.spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').mockReturnValue(true);
             const getFeaturesStub = stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
             getFeaturesStub.withArgs(ProgrammingLanguage.JAVA).returns(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
             getFeaturesStub.withArgs(ProgrammingLanguage.HASKELL).returns(getProgrammingLanguageFeature(ProgrammingLanguage.HASKELL));
@@ -266,8 +266,8 @@ describe('ProgrammingExercise Management Update Component', () => {
         let route: ActivatedRoute;
 
         beforeEach(() => {
-            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
-            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+            jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });

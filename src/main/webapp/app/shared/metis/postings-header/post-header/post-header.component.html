@@ -1,4 +1,4 @@
-<div class="row justify-content-between my-1 me-0">
+<div class="row justify-content-between my-2 me-0">
     <div class="col-auto pe-0">
         <span class="posting-header header-author-date">
             {{ posting.author!.name }}
@@ -37,7 +37,7 @@
     >
         <span class="answer-count"
             >{{ numberOfAnswerPosts }}
-            <fa-icon [icon]="'comments'" class="icon" [ngStyle]="{ color: showAnswers ? '#353d47' : '#6a737d' }"> </fa-icon>
+            <fa-icon [icon]="'comments'" class="icon" [ngStyle]="{ color: showAnswers ? '#6a737d' : '#353d47' }"> </fa-icon>
         </span>
     </div>
 </div>

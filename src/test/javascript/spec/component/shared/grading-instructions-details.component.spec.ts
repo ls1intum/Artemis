@@ -8,8 +8,10 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { Exercise } from 'app/entities/exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
+import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
+import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,8 +50,9 @@ describe('Grading Instructions Management Component', () => {
 
             // THEN
             expect(component.backupExercise.id).to.equal(component.exercise.id);
-            expect(component.questionEditorText).to.equal(
-                '[instruction]\n' +
+            expect(component.markdownEditorText).to.equal(
+                'Add Assessment Instruction text here\n\n' +
+                    '[instruction]\n' +
                     '\t[credits] 0\n' +
                     '\t[gradingScale] Add instruction grading scale here (only visible for tutors)\n' +
                     '\t[description] Add grading instruction here (only visible for tutors)\n' +
@@ -79,8 +82,9 @@ describe('Grading Instructions Management Component', () => {
             component.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(component.questionEditorText).to.equal(
-                '[criterion]' +
+            expect(component.markdownEditorText).to.equal(
+                'Add Assessment Instruction text here\n\n' +
+                    '[criterion]' +
                     'testCriteria' +
                     '\n' +
                     '\t' +
@@ -158,11 +162,32 @@ describe('Grading Instructions Management Component', () => {
         expect(component.exercise.gradingCriteria[0].title).to.equal(event.target.value);
     });
 
+    it('should change grading instruction', () => {
+        const newDescription = 'new text';
+        const domainCommands = [[newDescription, new InstructionDescriptionCommand()]] as [string, DomainCommand | null][];
+
+        component.exercise.gradingCriteria = [gradingCriterion];
+        component.onInstructionChange(domainCommands, gradingInstruction);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).to.equal(newDescription);
+    });
+
     it('should delete a grading instruction', () => {
         component.exercise.gradingCriteria = [gradingCriterion];
         component.deleteInstruction(gradingInstruction, gradingCriterion);
         fixture.detectChanges();
 
         expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].id).to.equal(undefined);
+    });
+
+    it('should set grading instruction text for exercise', () => {
+        const markdownText = 'new text';
+        const domainCommands = [[markdownText, null]] as [string, DomainCommand | null][];
+
+        component.setExerciseGradingInstructionText(domainCommands);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingInstructions).to.equal(markdownText);
     });
 });

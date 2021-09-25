@@ -1,6 +1,6 @@
 import * as chai from 'chai';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
 import { spy, stub } from 'sinon';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
@@ -10,11 +10,11 @@ import { OrionProgrammingExerciseComponent } from 'app/orion/management/orion-pr
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { OrionModule } from 'app/shared/orion/orion.module';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { BehaviorSubject } from 'rxjs';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -29,8 +29,8 @@ describe('OrionProgrammingExerciseComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, OrionModule],
-            declarations: [OrionProgrammingExerciseComponent, MockComponent(ProgrammingExerciseComponent), MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule],
+            declarations: [OrionProgrammingExerciseComponent, MockComponent(ProgrammingExerciseComponent), MockPipe(ArtemisTranslatePipe), MockComponent(OrionButtonComponent)],
             providers: [MockProvider(TranslateService), MockProvider(OrionConnectorService), MockProvider(ProgrammingExerciseService), { provide: Router, useValue: router }],
         })
             .compileComponents()

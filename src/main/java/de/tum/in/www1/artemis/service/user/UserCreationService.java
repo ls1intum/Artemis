@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
-import io.github.jhipster.security.RandomUtil;
+import tech.jhipster.security.RandomUtil;
 
 @Service
 public class UserCreationService {

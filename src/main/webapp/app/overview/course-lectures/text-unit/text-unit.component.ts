@@ -2,7 +2,6 @@ import { Component, Input, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { SERVER_API_URL } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-text-unit',

@@ -161,19 +161,12 @@
                 [(markdown)]="modelingExercise.problemStatement"
                 [editorMode]="EditorMode.LATEX"
                 [shouldDisplayAlert]="false"
+                [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
-        <div class="form-group" name="gradingInstructions" id="field_gradingInstructions">
-            <jhi-slide-toggle class="form-element" (checkedEmitter)="getCheckedFlag($event)"></jhi-slide-toggle>
-            <jhi-markdown-editor
-                *ngIf="this.checkedFlag === false"
-                class="markdown-editor background-editor-color"
-                [domainCommands]="domainCommandsGradingInstructions"
-                [(markdown)]="modelingExercise.gradingInstructions"
-                [editorMode]="EditorMode.LATEX"
-                [shouldDisplayAlert]="false"
-            ></jhi-markdown-editor>
-            <jhi-grading-instructions-details *ngIf="this.checkedFlag" [exercise]="modelingExercise"></jhi-grading-instructions-details>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
+            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="modelingExercise"></jhi-grading-instructions-details>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolution">Example Solution</label>
@@ -189,6 +182,7 @@
                 [(markdown)]="modelingExercise.sampleSolutionExplanation"
                 [editorMode]="EditorMode.LATEX"
                 [shouldDisplayAlert]="false"
+                [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
         <div class="form-group" *ngIf="!modelingExercise.id || isImport">

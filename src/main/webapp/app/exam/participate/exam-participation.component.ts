@@ -24,13 +24,12 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import { AlertService } from 'app/core/util/alert.service';
+import dayjs from 'dayjs';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
-import * as Sentry from '@sentry/browser';
+import { captureException } from '@sentry/browser';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/entities/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
@@ -56,7 +55,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     courseId: number;
     examId: number;
     testRunId: number;
-    testRunStartTime?: Moment;
+    testRunStartTime?: dayjs.Dayjs;
 
     // determines if component was once drawn visited
     pageComponentVisited: boolean[];
@@ -66,8 +65,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     examTitle = '';
     studentExam: StudentExam;
 
-    individualStudentEndDate: Moment;
-    individualStudentEndDateWithGracePeriod: Moment;
+    individualStudentEndDate: dayjs.Dayjs;
+    individualStudentEndDateWithGracePeriod: dayjs.Dayjs;
 
     activeExamPage = new ExamPage();
     unsavedChanges = false;
@@ -125,7 +124,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private serverDateService: ArtemisServerDateService,
         private translateService: TranslateService,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private courseExerciseService: CourseExerciseService,
     ) {
         // show only one synchronization error every 5s
@@ -151,7 +150,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam.exam!.course = new Course();
                         this.studentExam.exam!.course.id = this.courseId;
                         this.exam = studentExam.exam!;
-                        this.testRunStartTime = moment();
+                        this.testRunStartTime = dayjs();
                         this.initIndividualEndDates(this.testRunStartTime);
                         this.loadingExam = false;
                     },
@@ -230,11 +229,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (studentExam) {
             // init studentExam
             this.studentExam = studentExam;
+            // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
+            const exercises: Exercise[] = this.studentExam.exercises!;
+            const exerciseIds = exercises.map((exercise) => exercise.id).filter(Number) as number[];
+            this.examParticipationService.setExamExerciseIds(exerciseIds);
             // set endDate with workingTime
             if (!!this.testRunId) {
-                this.individualStudentEndDate = this.testRunStartTime!.add(this.studentExam.workingTime, 'seconds');
+                this.individualStudentEndDate = this.testRunStartTime!.add(this.studentExam.workingTime!, 'seconds');
             } else {
-                this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
+                this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
             }
             // initializes array which manages submission component and exam overview initialization
             this.pageComponentVisited = new Array(studentExam.exercises!.length).fill(false);
@@ -329,7 +332,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
                         exercise.exerciseHints = [];
                     });
-                    this.alertService.addAlert({ type: 'success', msg: 'studentExam.submitSuccessful', timeout: 20000 }, []);
+                    this.alertService.addAlert({ type: 'success', message: 'studentExam.submitSuccessful', timeout: 20000 });
                 },
                 (error: Error) => {
                     // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible
@@ -454,9 +457,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         window.clearInterval(this.autoSaveInterval);
     }
 
-    initIndividualEndDates(startDate: Moment) {
-        this.individualStudentEndDate = moment(startDate).add(this.studentExam.workingTime, 'seconds');
-        this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod, 'seconds');
+    initIndividualEndDates(startDate: dayjs.Dayjs) {
+        this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
+        this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
     }
 
     initLiveMode() {
@@ -488,7 +491,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.triggerSave(exerciseChange.forceSave);
         } catch (error) {
             // an error here should never lead to the wrong exercise being shown
-            Sentry.captureException(error);
+            captureException(error);
         }
         if (!exerciseChange.overViewChange) {
             this.initializeExercise(exerciseChange.exercise!);

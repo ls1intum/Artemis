@@ -8,7 +8,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -46,10 +45,12 @@ public class ProgrammingExerciseParticipationService {
 
     private final GitService gitService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ParticipationRepository participationRepository, TeamRepository teamRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, Optional<VersionControlService> versionControlService,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService) {
+            UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -59,6 +60,7 @@ public class ProgrammingExerciseParticipationService {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.gitService = gitService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -134,8 +136,6 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * NOTE: do not use this method any more, because loading the participation reliably with their exercise does not work with Hibernate/Hazelcast in a multi node server setup
-     *
      * Check if the currently logged in user can access a given participation by accessing the exercise and course connected to this participation
      * The method will treat the participation types differently:
      * - ProgrammingExerciseStudentParticipations should only be accessible by its owner (student) or users with at least the role TA in the courses.
@@ -144,48 +144,25 @@ public class ProgrammingExerciseParticipationService {
      * @param participation to check permissions for.
      * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
      */
-    @Deprecated(since = "5.0.6", forRemoval = true)
     public boolean canAccessParticipation(ProgrammingExerciseParticipation participation) {
+        if (participation == null) {
+            return false;
+        }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-            // If the current user is owner of the participation, they are allowed to access it
-            if (studentParticipation.isOwnedBy(user)) {
-                return true;
-            }
-            return canAccessParticipation(studentParticipation, studentParticipationRepository, user);
+        // If the current user is owner of the participation, they are allowed to access it
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && studentParticipation.isOwnedBy(user)) {
+            return true;
         }
-        else if (participation instanceof SolutionProgrammingExerciseParticipation solutionParticipation) {
-            return canAccessParticipation(solutionParticipation, solutionParticipationRepository, user);
-        }
-        else if (participation instanceof TemplateProgrammingExerciseParticipation templateParticipation) {
-            return canAccessParticipation(templateParticipation, templateParticipationRepository, user);
-        }
-        return false;
-    }
-
-    /**
-     * NOTE: do not use this method any more, because loading the participation reliably with their exercise does not work with Hibernate/Hazelcast in a multi node server setup
-     *
-     * Returns whether a user is allowed to access a given participation (as owner or at least as tutor of the course).
-     *
-     * @param <T>           The {@link ProgrammingExerciseParticipation} sub-class
-     * @param participation A participation of type <code>T</code>, must not be null
-     * @param repository    The database repository where participations of type <code>T</code> reside in
-     * @param user          The user, may be null, in which case the current user is fetched and used.
-     * @return <code>true</code> if the current user is allowed to access the given participation, <code>false</code> otherwise
-     */
-    @Deprecated(since = "5.0.6", forRemoval = true)
-    private <T extends ProgrammingExerciseParticipation> boolean canAccessParticipation(@NotNull T participation, JpaRepository<T, Long> repository, User user) {
         // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
-        // To prevent null pointer exceptions, we therefore retrieve it again as concrete sub-class instance by using the provided repository
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
-            log.warn("canAccessParticipation: reload participation, because programming exercise is null or a proxy object");
-            T participationFromDatabase = repository.findById(participation.getId()).get();
-            log.warn("canAccessParticipation: reloaded participation: {}", participationFromDatabase);
-            if (participationFromDatabase.getProgrammingExercise() == null || !Hibernate.isInitialized(participationFromDatabase.getProgrammingExercise())) {
-                log.error("canAccessParticipation: tried to reload participation, but received it again with an uninitialized programming exercise");
+            // Find the programming exercise for the given participation
+            var optionalProgrammingExercise = programmingExerciseRepository.getExercise(participation);
+            if (optionalProgrammingExercise.isEmpty()) {
+                log.error("canAccessParticipation: could not find programming exercise of participation id {}", participation.getId());
+                // Cannot access a programming participation that has no programming exercise associated with it
+                return false;
             }
-            participation.setProgrammingExercise(participationFromDatabase.getProgrammingExercise());
+            participation.setProgrammingExercise(optionalProgrammingExercise.get());
         }
         // TODO: I think we should higher the following permissions to editor
         return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), user);

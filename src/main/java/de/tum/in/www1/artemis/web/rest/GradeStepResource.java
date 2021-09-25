@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,8 +96,7 @@ public class GradeStepResource {
     }
 
     private GradeStepsDTO prepareGradeStepsDTO(GradingScale gradingScale, Integer maxPoints, String title) {
-        GradeStep[] gradeSteps = new GradeStep[gradingScale.getGradeSteps().size()];
-        gradingScale.getGradeSteps().toArray(gradeSteps);
+        Set<GradeStep> gradeSteps = gradingScale.getGradeSteps();
         for (GradeStep gradeStep : gradeSteps) {
             gradeStep.setGradingScale(null);
         }
