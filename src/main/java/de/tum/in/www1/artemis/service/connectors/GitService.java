@@ -495,7 +495,7 @@ public class GitService {
      * @return path of the local file system
      */
     public Path getLocalPathOfRepo(String targetPath, VcsRepositoryUrl targetUrl) {
-        return Paths.get(targetPath, folderNameForRepositoryUrl(targetUrl));
+        return Paths.get(targetPath.replaceAll("^\\./", ""), folderNameForRepositoryUrl(targetUrl));
     }
 
     /**

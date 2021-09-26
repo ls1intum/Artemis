@@ -3,18 +3,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Course } from 'app/entities/course.model';
 import { Posting } from 'app/entities/metis/posting.model';
-
-export enum CourseWideContext {
-    TECH_SUPPORT = 'TECH_SUPPORT',
-    ORGANIZATION = 'ORGANIZATION',
-    RANDOM = 'RANDOM',
-}
-
-export enum DisplayPriority {
-    PINNED = 'PINNED',
-    ARCHIVED = 'ARCHIVED',
-    NONE = 'NONE',
-}
+import { CourseWideContext, DisplayPriority } from 'app/shared/metis/metis.util';
 
 export class Post extends Posting {
     public title?: string;

@@ -1,18 +1,19 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Data, ParamMap, Router } from '@angular/router';
-import { JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { combineLatest, Subject } from 'rxjs';
-import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { ParseLinks } from 'app/core/util/parse-links.service';
+import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination.constants';
 
 @Component({
     selector: 'jhi-user-management',
@@ -32,17 +33,17 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     searchTermString = '';
 
     private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
+    dialogError = this.dialogErrorSource.asObservable();
     userSearchForm: FormGroup;
 
     constructor(
         private userService: UserService,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private accountService: AccountService,
-        private parseLinks: JhiParseLinks,
+        private parseLinks: ParseLinks,
         private activatedRoute: ActivatedRoute,
         private router: Router,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
     ) {
         this.search
             .pipe(
@@ -132,7 +133,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             relativeTo: this.activatedRoute.parent,
             queryParams: {
                 page: this.page,
-                sort: this.predicate + ',' + (this.ascending ? 'asc' : 'desc'),
+                sort: `${this.predicate},${this.ascending ? ASC : DESC}`,
             },
         });
     }
@@ -140,10 +141,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     private handleNavigation(): void {
         combineLatest(this.activatedRoute.data, this.activatedRoute.queryParamMap, (data: Data, params: ParamMap) => {
             const page = params.get('page');
-            this.page = page !== null ? +page : 1;
-            const sort = (params.get('sort') ?? data['defaultSort']).split(',');
+            this.page = page != undefined ? +page : 1;
+            const sort = (params.get(SORT) ?? data['defaultSort']).split(',');
             this.predicate = sort[0];
-            this.ascending = sort[1] === 'asc';
+            this.ascending = sort[1] === ASC;
             this.loadAll();
         }).subscribe();
     }

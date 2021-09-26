@@ -18,15 +18,15 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { restore, SinonStub, spy, stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { mockExercise, mockTeam, mockTeams, TeamRequestInterceptorMock } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -40,18 +40,11 @@ describe('TeamComponent', () => {
     let identityStub: SinonStub;
     let exerciseService: ExerciseService;
     let teamService: TeamService;
-    let alertService: JhiAlertService;
+    let alertService: AlertService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                MockModule(NgbModule),
-                MockModule(NgJhipsterModule),
-                MockModule(FeatureToggleModule),
-                MockModule(NgxDatatableModule),
-                MockModule(RouterModule),
-            ],
+            imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(FeatureToggleModule), MockModule(NgxDatatableModule), MockModule(RouterModule)],
             declarations: [
                 TeamComponent,
                 MockComponent(TeamUpdateButtonComponent),
@@ -92,7 +85,7 @@ describe('TeamComponent', () => {
                 stub(accountService, 'isAtLeastInstructorInCourse').returns(true);
                 fixture = TestBed.createComponent(TeamComponent);
                 comp = fixture.componentInstance;
-                alertService = TestBed.inject(JhiAlertService);
+                alertService = TestBed.inject(AlertService);
                 router = TestBed.inject(Router);
                 teamService = TestBed.inject(TeamService);
                 exerciseService = TestBed.inject(ExerciseService);

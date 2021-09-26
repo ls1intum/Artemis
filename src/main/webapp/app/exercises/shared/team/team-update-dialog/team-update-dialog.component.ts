@@ -7,7 +7,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Team } from 'app/entities/team.model';
 import { User } from 'app/core/user/user.model';
-import { cloneDeep, isEmpty, omit } from 'lodash';
+import { cloneDeep, isEmpty, omit } from 'lodash-es';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { Exercise } from 'app/entities/exercise.model';

@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -130,7 +130,7 @@ export class QuizExamSummaryComponent implements OnInit {
     get showMissingResultsNotice(): boolean {
         if (this.exam && this.exam.publishResultsDate && this.exercise && this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
             return (
-                moment(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) &&
+                dayjs(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) &&
                 (!this.exercise.studentParticipations[0].results || this.exercise.studentParticipations[0].results.length <= 0)
             );
         }

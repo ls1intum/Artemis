@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input, OnChanges } from '@angular/core';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ExerciseRowType } from 'app/course/manage/overview/course-management-exercise-row.component';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
@@ -77,10 +77,10 @@ export class CourseManagementCardComponent implements OnChanges {
     private sortExercises(exercises: Exercise[]): void {
         this.exercisesSorted = true;
 
-        const inSevenDays = moment().add(7, 'days').endOf('day');
+        const inSevenDays = dayjs().add(7, 'days').endOf('day');
 
         this.futureExercises = exercises
-            .filter((exercise) => exercise.releaseDate && exercise.releaseDate > moment() && exercise.releaseDate <= inSevenDays)
+            .filter((exercise) => exercise.releaseDate && exercise.releaseDate > dayjs() && exercise.releaseDate <= inSevenDays)
             .sort((exerciseA, exerciseB) => {
                 return exerciseA.releaseDate!.valueOf() - exerciseB.releaseDate!.valueOf();
             })
@@ -88,18 +88,18 @@ export class CourseManagementCardComponent implements OnChanges {
 
         this.currentExercises = exercises.filter(
             (exercise) =>
-                (exercise.releaseDate && exercise.releaseDate <= moment() && (!exercise.dueDate || exercise.dueDate > moment())) ||
-                (!exercise.releaseDate && exercise.dueDate && exercise.dueDate > moment()),
+                (exercise.releaseDate && exercise.releaseDate <= dayjs() && (!exercise.dueDate || exercise.dueDate > dayjs())) ||
+                (!exercise.releaseDate && exercise.dueDate && exercise.dueDate > dayjs()),
         );
 
         this.exercisesInAssessment = exercises.filter(
-            (exercise) => exercise.dueDate && exercise.dueDate <= moment() && exercise.assessmentDueDate && exercise.assessmentDueDate > moment(),
+            (exercise) => exercise.dueDate && exercise.dueDate <= dayjs() && exercise.assessmentDueDate && exercise.assessmentDueDate > dayjs(),
         );
 
         const allPastExercises = exercises
             .filter(
                 (exercise) =>
-                    (!exercise.assessmentDueDate && exercise.dueDate && exercise.dueDate <= moment()) || (exercise.assessmentDueDate && exercise.assessmentDueDate <= moment()),
+                    (!exercise.assessmentDueDate && exercise.dueDate && exercise.dueDate <= dayjs()) || (exercise.assessmentDueDate && exercise.assessmentDueDate <= dayjs()),
             )
             .sort((exerciseA, exerciseB) => {
                 // Sort by assessment due date (or due date if there is no assessment due date) descending
