@@ -33,7 +33,6 @@
                 "discussion": "Discussion"
             },
             "exerciseList": {
-                "releaseDateTooltip": "Only visible to teaching assistants and instructors. Release date:",
                 "releaseDate": "Release Date",
                 "dueDate": "Due Date",
                 "unreleased": "Hide unreleased",
@@ -47,6 +46,7 @@
                 "newFirst": "Newest",
                 "oldFirst": "Oldest",
                 "noExercises": "No exercises available for the course.",
+                "notReleasedTooltip": "Only visible to teaching assistants and instructors. Release Date: ",
                 "notReleased": "Not released",
                 "live": "Live",
                 "noDueDate": "No due date",

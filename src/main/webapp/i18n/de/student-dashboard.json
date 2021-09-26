@@ -33,7 +33,6 @@
                 "discussion": "Diskussion"
             },
             "exerciseList": {
-                "releaseDateTooltip": "Nicht sichbar für Studierende. Veröffentlichungsdatum: ",
                 "releaseDate": "Veröffentlichungsdatum",
                 "dueDate": "Einreichungsfrist",
                 "unreleased": "Keine Unveröffentlichten",
@@ -47,6 +46,7 @@
                 "newFirst": "Neueste",
                 "oldFirst": "Älteste",
                 "noExercises": "Es gibt keine Aufgaben für diesen Kurs.",
+                "notReleasedTooltip": "Nicht sichbar für Studierende. Veröffentlichungsdatum: ",
                 "notReleased": "Nicht freigegeben",
                 "live": "Live",
                 "noDueDate": "Keine Deadline",
