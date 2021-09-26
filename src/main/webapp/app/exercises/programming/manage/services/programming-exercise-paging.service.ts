@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';

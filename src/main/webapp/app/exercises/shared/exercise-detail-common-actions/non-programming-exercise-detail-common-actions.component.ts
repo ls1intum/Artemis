@@ -2,13 +2,13 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Subject } from 'rxjs';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { JhiEventManager } from 'ng-jhipster';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
@@ -35,7 +35,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
         private textExerciseService: TextExerciseService,
         private fileUploadExerciseService: FileUploadExerciseService,
         private modelingExerciseService: ModelingExerciseService,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
         private router: Router,
     ) {}
 

@@ -1,20 +1,20 @@
 import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 /**
  * Calculates the individual end time based on the studentExam
  *
  * @param exam
  * @param studentExam
- * @return {moment}
+ * @return {dayjs}
  */
 export const endTime = (exam: Exam, studentExam: StudentExam) => {
     if (!exam || !exam.endDate) {
         return undefined;
     }
     if (studentExam && studentExam.workingTime && exam.startDate) {
-        return moment(exam.startDate).add(studentExam.workingTime, 'seconds');
+        return dayjs(exam.startDate).add(studentExam.workingTime, 'seconds');
     }
     return exam.endDate;
 };
@@ -29,7 +29,7 @@ export const normalWorkingTime = (exam: Exam): number | undefined => {
     if (!exam || !exam.endDate || !exam.startDate) {
         return undefined;
     }
-    return moment(exam.endDate).diff(exam.startDate, 'seconds');
+    return dayjs(exam.endDate).diff(exam.startDate, 'seconds');
 };
 
 /**
@@ -41,7 +41,7 @@ export const normalWorkingTime = (exam: Exam): number | undefined => {
  */
 export const hasAdditionalWorkingTime = (exam: Exam, studentExam: StudentExam): boolean | undefined => {
     if (exam && exam.endDate && exam.startDate && studentExam && studentExam.workingTime) {
-        const personalEndDate = moment(exam.startDate).add(studentExam.workingTime, 'seconds');
+        const personalEndDate = dayjs(exam.startDate).add(studentExam.workingTime, 'seconds');
         return personalEndDate.isAfter(exam.endDate);
     }
     return false;
@@ -55,7 +55,7 @@ export const hasAdditionalWorkingTime = (exam: Exam, studentExam: StudentExam): 
  * @return {number} The additional working time in seconds
  */
 export const getAdditionalWorkingTime = (exam: Exam, studentExam: StudentExam): number => {
-    const personalEndDate = moment(exam.startDate).add(studentExam.workingTime, 'seconds');
+    const personalEndDate = dayjs(exam.startDate).add(studentExam.workingTime!, 'seconds');
     return personalEndDate.diff(exam.endDate, 'seconds');
 };
 

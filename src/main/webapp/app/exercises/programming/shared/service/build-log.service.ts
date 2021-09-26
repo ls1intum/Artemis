@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { SERVER_API_URL } from 'app/app.constants';
 import { BuildLogEntry } from 'app/entities/build-log.model';
 
 export interface IBuildLogService {

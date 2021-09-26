@@ -11,10 +11,10 @@ import { Router } from '@angular/router';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
-import * as moment from 'moment';
-import * as chai from 'chai';
 import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import * as chai from 'chai';
+import dayjs from 'dayjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 
@@ -44,9 +44,9 @@ describe('TextExercise Service', () => {
         httpMock = injector.get(HttpTestingController);
 
         elemDefault = new TextExercise(new Course(), undefined);
-        elemDefault.assessmentDueDate = moment();
-        elemDefault.dueDate = moment();
-        elemDefault.releaseDate = moment();
+        elemDefault.assessmentDueDate = dayjs();
+        elemDefault.dueDate = dayjs();
+        elemDefault.releaseDate = dayjs();
         elemDefault.studentParticipations = new Array<StudentParticipation>();
         plagiarismResults = new TextPlagiarismResult();
         plagiarismResults.exercise = elemDefault;

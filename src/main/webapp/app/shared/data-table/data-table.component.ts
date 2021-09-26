@@ -3,7 +3,7 @@ import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
 import { compose, filter, flatten } from 'lodash/fp';
-import { get, isNumber } from 'lodash';
+import { get, isNumber } from 'lodash-es';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SortService } from 'app/shared/service/sort.service';

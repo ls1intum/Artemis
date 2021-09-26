@@ -5,7 +5,7 @@ import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
@@ -23,7 +23,7 @@ import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/model
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { SimpleChange } from '@angular/core';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
@@ -34,19 +34,21 @@ Text.size = () => {
 describe('ModelingEditorComponent Component', () => {
     let fixture: ComponentFixture<ModelingEditorComponent>;
     const sandbox = sinon.createSandbox();
-    const course: Course = { id: 123 } as Course;
-    const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
+    const course = { id: 123 } as Course;
+    const diagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
+    // @ts-ignore
+    const classDiagram = cloneDeep(testClassDiagram as UMLModel); // note: clone is needed to prevent weired errors with setters, because testClassDiagram is not an actual object
 
     beforeEach(() => {
         const route = { params: of({ id: 1, courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
         diagram.id = 1;
-        diagram.jsonRepresentation = JSON.stringify(testClassDiagram);
+        diagram.jsonRepresentation = JSON.stringify(classDiagram);
 
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, ArtemisTestModule, ArtemisSharedModule, ArtemisModelingEditorModule],
             declarations: [],
             providers: [
-                JhiAlertService,
+                AlertService,
                 JhiLanguageHelper,
                 GuidedTourService,
                 { provide: NgbModal, useClass: MockNgbModalService },
@@ -69,8 +71,7 @@ describe('ModelingEditorComponent Component', () => {
     });
 
     it('ngAfterViewInit', () => {
-        // @ts-ignore
-        fixture.componentInstance.umlModel = testClassDiagram as UMLModel;
+        fixture.componentInstance.umlModel = classDiagram;
         fixture.detectChanges();
 
         // test
@@ -79,8 +80,7 @@ describe('ModelingEditorComponent Component', () => {
     });
 
     it('ngOnDestroy', () => {
-        // @ts-ignore
-        fixture.componentInstance.umlModel = testClassDiagram as UMLModel;
+        fixture.componentInstance.umlModel = classDiagram;
         fixture.detectChanges();
         fixture.componentInstance.ngAfterViewInit();
         expect(fixture.componentInstance['apollonEditor']).toBeTruthy();
@@ -92,17 +92,19 @@ describe('ModelingEditorComponent Component', () => {
 
     it('ngOnChanges', () => {
         // @ts-ignore
-        const model = testClassDiagram as UMLModel;
+        const model = classDiagram;
         fixture.componentInstance.umlModel = model;
         fixture.detectChanges();
         fixture.componentInstance.ngAfterViewInit();
         expect(fixture.componentInstance['apollonEditor']).toBeTruthy();
 
-        const changedModel = cloneDeep(model);
+        const changedModel = cloneDeep(model) as any;
         changedModel.elements = [];
         changedModel.relationships = [];
         changedModel.interactive = { elements: [], relationships: [] };
         changedModel.size = { height: 0, width: 0 };
+        // note: using cloneDeep a default value exists, which would prevent the comparison below to pass, therefore we need to remove it here
+        changedModel.default = undefined;
 
         // test
         fixture.componentInstance.ngOnChanges({
@@ -111,8 +113,8 @@ describe('ModelingEditorComponent Component', () => {
                 previousValue: model,
             } as SimpleChange,
         });
-
-        expect(fixture.componentInstance['apollonEditor']!.model).toEqual(changedModel);
+        const componentModel = fixture.componentInstance['apollonEditor']!.model as UMLModel;
+        expect(componentModel).toEqual(changedModel);
     });
 
     it('isFullScreen false', () => {
@@ -122,8 +124,7 @@ describe('ModelingEditorComponent Component', () => {
     });
 
     it('getCurrentModel', () => {
-        // @ts-ignore
-        fixture.componentInstance.umlModel = testClassDiagram as UMLModel;
+        fixture.componentInstance.umlModel = classDiagram;
         fixture.detectChanges();
         fixture.componentInstance.ngAfterViewInit();
         expect(fixture.componentInstance['apollonEditor']).toBeTruthy();
@@ -135,8 +136,7 @@ describe('ModelingEditorComponent Component', () => {
     });
 
     it('elementWithClass', () => {
-        // @ts-ignore
-        const model = testClassDiagram as UMLModel;
+        const model = classDiagram;
         fixture.componentInstance.umlModel = model;
         fixture.detectChanges();
         fixture.componentInstance.ngAfterViewInit();
@@ -148,8 +148,7 @@ describe('ModelingEditorComponent Component', () => {
     });
 
     it('elementWithAttribute', () => {
-        // @ts-ignore
-        const model = testClassDiagram as UMLModel;
+        const model = classDiagram;
         fixture.componentInstance.umlModel = model;
         fixture.detectChanges();
         fixture.componentInstance.ngAfterViewInit();
@@ -161,8 +160,7 @@ describe('ModelingEditorComponent Component', () => {
     });
 
     it('elementWithMethod', () => {
-        // @ts-ignore
-        const model = testClassDiagram as UMLModel;
+        const model = classDiagram;
         fixture.componentInstance.umlModel = model;
         fixture.detectChanges();
         fixture.componentInstance.ngAfterViewInit();

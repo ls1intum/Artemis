@@ -7,7 +7,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { DndModule } from 'ng2-dnd';
 import { DeviceDetectorService, DeviceInfo } from 'ngx-device-detector';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 
 chai.use(sinonChai);

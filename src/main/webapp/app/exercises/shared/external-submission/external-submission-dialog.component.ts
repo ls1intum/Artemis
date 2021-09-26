@@ -2,7 +2,6 @@ import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { JhiEventManager } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -11,6 +10,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
 import { SCORE_PATTERN } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-external-submission-dialog',
@@ -33,7 +33,7 @@ export class ExternalSubmissionDialogComponent implements OnInit {
         private participationService: ParticipationService,
         private externalSubmissionService: ExternalSubmissionService,
         private activeModal: NgbActiveModal,
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
     ) {}
 
     /**

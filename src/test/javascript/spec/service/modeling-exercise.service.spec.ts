@@ -8,7 +8,7 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -39,9 +39,9 @@ describe('ModelingExercise Service', () => {
         httpMock = injector.get(HttpTestingController);
 
         elemDefault = new ModelingExercise(UMLDiagramType.ComponentDiagram, undefined, undefined);
-        elemDefault.dueDate = moment();
-        elemDefault.releaseDate = moment();
-        elemDefault.assessmentDueDate = moment();
+        elemDefault.dueDate = dayjs();
+        elemDefault.releaseDate = dayjs();
+        elemDefault.assessmentDueDate = dayjs();
         elemDefault.studentParticipations = [];
         plagiarismResult = new ModelingPlagiarismResult();
         plagiarismResult.exercise = elemDefault;

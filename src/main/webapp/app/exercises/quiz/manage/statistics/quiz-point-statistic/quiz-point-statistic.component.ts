@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ChartOptions, ChartType } from 'chart.js';
 import { calculateHeightOfChart, createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -112,9 +112,9 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         // update remaining time
         if (this.quizExercise && this.quizExercise.adjustedDueDate) {
             const endDate = this.quizExercise.adjustedDueDate;
-            if (endDate.isAfter(moment())) {
+            if (endDate.isAfter(dayjs())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(moment(), 'seconds');
+                this.remainingTimeSeconds = endDate.diff(dayjs(), 'seconds');
                 this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
@@ -186,7 +186,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             this.router.navigate(['courses']);
         }
         this.quizExercise = quizExercise;
-        this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.remainingTime, 'seconds');
+        this.quizExercise.adjustedDueDate = dayjs().add(this.quizExercise.remainingTime!, 'seconds');
         this.waitingForQuizStart = !this.quizExercise.started;
         this.quizPointStatistic = this.quizExercise.quizPointStatistic!;
         this.maxScore = this.calculateMaxScore();

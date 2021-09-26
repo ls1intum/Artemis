@@ -234,7 +234,7 @@
                             >
                                 {{ 'artemisApp.exerciseAssessmentDashboard.reviewExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                             </button>
-                            <fa-icon class="text-secondary" [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id!)"></fa-icon>
+                            <fa-icon class="text-success" [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id!)"></fa-icon>
                         </li>
                     </ul>
                 </div>

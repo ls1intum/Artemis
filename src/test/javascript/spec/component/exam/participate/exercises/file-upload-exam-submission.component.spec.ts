@@ -10,7 +10,7 @@ import { ResizeableContainerComponent } from 'app/shared/resizeable-container/re
 import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockTranslateService, TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../../test.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
@@ -21,7 +21,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { createFileUploadSubmission } from '../../../../helpers/mocks/service/mock-file-upload-submission.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
@@ -33,7 +33,7 @@ const expect = chai.expect;
 describe('FileUploadExamSubmissionComponent', () => {
     let fixture: ComponentFixture<FileUploadExamSubmissionComponent>;
     let comp: FileUploadExamSubmissionComponent;
-    let jhiAlertService: JhiAlertService;
+    let alertService: AlertService;
     let mockSubmission: FileUploadSubmission;
     let mockExercise: FileUploadExercise;
     let fileUploadSubmissionService: FileUploadSubmissionService;
@@ -71,7 +71,7 @@ describe('FileUploadExamSubmissionComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(FileUploadExamSubmissionComponent);
                 comp = fixture.componentInstance;
-                jhiAlertService = TestBed.inject(JhiAlertService);
+                alertService = TestBed.inject(AlertService);
                 fileUploadSubmissionService = fixture.debugElement.injector.get(FileUploadSubmissionService);
             });
     });
@@ -224,7 +224,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const submissionFile = new File([''], 'exampleSubmission.png');
         Object.defineProperty(submissionFile, 'size', { value: MAX_SUBMISSION_FILE_SIZE + 1, writable: false });
         comp.studentSubmission = createFileUploadSubmission();
-        const jhiErrorSpy = sinon.spy(jhiAlertService, 'error');
+        const jhiErrorSpy = sinon.spy(alertService, 'error');
         const event = { target: { files: [submissionFile] } };
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
@@ -252,7 +252,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         // Only png and pdf types are allowed
         const submissionFile = new File([''], 'exampleSubmission.jpg');
         comp.studentSubmission = createFileUploadSubmission();
-        const jhiErrorSpy = sinon.spy(jhiAlertService, 'error');
+        const jhiErrorSpy = sinon.spy(alertService, 'error');
         const event = { target: { files: [submissionFile] } };
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
