@@ -33,6 +33,7 @@
                 "discussion": "Discussion"
             },
             "exerciseList": {
+                "releaseDateTooltip": "Only visible to teaching assistants and instructors. Release date:",
                 "releaseDate": "Release Date",
                 "dueDate": "Due Date",
                 "unreleased": "Hide unreleased",

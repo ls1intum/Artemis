@@ -33,11 +33,12 @@
                 "discussion": "Diskussion"
             },
             "exerciseList": {
-                "fullScore": "Keine mit voller Punktzahl",
+                "releaseDateTooltip": "Nicht sichbar für Studierende. Veröffentlichungsdatum: ",
                 "releaseDate": "Veröffentlichungsdatum",
                 "dueDate": "Einreichungsfrist",
-                "overdue": "Keine Überfälligen",
                 "unreleased": "Keine Unveröffentlichten",
+                "fullScore": "Keine mit voller Punktzahl",
+                "overdue": "Keine Überfälligen",
                 "noExerciseDate": "Kein Datum zugeordnet",
                 "exerciseGroupHeader": "Aufgaben: {{ total }}",
                 "currentExerciseGroupHeader": "Aktuelle Übung aktiv bis {{ date }}:",
