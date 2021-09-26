@@ -72,7 +72,7 @@ export class MetricsModalThreadsComponent implements OnInit {
     }
 
     private isMatchingTextFilter(thread: Thread): boolean {
-        if (this.threadFilter === undefined) {
+        if (this.threadFilter == undefined) {
             return true;
         }
 
@@ -84,7 +84,7 @@ export class MetricsModalThreadsComponent implements OnInit {
     }
 
     private isMatchingSelectedThreadState(thread: Thread): boolean {
-        if (this.selectedThreadState === undefined) {
+        if (this.selectedThreadState == undefined) {
             return true;
         }
 

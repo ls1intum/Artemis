@@ -7,7 +7,7 @@
 <div class="modal-body">
     <div class="mb-3">
         <span class="badge bg-primary hand" (click)="selectedThreadState = undefined">
-            <fa-icon *ngIf="selectedThreadState === undefined" icon="check"></fa-icon>
+            <fa-icon *ngIf="selectedThreadState == undefined" icon="check"></fa-icon>
             All&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpAll }}</span>
         </span>
 
