@@ -1,6 +1,6 @@
 import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Submission } from 'app/entities/submission.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -9,7 +9,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 export class Result implements BaseEntity {
     public id?: number;
     public resultString?: string;
-    public completionDate?: Moment;
+    public completionDate?: dayjs.Dayjs;
     public successful?: boolean;
     public hasFeedback?: boolean;
     public score?: number;

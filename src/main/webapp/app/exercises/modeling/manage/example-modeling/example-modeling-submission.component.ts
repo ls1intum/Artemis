@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
@@ -90,7 +90,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         private exampleSubmissionService: ExampleSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
         private tutorParticipationService: TutorParticipationService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,
@@ -195,14 +195,14 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 }
                 this.isNewSubmission = false;
 
-                this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
+                this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
                 this.location.go(newUrl);
             },
             (error: HttpErrorResponse) => {
-                onError(this.jhiAlertService, error);
+                onError(this.alertService, error);
             },
         );
     }
@@ -240,10 +240,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 }
                 this.isNewSubmission = false;
 
-                this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
+                this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
             },
             (error: HttpErrorResponse) => {
-                onError(this.jhiAlertService, error);
+                onError(this.alertService, error);
             },
         );
     }
@@ -280,7 +280,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     public saveExampleAssessment(): void {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('modelingAssessment.invalidAssessments');
+            this.alertService.error('modelingAssessment.invalidAssessments');
             return;
         }
         if (this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation && this.feedbacks) {
@@ -309,10 +309,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                     if (this.result) {
                         this.feedbacks = this.result.feedbacks!;
                     }
-                    this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
+                    this.alertService.success('modelingAssessmentEditor.messages.saveSuccessful');
                 },
                 () => {
-                    this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed');
+                    this.alertService.error('modelingAssessmentEditor.messages.saveFailed');
                 },
             );
     }
@@ -335,10 +335,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 if (this.result) {
                     this.feedbacks = this.result.feedbacks!;
                 }
-                this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
+                this.alertService.success('modelingAssessmentEditor.messages.saveSuccessful');
             },
             () => {
-                this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed');
+                this.alertService.error('modelingAssessmentEditor.messages.saveFailed');
             },
         );
     }
@@ -396,7 +396,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         window.scroll(0, 0);
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.modelingAssessment.invalidAssessments');
+            this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return;
         }
 
@@ -406,7 +406,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         delete result.submission;
         getLatestSubmissionResult(exampleSubmission.submission)!.feedbacks = this.feedbacks;
 
-        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.jhiAlertService, this);
+        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.alertService, this);
         command.assessExampleSubmission(exampleSubmission, this.exerciseId);
     }
 
@@ -429,7 +429,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     readAndUnderstood() {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
-            this.jhiAlertService.success('artemisApp.exampleSubmission.readSuccessfully');
+            this.alertService.success('artemisApp.exampleSubmission.readSuccessfully');
             this.back();
         });
     }

@@ -8,13 +8,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbAlert, NgbCollapse, NgbDropdownModule, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import * as moment from 'moment';
-import { JhiTranslateDirective } from 'ng-jhipster';
-import { JhiAlertService } from 'ng-jhipster';
+import dayjs from 'dayjs';
+import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 
 import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
@@ -46,6 +45,7 @@ import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -63,7 +63,7 @@ describe('CourseLectureDetails', () => {
     beforeEach(() => {
         mockRouter = sinon.createStubInstance(Router);
 
-        const releaseDate = moment('18-03-2020', 'DD-MM-YYYY');
+        const releaseDate = dayjs('18-03-2020', 'DD-MM-YYYY');
 
         const course = new Course();
         course.id = 456;
@@ -111,7 +111,7 @@ describe('CourseLectureDetails', () => {
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(SidePanelComponent),
                 MockComponent(FaIconComponent),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockComponent(SubmissionResultStatusComponent),
             ],
             providers: [
@@ -122,7 +122,7 @@ describe('CourseLectureDetails', () => {
                         return of(new HttpResponse({ body: lecture, headers, status: 200 }));
                     },
                 }),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 { provide: FileService, useClass: MockFileService },
                 { provide: Router, useValue: mockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -193,13 +193,13 @@ describe('CourseLectureDetails', () => {
     }));
 });
 
-const getAttachmentUnit = (lecture: Lecture, id: number, releaseDate: moment.Moment) => {
+const getAttachmentUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayjs) => {
     const attachment = new Attachment();
     attachment.id = id;
     attachment.version = 1;
     attachment.attachmentType = AttachmentType.FILE;
-    attachment.releaseDate = moment({ years: 2020, months: 3, date: 5 });
-    attachment.uploadDate = moment({ years: 2020, months: 3, date: 5 });
+    attachment.releaseDate = dayjs().year(2020).month(3).date(5);
+    attachment.uploadDate = dayjs().year(2020).month(3).date(5);
     attachment.name = 'test';
     attachment.link = '/path/to/file/test.pdf';
 

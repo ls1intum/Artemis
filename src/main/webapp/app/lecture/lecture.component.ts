@@ -2,13 +2,13 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { JhiEventManager } from 'ng-jhipster';
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureService } from './lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { onError } from 'app/shared/util/global.utils';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-lecture',
@@ -27,8 +27,8 @@ export class LectureComponent implements OnInit, OnDestroy {
         protected lectureService: LectureService,
         private route: ActivatedRoute,
         private router: Router,
-        private jhiAlertService: JhiAlertService,
-        protected eventManager: JhiEventManager,
+        private alertService: AlertService,
+        protected eventManager: EventManager,
         protected accountService: AccountService,
     ) {}
 
@@ -43,7 +43,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                 (res: Lecture[]) => {
                     this.lectures = res;
                 },
-                (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+                (res: HttpErrorResponse) => onError(this.alertService, res),
             );
     }
 

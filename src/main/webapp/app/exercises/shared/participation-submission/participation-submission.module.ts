@@ -4,10 +4,9 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ParticipationSubmissionComponent } from 'app/exercises/shared/participation-submission/participation-submission.component';
 import { ArtemisParticipationSubmissionRoutingModule } from 'app/exercises/shared/participation-submission/participation-submission-routing.module';
-import { MomentModule } from 'ngx-moment';
 
 @NgModule({
-    imports: [ArtemisSharedModule, MomentModule, ArtemisParticipationSubmissionRoutingModule, NgxDatatableModule, ArtemisResultModule],
+    imports: [ArtemisSharedModule, ArtemisParticipationSubmissionRoutingModule, NgxDatatableModule, ArtemisResultModule],
     declarations: [ParticipationSubmissionComponent],
 })
 export class ArtemisParticipationSubmissionModule {}

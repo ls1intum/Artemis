@@ -21,7 +21,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { FeedbackConflict, FeedbackConflictType } from 'app/entities/feedback-conflict';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -42,10 +42,10 @@ import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instr
 import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
-import { JhiTranslateDirective } from 'ng-jhipster';
 import { NgModel } from '@angular/forms';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TextFeedbackConflictsComponent', () => {
     let component: TextFeedbackConflictsComponent;
@@ -68,7 +68,7 @@ describe('TextFeedbackConflictsComponent', () => {
         id: 2278,
         submitted: true,
         type: SubmissionType.MANUAL,
-        submissionDate: moment('2019-07-09T10:47:33.244Z'),
+        submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
         text: 'First text. Second text.',
         participation,
     } as unknown as TextSubmission;
@@ -76,7 +76,7 @@ describe('TextFeedbackConflictsComponent', () => {
         {
             id: 2374,
             resultString: '1 of 12 points',
-            completionDate: moment('2019-07-09T11:51:23.251Z'),
+            completionDate: dayjs('2019-07-09T11:51:23.251Z'),
             successful: false,
             score: 8,
             rated: true,
@@ -116,7 +116,7 @@ describe('TextFeedbackConflictsComponent', () => {
             id: 1,
             conflict: true,
             conflictingFeedbackId: 5,
-            createdAt: moment('2019-07-09T11:51:23.251Z'),
+            createdAt: dayjs('2019-07-09T11:51:23.251Z'),
             type: FeedbackConflictType.INCONSISTENT_COMMENT,
             markedAsNoConflict: false,
         } as FeedbackConflict,
@@ -127,13 +127,13 @@ describe('TextFeedbackConflictsComponent', () => {
         id: 2280,
         submitted: true,
         type: SubmissionType.MANUAL,
-        submissionDate: moment('2019-07-09T10:47:33.244Z'),
+        submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
         text: 'First Conflicting Submission Text.',
     } as unknown as TextSubmission;
     conflictingSubmission.results = [
         {
             id: 2375,
-            completionDate: moment('2020-02-10T11:51:23.251Z'),
+            completionDate: dayjs('2020-02-10T11:51:23.251Z'),
             successful: false,
             score: 3,
             rated: true,
@@ -181,7 +181,7 @@ describe('TextFeedbackConflictsComponent', () => {
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
                 MockDirective(NgbTooltip),
                 MockComponent(ConfirmIconComponent),
                 MockDirective(NgModel),
@@ -207,7 +207,7 @@ describe('TextFeedbackConflictsComponent', () => {
 
     beforeEach(() => {
         router = TestBed.inject(Router);
-        spyOn(router, 'getCurrentNavigation').and.returnValues({ extras: { state: { submission: textSubmission } } } as any);
+        jest.spyOn(router, 'getCurrentNavigation').mockReturnValue({ extras: { state: { submission: textSubmission } } } as any);
         fixture = TestBed.createComponent(TextFeedbackConflictsComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
@@ -261,7 +261,7 @@ describe('TextFeedbackConflictsComponent', () => {
         expect(component.leftTotalScore).toBe(2);
         expect(component.isOverrideDisabled).toBe(false);
 
-        spyOn(textAssessmentService, 'submit').and.returnValue(
+        jest.spyOn(textAssessmentService, 'submit').mockReturnValue(
             of(
                 new HttpResponse({
                     body: component.leftSubmission!.latestResult,
@@ -319,9 +319,9 @@ describe('TextFeedbackConflictsComponent', () => {
         textBlockAssessmentAreas.forEach((textBlockAssessmentCardArea) => {
             const textBlockAssessmentCardComponent = textBlockAssessmentCardArea.componentInstance as TextblockAssessmentCardComponent;
             if (textBlockAssessmentCardComponent.textBlockRef === component.leftTextBlockRefs[0]) {
-                spyOn(textBlockAssessmentCardComponent, 'didSelect');
+                jest.spyOn(textBlockAssessmentCardComponent.didSelect, 'emit');
                 textBlockAssessmentCardComponent.select();
-                expect(textBlockAssessmentCardComponent.didSelect).toHaveBeenCalledTimes(0);
+                expect(textBlockAssessmentCardComponent.didSelect.emit).toHaveBeenCalledTimes(0);
             }
         });
 
@@ -339,13 +339,7 @@ describe('TextFeedbackConflictsComponent', () => {
         const feedbackConflict = textSubmission.latestResult!.feedbacks![0].conflictingTextAssessments![0];
         feedbackConflict.conflict = false;
         feedbackConflict.discard = true;
-        spyOn(textAssessmentService, 'solveFeedbackConflict').and.returnValue(
-            of(
-                new HttpResponse({
-                    body: feedbackConflict,
-                }),
-            ),
-        );
+        jest.spyOn(textAssessmentService, 'solveFeedbackConflict').mockReturnValue(of(feedbackConflict));
         component.discardConflict();
         expect(textAssessmentService.solveFeedbackConflict).toHaveBeenCalledWith(exercise!.id!, feedbackConflict.id!);
     });

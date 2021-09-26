@@ -5,7 +5,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { DifferencePipe } from 'ngx-moment';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
@@ -35,7 +34,6 @@ describe('ListOfComplaintsComponent', () => {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ courseId: 123 }),
                 },
-                DifferencePipe,
                 {
                     provide: ComplaintService,
                     useValue: {

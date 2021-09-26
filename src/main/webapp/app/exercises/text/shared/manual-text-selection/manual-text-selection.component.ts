@@ -6,6 +6,7 @@ import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-manual-text-selection',
@@ -20,8 +21,11 @@ export class ManualTextSelectionComponent {
     public hostRectangle: SelectionRectangle | undefined;
     public selectedText: string | undefined;
 
-    constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
+    assessText: string;
+
+    constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute, translateService: TranslateService) {
         textAssessmentAnalytics.setComponentRoute(route);
+        this.assessText = translateService.instant('artemisApp.textAssessment.editor.assess');
     }
 
     /**

@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { getTestBed, TestBed } from '@angular/core/testing';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { take } from 'rxjs/operators';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
@@ -10,7 +10,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockProvider } from 'ng-mocks';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { User } from 'app/core/user/user.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 
@@ -37,8 +37,8 @@ describe('ComplaintResponseService', () => {
 
         defaultComplaintResponse = new ComplaintResponse();
         defaultComplaintResponse.id = 1;
-        defaultComplaintResponse.lockEndDate = moment();
-        defaultComplaintResponse.submittedTime = moment();
+        defaultComplaintResponse.lockEndDate = dayjs();
+        defaultComplaintResponse.submittedTime = dayjs();
         defaultComplaintResponse.complaint = new Complaint();
         defaultComplaintResponse.complaint.id = 1;
     });
