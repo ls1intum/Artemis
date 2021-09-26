@@ -1,7 +1,7 @@
 import { SimpleChanges } from '@angular/core';
 import { getExercise, Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { findLatestResult } from 'app/shared/util/utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
@@ -96,7 +96,7 @@ export const isParticipationInDueTime = (participation: Participation, exercise:
     // If the submissionDate is before the dueDate of the exercise, the submission is in time.
     const submission = participation.submissions[0];
     if (submission.submissionDate) {
-        submission.submissionDate = moment(submission.submissionDate);
+        submission.submissionDate = dayjs(submission.submissionDate);
         return submission.submissionDate.isBefore(exercise.dueDate);
     }
 

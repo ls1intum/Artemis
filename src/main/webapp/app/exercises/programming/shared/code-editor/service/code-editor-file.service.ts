@@ -1,6 +1,6 @@
 import { DeleteFileChange, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
-import { isEmpty as _isEmpty } from 'lodash';
+import { isEmpty as _isEmpty } from 'lodash-es';
 import { Injectable } from '@angular/core';
 
 /**

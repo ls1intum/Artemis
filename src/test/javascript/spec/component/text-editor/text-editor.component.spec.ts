@@ -3,14 +3,14 @@ import { SinonStub, stub } from 'sinon';
 import * as ace from 'brace';
 import * as chai from 'chai';
 import { DebugElement } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockTextEditorService } from '../../helpers/mocks/service/mock-text-editor.service';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { BehaviorSubject } from 'rxjs';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -91,7 +91,7 @@ describe('TextEditorComponent', () => {
                 MockPipe(HtmlForMarkdownPipe),
             ],
             providers: [
-                JhiAlertService,
+                AlertService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TextEditorService, useClass: MockTextEditorService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -132,8 +132,8 @@ describe('TextEditorComponent', () => {
     }));
 
     it('should not allow to submit after the deadline if the initialization date is before the due date', fakeAsync(() => {
-        participation.initializationDate = moment();
-        textExercise.dueDate = moment().add(1, 'days');
+        participation.initializationDate = dayjs();
+        textExercise.dueDate = dayjs().add(1, 'days');
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.returns(participationSubject);
         comp.textExercise = textExercise;
@@ -149,8 +149,8 @@ describe('TextEditorComponent', () => {
     }));
 
     it('should allow to submit after the deadline if the initilization date is after the due date', fakeAsync(() => {
-        participation.initializationDate = moment().add(1, 'days');
-        textExercise.dueDate = moment();
+        participation.initializationDate = dayjs().add(1, 'days');
+        textExercise.dueDate = dayjs();
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.returns(participationSubject);
         comp.textExercise = textExercise;
@@ -185,8 +185,8 @@ describe('TextEditorComponent', () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.returns(participationSubject);
         comp.textExercise = textExercise;
-        comp.textExercise.dueDate = moment();
-        participation.initializationDate = moment().add(1, 'days');
+        comp.textExercise.dueDate = dayjs();
+        participation.initializationDate = dayjs().add(1, 'days');
 
         fixture.detectChanges();
         tick();
@@ -201,15 +201,15 @@ describe('TextEditorComponent', () => {
     it('should get inactive as soon as the due date passes the current date', fakeAsync(() => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.returns(participationSubject);
-        textExercise.dueDate = moment().add(1, 'days');
-        participation.initializationDate = moment();
+        textExercise.dueDate = dayjs().add(1, 'days');
+        participation.initializationDate = dayjs();
 
         fixture.detectChanges();
         tick();
 
         expect(comp.isActive).to.be.true;
 
-        comp.textExercise.dueDate = moment().subtract(1, 'days');
+        comp.textExercise.dueDate = dayjs().subtract(1, 'days');
 
         fixture.detectChanges();
         tick();

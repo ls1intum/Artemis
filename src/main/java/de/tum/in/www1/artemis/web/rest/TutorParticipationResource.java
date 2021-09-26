@@ -92,7 +92,7 @@ public class TutorParticipationResource {
     /**
      * POST /exercises/:exerciseId/assess-example-submission: Add an example submission to the tutor participation of the given exercise.
      * If it is just for review (not used for tutorial), the method just records that the tutor has read it.
-     * If it is a tutorial, the method checks if the assessment given by the tutor is matches the instructor one.
+     * If it is a tutorial, the method checks if the assessment given by the tutor matches the instructor one.
      * If yes, then it returns the participation, if not, it returns an error.
      *
      * @param exerciseId the id of the exercise of the tutorParticipation

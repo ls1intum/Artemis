@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
@@ -11,6 +11,7 @@ import { MockModule, MockPipe } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { TagInputModule } from 'ngx-chips';
 import { FormsModule } from '@angular/forms';
+import { metisTags } from '../../../../../helpers/sample/metis-sample-data';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -20,7 +21,6 @@ describe('PostTagSelectorComponent', () => {
     let fixture: ComponentFixture<PostTagSelectorComponent>;
     let metisService: MetisService;
     let metisServiceSpy: PropertyDescriptor;
-    const existingTags = ['tag1', 'tag2'];
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -50,7 +50,7 @@ describe('PostTagSelectorComponent', () => {
     it('should be initialized with existing list of tags', fakeAsync(() => {
         tick();
         expect(metisServiceSpy.get).to.have.been.called;
-        expect(component.existingPostTags).to.be.deep.equal(existingTags);
+        expect(component.existingPostTags).to.be.deep.equal(metisTags);
     }));
 
     it('should update tags', fakeAsync(() => {

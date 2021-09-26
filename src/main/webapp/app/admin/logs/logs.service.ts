@@ -1,25 +1,20 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { SERVER_API_URL } from 'app/app.constants';
-import { Log } from 'app/admin/logs/log.model';
+import { LoggersResponse, Level } from './log.model';
 
 @Injectable({ providedIn: 'root' })
 export class LogsService {
     constructor(private http: HttpClient) {}
 
-    /**
-     * Sends a PUT request to change the log level for the given log
-     * @param log for which the log level should be changed
-     */
-    changeLevel(log: Log): Observable<HttpResponse<void>> {
-        return this.http.put<void>(SERVER_API_URL + 'management/logs', log, { observe: 'response' });
+    changeLevel(name: string, configuredLevel: Level): Observable<{}> {
+        return this.http.post(SERVER_API_URL + `management/loggers/${name}`, { configuredLevel });
     }
 
     /**
      * Sends a GET request to retrieve all logs
      */
-    findAll(): Observable<HttpResponse<Log[]>> {
-        return this.http.get<Log[]>(SERVER_API_URL + 'management/logs', { observe: 'response' });
+    findAll(): Observable<LoggersResponse> {
+        return this.http.get<LoggersResponse>(SERVER_API_URL + 'management/loggers');
     }
 }

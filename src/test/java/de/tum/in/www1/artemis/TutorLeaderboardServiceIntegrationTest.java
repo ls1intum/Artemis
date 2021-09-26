@@ -32,6 +32,9 @@ public class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegr
 
     private Exercise exercise;
 
+    /**
+     * Prepares the testing suite by initializing variables and mocks
+     */
     @BeforeEach
     public void initTestCase() {
         var users = database.addUsers(10, TUTOR_COUNT, 0, 2);

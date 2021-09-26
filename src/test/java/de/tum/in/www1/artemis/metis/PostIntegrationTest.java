@@ -296,48 +296,64 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     // GET
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "USER")
     public void testGetPostsForCourse() throws Exception {
-        // add tag to existing post
-        Post postToUpdate = existingPosts.get(0);
-        postToUpdate.addTag("New Tag");
+        // no request params set will fetch all course posts without any context filter
+        var params = new LinkedMultiValueMap<String, String>();
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class);
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        // get amount of posts with that certain
         assertThat(returnedPosts.size()).isEqualTo(existingPosts.size());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetAllPostsForExercise() throws Exception {
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/exercises/" + exerciseId + "/posts", HttpStatus.OK, Post.class);
+    @WithMockUser(username = "tutor1", roles = "USER")
+    public void testGetPostsForCourse_WithCourseWideContextRequestParam() throws Exception {
+        var courseWideContext = CourseWideContext.RANDOM;
+        // request param courseWideContext will fetch all course posts that match this context filter
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("courseWideContext", courseWideContext.toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        // get amount of posts with that certain course-wide context
+        var expectedAmountOfFetchedPosts = existingCourseWidePosts.stream().filter(coursePost -> coursePost.getCourseWideContext() == courseWideContext).count();
+        assertThat(returnedPosts.size()).isEqualTo(expectedAmountOfFetchedPosts);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "USER")
+    public void testGetPostsForCourse_WithExerciseIdRequestParam() throws Exception {
+        // request param courseWideContext will fetch all course posts that match this context filter
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("exerciseId", exerciseId.toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        // get amount of posts with that certain course-wide context
         assertThat(returnedPosts.size()).isEqualTo(existingExercisePosts.size());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetAllPostsForExerciseWithWrongCourseId_badRequest() throws Exception {
-        Course dummyCourse = database.createCourse();
+    @WithMockUser(username = "tutor1", roles = "USER")
+    public void testGetPostsForCourse_WithLectureIdRequestParam() throws Exception {
+        // request param courseWideContext will fetch all course posts that match this context filter
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("lectureId", lectureId.toString());
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + dummyCourse.getId() + "/exercises/" + exerciseId + "/posts", HttpStatus.BAD_REQUEST, Post.class);
-        assertThat(returnedPosts).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetAllPostsForLecture() throws Exception {
-        Post post = existingLecturePosts.get(0);
-        Long lectureId = post.getLecture().getId();
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/lectures/" + lectureId + "/posts", HttpStatus.OK, Post.class);
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        // get amount of posts with that certain course-wide context
         assertThat(returnedPosts.size()).isEqualTo(existingLecturePosts.size());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetAllPostsForLectureWithWrongCourseId_badRequest() throws Exception {
-        Course dummyCourse = database.createCourse();
+    @WithMockUser(username = "tutor1", roles = "USER")
+    public void testGetPostsForCourse_WithInvalidRequestParams_badRequest() throws Exception {
+        // request param courseWideContext will fetch all course posts that match this context filter
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("lectureId", lectureId.toString());
+        params.add("exerciseId", exerciseId.toString());
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + dummyCourse.getId() + "/lectures/" + lectureId + "/posts", HttpStatus.BAD_REQUEST, Post.class);
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.BAD_REQUEST, Post.class, params);
+        // get amount of posts with that certain course-wide context
         assertThat(returnedPosts).isNull();
     }
 
@@ -443,9 +459,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(createdPost.getDisplayPriority()).isEqualTo(expectedPost.getDisplayPriority());
 
         // check if context, i.e. either correct lecture, exercise or course-wide context are set correctly on creation
-        assertThat(createdPost.getExercise()).isEqualTo(expectedPost.getExercise());
-        assertThat(createdPost.getLecture()).isEqualTo(expectedPost.getLecture());
         assertThat(createdPost.getCourse()).isEqualTo(expectedPost.getCourse());
         assertThat(createdPost.getCourseWideContext()).isEqualTo(expectedPost.getCourseWideContext());
+        assertThat(createdPost.getExercise()).isEqualTo(expectedPost.getExercise());
+        assertThat(createdPost.getLecture()).isEqualTo(expectedPost.getLecture());
     }
 }

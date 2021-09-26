@@ -91,7 +91,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
-    public void testResetToOriginHead(String defaultBranch) throws GitAPIException {
+    public void testResetToOriginHead(String defaultBranch) {
         gitUtilService.initRepo(defaultBranch);
         gitUtilService.updateFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1, "Some Change");
         assertThat(gitUtilService.isLocalEqualToRemote()).isFalse();

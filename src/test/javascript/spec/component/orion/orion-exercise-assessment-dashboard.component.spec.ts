@@ -1,7 +1,7 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
 import { spy, stub } from 'sinon';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -11,7 +11,7 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -50,7 +50,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
                 MockProvider(OrionConnectorService),
                 MockProvider(OrionAssessmentService),
                 MockProvider(ExerciseService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(TranslateService),
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ exerciseId: 10 }) } } },
             ],
@@ -111,7 +111,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         const getForTutorsStub = stub(TestBed.inject(ExerciseService), 'getForTutors');
         getForTutorsStub.returns(throwError(error));
 
-        const errorSpy = spy(TestBed.inject(JhiAlertService), 'error');
+        const errorSpy = spy(TestBed.inject(AlertService), 'error');
         // counter the initialization in beforeEach
         comp.exercise = undefined as any;
 
