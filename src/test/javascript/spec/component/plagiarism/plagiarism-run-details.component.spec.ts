@@ -26,7 +26,7 @@ describe('Plagiarism Run Details', () => {
     });
 
     it('updates chart data on changes', () => {
-        spyOn(comp, 'updateChartDataSet');
+        jest.spyOn(comp, 'updateChartDataSet');
 
         comp.ngOnChanges({
             plagiarismResult: { currentValue: plagiarismResult } as SimpleChange,

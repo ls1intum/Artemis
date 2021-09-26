@@ -71,7 +71,7 @@ describe('OrganizationManagementDetailComponent', () => {
         organization1.users = [user];
         organization1.courses = [course];
 
-        spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').and.returnValue(of(organization1));
+        jest.spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').mockReturnValue(of(organization1));
 
         component.ngOnInit();
         tick();
@@ -91,7 +91,7 @@ describe('OrganizationManagementDetailComponent', () => {
     it('should remove user from organization', fakeAsync(() => {
         organization1.users = createTestUsers();
         component.organization = organization1;
-        spyOn(organizationService, 'removeUserFromOrganization').and.returnValue(of(new HttpResponse<void>()));
+        jest.spyOn(organizationService, 'removeUserFromOrganization').mockReturnValue(of(new HttpResponse<void>()));
 
         component.removeFromOrganization(organization1.users[0]);
         tick();
@@ -101,7 +101,7 @@ describe('OrganizationManagementDetailComponent', () => {
     it('should not remove user from organization if error occurred', fakeAsync(() => {
         organization1.users = createTestUsers();
         component.organization = organization1;
-        spyOn(organizationService, 'removeUserFromOrganization').and.returnValue(throwError(new HttpErrorResponse({ status: 404 })));
+        jest.spyOn(organizationService, 'removeUserFromOrganization').mockReturnValue(throwError(new HttpErrorResponse({ status: 404 })));
 
         component.removeFromOrganization(organization1.users[0]);
         tick();
@@ -118,7 +118,7 @@ describe('OrganizationManagementDetailComponent', () => {
         organization1.users = [user1, user2];
         organization1.courses = [course1];
 
-        spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').and.returnValue(of(organization1));
+        jest.spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').mockReturnValue(of(organization1));
 
         component.loadAll();
         expect(component.organization.users?.length).toEqual(2);
@@ -129,7 +129,7 @@ describe('OrganizationManagementDetailComponent', () => {
         const user1 = { id: 11, login: 'user1' } as User;
         const user2 = { id: 12, login: 'user2' } as User;
 
-        spyOn(userService, 'search').and.returnValue(of(new HttpResponse({ body: [user1, user2] })));
+        jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user1, user2] })));
 
         component.dataTable = dataTable;
 

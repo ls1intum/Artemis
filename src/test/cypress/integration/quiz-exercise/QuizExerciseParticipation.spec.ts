@@ -9,7 +9,7 @@ const student = artemis.users.getStudentOne();
 const courseManagementRequest = artemis.requests.courseManagement;
 
 // Page objects
-const multipleChoiceQuiz = artemis.pageobjects.multipleChoiceQuiz;
+const multipleChoiceQuiz = artemis.pageobjects.quizExercise.multipleChoice;
 
 describe('Quiz Exercise Management', () => {
     let course: any;
@@ -49,8 +49,8 @@ describe('Quiz Exercise Management', () => {
         it('Student can see a visible quiz', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
-            cy.contains(quizExercise.title).should('be.visible').click();
-            cy.get('.btn').contains('Open quiz').click();
+            cy.contains(quizExercise.title).should('be.visible');
+            cy.get('.course-exercise-row').first().find('.btn-primary').click();
             cy.get('.quiz-waiting-for-start-overlay > span').should('contain.text', 'This page will refresh automatically, when the quiz starts.');
         });
 
@@ -58,8 +58,8 @@ describe('Quiz Exercise Management', () => {
             courseManagementRequest.setQuizVisible(quizExercise.id);
             courseManagementRequest.startQuizNow(quizExercise.id);
             cy.login(student, '/courses/' + course.id);
-            cy.contains(quizExercise.title).should('be.visible').click();
-            cy.get('.btn').contains('Start quiz').click();
+            cy.contains(quizExercise.title).should('be.visible');
+            cy.get('.course-exercise-row').first().find('.btn-primary').click();
             multipleChoiceQuiz.tickAnswerOption(0);
             multipleChoiceQuiz.tickAnswerOption(2);
             multipleChoiceQuiz.submit();

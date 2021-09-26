@@ -5,7 +5,7 @@ import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
@@ -77,9 +77,9 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         // update remaining time
         if (this.quizExercise && this.quizExercise.adjustedDueDate) {
             const endDate = this.quizExercise.adjustedDueDate;
-            if (endDate.isAfter(moment())) {
+            if (endDate.isAfter(dayjs())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(moment(), 'seconds');
+                this.remainingTimeSeconds = endDate.diff(dayjs(), 'seconds');
                 this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
@@ -128,7 +128,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         this.quizExercise = quiz;
         const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as QuizQuestion;
-        this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.remainingTime, 'seconds');
+        this.quizExercise.adjustedDueDate = dayjs().add(this.quizExercise.remainingTime!, 'seconds');
         this.waitingForQuizStart = !this.quizExercise.started;
     }
 

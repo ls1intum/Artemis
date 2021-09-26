@@ -3,7 +3,7 @@ import { PostingsCreateEditModalDirective } from 'app/shared/metis/postings-crea
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -90,7 +90,7 @@ export class PostCreateEditModalComponent extends PostingsCreateEditModalDirecti
         this.posting.title = this.formGroup.get('title')?.value;
         this.setPostContextPropertyWithFormValue();
         this.posting.tags = this.tags;
-        this.posting.creationDate = moment();
+        this.posting.creationDate = dayjs();
         this.metisService.createPost(this.posting).subscribe({
             next: (post: Post) => {
                 this.isLoading = false;

@@ -1,12 +1,14 @@
 import { OnDestroy, Pipe, PipeTransform } from '@angular/core';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 export const defaultLongDateTimeFormat = 'YYYY-MM-DD HH:mm:ss';
 
+export const GERMAN_SHORT_DATE_FORMAT = 'DD. MMM. YYYY';
+
 /**
- * Format a given date time that must be convertible to a moment object to a localized date time
+ * Format a given date time that must be convertible to a dayjs object to a localized date time
  * string based on the current language setting. Always returns the short format on mobile devices.
  * This pipe is stateful (pure = false) so that it can adapt to changes of the current locale.
  * Usage:
@@ -22,7 +24,7 @@ export const defaultLongDateTimeFormat = 'YYYY-MM-DD HH:mm:ss';
     pure: false,
 })
 export class ArtemisDatePipe implements PipeTransform, OnDestroy {
-    private dateTime: moment.Moment;
+    private dateTime: dayjs.Dayjs;
     private locale: string;
     private localizedDateTime: string;
     private onLangChange?: Subscription;
@@ -36,20 +38,16 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
 
     /**
      * Format a given dateTime to a localized date time string based on the current language setting.
-     * @param dateTime The date time that should be formatted. Must be convertible to moment().
+     * @param dateTime The date time that should be formatted. Must be convertible to dayjs().
      * @param format Format of the localized date time. Defaults to 'long'.
      * @param seconds Should seconds be displayed? Defaults to false.
      */
-    transform(
-        dateTime: Date | moment.Moment | string | number | null | undefined,
-        format: 'short' | 'long' | 'short-date' | 'long-date' | 'time' = 'long',
-        seconds = false,
-    ): string {
-        // Return empty string if given dateTime equals null or is not convertible to moment.
-        if (!dateTime || !moment(dateTime).isValid()) {
+    transform(dateTime: Date | dayjs.Dayjs | string | number | null | undefined, format: 'short' | 'long' | 'short-date' | 'long-date' | 'time' = 'long', seconds = false): string {
+        // Return empty string if given dateTime equals null or is not convertible to dayjs.
+        if (!dateTime || !dayjs(dateTime).isValid()) {
             return '';
         }
-        this.dateTime = moment(dateTime);
+        this.dateTime = dayjs(dateTime);
         this.long = format === 'long' || format === 'long-date';
         this.showDate = format !== 'time';
         this.showTime = format !== 'short-date' && format !== 'long-date';
@@ -58,22 +56,26 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         // Evaluate the format length based on the current window width.
         this.formatLengthBasedOnWindowWidth(window.innerWidth);
 
-        // Set locale to current language.
+        // Set locale to current language
         this.updateLocale(this.translateService.currentLang);
+        this.updateLocalizedDateTime();
 
-        // Clean up existing subscription to onLangChange.
+        // Clean up a possibly existing subscription to onLangChange
         this.cleanUpSubscription();
 
         // Subscribe to onLangChange event, in case the language changes.
         if (!this.onLangChange) {
-            this.onLangChange = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => this.updateLocale(event.lang));
+            this.onLangChange = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
+                this.updateLocale(event.lang);
+                this.updateLocalizedDateTime();
+            });
         }
 
         return this.localizedDateTime;
     }
 
     /**
-     * Returns a localized moment.js format string.
+     * Returns a localized dayjs format string.
      * WARNING: As this method is static it cannot listen to changes of the current locale itself. It also does not take into account the device width.
      * @param locale The locale string of the desired language. Defaults to 'en'.
      * @param format Format of the localized date time. Defaults to 'long'.
@@ -88,18 +90,19 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         return dateFormat + (dateFormat && timeFormat ? ' ' : '') + timeFormat;
     }
 
-    private updateLocale(lang: string): void {
-        if (this.locale === undefined && lang === undefined) {
-            this.locale = 'en';
+    private updateLocale(lang?: string): void {
+        if (!lang) {
+            // when there is no lang defined, we use the default one
+            lang = 'en';
         }
+
         if (lang !== this.locale) {
             this.locale = lang;
-            this.updateLocalizedDateTime();
         }
     }
 
     private updateLocalizedDateTime(): void {
-        this.dateTime.locale(this.locale);
+        this.dateTime = this.dateTime.locale(this.locale);
         this.localizedDateTime = this.dateTime.format(this.format());
     }
 
@@ -114,6 +117,9 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
             return '';
         }
         let format = 'll';
+        if (locale === 'de') {
+            format = GERMAN_SHORT_DATE_FORMAT; // fix missing 'll' in 'de' locale of dayjs
+        }
         if (!long) {
             switch (locale) {
                 case 'de':

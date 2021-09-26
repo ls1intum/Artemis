@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
 import { Subject, Observable, of } from 'rxjs';
 import { Subscription } from 'rxjs';
@@ -39,12 +39,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
     isTransitioning = false;
     rowClass: string | undefined = undefined;
 
-    constructor(
-        private organizationService: OrganizationManagementService,
-        private userService: UserService,
-        private alertService: JhiAlertService,
-        private route: ActivatedRoute,
-    ) {}
+    constructor(private organizationService: OrganizationManagementService, private userService: UserService, private alertService: AlertService, private route: ActivatedRoute) {}
 
     /**
      * Retrieve the organization from the organization management activated route data {@link OrganizationMgmtResolve} subscription

@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -11,7 +11,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementOverviewStatisticsComponent } from 'app/course/manage/overview/course-management-overview-statistics.component';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Course } from 'app/entities/course.model';
@@ -28,18 +28,18 @@ describe('CourseManagementCardComponent', () => {
     let component: CourseManagementCardComponent;
 
     const pastExercise = {
-        dueDate: moment().subtract(6, 'days'),
-        assessmentDueDate: moment().subtract(1, 'days'),
+        dueDate: dayjs().subtract(6, 'days'),
+        assessmentDueDate: dayjs().subtract(1, 'days'),
     } as Exercise;
     const currentExercise = {
-        dueDate: moment().add(2, 'days'),
-        releaseDate: moment().subtract(2, 'days'),
+        dueDate: dayjs().add(2, 'days'),
+        releaseDate: dayjs().subtract(2, 'days'),
     } as Exercise;
     const futureExercise1 = {
-        releaseDate: moment().add(4, 'days'),
+        releaseDate: dayjs().add(4, 'days'),
     } as Exercise;
     const futureExercise2 = {
-        releaseDate: moment().add(6, 'days'),
+        releaseDate: dayjs().add(6, 'days'),
     } as Exercise;
 
     const course = new Course();
@@ -90,11 +90,11 @@ describe('CourseManagementCardComponent', () => {
     });
 
     it('should only display the latest five past exercises', () => {
-        const pastExercise2 = { assessmentDueDate: moment().subtract(2, 'days') } as Exercise;
-        const pastExercise3 = { dueDate: moment().subtract(5, 'days') } as Exercise;
-        const pastExercise4 = { dueDate: moment().subtract(7, 'days') } as Exercise;
-        const pastExercise5 = { assessmentDueDate: moment().subtract(3, 'days') } as Exercise;
-        const pastExercise6 = { assessmentDueDate: moment().subtract(8, 'days') } as Exercise;
+        const pastExercise2 = { assessmentDueDate: dayjs().subtract(2, 'days') } as Exercise;
+        const pastExercise3 = { dueDate: dayjs().subtract(5, 'days') } as Exercise;
+        const pastExercise4 = { dueDate: dayjs().subtract(7, 'days') } as Exercise;
+        const pastExercise5 = { assessmentDueDate: dayjs().subtract(3, 'days') } as Exercise;
+        const pastExercise6 = { assessmentDueDate: dayjs().subtract(8, 'days') } as Exercise;
         component.courseWithExercises = {
             exercises: [pastExercise, pastExercise2, pastExercise3, pastExercise4, pastExercise5, pastExercise6],
         } as Course;

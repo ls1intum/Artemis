@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Post } from 'app/entities/metis/post.model';
 import * as sinon from 'sinon';
@@ -14,7 +14,6 @@ import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { getElement } from '../../../helpers/utils/general.utils';
 import { PageDiscussionSectionComponent } from 'app/overview/page-discussion-section/page-discussion-section.component';
-import * as moment from 'moment';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
@@ -49,6 +48,7 @@ import {
     metisPostLectureUser2,
     metisUpVoteReactionUser1,
 } from '../../../helpers/sample/metis-sample-data';
+import dayjs from 'dayjs';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -284,21 +284,21 @@ describe('CourseDiscussionComponent', () => {
     describe('sorting of posts', () => {
         beforeEach(() => {
             post1 = metisPostExerciseUser1;
-            post1.creationDate = moment();
+            post1.creationDate = dayjs();
             post1.displayPriority = DisplayPriority.PINNED;
 
             post2 = metisPostExerciseUser2;
-            post2.creationDate = moment().subtract(1, 'day');
+            post2.creationDate = dayjs().subtract(1, 'day');
             post2.displayPriority = DisplayPriority.NONE;
 
             post3 = metisPostLectureUser1;
-            post3.creationDate = moment().subtract(2, 'day');
+            post3.creationDate = dayjs().subtract(2, 'day');
             post3.reactions = [metisUpVoteReactionUser1];
             post3.answers = [metisAnswerPostUser1];
             post3.displayPriority = DisplayPriority.NONE;
 
             post4 = metisPostLectureUser2;
-            post4.creationDate = moment().subtract(2, 'minute');
+            post4.creationDate = dayjs().subtract(2, 'minute');
             post4.reactions = [metisUpVoteReactionUser1];
             post4.displayPriority = DisplayPriority.ARCHIVED;
 

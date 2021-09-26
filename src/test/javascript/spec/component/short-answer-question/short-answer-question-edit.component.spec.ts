@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
@@ -18,7 +18,7 @@ import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { stub } from 'sinon';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
@@ -331,7 +331,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     it('should add spot at cursor visual mode', () => {
         const textParts = [['0'], ['0']];
         const shortAnswerQuestionUtil = TestBed.inject(ShortAnswerQuestionUtil);
-        spyOn(shortAnswerQuestionUtil, 'divideQuestionTextIntoTextParts').and.returnValue(textParts);
+        jest.spyOn(shortAnswerQuestionUtil, 'divideQuestionTextIntoTextParts').mockReturnValue(textParts);
 
         const node = {} as Node;
 
@@ -392,8 +392,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
             substring(start: number, end?: number): string {
                 return '';
             },
-        } as String;
-        spyOn(artemisMarkdown, 'markdownForHtml').and.returnValue(markdownHelper);
+        } as string;
+        jest.spyOn(artemisMarkdown, 'markdownForHtml').mockReturnValue(markdownHelper);
         const questionUpdated = sinon.spy(component.questionUpdated, 'emit');
 
         component.shortAnswerQuestion.spots = [spot1, spot2];

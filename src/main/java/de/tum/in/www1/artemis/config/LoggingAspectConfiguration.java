@@ -4,7 +4,7 @@ import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
 
 import de.tum.in.www1.artemis.aop.logging.LoggingAspect;
-import io.github.jhipster.config.JHipsterConstants;
+import tech.jhipster.config.JHipsterConstants;
 
 @Configuration
 @EnableAspectJAutoProxy
