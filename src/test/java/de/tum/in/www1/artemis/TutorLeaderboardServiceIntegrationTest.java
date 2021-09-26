@@ -28,12 +28,12 @@ public class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegr
 
     final private static int ASSESSMENT_COUNT = 2;
 
-    Course course;
+    private Course course;
 
-    Exercise exercise;
+    private Exercise exercise;
 
     @BeforeEach
-    public void reset() {
+    public void initTestCase() {
         var users = database.addUsers(10, TUTOR_COUNT, 0, 2);
         var student1 = users.get(0);
         var tutor1 = database.getUserByLogin("tutor1");
