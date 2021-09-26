@@ -175,7 +175,7 @@ describe('TextExercise Service', () => {
         });
 
         it('should set TextExercise cluster disabled predicate', () => {
-            service.setClusterDisabledPredicate(1, true).subscribe((resp) => (requestResult = resp));
+            service.setClusterDisabledPredicate(1, 1, true).subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'PATCH' });
             req.flush({});
             expect(requestResult).to.deep.equal({});

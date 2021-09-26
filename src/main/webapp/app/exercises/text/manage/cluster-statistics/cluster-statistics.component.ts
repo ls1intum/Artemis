@@ -36,7 +36,7 @@ export class ClusterStatisticsComponent implements OnInit {
      * @param disabled The predicate specifying whether the cluster should be disabled or not
      */
     setClusterDisabledPredicate(clusterId: number, disabled: boolean): void {
-        this.textExerciseService.setClusterDisabledPredicate(clusterId, disabled).subscribe(() => {
+        this.textExerciseService.setClusterDisabledPredicate(this.currentExerciseId, clusterId, disabled).subscribe(() => {
             // reload content again
             this.loadClusterFromExercise(this.currentExerciseId);
         });

@@ -154,7 +154,7 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
     public void testToggleClusterDisabledPredicate_withDisabledAndEnabledCluster() throws Exception {
         TextCluster cluster = textClusterRepository.findAll().get(0);
         // set predicate to false
-        request.patch("/api/text-clusters/" + cluster.getId() + "?disabled=false", "{}", HttpStatus.OK);
+        request.patch("/api/text-exercises/" + exercise.getId() + "/text-clusters/" + cluster.getId() + "?disabled=false", "{}", HttpStatus.OK);
 
         // fetch statistics
         List<TextClusterStatisticsDTO> textClusterStatisticsFalse = request.getList("/api/text-exercises/" + exercise.getId() + "/cluster-statistics", HttpStatus.OK,
@@ -165,7 +165,7 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
         assertThat(textClusterStatisticFalse.isDisabled()).isFalse();
 
         // set predicate to true
-        request.patch("/api/text-clusters/" + cluster.getId() + "?disabled=true", "{}", HttpStatus.OK);
+        request.patch("/api/text-exercises/" + exercise.getId() + "/text-clusters/" + cluster.getId() + "?disabled=true", "{}", HttpStatus.OK);
 
         // fetch statistics
         List<TextClusterStatisticsDTO> textClusterStatisticsTrue = request.getList("/api/text-exercises/" + exercise.getId() + "/cluster-statistics", HttpStatus.OK,

@@ -72,22 +72,27 @@ public class TextClusterResource {
     }
 
     /**
-     * Patch text-clusters/{clusterId}
+     * Patch text-exercises/{exerciseId}/text-clusters/{clusterId}
      * Sets a text cluster's disabled boolean value
      *
      * @param clusterId The id of the cluster to be disabled/enabled
      * @param disabled The predicate value defining the disabled state of the cluster
      * @return The status whether the boolean value was set successfully or the setting failed.
      */
-    @PatchMapping("text-clusters/{clusterId}")
+    @PatchMapping("text-exercises/{exerciseId}/text-clusters/{clusterId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> toggleClusterDisabledPredicate(@PathVariable Long clusterId, @RequestParam boolean disabled) {
+    public ResponseEntity<Void> toggleClusterDisabledPredicate(@PathVariable Long exerciseId, @PathVariable Long clusterId, @RequestParam boolean disabled) {
         // Check if Instructor has permission to access the exercise that the cluster with id clusterId belongs to.
         TextCluster cluster = textClusterRepository.findWithEagerExerciseByIdElseThrow(clusterId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        // check if exercise exists and matches cluster exercise
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        if (!exercise.getId().equals(cluster.getExercise().getId())) {
+            return ResponseEntity.badRequest().build();
+        }
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, cluster.getExercise(), user);
 
-        log.info("REST request to disable Cluster : {}", clusterId);
+        log.debug("REST request to disable Cluster : {}", clusterId);
         cluster.setDisabled(disabled);
         textClusterRepository.save(cluster);
         return ResponseEntity.ok().build();

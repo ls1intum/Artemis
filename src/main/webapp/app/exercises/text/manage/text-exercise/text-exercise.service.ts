@@ -158,11 +158,12 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
 
     /**
      * Sets the cluster disabled predicate value
+     * @param exerciseId The id of the exercise the cluster belongs to
      * @param clusterId The id of the cluster to be disabled/enabled
      * @param disabled Boolean describing the disable state of the cluster
      * @returns An Observable resolving to a boolean predicate
      */
-    public setClusterDisabledPredicate(clusterId: number, disabled: boolean): Observable<boolean> {
-        return this.http.patch<boolean>(`api/text-clusters/${clusterId}`, {}, { params: { disabled } });
+    public setClusterDisabledPredicate(exerciseId: number, clusterId: number, disabled: boolean): Observable<boolean> {
+        return this.http.patch<boolean>(`api/text-exercises/${exerciseId}/text-clusters/${clusterId}`, {}, { params: { disabled } });
     }
 }
