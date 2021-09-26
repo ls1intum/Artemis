@@ -45,6 +45,7 @@
             "problemStatement": "Aufgabenstellung",
             "instructions": "Anweisungen",
             "sampleSolution": "Beispiel Lösung",
+            "assessmentCriterion": "Bewertungskriterium",
             "assessmentInstructions": "Bewertungsanweisungen",
             "assessmentInstruction": "Bewertungsanweisung: ",
             "structuredAssessmentInstructions": "Strukturierte Bewertungsanweisungen",

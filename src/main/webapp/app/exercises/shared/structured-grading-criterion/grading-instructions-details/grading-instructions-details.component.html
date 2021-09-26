@@ -1,4 +1,4 @@
-<div *ngIf="!exercise.gradingInstructionFeedbackUsed">
+<div class="edit-sqi" *ngIf="!exercise.gradingInstructionFeedbackUsed">
     <jhi-markdown-editor
         #markdownEditor
         class="markdown-editor"
@@ -13,27 +13,94 @@
         <ng-container #preview>
             <div class="pt-1 background-editor-high markdown-preview">
                 <div *ngFor="let criterion of exercise.gradingCriteria">
-                    <label class="font-weight-bold" [innerHTML]="criterion!.title! | htmlForMarkdown"></label>
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <td class="font-weight-bold" jhiTranslate="artemisApp.exercise.credits">Credits</td>
-                                <td class="font-weight-bold" jhiTranslate="artemisApp.exercise.gradingScale">Grading Scale</td>
-                                <td class="font-weight-bold" jhiTranslate="artemisApp.exercise.instructionDescription">Instruction Description</td>
-                                <td class="font-weight-bold" jhiTranslate="artemisApp.exercise.feedback">Feedback</td>
-                                <td class="font-weight-bold" jhiTranslate="artemisApp.exercise.usageCount">Max Count in Score</td>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let instruction of criterion.structuredGradingInstructions">
-                                <td style="width: 5%" [innerHTML]="instruction.credits"></td>
-                                <td style="width: 10%" [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
-                                <td style="width: 40%" [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown"></td>
-                                <td style="width: 35%" [innerHTML]="instruction!.feedback! | htmlForMarkdown"></td>
-                                <td style="width: 10%" [innerHTML]="instruction.usageCount"></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="row mt-4 border p-2">
+                        <div class="col-md-10 text-start">
+                            <div class="form-inline">
+                                <label class="form-control-label col-sm-2" jhiTranslate="artemisApp.exercise.assessmentCriterion" for="criterionTitle">Assessment Criterion</label>
+                                <input
+                                    class="form-control col-sm-4"
+                                    type="text"
+                                    id="criterionTitle"
+                                    name="criterionTitle"
+                                    [(ngModel)]="criterion.title!"
+                                    (change)="onCriterionTitleChange($event, criterion)"
+                                    placeholder="Criterion Title"
+                                />
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <div class="col-md-auto input-group-btn d-flex align-items-center">
+                                <span class="btn btn-block btn-danger" id="delete-criterion-button" (click)="deleteGradingCriterion(criterion)">
+                                    <fa-icon [icon]="'trash'"></fa-icon>
+                                    <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <ngx-datatable
+                        id="gradingInstructionsTable"
+                        class="bootstrap"
+                        trackByProp="id"
+                        [headerHeight]="50"
+                        [limit]="20"
+                        [columnMode]="'force'"
+                        [rowHeight]="'auto'"
+                        [rows]="criterion.structuredGradingInstructions"
+                        *ngIf="criterion.structuredGradingInstructions"
+                    >
+                        <ngx-datatable-column class="font-weight-bold" name="{{ 'artemisApp.exercise.credits' | artemisTranslate }}" prop="credits" [width]="20">
+                            <ng-template ngx-datatable-cell-template let-row="row">
+                                <jhi-table-editable-field [id]="row.id + '-credits'" [value]="row.credits || ''" [onValueUpdate]="updateCreditsInRow(row)">
+                                </jhi-table-editable-field>
+                            </ng-template>
+                        </ngx-datatable-column>
+                        <ngx-datatable-column name="{{ 'artemisApp.exercise.gradingScale' | artemisTranslate }}" prop="gradingScale" [width]="50">
+                            <ng-template ngx-datatable-cell-template let-row="row">
+                                <jhi-table-editable-field [id]="row.id + '-gradingScale'" [value]="row.gradingScale || ''" [onValueUpdate]="updateGradingScaleInRow(row)">
+                                </jhi-table-editable-field>
+                            </ng-template>
+                        </ngx-datatable-column>
+                        <ngx-datatable-column name="{{ 'artemisApp.exercise.instructionDescription' | artemisTranslate }}" prop="instructionDescription">
+                            <ng-template ngx-datatable-cell-template let-row="row">
+                                <jhi-table-editable-field
+                                    [id]="row.id + '-instructionDescription'"
+                                    [value]="row.instructionDescription || ''"
+                                    [onValueUpdate]="updateDescriptionInRow(row)"
+                                >
+                                </jhi-table-editable-field>
+                            </ng-template>
+                        </ngx-datatable-column>
+                        <ngx-datatable-column name="{{ 'artemisApp.exercise.feedback' | artemisTranslate }}" prop="feedback">
+                            <ng-template ngx-datatable-cell-template let-row="row">
+                                <jhi-table-editable-field [id]="row.id + '-feedback'" [value]="row.feedback || ''" [onValueUpdate]="updateFeedbackInRow(row)">
+                                </jhi-table-editable-field>
+                            </ng-template>
+                        </ngx-datatable-column>
+                        <ngx-datatable-column name="{{ 'artemisApp.exercise.usageCount' | artemisTranslate }}" prop="usageCount" [width]="20">
+                            <ng-template ngx-datatable-cell-template let-row="row">
+                                <jhi-table-editable-field [id]="row.id + '-usageCount'" [value]="row.usageCount || ''" [onValueUpdate]="updateUsageCountInRow(row)">
+                                </jhi-table-editable-field>
+                            </ng-template>
+                        </ngx-datatable-column>
+                        <ngx-datatable-column name="{{ 'artemisApp.instructorCourseDashboard.action' | artemisTranslate }}" prop="action" [width]="20">
+                            <ng-template ngx-datatable-cell-template let-row="row">
+                                <span class="re-evaluate-button" id="delete-instruction" (click)="deleteInstruction(row, criterion)">
+                                    <fa-icon [icon]="'trash'" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"></fa-icon>
+                                </span>
+                            </ng-template>
+                        </ngx-datatable-column>
+                    </ngx-datatable>
+                    <span class="re-evaluate-button" id="add-instruction-button" (click)="addNewInstruction(criterion)">
+                        <fa-icon [icon]="'plus'" ngbTooltip="{{ 'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate }}"></fa-icon>
+                    </span>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12 col-sm-6 col-xl-3 mb-1">
+                        <button id="add-criterion-button" class="btn btn-block btn-success" (click)="addNewGradingCriterion()">
+                            <fa-icon [icon]="'plus'"></fa-icon>
+                            <span jhiTranslate="artemisApp.exercise.addAssessmentCriterion"></span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </ng-container>

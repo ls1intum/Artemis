@@ -433,6 +433,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
         const instruction = new GradingInstruction();
         this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.push(instruction);
+        this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions = [...this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions];
     }
 
     addGradingCriterion() {
@@ -496,5 +497,65 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         if (command === null && text.length > 0) {
             this.exercise.gradingInstructions = text;
         }
+    }
+
+    /**
+     * Updates credits of the GradingInstruction.
+     *
+     * @param gradingInstruction
+     */
+    updateCreditsInRow(gradingInstruction: GradingInstruction) {
+        return (newValue: any) => {
+            gradingInstruction.credits = newValue;
+            return gradingInstruction.credits;
+        };
+    }
+
+    /**
+     * Updates gradingScale of the GradingInstruction.
+     *
+     * @param gradingInstruction
+     */
+    updateGradingScaleInRow(gradingInstruction: GradingInstruction) {
+        return (newValue: any) => {
+            gradingInstruction.gradingScale = newValue;
+            return gradingInstruction.gradingScale;
+        };
+    }
+
+    /**
+     * Updates instructionDescription of the GradingInstruction.
+     *
+     * @param gradingInstruction
+     */
+    updateDescriptionInRow(gradingInstruction: GradingInstruction) {
+        return (newValue: any) => {
+            gradingInstruction.instructionDescription = newValue;
+            return gradingInstruction.instructionDescription;
+        };
+    }
+
+    /**
+     * Updates feedback of the GradingInstruction.
+     *
+     * @param gradingInstruction
+     */
+    updateFeedbackInRow(gradingInstruction: GradingInstruction) {
+        return (newValue: any) => {
+            gradingInstruction.feedback = newValue;
+            return gradingInstruction.feedback;
+        };
+    }
+
+    /**
+     * Updates usageCount of the GradingInstruction.
+     *
+     * @param gradingInstruction
+     */
+    updateUsageCountInRow(gradingInstruction: GradingInstruction) {
+        return (newValue: any) => {
+            gradingInstruction.usageCount = newValue;
+            return gradingInstruction.usageCount;
+        };
     }
 }
