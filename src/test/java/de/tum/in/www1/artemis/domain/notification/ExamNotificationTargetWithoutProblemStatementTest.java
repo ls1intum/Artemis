@@ -4,8 +4,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.domain.notification.auxiliary.ExamNotificationTargetWithoutProblemStatement;
-
 public class ExamNotificationTargetWithoutProblemStatementTest {
 
     /**

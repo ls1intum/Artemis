@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
-import io.github.jhipster.config.JHipsterConstants;
+import tech.jhipster.config.JHipsterConstants;
 
 @Service
 @Profile("scheduling")
@@ -77,7 +77,7 @@ public class NotificationScheduleService implements IExerciseScheduleService<Exe
     }
 
     /**
-     * The actual timer with its timer task that should be run when the exercise release time comes
+     * The place where the actual tasks/methods are called/scheduled that should be run at the exercise release time
      * @param exercise which will be announced by a notifications at release date
      */
     private void scheduleNotificationForExercise(Exercise exercise) {

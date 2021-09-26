@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.notification.auxiliary;
+package de.tum.in.www1.artemis.domain.notification;
 
 import com.google.gson.Gson;
 
