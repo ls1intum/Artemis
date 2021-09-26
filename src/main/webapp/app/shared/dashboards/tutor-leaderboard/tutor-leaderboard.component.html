@@ -1,7 +1,7 @@
 <div class="row table-responsive mt-3">
     <table class="table">
         <thead>
-            <tr jhiSort [(predicate)]="sortPredicate" [(ascending)]="reverseOrder" [callback]="sortRows.bind(this)">
+            <tr jhiSort [(predicate)]="sortPredicate" [(ascending)]="reverseOrder" (sortChange)="sortRows()">
                 <th>#</th>
                 <th jhiSortBy="name">
                     <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.name' | artemisTranslate }}</a>

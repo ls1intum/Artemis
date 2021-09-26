@@ -1,8 +1,7 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -78,11 +77,11 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
-        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
+        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             quizExercise.isActiveQuiz = this.exerciseService.isActiveQuiz(this.exercise);
-            quizExercise.isPracticeModeAvailable = quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(this.exercise.dueDate!).isBefore(moment());
+            quizExercise.isPracticeModeAvailable = quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && dayjs(this.exercise.dueDate!).isBefore(dayjs());
             this.exercise = quizExercise;
         }
         this.exerciseCategories = this.exercise.categories || [];
@@ -94,11 +93,11 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         }
     }
 
-    getUrgentClass(date?: Moment) {
+    getUrgentClass(date?: dayjs.Dayjs) {
         if (!date) {
             return undefined;
         }
-        const remainingDays = date.diff(moment(), 'days');
+        const remainingDays = date.diff(dayjs(), 'days');
         if (0 <= remainingDays && remainingDays < 7) {
             return 'text-danger';
         }

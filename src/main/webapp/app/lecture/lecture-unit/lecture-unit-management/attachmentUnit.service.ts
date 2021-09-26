@@ -1,4 +1,3 @@
-import { SERVER_API_URL } from 'app/app.constants';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { HttpClient, HttpResponse } from '@angular/common/http';

@@ -15,12 +15,12 @@ bootRun {
     args = []
 }
 
-task webpack_test(type: YarnTask, dependsOn: 'yarn') {
-    args = ["run", "webpack:test"]
+task webapp_test(type: NpmTask, dependsOn: "npm_install") {
+    args = ["run", "webapp:test"]
 }
 
-task webpack(type: YarnTask, dependsOn: 'yarn') {
-    args = ["run", "webpack:prod"]
+task webapp(type: NpmTask, dependsOn: "npm_install") {
+    args = ["run", "webapp:prod"]
     environment = [APP_VERSION: project.version]
 }
 
@@ -37,6 +37,6 @@ processResources {
     }
 }
 
-test.dependsOn webpack_test
-processResources.dependsOn webpack
+test.dependsOn webapp_test
+processResources.dependsOn webapp
 bootJar.dependsOn processResources

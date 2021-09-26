@@ -3,7 +3,6 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { take } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';

@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { MomentModule } from 'ngx-moment';
 import { textEditorRoute } from 'app/exercises/text/participate/text-editor.route';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
@@ -18,7 +17,6 @@ const ENTITY_STATES = [...textEditorRoute];
 
 @NgModule({
     imports: [
-        MomentModule,
         ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisResultModule,

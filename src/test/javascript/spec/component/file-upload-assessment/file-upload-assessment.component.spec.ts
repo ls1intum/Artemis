@@ -3,10 +3,10 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as moment from 'moment';
+import sinonChai from 'sinon-chai';
+import dayjs from 'dayjs';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -38,7 +38,7 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import * as sinon from 'sinon';
 import { HttpErrorResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
@@ -61,7 +61,7 @@ describe('FileUploadAssessmentComponent', () => {
     let debugElement: DebugElement;
     let router: Router;
     let navigateByUrlStub: SinonStub;
-    let alertService: JhiAlertService;
+    let alertService: AlertService;
     let submissionService: SubmissionService;
 
     const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD, maxPoints: 100, bonusPoints: 0 } as FileUploadExercise;
@@ -117,7 +117,7 @@ describe('FileUploadAssessmentComponent', () => {
                 fileUploadAssessmentService = fixture.componentRef.injector.get(FileUploadAssessmentService);
                 accountService = TestBed.inject(AccountService);
                 complaintService = TestBed.inject(ComplaintService);
-                alertService = TestBed.inject(JhiAlertService);
+                alertService = TestBed.inject(AlertService);
                 submissionService = TestBed.inject(SubmissionService);
                 getFileUploadSubmissionForExerciseWithoutAssessmentStub = stub(
                     fileUploadSubmissionService,
@@ -453,7 +453,7 @@ describe('FileUploadAssessmentComponent', () => {
             const complaintResponse = new ComplaintResponse();
             comp.onUpdateAssessmentAfterComplaint(complaintResponse);
             expect(comp.isLoading).to.be.false;
-            sinon.assert.calledOnceWithExactly(alertServiceErrorSpy, 'errormessage', []);
+            expect(alertServiceErrorSpy).to.have.been.calledOnceWithExactly('errormessage', []);
         });
 
         it('should not update assessment after complaint', () => {
@@ -563,7 +563,7 @@ describe('FileUploadAssessmentComponent', () => {
         });
         it('should not be able to override if tutor is assessor and result has a complaint', () => {
             comp.isAtLeastInstructor = false;
-            comp.exercise!.assessmentDueDate = moment().add(-100, 'seconds');
+            comp.exercise!.assessmentDueDate = dayjs().add(-100, 'seconds');
             expect(comp.canOverride).to.be.equal(false);
         });
         it('should not be able to override if exercise is undefined', () => {
@@ -632,7 +632,7 @@ const createSubmission = (exercise: FileUploadExercise) => {
         id: 2278,
         submitted: true,
         type: SubmissionType.MANUAL,
-        submissionDate: moment('2019-07-09T10:47:33.244Z'),
+        submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
         participation: { type: ParticipationType.STUDENT, exercise } as unknown as Participation,
     } as FileUploadSubmission;
 };
@@ -641,7 +641,7 @@ const createResult = (submission: FileUploadSubmission) => {
     const result = new Result();
     result.id = 2374;
     result.resultString = '1 of 12 points';
-    result.completionDate = moment('2019-07-09T11:51:23.251Z');
+    result.completionDate = dayjs('2019-07-09T11:51:23.251Z');
     result.successful = false;
     result.score = 1;
     result.rated = true;
