@@ -1,10 +1,9 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Post } from 'app/entities/metis/post.model';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
@@ -40,7 +39,6 @@ import {
     metisUpVoteReactionUser1,
 } from '../../../helpers/sample/metis-sample-data';
 
-chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('PageDiscussionSectionComponent', () => {
@@ -107,20 +105,20 @@ describe('PageDiscussionSectionComponent', () => {
 
     it('should sort posts correctly', () => {
         post1 = metisPostExerciseUser1;
-        post1.creationDate = moment();
+        post1.creationDate = dayjs();
         post1.displayPriority = DisplayPriority.PINNED;
 
         post2 = metisPostExerciseUser2;
-        post2.creationDate = moment().subtract(1, 'day');
+        post2.creationDate = dayjs().subtract(1, 'day');
         post2.displayPriority = DisplayPriority.NONE;
 
         post3 = metisPostLectureUser1;
-        post3.creationDate = moment().subtract(2, 'day');
+        post3.creationDate = dayjs().subtract(2, 'day');
         post3.reactions = [metisUpVoteReactionUser1];
         post3.displayPriority = DisplayPriority.NONE;
 
         post4 = metisPostLectureUser2;
-        post4.creationDate = moment().subtract(2, 'minute');
+        post4.creationDate = dayjs().subtract(2, 'minute');
         post4.reactions = [metisUpVoteReactionUser1];
         post4.displayPriority = DisplayPriority.ARCHIVED;
 

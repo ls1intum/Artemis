@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Exercise, ExerciseType, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -44,9 +44,9 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     private setExerciseStatusBadge(): void {
         if (this.exercise) {
             if (this.isExamMode) {
-                this.exerciseStatusBadge = moment(this.exam?.endDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
+                this.exerciseStatusBadge = dayjs(this.exam?.endDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
             } else {
-                this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
+                this.exerciseStatusBadge = dayjs(this.exercise.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
             }
         }
     }

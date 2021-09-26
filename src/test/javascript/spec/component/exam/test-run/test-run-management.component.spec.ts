@@ -18,17 +18,19 @@ import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-m
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import { JhiAlertService, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import * as sinon from 'sinon';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('Test Run Management Component', () => {
     let component: TestRunManagementComponent;
@@ -57,7 +59,7 @@ describe('Test Run Management Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
-                MockDirective(JhiSortDirective),
+                MockDirective(SortDirective),
                 MockDirective(DeleteButtonDirective),
             ],
             providers: [
@@ -65,7 +67,7 @@ describe('Test Run Management Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
-                MockDirective(JhiTranslateDirective),
+                MockDirective(TranslateDirective),
             ],
         })
             .compileComponents()
@@ -75,11 +77,11 @@ describe('Test Run Management Component', () => {
                 examManagementService = TestBed.inject(ExamManagementService);
                 accountService = TestBed.inject(AccountService);
                 modalService = modalService = TestBed.inject(NgbModal);
-                spyOn(examManagementService, 'find').and.returnValue(of(new HttpResponse({ body: exam })));
-                spyOn(examManagementService, 'findAllTestRunsForExam').and.returnValue(of(new HttpResponse({ body: studentExams })));
-                spyOn(accountService, 'fetch').and.returnValue(of(new HttpResponse({ body: user })));
-                spyOn(accountService, 'isAtLeastInstructorInCourse').and.returnValue(true);
-                spyOn(examManagementService, 'deleteTestRun').and.returnValue(of(new HttpResponse({ body: {} })));
+                jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
+                jest.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
+                jest.spyOn(accountService, 'fetch').mockReturnValue(of(new HttpResponse({ body: user })));
+                jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
+                jest.spyOn(examManagementService, 'deleteTestRun').mockReturnValue(of(new HttpResponse({ body: {} })));
             });
     });
 
@@ -124,8 +126,8 @@ describe('Test Run Management Component', () => {
 
             const componentInstance = { title: String, text: String };
             const result = new Promise((resolve) => resolve({} as StudentExam));
-            spyOn(modalService, 'open').and.returnValue(<NgbModalRef>{ componentInstance, result });
-            spyOn(examManagementService, 'createTestRun').and.returnValue(of(new HttpResponse({ body: { id: 3, user: { id: 90 }, exercises: [exercise] } as StudentExam })));
+            jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
+            jest.spyOn(examManagementService, 'createTestRun').mockReturnValue(of(new HttpResponse({ body: { id: 3, user: { id: 90 }, exercises: [exercise] } as StudentExam })));
             fixture.detectChanges();
 
             expect(component.examContainsExercises).toBeTruthy();
@@ -137,7 +139,7 @@ describe('Test Run Management Component', () => {
         });
 
         it('should correctly catch error after creating test run', () => {
-            const alertService = TestBed.inject(JhiAlertService);
+            const alertService = TestBed.inject(AlertService);
             const exercise = { id: 1 } as Exercise;
             const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
             exam.exerciseGroups = [exerciseGroup];
@@ -145,9 +147,9 @@ describe('Test Run Management Component', () => {
 
             const componentInstance = { title: String, text: String };
             const result = new Promise((resolve) => resolve({} as StudentExam));
-            spyOn(modalService, 'open').and.returnValue(<NgbModalRef>{ componentInstance, result });
-            spyOn(examManagementService, 'createTestRun').and.returnValue(throwError(httpError));
-            spyOn(alertService, 'error');
+            jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
+            jest.spyOn(examManagementService, 'createTestRun').mockReturnValue(throwError(httpError));
+            jest.spyOn(alertService, 'error');
             fixture.detectChanges();
 
             expect(component.examContainsExercises).toBeTruthy();
@@ -176,7 +178,7 @@ describe('Test Run Management Component', () => {
     describe('sort rows', () => {
         it('should forward request to ', fakeAsync(() => {
             const sortService = TestBed.inject(SortService);
-            spyOn(sortService, 'sortByProperty').and.returnValue(studentExams);
+            jest.spyOn(sortService, 'sortByProperty').mockReturnValue(studentExams);
             fixture.detectChanges();
 
             component.sortRows();

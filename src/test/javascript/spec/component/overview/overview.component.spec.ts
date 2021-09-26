@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
@@ -102,20 +102,20 @@ describe('Overview Component', () => {
                     guidedTourService = TestBed.inject(GuidedTourService);
                     exerciseService = TestBed.inject(ExerciseService);
 
-                    spyOn(navBarComponentFixture.componentInstance, 'ngOnInit').and.callFake(() => {
+                    jest.spyOn(navBarComponentFixture.componentInstance, 'ngOnInit').mockImplementation(() => {
                         navBarComponent.currAccount = user;
                     });
 
-                    spyOn<any>(guidedTourComponent, 'subscribeToDotChanges').and.returnValue(of());
+                    jest.spyOn<any, any>(guidedTourComponent, 'subscribeToDotChanges').mockReturnValue(of());
 
-                    spyOn(exerciseService, 'getNextExercisesForDays').and.returnValue(of());
-                    spyOn(guidedTourService, 'init').and.returnValue(of());
-                    spyOn<any>(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
+                    jest.spyOn(exerciseService, 'getNextExercisesForDays').mockReturnValue([]);
+                    jest.spyOn(guidedTourService, 'init').mockImplementation();
+                    jest.spyOn<any, any>(guidedTourService, 'updateGuidedTourSettings').mockReturnValue(of());
 
-                    spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(true);
-                    spyOn<any>(guidedTourService, 'checkSelectorValidity').and.returnValue(true);
+                    jest.spyOn<any, any>(guidedTourService, 'checkTourState').mockReturnValue(true);
+                    jest.spyOn<any, any>(guidedTourService, 'checkSelectorValidity').mockReturnValue(true);
 
-                    spyOn<any>(guidedTourService, 'enableTour').and.callFake(() => {
+                    jest.spyOn<any, any>(guidedTourService, 'enableTour').mockImplementation(() => {
                         guidedTourService['availableTourForComponent'] = courseOverviewTour;
                         guidedTourService.currentTour = courseOverviewTour;
                     });

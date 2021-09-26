@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment } from 'app/entities/attachment.model';
@@ -11,7 +11,7 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { PageDiscussionSectionComponent } from 'app/overview/page-discussion-section/page-discussion-section.component';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-course-lecture-details',
@@ -29,7 +29,7 @@ export class CourseLectureDetailsComponent implements OnInit {
 
     readonly LectureUnitType = LectureUnitType;
 
-    constructor(private alertService: JhiAlertService, private lectureService: LectureService, private activatedRoute: ActivatedRoute, private fileService: FileService) {}
+    constructor(private alertService: AlertService, private lectureService: LectureService, private activatedRoute: ActivatedRoute, private fileService: FileService) {}
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
@@ -70,7 +70,7 @@ export class CourseLectureDetailsComponent implements OnInit {
             );
     }
     attachmentNotReleased(attachment: Attachment): boolean {
-        return attachment.releaseDate != undefined && !moment(attachment.releaseDate).isBefore(moment())!;
+        return attachment.releaseDate != undefined && !dayjs(attachment.releaseDate).isBefore(dayjs())!;
     }
 
     attachmentExtension(attachment: Attachment): string {
