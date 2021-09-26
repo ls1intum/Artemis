@@ -1,4 +1,4 @@
-.. _exercises:
+.. _orion:
 
 Orion
 =====
@@ -53,6 +53,8 @@ Students can participate in programming exercises via Orion by performing the fo
  2. After starting the exercise, a button to |open-in-intellij-button| appears.
  3. After cloning, the exercise can be solved in IntelliJ.
  4. Orion provides a button to |submit-button|. This will automatically commit and push the local changes and display the result of the automatic tests in IntelliJ.
+
+`Gif showcasing the usage for students <https://github.com/ls1intum/Orion#example-usage>`_
 
 Orion for Instructors
 ---------------------
