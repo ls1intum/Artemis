@@ -87,6 +87,7 @@
             "programmingLanguage": "Programmiersprache",
             "projectType": "Projekttyp",
             "packageName": "Package-Name",
+            "appName": "App-Name",
             "templateResult": "Ergebnis der Vorlage",
             "solutionResult": "Ergebnis der Musterlösung",
             "structureTestOracle": "Oracle Strukturtest aktualisieren",
