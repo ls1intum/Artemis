@@ -34,7 +34,7 @@
 
     <div class="mt-2">&nbsp;</div>
     {{ 'metrics.filter' | artemisTranslate }}: {{ filteredThreads.length }} {{ 'metrics.matches' | artemisTranslate }}
-    <input type="text" (keyup)="refreshTheFilter()" [(ngModel)]="threadFilter" class="form-control" />
+    <input type="text" (keyup)="refreshFilteredThreads()" [(ngModel)]="threadFilter" class="form-control" />
 
     <div class="pad" *ngFor="let thread of filteredThreads">
         <h6>

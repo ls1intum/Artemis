@@ -10,13 +10,13 @@ import { Thread, ThreadState } from '../../metrics.model';
 export class MetricsModalThreadsComponent implements OnInit {
     ThreadState = ThreadState;
 
-    private _selectedThreadState?: ThreadState;
+    private threadStateFilter?: ThreadState;
     get selectedThreadState(): ThreadState | undefined {
-        return this._selectedThreadState;
+        return this.threadStateFilter;
     }
     set selectedThreadState(newValue: ThreadState | undefined) {
-        this._selectedThreadState = newValue;
-        this.refreshTheFilter();
+        this.threadStateFilter = newValue;
+        this.refreshFilteredThreads();
     }
 
     threadFilter?: string;
@@ -76,11 +76,11 @@ export class MetricsModalThreadsComponent implements OnInit {
             return true;
         }
 
-        // Filter the threads only on the visible attributes
+        // Filter the threads only on the visible attributes and look for case-insensitive match
         const filteredAttributes = ['threadName', 'threadId', 'blockedTime', 'blockedCount', 'waitedTime', 'waitedCount', 'lockName'];
         return Object.keys(thread)
             .filter((key) => filteredAttributes.includes(key))
-            .some((key) => thread[key]?.toString().includes(this.threadFilter!));
+            .some((key) => thread[key]?.toString().toLowerCase().includes(this.threadFilter!.toLowerCase()));
     }
 
     private isMatchingSelectedThreadState(thread: Thread): boolean {
@@ -91,7 +91,7 @@ export class MetricsModalThreadsComponent implements OnInit {
         return thread.threadState === this.selectedThreadState!;
     }
 
-    refreshTheFilter() {
+    refreshFilteredThreads() {
         this.filteredThreads = this.threads?.filter((thread) => this.isMatchingTextFilter(thread) && this.isMatchingSelectedThreadState(thread)) ?? [];
     }
 

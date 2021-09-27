@@ -97,7 +97,7 @@ describe('MetricsModalThreadsComponent', () => {
                 comp.selectedThreadState = undefined;
 
                 // WHEN
-                comp.refreshTheFilter();
+                comp.refreshFilteredThreads();
 
                 // THEN
                 expect(comp.filteredThreads).toEqual(runnableThreads.concat(waitingThreads));
@@ -109,7 +109,7 @@ describe('MetricsModalThreadsComponent', () => {
                 comp.selectedThreadState = ThreadState.Runnable;
 
                 // WHEN
-                comp.refreshTheFilter();
+                comp.refreshFilteredThreads();
 
                 // THEN
                 expect(comp.filteredThreads).toEqual(runnableThreads);
@@ -123,7 +123,7 @@ describe('MetricsModalThreadsComponent', () => {
                 comp.threadFilter = undefined;
 
                 // WHEN
-                comp.refreshTheFilter();
+                comp.refreshFilteredThreads();
 
                 // THEN
                 expect(comp.filteredThreads).toEqual(runnableThreads.concat(waitingThreads));
@@ -135,7 +135,7 @@ describe('MetricsModalThreadsComponent', () => {
                 comp.threadFilter = '2';
 
                 // WHEN
-                comp.refreshTheFilter();
+                comp.refreshFilteredThreads();
 
                 // THEN
                 expect(comp.filteredThreads).toEqual([runnableThreads[1]]);
@@ -149,7 +149,7 @@ describe('MetricsModalThreadsComponent', () => {
             comp.selectedThreadState = ThreadState.Waiting;
 
             // WHEN
-            comp.refreshTheFilter();
+            comp.refreshFilteredThreads();
 
             // THEN
             expect(comp.filteredThreads).toEqual([]);
