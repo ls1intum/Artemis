@@ -129,6 +129,7 @@ dependencies {
     implementation group: "tech.jhipster", name: "jhipster-framework", {
         exclude group: "org.springframework", module: "spring-webmvc"
     }
+    implementation "org.jasypt:jasypt:1.9.3"
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
@@ -229,17 +230,3 @@ task executeCheckstyle (type: Exec) {
 task buildJarForDocker (type: Exec) {
     commandLine "./gradlew", "build", "-x", "webapp", "-x", "test", "-x", "jacocoTestCoverageVerification"
 }
-
-//if (project.hasProperty("nodeInstall")) {
-//    // Workaround node grade plugin not working on apple silicon https://github.com/node-gradle/gradle-node-plugin/issues/154
-//    OperatingSystem os = org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem();
-//    Architecture arch = org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentArchitecture();
-//    Boolean downloadNode = !os.isMacOsX() || arch.isAmd64()
-//    node {
-//        version = "14.17.1"
-//        yarnVersion = "${yarn_version}"
-//        download = downloadNode
-//    }
-//}
-//compileJava.dependsOn processResources
-//processResources.dependsOn bootBuildInfo

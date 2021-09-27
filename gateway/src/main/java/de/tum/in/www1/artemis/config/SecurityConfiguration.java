@@ -2,23 +2,28 @@ package de.tum.in.www1.artemis.config;
 
 import static org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers.pathMatchers;
 
+import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.web.filter.SpaWebFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.header.ReferrerPolicyServerHttpHeadersWriter;
 import org.springframework.security.web.server.util.matcher.NegatedServerWebExchangeMatcher;
 import org.springframework.security.web.server.util.matcher.OrServerWebExchangeMatcher;
+import org.springframework.web.filter.CorsFilter;
 import org.zalando.problem.spring.webflux.advice.security.SecurityProblemSupport;
 import tech.jhipster.config.JHipsterProperties;
 
@@ -31,21 +36,48 @@ public class SecurityConfiguration {
 
     private final TokenProvider tokenProvider;
 
+//    private final CorsFilter corsFilter;
+
     private final SecurityProblemSupport problemSupport;
+
+    @Value("${artemis.encryption-password}")
+    private String encryptionPassword;
 
     public SecurityConfiguration(
         TokenProvider tokenProvider,
         JHipsterProperties jHipsterProperties,
+//        CorsFilter corsFilter,
         SecurityProblemSupport problemSupport
     ) {
         this.tokenProvider = tokenProvider;
         this.jHipsterProperties = jHipsterProperties;
+//        this.corsFilter = corsFilter;
         this.problemSupport = problemSupport;
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new PBEPasswordEncoder(encryptor());
+    }
+
+    @Bean
+    public StandardPBEStringEncryptor encryptor() {
+        StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
+        encryptor.setAlgorithm("PBEWithMD5AndDES");
+        encryptor.setPassword(encryptionPassword);
+        return encryptor;
+    }
+    @Bean
+    RoleHierarchy roleHierarchy() {
+        var roleHierarchy = new RoleHierarchyImpl();
+        roleHierarchy.setHierarchy("""
+                    ROLE_ADMIN > ROLE_INSTRUCTOR
+                    ROLE_INSTRUCTOR > ROLE_EDITOR
+                    ROLE_EDITOR > ROLE_TA
+                    ROLE_TA > ROLE_USER
+                    ROLE_USER > ROLE_ANONYMOUS
+                """);
+        return roleHierarchy;
     }
 
     @Bean
