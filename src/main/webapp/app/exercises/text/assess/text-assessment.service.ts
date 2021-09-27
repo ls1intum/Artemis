@@ -73,7 +73,7 @@ export class TextAssessmentService {
      * @param exerciseId the id of the respective assessment event exercise id
      */
     public getNumberOfTutorsInvolvedInAssessment(courseId: number, exerciseId: number): Observable<number> {
-        return this.http.get<number>(`/analytics/text-assessment/text-exercises/${exerciseId}/courses/${courseId}/events`);
+        return this.http.get<number>(`/analytics/text-assessment/courses/${courseId}/text-exercises/${exerciseId}/tutors-involved`);
     }
 
     /**

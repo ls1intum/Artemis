@@ -155,7 +155,8 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
         // Add two events with two different tutor ids
         textAssessmentEventRepository.saveAll(List.of(event1, event2));
 
-        int numberOfTutorsInvolved = request.get("/analytics/text-assessment/events/courses/" + course.getId() + "/exercises/" + exercise.getId(), HttpStatus.OK, Integer.class);
+        int numberOfTutorsInvolved = request.get("/analytics/text-assessment/courses/" + course.getId() + "/text-exercises/" + exercise.getId() + "/tutors-involved", HttpStatus.OK,
+                Integer.class);
 
         assertThat(numberOfTutorsInvolved).isNotNull();
         assertThat(numberOfTutorsInvolved).isEqualTo(2);
