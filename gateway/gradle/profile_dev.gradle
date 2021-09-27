@@ -29,7 +29,14 @@ bootRun {
     args = []
 }
 
+task npm_install(type: NpmTask) {
+    workingDir = file("../")
+    args = ['install']
+}
+
 task webapp(type: NpmTask) {
+    workingDir = file("../")
+
     inputs.property('appVersion', project.version)
     inputs.files("../package.json")
         .withPropertyName('package')
@@ -52,12 +59,12 @@ task webapp(type: NpmTask) {
     inputs.dir("../src/main/webapp/")
         .withPropertyName("webapp-source-dir")
         .withPathSensitivity(PathSensitivity.RELATIVE)
-    outputs.dir("build/resources/main/static/")
+    outputs.dir("../build/resources/main/static/")
         .withPropertyName("webapp-build-dir")
 
-    dependsOn npmInstall
+    dependsOn npm_install
 
-    args = ["--cwd", "../", "run", "webapp:build"]
+    args = ["run", "webapp:build"]
     environment = [APP_VERSION: project.version]
 }
 
