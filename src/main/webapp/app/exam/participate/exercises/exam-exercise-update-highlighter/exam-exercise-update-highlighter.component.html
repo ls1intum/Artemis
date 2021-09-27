@@ -1,0 +1,5 @@
+<button id="highlightDiffButton" class="btn py-0 px-2 mt-0 mb-0 ms-2" [hidden]="previousProblemStatementUpdate == undefined" (click)="toggleHighlightedProblemStatement()">
+    {{
+        showHighlightedDifferences ? ('artemisApp.exam.problemStatementUpdate.showNew' | artemisTranslate) : ('artemisApp.exam.problemStatementUpdate.showDiff' | artemisTranslate)
+    }}
+</button>

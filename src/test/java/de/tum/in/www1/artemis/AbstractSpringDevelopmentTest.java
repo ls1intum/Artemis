@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis;
 
-import static io.github.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;

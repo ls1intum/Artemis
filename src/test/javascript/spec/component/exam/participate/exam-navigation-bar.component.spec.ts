@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamSession } from 'app/entities/exam-session.model';
@@ -8,7 +8,7 @@ import { of } from 'rxjs';
 import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
 import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
-import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -18,6 +18,7 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Exam Navigation Bar Component', () => {
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
@@ -38,6 +39,7 @@ describe('Exam Navigation Bar Component', () => {
                 { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
@@ -46,7 +48,7 @@ describe('Exam Navigation Bar Component', () => {
         repositoryService = fixture.debugElement.injector.get(CodeEditorRepositoryService);
         TestBed.inject(ExamParticipationService);
 
-        comp.endDate = moment();
+        comp.endDate = dayjs();
         comp.exercises = [
             {
                 id: 0,
@@ -72,7 +74,7 @@ describe('Exam Navigation Bar Component', () => {
         // Create an exam session, which is not an initial session.
         comp.examSessions = [{ initialSession: false } as ExamSession];
         const exerciseToBeSynced = comp.exercises[0];
-        spyOn(repositoryService, 'getStatus').and.returnValue(of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }));
+        jest.spyOn(repositoryService, 'getStatus').mockReturnValue(of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }));
 
         // When
         expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toEqual(true);
@@ -83,8 +85,8 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('trigger when the exam is about to end', () => {
-        spyOn(comp, 'saveExercise');
-        spyOn(comp.examAboutToEnd, 'emit');
+        jest.spyOn(comp, 'saveExercise');
+        jest.spyOn(comp.examAboutToEnd, 'emit');
 
         comp.triggerExamAboutToEnd();
 
@@ -93,8 +95,8 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should change the exercise', () => {
-        spyOn(comp.onPageChanged, 'emit');
-        spyOn(comp, 'setExerciseButtonStatus');
+        jest.spyOn(comp.onPageChanged, 'emit');
+        jest.spyOn(comp, 'setExerciseButtonStatus');
 
         expect(comp.exerciseIndex).toEqual(0);
 
@@ -109,8 +111,8 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should not change the exercise with invalid index', () => {
-        spyOn(comp.onPageChanged, 'emit');
-        spyOn(comp, 'setExerciseButtonStatus');
+        jest.spyOn(comp.onPageChanged, 'emit');
+        jest.spyOn(comp, 'setExerciseButtonStatus');
 
         expect(comp.exerciseIndex).toEqual(0);
 
@@ -143,7 +145,7 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('save the exercise with changeExercise', () => {
-        spyOn(comp, 'changePage');
+        jest.spyOn(comp, 'changePage');
         const changeExercise = true;
 
         comp.saveExercise(changeExercise);
@@ -152,7 +154,7 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('save the exercise without changeExercise', () => {
-        spyOn(comp, 'changePage');
+        jest.spyOn(comp, 'changePage');
         const changeExercise = false;
 
         comp.saveExercise(changeExercise);
@@ -161,8 +163,8 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should hand in the exam early', () => {
-        spyOn(comp, 'saveExercise');
-        spyOn(comp.onExamHandInEarly, 'emit');
+        jest.spyOn(comp, 'saveExercise');
+        jest.spyOn(comp.onExamHandInEarly, 'emit');
 
         comp.handInEarly();
 
@@ -241,7 +243,7 @@ describe('Exam Navigation Bar Component', () => {
 
     it('should navigate to other Exercise', () => {
         const updatedExerciseId = 2;
-        spyOn(comp, 'changeExerciseById');
+        jest.spyOn(comp, 'changeExerciseById');
         examExerciseIdForNavigationSourceMock.next(updatedExerciseId);
         expect(comp.changeExerciseById).toHaveBeenCalled();
     });

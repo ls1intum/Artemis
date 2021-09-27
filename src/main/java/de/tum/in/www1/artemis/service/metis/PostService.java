@@ -9,6 +9,8 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -61,6 +63,8 @@ public class PostService extends PostingService {
 
         // set author to current user
         post.setAuthor(user);
+        // set default value display priority -> NONE
+        post.setDisplayPriority(DisplayPriority.NONE);
         Post savedPost = postRepository.save(post);
 
         sendNotification(savedPost);
@@ -89,11 +93,22 @@ public class PostService extends PostingService {
         preCheckPostValidity(existingPost);
         mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
 
-        // update: allow overwriting of values only for depicted fields
+        // update: allow overwriting of values only for depicted fields if user is at least student
         existingPost.setTitle(post.getTitle());
         existingPost.setContent(post.getContent());
         existingPost.setVisibleForStudents(post.isVisibleForStudents());
         existingPost.setTags(post.getTags());
+
+        // update: allow overwriting of certain values if they are at least TAs in this course
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            existingPost.setDisplayPriority(post.getDisplayPriority());
+            // allow changing the post context (moving it to another context)
+            existingPost.setLecture(post.getLecture());
+            existingPost.setExercise(post.getExercise());
+            existingPost.setCourseWideContext(post.getCourseWideContext());
+            existingPost.setCourse(post.getCourse());
+        }
+
         Post updatedPost = postRepository.save(existingPost);
 
         if (updatedPost.getExercise() != null) {
@@ -105,6 +120,21 @@ public class PostService extends PostingService {
     }
 
     /**
+     * Invokes the updatePost method to persist the change of displayPriority
+     *
+     * @param courseId          id of the course the post belongs to
+     * @param postId            id of the post to change the pin state for
+     * @param displayPriority   new displayPriority
+     * @return updated post that was persisted
+     */
+    public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
+        Post post = postRepository.findByIdElseThrow(postId);
+        post.setDisplayPriority(displayPriority);
+
+        return updatePost(courseId, post);
+    }
+
+    /**
      * Add reaction to a post and persist the post
      *
      * @param post     post that is reacted on
@@ -113,6 +143,82 @@ public class PostService extends PostingService {
     public void updateWithReaction(Post post, Reaction reaction) {
         post.addReaction(reaction);
         postRepository.save(post);
+    }
+
+    /**
+     * @param courseId          id of the course the fetch posts for
+     * @param courseWideContext course-wide context for which the posts should be fetched
+     * @param exerciseId        id of the exercise for which the posts should be fetched
+     * @param lectureId         id of the lecture for which the posts should be fetched
+     * @return list of posts that match the given context
+     */
+    public List<Post> getPostsInCourse(Long courseId, CourseWideContext courseWideContext, Long exerciseId, Long lectureId) {
+        // no filter -> get all posts in course
+        if (courseWideContext == null && exerciseId == null && lectureId == null) {
+            return this.getAllCoursePosts(courseId);
+        }
+        // filter by course-wide context
+        else if (courseWideContext != null && exerciseId == null && lectureId == null) {
+            return this.getAllPostsByCourseWideContext(courseId, courseWideContext);
+        }
+        // filter by exercise
+        else if (courseWideContext == null && exerciseId != null && lectureId == null) {
+            return this.getAllExercisePosts(courseId, exerciseId);
+        }
+        // filter by lecture
+        else if (courseWideContext == null && exerciseId == null && lectureId != null) {
+            return this.getAllLecturePosts(courseId, lectureId);
+        }
+        else {
+            throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
+        }
+    }
+
+    /**
+     * Checks course, user and post validity,
+     * retrieves all posts for a course by its id
+     * and ensures that sensitive information is filtered out
+     *
+     * @param courseId id of the course the post belongs to
+     * @return list of posts that belong to the course
+     */
+    public List<Post> getAllCoursePosts(Long courseId) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        Course course = preCheckUserAndCourse(user, courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        // retrieve posts
+        List<Post> coursePosts = postRepository.findPostsForCourse(courseId);
+        // protect sample solution, grading instructions, etc.
+        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+
+        return coursePosts;
+    }
+
+    /**
+     * Checks course, user and post validity,
+     * retrieves all posts with a certain course-wide context by course id
+     * and ensures that sensitive information is filtered out
+     *
+     * @param courseId          id of the course the post belongs to
+     * @param courseWideContext specific course-wide context to filter course get posts for
+     * @return list of posts for a cretain course-wide contex
+     */
+    public List<Post> getAllPostsByCourseWideContext(Long courseId, CourseWideContext courseWideContext) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        Course course = preCheckUserAndCourse(user, courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        // retrieve posts
+        List<Post> coursePosts = postRepository.findPostsForCourseWideContext(courseId, courseWideContext);
+        // protect sample solution, grading instructions, etc.
+        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+
+        return coursePosts;
     }
 
     /**
@@ -165,29 +271,6 @@ public class PostService extends PostingService {
 
     /**
      * Checks course, user and post validity,
-     * retrieves all posts for a course by its id
-     * and ensures that sensitive information is filtered out
-     *
-     * @param courseId id of the course the post belongs to
-     * @return list of posts that belong to the course
-     */
-    public List<Post> getAllCoursePosts(Long courseId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        Course course = preCheckUserAndCourse(user, courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-
-        // retrieve posts
-        List<Post> coursePosts = postRepository.findPostsForCourse(courseId);
-        // protect sample solution, grading instructions, etc.
-        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-
-        return coursePosts;
-    }
-
-    /**
-     * Checks course, user and post validity,
      * determines authority to delete post and deletes the post
      *
      * @param courseId id of the course the post belongs to
@@ -210,7 +293,7 @@ public class PostService extends PostingService {
      * Checks course and user validity,
      * retrieves all tags for posts in a certain course
      *
-     * @param courseId  id of the course the tags belongs to
+     * @param courseId id of the course the tags belongs to
      * @return tags of all posts that belong to the course
      */
     public List<String> getAllCourseTags(Long courseId) {

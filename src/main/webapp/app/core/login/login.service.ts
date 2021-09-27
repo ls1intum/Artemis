@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Router } from '@angular/router';
 import { EMPTY, from } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
@@ -18,7 +18,7 @@ export class LoginService {
         private websocketService: JhiWebsocketService,
         private authServerProvider: AuthServerProvider,
         private router: Router,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private notificationService: NotificationService,
     ) {}
 

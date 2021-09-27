@@ -1,13 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -25,13 +24,15 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import * as sinon from 'sinon';
 import { Exam } from 'app/entities/exam.model';
 import { User } from 'app/core/user/user.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModule, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -136,8 +137,8 @@ describe('StudentExamsComponent', () => {
                 );
             },
         }),
-        MockProvider(JhiAlertService),
-        MockDirective(JhiTranslateDirective),
+        MockProvider(AlertService),
+        MockDirective(TranslateDirective),
         {
             provide: LocalStorageService,
             useClass: MockLocalStorageService,
@@ -176,7 +177,7 @@ describe('StudentExamsComponent', () => {
         exam.course = course;
         exam.id = 1;
         exam.registeredUsers = [studentOne, studentTwo];
-        exam.endDate = moment();
+        exam.endDate = dayjs();
         exam.startDate = exam.endDate.subtract(60, 'seconds');
 
         studentExamOne = new StudentExam();
@@ -260,8 +261,8 @@ describe('StudentExamsComponent', () => {
 
     it('should automatically assess modeling and text exercises of unsubmitted student exams', () => {
         studentExamOne!.workingTime = 10;
-        exam.startDate = moment().subtract(200, 'seconds');
-        exam.endDate = moment().subtract(100, 'seconds');
+        exam.startDate = dayjs().subtract(200, 'seconds');
+        exam.endDate = dayjs().subtract(100, 'seconds');
         exam.gracePeriod = 0;
         course.isAtLeastInstructor = true;
 
@@ -277,11 +278,11 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should correctly catch HTTPError when assessing unsubmitted exams', () => {
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         studentExamOne!.workingTime = 10;
-        exam.startDate = moment().subtract(200, 'seconds');
-        exam.endDate = moment().subtract(100, 'seconds');
+        exam.startDate = dayjs().subtract(200, 'seconds');
+        exam.endDate = dayjs().subtract(100, 'seconds');
         exam.gracePeriod = 0;
         course.isAtLeastInstructor = true;
 
@@ -301,7 +302,7 @@ describe('StudentExamsComponent', () => {
 
     it('should generate student exams if there are none', () => {
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().add(120, 'seconds');
+        exam.startDate = dayjs().add(120, 'seconds');
 
         studentExams = [];
         studentExamsComponentFixture.detectChanges();
@@ -325,7 +326,7 @@ describe('StudentExamsComponent', () => {
 
     it('should correctly catch HTTPError and get additional error when generating student exams', () => {
         examManagementService = TestBed.inject(ExamManagementService);
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const translationService = TestBed.inject(TranslateService);
         const errorDetailString = 'artemisApp.exam.validation.tooFewExerciseGroups';
         const httpError = new HttpErrorResponse({
@@ -333,7 +334,7 @@ describe('StudentExamsComponent', () => {
             status: 400,
         });
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().add(120, 'seconds');
+        exam.startDate = dayjs().add(120, 'seconds');
 
         studentExams = [];
         const generateStudentExamsStub = sinon.stub(examManagementService, 'generateStudentExams').returns(throwError(httpError));
@@ -355,7 +356,7 @@ describe('StudentExamsComponent', () => {
 
     it('should generate student exams after warning the user that the existing are deleted', () => {
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().add(120, 'seconds');
+        exam.startDate = dayjs().add(120, 'seconds');
 
         studentExamsComponentFixture.detectChanges();
         const componentInstance = { title: String, text: String };
@@ -383,7 +384,7 @@ describe('StudentExamsComponent', () => {
 
     it('should generate missing student exams', () => {
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().add(120, 'seconds');
+        exam.startDate = dayjs().add(120, 'seconds');
         studentExams = [studentExamOne!];
         studentExamsComponentFixture.detectChanges();
         studentExams = [studentExamOne!, studentExamTwo!];
@@ -406,10 +407,10 @@ describe('StudentExamsComponent', () => {
 
     it('should correctly catch HTTPError when generating missing student exams', () => {
         examManagementService = TestBed.inject(ExamManagementService);
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().add(120, 'seconds');
+        exam.startDate = dayjs().add(120, 'seconds');
 
         const generateMissingStudentExamsStub = sinon.stub(examManagementService, 'generateMissingStudentExams').returns(throwError(httpError));
         studentExams = [studentExamOne!];
@@ -428,7 +429,7 @@ describe('StudentExamsComponent', () => {
 
     it('should start the exercises of students', () => {
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().add(120, 'seconds');
+        exam.startDate = dayjs().add(120, 'seconds');
         studentExamsComponentFixture.detectChanges();
 
         expect(studentExamsComponent.isLoading).to.equal(false);
@@ -447,10 +448,10 @@ describe('StudentExamsComponent', () => {
 
     it('should correctly catch HTTPError when starting the exercises of the students', () => {
         examManagementService = TestBed.inject(ExamManagementService);
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().add(120, 'seconds');
+        exam.startDate = dayjs().add(120, 'seconds');
 
         const startExercisesStub = sinon.stub(examManagementService, 'startExercises').returns(throwError(httpError));
         studentExamsComponentFixture.detectChanges();
@@ -498,7 +499,7 @@ describe('StudentExamsComponent', () => {
             result,
         });
 
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         course.isAtLeastInstructor = true;
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         const unlockRepoStub = sinon.stub(examManagementService, 'unlockAllRepositories').returns(throwError(httpError));
@@ -552,7 +553,7 @@ describe('StudentExamsComponent', () => {
             result,
         });
 
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         course.isAtLeastInstructor = true;
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         const lockRepoStub = sinon.stub(examManagementService, 'lockAllRepositories').returns(throwError(httpError));
@@ -575,8 +576,8 @@ describe('StudentExamsComponent', () => {
 
     it('should evaluate Quiz exercises', () => {
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().subtract(200, 'seconds');
-        exam.endDate = moment().subtract(100, 'seconds');
+        exam.startDate = dayjs().subtract(200, 'seconds');
+        exam.endDate = dayjs().subtract(100, 'seconds');
 
         studentExamsComponentFixture.detectChanges();
         expect(studentExamsComponent.isLoading).to.equal(false);
@@ -594,9 +595,9 @@ describe('StudentExamsComponent', () => {
 
     it('should correctly catch HTTPError when evaluating quiz exercises', () => {
         course.isAtLeastInstructor = true;
-        exam.startDate = moment().subtract(200, 'seconds');
-        exam.endDate = moment().subtract(100, 'seconds');
-        const alertService = TestBed.inject(JhiAlertService);
+        exam.startDate = dayjs().subtract(200, 'seconds');
+        exam.endDate = dayjs().subtract(100, 'seconds');
+        const alertService = TestBed.inject(AlertService);
 
         studentExamsComponentFixture.detectChanges();
         expect(studentExamsComponent.isLoading).to.equal(false);

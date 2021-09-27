@@ -18,7 +18,7 @@
 
         <table class="table" [hidden]="ratings.length === 0">
             <thead>
-                <tr jhiSort [(predicate)]="ratingsSortingPredicate" [(ascending)]="ratingsReverseOrder" [callback]="sortRows.bind(this)">
+                <tr jhiSort [(predicate)]="ratingsSortingPredicate" [(ascending)]="ratingsReverseOrder" (sortChange)="sortRows()">
                     <th jhiSortBy="id">
                         <a class="th-link">#</a>
                         <fa-icon [icon]="'sort'"></fa-icon>

@@ -1,6 +1,6 @@
 import * as chai from 'chai';
 
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
@@ -19,7 +19,7 @@ import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-c
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisTestModule } from '../../../test.module';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { Team } from 'app/entities/team.model';
@@ -66,7 +66,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             declarations: [ExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent), MockComponent(CloneRepoButtonComponent)],
             providers: [
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },

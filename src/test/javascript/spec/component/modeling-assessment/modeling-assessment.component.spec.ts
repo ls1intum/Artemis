@@ -10,7 +10,7 @@ import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.co
 import * as chai from 'chai';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

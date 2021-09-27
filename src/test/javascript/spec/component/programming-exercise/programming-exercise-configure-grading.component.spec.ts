@@ -1,16 +1,15 @@
 import { async, ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import * as sinonChai from 'sinon-chai';
-import { sortBy as _sortBy } from 'lodash';
+import sinonChai from 'sinon-chai';
+import { sortBy as _sortBy } from 'lodash-es';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, Subject } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { CookieService } from 'ngx-cookie-service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -165,7 +164,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         },
     } as ProgrammingExerciseGradingStatistics;
 
-    const getExerciseTestCasteStateDTO = (released: boolean, hasStudentResult: boolean, testCasesChanged: boolean, buildAndTestStudentSubmissionsAfterDueDate?: Moment) => ({
+    const getExerciseTestCasteStateDTO = (released: boolean, hasStudentResult: boolean, testCasesChanged: boolean, buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs) => ({
         body: {
             released,
             hasStudentResult,
@@ -220,7 +219,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockDirective(NgModel),
             ],
             providers: [
-                JhiAlertService,
+                AlertService,
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProgrammingExerciseWebsocketService, useClass: MockProgrammingExerciseWebsocketService },
                 { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
@@ -286,7 +285,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         hasStudentResult = true,
         testCasesChanged = false,
         hasBuildAndTestAfterDueDate = true,
-        buildAndTestAfterDueDate = moment(),
+        buildAndTestAfterDueDate = dayjs(),
         showInactive = false,
     } = {}) => {
         comp.ngOnInit();
@@ -480,7 +479,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         updateTestCasesStub.returns(of(updateTestCases));
 
         // Initialize spy for error alert
-        const alertService = TestBed.inject(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = spy(alertService, 'error');
 
         const saveButton = getSaveButton();

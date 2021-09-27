@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
@@ -39,6 +39,15 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     ngOnInit(): void {
         // show submission answers in UI
         this.updateViewFromSubmission();
+    }
+
+    /**
+     * Updates the problem statement of the currently loaded modeling exercise which is part of the user's student exam.
+     * @param newProblemStatement is the updated problem statement that should be displayed to the user.
+     */
+    updateProblemStatement(newProblemStatement: string): void {
+        this.exercise.problemStatement = newProblemStatement;
+        this.changeDetectorReference.detectChanges();
     }
 
     getSubmission(): Submission {
@@ -90,7 +99,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return this.exercise && (!this.exercise.dueDate || moment(this.exercise.dueDate).isSameOrAfter(moment()));
+        return this.exercise && (!this.exercise.dueDate || dayjs(this.exercise.dueDate).isSameOrAfter(dayjs()));
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

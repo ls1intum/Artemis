@@ -4,7 +4,6 @@ import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { ChartsModule } from 'ng2-charts';
 import { ClipboardModule } from 'ngx-clipboard';
-import { MomentModule } from 'ngx-moment';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
@@ -37,7 +36,7 @@ const routes: Routes = [
             {
                 path: '',
                 pathMatch: 'full',
-                loadChildren: () => import('../discussion/discussion.module').then((m) => m.DiscussionModule),
+                loadChildren: () => import('../page-discussion-section/page-discussion-section.module').then((m) => m.PageDiscussionSectionModule),
             },
         ],
     },
@@ -51,7 +50,6 @@ const routes: Routes = [
         ArtemisSharedComponentModule,
         ChartsModule,
         ClipboardModule,
-        MomentModule,
         ArtemisSharedPipesModule,
         ArtemisResultModule,
         ArtemisSidePanelModule,

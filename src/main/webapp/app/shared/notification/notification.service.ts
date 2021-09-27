@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, ReplaySubject } from 'rxjs';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { map } from 'rxjs/operators';
 
-import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
@@ -150,7 +149,7 @@ export class NotificationService {
         return {
             title: 'Quiz started',
             text: 'Quiz "' + quizExercise.title + '" just started.',
-            notificationDate: moment(),
+            notificationDate: dayjs(),
             target: JSON.stringify({
                 course: quizExercise.course!.id,
                 mainPage: 'courses',
@@ -162,7 +161,7 @@ export class NotificationService {
 
     private addNotificationToObserver(notification: Notification): void {
         if (notification && notification.notificationDate) {
-            notification.notificationDate = moment(notification.notificationDate);
+            notification.notificationDate = dayjs(notification.notificationDate);
             this.notificationObserver.next(notification);
         }
     }
@@ -170,7 +169,7 @@ export class NotificationService {
     private convertDateArrayFromServer(res: HttpResponse<Notification[]>): HttpResponse<Notification[]> {
         if (res.body) {
             res.body.forEach((notification: Notification) => {
-                notification.notificationDate = notification.notificationDate ? moment(notification.notificationDate) : undefined;
+                notification.notificationDate = notification.notificationDate ? dayjs(notification.notificationDate) : undefined;
             });
         }
         return res;
