@@ -50,7 +50,7 @@ jobs:
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Tests
-      run: ./gradlew --console=plain executeTests jacocoTestReport -x npm -x webapp jacocoTestCoverageVerification
+      run: ./gradlew --console=plain executeTests jacocoTestReport -x webapp jacocoTestCoverageVerification
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
@@ -79,7 +79,7 @@ jobs:
     - name: Java Code Style
       run: ./gradlew spotlessCheck
     - name: Java Documentation
-      run: ./gradlew checkstyleMain -x npm -x webapp
+      run: ./gradlew checkstyleMain -x webapp
       if: success() || failure()
 
   client-tests:
