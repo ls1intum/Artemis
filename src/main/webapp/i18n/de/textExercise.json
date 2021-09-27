@@ -35,7 +35,7 @@
                 "description": "Ein Textcluster stellt eine Gruppe von Textblöcken basierend auf ähnlichen Studentenbeiträgen dar. Sobald ein Textblock ein Feedback von einem Tutor erhält, wird dieses Feedback als Vorschlag an die übrigen Textblöcke weitergegeben. Die folgende Tabelle zeigt eine Übersicht aller für diese Übung generierten Textblöcke. Sie können sehen wie viele automatische Feedback-Vorschläge innerhalb eines Clusters wiederverwendet werden. Sie können ein Cluster auch deaktivieren, wenn die Ähnlichkeitsgruppierung nicht wie erwartet durchgeführt wurde.",
                 "clusterId": "Cluster ID",
                 "reusedFeedbackRatio": "Anzahl wiederverwendetes Feedback / Clustergröße",
-                "reusedFeedbackRatioTooltip": "Anzahl der wiederverwendeten automatischen Feedbacks / Clustergröße",
+                "reusedFeedbackRatioTooltip": "Anzahl an wiederverwendetem, automatischem Feedback / Clustergröße",
                 "action": "Aktion",
                 "disable": "Deaktivieren",
                 "enable": "Aktivieren",
