@@ -21,7 +21,7 @@ plugins {
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "3.1.4"
     id "com.github.node-gradle.node" version "3.1.1"
-    id "com.diffplug.spotless" version "5.15.1"
+    id "com.diffplug.spotless" version "5.15.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.39.0"
     id "com.github.andygoossens.gradle-modernizer-plugin" version "1.6.0"
