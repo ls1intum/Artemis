@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,13 +73,15 @@ public class ProgrammingExerciseGradingService {
 
     private final SubmissionPolicyService submissionPolicyService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
-            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExamDateService examDateService,
-            SubmissionPolicyService submissionPolicyService) {
+                                             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
+                                             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
+                                             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+                                             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+                                             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExamDateService examDateService,
+                                             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -95,6 +98,7 @@ public class ProgrammingExerciseGradingService {
         this.resultService = resultService;
         this.examDateService = examDateService;
         this.submissionPolicyService = submissionPolicyService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -139,19 +143,25 @@ public class ProgrammingExerciseGradingService {
                 triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), programmingSubmission);
             }
 
-            if (!isTemplateParticipation && !isSolutionParticipation && programmingExercise.getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
-                submissionPolicyService.handleLockRepositoryPolicy(newResult, policy);
-            }
+            if (!isTemplateParticipation && !isSolutionParticipation) {
+                // When a student receives a new result, we want to check whether we need to lock the participation
+                // repository when a lock repository policy is present. At this point, we know that the programming
+                // exercise exists.
+                SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
+                if (submissionPolicy instanceof LockRepositoryPolicy policy) {
+                    submissionPolicyService.handleLockRepositoryPolicy(newResult, policy);
+                }
 
-            if (!isSolutionParticipation && !isTemplateParticipation && programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual()) {
-                // Note: in this case, we do not want to save the newResult, but we only want to update the latest semi-automatic one
-                Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), newResult,
+                if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual()) {
+                    // Note: in this case, we do not want to save the newResult, but we only want to update the latest semi-automatic one
+                    Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), newResult,
                         programmingExercise);
-                // Adding back dropped submission
-                updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
-                programmingSubmissionRepository.save(programmingSubmission);
-                resultRepository.save(updatedLatestSemiAutomaticResult);
-                return Optional.of(updatedLatestSemiAutomaticResult);
+                    // Adding back dropped submission
+                    updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
+                    programmingSubmissionRepository.save(programmingSubmission);
+                    resultRepository.save(updatedLatestSemiAutomaticResult);
+                    return Optional.of(updatedLatestSemiAutomaticResult);
+                }
             }
 
             // Finally save the new result once and make sure the order column between submission and result is maintained
@@ -257,7 +267,7 @@ public class ProgrammingExerciseGradingService {
         if (isStudentParticipation) {
             testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
         }
-        return calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise);
+        return calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, isStudentParticipation);
     }
 
     /**
@@ -278,12 +288,12 @@ public class ProgrammingExerciseGradingService {
 
         templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
                 .flatMap(p -> Optional.ofNullable(p.findLatestLegalResult())).ifPresent(result -> {
-                    calculateScoreForResult(testCases, testCases, result, exercise);
+                    calculateScoreForResult(testCases, testCases, result, exercise, false);
                     updatedResults.add(result);
                 });
         solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
                 .flatMap(p -> Optional.ofNullable(p.findLatestLegalResult())).ifPresent(result -> {
-                    calculateScoreForResult(testCases, testCases, result, exercise);
+                    calculateScoreForResult(testCases, testCases, result, exercise, false);
                     updatedResults.add(result);
                 });
 
@@ -295,7 +305,7 @@ public class ProgrammingExerciseGradingService {
         for (StudentParticipation studentParticipation : participations) {
             Result result = studentParticipation.findLatestLegalResult();
             if (result != null) {
-                calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise);
+                calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, false);
                 updatedResults.add(result);
             }
         }
@@ -305,7 +315,7 @@ public class ProgrammingExerciseGradingService {
         for (StudentParticipation studentParticipation : participationsWithManualResult) {
             Result result = studentParticipation.findLatestLegalResult();
             if (result != null) {
-                calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise);
+                calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, true);
                 updatedResults.add(result);
             }
         }
@@ -340,7 +350,7 @@ public class ProgrammingExerciseGradingService {
      * @return The updated result
      */
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
-            ProgrammingExercise exercise) {
+            ProgrammingExercise exercise, boolean applySubmissionPolicy) {
         // Distinguish between static code analysis feedback, test case feedback and manual feedback
         List<Feedback> testCaseFeedback = new ArrayList<>();
         List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
@@ -376,7 +386,7 @@ public class ProgrammingExerciseGradingService {
 
             // Recalculate the achieved score by including the test cases individual weight.
             // The score is always calculated from ALL (except visibility=never) test cases, regardless of the current date!
-            updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases);
+            updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
             updateResultString(result, successfulTestCases, testCasesForCurrentDate, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases);
@@ -484,7 +494,7 @@ public class ProgrammingExerciseGradingService {
      * @param hasDuplicateTestCases      indicates duplicate test cases.
      */
     private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
-            List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise, boolean hasDuplicateTestCases) {
+            List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
         if (hasDuplicateTestCases || successfulTestCases.isEmpty()) {
             result.setScore(0D);
         }
@@ -539,11 +549,13 @@ public class ProgrammingExerciseGradingService {
             // When a submission penalty policy is active, the score must be capped at the
             // maximum achievable score. The maximum achievable score depends on the policy
             // settings and number of unique submissions in the participation.
-            if (programmingExercise.getSubmissionPolicy() instanceof SubmissionPenaltyPolicy policy) {
-                double achievableScore = submissionPolicyService.calculateAchievableScoreForParticipation(result.getParticipation(), policy);
-                score = Math.min(score, achievableScore);
+            if (applySubmissionPolicy) {
+                SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
+                if (submissionPolicy instanceof SubmissionPenaltyPolicy policy) {
+                    double achievableScore = submissionPolicyService.calculateAchievableScoreForParticipation(result.getParticipation(), policy);
+                    score = Math.min(score, achievableScore);
+                }
             }
-
             result.setScore(score);
         }
     }
