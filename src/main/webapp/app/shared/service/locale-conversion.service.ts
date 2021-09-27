@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
-import { JhiLanguageService } from 'ng-jhipster';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
     providedIn: 'root',
 })
 export class LocaleConversionService {
-    locale = this.getLang(); // default value, will be overridden by the current language of Artemis
+    locale = LocaleConversionService.getLang(); // default value, will be overridden by the current language of Artemis
 
-    constructor(private languageService: JhiLanguageService) {
-        this.locale = this.languageService.getCurrentLanguage();
+    constructor(private translateService: TranslateService) {
+        this.locale = this.translateService.currentLang;
     }
 
     /**
@@ -48,7 +48,7 @@ export class LocaleConversionService {
     /**
      * Get the language set by the user.
      */
-    private getLang() {
+    private static getLang() {
         if (navigator.languages !== undefined) {
             return navigator.languages[0];
         } else {

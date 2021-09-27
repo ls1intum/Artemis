@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { round, stringifyIgnoringFields } from 'app/shared/util/utils';
 
 chai.use(sinonChai);

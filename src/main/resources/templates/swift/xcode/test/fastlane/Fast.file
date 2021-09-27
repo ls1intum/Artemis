@@ -1,0 +1,46 @@
+default_platform(:ios)
+
+desc "Build only"
+lane :build do
+    # Build the ${appName} application without tests
+    xcodebuild(workspace: "${appName}Test.xcworkspace",
+               derived_data_path: "DerivedData",
+               scheme: "${appName}",
+               configuration: "Debug",
+               clean: true,
+               build: true,
+               build_settings: {
+                   "CODE_SIGNING_ALLOWED" => "NO",
+                   "CODE_SIGNING_REQUIRED" => "NO",
+                   "CODE_SIGN_IDENTITY" => "",
+                   "CODE_SIGN_ENTITLEMENTS" => "",
+               })
+end
+
+desc "Run All Tests"
+lane :test do
+    # Run UI and Unit Tests
+    run_tests(workspace: "${appName}Test.xcworkspace",
+      		  derived_data_path: "DerivedData",
+      		  clean: true,
+       		  scheme: "${appName}")
+end
+
+    
+desc "Run Unit Tests only"
+lane :unittest do
+    # Run Unit Tests
+    run_tests(workspace: "${appName}Test.xcworkspace",
+      		  derived_data_path: "DerivedData",
+      		  clean: true,
+       		  scheme: "${appName}Test")
+end
+
+desc "Run UI Tests only"
+lane :uitest do
+    # Run UI Tests
+    run_tests(workspace: "${appName}Test.xcworkspace",
+      		  derived_data_path: "DerivedData",
+      		  clean: true,
+       		  scheme: "${appName}UITest")
+end

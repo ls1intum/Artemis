@@ -1,7 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
 import { filter } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -12,6 +11,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { CourseExerciseService, CourseManagementService } from '../../../course/manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
@@ -24,12 +25,12 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
         public exerciseService: ExerciseService,
         private fileUploadExerciseService: FileUploadExerciseService,
         private courseExerciseService: CourseExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private accountService: AccountService,
         private sortService: SortService,
         courseService: CourseManagementService,
         translateService: TranslateService,
-        eventManager: JhiEventManager,
+        eventManager: EventManager,
         route: ActivatedRoute,
     ) {
         super(courseService, translateService, route, eventManager);
@@ -51,7 +52,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                     });
                     this.emitExerciseCount(this.fileUploadExercises.length);
                 },
-                (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+                (res: HttpErrorResponse) => onError(this.alertService, res),
             );
     }
 

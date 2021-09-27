@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { stub } from 'sinon';
 import { of } from 'rxjs';
 import { HttpResponse, HttpHeaders } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -40,8 +40,8 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     const singleParticipantMode = false;
     const programmingExercise = new ProgrammingExercise(new Course(), undefined);
     programmingExercise.id = exerciseId;
-    programmingExercise.releaseDate = moment();
-    programmingExercise.dueDate = moment().add(7, 'days');
+    programmingExercise.releaseDate = dayjs();
+    programmingExercise.dueDate = dayjs().add(7, 'days');
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({

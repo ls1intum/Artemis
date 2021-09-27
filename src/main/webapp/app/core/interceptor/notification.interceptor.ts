@@ -2,15 +2,15 @@ import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } fr
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Injectable()
 export class NotificationInterceptor implements HttpInterceptor {
-    constructor(private alertService: JhiAlertService) {}
+    constructor(private alertService: AlertService) {}
 
     /**
      * Identifies and handles a given HTTP request. If the event is a HttpResponse and contains an alert, the alert
-     * and its parameters are broadcasted to the JhiAlertService.
+     * and its parameters are broadcasted to the AlertService.
      * @param request The outgoing request object to handle.
      * @param next The next interceptor in the chain, or the server
      * if no interceptors remain in the chain.
