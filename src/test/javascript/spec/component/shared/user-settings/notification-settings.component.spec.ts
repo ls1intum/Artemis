@@ -3,21 +3,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockProvider } from 'ng-mocks/cjs/lib/mock-provider/mock-provider';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
 import { MockPipe } from 'ng-mocks/cjs/lib/mock-pipe/mock-pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
-import { JhiAlertService } from 'ng-jhipster';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { MockComponent } from 'ng-mocks';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('NotificationSettingsComponent', () => {
     let comp: NotificationSettingsComponent;
@@ -25,10 +20,9 @@ describe('NotificationSettingsComponent', () => {
 
     const imports = [ArtemisTestModule, TranslateTestingModule];
     const declarations = [MockComponent(AlertComponent), NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
-    const providers = [MockProvider(JhiAlertService), { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }];
+    const providers = [MockProvider(AlertService), { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }];
 
     beforeEach(() => {
-        // TestBed.configureTestingModule({
         return TestBed.configureTestingModule({
             imports,
             declarations,
@@ -39,11 +33,6 @@ describe('NotificationSettingsComponent', () => {
                 fixture = TestBed.createComponent(NotificationSettingsComponent);
                 comp = fixture.componentInstance;
             });
-    });
-
-    it('should initialize component', () => {
-        comp.ngOnInit();
-        expect(comp).to.be.ok;
     });
 
     it('should toggle setting', () => {
@@ -62,13 +51,13 @@ describe('NotificationSettingsComponent', () => {
             },
         };
 
-        expect(comp.settingsChanged).to.be.false;
-        expect(notificationSettingA.changed).to.be.false;
+        expect(comp.settingsChanged).toBe(false);
+        expect(notificationSettingA.changed).toBe(false);
 
         comp.toggleSetting(event);
 
-        expect(notificationSettingA.webapp).not.to.be.equal(webappStatus);
-        expect(notificationSettingA.changed).to.be.true;
-        expect(comp.settingsChanged).to.be.true;
+        expect(notificationSettingA.webapp).not.toEqual(webappStatus);
+        expect(notificationSettingA.changed).toBe(true);
+        expect(comp.settingsChanged).toBe(true);
     });
 });

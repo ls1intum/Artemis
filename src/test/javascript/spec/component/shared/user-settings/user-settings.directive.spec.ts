@@ -2,9 +2,6 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
-import * as chai from 'chai';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
@@ -13,14 +10,13 @@ import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-tran
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
-import { JhiAlertService } from 'ng-jhipster';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { SinonStub, stub } from 'sinon';
 import { MockProvider } from 'ng-mocks';
 import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 /**
  * needed for testing the abstract UserSettingsDirective
@@ -31,17 +27,14 @@ import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-use
 })
 class UserSettingsMockComponent extends UserSettingsDirective {
     changeDetector: ChangeDetectorRef;
-    alertService: JhiAlertService;
+    alertService: AlertService;
 
-    constructor(userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: JhiAlertService) {
+    constructor(userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: AlertService) {
         super(userSettingsService, alertService, changeDetector);
         this.changeDetector = changeDetector;
         this.alertService = alertService;
     }
 }
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('User Settings Directive', () => {
     let comp: UserSettingsMockComponent;
@@ -49,10 +42,10 @@ describe('User Settings Directive', () => {
 
     let userSettingsService: UserSettingsService;
     let httpMock: HttpTestingController;
-    let alertService: JhiAlertService;
+    let alertService: AlertService;
     let changeDetector: ChangeDetectorRef;
 
-    let changeDetectorDetectChangesStub: SinonStub;
+    let changeDetectorDetectChangesStub: any;
 
     const router = new MockRouter();
 
@@ -87,17 +80,16 @@ describe('User Settings Directive', () => {
                 comp.userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
                 userSettingsService = TestBed.inject(UserSettingsService);
                 httpMock = TestBed.inject(HttpTestingController);
-                comp.alertService = TestBed.inject(JhiAlertService);
+                comp.alertService = TestBed.inject(AlertService);
                 alertService = comp.alertService;
                 comp.changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
                 changeDetector = comp.changeDetector;
-                changeDetectorDetectChangesStub = stub(changeDetector.constructor.prototype, 'detectChanges');
+                changeDetectorDetectChangesStub = spyOn(changeDetector.constructor.prototype, 'detectChanges');
             });
     });
 
     afterEach(() => {
         httpMock.verify();
-        sinon.restore();
     });
 
     describe('Service methods with Category Notification Settings', () => {
@@ -105,42 +97,42 @@ describe('User Settings Directive', () => {
 
         describe('test loadSettings', () => {
             it('should call userSettingsService to load Settings', () => {
-                stub(userSettingsService, 'loadSettings').returns(of(new HttpResponse({ body: notificationSettingsForTesting })));
-                const loadSettingsSuccessAsSettingsStructureSpy = sinon.spy(userSettingsService, 'loadSettingsSuccessAsSettingsStructure');
-                const extractIndividualSettingsFromSettingsStructureSpy = sinon.spy(userSettingsService, 'extractIndividualSettingsFromSettingsStructure');
+                jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(new HttpResponse({ body: notificationSettingsForTesting })));
+                const loadSettingsSuccessAsSettingsStructureSpy = spyOn(userSettingsService, 'loadSettingsSuccessAsSettingsStructure');
+                const extractIndividualSettingsFromSettingsStructureSpy = spyOn(userSettingsService, 'extractIndividualSettingsFromSettingsStructure');
 
                 comp.ngOnInit();
 
-                expect(loadSettingsSuccessAsSettingsStructureSpy).to.be.calledOnce;
-                expect(extractIndividualSettingsFromSettingsStructureSpy).to.be.calledOnce;
-                expect(changeDetectorDetectChangesStub).to.have.been.called;
+                expect(loadSettingsSuccessAsSettingsStructureSpy).toHaveBeenCalledTimes(1);
+                expect(extractIndividualSettingsFromSettingsStructureSpy).toHaveBeenCalledTimes(1);
+                expect(changeDetectorDetectChangesStub).toHaveBeenCalled();
             });
 
             it('should handle error correctly when loading fails', () => {
-                const alertServiceSpy = sinon.spy(comp.alertService, 'error');
+                const alertServiceSpy = spyOn(comp.alertService, 'error');
                 const errorResponse = new HttpErrorResponse({ status: 403 });
-                stub(userSettingsService, 'loadSettings').returns(throwError(errorResponse));
+                jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(throwError(errorResponse));
 
                 comp.ngOnInit();
 
-                expect(alertServiceSpy).to.be.calledOnce;
+                expect(alertServiceSpy).toHaveBeenCalled();
             });
         });
 
         describe('test savingSettings', () => {
             it('should call userSettingsService to save Settings', () => {
-                stub(userSettingsService, 'saveSettings').returns(of(new HttpResponse({ body: notificationSettingsForTesting })));
-                const saveSettingsSuccessSpy = sinon.spy(userSettingsService, 'saveSettingsSuccess');
-                const extractIndividualSettingsFromSettingsStructureSpy = sinon.spy(userSettingsService, 'extractIndividualSettingsFromSettingsStructure');
-                const createApplyChangesEventSpy = sinon.spy(userSettingsService, 'sendApplyChangesEvent');
-                const alertServiceSuccessSpy = sinon.spy(alertService, 'success');
+                jest.spyOn(userSettingsService, 'saveSettings').mockReturnValue(of(new HttpResponse({ body: notificationSettingsForTesting })));
+                const saveSettingsSuccessSpy = spyOn(userSettingsService, 'saveSettingsSuccess');
+                const extractIndividualSettingsFromSettingsStructureSpy = spyOn(userSettingsService, 'extractIndividualSettingsFromSettingsStructure');
+                const createApplyChangesEventSpy = spyOn(userSettingsService, 'sendApplyChangesEvent');
+                const alertServiceSuccessSpy = spyOn(alertService, 'success');
 
                 comp.saveSettings();
 
-                expect(saveSettingsSuccessSpy).to.be.calledOnce;
-                expect(extractIndividualSettingsFromSettingsStructureSpy).to.be.calledOnce;
-                expect(createApplyChangesEventSpy).to.be.calledOnce;
-                expect(alertServiceSuccessSpy).to.have.been.called;
+                expect(saveSettingsSuccessSpy).toHaveBeenCalledTimes(1);
+                expect(extractIndividualSettingsFromSettingsStructureSpy).toHaveBeenCalledTimes(1);
+                expect(createApplyChangesEventSpy).toHaveBeenCalledTimes(1);
+                expect(alertServiceSuccessSpy).toHaveBeenCalled();
             });
         });
     });
