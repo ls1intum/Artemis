@@ -3,7 +3,7 @@ import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import * as sinon from 'sinon';
 import { MockPipe } from 'ng-mocks';
@@ -18,7 +18,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { LectureService } from 'app/lecture/lecture.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -89,7 +89,7 @@ describe('LectureUnitManagementComponent', () => {
             providers: [
                 MockProvider(LectureUnitService),
                 MockProvider(LectureService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,

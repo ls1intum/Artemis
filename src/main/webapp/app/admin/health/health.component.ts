@@ -2,9 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
-import { Health, HealthDetails, HealthService } from './health.service';
+import { HealthService } from './health.service';
 import { HealthModalComponent } from './health-modal.component';
-import { KeyValue } from '@angular/common';
+import { Health, HealthDetails, HealthStatus } from 'app/admin/health/health.model';
 
 @Component({
     selector: 'jhi-health',
@@ -19,12 +19,11 @@ export class HealthComponent implements OnInit {
         this.refresh();
     }
 
-    getBadgeClass(statusState: string | undefined) {
+    getBadgeClass(statusState: HealthStatus) {
         if (statusState === 'UP') {
             return 'bg-success';
-        } else {
-            return 'bg-danger';
         }
+        return 'bg-danger';
     }
 
     refresh(): void {
@@ -38,7 +37,7 @@ export class HealthComponent implements OnInit {
         );
     }
 
-    showHealth(health: KeyValue<string, HealthDetails | undefined>): void {
+    showHealth(health: { key: string; value: HealthDetails }): void {
         const modalRef = this.modalService.open(HealthModalComponent);
         modalRef.componentInstance.health = health;
     }

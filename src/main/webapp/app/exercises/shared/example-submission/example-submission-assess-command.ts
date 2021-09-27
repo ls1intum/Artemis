@@ -1,4 +1,4 @@
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FeedbackCorrectionError } from 'app/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
@@ -11,7 +11,7 @@ export interface FeedbackMarker {
 }
 
 export class ExampleSubmissionAssessCommand {
-    constructor(private tutorParticipationService: TutorParticipationService, private jhiAlertService: JhiAlertService, private feedbackMarker: FeedbackMarker) {}
+    constructor(private tutorParticipationService: TutorParticipationService, private alertService: AlertService, private feedbackMarker: FeedbackMarker) {}
 
     assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number) {
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, exerciseId).subscribe(
@@ -22,7 +22,7 @@ export class ExampleSubmissionAssessCommand {
 
     private onSuccess() {
         this.feedbackMarker.markAllFeedbackToCorrect();
-        this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success');
+        this.alertService.success('artemisApp.exampleSubmission.assessScore.success');
     }
 
     private onFailure(error: HttpErrorResponse) {
@@ -36,9 +36,9 @@ export class ExampleSubmissionAssessCommand {
             this.feedbackMarker.markWrongFeedback(correctionErrors);
 
             const msg = correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
-            this.jhiAlertService.error(msg, { mistakeCount: correctionErrors.length });
+            this.alertService.error(msg, { mistakeCount: correctionErrors.length });
         } else {
-            onError(this.jhiAlertService, error);
+            onError(this.alertService, error);
         }
     }
 }

@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Result } from 'app/entities/result.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { filter } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
@@ -29,14 +29,14 @@ export class ComplaintsComponent implements OnInit {
     @Output() submit: EventEmitter<void> = new EventEmitter();
     complaintText?: string;
     alreadySubmitted = false;
-    submittedDate: Moment;
+    submittedDate: dayjs.Dayjs;
     accepted?: boolean;
     handled: boolean;
     complaintResponse: ComplaintResponse;
     ComplaintType = ComplaintType;
     loaded = true;
 
-    constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
+    constructor(private complaintService: ComplaintService, private alertService: AlertService, private complaintResponseService: ComplaintResponseService) {}
 
     ngOnInit(): void {
         this.complaintService
@@ -56,7 +56,7 @@ export class ComplaintsComponent implements OnInit {
                     }
                 },
                 (error: HttpErrorResponse) => {
-                    onError(this.jhiAlertService, error);
+                    onError(this.alertService, error);
                 },
             );
     }
@@ -83,9 +83,9 @@ export class ComplaintsComponent implements OnInit {
             (err: HttpErrorResponse) => {
                 this.loaded = true;
                 if (err && err.error && err.error.errorKey === 'toomanycomplaints') {
-                    this.jhiAlertService.error('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintsPerCourse });
+                    this.alertService.error('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintsPerCourse });
                 } else {
-                    onError(this.jhiAlertService, err);
+                    onError(this.alertService, err);
                 }
             },
         );

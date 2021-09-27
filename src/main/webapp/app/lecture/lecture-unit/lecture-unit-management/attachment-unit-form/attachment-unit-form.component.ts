@@ -1,5 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -12,7 +12,7 @@ export interface AttachmentUnitFormData {
 export interface FormProperties {
     name?: string;
     description?: string;
-    releaseDate?: Moment;
+    releaseDate?: dayjs.Dayjs;
     version?: number;
     updateNotificationText?: string;
 }

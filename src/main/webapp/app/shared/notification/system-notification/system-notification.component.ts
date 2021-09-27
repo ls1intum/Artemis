@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -64,14 +64,14 @@ export class SystemNotificationComponent implements OnInit {
                 return;
             }
             systemNotification = systemNotification as SystemNotification;
-            systemNotification.notificationDate = systemNotification.notificationDate ? moment(systemNotification.notificationDate) : undefined;
-            systemNotification.expireDate = systemNotification.expireDate ? moment(systemNotification.expireDate) : undefined;
+            systemNotification.notificationDate = systemNotification.notificationDate ? dayjs(systemNotification.notificationDate) : undefined;
+            systemNotification.expireDate = systemNotification.expireDate ? dayjs(systemNotification.expireDate) : undefined;
             if (!this.notification) {
                 this.checkNotificationDates(systemNotification);
             } else {
                 if (this.notification.id === systemNotification.id) {
                     this.checkNotificationDates(systemNotification);
-                } else if (systemNotification.notificationDate!.isBefore(this.notification.notificationDate!) && systemNotification.expireDate!.isAfter(moment())) {
+                } else if (systemNotification.notificationDate!.isBefore(this.notification.notificationDate!) && systemNotification.expireDate!.isAfter(dayjs())) {
                     this.checkNotificationDates(systemNotification);
                 }
             }
@@ -79,7 +79,7 @@ export class SystemNotificationComponent implements OnInit {
     }
 
     private checkNotificationDates(systemNotification: SystemNotification) {
-        if (systemNotification.expireDate!.isAfter(moment()) && systemNotification.notificationDate!.isBefore(moment())) {
+        if (systemNotification.expireDate!.isAfter(dayjs()) && systemNotification.notificationDate!.isBefore(dayjs())) {
             this.notification = systemNotification;
             this.setAlertClass();
             this.setAlertIcon();
