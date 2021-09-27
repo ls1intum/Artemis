@@ -40,8 +40,8 @@ describe('PostComponent', () => {
                 MockComponent(PostHeaderComponent),
                 MockComponent(PostingContentComponent),
                 MockComponent(PostFooterComponent),
-                MockDirective(MockRouterLinkDirective),
-                MockDirective(MockQueryParamsDirective),
+                MockRouterLinkDirective,
+                MockQueryParamsDirective,
             ],
         })
             .compileComponents()
