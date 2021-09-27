@@ -11,9 +11,9 @@ import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -42,7 +42,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
         private teamService: TeamService,
         private jhiWebsocketService: JhiWebsocketService,
         private serverDateService: ArtemisServerDateService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
     ) {}
 
     async ngOnInit() {
@@ -70,8 +70,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
             },
             (error: HttpErrorResponse) => {
                 const errorMessage = error.headers.get('X-artemisApp-message')!;
-                const jhiAlert = this.jhiAlertService.error(errorMessage);
-                jhiAlert.msg = errorMessage;
+                const jhiAlert = this.alertService.error(errorMessage);
+                jhiAlert.message = errorMessage;
             },
         );
     }
@@ -133,7 +133,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
      */
     hasVisibleExams(): boolean {
         for (const exam of this.course?.exams!) {
-            if (exam.visibleDate && moment(exam.visibleDate).isBefore(this.serverDateService.now())) {
+            if (exam.visibleDate && dayjs(exam.visibleDate).isBefore(this.serverDateService.now())) {
                 return true;
             }
         }

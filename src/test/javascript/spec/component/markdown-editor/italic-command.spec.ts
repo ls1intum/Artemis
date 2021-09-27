@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 
 import { AceEditorModule } from 'ng2-ace-editor';
 import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';

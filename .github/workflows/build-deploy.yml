@@ -46,7 +46,7 @@ jobs:
       uses: actions/setup-node@v2.4.0
       with:
         node-version: '${{ env.node }}'
-        cache: 'yarn'
+        cache: 'npm'
     - name: Setup Java
       uses: actions/setup-java@v2.3.0
       with:

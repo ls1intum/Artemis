@@ -26,10 +26,10 @@ import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questi
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockModule, MockProvider } from 'ng-mocks';
 import { MockPipe } from 'ng-mocks';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -99,7 +99,7 @@ describe('QuizExamSummaryComponent', () => {
     });
 
     it('should initialize', () => {
-        component.exam = { id: 1, publishResultsDate: moment().subtract(1, 'hours') } as Exam;
+        component.exam = { id: 1, publishResultsDate: dayjs().subtract(1, 'hours') } as Exam;
         fixture.detectChanges();
         expect(component).to.be.ok;
         expect(component.exam).to.exist;

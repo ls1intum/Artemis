@@ -5,14 +5,14 @@ import { systemNotificationManagementRoute } from 'app/admin/system-notification
 import { Authority } from 'app/shared/constants/authority.constants';
 import { upcomingExamsAndExercisesRoute } from 'app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.route';
 import { AuditsComponent } from 'app/admin/audits/audits.component';
-import { JhiConfigurationComponent } from 'app/admin/configuration/configuration.component';
+import { ConfigurationComponent } from 'app/admin/configuration/configuration.component';
 import { AdminFeatureToggleComponent } from 'app/admin/features/admin-feature-toggle.component';
 import { HealthComponent } from 'app/admin/health/health.component';
 import { LogsComponent } from 'app/admin/logs/logs.component';
-import { JhiMetricsMonitoringComponent } from 'app/admin/metrics/metrics.component';
 import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';
 import { organizationMgmtRoute } from 'app/admin/organization-management/organization-management.route';
+import { MetricsComponent } from 'app/admin/metrics/metrics.component';
 
 export const adminState: Routes = [
     {
@@ -32,7 +32,7 @@ export const adminState: Routes = [
             },
             {
                 path: 'configuration',
-                component: JhiConfigurationComponent,
+                component: ConfigurationComponent,
                 data: {
                     pageTitle: 'configuration.title',
                 },
@@ -67,7 +67,7 @@ export const adminState: Routes = [
             },
             {
                 path: 'metrics',
-                component: JhiMetricsMonitoringComponent,
+                component: MetricsComponent,
                 data: {
                     pageTitle: 'metrics.title',
                 },

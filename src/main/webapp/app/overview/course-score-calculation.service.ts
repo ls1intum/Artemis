@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { round } from 'app/shared/util/utils';
@@ -29,8 +28,8 @@ export class CourseScoreCalculationService {
         let reachableMaxPointsInCourse = 0;
         let presentationScore = 0;
         for (const exercise of courseExercises) {
-            const isExerciseFinished = !exercise.dueDate || exercise.dueDate.isBefore(moment());
-            const isAssessmentOver = !exercise.assessmentDueDate || exercise.assessmentDueDate.isBefore(moment());
+            const isExerciseFinished = !exercise.dueDate || exercise.dueDate.isBefore(dayjs());
+            const isAssessmentOver = !exercise.assessmentDueDate || exercise.assessmentDueDate.isBefore(dayjs());
             const isExerciseIncluded = exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED;
 
             if (isExerciseFinished && isExerciseIncluded) {
@@ -101,7 +100,7 @@ export class CourseScoreCalculationService {
         }
     }
 
-    getResultForParticipation(participation: Participation | undefined, dueDate: Moment) {
+    getResultForParticipation(participation: Participation | undefined, dueDate: dayjs.Dayjs) {
         if (!participation) {
             return undefined;
         }
@@ -156,12 +155,12 @@ export class CourseScoreCalculationService {
     }
 
     private static convertDateForResultFromServer(result: Result): Result {
-        result.completionDate = result.completionDate ? moment(result.completionDate) : undefined;
+        result.completionDate = result.completionDate ? dayjs(result.completionDate) : undefined;
         return result;
     }
 
     private static convertDateForParticipationFromServer(participation: Participation): Participation {
-        participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : undefined;
+        participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
         return participation;
     }
 }

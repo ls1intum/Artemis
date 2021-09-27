@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 @Injectable({
     providedIn: 'root',
@@ -16,8 +16,8 @@ export class SortService {
                 return SortService.compareWithUndefinedNull(valueA, valueB);
             }
 
-            if (moment.isMoment(valueA) && moment.isMoment(valueB)) {
-                return SortService.compareMoments(valueA, valueB, asc);
+            if (dayjs.isDayjs(valueA) && dayjs.isDayjs(valueB)) {
+                return SortService.compareDayjs(valueA, valueB, asc);
             }
 
             return SortService.compareBasic(valueA, valueB, asc);
@@ -34,7 +34,7 @@ export class SortService {
         }
     }
 
-    private static compareMoments(valueA: moment.Moment, valueB: moment.Moment, ascending: boolean) {
+    private static compareDayjs(valueA: dayjs.Dayjs, valueB: dayjs.Dayjs, ascending: boolean) {
         if (valueA.isSame(valueB)) {
             return 0;
         } else if (ascending) {

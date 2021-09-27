@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ActivatedRoute, Params } from '@angular/router';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -14,7 +14,7 @@ import { of } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { User } from 'app/core/user/user.model';
 import { Team } from 'app/entities/team.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
@@ -109,12 +109,12 @@ describe('ParticipationComponent', () => {
     it('should format a dates correctly', () => {
         expect(component.formatDate(undefined)).to.equal('');
 
-        const momentDate = moment();
-        expect(component.formatDate(momentDate)).to.equal(momentDate.format(defaultLongDateTimeFormat));
+        const dayjsDate = dayjs();
+        expect(component.formatDate(dayjsDate)).to.equal(dayjsDate.format(defaultLongDateTimeFormat));
 
         const date = new Date();
-        const momentFromDate = moment(date);
-        expect(component.formatDate(date)).to.equal(momentFromDate.format(defaultLongDateTimeFormat));
+        const dayjsFromDate = dayjs(date);
+        expect(component.formatDate(date)).to.equal(dayjsFromDate.format(defaultLongDateTimeFormat));
     });
 
     it('should format student login or team name from participation', () => {

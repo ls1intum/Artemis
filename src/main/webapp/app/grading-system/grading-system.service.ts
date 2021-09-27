@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { GradingScale } from 'app/entities/grading-scale.model';
-import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';

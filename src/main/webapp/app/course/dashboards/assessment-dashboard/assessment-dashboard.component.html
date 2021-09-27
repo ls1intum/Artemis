@@ -74,7 +74,7 @@
         </div>
         <table class="table exercise-table guided-tour-exercise-table">
             <thead>
-                <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="sortRows.bind(this)">
+                <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" (sortChange)="sortRows()">
                     <th jhiSortBy="type">
                         <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseType' | artemisTranslate }}</a>
                         <fa-icon [icon]="'sort'"></fa-icon>

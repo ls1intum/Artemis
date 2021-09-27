@@ -1,11 +1,11 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, getTestBed, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import * as sinon from 'sinon';
-import { SinonSpy, SinonStub, stub } from 'sinon';
+import { SinonSpy } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
@@ -36,7 +36,7 @@ describe('PostReactionsBarComponent', () => {
     let debugElement: DebugElement;
     let metisService: MetisService;
     let accountService: MockAccountService;
-    let accountServiceAuthorityStub: SinonStub;
+    let accountServiceAuthorityStub: jest.SpyInstance;
     let metisServiceUpdateDisplayPrioritySpy: SinonSpy;
     let post: Post;
     let reactionToCreate: Reaction;
@@ -63,7 +63,7 @@ describe('PostReactionsBarComponent', () => {
                 accountService = injector.get(AccountService);
                 debugElement = fixture.debugElement;
                 component = fixture.componentInstance;
-                accountServiceAuthorityStub = stub(accountService, 'isAtLeastTutorInCourse');
+                accountServiceAuthorityStub = jest.spyOn(accountService, 'isAtLeastTutorInCourse');
                 metisServiceUpdateDisplayPrioritySpy = sinon.spy(metisService, 'updatePostDisplayPriority');
                 post = new Post();
                 post.id = 1;
@@ -80,11 +80,12 @@ describe('PostReactionsBarComponent', () => {
     });
 
     afterEach(function () {
+        jest.clearAllMocks();
         sinon.restore();
     });
 
     it('should initialize user authority and reactions correctly', () => {
-        accountServiceAuthorityStub.returns(false);
+        accountServiceAuthorityStub.mockReturnValue(false);
         component.ngOnInit();
         expect(component.currentUserIsAtLeastTutor).to.deep.equal(false);
         fixture.detectChanges();
@@ -100,7 +101,7 @@ describe('PostReactionsBarComponent', () => {
 
     it('should initialize user authority and reactions correctly with same user', () => {
         component.posting!.author!.id = 99;
-        accountServiceAuthorityStub.returns(true);
+        accountServiceAuthorityStub.mockReturnValue(true);
         component.ngOnInit();
         expect(component.currentUserIsAtLeastTutor).to.deep.equal(true);
         fixture.detectChanges();
@@ -141,7 +142,7 @@ describe('PostReactionsBarComponent', () => {
     });
 
     it('should invoke metis service method when pin icon is toggled', () => {
-        accountServiceAuthorityStub.returns(true);
+        accountServiceAuthorityStub.mockReturnValue(true);
         component.ngOnInit();
         fixture.detectChanges();
         const pinEmoji = getElement(debugElement, '.pin');
@@ -155,7 +156,7 @@ describe('PostReactionsBarComponent', () => {
     });
 
     it('should invoke metis service method when archive icon is toggled', () => {
-        accountServiceAuthorityStub.returns(true);
+        accountServiceAuthorityStub.mockReturnValue(true);
         component.ngOnInit();
         fixture.detectChanges();
         const archiveEmoji = getElement(debugElement, '.archive');
@@ -169,7 +170,7 @@ describe('PostReactionsBarComponent', () => {
     });
 
     it('should show non-clickable pin emoji with correct tooltip for student when post is pinned', () => {
-        accountServiceAuthorityStub.returns(false);
+        accountServiceAuthorityStub.mockReturnValue(false);
         component.posting.displayPriority = DisplayPriority.PINNED;
         component.ngOnInit();
         fixture.detectChanges();
@@ -182,7 +183,7 @@ describe('PostReactionsBarComponent', () => {
     });
 
     it('should show non-clickable archive emoji with correct tooltip for student when post is archived', () => {
-        accountServiceAuthorityStub.returns(false);
+        accountServiceAuthorityStub.mockReturnValue(false);
         component.posting.displayPriority = DisplayPriority.ARCHIVED;
         component.ngOnInit();
         fixture.detectChanges();

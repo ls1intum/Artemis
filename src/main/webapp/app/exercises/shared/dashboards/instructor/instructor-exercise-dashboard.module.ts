@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { instructorExerciseDashboardRoute } from './instructor-exercise-dashboard.route';
 import { InstructorExerciseDashboardComponent } from './instructor-exercise-dashboard.component';
-import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ChartsModule } from 'ng2-charts';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
@@ -16,7 +15,6 @@ const ENTITY_STATES = instructorExerciseDashboardRoute;
 @NgModule({
     imports: [
         ArtemisSharedModule,
-        MomentModule,
         ClipboardModule,
         RouterModule.forChild(ENTITY_STATES),
         ChartsModule,

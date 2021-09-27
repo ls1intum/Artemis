@@ -130,11 +130,11 @@ export class ProgrammingExerciseImportComponent implements OnInit {
 
     /** Callback function when the user navigates through the page results
      *
-     * @param pagenumber The current page number
+     * @param pageNumber The current page number
      */
-    onPageChange(pagenumber: number) {
-        if (pagenumber) {
-            this.page = pagenumber;
+    onPageChange(pageNumber: number) {
+        if (pageNumber) {
+            this.page = pageNumber;
         }
     }
 }

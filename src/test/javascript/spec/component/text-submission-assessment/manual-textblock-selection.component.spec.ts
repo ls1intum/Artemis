@@ -120,7 +120,7 @@ describe('ManualTextblockSelectionComponent', () => {
     });
 
     it('should handle manual text selection correctly', () => {
-        spyOn(component.textBlockRefAdded, 'emit');
+        jest.spyOn(component.textBlockRefAdded, 'emit');
         component.handleTextSelection('Third text. Fourth text.', component.textBlockRefGroups[2]);
         fixture.detectChanges();
 
