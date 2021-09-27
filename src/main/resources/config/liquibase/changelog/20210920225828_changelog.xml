@@ -1,6 +1,21 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
     <changeSet author="argertboja" id="20210920225828">
+        <!--The first query finds all feedbacks which need a migration and prepares all the required
+        information to create all the missing text blocks such as text, first_index, end_index,
+        submission_id to which these text blocks belong to, type defined as MANUAL, the feedback_id
+        which is used to update the reference and the text block id which is computed as follows:
+        sha1(submission_id;start_index-end_index;text)
+        -->
+
+        <!--The second query finds all feedbacks which do not belong to any participation however they
+        are used for tutorial purposes-->
+
+        <!--The third query creates all missing text blocks-->
+
+        <!--The fourth query updates all feedback references-->
+
+        <!--The last two queries find and delete all left over feedbacks which haven't been removed before-->
         <sql>
             CREATE TEMPORARY TABLE feedbacks_to_migrate
             SELECT f.reference AS text,
@@ -18,6 +33,17 @@
             LEFT JOIN text_block b ON s.id = b.submission_id AND f.reference = b.id
             WHERE e.discriminator = 'T' AND f.reference IS NOT NULL AND f.reference NOT IN (SELECT id FROM text_block);
 
+            INSERT INTO feedbacks_to_migrate (text, start_index, end_index, submission_id, type, feedback_id, tb_id)
+            SELECT f.reference,
+            POSITION(f.reference IN s.text),
+            POSITION(f.reference IN s.text) + LENGTH(f.reference),
+            r.submission_id,
+            'MANUAL',
+            f.id,
+            SHA1(CONCAT(r.submission_id,';', POSITION(f.reference IN s.text),'-',POSITION(f.reference IN s.text) + LENGTH(f.reference),';',f.reference))
+            FROM feedback f INNER JOIN result r ON f.result_id = r.id
+            INNER JOIN submission s ON r.submission_id = s.id WHERE r.participation_id IS NULL AND s.participation_id IS NULL AND length(f.reference) > 255;
+
             INSERT INTO text_block (id, text, start_index, end_index, submission_id, type)
             SELECT ftm.tb_id, ftm.text, ftm.start_index, ftm.end_index, ftm.submission_id, ftm.type
             FROM feedbacks_to_migrate ftm;
@@ -26,6 +52,14 @@
             INNER JOIN feedbacks_to_migrate ftm ON f.id = ftm.feedback_id
             SET f.reference = ftm.tb_id
             WHERE f.id = ftm.feedback_id;
+
+            CREATE TEMPORARY TABLE leftover_feedbacks
+            SELECT f.id AS feedback_id
+            FROM feedback f INNER JOIN result r ON f.result_id = r.id
+            WHERE r.participation_id IS NULL AND r.submission_id IS NULL;
+
+            DELETE FROM feedback
+            WHERE id IN (SELECT feedback_id FROM leftover_feedbacks) OR result_id IS NULL;
         </sql>
     </changeSet>
 </databaseChangeLog>
