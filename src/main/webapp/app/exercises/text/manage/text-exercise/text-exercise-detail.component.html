@@ -17,7 +17,7 @@
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
                 </a>
             </div>
-            <div *ngIf="textExercise.releaseDate != undefined && moment(textExercise.releaseDate).isBefore(moment())" class="mt-3">
+            <div *ngIf="textExercise.releaseDate != undefined && dayjs(textExercise.releaseDate).isBefore(dayjs())" class="mt-3">
                 <jhi-exercise-detail-statistics [exercise]="textExercise" [doughnutStats]="doughnutStats" [exerciseType]="ExerciseType.TEXT"></jhi-exercise-detail-statistics>
                 <hr />
                 <div>

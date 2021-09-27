@@ -14,7 +14,7 @@ import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-subm
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { Submission } from 'app/entities/submission.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';

@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { SERVER_API_URL } from 'app/app.constants';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Injectable({ providedIn: 'root' })

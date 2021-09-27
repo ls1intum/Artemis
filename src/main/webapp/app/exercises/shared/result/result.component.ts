@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { getExercise, Participation, ParticipationType } from 'app/entities/participation/participation.model';
@@ -220,12 +220,12 @@ export class ResultComponent implements OnInit, OnChanges {
             // Based on its submission we test if the participation is in due time of the given exercise.
 
             const inDueTime = isParticipationInDueTime(this.participation, exercise);
-            const dueDate = ResultComponent.dateAsMoment(exercise.dueDate);
-            const assessmentDueDate = ResultComponent.dateAsMoment(exercise.assessmentDueDate);
+            const dueDate = ResultComponent.dateAsDayjs(exercise.dueDate);
+            const assessmentDueDate = ResultComponent.dateAsDayjs(exercise.assessmentDueDate);
 
             if (inDueTime && initializedResultWithScore(this.result)) {
                 // Submission is in due time of exercise and has a result with score
-                if (!assessmentDueDate || assessmentDueDate.isBefore()) {
+                if (!assessmentDueDate || assessmentDueDate.isBefore(dayjs())) {
                     // the assessment due date has passed (or there was none)
                     return ResultTemplateStatus.HAS_RESULT;
                 } else {
@@ -234,10 +234,10 @@ export class ResultComponent implements OnInit, OnChanges {
                 }
             } else if (inDueTime && !initializedResultWithScore(this.result)) {
                 // Submission is in due time of exercise and doesn't have a result with score.
-                if (!dueDate || dueDate.isSameOrAfter()) {
+                if (!dueDate || dueDate.isSameOrAfter(dayjs())) {
                     // the due date is in the future (or there is none) => the exercise is still ongoing
                     return ResultTemplateStatus.SUBMITTED;
-                } else if (!assessmentDueDate || assessmentDueDate.isSameOrAfter()) {
+                } else if (!assessmentDueDate || assessmentDueDate.isSameOrAfter(dayjs())) {
                     // the due date is over, further submissions are no longer possible, waiting for grading
                     return ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING;
                 } else {
@@ -245,7 +245,7 @@ export class ResultComponent implements OnInit, OnChanges {
                     // TODO why is this distinct from the case above? The submission can still be graded and often is.
                     return ResultTemplateStatus.NO_RESULT;
                 }
-            } else if (initializedResultWithScore(this.result) && (!assessmentDueDate || assessmentDueDate.isBefore())) {
+            } else if (initializedResultWithScore(this.result) && (!assessmentDueDate || assessmentDueDate.isBefore(dayjs()))) {
                 // Submission is not in due time of exercise, has a result with score and there is no assessmentDueDate for the exercise or it lies in the past.
                 // TODO handle external submissions with new status "External"
                 return ResultTemplateStatus.LATE;
@@ -269,11 +269,11 @@ export class ResultComponent implements OnInit, OnChanges {
         return ResultTemplateStatus.NO_RESULT;
     }
 
-    private static dateAsMoment(date: any) {
+    private static dateAsDayjs(date: any) {
         if (date == undefined) {
             return undefined;
         }
-        return moment.isMoment(date) ? date : moment(date);
+        return dayjs.isDayjs(date) ? date : dayjs(date);
     }
 
     /**

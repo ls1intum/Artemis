@@ -4,7 +4,6 @@ import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
-import { SERVER_API_URL } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
@@ -47,14 +46,14 @@ describe('TextAssessmentAnalytics Service', () => {
     }));
 
     it('should subscribe to route parameters if artemis analytics is enabled', fakeAsync(() => {
-        const subscribeToRouteParameters = spyOn<any>(service, 'subscribeToRouteParameters');
+        const subscribeToRouteParameters = jest.spyOn<any, any>(service, 'subscribeToRouteParameters').mockImplementation(() => {});
         service.analyticsEnabled = true;
         service.setComponentRoute(new ActivatedRoute());
         expect(subscribeToRouteParameters).toHaveBeenCalledTimes(1);
     }));
 
     it('should not subscribe to route parameters if artemis analytics is disabled', fakeAsync(() => {
-        const subscribeToRouteParameters = spyOn<any>(service, 'subscribeToRouteParameters');
+        const subscribeToRouteParameters = jest.spyOn<any, any>(service, 'subscribeToRouteParameters');
         service.analyticsEnabled = false;
         service.setComponentRoute(new ActivatedRoute());
         expect(subscribeToRouteParameters).toHaveBeenCalledTimes(0);

@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -7,7 +7,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MomentModule } from 'ngx-moment';
 import { CourseManagementExerciseRowComponent } from 'app/course/manage/overview/course-management-exercise-row.component';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -36,7 +35,7 @@ describe('CourseManagementExerciseRowComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MomentModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 CourseManagementExerciseRowComponent,
                 MockPipe(ArtemisTranslatePipe),
