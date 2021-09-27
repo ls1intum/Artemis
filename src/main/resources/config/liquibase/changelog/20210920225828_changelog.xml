@@ -1,6 +1,6 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
-    <changeSet author="argertboja" id="20210920225828">
+    <changeSet author="argertboja" id="20210920225828-1">
         <!--The first query finds all feedbacks which need a migration and prepares all the required
         information to create all the missing text blocks such as text, first_index, end_index,
         submission_id to which these text blocks belong to, type defined as MANUAL, the feedback_id
@@ -60,6 +60,15 @@
 
             DELETE FROM feedback
             WHERE id IN (SELECT feedback_id FROM leftover_feedbacks) OR result_id IS NULL;
+        </sql>
+    </changeSet>
+    <changeSet author="argertboja" id="20210920225828-1">
+        <!--The first query shortens the reference column length to 255 chars-->
+        <!--The second query runs an index on reference column of feedback table-->
+        <sql>
+            ALTER TABLE feedback MODIFY reference VARCHAR(255);
+
+            CREATE INDEX idx_reference ON feedback(reference);
         </sql>
     </changeSet>
 </databaseChangeLog>
