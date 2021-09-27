@@ -39,7 +39,7 @@ public abstract class Posting extends DomainObject {
     @Column(name = "content")
     private String content;
 
-    // To be used when more advances strategies for post similarity comparisons are developed
+    // To be used as soon as more advanced strategies for post similarity comparisons are developed
     @Lob
     @Column(name = "tokenized_content")
     private String tokenizedContent;
