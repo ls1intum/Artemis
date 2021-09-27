@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -22,6 +23,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findPostsByExerciseId(Long exerciseId);
 
     List<Post> findPostsByLectureId(Long lectureId);
+
+    @Query("select distinct post from Post post left join post.lecture lecture left join post.exercise exercise where ( post.courseWideContext = :#{#courseWideContext} and (lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} or post.course.id = :#{#courseId} ))")
+    List<Post> findPostsForCourseWideContext(@Param("courseId") Long courseId, @Param("courseWideContext") CourseWideContext courseWideContext);
 
     @Query("select distinct post from Post post left join post.lecture lecture left join post.exercise exercise where ( lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} or post.course.id = :#{#courseId} )")
     List<Post> findPostsForCourse(@Param("courseId") Long courseId);

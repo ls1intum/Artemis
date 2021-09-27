@@ -5,6 +5,24 @@
                 "title": "Beispielabgabe-Board",
                 "editor": "Beispielabgabe-Editor"
             },
+            "legend": {
+                "title": "Legende",
+                "positiveScore": "Positive Punktzahl",
+                "negativeScore": "Negative Punktzahl",
+                "incorrectAssessment": "Falsche Beurteilung",
+                "feedbackWithoutScore": "Feedback ohne Punktzahl"
+            },
+            "feedback": {
+                "CORRECT": "Richtiges Feedback 👍",
+                "INCORRECT_SCORE": "Falsche Punktzahl",
+                "UNNECESSARY_FEEDBACK": "Redundantes Feedback",
+                "MISSING_GRADING_INSTRUCTION": "Fehlende Bewertungsanweisung",
+                "INCORRECT_GRADING_INSTRUCTION": "Falsche Bewertungsanweisung"
+            },
+            "submissionValidation": {
+                "missing": "Zu wenig Feedback gegeben. In der Musterbewertung wurde an mehr Stellen Feedback gegeben.",
+                "wrong": "Falsche Beurteilung. Es gibt {{mistakeCount}} Fehler.\nBitte überprüfe die Bewertungskriterien und reiche deine verbesserte Bewertung ein."
+            },
             "assessScore": {
                 "success": "Herzlichen Glückwunsch! Das ist eine gute Beurteilung!",
                 "tooLow": "Die Punktzahl deiner Bewertung dieser Abgabe ist zu niedrig. Bitte überprüfe die Bewertungskriterien und die Abgabe noch einmal sorgfältig und reiche deine verbesserte Bewertung ein.",

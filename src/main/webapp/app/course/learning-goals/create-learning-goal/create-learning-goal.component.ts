@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { finalize, switchMap, take } from 'rxjs/operators';
@@ -25,7 +25,7 @@ export class CreateLearningGoalComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private learningGoalService: LearningGoalService,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private lectureService: LectureService,
     ) {}
 

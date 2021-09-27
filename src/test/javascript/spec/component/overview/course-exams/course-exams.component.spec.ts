@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,7 +12,7 @@ import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.com
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -23,12 +23,12 @@ describe('CourseExamsComponent', () => {
 
     const visibleExam = {
         id: 1,
-        visibleDate: moment().subtract(2, 'days'),
+        visibleDate: dayjs().subtract(2, 'days'),
     } as Exam;
 
     const notVisibleExam = {
         id: 2,
-        visibleDate: moment().add(2, 'days'),
+        visibleDate: dayjs().add(2, 'days'),
     } as Exam;
 
     beforeEach(async () => {

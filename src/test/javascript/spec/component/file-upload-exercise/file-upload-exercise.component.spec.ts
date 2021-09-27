@@ -45,7 +45,7 @@ describe('FileUploadExercise Management Component', () => {
     it('Should call loadExercises on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
-        spyOn(service, 'findAllFileUploadExercisesForCourse').and.returnValue(
+        jest.spyOn(service, 'findAllFileUploadExercisesForCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [fileUploadExercise],

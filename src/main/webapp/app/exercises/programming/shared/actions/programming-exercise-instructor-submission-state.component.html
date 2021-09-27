@@ -3,8 +3,8 @@
         <fa-icon [icon]="'clock'"></fa-icon>
         <span
             [ngbTooltip]="'artemisApp.programmingExercise.resultETATooltip' | artemisTranslate"
-            [innerHTML]="'artemisApp.programmingExercise.resultETA' | artemisTranslate: { eta: resultEtaInMs | amDuration: 'milliseconds' }"
-            >Result ETA: {{ resultEtaInMs | amDuration: 'milliseconds' }}</span
+            [innerHTML]="'artemisApp.programmingExercise.resultETA' | artemisTranslate: { eta: resultEtaInMs | duration }"
+            >Result ETA: {{ resultEtaInMs | duration }}</span
         >
     </div>
     <div id="build-state" class="d-flex flex-column justify-content-between">

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Organization } from 'app/entities/organization.model';
 
 @Component({
@@ -16,7 +16,7 @@ export class OrganizationSelectorComponent implements OnInit {
     constructor(
         private activeModal: NgbActiveModal,
         private translateService: TranslateService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private organizationService: OrganizationManagementService,
     ) {}
 

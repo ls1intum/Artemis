@@ -1,12 +1,10 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { DebugElement } from '@angular/core';
 import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { SinonStub, spy, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -14,6 +12,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { getElement } from '../../../../../helpers/utils/general.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
+import { metisAnswerPostUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -24,14 +23,6 @@ describe('AnswerPostFooterComponent', () => {
     let debugElement: DebugElement;
     let metisService: MetisService;
     let metisServiceUserAuthorityStub: SinonStub;
-
-    const unApprovedAnswerPost = {
-        id: 1,
-        creationDate: moment(),
-        content: 'not approved most recent',
-        tutorApproved: false,
-    } as AnswerPost;
-
     beforeEach(() => {
         return TestBed.configureTestingModule({
             providers: [{ provide: MetisService, useClass: MockMetisService }],
@@ -44,7 +35,7 @@ describe('AnswerPostFooterComponent', () => {
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
                 metisServiceUserAuthorityStub = stub(metisService, 'metisUserIsAtLeastTutorInCourse');
-                component.posting = unApprovedAnswerPost;
+                component.posting = metisAnswerPostUser1;
                 component.ngOnInit();
             });
     });
