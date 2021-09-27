@@ -35,7 +35,7 @@
             },
             "overview": {
                 "title": "Beiträge",
-                "searchBarDefault": "Suche nach bestimmten Schlagworten in Beiträgen, verwende #, um einem bestimmten Beitrag zu suchen (z.B. #1)",
+                "searchBarDefault": "Suche nach Beiträgen, verwende #, um einem bestimmten Beitrag zu suchen (z.B. #1)",
                 "postContextFilter": "Zeige Beiträge in:",
                 "courseFilterExplanation": "(Alle Beiträge)",
                 "sortPostsBy": "Sortiere nach:",
@@ -61,7 +61,7 @@
                 "tagsTooltip": "Gib deinem Beitrag bis zu drei aussagekräftige und wiederverwendbare Tags. Tippe in das Eingabefeld und bestätige mit Enter, um ein Tag hinzuzufügen.",
                 "tagPlaceholder": "+ Tag",
                 "tagSecondaryPlaceholder": "Tag(s) hinzufügen",
-                "similarPostsTooltip": "Der automatische Beitrags-Vergleich hat folgende Beiträge gefunden, die deinem Anliegen ähnlich sein könnten - bitte prüfe, ob deine Frage bereits gestellt und/oder beantwortet wurde.",
+                "similarPostsTooltip": "Der automatische Kursabgleich hat folgende Beiträge gefunden, die deinem Anliegen ähnlich sein könnten - bitte prüfe, ob deine Frage bereits gestellt und/oder beantwortet wurde.",
                 "content": "Inhalt",
                 "contentTooltip": "Beschreibe dein Problem oder deine Anfrage so präzise wie möglich. Dort, wo es die Lesbarkeit verbessert, verwende bitte Markdown Formatierungen.",
                 "created": "Beitrag erfolgreich erstellt",

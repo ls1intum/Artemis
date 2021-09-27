@@ -43,7 +43,7 @@ export interface PostContextFilter {
 }
 
 /**
- * The content of a Post is composed of `PostingContentPart` that allows rending the parts individually and creating references to other posts.
+ * The content of a Post is composed of `PostingContentPart` that allows rendering the parts individually and creating references to other posts.
  * For example, the content "You can find more information on this topic in #5 and #6 as well." will be split up in two separate `PostingContentPart`s:
  * { contentBeforeReference: "You can find more information on this topic in ",
  *   linkToReference: "/courses/{courseId}/discussion",

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -19,7 +19,7 @@ import { HttpResponse } from '@angular/common/http';
     styleUrls: ['./page-discussion-section.scss'],
     providers: [MetisService],
 })
-export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
+export class PageDiscussionSectionComponent implements OnInit, AfterViewInit, OnDestroy {
     @Input() exercise?: Exercise;
     @Input() lecture?: Lecture;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
@@ -69,14 +69,6 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
                 this.currentPost = this.posts.find((post) => post.id === this.currentPostId);
             }
         });
-    }
-
-    /**
-     * on changes: fetches the posts for the exercise or lecture the discussion section is placed at,
-     * triggers the creation of an empty post
-     */
-    ngOnChanges(): void {
-        this.createEmptyPost();
     }
 
     /**
@@ -151,8 +143,8 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
                 modifiers: [
                     // Set maximum width
                     interact.modifiers!.restrictSize({
-                        min: { width: 390, height: 0 },
-                        max: { width: 600, height: 4000 },
+                        min: { width: 25, height: 0 },
+                        max: { width: 25, height: 100 },
                     }),
                 ],
                 inertia: true,
@@ -165,7 +157,7 @@ export class PageDiscussionSectionComponent implements OnInit, OnChanges, AfterV
             })
             .on('resizemove', function (event: any) {
                 const target = event.target;
-                target.style.width = event.rect.width + 'px';
+                target.style.width = event.rect.width + '%';
             });
     }
 

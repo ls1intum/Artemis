@@ -49,7 +49,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
                 const referencedId = this.content!.substring(patternMatch.startIndex + 1, patternMatch.endIndex); // e.g. post id 6
                 const referenceStr = this.content!.substring(patternMatch.startIndex, patternMatch.endIndex); // e.g. '#6'
 
-                // the referenced Id is within the currently loaded posts, we can create the context-specific link to that post
+                // if the referenced Id is within the currently loaded posts, we can create the context-specific link to that post
                 // by invoking the respective metis service methods for link and query params and passing the post object;
                 // if not, we do not want to fetch the post from the DB and rather always navigate to the course discussion page with the referenceStr as search text
                 const referencedPostInLoadedPosts = this.currentlyLoadedPosts.find((post: Post) => post.id! === +referencedId);

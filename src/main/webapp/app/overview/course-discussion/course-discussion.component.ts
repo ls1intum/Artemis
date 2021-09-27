@@ -62,7 +62,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     ) {}
 
     /**
-     * on initialization: initializes the metis service, fetches the posts for the course, resets all user inputs and selects to defaults,
+     * on initialization: initializes the metis service, fetches the posts for the course, resets all user inputs and selects the defaults,
      * creates the subscription to posts to stay updated on any changes of posts in this course
      */
     ngOnInit(): void {
@@ -85,7 +85,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
                     this.createEmptyPost();
                     this.resetFormGroup();
                     if (this.searchText) {
-                        this.onSearch();
+                        this.onSearch(true);
                     }
                 }
             });
@@ -134,9 +134,15 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      * on changing the search text via input, the metis service is invoked to deliver the posts for the currently set context,
      * the sort will be done on the currently visible posts, so the forceReload flag is set to false
      */
-    onSearch(): void {
+    onSearch(forceUpdate = false): void {
         this.currentPostContentFilter.searchText = this.searchText;
-        this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
+        this.router.navigate([], {
+            queryParams: {
+                searchText: this.searchText,
+            },
+            queryParamsHandling: 'merge',
+        });
+        this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate);
     }
 
     /**

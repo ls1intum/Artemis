@@ -15,7 +15,7 @@ $label-color: #6a737d;
 }
 
 .expanded-discussion {
-    width: 35vw;
+    width: 30vw;
 
     .draggable-left {
         display: flex;
@@ -67,11 +67,6 @@ $label-color: #6a737d;
         padding-bottom: 0.5rem;
         place-self: center;
     }
-}
-
-.post-result-information {
-    font-size: small;
-    font-style: italic;
 }
 
 @media screen and (max-width: 992px) {

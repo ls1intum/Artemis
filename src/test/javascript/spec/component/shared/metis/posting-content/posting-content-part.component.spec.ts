@@ -1,16 +1,10 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement, Directive, Input } from '@angular/core';
 import { getElement, getElements } from '../../../../helpers/utils/general.utils';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { PostingContentPart } from 'app/shared/metis/metis.util';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-
 import { MockDirective } from 'ng-mocks';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: '[routerLink]' })
@@ -58,11 +52,11 @@ describe('PostingContentPartComponent', () => {
             } as PostingContentPart;
             fixture.detectChanges();
             const markdownRenderedTexts = getElements(debugElement, '.markdown-preview');
-            expect(markdownRenderedTexts).to.have.length(1);
-            expect(markdownRenderedTexts![0].innerHTML).to.be.equal('<p>' + postingContent + '</p>');
+            expect(markdownRenderedTexts).toHaveLength(1);
+            expect(markdownRenderedTexts![0].innerHTML).toEqual('<p>' + postingContent + '</p>');
 
             const referenceLink = getElement(debugElement, '.reference-hash');
-            expect(referenceLink).to.not.exist;
+            expect(referenceLink).toBeDefined();
         });
     });
 
@@ -80,12 +74,12 @@ describe('PostingContentPartComponent', () => {
             } as PostingContentPart;
             fixture.detectChanges();
             const markdownRenderedTexts = getElements(debugElement, '.markdown-preview');
-            expect(markdownRenderedTexts).to.have.length(2);
-            expect(markdownRenderedTexts![0].innerHTML).to.be.equal('<p>' + contentBeforeReference + '</p>');
-            expect(markdownRenderedTexts![1].innerHTML).to.be.equal('<p>' + contentAfterReference + '</p>');
+            expect(markdownRenderedTexts).toHaveLength(2);
+            expect(markdownRenderedTexts![0].innerHTML).toEqual('<p>' + contentBeforeReference + '</p>');
+            expect(markdownRenderedTexts![1].innerHTML).toEqual('<p>' + contentAfterReference + '</p>');
 
             const referenceLink = getElement(debugElement, '.reference-hash');
-            expect(referenceLink).to.exist;
+            expect(referenceLink).toBeDefined();
         });
     });
 });

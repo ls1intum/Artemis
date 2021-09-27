@@ -8,6 +8,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { SinonStub, stub } from 'sinon';
 import { PageType } from 'app/shared/metis/metis.util';
@@ -35,7 +37,10 @@ describe('PostFooterComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(ArtemisCoursesRoutingModule)],
-            providers: [{ provide: MetisService, useClass: MockMetisService }],
+            providers: [
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
             declarations: [PostFooterComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(PostReactionsBarComponent)],
         })
             .compileComponents()
