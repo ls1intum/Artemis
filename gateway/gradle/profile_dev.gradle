@@ -1,3 +1,10 @@
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+}
+
 dependencies {
     developmentOnly "org.springframework.boot:spring-boot-devtools:${spring_boot_version}"
 }
@@ -22,6 +29,38 @@ bootRun {
     args = []
 }
 
+task webapp(type: NpmTask) {
+    inputs.property('appVersion', project.version)
+    inputs.files("../package.json")
+        .withPropertyName('package')
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files("../package-lock.json")
+        .withPropertyName('package-lock')
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files("../build.gradle")
+        .withPropertyName('build.gradle')
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files("../angular.json")
+        .withPropertyName('angular.json')
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files("../tsconfig.json", "../tsconfig.app.json")
+        .withPropertyName("tsconfig")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir("../webpack/")
+        .withPropertyName("webpack/")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir("../src/main/webapp/")
+        .withPropertyName("webapp-source-dir")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir("build/resources/main/static/")
+        .withPropertyName("webapp-build-dir")
+
+    dependsOn npmInstall
+
+    args = ["--cwd", "../", "run", "webapp:build"]
+    environment = [APP_VERSION: project.version]
+}
+
 task webpack(type: YarnTask, dependsOn: 'yarn') {
     inputs.dir("../src/main/webapp/")
     inputs.files("../yarn.lock")
@@ -37,8 +76,8 @@ task webpack(type: YarnTask, dependsOn: 'yarn') {
 }
 
 task copyClientBuildFiles(type: Copy) {
-    from "../build/resources/main/"
-    into "build/resources/main/"
+    from "../build/resources/main/static"
+    into "build/resources/main/static"
     exclude "config"
     fileMode = 0644
 }
@@ -58,6 +97,6 @@ processResources {
     }
 }
 
-tasks.copyClientBuildFiles.dependsOn webpack
+tasks.copyClientBuildFiles.dependsOn webapp
 processResources.dependsOn tasks.copyClientBuildFiles
 bootJar.dependsOn processResources

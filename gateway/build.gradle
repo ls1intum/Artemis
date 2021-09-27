@@ -15,16 +15,17 @@ plugins {
     id "eclipse"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "com.google.cloud.tools.jib" version "3.1.2"
-    id "com.github.node-gradle.node" version "3.1.0"
-    id "com.diffplug.spotless" version "5.14.2"
+    id "com.google.cloud.tools.jib" version "3.1.4"
+    id "com.github.node-gradle.node" version "3.1.1"
+    id "com.diffplug.spotless" version "5.15.1"
     id "org.openapi.generator"
     id "io.spring.nohttp"
+    id "com.github.andygoossens.gradle-modernizer-plugin" version "1.6.0"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.1.4"
+version = "5.2.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility = 16
@@ -54,10 +55,30 @@ idea {
     }
 }
 
+
+spotless {
+    // allows to execute the code formatting commands ./gradlew spotlessApply and ./gradlew spotlessCheck
+    java {
+        target project.fileTree(project.rootDir) {
+            include "**/*.java"
+            exclude "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**"
+        }
+        importOrderFile "artemis-spotless.importorder"
+        eclipse().configFile "artemis-spotless-style.xml"
+
+        removeUnusedImports()
+    }
+}
+
 defaultTasks "bootRun"
 
 springBoot {
     mainClass = "de.tum.in.www1.artemis.GatewayApp"
+}
+
+modernizer {
+    failOnViolations = true
+    includeTestClasses = true
 }
 
 test {
@@ -144,8 +165,8 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-hystrix"
     implementation "org.springframework.retry:spring-retry"
     implementation "org.springframework.cloud:spring-cloud-starter-bootstrap"
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.0.3"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.4"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.0.4"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.5"
     implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
@@ -184,20 +205,41 @@ task cleanResources(type: Delete) {
 }
 
 wrapper {
-    gradleVersion = "7.1.1"
+    gradleVersion = "7.2"
 }
 
-
-if (project.hasProperty("nodeInstall")) {
-    // Workaround node grade plugin not working on apple silicon https://github.com/node-gradle/gradle-node-plugin/issues/154
-    OperatingSystem os = org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem();
-    Architecture arch = org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentArchitecture();
-    Boolean downloadNode = !os.isMacOsX() || arch.isAmd64()
-    node {
-        version = "14.17.1"
-        yarnVersion = "${yarn_version}"
-        download = downloadNode
-    }
+node {
+    download = true
+    version = "${node_version}"
+    npmVersion = "${npm_version}"
 }
-compileJava.dependsOn processResources
-processResources.dependsOn bootBuildInfo
+
+// Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
+checkstyle {
+    toolVersion "${checkstyle_version}"
+    configFile file("checkstyle.xml")
+    checkstyleTest.enabled = false
+    maxErrors = 0
+}
+
+task executeCheckstyle (type: Exec) {
+    commandLine "./gradlew", "checkstyleMain", "-x", "npm", "-x", "webapp"
+}
+
+task buildJarForDocker (type: Exec) {
+    commandLine "./gradlew", "build", "-x", "webapp", "-x", "test", "-x", "jacocoTestCoverageVerification"
+}
+
+//if (project.hasProperty("nodeInstall")) {
+//    // Workaround node grade plugin not working on apple silicon https://github.com/node-gradle/gradle-node-plugin/issues/154
+//    OperatingSystem os = org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem();
+//    Architecture arch = org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentArchitecture();
+//    Boolean downloadNode = !os.isMacOsX() || arch.isAmd64()
+//    node {
+//        version = "14.17.1"
+//        yarnVersion = "${yarn_version}"
+//        download = downloadNode
+//    }
+//}
+//compileJava.dependsOn processResources
+//processResources.dependsOn bootBuildInfo
