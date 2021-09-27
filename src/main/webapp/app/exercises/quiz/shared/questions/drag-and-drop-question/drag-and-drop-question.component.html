@@ -111,8 +111,7 @@
                             <div
                                 class="drop-location results"
                                 [ngClass]="{
-                                    incorrect:
-                                        isLocationCorrect(dropLocation) === false && !dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid
+                                    incorrect: isLocationCorrect(dropLocation) === 1 && !dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid
                                 }"
                                 [ngStyle]="{
                                     top: dropLocation.posY! / 2 + '%',
@@ -123,7 +122,7 @@
                             >
                                 <div
                                     class="result-symbol"
-                                    *ngIf="isLocationCorrect(dropLocation) === false && !dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid"
+                                    *ngIf="isLocationCorrect(dropLocation) === 1 && !dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid"
                                 >
                                     <fa-icon [icon]="'exclamation-triangle'" size="2x" class="warning"></fa-icon>
                                 </div>
@@ -166,8 +165,7 @@
                             <div
                                 class="drop-location sampleSolution"
                                 [ngClass]="{
-                                    incorrect:
-                                        isLocationCorrect(dropLocation) === false && !dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid
+                                    incorrect: isLocationCorrect(dropLocation) === 1 && !dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid
                                 }"
                                 [ngStyle]="{
                                     top: dropLocation.posY! / 2 + '%',
@@ -179,7 +177,7 @@
                                 <div
                                     class="result-symbol"
                                     *ngIf="
-                                        isLocationCorrect(dropLocation) === false &&
+                                        isLocationCorrect(dropLocation) === 1 &&
                                         !dropLocation.invalid &&
                                         !invalidDragItemForDropLocation(dropLocation) &&
                                         !question.invalid &&

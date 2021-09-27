@@ -23,6 +23,11 @@ polyfill({
 /* eslint-enable */
 window.addEventListener('touchmove', function () {}, { passive: false });
 
+enum MappingResult {
+    MAPPED_CORRECT,
+    MAPPED_INCORRECT,
+    NOT_MAPPED,
+}
 @Component({
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html',
@@ -236,11 +241,11 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
      * (Only possible if this.question.correctMappings is available)
      *
      * @param dropLocation {object} the drop location to check for correctness
-     * @return {boolean | undefined} true, if the drop location is correct, false if not and undefined if the location is correctly left blank
+     * @return {MappingResult} MAPPED_CORRECT, if the drop location is correct, MAPPED_INCORRECT if not and NOT_MAPPED if the location is correctly left blank
      */
-    isLocationCorrect(dropLocation: DropLocation): boolean | undefined {
+    isLocationCorrect(dropLocation: DropLocation): MappingResult {
         if (!this.question.correctMappings) {
-            return false;
+            return MappingResult.MAPPED_INCORRECT;
         }
         const validDragItems = this.question.correctMappings
             .filter(function (mapping) {
@@ -252,11 +257,13 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
         const selectedItem = this.dragItemForDropLocation(dropLocation);
 
         if (selectedItem === null) {
-            return validDragItems.length === 0 ? undefined : false;
+            return validDragItems.length === 0 ? MappingResult.NOT_MAPPED : MappingResult.MAPPED_INCORRECT;
         } else {
             return validDragItems.some(function (dragItem) {
                 return this.dragAndDropQuestionUtil.isSameDragItem(dragItem, selectedItem);
-            }, this);
+            }, this)
+                ? MappingResult.MAPPED_CORRECT
+                : MappingResult.MAPPED_INCORRECT;
         }
     }
 
@@ -310,8 +317,8 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
      */
     evaluateDropLocations(): void {
         if (this.question.dropLocations) {
-            this.correctAnswer = this.question.dropLocations.filter((dropLocation) => this.isLocationCorrect(dropLocation)).length;
-            this.incorrectLocationMappings = this.question.dropLocations.filter((dropLocation) => this.isLocationCorrect(dropLocation) === false).length;
+            this.correctAnswer = this.question.dropLocations.filter((dropLocation) => this.isLocationCorrect(dropLocation) === MappingResult.MAPPED_CORRECT).length;
+            this.incorrectLocationMappings = this.question.dropLocations.filter((dropLocation) => this.isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT).length;
             this.mappedLocations = this.question.dropLocations.filter((dropLocation) => this.isAssignedLocation(dropLocation)).length;
         }
     }

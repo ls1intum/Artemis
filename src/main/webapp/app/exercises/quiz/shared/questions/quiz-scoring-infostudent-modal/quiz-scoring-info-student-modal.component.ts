@@ -46,7 +46,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     checkForWrongAnswers = new Array<AnswerOption>();
 
     /* Drag and Drop Counting Variables*/
-    differenceDragAndDrop: number; // Difference between the wronglyMappedDragAndDropItems and correctlyMappedDragAndDropItems
+    differenceDragAndDrop: number; // Difference between the incorrectlyMappedDragAndDropItems and correctlyMappedDragAndDropItems
 
     /* Short Answer Counting Variables*/
     shortAnswerSpots: number; // Amount of short answer spots
