@@ -62,7 +62,7 @@
             WHERE id IN (SELECT feedback_id FROM leftover_feedbacks) OR result_id IS NULL;
         </sql>
     </changeSet>
-    <changeSet author="argertboja" id="20210920225828-1">
+    <changeSet author="argertboja" id="20210920225828-2">
         <!--The first query shortens the reference column length to 255 chars-->
         <!--The second query runs an index on reference column of feedback table-->
         <sql>
