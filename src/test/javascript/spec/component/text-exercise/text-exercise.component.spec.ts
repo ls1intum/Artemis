@@ -44,7 +44,7 @@ describe('TextExercise Management Component', () => {
     it('Should call loadExercises on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
-        spyOn(courseExerciseService, 'findAllTextExercisesForCourse').and.returnValue(
+        jest.spyOn(courseExerciseService, 'findAllTextExercisesForCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [textExercise],

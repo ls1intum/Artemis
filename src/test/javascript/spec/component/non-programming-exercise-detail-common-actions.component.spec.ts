@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ArtemisTestModule } from '../test.module';
@@ -46,7 +46,7 @@ describe('Exercise detail common actions Component', () => {
                 MockDirective(DeleteButtonDirective),
                 MockComponent(ExternalSubmissionButtonComponent),
             ],
-            providers: [JhiLanguageHelper, JhiAlertService, { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService }],
+            providers: [JhiLanguageHelper, AlertService, { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService }],
         })
             .overrideTemplate(ProgrammingExerciseDetailComponent, '')
             .compileComponents();

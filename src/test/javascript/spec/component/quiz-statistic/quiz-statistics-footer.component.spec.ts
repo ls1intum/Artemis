@@ -15,7 +15,6 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { SinonStub, stub } from 'sinon';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 const question = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as QuizQuestion;
@@ -29,10 +28,10 @@ describe('QuizExercise Statistic Footer Component', () => {
     let fixture: ComponentFixture<QuizStatisticsFooterComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy: SinonStub;
-    let routerSpy: SinonStub;
+    let accountSpy: jest.SpyInstance;
+    let routerSpy: jest.SpyInstance;
     let router: Router;
-    let quizServiceFindSpy: SinonStub;
+    let quizServiceFindSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -55,9 +54,9 @@ describe('QuizExercise Statistic Footer Component', () => {
                 quizService = fixture.debugElement.injector.get(QuizExerciseService);
                 accountService = fixture.debugElement.injector.get(AccountService);
                 router = fixture.debugElement.injector.get(Router);
-                routerSpy = stub(router, 'navigateByUrl');
-                accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(true);
-                quizServiceFindSpy = stub(quizService, 'find').returns(of(new HttpResponse({ body: quizExercise })));
+                routerSpy = jest.spyOn(router, 'navigateByUrl');
+                accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+                quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });
 
@@ -70,8 +69,8 @@ describe('QuizExercise Statistic Footer Component', () => {
     it('Should load Quiz on Init', fakeAsync(() => {
         // setup
         jest.useFakeTimers();
-        const loadSpy = spyOn(comp, 'loadQuiz').and.callThrough();
-        const updateDisplayedTimesSpy = spyOn(comp, 'updateDisplayedTimes');
+        const loadSpy = jest.spyOn(comp, 'loadQuiz');
+        const updateDisplayedTimesSpy = jest.spyOn(comp, 'updateDisplayedTimes');
 
         // call
         comp.ngOnInit();

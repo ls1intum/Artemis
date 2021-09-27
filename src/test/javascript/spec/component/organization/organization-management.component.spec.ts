@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 
@@ -67,8 +67,8 @@ describe('OrganizationManagementComponent', () => {
 
         const numOfUsersAndCoursesOfOrganizations = [countOrg1, countOrg2];
 
-        spyOn(organizationService, 'getOrganizations').and.returnValue(of([organization1, organization2]));
-        spyOn(organizationService, 'getNumberOfUsersAndCoursesOfOrganizations').and.returnValue(of(numOfUsersAndCoursesOfOrganizations));
+        jest.spyOn(organizationService, 'getOrganizations').mockReturnValue(of([organization1, organization2]));
+        jest.spyOn(organizationService, 'getNumberOfUsersAndCoursesOfOrganizations').mockReturnValue(of(numOfUsersAndCoursesOfOrganizations));
 
         fixture.detectChanges();
         expect(component).to.be.ok;
@@ -85,7 +85,7 @@ describe('OrganizationManagementComponent', () => {
         organization1.name = 'orgOne';
 
         component.organizations = [organization1];
-        spyOn(organizationService, 'deleteOrganization').and.returnValue(of(new HttpResponse<void>()));
+        jest.spyOn(organizationService, 'deleteOrganization').mockReturnValue(of(new HttpResponse<void>()));
 
         component.deleteOrganization(5);
         fixture.detectChanges();

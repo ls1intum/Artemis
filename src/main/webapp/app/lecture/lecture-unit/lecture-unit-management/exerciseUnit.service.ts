@@ -1,6 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { SERVER_API_URL } from 'app/app.constants';
 import { Observable } from 'rxjs';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { map } from 'rxjs/operators';

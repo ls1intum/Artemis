@@ -41,7 +41,7 @@
                                     <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
                                 </div>
                             </div>
-                            <span>{{ details.releaseDate! | amTimeAgo }}</span>
+                            <span>{{ details.releaseDate! | artemisTimeAgo }}</span>
                         </div>
                         <div *ngIf="!details.releaseDate"><p></p></div>
                     </div>
@@ -62,7 +62,7 @@
                                     <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
                                 </div>
                             </div>
-                            <span>{{ details.dueDate! | amTimeAgo }}</span>
+                            <span>{{ details.dueDate! | artemisTimeAgo }}</span>
                         </div>
                         <div *ngIf="!details.dueDate"><p></p></div>
                     </div>
@@ -83,7 +83,7 @@
                                     <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
                                 </div>
                             </div>
-                            <span>{{ details.assessmentDueDate! | amTimeAgo }}</span>
+                            <span>{{ details.assessmentDueDate! | artemisTimeAgo }}</span>
                         </div>
                         <div *ngIf="!details.assessmentDueDate"><p></p></div>
                     </div>
