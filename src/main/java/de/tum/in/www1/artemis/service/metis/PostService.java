@@ -388,6 +388,13 @@ public class PostService extends PostingService {
         return postRepository.findByIdElseThrow(postId);
     }
 
+    /**
+     * Calculates k similar posts based on the underlying content comparison strategy
+     *
+     * @param courseId id of the course in which similar posts are searched for
+     * @param post post that is to be created and check for similar posts beforehand
+     * @return list of similar posts
+     */
     public List<Post> getSimilarPosts(Long courseId, Post post) {
         List<Post> coursePosts = this.getAllCoursePosts(courseId);
         Map<SimilarityScore, Double> map = new HashMap<>();
