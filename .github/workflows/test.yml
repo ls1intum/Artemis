@@ -77,7 +77,7 @@ jobs:
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Code Style
-      run: ./gradlew spotlessCheck
+    - run: ./gradlew spotlessCheck
     - name: Java Documentation
     - run: ./gradlew checkstyleMain -x npm -x webapp
       if: success() || failure()
