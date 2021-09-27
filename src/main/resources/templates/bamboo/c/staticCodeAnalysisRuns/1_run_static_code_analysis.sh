@@ -12,6 +12,9 @@ sudo chown artemis_user:artemis_user target -R
 
 # Navigate into students assignment and save the SCA results in gcc.xml
 cd assignment || exit
-chmod +x ../tests/Converter.py
-make staticAnalysis 2> gcc.txt
+sudo make staticAnalysis 2> gcc.txt
+sudo chown artemis_user:artemis_user ../tests/Converter.py
 python3 ../tests/Converter.py -i gcc.txt -o ../target/gcc.xml
+
+# Give bamboo permissions to delete the target folder after publishing the artifact
+sudo chmod -R 777 ${bamboo.working.directory}/target
