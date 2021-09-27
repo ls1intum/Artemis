@@ -25,7 +25,7 @@
             <div class="table-responsive">
                 <table class="table table-bordered">
                     <thead class="thead-dark">
-                        <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
+                        <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                             <th jhiSortBy="id">
                                 id
                                 <fa-icon [icon]="'sort'"></fa-icon>

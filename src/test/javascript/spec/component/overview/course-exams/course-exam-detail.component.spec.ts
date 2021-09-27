@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -8,7 +8,7 @@ import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -17,8 +17,8 @@ describe('CourseExamDetailComponent', () => {
     let component: CourseExamDetailComponent;
     let componentFixture: ComponentFixture<CourseExamDetailComponent>;
 
-    const startDate = moment('2020-06-11 11:29:51');
-    const endDate = moment('2020-06-11 11:59:51');
+    const startDate = dayjs('2020-06-11 11:29:51');
+    const endDate = dayjs('2020-06-11 11:59:51');
 
     const testExam = {
         id: 1,

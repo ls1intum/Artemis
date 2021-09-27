@@ -1,9 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { TranslateService } from '@ngx-translate/core';
-import { DifferencePipe } from 'ngx-moment';
 import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 import { ArtemisTestModule } from '../../test.module';
 import { of } from 'rxjs';
@@ -56,7 +55,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ExerciseScoresExportButtonComponent],
-            providers: [DifferencePipe, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseScoresExportButtonComponent);

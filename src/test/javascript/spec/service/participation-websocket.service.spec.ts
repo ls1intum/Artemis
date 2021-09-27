@@ -2,7 +2,7 @@ import { async } from '@angular/core/testing';
 import * as chai from 'chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, Subject } from 'rxjs';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { Participation } from 'app/entities/participation/participation.model';

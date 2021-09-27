@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
@@ -30,7 +30,6 @@ describe('PostHeaderComponent', () => {
     let metisService: MetisService;
     let metisServiceUserIsAtLeastTutorStub: SinonStub;
     let metisServiceDeletePostStub: SinonStub;
-
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],

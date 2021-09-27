@@ -3,7 +3,6 @@ import { RouterModule } from '@angular/router';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { exerciseAssessmentDashboardRoute } from './exercise-assessment-dashboard.route';
 import { ExerciseAssessmentDashboardComponent } from './exercise-assessment-dashboard.component';
-import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
@@ -29,7 +28,6 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
     imports: [
         ArtemisSharedModule,
         ArtemisResultModule,
-        MomentModule,
         ClipboardModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisModelingEditorModule,

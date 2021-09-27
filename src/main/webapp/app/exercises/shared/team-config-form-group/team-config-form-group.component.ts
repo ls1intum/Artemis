@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseMode } from 'app/entities/exercise.model';
 
 @Component({

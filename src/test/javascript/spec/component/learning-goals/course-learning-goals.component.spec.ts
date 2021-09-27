@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -8,7 +8,7 @@ import { LearningGoalService } from 'app/course/learning-goals/learningGoal.serv
 import { of } from 'rxjs';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { ActivatedRoute } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { IndividualLearningGoalProgress, IndividualLectureUnitProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
 import { Component, Input } from '@angular/core';
 import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
@@ -17,8 +17,8 @@ import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import * as _ from 'lodash';
 import * as Sentry from '@sentry/browser';
+import { cloneDeep } from 'lodash-es';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -53,7 +53,7 @@ describe('CourseLearningGoals', () => {
             imports: [],
             declarations: [CourseLearningGoalsComponent, LearningGoalCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(LearningGoalService),
                 MockProvider(AccountService),
                 {
@@ -112,7 +112,7 @@ describe('CourseLearningGoals', () => {
             status: 200,
         });
 
-        const learningGoalProgressParticipantScores = _.cloneDeep(learningGoalProgress);
+        const learningGoalProgressParticipantScores = cloneDeep(learningGoalProgress);
         learningGoalProgressParticipantScores.pointsAchievedByStudentInLearningGoal = 0;
         const learningGoalProgressParticipantScoreResponse: HttpResponse<IndividualLearningGoalProgress> = new HttpResponse({
             body: learningGoalProgressParticipantScores,

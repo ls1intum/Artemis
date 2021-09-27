@@ -7,7 +7,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 const PERSONAL_PARTICIPATION_TOPIC = `/user/topic/newResults`;
@@ -72,7 +72,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      */
     private notifyResultSubscribers = (result: Result) => {
         const resultObservable = this.resultObservables.get(result.participation!.id!);
-        // TODO: We never convert the date strings of the result (e.g. completionDate) to a Moment object
+        // TODO: We never convert the date strings of the result (e.g. completionDate) to a Dayjs object
         //  this could be an issue in some parts of app when a formatted date is needed.
         if (!resultObservable) {
             this.resultObservables.set(result.participation!.id!, new BehaviorSubject(result));
@@ -264,9 +264,9 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         if (exercise instanceof ProgrammingExercise) {
             const programmingExercise = exercise as ProgrammingExercise;
             isInactiveProgrammingExercise =
-                !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate).isBefore(moment());
+                !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && dayjs(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate).isBefore(dayjs());
         }
-        if (isInactiveProgrammingExercise || (exercise.dueDate && moment(exercise.dueDate).isBefore(moment()))) {
+        if (isInactiveProgrammingExercise || (exercise.dueDate && dayjs(exercise.dueDate).isBefore(dayjs()))) {
             this.removeParticipation(participationId, exercise.id);
         }
     }

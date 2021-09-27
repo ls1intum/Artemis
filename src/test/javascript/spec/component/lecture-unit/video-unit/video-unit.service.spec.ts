@@ -2,12 +2,12 @@ import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 
@@ -28,7 +28,7 @@ describe('VideoUnitService', () => {
                 MockProvider(LectureUnitService, {
                     convertDateFromServerResponse<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
                         if (res.body) {
-                            res.body.releaseDate = res.body.releaseDate ? moment(res.body.releaseDate) : undefined;
+                            res.body.releaseDate = res.body.releaseDate ? dayjs(res.body.releaseDate) : undefined;
                         }
                         return res;
                     },
