@@ -63,7 +63,7 @@ To package your application as a war in order to deploy it to an application ser
 To launch your application's tests, run:
 
 ```
-./gradlew test jacocoTestReport -x yarn -x webpack -x copyClientBuildFiles
+./gradlew test jacocoTestReport -x yarn -x webapp -x copyClientBuildFiles
 ```
 
 ## Using Docker to simplify development (optional)
