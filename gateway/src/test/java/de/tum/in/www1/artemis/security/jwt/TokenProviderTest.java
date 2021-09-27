@@ -43,7 +43,7 @@ class TokenProviderTest {
 
     @Test
     void testReturnFalseWhenJWThasInvalidSignature() {
-        boolean isTokenValid = tokenProvider.validateToken(createTokenWithDifferentSignature());
+        boolean isTokenValid = tokenProvider.validateTokenForAuthority(createTokenWithDifferentSignature());
 
         assertThat(isTokenValid).isFalse();
     }
@@ -53,7 +53,7 @@ class TokenProviderTest {
         Authentication authentication = createAuthentication();
         String token = tokenProvider.createToken(authentication, false);
         String invalidToken = token.substring(1);
-        boolean isTokenValid = tokenProvider.validateToken(invalidToken);
+        boolean isTokenValid = tokenProvider.validateTokenForAuthority(invalidToken);
 
         assertThat(isTokenValid).isFalse();
     }
@@ -65,7 +65,7 @@ class TokenProviderTest {
         Authentication authentication = createAuthentication();
         String token = tokenProvider.createToken(authentication, false);
 
-        boolean isTokenValid = tokenProvider.validateToken(token);
+        boolean isTokenValid = tokenProvider.validateTokenForAuthority(token);
 
         assertThat(isTokenValid).isFalse();
     }
@@ -74,14 +74,14 @@ class TokenProviderTest {
     void testReturnFalseWhenJWTisUnsupported() {
         String unsupportedToken = createUnsupportedToken();
 
-        boolean isTokenValid = tokenProvider.validateToken(unsupportedToken);
+        boolean isTokenValid = tokenProvider.validateTokenForAuthority(unsupportedToken);
 
         assertThat(isTokenValid).isFalse();
     }
 
     @Test
     void testReturnFalseWhenJWTisInvalid() {
-        boolean isTokenValid = tokenProvider.validateToken("");
+        boolean isTokenValid = tokenProvider.validateTokenForAuthority("");
 
         assertThat(isTokenValid).isFalse();
     }

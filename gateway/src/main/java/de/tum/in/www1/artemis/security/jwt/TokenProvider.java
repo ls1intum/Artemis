@@ -98,7 +98,16 @@ public class TokenProvider {
      * @param authToken JWT Authorization Token
      * @return boolean indicating if token is valid
      */
-    public boolean validateToken(String authToken) {
+    public boolean validateTokenForAuthority(String authToken) {
+        return validateJwsToken(authToken);
+    }
+
+    /**
+     * Validate an JWT Authorization Token
+     * @param authToken JWT Authorization Token
+     * @return boolean indicating if token is valid
+     */
+    private boolean validateJwsToken(String authToken) {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken);
             return true;

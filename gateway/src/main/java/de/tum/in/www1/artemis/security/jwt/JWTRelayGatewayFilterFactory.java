@@ -21,7 +21,7 @@ public class JWTRelayGatewayFilterFactory extends AbstractGatewayFilterFactory<O
     public GatewayFilter apply(Object config) {
         return (exchange, chain) -> {
             String token = this.extractJWTToken(exchange.getRequest());
-            if (StringUtils.hasText(token) && this.tokenProvider.validateToken(token)) {
+            if (StringUtils.hasText(token) && this.tokenProvider.validateTokenForAuthority(token)) {
                 ServerHttpRequest request = exchange.getRequest().mutate().header(AUTHORIZATION_HEADER, "Bearer " + token).build();
 
                 return chain.filter(exchange.mutate().request(request).build());

@@ -18,6 +18,8 @@ public class JWTFilter implements WebFilter {
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
+    public static final String AUTHORIZATION_TOKEN = "access_token";
+
     private final TokenProvider tokenProvider;
 
     public JWTFilter(TokenProvider tokenProvider) {
@@ -27,7 +29,7 @@ public class JWTFilter implements WebFilter {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String jwt = resolveToken(exchange.getRequest());
-        if (StringUtils.hasText(jwt) && this.tokenProvider.validateToken(jwt)) {
+        if (StringUtils.hasText(jwt) && this.tokenProvider.validateTokenForAuthority(jwt)) {
             Authentication authentication = this.tokenProvider.getAuthentication(jwt);
             return chain.filter(exchange).subscriberContext(ReactiveSecurityContextHolder.withAuthentication(authentication));
         }
@@ -38,6 +40,10 @@ public class JWTFilter implements WebFilter {
         String bearerToken = request.getHeaders().getFirst(AUTHORIZATION_HEADER);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
+        }
+        String jwt = request.getQueryParams().getFirst(AUTHORIZATION_TOKEN);
+        if (StringUtils.hasText(jwt)) {
+            return jwt;
         }
         return null;
     }
