@@ -3,7 +3,6 @@ import { PostingsFooterDirective } from 'app/shared/metis/postings-footer/postin
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ContextInformation, PageType } from 'app/shared/metis/metis.util';
-import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-post-footer',
