@@ -61,6 +61,7 @@
             "instructionDescription": "Beschreibung der Anweisung",
             "credits": "Credits",
             "feedback": "Feedback",
+            "editText": "Text bearbeiten",
             "usageCountHint": "Diese Zahl gibt an, wie oft Punkte für diese Anweisung zur Endbewertung hinzugefügt werden",
             "title": "Titel",
             "shortName": "Kurzname",

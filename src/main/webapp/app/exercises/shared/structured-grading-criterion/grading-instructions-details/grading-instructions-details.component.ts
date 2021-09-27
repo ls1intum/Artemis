@@ -40,6 +40,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     feedbackCommand = new FeedbackCommand();
     usageCountCommand = new UsageCountCommand();
 
+    showEditMode: boolean;
+
     domainCommands: DomainCommand[] = [
         this.creditsCommand,
         this.gradingScaleCommand,
@@ -64,6 +66,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.criteria = this.exercise.gradingCriteria || [];
         this.backupExercise = cloneDeep(this.exercise);
         this.markdownEditorText = this.generateMarkdown();
+        this.showEditMode = true;
     }
 
     ngAfterContentInit() {
@@ -561,5 +564,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             }
             return gradingInstruction.usageCount;
         };
+    }
+
+    /**
+     * Switches edit mode
+     */
+    switchMode() {
+        this.showEditMode = !this.showEditMode;
     }
 }
