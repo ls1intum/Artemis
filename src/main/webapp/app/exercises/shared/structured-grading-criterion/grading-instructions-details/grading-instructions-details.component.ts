@@ -506,7 +506,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      */
     updateCreditsInRow(gradingInstruction: GradingInstruction) {
         return (newValue: any) => {
-            gradingInstruction.credits = newValue;
+            if (newValue.match('^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$')) {
+                gradingInstruction.credits = newValue;
+            }
             return gradingInstruction.credits;
         };
     }
@@ -554,7 +556,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      */
     updateUsageCountInRow(gradingInstruction: GradingInstruction) {
         return (newValue: any) => {
-            gradingInstruction.usageCount = newValue;
+            if (newValue.match('^[0-9]*$')) {
+                gradingInstruction.usageCount = newValue;
+            }
             return gradingInstruction.usageCount;
         };
     }
