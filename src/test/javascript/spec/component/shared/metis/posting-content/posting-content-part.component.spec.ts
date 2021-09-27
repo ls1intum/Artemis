@@ -4,7 +4,6 @@ import { getElement, getElements } from '../../../../helpers/utils/general.utils
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { PostingContentPart } from 'app/shared/metis/metis.util';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MockDirective } from 'ng-mocks';
 
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: '[routerLink]' })
@@ -28,8 +27,8 @@ describe('PostingContentPartComponent', () => {
             declarations: [
                 PostingContentPartComponent,
                 HtmlForMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
-                MockDirective(MockRouterLinkDirective),
-                MockDirective(MockQueryParamsDirective),
+                MockRouterLinkDirective,
+                MockQueryParamsDirective,
             ],
         })
             .compileComponents()
