@@ -1,9 +1,8 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { JhiAlertService, JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
@@ -22,6 +21,9 @@ import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { AlertService } from 'app/core/util/alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -44,13 +46,13 @@ describe('CreateExerciseUnitComponent', () => {
             declarations: [
                 CreateExerciseUnitComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(JhiSortDirective),
-                MockDirective(JhiSortByDirective),
+                MockDirective(SortDirective),
+                MockDirective(SortByDirective),
                 MockComponent(FaIconComponent),
             ],
             providers: [
                 MockProvider(CourseManagementService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 MockProvider(SortService),
                 MockProvider(ExerciseUnitService),
                 { provide: Router, useClass: MockRouter },

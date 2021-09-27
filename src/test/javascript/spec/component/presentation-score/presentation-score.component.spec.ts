@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
 import { Course } from 'app/entities/course.model';

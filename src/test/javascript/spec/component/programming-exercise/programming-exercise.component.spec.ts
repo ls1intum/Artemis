@@ -53,7 +53,7 @@ describe('ProgrammingExercise Management Component', () => {
     it('Should call load all on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
-        spyOn(service, 'findAllProgrammingExercisesForCourse').and.returnValue(
+        jest.spyOn(service, 'findAllProgrammingExercisesForCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [programmingExercise],

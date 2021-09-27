@@ -53,8 +53,8 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.config.JHipsterConstants;
-import io.github.jhipster.web.util.ResponseUtil;
+import tech.jhipster.config.JHipsterConstants;
+import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing Course.

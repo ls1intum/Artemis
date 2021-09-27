@@ -9,12 +9,13 @@ import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.
 import { SortService } from 'app/shared/service/sort.service';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import * as chai from 'chai';
-import { JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,8 +38,8 @@ describe('ModelingExerciseImportComponent', () => {
                 MockPipe(ExerciseCourseTitlePipe),
                 MockDirective(NgbHighlight),
                 MockDirective(NgbPagination),
-                MockDirective(JhiSortByDirective),
-                MockDirective(JhiSortDirective),
+                MockDirective(SortByDirective),
+                MockDirective(SortDirective),
                 MockDirective(ButtonComponent),
             ],
             providers: [],

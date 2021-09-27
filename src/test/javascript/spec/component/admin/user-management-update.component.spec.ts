@@ -1,4 +1,4 @@
-import { async, ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
@@ -16,13 +16,12 @@ describe('User Management Update Component', () => {
     let comp: UserManagementUpdateComponent;
     let fixture: ComponentFixture<UserManagementUpdateComponent>;
     let service: UserService;
-    let mockLanguageHelper: any;
     const parentRoute = {
         data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.USER], ['admin'], undefined, undefined, undefined) }),
     } as any as ActivatedRoute;
     const route = { parent: parentRoute } as any as ActivatedRoute;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [UserManagementUpdateComponent],
@@ -37,21 +36,21 @@ describe('User Management Update Component', () => {
         })
             .overrideTemplate(UserManagementUpdateComponent, '')
             .compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(UserManagementUpdateComponent);
         comp = fixture.componentInstance;
         service = fixture.debugElement.injector.get(UserService);
-        mockLanguageHelper = fixture.debugElement.injector.get(JhiLanguageHelper);
     });
 
     describe('OnInit', () => {
         it('Should load authorities and language on init', inject(
-            [],
-            fakeAsync(() => {
+            [JhiLanguageHelper],
+            fakeAsync((languageHelper: JhiLanguageHelper) => {
                 // GIVEN
-                spyOn(service, 'authorities').and.returnValue(of(['USER']));
+                jest.spyOn(service, 'authorities').mockReturnValue(of(['USER']));
+                const getAllSpy = jest.spyOn(languageHelper, 'getAll').mockReturnValue([]);
 
                 // WHEN
                 comp.ngOnInit();
@@ -59,7 +58,7 @@ describe('User Management Update Component', () => {
                 // THEN
                 expect(service.authorities).toHaveBeenCalled();
                 expect(comp.authorities).toEqual(['USER']);
-                expect(mockLanguageHelper.getAllSpy).toHaveBeenCalled();
+                expect(getAllSpy).toHaveBeenCalled();
             }),
         ));
     });
@@ -70,7 +69,7 @@ describe('User Management Update Component', () => {
             fakeAsync(() => {
                 // GIVEN
                 const entity = new User(123);
-                spyOn(service, 'update').and.returnValue(
+                jest.spyOn(service, 'update').mockReturnValue(
                     of(
                         new HttpResponse({
                             body: entity,
@@ -94,7 +93,7 @@ describe('User Management Update Component', () => {
             fakeAsync(() => {
                 // GIVEN
                 const entity = new User();
-                spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
+                jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
                 comp.user = entity;
                 // WHEN
                 comp.save();

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -20,7 +20,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import * as chai from 'chai';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 
@@ -54,7 +54,7 @@ describe('TextExamSubmissionComponent', () => {
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
             ],
-            providers: [MockProvider(TextEditorService), MockProvider(JhiAlertService), MockProvider(TranslateService), MockProvider(ArtemisMarkdownService)],
+            providers: [MockProvider(TextEditorService), MockProvider(AlertService), MockProvider(TranslateService), MockProvider(ArtemisMarkdownService)],
         })
             .compileComponents()
             .then(() => {

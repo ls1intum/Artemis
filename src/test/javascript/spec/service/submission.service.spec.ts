@@ -11,7 +11,6 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
-import { SERVER_API_URL } from 'app/app.constants';
 import { HttpResponse } from '@angular/common/http';
 import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 const expect = chai.expect;

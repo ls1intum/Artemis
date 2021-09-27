@@ -9,13 +9,12 @@ import { StatisticsService } from 'app/shared/statistics-graph/statistics.servic
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockPipe } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
-import { MomentModule } from 'ngx-moment';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
@@ -30,7 +29,7 @@ describe('StatisticsGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MomentModule, ChartsModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), ChartsModule],
             declarations: [StatisticsGraphComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -56,7 +55,7 @@ describe('StatisticsGraphComponent', () => {
         component.graphType = Graphs.SUBMISSIONS;
         component.statisticsView = StatisticsView.ARTEMIS;
         let arrayLength = 0;
-        const spy = spyOn(service, 'getChartData');
+        const getChartDataMock = jest.spyOn(service, 'getChartData');
 
         for (const span of Object.values(SpanType)) {
             component.currentSpan = span;
@@ -68,8 +67,8 @@ describe('StatisticsGraphComponent', () => {
                     arrayLength = 7;
                     break;
                 case SpanType.MONTH:
-                    const startDate = moment().subtract(1, 'months');
-                    arrayLength = moment().diff(startDate, 'days');
+                    const startDate = dayjs().subtract(1, 'months');
+                    arrayLength = dayjs().diff(startDate, 'days');
                     break;
                 case SpanType.QUARTER:
                     arrayLength = 12;
@@ -82,7 +81,7 @@ describe('StatisticsGraphComponent', () => {
             for (let i = 0; i < arrayLength; i++) {
                 graphData[i] = i + 1;
             }
-            spy.and.returnValue(of(graphData));
+            getChartDataMock.mockReturnValue(of(graphData));
 
             const changes = { currentSpan: { currentValue: span } as SimpleChange };
             component.ngOnChanges(changes);
@@ -117,7 +116,7 @@ describe('StatisticsGraphComponent', () => {
         component.currentSpan = SpanType.WEEK;
         component.statisticsView = StatisticsView.ARTEMIS;
         const graphData = [1, 2, 3, 4, 5, 6, 8];
-        spyOn(service, 'getChartData').and.returnValue(of(graphData));
+        jest.spyOn(service, 'getChartData').mockReturnValue(of(graphData));
 
         fixture.detectChanges();
 

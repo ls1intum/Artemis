@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Route } from '@angular/router';
-import { JhiResolvePagingParams } from 'ng-jhipster';
 import { OrganizationManagementComponent } from 'app/admin/organization-management/organization-management.component';
 import { OrganizationManagementUpdateComponent } from 'app/admin/organization-management/organization-management-update.component';
 import { OrganizationManagementDetailComponent } from 'app/admin/organization-management/organization-management-detail.component';
@@ -23,9 +22,6 @@ export const organizationMgmtRoute: Route[] = [
     {
         path: 'organization-management',
         component: OrganizationManagementComponent,
-        resolve: {
-            pagingParams: JhiResolvePagingParams,
-        },
         data: {
             pageTitle: 'organizationManagement.title',
         },
