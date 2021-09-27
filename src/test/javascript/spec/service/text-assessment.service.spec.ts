@@ -200,7 +200,7 @@ describe('TextAssessment Service', () => {
             .subscribe((resp) => expect(resp).toEqual(responseNumberOfTutors));
 
         const req = httpMock.expectOne({
-            url: `/analytics/text-assessment/events/courses/1/exercises/1`,
+            url: `/analytics/text-assessment/text-exercises/1/courses/1/events`,
             method: 'GET',
         });
         req.flush(responseNumberOfTutors);

@@ -91,14 +91,14 @@ public class TextAssessmentEventResource {
     }
 
     /**
-     * GET events/courses/{courseId}/exercises/{exerciseId} : get the number of the tutors involved in the list of events
+     * GET text-exercises/{exerciseId}/courses/{courseId}/events : get the number of the tutors involved in the list of events
      * @param courseId the id of the course to query events for
      * @param exerciseId the id of the exercise to query events for
      * @return an integer representing the number of tutors involved for the respective course and exercise
      */
-    @GetMapping("events/courses/{courseId}/exercises/{exerciseId}")
+    @GetMapping("text-exercises/{exerciseId}/courses/{courseId}/events")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Integer> getNumberOfTutorsInvolved(@PathVariable Long courseId, @PathVariable Long exerciseId) {
+    public ResponseEntity<Integer> getNumberOfTutorsInvolved(@PathVariable Long exerciseId, @PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
