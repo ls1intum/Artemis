@@ -192,6 +192,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 if (assessment.dropInfo && assessment.dropInfo.instruction?.id) {
                     feedback.gradingInstruction = assessment.dropInfo.instruction;
                 }
+                if (feedback.gradingInstruction && assessment.dropInfo == undefined) {
+                    feedback.gradingInstruction = undefined;
+                }
             } else {
                 feedback = Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo);
             }
