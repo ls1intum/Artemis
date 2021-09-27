@@ -1,12 +1,8 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { DebugElement } from '@angular/core';
 import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
-import * as sinon from 'sinon';
-import { SinonStub, spy, stub } from 'sinon';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { getElement } from '../../../../../helpers/utils/general.utils';
@@ -14,15 +10,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/postings-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { metisAnswerPostUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('AnswerPostFooterComponent', () => {
     let component: AnswerPostFooterComponent;
     let fixture: ComponentFixture<AnswerPostFooterComponent>;
     let debugElement: DebugElement;
     let metisService: MetisService;
-    let metisServiceUserAuthorityStub: SinonStub;
+    let metisServiceUserAuthorityMock: jest.SpyInstance;
     beforeEach(() => {
         return TestBed.configureTestingModule({
             providers: [{ provide: MetisService, useClass: MockMetisService }],
@@ -34,44 +27,44 @@ describe('AnswerPostFooterComponent', () => {
                 debugElement = fixture.debugElement;
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
-                metisServiceUserAuthorityStub = stub(metisService, 'metisUserIsAtLeastTutorInCourse');
+                metisServiceUserAuthorityMock = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
                 component.posting = metisAnswerPostUser1;
                 component.ngOnInit();
             });
     });
 
     afterEach(function () {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize user authority and answer post footer correctly', () => {
-        metisServiceUserAuthorityStub.returns(false);
+        metisServiceUserAuthorityMock.mockReturnValue(false);
         component.ngOnInit();
-        expect(component.isAtLeastTutorInCourse).to.deep.equal(false);
+        expect(component.isAtLeastTutorInCourse).toBe(false);
         fixture.detectChanges();
         const approvedBadge = getElement(debugElement, '.approved-badge');
-        expect(approvedBadge).to.not.exist;
+        expect(approvedBadge).toBeDefined();
     });
 
     it('should initialize user authority and answer post footer correctly', () => {
-        metisServiceUserAuthorityStub.returns(true);
+        metisServiceUserAuthorityMock.mockReturnValue(true);
         component.ngOnInit();
-        expect(component.isAtLeastTutorInCourse).to.deep.equal(true);
+        expect(component.isAtLeastTutorInCourse).toBe(true);
         fixture.detectChanges();
         const approvedBadge = getElement(debugElement, '.approved-badge');
-        expect(approvedBadge).to.not.exist;
+        expect(approvedBadge).toBeDefined();
     });
 
     it('should toggle answer post from unapproved to approved on click', () => {
-        const toggleApproveSpy = spy(component, 'toggleApprove');
-        metisServiceUserAuthorityStub.returns(true);
+        const toggleApproveSpy = jest.spyOn(component, 'toggleApprove');
+        metisServiceUserAuthorityMock.mockReturnValue(true);
         fixture.detectChanges();
         const toggleElement = getElement(debugElement, '#toggleElement');
         toggleElement.click();
         fixture.detectChanges();
-        expect(toggleApproveSpy).to.have.been.called;
-        expect(component.posting.tutorApproved).to.be.equal(true);
+        expect(toggleApproveSpy).toHaveBeenCalled();
+        expect(component.posting.tutorApproved).toBe(true);
         const approvedBadge = getElement(debugElement, '.approved-badge');
-        expect(approvedBadge).to.exist;
+        expect(approvedBadge).toBeDefined();
     });
 });
