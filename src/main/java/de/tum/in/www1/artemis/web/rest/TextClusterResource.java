@@ -75,6 +75,7 @@ public class TextClusterResource {
      * Patch text-exercises/{exerciseId}/text-clusters/{clusterId}
      * Sets a text cluster's disabled boolean value
      *
+     * @param exerciseId The id of the exercise the cluster belongs to
      * @param clusterId The id of the cluster to be disabled/enabled
      * @param disabled The predicate value defining the disabled state of the cluster
      * @return The status whether the boolean value was set successfully or the setting failed.
