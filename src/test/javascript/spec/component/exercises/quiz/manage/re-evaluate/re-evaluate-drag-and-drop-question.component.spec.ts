@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as chai from 'chai';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../../../../test.module';
 import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';

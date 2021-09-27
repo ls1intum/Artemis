@@ -6,17 +6,13 @@ import { AuthInterceptor } from 'app/core/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
-import { JhiConfigService, JhiLanguageService, NgJhipsterModule } from 'ng-jhipster';
 import { NgbDateAdapter, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
-import * as moment from 'moment';
-import { NgxWebstorageModule } from 'ngx-webstorage';
-import { DifferencePipe, MomentModule } from 'ngx-moment';
-import { NgbDateMomentAdapter } from 'app/shared/util/datepicker-adapter';
+import { NgxWebstorageModule, SessionStorageService } from 'ngx-webstorage';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import locale from '@angular/common/locales/en';
 import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
-import { MissingTranslationHandler, TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { MissingTranslationHandler, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { RepositoryInterceptor } from 'app/exercises/shared/result/repository.service';
 import { CookieService } from 'ngx-cookie-service';
@@ -24,22 +20,14 @@ import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { ArtemisVersionInterceptor } from 'app/core/interceptor/artemis-version.interceptor';
 import { missingTranslationHandler, translatePartialLoader } from './config/translation.config';
+import dayjs from 'dayjs';
+import './config/dayjs';
+import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 
 @NgModule({
     imports: [
         HttpClientModule,
         NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
-        /**
-         * @external MomentModule is a date library for parsing, validating, manipulating, and formatting dates.
-         */
-        MomentModule,
-        NgJhipsterModule.forRoot({
-            // set below to true to make alerts look like toast
-            alertAsToast: false,
-            alertTimeout: 8000,
-            i18nEnabled: true,
-            defaultI18nLang: 'en',
-        }),
         TranslateModule.forRoot({
             loader: {
                 provide: TranslateLoader,
@@ -49,7 +37,6 @@ import { missingTranslationHandler, translatePartialLoader } from './config/tran
             missingTranslationHandler: {
                 provide: MissingTranslationHandler,
                 useFactory: missingTranslationHandler,
-                deps: [JhiConfigService],
             },
         }),
     ],
@@ -59,10 +46,9 @@ import { missingTranslationHandler, translatePartialLoader } from './config/tran
             provide: LOCALE_ID,
             useValue: 'en',
         },
-        { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter },
+        { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
         { provide: ErrorHandler, useClass: SentryErrorHandler },
         DatePipe,
-        DifferencePipe,
         CookieService,
         /**
          * @description Interceptor declarations:
@@ -116,11 +102,13 @@ import { missingTranslationHandler, translatePartialLoader } from './config/tran
     ],
 })
 export class ArtemisCoreModule {
-    constructor(iconLibrary: FaIconLibrary, dpConfig: NgbDatepickerConfig, languageService: JhiLanguageService) {
+    constructor(iconLibrary: FaIconLibrary, dpConfig: NgbDatepickerConfig, translateService: TranslateService, sessionStorageService: SessionStorageService) {
         registerLocaleData(locale);
         iconLibrary.addIconPacks(fas);
         iconLibrary.addIcons(...fontAwesomeIcons);
-        dpConfig.minDate = { year: moment().year() - 100, month: 1, day: 1 };
-        languageService.init();
+        dpConfig.minDate = { year: dayjs().subtract(100, 'year').year(), month: 1, day: 1 };
+        translateService.setDefaultLang('en');
+        const langKey = sessionStorageService.retrieve('locale') ?? 'en';
+        translateService.use(langKey);
     }
 }

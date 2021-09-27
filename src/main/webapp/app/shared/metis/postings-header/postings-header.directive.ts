@@ -1,6 +1,6 @@
 import { Posting } from 'app/entities/metis/posting.model';
 import { Directive, Input, OnInit } from '@angular/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 
 @Directive()
@@ -20,7 +20,7 @@ export abstract class PostingsHeaderDirective<T extends Posting> implements OnIn
     ngOnInit(): void {
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(this.posting);
-        this.postingIsOfToday = moment().isSame(this.posting.creationDate, 'day');
+        this.postingIsOfToday = dayjs().isSame(this.posting.creationDate, 'day');
         this.todayFlag = this.getTodayFlag();
     }
 

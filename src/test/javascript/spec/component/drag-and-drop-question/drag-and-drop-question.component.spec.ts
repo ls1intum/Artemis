@@ -18,7 +18,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DndModule } from 'ng2-dnd';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 
 chai.use(sinonChai);

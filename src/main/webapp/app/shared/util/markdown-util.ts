@@ -6,7 +6,7 @@
  * @param text the text that will be added into the editor of the passed ace editor component
  * @param aceEditor the editor in which the text will be added at the current curser position
  */
-export function addTextAtCursor(text: String, aceEditor: any) {
+export function addTextAtCursor(text: string, aceEditor: any) {
     aceEditor.focus();
     aceEditor.clearSelection();
     aceEditor.moveCursorTo(aceEditor.getCursorPosition().row, Number.POSITIVE_INFINITY);

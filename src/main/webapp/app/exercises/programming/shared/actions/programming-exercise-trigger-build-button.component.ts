@@ -12,7 +12,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { hasParticipationChanged } from 'app/overview/participation-utils';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
@@ -46,7 +46,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     protected constructor(
         protected submissionService: ProgrammingSubmissionService,
         protected participationWebsocketService: ParticipationWebsocketService,
-        protected alertService: JhiAlertService,
+        protected alertService: AlertService,
     ) {}
 
     /**

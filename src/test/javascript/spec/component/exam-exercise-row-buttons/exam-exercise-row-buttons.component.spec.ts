@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -17,7 +17,7 @@ import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -111,11 +111,11 @@ describe('ExamExerciseRowButtonsComponent', () => {
     });
     describe('isExamOver', () => {
         it('should return true if over', () => {
-            component.latestIndividualEndDate = moment().subtract(1, 'hours');
+            component.latestIndividualEndDate = dayjs().subtract(1, 'hours');
             expect(component.isExamOver()).is.true;
         });
         it('should return false if not yet over', () => {
-            component.latestIndividualEndDate = moment().add(1, 'hours');
+            component.latestIndividualEndDate = dayjs().add(1, 'hours');
             expect(component.isExamOver()).is.false;
         });
         it('should return false if endDate is undefined', () => {
@@ -124,11 +124,11 @@ describe('ExamExerciseRowButtonsComponent', () => {
     });
     describe('hasExamStarted', () => {
         it('should return true if started', () => {
-            component.exam.startDate = moment().subtract(1, 'hours');
+            component.exam.startDate = dayjs().subtract(1, 'hours');
             expect(component.hasExamStarted()).is.true;
         });
         it('should return false if not yet started', () => {
-            component.exam.startDate = moment().add(1, 'hours');
+            component.exam.startDate = dayjs().add(1, 'hours');
             expect(component.hasExamStarted()).is.false;
         });
         it('should return false if startDate is undefined', () => {
