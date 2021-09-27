@@ -103,7 +103,6 @@ describe('User Settings Service', () => {
      */
     function compareSettingsStructure(expectedSettingsStructure: UserSettingsStructure<Setting>, resultingSettingsStructure: UserSettingsStructure<Setting>) {
         // this step alone is not enough due to the polymorphic nature of the settings
-        //expect(expectedSettingsStructure).to.deep.equal(resultingSettingsStructure);
         expect(expectedSettingsStructure).toEqual(resultingSettingsStructure);
         const expectedIndividualSettings = extractSettingsFromSettingsStructure(expectedSettingsStructure);
         const resultingIndividualSettings = extractSettingsFromSettingsStructure(resultingSettingsStructure);
