@@ -1,7 +1,5 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import * as sinonChai from 'sinon-chai';
-import * as chai from 'chai';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { GroupNotification } from 'app/entities/group-notification.model';
@@ -20,9 +18,6 @@ export const notificationSettingB: NotificationSetting = {
 };
 
 export const notificationSettingsForTesting: NotificationSetting[] = [notificationSettingA, notificationSettingB];
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('User Settings Service', () => {
     let notificationSettingsService: NotificationSettingsService;
@@ -62,8 +57,8 @@ describe('User Settings Service', () => {
                 const resultOfA = notificationSettingsService.isNotificationAllowedBySettings(notificationA, map);
                 const resultOfB = notificationSettingsService.isNotificationAllowedBySettings(notificationB, map);
 
-                expect(resultOfA).to.equal(activationStatusOfA);
-                expect(resultOfB).to.equal(activationStatusOfB);
+                expect(resultOfA).toEqual(activationStatusOfA);
+                expect(resultOfB).toEqual(activationStatusOfB);
             });
         });
 
@@ -82,15 +77,15 @@ describe('User Settings Service', () => {
 
             const resultMap = notificationSettingsService.createUpdatedNotificationTitleActivationMap(notificationSettingsForTesting);
 
-            expect(resultMap.has(type1)).to.be.true;
-            expect(resultMap.has(type2)).to.be.true;
-            expect(resultMap.has(type3)).to.be.true;
+            expect(resultMap.has(type1)).toBe(true);
+            expect(resultMap.has(type2)).toBe(true);
+            expect(resultMap.has(type3)).toBe(true);
 
-            expect(resultMap.size).to.be.equal(3);
+            expect(resultMap.size).toEqual(3);
 
-            expect(resultMap.get(type1)).to.be.equal(type1ActivationStatus);
-            expect(resultMap.get(type2)).to.be.equal(type2ActivationStatus);
-            expect(resultMap.get(type3)).to.be.equal(type3ActivationStatus);
+            expect(resultMap.get(type1)).toEqual(type1ActivationStatus);
+            expect(resultMap.get(type2)).toEqual(type2ActivationStatus);
+            expect(resultMap.get(type3)).toEqual(type3ActivationStatus);
         });
     });
 });

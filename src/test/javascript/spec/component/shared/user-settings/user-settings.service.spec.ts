@@ -1,11 +1,7 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { SERVER_API_URL } from 'app/app.constants';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
-import * as chai from 'chai';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
@@ -14,9 +10,6 @@ import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-tran
 import { Setting, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { notificationSettingsStructure, NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { notificationSettingsForTesting } from './notification-settings.service.spec';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('User Settings Service', () => {
     // general & common
@@ -79,8 +72,8 @@ describe('User Settings Service', () => {
         providedNotificationSettings.forEach((providedSetting) => {
             for (const expectedNotificationSetting of expectedNotificationSettings) {
                 if (providedSetting.settingId === expectedNotificationSetting.settingId) {
-                    expect(providedSetting.webapp).to.equal(expectedNotificationSetting.webapp);
-                    expect(providedSetting.email).to.equal(expectedNotificationSetting.email);
+                    expect(providedSetting.webapp).toEqual(expectedNotificationSetting.webapp);
+                    expect(providedSetting.email).toEqual(expectedNotificationSetting.email);
                     break;
                 }
             }
@@ -110,10 +103,11 @@ describe('User Settings Service', () => {
      */
     function compareSettingsStructure(expectedSettingsStructure: UserSettingsStructure<Setting>, resultingSettingsStructure: UserSettingsStructure<Setting>) {
         // this step alone is not enough due to the polymorphic nature of the settings
-        expect(expectedSettingsStructure).to.deep.equal(resultingSettingsStructure);
+        //expect(expectedSettingsStructure).to.deep.equal(resultingSettingsStructure);
+        expect(expectedSettingsStructure).toEqual(resultingSettingsStructure);
         const expectedIndividualSettings = extractSettingsFromSettingsStructure(expectedSettingsStructure);
         const resultingIndividualSettings = extractSettingsFromSettingsStructure(resultingSettingsStructure);
-        expect(expectedIndividualSettings).to.deep.equal(resultingIndividualSettings);
+        expect(expectedIndividualSettings).toEqual(resultingIndividualSettings);
     }
 
     beforeEach(() => {
@@ -133,7 +127,6 @@ describe('User Settings Service', () => {
 
     afterEach(() => {
         httpMock.verify();
-        sinon.restore();
     });
 
     describe('Service methods with Category Notification Settings', () => {
@@ -143,7 +136,7 @@ describe('User Settings Service', () => {
             it('should call correct URL to fetch all settings', () => {
                 userSettingsService.loadSettings(userSettingsCategory).subscribe();
                 const req = httpMock.expectOne({ method: 'GET' });
-                expect(req.request.url).to.equal(notificationSettingsResourceUrl);
+                expect(req.request.url).toEqual(notificationSettingsResourceUrl);
             });
 
             it('should load correct default settings as foundation', () => {
@@ -168,7 +161,7 @@ describe('User Settings Service', () => {
                 let resultingSettings: NotificationSetting[];
                 resultingSettings = userSettingsService.loadSettingsSuccessAsIndividualSettings(notificationSettingsForTesting, userSettingsCategory) as NotificationSetting[];
 
-                expect(resultingSettings.length).to.equal(expectedNotificationSettings.length);
+                expect(resultingSettings.length).toEqual(expectedNotificationSettings.length);
                 checkIfProvidedNotificationSettingsArePartOfExpectedSettings(resultingSettings, expectedNotificationSettings);
             });
         });
@@ -177,7 +170,7 @@ describe('User Settings Service', () => {
             it('should call correct URL to save settings', () => {
                 userSettingsService.saveSettings(notificationSettingsForTesting, userSettingsCategory).subscribe();
                 const req = httpMock.expectOne({ method: 'PUT' });
-                expect(req.request.url).to.equal(notificationSettingsResourceUrl);
+                expect(req.request.url).toEqual(notificationSettingsResourceUrl);
             });
 
             it('should correctly update and return settings based on received settings', () => {

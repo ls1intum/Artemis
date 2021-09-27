@@ -298,7 +298,7 @@ describe('Notification Sidebar Component', () => {
     describe('Reset Sidebar', () => {
         it('should listen and catch notification settings change and reset side bar', () => {
             // preparation to test reloading
-            const lastNotificationRead = moment();
+            const lastNotificationRead = dayjs();
             const fake = sinon.fake.returns(of({ lastNotificationRead } as User));
             sinon.replace(accountService, 'getAuthenticationState', fake);
             notificationSidebarComponent.ngOnInit();

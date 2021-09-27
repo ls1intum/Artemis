@@ -7,7 +7,6 @@ import { MockPipe } from 'ng-mocks/cjs/lib/mock-pipe/mock-pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { MockComponent } from 'ng-mocks';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
@@ -18,7 +17,7 @@ describe('NotificationSettingsComponent', () => {
     let comp: NotificationSettingsComponent;
     let fixture: ComponentFixture<NotificationSettingsComponent>;
 
-    const imports = [ArtemisTestModule, TranslateTestingModule];
+    const imports = [ArtemisTestModule];
     const declarations = [MockComponent(AlertComponent), NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
     const providers = [MockProvider(AlertService), { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }];
 
@@ -50,7 +49,6 @@ describe('NotificationSettingsComponent', () => {
                 id: settingId,
             },
         };
-
         expect(comp.settingsChanged).toBe(false);
         expect(notificationSettingA.changed).toBe(false);
 
