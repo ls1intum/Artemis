@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ConsistencyCheckError } from 'app/entities/consistency-check-result.model';
 import { getCourseId } from 'app/entities/exercise.model';
 
@@ -16,7 +16,7 @@ export class ConsistencyCheckComponent implements OnInit {
     inconsistencies: ConsistencyCheckError[];
     courseId: number | undefined;
 
-    constructor(private activeModal: NgbActiveModal, private consistencyCheckService: ConsistencyCheckService, private jhiAlertService: JhiAlertService) {}
+    constructor(private activeModal: NgbActiveModal, private consistencyCheckService: ConsistencyCheckService, private alertService: AlertService) {}
 
     ngOnInit(): void {
         if (this.checkType === CheckType.PROGRAMMING_EXERCISE) {
@@ -28,7 +28,7 @@ export class ConsistencyCheckComponent implements OnInit {
                     }
                 },
                 (err) => {
-                    this.jhiAlertService.error(err);
+                    this.alertService.error(err);
                 },
             );
         } else if (this.checkType === CheckType.COURSE) {
@@ -37,12 +37,12 @@ export class ConsistencyCheckComponent implements OnInit {
                     this.inconsistencies = inconsistencies;
                 },
                 (err) => {
-                    this.jhiAlertService.error(err);
+                    this.alertService.error(err);
                 },
             );
             this.courseId = this.id;
         } else {
-            this.jhiAlertService.error('No check type specified');
+            this.alertService.error('No check type specified');
         }
     }
 
