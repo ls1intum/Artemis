@@ -36,7 +36,7 @@ describe('MetricsModalThreadsComponent', () => {
 
     afterEach(() => {
         jest.clearAllMocks();
-    })
+    });
 
     function createThread(id: number, threadState: ThreadState): Thread {
         return {
@@ -159,7 +159,7 @@ describe('MetricsModalThreadsComponent', () => {
     describe('on dismiss', () => {
         it('calls activeModal.dismiss()', () => {
             // GIVEN
-            const dismissSpy = jest.spyOn(activeModal, 'dismiss').mockImplementation(() => { });
+            const dismissSpy = jest.spyOn(activeModal, 'dismiss').mockImplementation(() => {});
             expect(dismissSpy).not.toBeCalled();
 
             // WHEN
