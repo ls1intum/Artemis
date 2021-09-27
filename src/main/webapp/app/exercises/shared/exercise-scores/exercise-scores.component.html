@@ -271,7 +271,7 @@
                             Online editor
                         </a>
                         <a
-                            *ngIf="exercise.course && (newManualResultAllowed || (value.assessmentType !== exercise.assessmentType && exercise.isAtLeastInstructor))"
+                            *ngIf="exercise.course && (newManualResultAllowed || (value.assessmentType !== exercise.assessmentType && !!exercise.isAtLeastInstructor))"
                             [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             class="btn btn-primary btn-sm me-1"
                         >
@@ -281,7 +281,7 @@
                         <a
                             *ngIf="
                                 exercise.exerciseGroup &&
-                                (newManualResultAllowed || (value.assessmentType !== exercise.assessmentType && exercise.isAtLeastInstructor)) &&
+                                (newManualResultAllowed || (value.assessmentType !== exercise.assessmentType && !!exercise.isAtLeastInstructor)) &&
                                 exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&
                                 exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2
                             "
