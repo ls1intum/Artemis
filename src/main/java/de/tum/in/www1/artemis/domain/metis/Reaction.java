@@ -6,6 +6,7 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.data.annotation.CreatedDate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
@@ -29,7 +30,8 @@ public class Reaction extends DomainObject {
     @ManyToOne
     private User user;
 
-    @Column(name = "creation_date")
+    @CreatedDate
+    @Column(name = "creation_date", updatable = false)
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
     /**

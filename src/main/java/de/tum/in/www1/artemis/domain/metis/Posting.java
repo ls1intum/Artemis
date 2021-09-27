@@ -10,6 +10,7 @@ import javax.persistence.MappedSuperclass;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.data.annotation.CreatedDate;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -30,14 +31,15 @@ public abstract class Posting extends DomainObject {
     @ManyToOne
     private User author;
 
-    @Column(name = "creation_date")
+    @CreatedDate
+    @Column(name = "creation_date", updatable = false)
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
     @Lob
     @Column(name = "content")
     private String content;
 
-    // To be used with introduction of Metis
+    // To be used when more advances strategies for post similarity comparisons are developed
     @Lob
     @Column(name = "tokenized_content")
     private String tokenizedContent;
