@@ -62,16 +62,14 @@ export class MockMetisService {
 
     getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {}
 
-    getLinkForPost(posting: Post) {
-        if (posting.courseWideContext) {
-            return ['/courses', metisCourse.id, 'discussion'];
+    getLinkForPost(post?: Post): (string | number)[] {
+        if (post?.lecture) {
+            return ['/courses', metisCourse.id!, 'lectures', post.lecture.id!];
         }
-        if (posting.lecture) {
-            return ['/courses', metisCourse.id, 'lectures', posting.lecture.id!];
+        if (post?.exercise) {
+            return ['/courses', metisCourse.id!, 'exercises', post.exercise.id!];
         }
-        if (posting.exercise) {
-            return ['/courses', metisCourse.id, 'exercises', posting.exercise.id!];
-        }
+        return ['/courses', metisCourse.id!, 'discussion'];
     }
 
     getQueryParamsForPost(posting: Post): Params {

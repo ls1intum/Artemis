@@ -72,7 +72,7 @@
                 "answers": "Antworten",
                 "approvedAnswerPosts": "Bestätigte Antworten",
                 "exerciseOrLecture": "Übung / Vorlesung",
-                "backToAllPosts": "Zeige alle Beiträge"
+                "showAllPosts": "Zeige alle Beiträge"
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",

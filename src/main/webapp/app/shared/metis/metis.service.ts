@@ -268,6 +268,10 @@ export class MetisService {
 
     /**
      * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
+     * @param courseWideContext optional course-wide context as default context
+     * @param exercise optional exercise as default context
+     * @param lectureId if of optional lecture as default context
+     * @return Post created default Post object
      */
     createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lectureId?: number): Post {
         const emptyPost: Post = new Post();
@@ -285,18 +289,26 @@ export class MetisService {
         return emptyPost;
     }
 
-    getLinkForPost(posting: Post) {
-        if (posting.courseWideContext) {
-            return ['/courses', this.courseId, 'discussion'];
+    /**
+     * determines link components for a given posts that will navigate to the single-view of that post
+     * @param post post to be navigated to
+     * @return array of link components for the post
+     */
+    getLinkForPost(post?: Post): (string | number)[] {
+        if (post?.lecture) {
+            return ['/courses', this.courseId, 'lectures', post.lecture.id!];
         }
-        if (posting.lecture) {
-            return ['/courses', this.courseId, 'lectures', posting.lecture.id!];
+        if (post?.exercise) {
+            return ['/courses', this.courseId, 'exercises', post.exercise.id!];
         }
-        if (posting.exercise) {
-            return ['/courses', this.courseId, 'exercises', posting.exercise.id!];
-        }
+        return ['/courses', this.courseId, 'discussion'];
     }
 
+    /**
+     * determines if the current user is the author of a given posting
+     * @param posting posting to be checked against
+     * @return boolean author flag
+     */
     getQueryParamsForPost(posting: Post): Params {
         const params: Params = {};
         if (posting.courseWideContext) {

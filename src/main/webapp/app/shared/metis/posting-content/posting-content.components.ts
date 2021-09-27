@@ -53,9 +53,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
                 // by invoking the respective metis service methods for link and query params and passing the post object;
                 // if not, we do not want to fetch the post from the DB and rather always navigate to the course discussion page with the referenceStr as search text
                 const referencedPostInLoadedPosts = this.currentlyLoadedPosts.find((post: Post) => post.id! === +referencedId);
-                const linkToReference = referencedPostInLoadedPosts
-                    ? this.metisService.getLinkForPost(referencedPostInLoadedPosts)
-                    : ['/courses', this.metisService.getCourse().id!, 'discussion'];
+                const linkToReference = this.metisService.getLinkForPost(referencedPostInLoadedPosts);
                 const queryParams = referencedPostInLoadedPosts ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts) : ({ searchText: referenceStr } as Params);
 
                 // determining the endIndex of the content after the reference
