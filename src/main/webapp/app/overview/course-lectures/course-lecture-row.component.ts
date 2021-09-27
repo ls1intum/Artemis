@@ -1,6 +1,5 @@
 import { Component, HostBinding, Input } from '@angular/core';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Lecture } from 'app/entities/lecture.model';
@@ -18,11 +17,11 @@ export class CourseLectureRowComponent {
 
     constructor(private router: Router, private route: ActivatedRoute) {}
 
-    getUrgentClass(date?: Moment) {
+    getUrgentClass(date?: dayjs.Dayjs) {
         if (!date) {
             return '';
         }
-        const remainingDays = date.diff(moment(), 'days');
+        const remainingDays = date.diff(dayjs(), 'days');
         if (0 <= remainingDays && remainingDays < 7) {
             return 'text-danger';
         }

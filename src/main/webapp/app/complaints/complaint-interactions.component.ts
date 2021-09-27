@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -124,20 +124,37 @@ export class ComplaintInteractionsComponent implements OnInit {
      */
     get isTimeOfFeedbackRequestValid(): boolean {
         if (!this.isExamMode && this.result && this.result.completionDate) {
-            return this.isComplaintWithinTimeBoundaries();
+            return this.isMoreFeedbackRequestWithinTimeBoundaries();
         }
         return false;
     }
 
     /**
-     * Checks if a complaint (either actual complaint or more feedback request) can be filed
+     * Checks if a more feedback request can be filed
+     */
+    isMoreFeedbackRequestWithinTimeBoundaries(): boolean {
+        if (this.course?.requestMoreFeedbackEnabled && this.course?.maxRequestMoreFeedbackTimeDays !== undefined) {
+            const resultCompletionDate = dayjs(this.result.completionDate!);
+            if (!this.exercise.assessmentDueDate || resultCompletionDate.isAfter(this.exercise.assessmentDueDate)) {
+                return resultCompletionDate.isAfter(dayjs().subtract(this.course?.maxRequestMoreFeedbackTimeDays, 'day'));
+            }
+            return dayjs(this.exercise.assessmentDueDate).isAfter(dayjs().subtract(this.course?.maxRequestMoreFeedbackTimeDays, 'day'));
+        }
+        return false;
+    }
+
+    /**
+     * Checks if a complaint can be filed
      */
     isComplaintWithinTimeBoundaries(): boolean {
-        const resultCompletionDate = moment(this.result.completionDate!);
-        if (!this.exercise.assessmentDueDate || resultCompletionDate.isAfter(this.exercise.assessmentDueDate)) {
-            return resultCompletionDate.isAfter(moment().subtract(this.course?.maxRequestMoreFeedbackTimeDays, 'day'));
+        if (this.course?.complaintsEnabled && this.course?.maxComplaintTimeDays !== undefined) {
+            const resultCompletionDate = dayjs(this.result.completionDate!);
+            if (!this.exercise.assessmentDueDate || resultCompletionDate.isAfter(this.exercise.assessmentDueDate)) {
+                return resultCompletionDate.isAfter(dayjs().subtract(this.course?.maxComplaintTimeDays, 'day'));
+            }
+            return dayjs(this.exercise.assessmentDueDate).isAfter(dayjs().subtract(this.course?.maxComplaintTimeDays, 'day'));
         }
-        return moment(this.exercise.assessmentDueDate).isAfter(moment().subtract(this.course?.maxRequestMoreFeedbackTimeDays, 'day'));
+        return false;
     }
 
     /**

@@ -1,6 +1,5 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
@@ -86,7 +85,7 @@ describe('Logs Service', () => {
                 plagiarismCheckSupported: false,
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: false,
-                projectTypes: [],
+                projectTypes: ['PLAIN', 'XCODE'],
             },
             {
                 programmingLanguage: 'C',
@@ -180,7 +179,7 @@ describe('Logs Service', () => {
                 packageNameRequired: true,
                 plagiarismCheckSupported: false,
                 programmingLanguage: ProgrammingLanguage.SWIFT,
-                projectTypes: [],
+                projectTypes: [ProjectType.PLAIN, ProjectType.XCODE],
                 sequentialTestRuns: false,
                 staticCodeAnalysis: true,
             },

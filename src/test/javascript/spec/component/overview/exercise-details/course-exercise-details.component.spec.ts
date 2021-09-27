@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { Directive, HostListener, Input } from '@angular/core';
-import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
@@ -40,14 +40,12 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import * as chai from 'chai';
-import { cloneDeep } from 'lodash';
-import * as moment from 'moment';
+import { cloneDeep } from 'lodash-es';
+import dayjs from 'dayjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of } from 'rxjs';
-import { restore, SinonStub, stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
@@ -55,6 +53,12 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -84,18 +88,18 @@ describe('CourseExerciseDetailsComponent', () => {
     let teamService: TeamService;
     let participationService: ParticipationService;
     let participationWebsocketService: ParticipationWebsocketService;
-    let getProfileInfoStub: SinonStub;
-    let getExerciseDetailsStub: SinonStub;
-    let getTeamPayloadStub: SinonStub;
-    let mergeStudentParticipationStub: SinonStub;
-    let subscribeForParticipationChangesStub: SinonStub;
+    let getProfileInfoMock: jest.SpyInstance;
+    let getExerciseDetailsMock: jest.SpyInstance;
+    let getTeamPayloadMock: jest.SpyInstance;
+    let mergeStudentParticipationMock: jest.SpyInstance;
+    let subscribeForParticipationChangesMock: jest.SpyInstance;
     let complaintService: ComplaintService;
     const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [] } as unknown as Exercise;
     const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisSharedModule],
+            imports: [],
             declarations: [
                 CourseExerciseDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -112,6 +116,13 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ComplaintInteractionsComponent),
                 MockComponent(RatingComponent),
                 RouterLinkSpy,
+                MockComponent(AlertComponent),
+                MockComponent(AlertErrorComponent),
+                MockComponent(ExerciseDetailsStudentActionsComponent),
+                MockComponent(FaIconComponent),
+                MockDirective(ExtensionPointDirective),
+                MockPipe(ArtemisDatePipe),
+                MockDirective(NgbTooltip),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -141,39 +152,35 @@ describe('CourseExerciseDetailsComponent', () => {
                 fixture = TestBed.createComponent(CourseExerciseDetailsComponent);
                 comp = fixture.componentInstance;
 
-                // stub profileService
+                // mock profileService
                 profileService = fixture.debugElement.injector.get(ProfileService);
-                getProfileInfoStub = stub(profileService, 'getProfileInfo');
+                getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
                 const profileInfo = { inProduction: false } as ProfileInfo;
                 const profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
-                getProfileInfoStub.returns(profileInfoSubject);
+                getProfileInfoMock.mockReturnValue(profileInfoSubject);
 
-                // stub exerciseService
+                // mock exerciseService
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
-                getExerciseDetailsStub = stub(exerciseService, 'getExerciseDetails');
-                getExerciseDetailsStub.returns(of({ body: exercise }));
+                getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
+                getExerciseDetailsMock.mockReturnValue(of({ body: exercise }));
 
-                // stub teamService, needed for team assignment
+                // mock teamService, needed for team assignment
                 teamService = fixture.debugElement.injector.get(TeamService);
-                getTeamPayloadStub = stub(teamService, 'teamAssignmentUpdates');
+                getTeamPayloadMock = jest.spyOn(teamService, 'teamAssignmentUpdates', 'get');
                 const teamAssignmentPayload = { exerciseId: 2, teamId: 2, studentParticipations: [] } as TeamAssignmentPayload;
-                getTeamPayloadStub.get(() => Promise.resolve(of(teamAssignmentPayload)));
+                getTeamPayloadMock.mockReturnValue(() => Promise.resolve(of(teamAssignmentPayload)));
 
-                // stub participationService, needed for team assignment
-                participationService = fixture.debugElement.injector.get(ParticipationService);
-                mergeStudentParticipationStub = stub(participationService, 'mergeStudentParticipations');
-
-                // stub participationService, needed for team assignment
+                // mock participationService, needed for team assignment
                 participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
-                subscribeForParticipationChangesStub = stub(participationWebsocketService, 'subscribeForParticipationChanges');
-                subscribeForParticipationChangesStub.returns(new BehaviorSubject<Participation | undefined>(undefined));
+                subscribeForParticipationChangesMock = jest.spyOn(participationWebsocketService, 'subscribeForParticipationChanges');
+                subscribeForParticipationChangesMock.mockReturnValue(new BehaviorSubject<Participation | undefined>(undefined));
 
                 complaintService = TestBed.inject(ComplaintService);
             });
-    }));
+    });
 
     afterEach(() => {
-        restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', fakeAsync(() => {
@@ -194,29 +201,32 @@ describe('CourseExerciseDetailsComponent', () => {
         studentParticipation.type = ParticipationType.STUDENT;
         const result = new Result();
         result.id = 1;
-        result.completionDate = moment();
+        result.completionDate = dayjs();
         studentParticipation.results = [result];
         studentParticipation.exercise = exercise;
 
         const exerciseDetail = { ...exercise, studentParticipations: [studentParticipation] };
-        const exerciseDetailReponse = of({ body: exerciseDetail });
+        const exerciseDetailResponse = of({ body: exerciseDetail });
 
         // return initial participation for websocketService
-        stub(participationWebsocketService, 'getParticipationForExercise').returns(studentParticipation);
-        stub(complaintService, 'findBySubmissionId').returns(of({} as EntityResponseType));
+        jest.spyOn(participationWebsocketService, 'getParticipationForExercise').mockReturnValue(studentParticipation);
+        jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({} as EntityResponseType));
 
-        mergeStudentParticipationStub.returns(studentParticipation);
+        // mock participationService, needed for team assignment
+        participationService = TestBed.inject(ParticipationService);
+        mergeStudentParticipationMock = jest.spyOn(participationService, 'mergeStudentParticipations');
+        mergeStudentParticipationMock.mockReturnValue(studentParticipation);
         const changedParticipation = cloneDeep(studentParticipation);
         const changedResult = { ...result, id: 2 };
         changedParticipation.results = [changedResult];
-        subscribeForParticipationChangesStub.returns(new BehaviorSubject<Participation | undefined>(changedParticipation));
+        subscribeForParticipationChangesMock.mockReturnValue(new BehaviorSubject<Participation | undefined>(changedParticipation));
 
         fixture.detectChanges();
         tick(500);
         expect(comp).to.be.ok;
 
-        // override stub to return exercise with participation
-        getExerciseDetailsStub.returns(exerciseDetailReponse);
+        // override mock to return exercise with participation
+        getExerciseDetailsMock.mockReturnValue(exerciseDetailResponse);
         comp.loadExercise();
         fixture.detectChanges();
         expect(comp.courseId).to.equal(1);
@@ -240,7 +250,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should simulate a submission', () => {
         const courseExerciseSubmissionResultSimulationService = fixture.debugElement.injector.get(CourseExerciseSubmissionResultSimulationService);
-        stub(courseExerciseSubmissionResultSimulationService, 'simulateSubmission').returns(
+        jest.spyOn(courseExerciseSubmissionResultSimulationService, 'simulateSubmission').mockReturnValue(
             of(
                 new HttpResponse({
                     body: new ProgrammingSubmission(),
@@ -252,19 +262,17 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.wasSubmissionSimulated).to.be.true;
     });
 
-    it('should simulate a result', () => {
+    it('should simulate a result', fakeAsync(() => {
+        const result = new Result();
+        result.participation = new StudentParticipation();
         comp.exercise = { id: 2 } as Exercise;
         const courseExerciseSubmissionResultSimulationService = fixture.debugElement.injector.get(CourseExerciseSubmissionResultSimulationService);
-        stub(courseExerciseSubmissionResultSimulationService, 'simulateResult').returns(
-            of(
-                new HttpResponse({
-                    body: new Result(),
-                }),
-            ),
-        );
+        jest.spyOn(courseExerciseSubmissionResultSimulationService, 'simulateResult').mockReturnValue(of({ body: result } as HttpResponse<Result>));
         comp.simulateResult();
+        tick();
+        flush();
 
         expect(comp.wasSubmissionSimulated).to.be.false;
         expect(comp.exercise?.participationStatus).to.equal(ParticipationStatus.EXERCISE_SUBMITTED);
-    });
+    }));
 });

@@ -1,16 +1,28 @@
 {
     "plugins": [
+//        "@angular-eslint/eslint-plugin",
         "@typescript-eslint",
         "@typescript-eslint/tslint",
         "chai-friendly"
     ],
     "extends": [
+//        "eslint:recommended",
+//        "plugin:@typescript-eslint/recommended",
+//        "plugin:@typescript-eslint/recommended-requiring-type-checking",
+//        "plugin:@angular-eslint/recommended",
         "plugin:prettier/recommended",
         "prettier"
+//        "eslint-config-prettier"
     ],
+    "env": {
+        "browser": true,
+        "es6": true,
+        "commonjs": true,
+        "jest": true
+    },
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "ecmaVersion": 6,
+        "ecmaVersion": 2018,
         "project": ["./tsconfig.json", "./tsconfig.app.json", "./tsconfig.spec.json", "./tsconfig.webpack.json", "src/test/cypress/tsconfig.json"],
         "sourceType": "module",
         "ecmaFeatures": {
@@ -36,6 +48,13 @@
             }
         ],
         "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-unsafe-return": "off",
+        "@typescript-eslint/no-unsafe-member-access": "off",
+        "@typescript-eslint/restrict-plus-operands": "off",
+        "@typescript-eslint/no-unsafe-call": "off",
+        "@typescript-eslint/no-floating-promises": "off",
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@angular-eslint/no-output-on-prefix": "off",
         "chai-friendly/no-unused-expressions": 2
     },
     "overrides": [{

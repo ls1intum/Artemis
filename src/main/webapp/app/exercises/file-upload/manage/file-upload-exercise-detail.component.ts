@@ -2,23 +2,24 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
-import { JhiEventManager } from 'ng-jhipster';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { filter } from 'rxjs/operators';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
     templateUrl: './file-upload-exercise-detail.component.html',
 })
 export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
+    readonly dayjs = dayjs;
     fileUploadExercise: FileUploadExercise;
     isExamExercise: boolean;
     course: Course | undefined;
@@ -26,14 +27,13 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     private eventSubscriber: Subscription;
 
     readonly ExerciseType = ExerciseType;
-    readonly moment = moment;
     doughnutStats: ExerciseManagementStatisticsDto;
 
     constructor(
-        private eventManager: JhiEventManager,
+        private eventManager: EventManager,
         private fileUploadExerciseService: FileUploadExerciseService,
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private statisticsService: StatisticsService,
     ) {}
 
@@ -63,7 +63,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
                     this.isExamExercise = this.fileUploadExercise.exerciseGroup !== undefined;
                     this.course = this.isExamExercise ? this.fileUploadExercise.exerciseGroup?.exam?.course : this.fileUploadExercise.course;
                 },
-                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+                (error: HttpErrorResponse) => onError(this.alertService, error),
             );
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;

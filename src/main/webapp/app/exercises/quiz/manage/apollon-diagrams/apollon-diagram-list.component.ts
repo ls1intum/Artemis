@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagramCreateFormComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-create-form.component';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
@@ -26,7 +26,7 @@ export class ApollonDiagramListComponent implements OnInit {
 
     constructor(
         private apollonDiagramsService: ApollonDiagramService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private modalService: NgbModal,
         private sortService: SortService,
         private route: ActivatedRoute,
@@ -50,7 +50,7 @@ export class ApollonDiagramListComponent implements OnInit {
                 this.apollonDiagrams = response.body!;
             },
             () => {
-                this.jhiAlertService.error('artemisApp.apollonDiagram.home.error.loading');
+                this.alertService.error('artemisApp.apollonDiagram.home.error.loading');
             },
         );
     }
@@ -62,13 +62,13 @@ export class ApollonDiagramListComponent implements OnInit {
     delete(apollonDiagram: ApollonDiagram) {
         this.apollonDiagramsService.delete(apollonDiagram.id!, this.courseId).subscribe(
             () => {
-                this.jhiAlertService.success('artemisApp.apollonDiagram.delete.success', { title: apollonDiagram.title });
+                this.alertService.success('artemisApp.apollonDiagram.delete.success', { title: apollonDiagram.title });
                 this.apollonDiagrams = this.apollonDiagrams.filter((diagram) => {
                     return diagram.id !== apollonDiagram.id;
                 });
             },
             () => {
-                this.jhiAlertService.error('artemisApp.apollonDiagram.delete.error', { title: apollonDiagram.title });
+                this.alertService.error('artemisApp.apollonDiagram.delete.error', { title: apollonDiagram.title });
             },
         );
     }

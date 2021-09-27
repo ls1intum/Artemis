@@ -17,7 +17,7 @@ The most basic test looks similar to this:
  .. code:: ts
 
     import * as chai from 'chai';
-    import * as sinonChai from 'sinon-chai';
+    import sinonChai from 'sinon-chai';
     import * as sinon from 'sinon';
     import { ComponentFixture, TestBed } from '@angular/core/testing';
 
@@ -73,7 +73,7 @@ Example of a bad test practice:
 
             beforeEach(() => {
                 return TestBed.configureTestingModule({
-                    imports: [ArtemisTestModule, NgxDatatableModule, ArtemisResultModule, ArtemisSharedModule, TranslateModule.forRoot(), RouterTestingModule, MomentModule],
+                    imports: [ArtemisTestModule, NgxDatatableModule, ArtemisResultModule, ArtemisSharedModule, TranslateModule.forRoot(), RouterTestingModule],
                     declarations: [
                         ParticipationSubmissionComponent,
                         MockComponent(UpdatingResultComponent),
@@ -151,7 +151,6 @@ Here are the improvements for the test above:
   - ArtemisResultModule
   - ArtemisSharedModule
   - TranslateModule.forRoot()
-  - MomentModule
 
 * **Mocked** pipes, directives and components that are not supposed to be tested:
 
@@ -168,7 +167,7 @@ Here are the improvements for the test above:
 
 More examples on test speed improvement can be found in the `following PR <https://github.com/ls1intum/Artemis/pull/3879/files>`_.
 
-   *  Services should be mocked if they simply return some data from the server. However, if the service has some form of logic included (for example converting dates to moments),
+   *  Services should be mocked if they simply return some data from the server. However, if the service has some form of logic included (for example converting dates to datejs instances),
       and this logic is important for the component, do not mock the service methods, but mock the HTTP requests and responses from the API. This allows us to test the interaction
       of the component with the service and in addition test that the service logic works correctly. A good explanation can be found in the `official angular documentation <https://angular.io/guide/http#testing-http-requests>`_.
 
@@ -211,7 +210,7 @@ More examples on test speed improvement can be found in the `following PR <https
    Unless you have a very advanced setup or need a special configuration, you probably want to only use that one.
    In ``afterEach`` block one should add ``sinon.restore()``, which restores all fakes created through sandbox.
 
-4. Make sure to have at least 80% line test coverage. Running ``yarn test --coverage`` to create a coverage report. You can also simply run the tests in IntelliJ IDEA with coverage activated.
+4. Make sure to have at least 80% line test coverage. Running ``npm test --coverage`` to create a coverage report. You can also simply run the tests in IntelliJ IDEA with coverage activated.
 
 5. It is preferable to test a component through the interaction of the user with the template. This decouples the test from the concrete implementation used in the component.
    For example if you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click and then assert that the data has been loaded and that the expected
@@ -239,7 +238,7 @@ Here is an example of a test for `exercise-update-warning component <https://git
  .. code:: ts
 
     import * as chai from 'chai';
-    import * as sinonChai from 'sinon-chai';
+    import sinonChai from 'sinon-chai';
     import * as sinon from 'sinon';
 
     chai.use(sinonChai);
