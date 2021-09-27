@@ -14,7 +14,7 @@
         <div class="table-responsive">
             <table class="table table-bordered">
                 <thead class="thead-dark">
-                    <tr jhiSort [(predicate)]="connectedLectureUnitsPredicate" [(ascending)]="connectedLectureUnitsReverse" [callback]="sortConnectedLectureUnits.bind(this)">
+                    <tr jhiSort [(predicate)]="connectedLectureUnitsPredicate" [(ascending)]="connectedLectureUnitsReverse" (sortChange)="sortConnectedLectureUnits()">
                         <th id="connectedLectureUnitLectureUnitNameHeader" class="bg-primary">
                             {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.name' | artemisTranslate }}
                         </th>

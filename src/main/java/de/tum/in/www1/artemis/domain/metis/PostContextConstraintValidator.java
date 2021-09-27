@@ -5,8 +5,8 @@ import javax.validation.ConstraintValidatorContext;
 
 /**
  * A specific ConstraintValidator that validates if the Post context is mutually exclusive,
- * i.e. that either a Lecture, an Exercise, or a Course is associated with the Post.
- * In case the Post is associated with a course, there has to be a context specification in terms of a CourseWideContext.
+ * i.e. that either a Lecture, an Exercise, or a CourseWideContext is associated with the Post.
+ * In case the Post is associated with a CourseWideContext, the according course has to be set as well.
  */
 public class PostContextConstraintValidator implements ConstraintValidator<PostConstraints, Post> {
 
@@ -14,6 +14,6 @@ public class PostContextConstraintValidator implements ConstraintValidator<PostC
     public boolean isValid(Post post, ConstraintValidatorContext ctx) {
         return (post.getExercise() != null && post.getLecture() == null && post.getCourseWideContext() == null)
                 || (post.getExercise() == null && post.getLecture() != null && post.getCourseWideContext() == null)
-                || (post.getExercise() == null && post.getLecture() == null && post.getCourseWideContext() != null);
+                || (post.getExercise() == null && post.getLecture() == null && post.getCourseWideContext() != null && post.getCourse() != null);
     }
 }

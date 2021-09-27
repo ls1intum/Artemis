@@ -4,13 +4,13 @@ import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
 import { HttpResponse } from '@angular/common/http';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExercisePopupService } from 'app/exercises/quiz/manage/quiz-exercise-popup.service';
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
@@ -134,15 +134,15 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @param quizExercise
      */
     prepareEntity(quizExercise: QuizExercise) {
-        quizExercise.releaseDate = quizExercise.releaseDate ? quizExercise.releaseDate : moment();
+        quizExercise.releaseDate = quizExercise.releaseDate ? quizExercise.releaseDate : dayjs();
         quizExercise.duration = Number(quizExercise.duration);
         quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
     }
 
     /**
      * @function durationString
-     * @desc Gives the duration time in a String with this format: <minutes>:<seconds>
-     * @returns {String} the duration as String
+     * @desc Gives the duration time in a string with this format: <minutes>:<seconds>
+     * @returns {string} the duration as string
      */
     durationString(): string {
         if (this.duration.seconds! <= 0) {

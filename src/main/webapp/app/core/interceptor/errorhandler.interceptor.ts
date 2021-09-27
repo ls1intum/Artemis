@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { JhiEventManager } from 'ng-jhipster';
 import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Injectable()
 export class ErrorHandlerInterceptor implements HttpInterceptor {
-    constructor(private eventManager: JhiEventManager) {}
+    constructor(private eventManager: EventManager) {}
 
     /**
      * Identifies and handles a given HTTP request. If the request's error status is not 401 and the error message is empty

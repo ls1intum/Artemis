@@ -25,7 +25,7 @@ import * as chai from 'chai';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;

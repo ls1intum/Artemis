@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { LectureService } from './lecture.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { Lecture } from 'app/entities/lecture.model';
@@ -29,7 +29,7 @@ export class LectureUpdateComponent implements OnInit {
     domainCommandsDescription = [new KatexCommand()];
 
     constructor(
-        protected jhiAlertService: JhiAlertService,
+        protected alertService: AlertService,
         protected lectureService: LectureService,
         protected courseService: CourseManagementService,
         protected activatedRoute: ActivatedRoute,
@@ -100,6 +100,6 @@ export class LectureUpdateComponent implements OnInit {
      */
     protected onSaveError(error: HttpErrorResponse) {
         this.isSaving = false;
-        onError(this.jhiAlertService, error);
+        onError(this.alertService, error);
     }
 }

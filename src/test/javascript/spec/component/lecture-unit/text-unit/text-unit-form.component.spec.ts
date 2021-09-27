@@ -8,10 +8,10 @@ import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/lecture-uni
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 chai.use(sinonChai);
@@ -72,7 +72,7 @@ describe('TextUnitFormComponent', () => {
         routerMock.setUrl(fakeUrl);
         const cache = {
             markdown: 'Lorem Ipsum',
-            date: moment({ years: 2010, months: 3, date: 5 }).format('MMM DD YYYY, HH:mm:ss'),
+            date: dayjs().year(2010).month(3).date(5).format('MMM DD YYYY, HH:mm:ss'),
         };
         store[fakeUrl] = JSON.stringify(cache);
 
@@ -157,7 +157,7 @@ describe('TextUnitFormComponent', () => {
     it('should correctly set form values in edit mode', fakeAsync(() => {
         const formData: TextUnitFormData = {
             name: 'test',
-            releaseDate: moment({ years: 2010, months: 3, date: 5 }),
+            releaseDate: dayjs().year(2010).month(3).date(5),
             content: 'Lorem Ipsum',
         };
 

@@ -6,7 +6,7 @@ import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
@@ -33,7 +33,7 @@ describe('ApollonDiagramDetail Component', () => {
     const course: Course = { id: 123 } as Course;
     const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
     let modalService: NgbModal;
-    let jhiAlertService: JhiAlertService;
+    let alertService: AlertService;
 
     global.URL.createObjectURL = jest.fn(() => 'http://some.test.com');
     global.URL.revokeObjectURL = jest.fn(() => '');
@@ -47,7 +47,7 @@ describe('ApollonDiagramDetail Component', () => {
             imports: [HttpClientTestingModule],
             declarations: [ApollonDiagramDetailComponent],
             providers: [
-                JhiAlertService,
+                AlertService,
                 JhiLanguageHelper,
                 ApollonDiagramService,
                 { provide: NgbModal, useClass: MockNgbModalService },
@@ -63,7 +63,7 @@ describe('ApollonDiagramDetail Component', () => {
                 fixture = TestBed.createComponent(ApollonDiagramDetailComponent);
                 apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
                 modalService = fixture.debugElement.injector.get(NgbModal);
-                jhiAlertService = fixture.debugElement.injector.get(JhiAlertService);
+                alertService = fixture.debugElement.injector.get(AlertService);
             });
     });
 
@@ -172,7 +172,7 @@ describe('ApollonDiagramDetail Component', () => {
 
         const result = new Promise((resolve) => resolve(true));
         sandbox.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance: fixture.componentInstance, result });
-        const successSpy = sandbox.spy(jhiAlertService, 'success');
+        const successSpy = sandbox.spy(alertService, 'success');
 
         // test
         await fixture.componentInstance.generateExercise();

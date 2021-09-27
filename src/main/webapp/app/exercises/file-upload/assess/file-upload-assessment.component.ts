@@ -3,9 +3,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { JhiAlertService } from 'ng-jhipster';
-import * as moment from 'moment';
-import { now } from 'moment';
+import { AlertService } from 'app/core/util/alert.service';
+import dayjs from 'dayjs';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -26,7 +25,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { getFirstResultWithComplaint, getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -74,7 +73,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     constructor(
         private changeDetectorRef: ChangeDetectorRef,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private modalService: NgbModal,
         private router: Router,
         private route: ActivatedRoute,
@@ -158,7 +157,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
                     this.navigateBack();
-                    this.jhiAlertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
+                    this.alertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
                 } else {
@@ -181,7 +180,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                         this.navigateBack();
                     } else {
-                        onError(this.jhiAlertService, error);
+                        onError(this.alertService, error);
                     }
                 },
             );
@@ -192,7 +191,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.submission = submission;
         this.participation = this.submission.participation as StudentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
-        this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && moment(this.exercise.assessmentDueDate).isBefore(now());
+        this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && dayjs(this.exercise.assessmentDueDate).isBefore(dayjs());
         if (this.resultId > 0) {
             this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
             this.result = getSubmissionResultById(this.submission, this.resultId);
@@ -211,8 +210,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             this.result!.feedbacks = [];
         }
         if ((!this.result?.assessor || this.result?.assessor.id === this.userId) && !this.result?.completionDate) {
-            this.jhiAlertService.clear();
-            this.jhiAlertService.info('artemisApp.fileUploadAssessment.messages.lock');
+            this.alertService.clear();
+            this.alertService.info('artemisApp.fileUploadAssessment.messages.lock');
         }
 
         this.checkPermissions();
@@ -273,7 +272,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                     this.hasNewSubmissions = false;
                 } else {
                     this.isLoading = false;
-                    onError(this.jhiAlertService, error);
+                    onError(this.alertService, error);
                 }
             },
         );
@@ -287,12 +286,12 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             .subscribe(
                 (result: Result) => {
                     this.result = result;
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.success('artemisApp.assessment.messages.saveSuccessful');
+                    this.alertService.clear();
+                    this.alertService.success('artemisApp.assessment.messages.saveSuccessful');
                 },
                 () => {
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.error('artemisApp.assessment.messages.saveFailed');
+                    this.alertService.clear();
+                    this.alertService.error('artemisApp.assessment.messages.saveFailed');
                 },
             );
     }
@@ -300,7 +299,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     onSubmitAssessment() {
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.fileUploadAssessment.error.invalidAssessments');
+            this.alertService.error('artemisApp.fileUploadAssessment.error.invalidAssessments');
             return;
         }
         this.isLoading = true;
@@ -311,8 +310,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 (result: Result) => {
                     this.result = result;
                     this.updateParticipationWithResult();
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.success('artemisApp.assessment.messages.submitSuccessful');
+                    this.alertService.clear();
+                    this.alertService.success('artemisApp.assessment.messages.submitSuccessful');
                 },
                 (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
             );
@@ -343,11 +342,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     getComplaint(): void {
-        const resultWithComplaint = getFirstResultWithComplaint(this.submission);
-        if (!resultWithComplaint) {
-            return;
-        }
-        this.complaintService.findByResultId(resultWithComplaint.id!).subscribe(
+        this.complaintService.findBySubmissionId(this.submission.id!).subscribe(
             (res) => {
                 if (!res.body) {
                     return;
@@ -355,7 +350,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 this.complaint = res.body;
             },
             (err: HttpErrorResponse) => {
-                onError(this.jhiAlertService, err);
+                onError(this.alertService, err);
             },
         );
     }
@@ -431,7 +426,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.exercise.assessmentDueDate) {
-                isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
+                isBeforeAssessmentDueDate = dayjs().isBefore(this.exercise.assessmentDueDate!);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
             return this.isAssessor && isBeforeAssessmentDueDate;
@@ -448,7 +443,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.fileUploadAssessment.error.invalidAssessments');
+            this.alertService.error('artemisApp.fileUploadAssessment.error.invalidAssessments');
             return;
         }
         this.isLoading = true;
@@ -459,16 +454,16 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 (response) => {
                     this.result = response.body!;
                     this.updateParticipationWithResult();
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
+                    this.alertService.clear();
+                    this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
                 },
                 (httpErrorResponse: HttpErrorResponse) => {
-                    this.jhiAlertService.clear();
+                    this.alertService.clear();
                     const error = httpErrorResponse.error;
                     if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                        this.jhiAlertService.error(error.message, error.params);
+                        this.alertService.error(error.message, error.params);
                     } else {
-                        this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
+                        this.alertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
                     }
                 },
             );
@@ -479,6 +474,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error);
+        this.alertService.error(error);
     }
 }
