@@ -32,7 +32,7 @@
             "error": "An error occurred. Please try again later.",
             "clusterStatistics": {
                 "title": "Cluster Statistics",
-                "description": "A text cluster represents a group of text blocks from student submissions that are identified to be similar.<br/> Once a text block gets a feedback by a tutor, the feedback gets propagated to the rest of text blocks as a suggestion.<br/> The following table shows an overview of all generated text clusters for this exercise.<br/> You can view how much automatic feedback suggestion reuse there is within a cluster. You can also disable a cluster if the similarity grouping has not been performed as expected.",
+                "description": "A text cluster represents a group of text blocks from student submissions that are identified to be similar.<br/> Once there is tutor feedback on a text block, this feedback is propagated to all other text blocks in that cluster.<br/> The following table shows an overview of all generated text clusters for this exercise.<br/> You can see how many of the automatic feedback suggestions were reused within a cluster. You can also disable a cluster, for example, if a low usage rate of automatic feedback indicates that clustering has not resulted in reusable feedback being suggested during text exercise assessment.",
                 "clusterId": "Cluster ID",
                 "reusedFeedbackRatio": "Ratio of Reused Feedback in Cluster",
                 "reusedFeedbackRatioTooltip": "Amount of reused automatic feedback / cluster size",
