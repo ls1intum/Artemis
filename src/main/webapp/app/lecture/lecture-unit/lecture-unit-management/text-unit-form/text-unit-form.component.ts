@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
@@ -9,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 export interface TextUnitFormData {
     name?: string;
-    releaseDate?: Moment;
+    releaseDate?: dayjs.Dayjs;
     content?: string;
 }
 
@@ -117,7 +116,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
 
     private writeToLocalStorage(markdown: string) {
         if (window.localStorage) {
-            const cache = { markdown, date: moment().format('MMM DD YYYY, HH:mm:ss') };
+            const cache = { markdown, date: dayjs().format('MMM DD YYYY, HH:mm:ss') };
             localStorage.setItem(this.router.url, JSON.stringify(cache));
         }
     }

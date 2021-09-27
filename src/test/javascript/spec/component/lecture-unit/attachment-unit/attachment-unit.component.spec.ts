@@ -1,7 +1,7 @@
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -48,8 +48,8 @@ describe('AttachmentUnitComponent', () => {
                 attachment.id = 1;
                 attachment.version = 1;
                 attachment.attachmentType = AttachmentType.FILE;
-                attachment.releaseDate = moment({ years: 2010, months: 3, date: 5 });
-                attachment.uploadDate = moment({ years: 2010, months: 3, date: 5 });
+                attachment.releaseDate = dayjs().year(2010).month(3).date(5);
+                attachment.uploadDate = dayjs().year(2010).month(3).date(5);
                 attachment.name = 'test';
                 attachment.link = '/path/to/file/test.pdf';
 

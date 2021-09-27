@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { SERVER_API_URL } from 'app/app.constants';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';

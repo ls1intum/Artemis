@@ -2,7 +2,7 @@ import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -19,7 +19,7 @@ describe('Participation Service', () => {
     let service: ParticipationService;
     let httpMock: HttpTestingController;
     let elemDefault: Participation;
-    let currentDate: moment.Moment;
+    let currentDate: dayjs.Dayjs;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -33,7 +33,7 @@ describe('Participation Service', () => {
         injector = getTestBed();
         service = injector.get(ParticipationService);
         httpMock = injector.get(HttpTestingController);
-        currentDate = moment();
+        currentDate = dayjs();
 
         elemDefault = new StudentParticipation();
     });

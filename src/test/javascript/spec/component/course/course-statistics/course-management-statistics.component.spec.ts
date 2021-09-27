@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
@@ -11,7 +11,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MomentModule } from 'ngx-moment';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { SpanType } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsComponent } from 'app/course/manage/course-management-statistics.component';
@@ -37,7 +36,7 @@ describe('CourseManagementStatisticsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MomentModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
             declarations: [
                 CourseManagementStatisticsComponent,
                 MockComponent(AlertComponent),
@@ -65,13 +64,13 @@ describe('CourseManagementStatisticsComponent', () => {
     });
 
     it('should initialize', () => {
-        spyOn(service, 'getCourseStatistics').and.returnValue(of(returnValue));
+        jest.spyOn(service, 'getCourseStatistics').mockReturnValue(of(returnValue));
         fixture.detectChanges();
         expect(component).to.be.ok;
     });
 
     it('should trigger when tab changed', fakeAsync(() => {
-        spyOn(service, 'getCourseStatistics').and.returnValue(of(returnValue));
+        jest.spyOn(service, 'getCourseStatistics').mockReturnValue(of(returnValue));
         const tabSpy = sinon.spy(component, 'onTabChanged');
         fixture.detectChanges();
 

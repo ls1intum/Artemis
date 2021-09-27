@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteFileChange, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
-import * as Sentry from '@sentry/browser';
+import { captureException } from '@sentry/browser';
 
 // Modal -> Delete repository file
 @Component({
@@ -42,7 +42,7 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
                     this.parent.onFileDeleted(new DeleteFileChange(this.fileType, this.fileNameToDelete));
                 },
                 (err) => {
-                    Sentry.captureException(err);
+                    captureException(err);
                     // TODO: show the error to the user
                 },
             );

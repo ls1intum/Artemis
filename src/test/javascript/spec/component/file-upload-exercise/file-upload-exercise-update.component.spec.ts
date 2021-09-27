@@ -56,7 +56,7 @@ describe('FileUploadExercise Management Update Component', () => {
                 comp.ngOnInit();
 
                 const entity = { ...fileUploadExercise };
-                spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
+                jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN
                 comp.save();
@@ -81,7 +81,7 @@ describe('FileUploadExercise Management Update Component', () => {
             it('Should call update service on save for existing entity', fakeAsync(() => {
                 // GIVEN
                 const entity = { ...fileUploadExercise };
-                spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
+                jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
                 comp.ngOnInit();
 
                 // WHEN

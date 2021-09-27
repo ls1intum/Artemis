@@ -20,9 +20,9 @@ export class ParticipantScoresTablesContainerComponent {
     @Input()
     avgRatedScore = 0;
     @Input()
-    avgGrade?: String;
+    avgGrade?: string;
     @Input()
-    avgRatedGrade?: String;
+    avgRatedGrade?: string;
     @Input()
     isBonus = false;
     @Output()

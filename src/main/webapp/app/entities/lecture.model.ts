@@ -1,4 +1,4 @@
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Attachment } from 'app/entities/attachment.model';
 import { Post } from 'app/entities/metis/post.model';
@@ -9,8 +9,8 @@ export class Lecture implements BaseEntity {
     id?: number;
     title?: string;
     description?: string;
-    startDate?: Moment;
-    endDate?: Moment;
+    startDate?: dayjs.Dayjs;
+    endDate?: dayjs.Dayjs;
     attachments?: Attachment[];
     posts?: Post[];
     lectureUnits?: LectureUnit[];

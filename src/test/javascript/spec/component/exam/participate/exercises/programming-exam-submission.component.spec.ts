@@ -16,10 +16,10 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -80,8 +80,8 @@ describe('ProgrammingExamSubmissionComponent', () => {
 
     it('should set the repositoryIsLocked value to true', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), new ExerciseGroup());
-        programmingExercise.dueDate = moment().subtract(10, 'seconds');
-        programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = moment().subtract(60, 'seconds');
+        programmingExercise.dueDate = dayjs().subtract(10, 'seconds');
+        programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs().subtract(60, 'seconds');
 
         component.exercise = programmingExercise;
         fixture.detectChanges();
