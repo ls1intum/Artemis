@@ -40,7 +40,7 @@ export class UserSettingsService {
      */
     public loadSettingsSuccessAsSettingsStructure(receivedSettingsFromServer: Setting[], category: UserSettingsCategory): UserSettingsStructure<Setting> {
         let settingsResult: UserSettingsStructure<Setting>;
-        // load default settings as foundation
+        // load structure as foundation
         settingsResult = UserSettingsService.loadSettingsStructure(category);
         this.updateSettingsStructure(receivedSettingsFromServer, settingsResult);
         return settingsResult;
