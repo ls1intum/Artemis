@@ -85,7 +85,7 @@ describe('Logs Service', () => {
                 plagiarismCheckSupported: false,
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: false,
-                projectTypes: [],
+                projectTypes: ['PLAIN', 'XCODE'],
             },
             {
                 programmingLanguage: 'C',
@@ -179,7 +179,7 @@ describe('Logs Service', () => {
                 packageNameRequired: true,
                 plagiarismCheckSupported: false,
                 programmingLanguage: ProgrammingLanguage.SWIFT,
-                projectTypes: [],
+                projectTypes: [ProjectType.PLAIN, ProjectType.XCODE],
                 sequentialTestRuns: false,
                 staticCodeAnalysis: true,
             },
