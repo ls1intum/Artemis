@@ -197,7 +197,7 @@ General best practices
             }
         }
         String expected = "Dog:French";
-        String actual = testTranslationServer.runService("Dog", "French");
+        String actual = testTranslationServer.runService("French", "Dog");
         if(!expected.equals(actual)) fail("Descriptive fail message");
     }
 
