@@ -124,6 +124,7 @@
   },
   "defaultProject": "artemis",
   "cli": {
+    "analytics": false,
     "packageManager": "npm"
   }
 }

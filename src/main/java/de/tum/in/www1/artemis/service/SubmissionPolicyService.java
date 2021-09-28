@@ -205,7 +205,7 @@ public class SubmissionPolicyService {
         if (!policy.isActive()) {
             return;
         }
-        int submissions = getParticipationSubmissionCount(result) + 1;
+        int submissions = getParticipationSubmissionCount(result);
         int allowedSubmissions = policy.getSubmissionLimit();
         if (submissions == allowedSubmissions) {
             programmingExerciseParticipationService.lockStudentRepository(policy.getProgrammingExercise(), (ProgrammingExerciseStudentParticipation) result.getParticipation());
@@ -229,5 +229,20 @@ public class SubmissionPolicyService {
     private void toggleSubmissionPolicy(SubmissionPolicy policy, boolean active) {
         policy.setActive(active);
         submissionPolicyRepository.save(policy);
+    }
+
+    public String calculateResultStringAttachment(ProgrammingExercise exercise, Participation participation) {
+        SubmissionPolicy policy = exercise.getSubmissionPolicy();
+        if (!policy.isActive()) {
+            return "";
+        }
+        int submissions = getParticipationSubmissionCount(participation);
+        int allowedSubmissions = policy.getSubmissionLimit();
+        if (submissions <= allowedSubmissions) {
+            return ", %d of %d Submissions".formatted(submissions, allowedSubmissions);
+        } else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
+            return ", %d%% Submission Penalty".formatted((int) Math.min(submissionPenaltyPolicy.getExceedingPenalty() * (submissions - allowedSubmissions), 100));
+        }
+        return "";
     }
 }

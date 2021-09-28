@@ -299,17 +299,34 @@
                 "submissionPenalty": {
                     "optionLabel": "Submission Limit Exceeded Penalty",
                     "penaltyInputFieldTitle": "Penalty after Exceeding Submission Limit",
+                    "exceedingLimitDescription": "The permanent penalty the system imposes on the maximum achievable participant score when exceeding the submission limit.",
                     "penaltyInputFieldValidationWarning": {
                         "min": "The penalty must be between 0 and 100 percent!",
-                        "max": "The penalty must be between 0 and 100 percent!"
+                        "max": "The penalty must be between 0 and 100 percent!",
+                        "required": "The penalty must be set!"
                     },
-                    "penaltyInputFieldDescription": "No description available atm"
+                    "penaltyInfoLabel": "Exceeding Penalty"
+                },
+                "submissionPolicyType": {
+                    "title": "Submission Policy Type",
+                    "none": {
+                        "title": "None"
+                    },
+                    "lock_repository": {
+                        "title": "Lock Repository",
+                        "tooltip": "Your participation repository will be locked as soon as you reach the submission limit. You won't be able to participate further in the exercise after your repository is locked."
+                    },
+                    "submission_penalty": {
+                        "title": "Submission Penalty",
+                        "tooltip": "For each submission exceeding the limit, a permanent penalty is imposed on your maximum achievable score. This penalty increases with every submission exceeding the limit."
+                    }
                 },
                 "submissionLimitTitle": "Submission Limit",
-                "submissionLimitDescription": "No description available atm",
+                "submissionLimitDescription": "The amount of submissions a participant can make before the system enforces the selected policy.",
                 "submissionLimitWarning": {
-                    "min": "The amount of allowed submissions must be between 0 and 500!",
-                    "max": "The amount of allowed submissions must be between 0 and 500!"
+                    "min": "The submission limit must be between 0 and 500!",
+                    "max": "The submission limit  must be between 0 and 500!",
+                    "required": "The submission limit must be set!"
                 }
             }
         },

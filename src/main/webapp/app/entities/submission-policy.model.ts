@@ -13,6 +13,7 @@ export abstract class SubmissionPolicy implements BaseEntity {
     public programmingExercise?: ProgrammingExercise;
     public active?: boolean;
     public submissionLimit?: number;
+    public exceedingPenalty?: number;
     public type?: SubmissionPolicyType;
 
     protected constructor(type: SubmissionPolicyType) {
@@ -23,6 +24,7 @@ export abstract class SubmissionPolicy implements BaseEntity {
 export class LockRepositoryPolicy extends SubmissionPolicy {
     constructor() {
         super(SubmissionPolicyType.LOCK_REPOSITORY);
+        this.exceedingPenalty = undefined;
     }
 }
 

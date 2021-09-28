@@ -369,6 +369,11 @@ public class ProgrammingExerciseGradingService {
         // Remove feedback that is in an invisible sca category
         staticCodeAnalysisFeedback = staticCodeAnalysisService.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
 
+        if (applySubmissionPolicy) {
+            SubmissionPolicy submissionPolicy = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exercise.getId()).getSubmissionPolicy();
+            exercise.setSubmissionPolicy(submissionPolicy);
+        }
+
         // Case 1: There are tests and test case feedback, find out which tests were not executed or should only count to the score after the due date.
         if (testCasesForCurrentDate.size() > 0 && testCaseFeedback.size() > 0 && result.getFeedbacks().size() > 0) {
             retainAutomaticFeedbacksWithTestCase(result, testCases);
@@ -389,7 +394,7 @@ public class ProgrammingExerciseGradingService {
             updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            updateResultString(result, successfulTestCases, testCasesForCurrentDate, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases);
+            updateResultString(result, successfulTestCases, testCasesForCurrentDate, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0 && testCaseFeedback.size() > 0) {
@@ -399,7 +404,7 @@ public class ProgrammingExerciseGradingService {
             boolean hasDuplicateTestCases = createFeedbackForDuplicateTests(result, exercise);
 
             // In this case, test cases won't be displayed but static code analysis feedback must be shown in the result string.
-            updateResultString(result, Set.of(), Set.of(), staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases);
+            updateResultString(result, Set.of(), Set.of(), staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
         }
         // Case 3: If there is no test case feedback, the build has failed or it has previously fallen under case 2. In this case we just return the original result without
         // changing it.
@@ -550,7 +555,7 @@ public class ProgrammingExerciseGradingService {
             // maximum achievable score. The maximum achievable score depends on the policy
             // settings and number of unique submissions in the participation.
             if (applySubmissionPolicy) {
-                SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
+                SubmissionPolicy submissionPolicy = programmingExercise.getSubmissionPolicy();
                 if (submissionPolicy instanceof SubmissionPenaltyPolicy policy) {
                     double achievableScore = submissionPolicyService.calculateAchievableScoreForParticipation(result.getParticipation(), policy);
                     score = Math.min(score, achievableScore);
@@ -622,7 +627,7 @@ public class ProgrammingExerciseGradingService {
      * @param hasDuplicateTestCases indicates duplicate test cases
      */
     private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests, List<Feedback> scaFeedback,
-            ProgrammingExercise exercise, boolean hasDuplicateTestCases) {
+            ProgrammingExercise exercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
         if (hasDuplicateTestCases) {
             result.setResultString("Error: Found duplicated tests!");
         }
@@ -635,6 +640,11 @@ public class ProgrammingExerciseGradingService {
                 String issueTerm = scaFeedback.size() == 1 ? ", 1 issue" : ", " + scaFeedback.size() + " issues";
                 newResultString += issueTerm;
             }
+
+            if (applySubmissionPolicy) {
+                newResultString += submissionPolicyService.calculateResultStringAttachment(exercise, result.getParticipation());
+            }
+
             if (result.isManual()) {
                 newResultString = updateManualResultString(newResultString, result, exercise);
             }

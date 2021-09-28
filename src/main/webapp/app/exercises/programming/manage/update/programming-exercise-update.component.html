@@ -305,7 +305,7 @@
                     >
                     <fa-icon
                         icon="question-circle"
-                        class="text-danger"
+                        class="text-secondary"
                         placement="top"
                         ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription' | artemisTranslate }}"
                     ></fa-icon>
@@ -342,9 +342,9 @@
                     >
                     <fa-icon
                         icon="question-circle"
-                        class="text-danger"
+                        class="text-secondary"
                         placement="top"
-                        ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldDescription' | artemisTranslate }}"
+                        ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription' | artemisTranslate }}"
                     ></fa-icon>
                     <div class="input-group">
                         <div class="input-group-prepend">
@@ -352,6 +352,7 @@
                         </div>
                         <input
                             #exceedingPenaltyInput
+                            required
                             type="number"
                             class="form-control"
                             min="0"

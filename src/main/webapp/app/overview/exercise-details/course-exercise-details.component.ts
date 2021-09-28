@@ -41,6 +41,8 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
+import { ProgrammingExerciseSubmissionPolicyService } from 'app/exercises/programming/manage/services/programming-exercise-submission-policy.service';
+import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -80,6 +82,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private discussionComponent?: PageDiscussionSectionComponent;
     baseResource: string;
     isExamExercise: boolean;
+    hasSubmissionPolicy: boolean;
+    submissionPolicy: SubmissionPolicy;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
@@ -108,6 +112,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private alertService: AlertService,
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
+        private programmingExerciseSubmissionPolicyService: ProgrammingExerciseSubmissionPolicyService,
         private teamService: TeamService,
         private quizExerciseService: QuizExerciseService,
         private submissionService: ProgrammingSubmissionService,
@@ -192,6 +197,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     setBuildPlanUrlForProgrammingParticipations(profileInfo, this.exercise?.studentParticipations!, (this.exercise as ProgrammingExercise).projectKey);
                 });
             }
+            this.hasSubmissionPolicy = false;
+            this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exerciseId).subscribe((submissionPolicy) => {
+                this.submissionPolicy = submissionPolicy;
+                this.hasSubmissionPolicy = true;
+            });
         }
 
         // This is only needed in the local environment

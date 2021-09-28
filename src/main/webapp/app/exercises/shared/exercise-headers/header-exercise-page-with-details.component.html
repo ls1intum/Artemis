@@ -76,6 +76,28 @@
                     </h5>
                 </div>
             </div>
+            <div class="row" *ngIf="submissionPolicy != undefined">
+                <div class="col-6">
+                    <h5>{{ 'artemisApp.programmingExercise.submissionPolicy.title' | artemisTranslate }}: </h5>
+                </div>
+                <div class="col-6">
+                    <h5>
+                        {{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy.type + '.title' | artemisTranslate }}
+                        <fa-icon icon="question-circle" ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy.type + '.tooltip' | artemisTranslate }}" placement="top"></fa-icon>
+                    </h5>
+                </div>
+            </div>
+            <div class="row" *ngIf="submissionPolicy != undefined">
+                <div class="col-6">
+                    <h5>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}: </h5>
+                </div>
+                <div class="col-6">
+                    <h5>
+                        {{ submissionPolicy.submissionLimit + (submissionPolicy.exceedingPenalty != undefined ? ' (' + submissionPolicy.exceedingPenalty + '% ' + ('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate) + ')' : '')}}
+
+                    </h5>
+                </div>
+            </div>
             <div class="row" *ngIf="exercise.includedInOverallScore != undefined && exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_COMPLETELY">
                 <div class="col-6">
                     <h5>{{ 'artemisApp.exercise.includedInOverallScore' | artemisTranslate }}:</h5>

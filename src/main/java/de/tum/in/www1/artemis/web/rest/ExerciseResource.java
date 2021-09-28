@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -322,8 +323,10 @@ public class ExerciseResource {
             exercise.addParticipation(participation);
         }
 
-        if (exercise instanceof ProgrammingExercise) {
-            ((ProgrammingExercise) exercise).checksAndSetsIfProgrammingExerciseIsLocalSimulation();
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            SubmissionPolicy policy =  programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
+            programmingExercise.setSubmissionPolicy(policy);
+            programmingExercise.checksAndSetsIfProgrammingExerciseIsLocalSimulation();
         }
         // TODO: we should also check that the submissions do not contain sensitive data
 
