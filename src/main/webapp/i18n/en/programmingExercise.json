@@ -87,6 +87,7 @@
             "programmingLanguage": "Programming Language",
             "projectType": "Project Type",
             "packageName": "Package Name",
+            "appName": "App Name",
             "templateResult": "Template Result",
             "solutionResult": "Solution Result",
             "structureTestOracle": "Update Structure Test Oracle",
