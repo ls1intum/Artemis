@@ -358,6 +358,34 @@ describe('NavbarComponent', () => {
             sinon.assert.match(component.breadcrumbs[5], conflictCrumb);
         });
 
+        it('exercise assessment dashboard', () => {
+            let courseId = 1;
+            let exerciseId = 2;
+            const testUrl = `/course-management/${courseId}/assessment-dashboard/${exerciseId}`;
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(courseManagementStub).to.have.been.calledWith(courseId);
+            expect(exerciseStub).to.have.been.calledWith(exerciseId);
+
+            expect(component.breadcrumbs.length).to.equal(4);
+
+            // Use matching here to ignore non-semantic differences between objects
+            sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
+            sinon.assert.match(component.breadcrumbs[1], testCourseCrumb);
+            sinon.assert.match(component.breadcrumbs[2], {
+                label: 'artemisApp.assessmentDashboard.home.title',
+                translate: true,
+                uri: '/course-management/1/assessment-dashboard/',
+            } as MockBreadcrumb);
+            sinon.assert.match(component.breadcrumbs[3], {
+                label: 'Test Exercise',
+                translate: false,
+                uri: '/course-management/1/assessment-dashboard/2/'
+            } as MockBreadcrumb);
+        });
+
         it('modeling exercise example submission', () => {
             const testUrl = '/course-management/1/modeling-exercises/2/example-submissions/new';
             router.setUrl(testUrl);
