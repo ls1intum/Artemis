@@ -143,8 +143,8 @@ export class PageDiscussionSectionComponent implements OnInit, AfterViewInit, On
                 modifiers: [
                     // Set maximum width
                     interact.modifiers!.restrictSize({
-                        min: { width: 25, height: 0 },
-                        max: { width: 25, height: 100 },
+                        min: { width: 360, height: 0 },
+                        max: { width: 600, height: 4000 },
                     }),
                 ],
                 inertia: true,
@@ -157,7 +157,7 @@ export class PageDiscussionSectionComponent implements OnInit, AfterViewInit, On
             })
             .on('resizemove', function (event: any) {
                 const target = event.target;
-                target.style.width = event.rect.width + '%';
+                target.style.width = event.rect.width + 'px';
             });
     }
 

@@ -6,8 +6,8 @@ import { User } from 'app/core/user/user.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { ContextInformation, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
 import { Course } from 'app/entities/course.model';
-import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
 import { Params } from '@angular/router';
+import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
 
 let pageType: PageType;
 
@@ -74,6 +74,16 @@ export class MockMetisService {
 
     getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {}
 
+    getLinkForPost(post?: Post): (string | number)[] {
+        if (post?.lecture) {
+            return ['/courses', metisCourse.id!, 'lectures', post.lecture.id!];
+        }
+        if (post?.exercise) {
+            return ['/courses', metisCourse.id!, 'exercises', post.exercise.id!];
+        }
+        return ['/courses', metisCourse.id!, 'discussion'];
+    }
+
     getContextInformation(post: Post): ContextInformation {
         let routerLinkComponents = undefined;
         let displayName;
@@ -88,18 +98,6 @@ export class MockMetisService {
             displayName = 'some context';
         }
         return { routerLinkComponents, displayName };
-    }
-
-    getLinkForPost(post: Post) {
-        if (post.courseWideContext) {
-            return ['/courses', metisCourse.id, 'discussion'];
-        }
-        if (post.lecture) {
-            return ['/courses', metisCourse.id, 'lectures', post.lecture.id!];
-        }
-        if (post.exercise) {
-            return ['/courses', metisCourse.id, 'exercises', post.exercise.id!];
-        }
     }
 
     getQueryParamsForPost(post: Post): Params {

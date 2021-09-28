@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.metis;
 import static de.tum.in.www1.artemis.service.metis.PostService.TOP_K_SIMILARITY_RESULTS;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -440,7 +438,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         post.setContent("Content Post");
         post.setVisibleForStudents(true);
         post.setDisplayPriority(DisplayPriority.NONE);
-        post.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
         post.addTag("Tag");
         return post;
     }
@@ -461,7 +458,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // check if title, content, creation data, and tags are set correctly on creation
         assertThat(createdPost.getTitle()).isEqualTo(expectedPost.getTitle());
         assertThat(createdPost.getContent()).isEqualTo(expectedPost.getContent());
-        assertThat(createdPost.getCreationDate()).isEqualTo(expectedPost.getCreationDate());
+        assertThat(createdPost.getCreationDate()).isNotNull();
         assertThat(createdPost.getTags()).isEqualTo(expectedPost.getTags());
 
         // check if default values are set correctly on creation
