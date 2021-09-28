@@ -1,7 +1,7 @@
 <span
     class="ms-1 badge bg-warning"
     *ngIf="exercise.isAtLeastTutor && exercise.releaseDate != undefined && !dayjs(exercise.releaseDate).isBefore(dayjs())"
-    ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | artemisDate }}"
+    ngbTooltip="{{ 'artemisApp.courseOverview.exerciseList.notReleasedTooltip' | artemisTranslate }}{{ exercise.releaseDate | artemisDate }}"
 >
     {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
 </span>

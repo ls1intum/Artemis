@@ -2,13 +2,11 @@ package de.tum.in.www1.artemis.domain.metis;
 
 import java.time.ZonedDateTime;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.data.annotation.CreatedDate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
@@ -18,10 +16,13 @@ import de.tum.in.www1.artemis.domain.User;
 
 /**
  * A Reaction on a Posting.
+ * A reaction has to be unique with regard to user_id emoji_id and id of the posting it belongs to,
+ * i.e. every user can only react once on a posting with a certain emoji.
  */
 @Entity
 @ReactionConstraints
-@Table(name = "reaction")
+@Table(name = "reaction", uniqueConstraints = { @UniqueConstraint(columnNames = { "emoji_id", "user_id", "post_id" }),
+        @UniqueConstraint(columnNames = { "emoji_id", "user_id", "answer_post_id" }) })
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Reaction extends DomainObject {
@@ -29,8 +30,9 @@ public class Reaction extends DomainObject {
     @ManyToOne
     private User user;
 
-    @Column(name = "creation_date")
-    private ZonedDateTime creationDate;
+    @CreatedDate
+    @Column(name = "creation_date", updatable = false)
+    private ZonedDateTime creationDate = ZonedDateTime.now();
 
     /**
      * Unique, identifying name of the emoji, such as "smiley"
