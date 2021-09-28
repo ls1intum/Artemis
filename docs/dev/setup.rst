@@ -371,7 +371,7 @@ you can add a memory limit parameter used in the script in ``package.json`` to t
    # This local change in `package.json` should not be committed.
    --max_old_space_size=5120 # possible higher values are 6144, 7168, and 8192
 
-The parameter could be added to each **ng** command as in the example below which edits the **start** scirpt in ``package.json``:  
+The parameter could be added to each **ng** command as in the example below which edits the **start** script in ``package.json``:  
 
 ::
 
