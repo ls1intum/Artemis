@@ -79,14 +79,14 @@ Tutors can assess programming exercises via Orion by performing the following st
  3. After downloading or opening the exercise in IntelliJ, the normal submission overview is shown in the integrated browser. Each submission can be opened in Orion, new submissions can be started by |start-assessment-in-orion-button|. This downloads the submission files and overwrites the previous submission.
  4. The student's code is in the directory *assignment*. The tests are in the directory *tests*. Additionally, there are two directories *template* and *studentSubmission* that contain internal files and should be ignored.
  5. Opening a file from the assignment opens the editor with two available modes, which can be switched using the tabs at the bottom of the editor.
-  - In edit mode ("Text"), the files can be edited regularly, e.g. to try out fixes
-  - In assessment mode ("Assessment"), the files are read-only, but assessment comments can be added, similar to assessment in Artemis. Click the plus on the gutter on the left of the editor to add a new comment.
+   - In edit mode ("Text"), the files can be edited regularly, e.g. to try out fixes
+   - In assessment mode ("Assessment"), the files are read-only, but assessment comments can be added, similar to assessment in Artemis. Click the plus on the gutter on the left of the editor to add a new comment.
  6. The integrated browser displays the problem statement, the assessment instructions, and the buttons to edit the general feedback.
 
 .. |back-button| image:: orion/back-button.png
 .. |submit-button| image:: orion/submit-button.png
 .. |test-locally-button| image:: orion/test-locally-button.png
 .. |open-in-intellij-button| image:: orion/open-in-intellij-button.png
-.. |edit-in-intellij-button| image:: .orion/edit-in-intellij-button.png
+.. |edit-in-intellij-button| image:: orion/edit-in-intellij-button.png
 .. |assess-in-orion-button| image:: orion/assess-in-orion-button.png
 .. |start-assessment-in-orion-button| image:: orion/start-assessment-in-orion-button.png
