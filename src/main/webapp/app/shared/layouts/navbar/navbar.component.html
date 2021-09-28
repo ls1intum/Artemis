@@ -173,7 +173,7 @@
                 </a>
                 <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
                     <li>
-                        <a id="settings" class="dropdown-header" [routerLink]="['/user-settings']" (click)="collapseNavbar()">
+                        <a class="dropdown-item" [routerLink]="['/user-settings']" (click)="collapseNavbar()">
                             <fa-icon [icon]="'cog'" [fixedWidth]="true"></fa-icon>
                             <span>{{ 'global.menu.settings' | artemisTranslate }}</span>
                         </a>

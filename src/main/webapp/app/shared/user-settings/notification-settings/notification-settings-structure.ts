@@ -63,7 +63,7 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
             settings: [
                 {
                     key: 'courseAndExamArchivingStarted',
-                    descriptionKey: 'courseAndExamArchivingStartedDescriptions',
+                    descriptionKey: 'courseAndExamArchivingStartedDescription',
                     settingId: SettingId.NOTIFICATION__INSTRUCTOR_EXCLUSIVE_NOTIFICATIONS__COURSE_AND_EXAM_ARCHIVING_STARTED,
                 },
             ],
