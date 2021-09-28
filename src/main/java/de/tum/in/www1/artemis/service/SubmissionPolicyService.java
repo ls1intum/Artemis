@@ -135,9 +135,9 @@ public class SubmissionPolicyService {
     }
 
     private void disableLockRepositoryPolicy(LockRepositoryPolicy policy) {
-        ProgrammingExercise exercise = policy.getProgrammingExercise();
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(policy.getProgrammingExercise().getId());
         for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
-            if (studentParticipation.getResults().size() >= policy.getSubmissionLimit()) {
+            if (studentParticipation.getSubmissions().size() >= policy.getSubmissionLimit()) {
                 programmingExerciseParticipationService.unlockStudentRepository(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
             }
         }
@@ -160,7 +160,7 @@ public class SubmissionPolicyService {
     }
 
     private void updateLockRepositoryPolicy(SubmissionPolicy originalPolicy, SubmissionPolicy newPolicy) {
-        ProgrammingExercise exercise = originalPolicy.getProgrammingExercise();
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(originalPolicy.getProgrammingExercise().getId());
         if (originalPolicy.getSubmissionLimit() < newPolicy.getSubmissionLimit()) {
             for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
                 if (studentParticipation.getResults().size() >= originalPolicy.getSubmissionLimit()) {
@@ -191,7 +191,7 @@ public class SubmissionPolicyService {
      * @return achievable score in %
      */
     public double calculateAchievableScoreForParticipation(Participation participation, SubmissionPenaltyPolicy submissionPenaltyPolicy) {
-        if (submissionPenaltyPolicy.isActive()) {
+        if (submissionPenaltyPolicy != null && submissionPenaltyPolicy.isActive()) {
             int presentSubmissions = getParticipationSubmissionCount(participation);
             int illegalSubmissionCount = presentSubmissions - submissionPenaltyPolicy.getSubmissionLimit();
             if (illegalSubmissionCount > 0) {
@@ -201,14 +201,15 @@ public class SubmissionPolicyService {
         return 100;
     }
 
-    public void handleLockRepositoryPolicy(Result result, LockRepositoryPolicy policy) {
-        if (!policy.isActive()) {
+    public void handleLockRepositoryPolicy(Result result, LockRepositoryPolicy lockRepositoryPolicy) {
+        if (lockRepositoryPolicy == null || !lockRepositoryPolicy.isActive()) {
             return;
         }
         int submissions = getParticipationSubmissionCount(result);
-        int allowedSubmissions = policy.getSubmissionLimit();
+        int allowedSubmissions = lockRepositoryPolicy.getSubmissionLimit();
         if (submissions == allowedSubmissions) {
-            programmingExerciseParticipationService.lockStudentRepository(policy.getProgrammingExercise(), (ProgrammingExerciseStudentParticipation) result.getParticipation());
+            ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(lockRepositoryPolicy.getProgrammingExercise().getId());
+            programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) result.getParticipation());
         }
         // This is the fallback behavior in case the VCS does not lock the repository for whatever reason when the
         // submission limit is reached.
@@ -233,7 +234,7 @@ public class SubmissionPolicyService {
 
     public String calculateResultStringAttachment(ProgrammingExercise exercise, Participation participation) {
         SubmissionPolicy policy = exercise.getSubmissionPolicy();
-        if (!policy.isActive()) {
+        if (policy == null || !policy.isActive()) {
             return "";
         }
         int submissions = getParticipationSubmissionCount(participation);

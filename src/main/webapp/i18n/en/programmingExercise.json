@@ -291,6 +291,12 @@
             },
             "submissionPolicy": {
                 "title": "Submission Policy",
+                "update": "Update",
+                "delete": "Delete",
+                "activate": "Activate",
+                "deactivate": "Deactivate",
+                "removeSuccessful": "The Submission Policy was removed successfully!",
+                "removeUnsuccessful": "The Submission Policy was not removed successfully!",
                 "none": {
                     "optionLabel": "None"
                 },

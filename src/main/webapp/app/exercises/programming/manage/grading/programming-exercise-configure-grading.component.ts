@@ -20,6 +20,7 @@ import {
     ProgrammingExerciseTestCaseUpdate,
     StaticCodeAnalysisCategoryUpdate,
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { ProgrammingExerciseSubmissionPolicyService } from 'app/exercises/programming/manage/services/programming-exercise-submission-policy.service';
 
 /**
  * Describes the editableField
@@ -120,6 +121,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         private accountService: AccountService,
         private gradingService: ProgrammingExerciseGradingService,
         private programmingExerciseService: ProgrammingExerciseService,
+        private programmingExerciseSubmissionPolicyService: ProgrammingExerciseSubmissionPolicyService,
         private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService,
         private route: ActivatedRoute,
         private alertService: AlertService,
@@ -186,7 +188,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.isLoading = false;
             }
 
-            if (params['tab'] === 'test-cases' || params['tab'] === 'code-analysis') {
+            if (params['tab'] === 'test-cases' || params['tab'] === 'code-analysis' || params['tab'] === 'submission-policy') {
                 this.activeTab = params['tab'];
             } else {
                 this.selectTab('test-cases');
@@ -448,6 +450,38 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.changedCategoryIds = [];
             });
     }
+
+    /**
+     * Removes the submission policy of the programming exercise.
+     */
+    removeSubmissionPolicy() {
+        this.isSaving = true;
+        this.programmingExerciseSubmissionPolicyService
+            .removeSubmissionPolicyFromProgrammingExercise(this.programmingExercise.id!)
+            .pipe(
+                tap(() => {
+                    this.programmingExercise.submissionPolicy = undefined;
+                    this.alertService.success(`artemisApp.programmingExercise.submissionPolicy.removeSuccessful`);
+                }),
+                catchError(() => {
+                    this.alertService.error(`artemisApp.programmingExercise.submissionPolicy.removeUnsuccessful`);
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
+                this.isSaving = false;
+            });
+    }
+
+    /**
+     * Updates the submission policy of the programming exercise.
+     */
+    updateSubmissionPolicy() {}
+
+    /**
+     * Enable/Disable the submission policy of the programming exercise.
+     */
+    toggleSubmissionPolicy() {}
 
     /**
      * Executes filtering on all available test cases with the specified params.
