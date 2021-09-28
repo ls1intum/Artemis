@@ -26,6 +26,10 @@
                         <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
+                    <th *ngIf="!exercise.teamMode && exercise.isAtLeastInstructor" jhiSortBy="participation.student.login">
+                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentLogin">Student login</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="submissionDate">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
