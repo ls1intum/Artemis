@@ -8,7 +8,7 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { take } from 'rxjs/operators';
 
 chai.use(sinonChai);

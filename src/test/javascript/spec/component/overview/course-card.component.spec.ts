@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
@@ -11,11 +11,11 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { Exercise } from 'app/entities/exercise.model';
 import { MockComponent, MockPipe, MockProvider, MockDirective } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
-import { TimeAgoPipe } from 'ngx-moment';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -29,9 +29,9 @@ describe('CourseCardComponent', () => {
         submitted: true,
         results: [{ successful: true }],
     };
-    const pastExercise = { id: 1, dueDate: moment().subtract(2, 'days') } as Exercise;
-    const nextExercise = { id: 2, dueDate: moment().add(2, 'days'), studentParticipations: [{ submissions: [submission] }] } as Exercise;
-    const secondNextExercise = { id: 3, dueDate: moment().add(4, 'days') } as Exercise;
+    const pastExercise = { id: 1, dueDate: dayjs().subtract(2, 'days') } as Exercise;
+    const nextExercise = { id: 2, dueDate: dayjs().add(2, 'days'), studentParticipations: [{ submissions: [submission] }] } as Exercise;
+    const secondNextExercise = { id: 3, dueDate: dayjs().add(4, 'days') } as Exercise;
     const course = { id: 1, exercises: [pastExercise, nextExercise, secondNextExercise], lectures: [], exams: [] } as Course;
 
     beforeEach(() => {
@@ -40,7 +40,7 @@ describe('CourseCardComponent', () => {
             declarations: [
                 CourseCardComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockPipe(TimeAgoPipe),
+                MockPipe(ArtemisTimeAgoPipe),
                 MockRouterLinkDirective,
                 MockComponent(SecuredImageComponent),
                 MockDirective(NgbTooltip),

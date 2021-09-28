@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import * as moment from 'moment';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -57,8 +56,8 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
      *
      * @param newReleaseDate The new release date
      */
-    updateReleaseDate(newReleaseDate?: Moment) {
-        if (this.exercise.dueDate && newReleaseDate && moment(newReleaseDate).isAfter(this.exercise.dueDate)) {
+    updateReleaseDate(newReleaseDate?: dayjs.Dayjs) {
+        if (this.exercise.dueDate && newReleaseDate && dayjs(newReleaseDate).isAfter(this.exercise.dueDate)) {
             this.updateDueDate(newReleaseDate);
         }
         this.exercise.releaseDate = newReleaseDate;
@@ -68,13 +67,13 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
      * Updates the due Date of the programming exercise
      * @param dueDate the new dueDate
      */
-    private updateDueDate(dueDate: Moment) {
+    private updateDueDate(dueDate: dayjs.Dayjs) {
         alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewDueDate'));
         this.exercise.dueDate = dueDate;
 
         // If the new due date is after the "After Due Date", then we have to set the "After Due Date" to the new due date
         const afterDue = this.exercise.buildAndTestStudentSubmissionsAfterDueDate;
-        if (afterDue && moment(dueDate).isAfter(afterDue)) {
+        if (afterDue && dayjs(dueDate).isAfter(afterDue)) {
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = dueDate;
             alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewAfterDueDate'));
         }

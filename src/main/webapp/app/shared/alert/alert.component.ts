@@ -1,24 +1,15 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { JhiAlert } from 'ng-jhipster';
-import { JhiAlertService } from 'ng-jhipster';
+import { Alert, AlertService } from 'app/core/util/alert.service';
 import { checkForMissingTranslationKey } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-alert',
-    template: `
-        <div class="alerts mt-1" role="alert">
-            <div *ngFor="let alert of alerts" [ngClass]="setClasses(alert)">
-                <ngb-alert *ngIf="alert && alert.type && alert.msg && alert.close" [type]="alert.type" (close)="alert.close(alerts)">
-                    <pre [innerHTML]="getAlertMessage(alert)"></pre>
-                </ngb-alert>
-            </div>
-        </div>
-    `,
+    templateUrl: './alert.component.html',
 })
 export class AlertComponent implements OnInit, OnDestroy {
-    alerts: JhiAlert[] = [];
+    alerts: Alert[] = [];
 
-    constructor(private alertService: JhiAlertService) {}
+    constructor(private alertService: AlertService) {}
 
     /**
      * get alerts on init
@@ -29,10 +20,10 @@ export class AlertComponent implements OnInit, OnDestroy {
 
     /**
      * set classes for alert
-     * @param {JhiAlert} alert
+     * @param {Alert} alert
      * @return {{ [key: string]: boolean }}
      */
-    setClasses(alert: JhiAlert): { [key: string]: boolean } {
+    setClasses(alert: Alert): { [key: string]: boolean } {
         const classes = { 'jhi-toast': Boolean(alert.toast) };
         if (alert.position) {
             return { ...classes, [alert.position]: true };
@@ -47,13 +38,17 @@ export class AlertComponent implements OnInit, OnDestroy {
         this.alertService.clear();
     }
 
+    close(alert: Alert): void {
+        alert.close?.(this.alerts);
+    }
+
     /**
-     * The recveived alert may contain a message which could not be translated.
+     * The received alert may contain a message which could not be translated.
      * We slice the wrapping 'translation-not-found[..]' and return the response.
      * @param alert which contains the alert message
      */
-    getAlertMessage(alert: JhiAlert): String {
+    getAlertMessage(alert: Alert) {
         checkForMissingTranslationKey(alert);
-        return alert.msg;
+        return alert.message;
     }
 }

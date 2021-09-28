@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
@@ -10,7 +10,7 @@ import { SinonStub, stub } from 'sinon';
 import { BehaviorSubject, Subject } from 'rxjs';
 import * as ace from 'brace';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -69,7 +69,7 @@ describe('CodeEditorStudentIntegration', () => {
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | undefined>;
     let routeSubject: Subject<Params>;
 
-    const result = { id: 3, successful: false, completionDate: moment().subtract(2, 'days') };
+    const result = { id: 3, successful: false, completionDate: dayjs().subtract(2, 'days') };
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -165,7 +165,7 @@ describe('CodeEditorStudentIntegration', () => {
         const participation = {
             id: 1,
             results: [result],
-            exercise: { id: 99, buildAndTestStudentSubmissionsAfterDueDate: moment().subtract(1, 'hours'), dueDate: moment().subtract(2, 'hours') } as ProgrammingExercise,
+            exercise: { id: 99, buildAndTestStudentSubmissionsAfterDueDate: dayjs().subtract(1, 'hours'), dueDate: dayjs().subtract(2, 'hours') } as ProgrammingExercise,
         } as any;
         const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();

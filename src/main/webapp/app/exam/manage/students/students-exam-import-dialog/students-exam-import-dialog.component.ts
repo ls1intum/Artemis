@@ -1,14 +1,14 @@
 import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { StudentDTO } from 'app/entities/student-dto.model';
-import * as Papa from 'papaparse';
+import { parse } from 'papaparse';
 
 const csvColumns = Object.freeze({
     registrationNumber: 'registrationnumber',
@@ -53,7 +53,7 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(private activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService, private examManagementService: ExamManagementService) {}
+    constructor(private activeModal: NgbActiveModal, private alertService: AlertService, private examManagementService: ExamManagementService) {}
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
@@ -164,7 +164,7 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
      */
     private parseCSVFile(csvFile: File): Promise<CsvStudent[]> {
         return new Promise((resolve, reject) => {
-            Papa.parse(csvFile, {
+            parse(csvFile, {
                 header: true,
                 transformHeader: (header: string) => header.toLowerCase().replace(' ', '').replace('_', ''),
                 skipEmptyLines: true,
@@ -246,7 +246,7 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
      * Callback method that is called when the import request failed
      */
     onSaveError() {
-        this.jhiAlertService.error('artemisApp.examManagement.examStudents.importStudents.genericErrorMessage');
+        this.alertService.error('artemisApp.examManagement.examStudents.importStudents.genericErrorMessage');
         this.isImporting = false;
     }
 

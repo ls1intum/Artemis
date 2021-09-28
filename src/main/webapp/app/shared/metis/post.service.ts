@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { SERVER_API_URL } from 'app/app.constants';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsService } from 'app/shared/metis/postings.service';
 import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
