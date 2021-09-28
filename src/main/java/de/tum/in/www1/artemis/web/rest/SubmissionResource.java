@@ -20,6 +20,8 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -149,6 +151,25 @@ public class SubmissionResource {
         List<SubmissionWithComplaintDTO> submissionWithComplaintDTOs = submissionService.getSubmissionsWithComplaintsForExercise(exerciseId, principal, isAtLeastInstructor);
 
         return ResponseEntity.ok(submissionWithComplaintDTOs);
+    }
+
+    /**
+     * Search for all submissions by participant name. The result is pageable since there
+     * might be hundreds of submissions in the DB.
+     *
+     * @param exerciseId exerciseId which submissions belongs to
+     * @param search     the pageable search containing the page size and query string
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("exercises/{exerciseId}/submissions-for-import")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<SearchResultPageDTO<Submission>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, PageableSearchDTO<String> search) {
+        log.debug("REST request to get all Submissions for import : {}", exerciseId);
+
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+        return ResponseEntity.ok(submissionService.getSubmissionsOnPageWithSize(search, exercise.getId()));
     }
 
     private void checkAccessPermissionAtInstructor(Submission submission) {
