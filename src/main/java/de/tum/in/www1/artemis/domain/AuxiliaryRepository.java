@@ -179,7 +179,7 @@ public class AuxiliaryRepository extends DomainObject {
     public record AuxRepoNameWithSlug(String name, String repositorySlug) {
     }
 
-    public boolean containsSameStringValues(AuxiliaryRepository other) {
+    public boolean containsEqualStringValues(AuxiliaryRepository other) {
         return Objects.equals(name, other.name) && Objects.equals(checkoutDirectory, other.checkoutDirectory) && Objects.equals(description, other.description);
     }
 }
