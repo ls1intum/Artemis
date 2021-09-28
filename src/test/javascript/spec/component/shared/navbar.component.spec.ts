@@ -359,8 +359,8 @@ describe('NavbarComponent', () => {
         });
 
         it('exercise assessment dashboard', () => {
-            let courseId = 1;
-            let exerciseId = 2;
+            const courseId = 1;
+            const exerciseId = 2;
             const testUrl = `/course-management/${courseId}/assessment-dashboard/${exerciseId}`;
             router.setUrl(testUrl);
 
@@ -382,7 +382,7 @@ describe('NavbarComponent', () => {
             sinon.assert.match(component.breadcrumbs[3], {
                 label: 'Test Exercise',
                 translate: false,
-                uri: '/course-management/1/assessment-dashboard/2/'
+                uri: '/course-management/1/assessment-dashboard/2/',
             } as MockBreadcrumb);
         });
 
