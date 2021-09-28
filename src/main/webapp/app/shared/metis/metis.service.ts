@@ -290,9 +290,9 @@ export class MetisService {
     }
 
     /**
-     * determines link components for a given posts that will navigate to the single-view of that post
-     * @param post post to be navigated to
-     * @return array of link components for the post
+     * determines the router link components required for navigating to the detail view of the given post
+     * @param post to be navigated to
+     * @return [] array of router link components
      */
     getLinkForPost(post?: Post): (string | number)[] {
         if (post?.lecture) {
@@ -305,16 +305,16 @@ export class MetisService {
     }
 
     /**
-     * determines if the current user is the author of a given posting
-     * @param posting posting to be checked against
-     * @return boolean author flag
+     * determines the routing params required for navigating to the detail view of the given post
+     * @param post to be navigated to
+     * @return Params required parameter key-value pair
      */
-    getQueryParamsForPost(posting: Post): Params {
+    getQueryParamsForPost(post: Post): Params {
         const params: Params = {};
-        if (posting.courseWideContext) {
-            params.searchText = `#${posting.id}`;
+        if (post.courseWideContext) {
+            params.searchText = `#${post.id}`;
         } else {
-            params.postId = posting.id;
+            params.postId = post.id;
         }
         return params;
     }
