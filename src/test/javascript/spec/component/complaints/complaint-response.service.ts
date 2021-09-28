@@ -1,9 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { getTestBed, TestBed } from '@angular/core/testing';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { take } from 'rxjs/operators';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
@@ -13,9 +10,6 @@ import { MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs';
 import { User } from 'app/core/user/user.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ComplaintResponseService', () => {
     let testBed: TestBed;
@@ -45,17 +39,17 @@ describe('ComplaintResponseService', () => {
 
     afterEach(() => {
         httpTestingController.verify();
-        sinon.restore();
+        jest.resetAllMocks();
     });
 
     function setupLockTest(loginOfLoggedInUser: string, loggedInUserIsInstructor: boolean, loginOfReviewer: string, lockActive: boolean) {
         const accountService = testBed.get(AccountService);
-        sinon.stub(accountService, 'userIdentity').get(function getterFn() {
+        jest.spyOn(accountService, 'userIdentity', 'get').mockImplementation(function getterFn() {
             const user = new User();
             user.login = loginOfLoggedInUser;
             return user;
         });
-        sinon.stub(accountService, 'isAtLeastInstructorForExercise').returns(loggedInUserIsInstructor);
+        jest.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(loggedInUserIsInstructor);
 
         const lockedComplaintResponse = new ComplaintResponse();
         lockedComplaintResponse.isCurrentlyLocked = lockActive;
@@ -69,18 +63,18 @@ describe('ComplaintResponseService', () => {
     it('should correctly calculate that complaint response is locked for user', () => {
         const lockedComplaintResponse = setupLockTest('test', false, 'test2', true);
         const isLocked = complaintResponseService.isComplaintResponseLockedForLoggedInUser(lockedComplaintResponse, new TextExercise(undefined, undefined));
-        expect(isLocked).to.be.true;
+        expect(isLocked).toBe(true);
     });
 
     it('should correctly calculate that complaint response is not locked for instructor', () => {
         const lockedComplaintResponse = setupLockTest('test', true, 'test2', true);
         const isLocked = complaintResponseService.isComplaintResponseLockedForLoggedInUser(lockedComplaintResponse, new TextExercise(undefined, undefined));
-        expect(isLocked).to.be.false;
+        expect(isLocked).toBe(false);
     });
     it('should correctly calculate that complaint response is not locked for reviewer', () => {
         const lockedComplaintResponse = setupLockTest('test', false, 'test', true);
         const isLocked = complaintResponseService.isComplaintResponseLockedForLoggedInUser(lockedComplaintResponse, new TextExercise(undefined, undefined));
-        expect(isLocked).to.be.false;
+        expect(isLocked).toBe(false);
     });
     it('should call refreshLock', async () => {
         const returnedFromService = { ...defaultComplaintResponse };
@@ -90,7 +84,7 @@ describe('ComplaintResponseService', () => {
             .subscribe((resp) => (expectedComplaintResponse = resp));
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        expect(expectedComplaintResponse.body).to.deep.equal(defaultComplaintResponse);
+        expect(expectedComplaintResponse.body).toEqual(defaultComplaintResponse);
     });
 
     it('should call removeLock', async () => {
@@ -111,7 +105,7 @@ describe('ComplaintResponseService', () => {
             .subscribe((resp) => (expectedComplaintResponse = resp));
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        expect(expectedComplaintResponse.body).to.deep.equal(defaultComplaintResponse);
+        expect(expectedComplaintResponse.body).toEqual(defaultComplaintResponse);
     });
 
     it('should call resolveComplaint', async () => {
@@ -122,7 +116,7 @@ describe('ComplaintResponseService', () => {
             .subscribe((resp) => (expectedComplaintResponse = resp));
         const req = httpTestingController.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
-        expect(expectedComplaintResponse.body).to.deep.equal(defaultComplaintResponse);
+        expect(expectedComplaintResponse.body).toEqual(defaultComplaintResponse);
     });
 
     it('should call findByComplaintId', async () => {
@@ -133,6 +127,6 @@ describe('ComplaintResponseService', () => {
             .subscribe((resp) => (expectedComplaintResponse = resp));
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        expect(expectedComplaintResponse.body).to.deep.equal(defaultComplaintResponse);
+        expect(expectedComplaintResponse.body).toEqual(defaultComplaintResponse);
     });
 });

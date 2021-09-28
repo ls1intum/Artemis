@@ -8,7 +8,6 @@ import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import * as sinon from 'sinon';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MockProvider } from 'ng-mocks';
@@ -71,33 +70,33 @@ describe('ComplaintsComponent', () => {
     }));
 
     it('should submit after complaint creation', () => {
-        const createStub = sinon.stub(complaintService, 'create').returns(of({} as EntityResponseType));
-        const submitSpy = sinon.spy(component.submit, 'emit');
+        const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(of({} as EntityResponseType));
+        const submitSpy = jest.spyOn(component.submit, 'emit');
         component.createComplaint();
-        expect(createStub).toHaveBeenCalledTimes(1);
+        expect(createMock).toHaveBeenCalledTimes(1);
         expect(submitSpy).toHaveBeenCalledTimes(1);
         expect(submitSpy).toHaveBeenCalledWith();
     });
 
     it('should throw unknown error after complaint creation', () => {
-        const createStub = sinon.stub(complaintService, 'create').returns(throwError({ status: 500 }));
-        const submitSpy = sinon.spy(component.submit, 'emit');
-        const errorSpy = sinon.spy(alertService, 'error');
+        const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError({ status: 500 }));
+        const submitSpy = jest.spyOn(component.submit, 'emit');
+        const errorSpy = jest.spyOn(alertService, 'error');
         component.createComplaint();
-        expect(createStub).toHaveBeenCalledTimes(1);
+        expect(createMock).toHaveBeenCalledTimes(1);
         expect(submitSpy).not.toHaveBeenCalled();
         expect(errorSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should throw known error after complaint creation', () => {
         const error = { error: { errorKey: 'toomanycomplaints' } } as HttpErrorResponse;
-        const createStub = sinon.stub(complaintService, 'create').returns(throwError(error));
-        const submitSpy = sinon.spy(component.submit, 'emit');
-        const errorSpy = sinon.spy(alertService, 'error');
+        const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError(error));
+        const submitSpy = jest.spyOn(component.submit, 'emit');
+        const errorSpy = jest.spyOn(alertService, 'error');
         const numberOfComplaints = 42;
         component.maxComplaintsPerCourse = numberOfComplaints;
         component.createComplaint();
-        expect(createStub).toHaveBeenCalledTimes(1);
+        expect(createMock).toHaveBeenCalledTimes(1);
         expect(submitSpy).not.toHaveBeenCalled();
         expect(errorSpy).toHaveBeenCalledTimes(1);
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: numberOfComplaints });
