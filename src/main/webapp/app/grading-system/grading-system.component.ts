@@ -61,6 +61,13 @@ export class GradingSystemComponent implements OnInit {
         });
     }
 
+    // download settings containing element
+    private setting = {
+        element: {
+            dynamicDownload: null as unknown as HTMLElement,
+        },
+    };
+
     private handleFindObservable(findObservable: Observable<EntityResponseType>) {
         findObservable
             .pipe(
@@ -612,5 +619,132 @@ export class GradingSystemComponent implements OnInit {
             gradeSteps,
             gradeType: GradeType.GRADE,
         };
+    }
+
+    /**
+     * Import grade key schema file (*.json) from local computer
+     * @param event the file read event
+     */
+    importGradeSchemaFile(event: any) {
+        // no file chosen
+        if (event.target.files.length !== 1) {
+            return null;
+        }
+
+        const reader = new FileReader();
+
+        reader.onloadend = () => this.loadGradeSchema(reader.result);
+        reader.readAsText(event.target.files[0]);
+    }
+
+    /**
+     * Parse and load grade key schema
+     * @param jsonStr the json representation as a string
+     */
+    loadGradeSchema(jsonStr: any) {
+        let jsonObject;
+        try {
+            jsonObject = JSON.parse(jsonStr);
+        } catch (e) {
+            window.alert('Error loading scheme: ' + e.message);
+        }
+
+        const gradeType = this.parseGradeType(jsonObject.gradeType);
+        const lowerBoundInclusive: boolean = jsonObject.lowerBoundInclusive;
+
+        const gradeSteps = this.modifyGradeStepsByGeneralSettings(gradeType, lowerBoundInclusive, jsonObject.gradeSteps);
+
+        this.gradingScale = {
+            gradeSteps,
+            gradeType,
+        };
+
+        // max points need to updated, initial value set does not trigger
+        // this.maxPoints = 0;
+        if (jsonObject.maxPoints) {
+            this.maxPoints = jsonObject.maxPoints;
+            this.onChangeMaxPoints(jsonObject.maxPoints);
+        }
+
+        // sort grade steps by percentage
+        this.handleFindResponse(this.gradingScale);
+        if (gradeType === GradeType.GRADE) {
+            this.determineFirstPassingGrade();
+        }
+    }
+
+    /**
+     * Maps grade type string representation to corresponding typescript object
+     * @param gradeTypStr
+     */
+    parseGradeType(gradeTypStr: string): GradeType {
+        let gradeType;
+        if (gradeTypStr === 'GradeType.BONUS') {
+            gradeType = GradeType.BONUS;
+        } else if (gradeTypStr === 'GradeType.GRADE') {
+            gradeType = GradeType.GRADE;
+        } else {
+            gradeType = GradeType.NONE;
+        }
+
+        return gradeType;
+    }
+
+    /**
+     * Modify the single grade steps depending on general settings of the grade key schema
+     * @param gradeType grade type of grade key schema
+     * @param lowerBoundInclusive bool whether lower bound points/percentage is included in the grade step
+     * @param gradeStepsUnparsed
+     * @return gradeSteps adjusted grade steps
+     */
+    modifyGradeStepsByGeneralSettings(gradeType: GradeType, lowerBoundInclusive: boolean, gradeStepsUnparsed: any): GradeStep[] {
+        return gradeStepsUnparsed.map((gradeStep: GradeStep) => ({
+            gradeName: gradeStep.gradeName,
+            lowerBoundPercentage: gradeStep.lowerBoundPercentage,
+            upperBoundPercentage: gradeStep.upperBoundPercentage,
+            lowerBoundInclusive,
+            upperBoundInclusive: !lowerBoundInclusive,
+            isPassingGrade: gradeType === GradeType.GRADE ? gradeStep.isPassingGrade : null,
+        }));
+    }
+
+    /**
+     * Grade key scheme to JSON string
+     */
+    gradeSchemeToJsonStr(): string {
+        return JSON.stringify({
+            gradeType: 'GradeType.' + this.gradingScale.gradeType,
+            lowerBoundInclusive: this.gradingScale.gradeSteps[0].lowerBoundInclusive,
+            maxPoints: (<GradeStep>this.gradingScale.gradeSteps.last()).upperBoundPoints,
+            gradeSteps: this.gradingScale.gradeSteps,
+        });
+    }
+
+    /**
+     * Download grading key schema to json file
+     */
+    downloadGradingKeyJson(): void {
+        this.downloadByHtmlTag({
+            fileName: 'grading_key_' + this.gradingScale.course?.shortName + '.json',
+            text: this.gradeSchemeToJsonStr(),
+        });
+    }
+
+    /**
+     * Create a <a>-tag for file to be downloaded an programmatically click
+     * @param arg: type with filename and content string
+     * @private
+     */
+    private downloadByHtmlTag(arg: { fileName: string; text: string }): void {
+        if (!this.setting.element.dynamicDownload) {
+            this.setting.element.dynamicDownload = document.createElement('a');
+        }
+        const element = this.setting.element.dynamicDownload;
+        const fileType = arg.fileName.indexOf('.json') > -1 ? 'text/json' : 'text/plain';
+        element.setAttribute('href', `data:${fileType};charset=utf-8,${encodeURIComponent(arg.text)}`);
+        element.setAttribute('download', arg.fileName);
+
+        const event = new MouseEvent('click');
+        element.dispatchEvent(event);
     }
 }

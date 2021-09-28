@@ -12,6 +12,15 @@
             </button>
             <jhi-grading-system-info-modal></jhi-grading-system-info-modal>
         </div>
+        <div class="d-flex">
+            <label class="btn btn-primary me-1 mb-1">
+                <span jhiTranslate="artemisApp.gradingSystem.importButton">Import (.json)</span>
+                <input type="file" accept=".json" style="display: none" (change)="importGradeSchemaFile($event)" />
+            </label>
+            <button (click)="downloadGradingKeyJson()" class="btn btn-primary me-1 mb-1" type="button">
+                <span jhiTranslate="artemisApp.gradingSystem.exportButton">Export (.json)</span>
+            </button>
+        </div>
         <div class="dropdown-container">
             <div class="form-group">
                 <span class="colon-suffix no-flex-shrink">
