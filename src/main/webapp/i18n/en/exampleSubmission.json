@@ -52,7 +52,10 @@
             "assessmentInstruction": "Double-click on a model element to view and edit the element's assessment.",
             "deleted": "Example submission deleted successfully",
             "assessmentExplanation": "Explanation",
-            "assessmentExplanationInfo": "Additional explanation for this example assessment"
+            "assessmentExplanationInfo": "Additional explanation for this example assessment",
+            "importExampleSubmission": "Import Example Submission",
+            "importExampleSubmissionLabel": "Import an Example Submission",
+            "searchSubmission": "Search for Submission"
         },
         "tutorParticipation": {
             "deleted": "The tutor participation was deleted successfully"
