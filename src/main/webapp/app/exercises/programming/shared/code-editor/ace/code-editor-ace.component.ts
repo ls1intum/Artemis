@@ -186,6 +186,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
             // Setup inline feedbacks
             // Get amount of lines of code in order to render for each line a corresponding inline feedback component
+            console.log(this.isTutorAssessment);
             if (this.isTutorAssessment) {
                 const lines = this.editor.getEditor().getSession().getLength();
                 this.lineCounter = new Array(lines);
