@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges } from '@angular/core';
 import dayjs from 'dayjs';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -9,10 +9,11 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
     templateUrl: './programming-exercise-lifecycle.component.html',
     styleUrls: ['./programming-exercise-test-schedule-picker.scss'],
 })
-export class ProgrammingExerciseLifecycleComponent implements OnInit {
+export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges {
     @Input() exercise: ProgrammingExercise;
     @Input() isExamMode: boolean;
     @Input() readOnly: boolean;
+    minTestExecutionDate = dayjs();
 
     readonly assessmentType = AssessmentType;
 
@@ -25,6 +26,20 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
         if (!this.exercise.id) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
+    }
+
+    /**
+     * Sets a proper minimum date for executing automatic tests depending on if its exam mode or not.
+     */
+    ngOnChanges(): void {
+        let testExecutionDate;
+        if (this.isExamMode) {
+            testExecutionDate = this.exercise.exerciseGroup?.exam?.endDate;
+        } else {
+            testExecutionDate = this.exercise.dueDate;
+        }
+        // If no due date has been set for the exam or the exercise we set the current date as minimum to prevent execution dates in the past
+        this.minTestExecutionDate = testExecutionDate ?? dayjs();
     }
 
     /**

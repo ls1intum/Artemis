@@ -35,8 +35,8 @@
                 <jhi-programming-exercise-test-schedule-date-picker
                     class="test-schedule-date me-2"
                     [(ngModel)]="exercise.buildAndTestStudentSubmissionsAfterDueDate"
-                    [startAt]="exercise.dueDate"
-                    [min]="exercise.dueDate"
+                    [startAt]="minTestExecutionDate"
+                    [min]="minTestExecutionDate"
                     [readOnly]="readOnly"
                     label="artemisApp.programmingExercise.timeline.afterDueDate"
                     tooltipText="artemisApp.programmingExercise.timeline.afterDueDateTooltip"
