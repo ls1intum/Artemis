@@ -80,8 +80,8 @@ Assessment in Orion
 Tutors can assess programming exercises via Orion by performing the following steps:
 
  1. Navigate to the assessment dashboard of the exercise using the integrated browser.
- 2. Click |assess-in-orion-button|. This automatically downloads the repository with the automatic tests.
- 3. After downloading or opening the exercise in IntelliJ, the submission overview is shown in the integrated browser. Each submission can be opened in Orion. To start a new submission, click |start-assessment-in-orion-button|. This downloads the submission files and overwrites the previous submission.
+ 2. Click |assess-in-orion-button|. This automatically sets up the assessment project.
+ 3. After downloading or opening the project in IntelliJ, the submission overview is shown in the integrated browser. Each submission can be opened in Orion. To start a new submission, click |start-assessment-in-orion-button|. This downloads the submission files and overwrites the previous submission.
  4. The student's code is in the directory ``assignment``. The tests are in the directory ``tests``. Additionally, there are two directories ``template`` and ``studentSubmission`` that contain internal files and should be ignored.
  5. Opening a file in the ``assignment`` directory opens the editor with two available modes, which can be switched using the tabs at the bottom of the editor.
    - In edit mode (tab "Text"), the files can be edited regularly, e.g. to try out fixes.
