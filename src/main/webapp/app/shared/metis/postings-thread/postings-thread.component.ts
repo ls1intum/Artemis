@@ -12,7 +12,7 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-cr
 export class PostingsThreadComponent implements OnInit, OnChanges, OnDestroy {
     @Input() post: Post;
     @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
-    showAnswers: boolean;
+    @Input() showAnswers: boolean;
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
