@@ -371,12 +371,19 @@ you can add a memory limit parameter used in the script in ``package.json`` to t
    # This local change in `package.json` should not be committed.
    --max_old_space_size=5120 # possible higher values are 6144, 7168, and 8192
 
-The parameter could be added to each **ng** command as in the example below which edits the **start** script in ``package.json``:  
+You can do it by changing the **start** script in ``package.json`` from:
+
+::
+
+   "start": "ng serve --hmr",
+
+to
 
 ::
 
    "start": "node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng serve --hmr",
 
+The same change could be added to each **ng** command as in the example above. 
 
 Make sure to **not commit this change** in ``package.json``.
 
