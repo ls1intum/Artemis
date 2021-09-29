@@ -1,4 +1,19 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
 .post-result-information {
     font-size: small;
     font-style: italic;
+}
+
+.post-separation-line {
+    height: 1px;
+    background: $metis-light-gray;
+}
+
+.icon {
+    color: $metis-gray;
+}
+
+.posting-header {
+    font-size: 12px;
 }

@@ -7,7 +7,7 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-cr
 @Component({
     selector: 'jhi-postings-thread',
     templateUrl: './postings-thread.component.html',
-    styleUrls: ['./postings-thread.component.scss'],
+    styleUrls: ['../metis.component.scss'],
 })
 export class PostingsThreadComponent implements OnInit, OnChanges, OnDestroy {
     @Input() post: Post;

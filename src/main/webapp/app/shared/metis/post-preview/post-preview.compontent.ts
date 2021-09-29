@@ -8,14 +8,12 @@ import { Router } from '@angular/router';
 @Component({
     selector: 'jhi-post-preview',
     templateUrl: './post-preview.component.html',
-    styleUrls: ['./post-preview.component.scss'],
+    styleUrls: ['../post/post.component.scss', '../metis.component.scss', '../postings-footer/post-footer/post-footer.component.scss'],
 })
 export class PostPreviewComponent implements OnInit {
     @Input() post: Post;
     @Input() ref?: NgbModalRef;
     contextInformation: ContextInformation;
-    hasApprovedAnswers: boolean;
-    numberOfAnswerPosts: number;
 
     constructor(public metisService: MetisService, private router: Router) {}
 
@@ -24,8 +22,6 @@ export class PostPreviewComponent implements OnInit {
      */
     ngOnInit(): void {
         this.contextInformation = this.metisService.getContextInformation(this.post);
-        this.hasApprovedAnswers = this.metisService.checkForApprovedAnswers(this.post);
-        this.numberOfAnswerPosts = this.metisService.getNumberOfAnswerPosts(this.post);
     }
 
     routeToPost() {

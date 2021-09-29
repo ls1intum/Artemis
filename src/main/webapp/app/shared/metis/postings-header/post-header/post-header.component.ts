@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, OnChanges, OnDestroy, Output, ViewChild } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsHeaderDirective } from 'app/shared/metis/postings-header/postings-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -7,13 +7,12 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-e
 @Component({
     selector: 'jhi-post-header',
     templateUrl: './post-header.component.html',
-    styleUrls: ['../posting-header.component.scss'],
+    styleUrls: ['../../metis.component.scss'],
 })
-export class PostHeaderComponent extends PostingsHeaderDirective<Post> implements OnInit, OnChanges, OnDestroy {
+export class PostHeaderComponent extends PostingsHeaderDirective<Post> implements OnChanges, OnDestroy {
     @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     numberOfAnswerPosts: number;
-    hasApprovedAnswers: boolean;
     showAnswers = false;
 
     constructor(protected metisService: MetisService) {
@@ -21,21 +20,10 @@ export class PostHeaderComponent extends PostingsHeaderDirective<Post> implement
     }
 
     /**
-     * on initialization: updates answer post information
-     */
-    ngOnInit(): void {
-        super.ngOnInit();
-        this.numberOfAnswerPosts = this.metisService.getNumberOfAnswerPosts(this.posting);
-        this.hasApprovedAnswers = this.metisService.checkForApprovedAnswers(this.posting);
-    }
-
-    /**
-     * on initialization: updates answer post information
+     * on changes: updates the number of answer posts
      */
     ngOnChanges(): void {
-        super.ngOnInit();
-        this.numberOfAnswerPosts = this.metisService.getNumberOfAnswerPosts(this.posting);
-        this.hasApprovedAnswers = this.metisService.checkForApprovedAnswers(this.posting);
+        this.numberOfAnswerPosts = this.getNumberOfAnswerPosts();
     }
 
     /**
@@ -43,6 +31,14 @@ export class PostHeaderComponent extends PostingsHeaderDirective<Post> implement
      */
     ngOnDestroy(): void {
         this.postCreateEditModal?.modalRef?.close();
+    }
+
+    /**
+     * counts the answer posts of a post, 0 if none exist
+     * @return number number of answer posts
+     */
+    getNumberOfAnswerPosts(): number {
+        return <number>this.posting.answers?.length! ? this.posting.answers?.length! : 0;
     }
 
     /**

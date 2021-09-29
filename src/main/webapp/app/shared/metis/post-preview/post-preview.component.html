@@ -9,15 +9,6 @@
             </span>
         </span>
     </div>
-    <div class="col-auto ps-0 pe-1 toggle-answer-element">
-        <span class="answer-count">
-            {{ numberOfAnswerPosts }}
-            <span *ngIf="numberOfAnswerPosts > 0 && hasApprovedAnswers">
-                (<fa-icon [icon]="'check-double'" class="icon" [ngStyle]="{ color: 'green', fontSize: 'smaller' }"> </fa-icon>)
-            </span>
-            <fa-icon [icon]="'comments'" class="icon" [ngStyle]="{ color: '#353d47' }"></fa-icon>
-        </span>
-    </div>
 </div>
 <!-- title with linked id -->
 <div class="row align-items-center">
