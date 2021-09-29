@@ -3386,6 +3386,21 @@ public class DatabaseUtilService {
         return search;
     }
 
+    public PageableSearchDTO<String> configureStudentParticipationSearch(String searchTerm) {
+        final var search = new PageableSearchDTO<String>();
+        search.setPage(1);
+        search.setPageSize(10);
+        search.setSearchTerm(searchTerm);
+        search.setSortedColumn(StudentParticipation.StudentParticipationSearchColumn.ID.name());
+        if ("".equals(searchTerm)) {
+            search.setSortingOrder(SortingOrder.ASCENDING);
+        }
+        else {
+            search.setSortingOrder(SortingOrder.DESCENDING);
+        }
+        return search;
+    }
+
     public LinkedMultiValueMap<String, String> exerciseSearchMapping(PageableSearchDTO<String> search) {
         final var mapType = new TypeToken<Map<String, String>>() {
         }.getType();
