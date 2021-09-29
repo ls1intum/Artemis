@@ -70,7 +70,7 @@ describe('AnswerPostFooterComponent', () => {
         toggleElement.click();
         fixture.detectChanges();
         expect(toggleApproveSpy).to.have.been.called;
-        expect(component.posting.tutorApproved).to.be.equal(true);
+        expect(component.posting.resolvesPost).to.be.equal(true);
         const approvedBadge = getElement(debugElement, '.approved-badge');
         expect(approvedBadge).to.exist;
     });

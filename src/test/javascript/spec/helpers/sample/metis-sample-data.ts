@@ -126,7 +126,7 @@ export const metisApprovedAnswerPostTutor = {
     id: 3,
     author: metisTutor,
     content: 'metisApprovedAnswerPostTutor',
-    tutorApproved: true,
+    resolvesPost: true,
     creationDate: undefined,
 } as AnswerPost;
 

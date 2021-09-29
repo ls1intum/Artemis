@@ -283,4 +283,24 @@ export class MetisService {
         }
         return emptyPost;
     }
+
+    /**
+     * counts the answer posts of a post, 0 if none exist
+     * @return number number of answer posts
+     */
+    getNumberOfAnswerPosts(post: Post): number {
+        return <number>post.answers?.length! ? post.answers?.length! : 0;
+    }
+
+    /**
+     * determines if the post is resolved by searching for resolving answer posts
+     * @return boolean flag that indicates if the post is resolved
+     */
+    isPostResolved(post: Post): boolean {
+        if (this.getNumberOfAnswerPosts(post) > 0) {
+            return post.answers!.filter((answer: AnswerPost) => answer.resolvesPost === true).length > 0;
+        } else {
+            return false;
+        }
+    }
 }

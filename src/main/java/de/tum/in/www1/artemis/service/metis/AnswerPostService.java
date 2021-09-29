@@ -67,7 +67,7 @@ public class AnswerPostService extends PostingService {
         Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
 
         // answer post is automatically approved if written by an instructor
-        answerPost.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
+        answerPost.setResolvesPost(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
         // use post from database rather than user input
         answerPost.setPost(post);
         // set author to current user
@@ -103,7 +103,7 @@ public class AnswerPostService extends PostingService {
         existingAnswerPost.setContent(answerPost.getContent());
         // tutor approval can only be toggled by a tutor
         if (this.authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            existingAnswerPost.setTutorApproved(answerPost.isTutorApproved());
+            existingAnswerPost.setResolvesPost(answerPost.doesResolvePost());
         }
         AnswerPost updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
 

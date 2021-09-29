@@ -11,6 +11,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 export class AnswerPostFooterComponent extends PostingsFooterDirective<AnswerPost> implements OnInit {
     @Output() toggleApproveChange: EventEmitter<AnswerPost> = new EventEmitter<AnswerPost>();
     isAtLeastTutorInCourse: boolean;
+    isAuthorOfOriginalPost: boolean;
 
     constructor(private metisService: MetisService) {
         super();
@@ -21,15 +22,17 @@ export class AnswerPostFooterComponent extends PostingsFooterDirective<AnswerPos
      */
     ngOnInit(): void {
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+        // determines if the current user is the author of the original post, that the answer belongs to
+        this.isAuthorOfOriginalPost = this.metisService.metisUserIsAuthorOfPosting(this.posting.post!);
     }
 
     /**
-     * toggles the tutorApproved property of an answer post if the user is at least tutor in a course,
+     * toggles the resolvesPost property of an answer post if the user is at least tutor in a course or the user is the author of the original post,
      * delegates the update to the metis service
      */
-    toggleApprove(): void {
-        if (this.isAtLeastTutorInCourse) {
-            this.posting.tutorApproved = !this.posting.tutorApproved;
+    toggleResolvesPost(): void {
+        if (this.isAtLeastTutorInCourse || this.isAuthorOfOriginalPost) {
+            this.posting.resolvesPost = !this.posting.resolvesPost;
             this.metisService.updateAnswerPost(this.posting).subscribe(() => {});
         }
     }

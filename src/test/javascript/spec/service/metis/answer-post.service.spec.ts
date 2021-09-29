@@ -46,7 +46,7 @@ describe('AnswerPost Service', () => {
             tick();
         }));
 
-        it('should update a AnswerPost tutorApproved field', fakeAsync(() => {
+        it('should update a AnswerPost resolvesPost field', fakeAsync(() => {
             const returnedFromService = { ...metisAnswerPostUser1, tutorApproved: true };
             const expected = { ...returnedFromService };
             service

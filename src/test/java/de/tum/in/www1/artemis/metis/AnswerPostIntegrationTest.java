@@ -249,12 +249,12 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToApprove = existingAnswerPosts.get(0);
 
         // approve answer
-        answerPostToApprove.setTutorApproved(true);
+        answerPostToApprove.setResolvesPost(true);
         AnswerPost approvedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToApprove, AnswerPost.class, HttpStatus.OK);
         assertThat(approvedAnswerPost).isEqualTo(answerPostToApprove);
 
         // unapprove answer
-        approvedAnswerPost.setTutorApproved(false);
+        approvedAnswerPost.setResolvesPost(false);
         AnswerPost unapprovedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", approvedAnswerPost, AnswerPost.class, HttpStatus.OK);
         assertThat(unapprovedAnswerPost).isEqualTo(answerPostToApprove);
     }
