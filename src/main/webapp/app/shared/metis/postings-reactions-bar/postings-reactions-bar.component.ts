@@ -108,6 +108,14 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     }
 
     /**
+     * opens the emoji selector overlay if user clicks the '.reaction-button'
+     * closes the emoji selector overly if user clicks the '.reaction-button' again or somewhere outside the overlay
+     */
+    toggleEmojiSelect() {
+        this.showReactionSelector = !this.showReactionSelector;
+    }
+
+    /**
      * updates the reaction based when a displayed emoji reaction is clicked,
      * i.e. when agree on an existing reaction (+1) or removing own reactions (-1)
      */
