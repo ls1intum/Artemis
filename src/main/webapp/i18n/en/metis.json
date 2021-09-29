@@ -37,7 +37,7 @@
             },
             "overview": {
                 "title": "Posts",
-                "searchBarDefault": "Search for a post...",
+                "searchBarDefault": "Search for a post, use # to find a specific post (e.g. #1)",
                 "postContextFilter": "Show posts for:",
                 "courseFilterExplanation": "(All posts)",
                 "sortPostsBy": "Sort by:",
@@ -73,7 +73,8 @@
                 "votes": "Votes",
                 "answers": "Replies",
                 "approvedAnswerPosts": "Approved replies",
-                "exerciseOrLecture": "Exercise / Lecture"
+                "exerciseOrLecture": "Exercise / Lecture",
+                "showAllPosts": "Show all posts"
             },
             "answerPost": {
                 "created": "New reply successfully created",

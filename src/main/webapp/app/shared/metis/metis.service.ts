@@ -15,6 +15,7 @@ import { CourseWideContext, DisplayPriority, PageType, PostContextFilter } from 
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { Params } from '@angular/router';
 
 @Injectable()
 export class MetisService {
@@ -267,6 +268,10 @@ export class MetisService {
 
     /**
      * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
+     * @param courseWideContext optional course-wide context as default context
+     * @param exercise optional exercise as default context
+     * @param lectureId of optional lecture as default context
+     * @return Post created default Post object
      */
     createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lectureId?: number): Post {
         const emptyPost: Post = new Post();
@@ -302,5 +307,35 @@ export class MetisService {
         } else {
             return false;
         }
+    }
+
+    /**
+     * determines the router link components required for navigating to the detail view of the given post
+     * @param post to be navigated to
+     * @return [] array of router link components
+     */
+    getLinkForPost(post?: Post): (string | number)[] {
+        if (post?.lecture) {
+            return ['/courses', this.courseId, 'lectures', post.lecture.id!];
+        }
+        if (post?.exercise) {
+            return ['/courses', this.courseId, 'exercises', post.exercise.id!];
+        }
+        return ['/courses', this.courseId, 'discussion'];
+    }
+
+    /**
+     * determines the routing params required for navigating to the detail view of the given post
+     * @param post to be navigated to
+     * @return Params required parameter key-value pair
+     */
+    getQueryParamsForPost(post: Post): Params {
+        const params: Params = {};
+        if (post.courseWideContext) {
+            params.searchText = `#${post.id}`;
+        } else {
+            params.postId = post.id;
+        }
+        return params;
     }
 }

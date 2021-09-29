@@ -8,6 +8,10 @@ $label-color: #6a737d;
     display: flex;
     height: 100%;
     margin-left: auto;
+
+    .back-instruction {
+        font-size: 12px;
+    }
 }
 
 .expanded-discussion {
