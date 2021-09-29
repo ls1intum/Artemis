@@ -1,15 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ExampleSubmissionImportComponent } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import.component';
+import { Submission } from 'app/entities/submission.model';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
 })
-export class ExampleSubmissionsComponent implements OnInit {
+export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     exercise: Exercise;
 
     constructor(
@@ -17,6 +21,7 @@ export class ExampleSubmissionsComponent implements OnInit {
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
         private courseService: CourseManagementService,
+        private modalService: NgbModal,
     ) {}
 
     /**
@@ -29,6 +34,15 @@ export class ExampleSubmissionsComponent implements OnInit {
             this.courseService.checkAndSetCourseRights(exercise.course);
             this.exercise = exercise;
         });
+    }
+
+    /**
+     * Closes open modal on component destroy
+     */
+    ngOnDestroy() {
+        if (this.modalService.hasOpenModals()) {
+            this.modalService.dismissAll();
+        }
     }
 
     /**
@@ -68,5 +82,26 @@ export class ExampleSubmissionsComponent implements OnInit {
                 id,
             ];
         }
+    }
+
+    /**
+     * Opens the import module for example submission
+     * Then invokes import api for selected submission
+     */
+    openImportModal() {
+        const exampleSubmissionImportModalRef = this.modalService.open(ExampleSubmissionImportComponent, {
+            size: 'lg',
+            backdrop: 'static',
+        });
+        exampleSubmissionImportModalRef.componentInstance.exercise = this.exercise;
+        exampleSubmissionImportModalRef.result.then((selectedSubmission: Submission) => {
+            this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise.id!).subscribe(
+                () => {
+                    this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
+                    location.reload();
+                },
+                (error: HttpErrorResponse) => onError(this.alertService, error),
+            );
+        });
     }
 }
