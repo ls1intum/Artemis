@@ -12,7 +12,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
     postIsResolved: boolean;
 
-    constructor(private metisService: MetisService) {
+    constructor(public metisService: MetisService) {
         super();
     }
 
