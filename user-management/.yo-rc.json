@@ -2,7 +2,7 @@
   "generator-jhipster": {
     "applicationType": "microservice",
     "baseName": "userManagement",
-    "jhipsterVersion": "7.1.0",
+    "jhipsterVersion": "7.2.0",
     "skipClient": true,
     "withAdminUi": false,
     "skipUserManagement": true,
