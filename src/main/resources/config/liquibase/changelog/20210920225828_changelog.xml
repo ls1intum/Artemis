@@ -93,12 +93,11 @@
         </sql>
     </changeSet>
     <changeSet author="argertboja" id="20210920225828-2">
-        <sql>
-            <!--Shorten the reference column length to 255 chars-->
-            ALTER TABLE feedback MODIFY reference VARCHAR(255);
-
-            <!--This query runs an index on reference column of feedback table-->
-            CREATE INDEX idx_reference ON feedback(reference);
-        </sql>
+        <!--Shorten the reference column length to 255 chars-->
+        <modifyDataType tableName="feedback" columnName="reference" newDataType="varchar(255)"/>
+        <!--Create an index on reference column of feedback-->
+        <createIndex indexName="idx_reference" tableName="feedback">
+            <column name="reference"/>
+        </createIndex>
     </changeSet>
 </databaseChangeLog>
