@@ -301,102 +301,12 @@
                 </div>
             </div>
         </div>
-
-        <div class="form-group-narrow">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.title" for="field_submissionPolicy">Submission Policy</label>
-            <select
-                #policy
-                required
-                class="form-control"
-                [ngModel]="selectedSubmissionPolicy"
-                (ngModelChange)="policy.value = onSubmissionPolicyTypeChanged($event)"
-                name="submissionPolicyType"
-                id="field_submissionPolicy"
-                [disabled]="isImport || isEdit || !!programmingExercise.id"
-            >
-                <option value="none">{{ 'artemisApp.programmingExercise.submissionPolicy.none.optionLabel' | artemisTranslate }}</option>
-                <option value="lock_repository">{{ 'artemisApp.programmingExercise.submissionPolicy.lockRepository.optionLabel' | artemisTranslate }}</option>
-                <option value="submission_penalty">{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.optionLabel' | artemisTranslate }}</option>
-            </select>
+        <div class="form-group">
+            <jhi-submission-policy-update
+                [editable]="!(isEdit || isImport)"
+                [programmingExercise]="programmingExercise"
+            ></jhi-submission-policy-update>
         </div>
-
-        <div class="row" *ngIf="!isSubmissionPolicyNone">
-            <div class="col">
-                <ng-container *ngIf="isSubmissionPolicyLockRepository || isSubmissionPolicySubmissionPenalty">
-                    <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle" for="field_submissionLimitExceededPenalty"
-                        >Submission Limit</label
-                    >
-                    <fa-icon
-                        icon="question-circle"
-                        class="text-secondary"
-                        placement="top"
-                        ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription' | artemisTranslate }}"
-                    ></fa-icon>
-                    <div class="input-group">
-                        <input
-                            #submissionLimitInput
-                            required
-                            type="number"
-                            class="form-control"
-                            min="0"
-                            max="500"
-                            name="submissionLimit"
-                            id="field_submissionLimit"
-                            [disabled]="isEdit || isImport"
-                            [ngModel]="submissionLimit"
-                            (ngModelChange)="updateSubmissionLimit(+submissionLimitInput.value)"
-                            #penalty="ngModel"
-                        />
-                    </div>
-                    <ng-container *ngFor="let e of penalty.errors! | keyvalue">
-                        <div *ngIf="penalty.invalid && (penalty.dirty || penalty.touched)" class="alert alert-danger">
-                            <div [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning' + '.' + e.key"></div>
-                        </div>
-                    </ng-container>
-                </ng-container>
-            </div>
-            <div class="col">
-                <ng-container *ngIf="isSubmissionPolicySubmissionPenalty">
-                    <label
-                        class="label-narrow"
-                        jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldTitle"
-                        for="field_submissionLimitExceededPenalty"
-                        >Penalty after Exceeding Submission Limit</label
-                    >
-                    <fa-icon
-                        icon="question-circle"
-                        class="text-secondary"
-                        placement="top"
-                        ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription' | artemisTranslate }}"
-                    ></fa-icon>
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">%</span>
-                        </div>
-                        <input
-                            #exceedingPenaltyInput
-                            required
-                            type="number"
-                            class="form-control"
-                            min="0"
-                            max="100"
-                            name="submissionLimitExceededPenalty"
-                            id="field_submissionLimitExceededPenalty"
-                            [disabled]="isEdit || isImport"
-                            [ngModel]="exceedingPenalty"
-                            (ngModelChange)="updateExceedingPenalty(+exceedingPenaltyInput.value)"
-                            #penalty="ngModel"
-                        />
-                    </div>
-                    <ng-container *ngFor="let e of penalty.errors! | keyvalue">
-                        <div *ngIf="penalty.invalid && (penalty.dirty || penalty.touched)" class="alert alert-danger">
-                            <div [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning' + '.' + e.key"></div>
-                        </div>
-                    </ng-container>
-                </ng-container>
-            </div>
-        </div>
-
         <div class="form-group mt-2" *ngIf="programmingExercise.programmingLanguage && staticCodeAnalysisAllowed && ProjectType.XCODE !== selectedProjectType">
             <div class="form-check custom-control custom-checkbox">
                 <input

@@ -26,7 +26,6 @@ import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-upda
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
-import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -63,15 +62,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue: ProjectType;
-
-    private selectedSubmissionPolicyType: SubmissionPolicyType;
-
-    submissionLimit: number;
-    exceedingPenalty: number;
-
-    isSubmissionPolicyNone: boolean;
-    isSubmissionPolicyLockRepository: boolean;
-    isSubmissionPolicySubmissionPenalty: boolean;
 
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
@@ -212,22 +202,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return this.selectedProgrammingLanguageValue;
     }
 
-    get selectedSubmissionPolicy() {
-        return this.selectedSubmissionPolicyType;
-    }
-
-    updateSubmissionLimit(limit: number) {
-        this.submissionLimit = limit;
-        this.programmingExercise!.submissionPolicy!.submissionLimit = limit;
-        return limit;
-    }
-
-    updateExceedingPenalty(penalty: number) {
-        this.exceedingPenalty = penalty;
-        (this.programmingExercise!.submissionPolicy! as SubmissionPenaltyPolicy).exceedingPenalty = penalty;
-        return penalty;
-    }
-
     /**
      * Will also trigger loading the corresponding project type template.
      *
@@ -271,7 +245,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             this.selectedProjectTypeValue = this.programmingExercise.projectType!;
-            this.selectedSubmissionPolicyType = this.programmingExercise.submissionPolicy?.type ?? SubmissionPolicyType.NONE;
         });
 
         // If it is an import, just get the course, otherwise handle the edit and new cases
@@ -323,16 +296,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
         // Select the correct pattern
         this.setPackageNamePattern(this.selectedProgrammingLanguage);
-
-        // Initialize the submission policy of this exercise
-        this.onSubmissionPolicyTypeChanged(this.programmingExercise.submissionPolicy?.type ?? SubmissionPolicyType.NONE);
-        console.log(this.programmingExercise.submissionPolicy);
-        if (!this.isSubmissionPolicyNone) {
-            this.updateSubmissionLimit(this.programmingExercise.submissionPolicy?.submissionLimit ?? 0);
-            if (this.isSubmissionPolicySubmissionPenalty) {
-                this.updateExceedingPenalty((this.programmingExercise.submissionPolicy as SubmissionPenaltyPolicy).exceedingPenalty ?? 0);
-            }
-        }
 
         // Checks if the current environment is production
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -500,21 +463,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         window.scrollTo(0, 0);
     }
 
-    private setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType: SubmissionPolicyType) {
-        this.isSubmissionPolicyNone = this.isSubmissionPolicyLockRepository = this.isSubmissionPolicySubmissionPenalty = false;
-        switch (submissionPolicyType) {
-            case SubmissionPolicyType.NONE:
-                this.isSubmissionPolicyNone = true;
-                break;
-            case SubmissionPolicyType.LOCK_REPOSITORY:
-                this.isSubmissionPolicyLockRepository = true;
-                break;
-            case SubmissionPolicyType.SUBMISSION_PENALTY:
-                this.isSubmissionPolicySubmissionPenalty = true;
-                break;
-        }
-    }
-
     /**
      * When setting the programming language, a change guard is triggered.
      * This is because we want to reload the instructions template for a different language, but don't want the user to loose unsaved changes.
@@ -578,32 +526,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
-    }
-
-    onSubmissionPolicyTypeChanged(submissionPolicyType: SubmissionPolicyType) {
-        const previousSubmissionPolicyType = this.programmingExercise?.submissionPolicy ?? SubmissionPolicyType.NONE;
-        if (submissionPolicyType === SubmissionPolicyType.NONE) {
-            this.programmingExercise.submissionPolicy = undefined;
-        } else if (submissionPolicyType === SubmissionPolicyType.LOCK_REPOSITORY) {
-            const newPolicy = new LockRepositoryPolicy();
-            if (this.programmingExercise.submissionPolicy) {
-                newPolicy.id = this.programmingExercise.submissionPolicy.id;
-                newPolicy.submissionLimit = this.programmingExercise.submissionPolicy.submissionLimit;
-            }
-            this.programmingExercise.submissionPolicy = newPolicy;
-        } else if (submissionPolicyType === SubmissionPolicyType.SUBMISSION_PENALTY) {
-            const newPolicy = new SubmissionPenaltyPolicy();
-            if (this.programmingExercise.submissionPolicy) {
-                newPolicy.id = this.programmingExercise.submissionPolicy.id;
-                newPolicy.submissionLimit = this.programmingExercise.submissionPolicy.submissionLimit;
-            }
-            if (previousSubmissionPolicyType === SubmissionPolicyType.SUBMISSION_PENALTY) {
-                newPolicy.exceedingPenalty = (this.programmingExercise.submissionPolicy as SubmissionPenaltyPolicy).exceedingPenalty;
-            }
-            this.programmingExercise.submissionPolicy = newPolicy;
-        }
-        this.setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType);
-        return submissionPolicyType!;
     }
 
     onRecreateBuildPlanOrUpdateTemplateChange() {

@@ -21,6 +21,7 @@ import {
     StaticCodeAnalysisCategoryUpdate,
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { ProgrammingExerciseSubmissionPolicyService } from 'app/exercises/programming/manage/services/programming-exercise-submission-policy.service';
+import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 
 /**
  * Describes the editableField
@@ -84,6 +85,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     testCaseColors = {};
     categoryColors = {};
+
+    submissionPolicy?: SubmissionPolicy;
 
     /**
      * Returns the value of testcases
