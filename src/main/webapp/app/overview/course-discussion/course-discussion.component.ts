@@ -133,6 +133,8 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     /**
      * on changing the search text via input, the metis service is invoked to deliver the posts for the currently set context,
      * the sort will be done on the currently visible posts, so the forceReload flag is set to false
+     *
+     * @param forceUpdate passed to metisService method call; if true, forces a re-fetch even if filter property did not change
      */
     onSearch(forceUpdate = false): void {
         this.currentPostContentFilter.searchText = this.searchText;
