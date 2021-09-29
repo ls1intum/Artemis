@@ -75,12 +75,12 @@ describe('Programming Exercise Management', () => {
             programmingCreation.setPackageName('de.test');
 
             // Set release and due dates via owl date picker
-            cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').should('be.visible').click();
-            cy.get(datepickerButtons).wait(500).eq(1).should('be.visible').click();
+            cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').click();
+            cy.get(datepickerButtons).wait(500).eq(1).click();
             cy.get('.test-schedule-date.ng-pristine > :nth-child(1) > .btn').click();
             cy.get('.owl-dt-control-arrow-button').eq(1).click();
             cy.get('.owl-dt-day-3').eq(2).click();
-            cy.get(datepickerButtons).eq(1).should('be.visible').click();
+            cy.get(datepickerButtons).eq(1).click();
 
             programmingCreation.setPoints(100);
             programmingCreation.checkAllowOnlineEditor();
