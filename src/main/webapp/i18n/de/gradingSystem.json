@@ -5,7 +5,7 @@
             "titleCourse": "Notenschlüssel für Kurs",
             "titleExam": "Notenschlüssel für Klausur",
             "defaultButton": "Standard Notenschlüssel Generieren",
-            "inputButton": "Importieren (.json)",
+            "importButton": "Importieren (.json)",
             "exportButton": "Exportieren (.json)",
             "gradeType": {
                 "title": "Notentyp",
