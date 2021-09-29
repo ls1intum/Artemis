@@ -509,6 +509,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.showEditMode = !this.showEditMode;
     }
 
+    /**
+     * Updates given grading instruction in exercise
+     *
+     * @param gradingInstruction needs to be updated
+     * @param criterion includes instruction needs to be update
+     */
     updateGradingInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
         const instructionIndex = this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);

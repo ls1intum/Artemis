@@ -14,8 +14,8 @@ import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domain
 describe('Grading Instructions Management Component', () => {
     let component: GradingInstructionsDetailsComponent;
     let fixture: ComponentFixture<GradingInstructionsDetailsComponent>;
-    const gradingInstruction = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 } as GradingInstruction;
-    const gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] } as GradingCriterion;
+    let gradingInstruction: GradingInstruction;
+    let gradingCriterion: GradingCriterion;
     const exercise = { id: 1 } as Exercise;
     const backupExercise = { id: 1 } as Exercise;
     beforeEach(() => {
@@ -35,6 +35,8 @@ describe('Grading Instructions Management Component', () => {
         component = fixture.componentInstance;
         component.exercise = exercise;
         component.backupExercise = backupExercise;
+        gradingInstruction = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 };
+        gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] };
     });
 
     describe('OnInit', function () {
@@ -184,5 +186,65 @@ describe('Grading Instructions Management Component', () => {
         fixture.detectChanges();
 
         expect(component.exercise.gradingInstructions).toEqual(markdownText);
+    });
+
+    it('should update credits for grading instruction', () => {
+        component.exercise.gradingCriteria = [gradingCriterion];
+        const event = { target: { value: 5 } };
+        const instruction = gradingInstruction;
+        const criterion = gradingCriterion;
+
+        component.setCredits(event, instruction, criterion);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].credits).toEqual(event.target.value);
+    });
+
+    it('should update grading scale for grading instruction', () => {
+        component.exercise.gradingCriteria = [gradingCriterion];
+        const event = { target: { value: 'changed grading scale' } };
+        const instruction = gradingInstruction;
+        const criterion = gradingCriterion;
+
+        component.setGradingScale(event, instruction, criterion);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].gradingScale).toEqual(event.target.value);
+    });
+
+    it('should update instruction description for grading instruction', () => {
+        component.exercise.gradingCriteria = [gradingCriterion];
+        const event = { target: { value: 'changed instruction description' } };
+        const instruction = gradingInstruction;
+        const criterion = gradingCriterion;
+
+        component.setGradingInstructionDescription(event, instruction, criterion);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription).toEqual(event.target.value);
+    });
+
+    it('should update feedback for grading instruction', () => {
+        component.exercise.gradingCriteria = [gradingCriterion];
+        const event = { target: { value: 'changed feedback' } };
+        const instruction = gradingInstruction;
+        const criterion = gradingCriterion;
+
+        component.setFeedback(event, instruction, criterion);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].feedback).toEqual(event.target.value);
+    });
+
+    it('should update usage count for grading instruction', () => {
+        component.exercise.gradingCriteria = [gradingCriterion];
+        const event = { target: { value: 2 } };
+        const instruction = gradingInstruction;
+        const criterion = gradingCriterion;
+
+        component.setUsageCount(event, instruction, criterion);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].usageCount).toEqual(event.target.value);
     });
 });
