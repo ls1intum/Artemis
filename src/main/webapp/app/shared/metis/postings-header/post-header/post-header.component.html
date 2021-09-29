@@ -29,8 +29,8 @@
         </jhi-confirm-icon>
     </div>
     <div *ngIf="numberOfAnswerPosts > 0" class="col-auto ps-0 pe-1 toggle-answer-element clickable" (click)="toggleAnswers()">
-        <span class="answer-count"
-            >{{ numberOfAnswerPosts }}
+        <span class="answer-count">
+            {{ numberOfAnswerPosts }}
             <fa-icon
                 [ngbTooltip]="'artemisApp.metis.toggleThread' | artemisTranslate"
                 [disableTooltip]="numberOfAnswerPosts === 0"

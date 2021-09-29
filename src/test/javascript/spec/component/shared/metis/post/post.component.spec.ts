@@ -1,7 +1,7 @@
 import * as chai from 'chai';
 import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
@@ -9,6 +9,11 @@ import { getElement } from '../../../../helpers/utils/general.utils';
 import { PostFooterComponent } from 'app/shared/metis/postings-footer/post-footer/post-footer.component';
 import { PostHeaderComponent } from 'app/shared/metis/postings-header/post-header/post-header.component';
 import { metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -20,7 +25,16 @@ describe('PostComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            declarations: [PostComponent, MockPipe(HtmlForMarkdownPipe), MockComponent(PostHeaderComponent), MockComponent(PostFooterComponent)],
+            declarations: [
+                PostComponent,
+                MockPipe(HtmlForMarkdownPipe),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(NgbTooltip),
+                MockComponent(PostHeaderComponent),
+                MockComponent(PostFooterComponent),
+                MockComponent(FaIconComponent),
+            ],
+            providers: [{ provide: MetisService, useClass: MockMetisService }],
         })
             .compileComponents()
             .then(() => {

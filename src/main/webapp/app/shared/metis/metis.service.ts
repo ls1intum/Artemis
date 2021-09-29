@@ -289,7 +289,7 @@ export class MetisService {
      * @return number number of answer posts
      */
     getNumberOfAnswerPosts(post: Post): number {
-        return <number>post.answers?.length! ? post.answers?.length! : 0;
+        return post.answers?.length! ? post.answers?.length! : 0;
     }
 
     /**

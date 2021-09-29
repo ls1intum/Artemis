@@ -56,4 +56,12 @@ export class MockMetisService {
     }
 
     getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {}
+
+    isPostResolved(post: Post) {
+        return true;
+    }
+
+    getNumberOfAnswerPosts(post: Post) {
+        return post.answers?.length! ? post.answers?.length! : 0;
+    }
 }
