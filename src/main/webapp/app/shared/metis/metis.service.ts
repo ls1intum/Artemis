@@ -270,7 +270,7 @@ export class MetisService {
      * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
      * @param courseWideContext optional course-wide context as default context
      * @param exercise optional exercise as default context
-     * @param lectureId if of optional lecture as default context
+     * @param lectureId of optional lecture as default context
      * @return Post created default Post object
      */
     createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lectureId?: number): Post {

@@ -67,7 +67,7 @@ export interface PostingContentPart {
 
 /**
  * For each match that is found during regex search on a posting content string, the start index of the match as well as the inclusive end index of the match is stored.
- * For example, if we search of the reference pattern in the string "I reference #54.", the resulting PatternMatch object would be:
+ * For example, if we search for the reference pattern in the string "I reference #54.", the resulting PatternMatch object would be:
  * { startIndex: 12, endIndex: 15}
  */
 export interface PatternMatch {
