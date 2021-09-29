@@ -105,11 +105,14 @@ a.btn {
             font-weight: normal;
         }
     }
+}
 
-    // make sure to align with the bootstrap rule here
-    @media (max-width: 576px) {
-        padding-left: 12px;
-        padding-right: 12px;
+// make sure to align with the bootstrap rule here
+// workaround for unsupported justify-content-evenly by bootstrap
+@media (max-width: 576px) {
+    .footer::before,
+    .footer::after {
+        content: '';
     }
 }
 
