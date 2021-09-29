@@ -1,0 +1,52 @@
+<!-- uncollapsed posts -->
+<div *ngIf="course">
+    <div *ngIf="!collapsed; else collapsedPosts" class="postings-container expanded-discussion">
+        <div class="draggable-left">
+            <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
+        </div>
+        <div class="card">
+            <!-- header -->
+            <div class="card-header text-white" [ngbTooltip]="'artemisApp.metis.discussion.hide' | artemisTranslate" (click)="collapsed = true">
+                <div class="row flex-grow-1">
+                    <div class="col">
+                        <h5 class="mb-0" jhiTranslate="artemisApp.metis.discussion.label">Discussion</h5>
+                    </div>
+                    <div class="col-auto">
+                        <fa-icon [icon]="'chevron-right'"></fa-icon>
+                    </div>
+                </div>
+            </div>
+            <!-- body -->
+            <div class="card-body pt-0">
+                <!-- loading posts -->
+                <div class="post-result-information row mt-2" *ngIf="isLoading">
+                    <div class="col-12">{{ 'artemisApp.metis.loadingPosts' | artemisTranslate }}</div>
+                </div>
+                <!-- no posts -->
+                <div class="post-result-information row mt-2" *ngIf="!isLoading && posts.length === 0">
+                    <div class="col-12">{{ 'artemisApp.metis.noPosts' | artemisTranslate }}</div>
+                </div>
+                <!-- list of posts -->
+                <jhi-postings-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post"> </jhi-postings-thread>
+                <!-- new post button -->
+                <div class="row mt-2" *ngIf="createdPost">
+                    <div class="col-12">
+                        <button class="btn btn-sm btn-primary" (click)="createEditModal.open()">
+                            <fa-icon [icon]="'plus'"></fa-icon>
+                            <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
+                        </button>
+                        <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- collapsed posts -->
+    <ng-template #collapsedPosts>
+        <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.discussion.show' | artemisTranslate">
+            <fa-icon class="expand-postings-icon" [icon]="'chevron-left'"></fa-icon>
+            <span class="h5" jhiTranslate="artemisApp.metis.discussion.label"></span>
+            <fa-icon class="expand-postings-icon" [icon]="'chevron-left'"></fa-icon>
+        </div>
+    </ng-template>
+</div>

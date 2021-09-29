@@ -2,9 +2,8 @@ import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import * as chai from 'chai';
-import * as moment from 'moment';
-import * as sinonChai from 'sinon-chai';
-import { SERVER_API_URL } from 'app/app.constants';
+import dayjs from 'dayjs';
+import sinonChai from 'sinon-chai';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
@@ -53,9 +52,9 @@ describe('Modeling Assessment Service', () => {
             elemDefault.resultString = '5 of 5 points';
             elemDefault.score = 5;
             elemDefault.hasComplaint = false;
-            elemDefault.completionDate = moment();
-            elemDefault.submission = { id: 187, submissionDate: moment() };
-            elemDefault.participation = { id: 6, initializationDate: moment() };
+            elemDefault.completionDate = dayjs();
+            elemDefault.submission = { id: 187, submissionDate: dayjs() };
+            elemDefault.participation = { id: 6, initializationDate: dayjs() };
             it('should save an assessment', async () => {
                 const submissionId = 187;
                 const feedbacks = [

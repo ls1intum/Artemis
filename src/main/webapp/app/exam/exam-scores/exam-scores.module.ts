@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { ChartsModule } from 'ng2-charts';
 import { ExamScoresComponent } from './exam-scores.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MomentModule } from 'ngx-moment';
 import { ArtemisExamScoresRoutingModule } from 'app/exam/exam-scores/exam-scores.route';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
@@ -12,15 +11,6 @@ import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam
 
 @NgModule({
     declarations: [ExamScoresComponent, ExamScoresAverageScoresGraphComponent],
-    imports: [
-        ArtemisSharedModule,
-        ChartsModule,
-        MomentModule,
-        ArtemisExamScoresRoutingModule,
-        ArtemisDataTableModule,
-        NgxDatatableModule,
-        ArtemisResultModule,
-        ArtemisSharedComponentModule,
-    ],
+    imports: [ArtemisSharedModule, ChartsModule, ArtemisExamScoresRoutingModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisResultModule, ArtemisSharedComponentModule],
 })
 export class ArtemisExamScoresModule {}

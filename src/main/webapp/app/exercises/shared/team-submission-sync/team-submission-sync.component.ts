@@ -2,7 +2,7 @@ import { Component, Input, Output, OnInit, EventEmitter } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { throttleTime, filter } from 'rxjs/operators';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { SubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -27,7 +27,7 @@ export class TeamSubmissionSyncComponent implements OnInit {
     currentUser: User;
     websocketTopic: string;
 
-    constructor(private accountService: AccountService, private teamSubmissionWebsocketService: JhiWebsocketService, private jhiAlertService: JhiAlertService) {
+    constructor(private accountService: AccountService, private teamSubmissionWebsocketService: JhiWebsocketService, private alertService: AlertService) {
         this.accountService.identity().then((user: User) => (this.currentUser = user));
     }
 
@@ -81,6 +81,6 @@ export class TeamSubmissionSyncComponent implements OnInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error);
+        this.alertService.error(error);
     }
 }

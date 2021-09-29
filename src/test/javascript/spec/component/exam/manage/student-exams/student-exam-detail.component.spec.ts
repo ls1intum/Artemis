@@ -9,7 +9,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
@@ -19,15 +18,14 @@ import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testi
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
 import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MockTranslateValuesDirective } from '../../../course/course-scores/course-scores.component.spec';
 import { Exercise } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exam } from 'app/entities/exam.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
@@ -36,6 +34,9 @@ import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exam
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -71,7 +72,7 @@ describe('StudentExamDetailComponent', () => {
             course,
             id: 1,
             registeredUsers: [student],
-            visibleDate: moment().add(120, 'seconds'),
+            visibleDate: dayjs().add(120, 'seconds'),
         };
 
         result = { score: 40 };
@@ -95,7 +96,7 @@ describe('StudentExamDetailComponent', () => {
             exam,
             user: student,
             submitted: true,
-            submissionDate: moment(),
+            submissionDate: dayjs(),
             exercises: [exercise],
         };
 
@@ -149,8 +150,8 @@ describe('StudentExamDetailComponent', () => {
                     },
                 }),
                 MockPipe(ArtemisDurationFromSecondsPipe),
-                MockProvider(JhiAlertService),
-                MockDirective(JhiTranslateDirective),
+                MockProvider(AlertService),
+                MockDirective(TranslateDirective),
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -232,9 +233,9 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.studentExam = studentExam;
         studentExam.exam!.gracePeriod = 100;
         expect(studentExamDetailComponent.examIsOver()).to.equal(false);
-        studentExam.exam!.endDate = moment().add(-20, 'seconds');
+        studentExam.exam!.endDate = dayjs().add(-20, 'seconds');
         expect(studentExamDetailComponent.examIsOver()).to.equal(false);
-        studentExam.exam!.endDate = moment().add(-200, 'seconds');
+        studentExam.exam!.endDate = dayjs().add(-200, 'seconds');
         expect(studentExamDetailComponent.examIsOver()).to.equal(true);
         studentExam.exam = undefined;
         expect(studentExamDetailComponent.examIsOver()).to.equal(false);

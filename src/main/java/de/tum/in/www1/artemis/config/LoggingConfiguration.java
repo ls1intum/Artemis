@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
-import static io.github.jhipster.config.logging.LoggingUtils.*;
+import static tech.jhipster.config.logging.LoggingUtils.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,10 +13,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ch.qos.logback.classic.LoggerContext;
-import io.github.jhipster.config.JHipsterProperties;
+import tech.jhipster.config.JHipsterProperties;
 
 /*
- * Configures the console and Logstash log appenders from the app properties
+ * Configures the console and Logstash log appender from the app properties
  */
 @Configuration
 public class LoggingConfiguration {
@@ -42,9 +42,6 @@ public class LoggingConfiguration {
         }
         if (loggingProperties.isUseJsonFormat() || logstashProperties.isEnabled()) {
             addContextListener(context, customFields, loggingProperties);
-        }
-        if (jHipsterProperties.getMetrics().getLogs().isEnabled()) {
-            setMetricsMarkerLogbackFilter(context, loggingProperties.isUseJsonFormat());
         }
     }
 }

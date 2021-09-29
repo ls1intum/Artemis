@@ -76,8 +76,8 @@
                 "cannotRegisterInstructor": "Du kannst keine Personen aus der Lehr- oder Administrationsgruppe zu Klausuren anmelden."
             },
             "problemStatementUpdate": {
-                "showDiff": "zeige Unterschiede",
-                "showNew": "zeige nur neue Version"
+                "showDiff": "Zeige Unterschiede",
+                "showNew": "Zeige nur neue Version"
             }
         },
         "examScores": {
@@ -93,11 +93,11 @@
             "secondCorrectionColumn": "Zweitkorrektur",
             "titleExerciseGroupColumn": "Aufgabengruppe",
             "titleExerciseColumn": "Aufgabe",
-            "averagePointsColumn": "Durchschnitt",
+            "averagePointsColumn": "Durchschnittliche Punktzahl",
             "averageGradeColumn": "Durchschnittliche Note",
             "averageBonusColumn": "Durchschnittliche Bonuspunkte",
-            "medianGradeColumn": "Median-Note",
-            "medianBonusColumn": "Median-Bonuspunkte",
+            "medianGradeColumn": "Note Median",
+            "medianBonusColumn": "Bonuspunkte Median",
             "participantsColumn": "Teilnehmende",
             "averageExerciseTooltip": "(Durchschnittliche / Maximale) Punktzahl für die Aufgabe. Die aktiven Filtereinstellungen beeinflussen den Durchschnitt.",
             "averageExerciseGroupTooltip": "(Durchschnittliche / Maximale) Punktzahl für die Aufgabengruppe. Die aktiven Filtereinstellungen beeinflussen den Durchschnitt.",
@@ -115,8 +115,9 @@
             "exportCSV": "Exportiere Ergebnisse als CSV",
             "filterForSubmittedExams": "Berücksichtige nur abgegebene Klausuren",
             "filterForNonEmptySubmissions": "Berücksichtige nur Aufgaben mit mindestens einer nicht leeren Abgabe",
-            "medianColumn": "Median",
-            "standardDeviationColumn": "Standardabweichung",
+            "medianColumn": "Punkte Median",
+            "standardDeviationColumn": "Punkte Standardabweichung",
+            "standardGradeDeviationColumn": "Noten Standardabweichung",
             "noOfExams": "Klausuren",
             "registered": "Angemeldete Studierende",
             "noExerciseGroups": "Aufgabengruppen",

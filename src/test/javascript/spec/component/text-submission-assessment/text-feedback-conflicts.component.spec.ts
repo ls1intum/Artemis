@@ -1,20 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
-import { ActivatedRoute, RouterModule, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { MockComponent } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { TextFeedbackConflictsComponent } from 'app/exercises/text/assess/conflicts/text-feedback-conflicts.component';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
-import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
-import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
 import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/text-submission-assessment.component';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
@@ -26,7 +21,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { FeedbackConflict, FeedbackConflictType } from 'app/entities/feedback-conflict';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -34,9 +29,23 @@ import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
+import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { NgModel } from '@angular/forms';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TextFeedbackConflictsComponent', () => {
     let component: TextFeedbackConflictsComponent;
@@ -59,7 +68,7 @@ describe('TextFeedbackConflictsComponent', () => {
         id: 2278,
         submitted: true,
         type: SubmissionType.MANUAL,
-        submissionDate: moment('2019-07-09T10:47:33.244Z'),
+        submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
         text: 'First text. Second text.',
         participation,
     } as unknown as TextSubmission;
@@ -67,7 +76,7 @@ describe('TextFeedbackConflictsComponent', () => {
         {
             id: 2374,
             resultString: '1 of 12 points',
-            completionDate: moment('2019-07-09T11:51:23.251Z'),
+            completionDate: dayjs('2019-07-09T11:51:23.251Z'),
             successful: false,
             score: 8,
             rated: true,
@@ -107,7 +116,7 @@ describe('TextFeedbackConflictsComponent', () => {
             id: 1,
             conflict: true,
             conflictingFeedbackId: 5,
-            createdAt: moment('2019-07-09T11:51:23.251Z'),
+            createdAt: dayjs('2019-07-09T11:51:23.251Z'),
             type: FeedbackConflictType.INCONSISTENT_COMMENT,
             markedAsNoConflict: false,
         } as FeedbackConflict,
@@ -118,13 +127,13 @@ describe('TextFeedbackConflictsComponent', () => {
         id: 2280,
         submitted: true,
         type: SubmissionType.MANUAL,
-        submissionDate: moment('2019-07-09T10:47:33.244Z'),
+        submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
         text: 'First Conflicting Submission Text.',
     } as unknown as TextSubmission;
     conflictingSubmission.results = [
         {
             id: 2375,
-            completionDate: moment('2020-02-10T11:51:23.251Z'),
+            completionDate: dayjs('2020-02-10T11:51:23.251Z'),
             successful: false,
             score: 3,
             rated: true,
@@ -154,18 +163,7 @@ describe('TextFeedbackConflictsComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                ArtemisSharedModule,
-                ArtemisAssessmentSharedModule,
-                AssessmentInstructionsModule,
-                TranslateModule.forRoot(),
-                ArtemisConfirmIconModule,
-                RouterModule,
-                RouterTestingModule,
-                TextSharedModule,
-                ArtemisGradingInstructionLinkIconModule,
-            ],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), RouterTestingModule],
             declarations: [
                 TextFeedbackConflictsComponent,
                 TextSubmissionAssessmentComponent,
@@ -174,6 +172,23 @@ describe('TextFeedbackConflictsComponent', () => {
                 TextblockFeedbackEditorComponent,
                 ManualTextblockSelectionComponent,
                 TextFeedbackConflictsHeaderComponent,
+                MockComponent(ScoreDisplayComponent),
+                MockComponent(FaIconComponent),
+                MockComponent(FaLayersComponent),
+                MockTranslateValuesDirective,
+                MockComponent(AssessmentLayoutComponent),
+                MockComponent(AssessmentInstructionsComponent),
+                MockComponent(ResizeableContainerComponent),
+                MockComponent(UnreferencedFeedbackComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+                MockDirective(NgbTooltip),
+                MockComponent(ConfirmIconComponent),
+                MockDirective(NgModel),
+                MockComponent(GradingInstructionLinkIconComponent),
+                MockComponent(AssessmentCorrectionRoundBadgeComponent),
+                MockComponent(ManualTextSelectionComponent),
+                MockComponent(AlertComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ feedbackId: 1 }) } } },
@@ -183,8 +198,8 @@ describe('TextFeedbackConflictsComponent', () => {
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {
-                    declarations: [MockComponent(FaIconComponent)],
-                    exports: [MockComponent(FaIconComponent)],
+                    declarations: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
+                    exports: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
                 },
             })
             .compileComponents();
@@ -192,7 +207,7 @@ describe('TextFeedbackConflictsComponent', () => {
 
     beforeEach(() => {
         router = TestBed.inject(Router);
-        spyOn(router, 'getCurrentNavigation').and.returnValues({ extras: { state: { submission: textSubmission } } } as any);
+        jest.spyOn(router, 'getCurrentNavigation').mockReturnValue({ extras: { state: { submission: textSubmission } } } as any);
         fixture = TestBed.createComponent(TextFeedbackConflictsComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
@@ -246,7 +261,7 @@ describe('TextFeedbackConflictsComponent', () => {
         expect(component.leftTotalScore).toBe(2);
         expect(component.isOverrideDisabled).toBe(false);
 
-        spyOn(textAssessmentService, 'submit').and.returnValue(
+        jest.spyOn(textAssessmentService, 'submit').mockReturnValue(
             of(
                 new HttpResponse({
                     body: component.leftSubmission!.latestResult,
@@ -304,9 +319,9 @@ describe('TextFeedbackConflictsComponent', () => {
         textBlockAssessmentAreas.forEach((textBlockAssessmentCardArea) => {
             const textBlockAssessmentCardComponent = textBlockAssessmentCardArea.componentInstance as TextblockAssessmentCardComponent;
             if (textBlockAssessmentCardComponent.textBlockRef === component.leftTextBlockRefs[0]) {
-                spyOn(textBlockAssessmentCardComponent, 'didSelect');
+                jest.spyOn(textBlockAssessmentCardComponent.didSelect, 'emit');
                 textBlockAssessmentCardComponent.select();
-                expect(textBlockAssessmentCardComponent.didSelect).toHaveBeenCalledTimes(0);
+                expect(textBlockAssessmentCardComponent.didSelect.emit).toHaveBeenCalledTimes(0);
             }
         });
 
@@ -324,13 +339,7 @@ describe('TextFeedbackConflictsComponent', () => {
         const feedbackConflict = textSubmission.latestResult!.feedbacks![0].conflictingTextAssessments![0];
         feedbackConflict.conflict = false;
         feedbackConflict.discard = true;
-        spyOn(textAssessmentService, 'solveFeedbackConflict').and.returnValue(
-            of(
-                new HttpResponse({
-                    body: feedbackConflict,
-                }),
-            ),
-        );
+        jest.spyOn(textAssessmentService, 'solveFeedbackConflict').mockReturnValue(of(feedbackConflict));
         component.discardConflict();
         expect(textAssessmentService.solveFeedbackConflict).toHaveBeenCalledWith(exercise!.id!, feedbackConflict.id!);
     });

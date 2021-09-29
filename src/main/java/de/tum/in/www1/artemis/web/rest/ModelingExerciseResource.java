@@ -6,6 +6,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -174,6 +175,12 @@ public class ModelingExerciseResource {
         exerciseService.validateGeneralSettings(modelingExercise);
 
         ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
+
+        // Forbid changing the course the exercise belongs to.
+        if (!Objects.equals(modelingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+            return conflict("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
+        }
+
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
@@ -188,7 +195,7 @@ public class ModelingExerciseResource {
 
         modelingExerciseService.scheduleOperations(updatedModelingExercise.getId());
 
-        if (notificationText != null) {
+        if ((notificationText != null && modelingExercise.isCourseExercise()) || modelingExercise.isExamExercise()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(modelingExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString()))
@@ -217,26 +224,6 @@ public class ModelingExerciseResource {
             exercise.setCourse(null);
         }
         return ResponseEntity.ok().body(exercises);
-    }
-
-    /**
-     * GET /modeling-exercises/:id/statistics : get the "id" modelingExercise statistics.
-     *
-     * @param exerciseId the id of the modelingExercise for which the statistics should be retrieved
-     * @return the json encoded modelingExercise statistics
-     */
-    @GetMapping(value = "/modeling-exercises/{exerciseId}/statistics")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<String> getModelingExerciseStatistics(@PathVariable Long exerciseId) {
-        log.debug("REST request to get ModelingExercise Statistics for Exercise: {}", exerciseId);
-        var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
-        // if (compassService.isSupported(modelingExercise)) {
-        // return ResponseEntity.ok(compassService.getStatistics(exerciseId).toString());
-        // }
-        // else {
-        return notFound();
-        // }
     }
 
     /**

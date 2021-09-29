@@ -5,7 +5,10 @@ client:
 - src/main/webapp/**/*
 
 tests:
-- src/test/*
+- src/test/**/*
+
+cypress:
+- src/test/cypress/**/*
 
 database:
 - src/main/resources/config/liquibase/master.xml

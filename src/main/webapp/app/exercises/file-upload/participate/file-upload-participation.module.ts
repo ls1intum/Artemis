@@ -5,7 +5,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { FileUploadSubmissionComponent } from './file-upload-submission.component';
-import { MomentModule } from 'ngx-moment';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
@@ -17,7 +16,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
         ArtemisResultModule,
         ArtemisComplaintsModule,
         ArtemisFileUploadParticipationRoutingModule,
-        MomentModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         RatingModule,
         ArtemisMarkdownModule,

@@ -386,7 +386,11 @@ public class DatabaseUtilService {
     }
 
     public Course createCourse() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        return createCourse(null);
+    }
+
+    public Course createCourse(Long id) {
+        Course course = ModelFactory.generateCourse(id, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         return courseRepo.save(course);
     }
 
@@ -769,6 +773,7 @@ public class DatabaseUtilService {
         post.setTitle(String.format("Title Post %s", (i + 1)));
         post.setContent(String.format("Content Post %s", (i + 1)));
         post.setVisibleForStudents(true);
+        post.setDisplayPriority(DisplayPriority.NONE);
         post.setAuthor(getUserByLoginWithoutAuthorities(String.format("student%s", (i + 1))));
         post.setCreationDate(ZonedDateTime.of(2015, 11, 28, 23, 45, 59, 1234, ZoneId.of("UTC")));
         String tag = String.format("Tag %s", (i + 1));
@@ -2948,6 +2953,7 @@ public class DatabaseUtilService {
         }
         else {
             submission = ModelFactory.generateTextSubmission(modelOrText, Language.ENGLISH, false);
+            saveSubmissionToRepo(submission);
         }
         submission.setExampleSubmission(flagAsExampleSubmission);
         return ModelFactory.generateExampleSubmission(submission, exercise, usedForTutorial);
@@ -3371,6 +3377,21 @@ public class DatabaseUtilService {
         search.setPageSize(10);
         search.setSearchTerm(searchTerm);
         search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
+        if ("".equals(searchTerm)) {
+            search.setSortingOrder(SortingOrder.ASCENDING);
+        }
+        else {
+            search.setSortingOrder(SortingOrder.DESCENDING);
+        }
+        return search;
+    }
+
+    public PageableSearchDTO<String> configureStudentParticipationSearch(String searchTerm) {
+        final var search = new PageableSearchDTO<String>();
+        search.setPage(1);
+        search.setPageSize(10);
+        search.setSearchTerm(searchTerm);
+        search.setSortedColumn(StudentParticipation.StudentParticipationSearchColumn.ID.name());
         if ("".equals(searchTerm)) {
             search.setSortingOrder(SortingOrder.ASCENDING);
         }

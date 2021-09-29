@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
@@ -19,7 +19,7 @@ export class CreateTextUnitComponent implements OnInit {
     isLoading: boolean;
     lectureId: number;
     courseId: number;
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private textUnitService: TextUnitService, private alertService: JhiAlertService) {}
+    constructor(private activatedRoute: ActivatedRoute, private router: Router, private textUnitService: TextUnitService, private alertService: AlertService) {}
 
     ngOnInit(): void {
         const lectureRoute = this.activatedRoute.parent!.parent!;

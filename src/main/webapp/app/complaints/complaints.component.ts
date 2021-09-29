@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Result } from 'app/entities/result.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { filter } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
@@ -20,6 +20,7 @@ import { onError } from 'app/shared/util/global.utils';
 export class ComplaintsComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() resultId: number;
+    @Input() submissionId: number;
     @Input() examId?: number;
     @Input() allowedComplaints: number; // the number of complaints that a student can still submit in the course
     @Input() maxComplaintsPerCourse: number;
@@ -27,19 +28,19 @@ export class ComplaintsComponent implements OnInit {
     @Input() isCurrentUserSubmissionAuthor = false;
     @Output() submit: EventEmitter<void> = new EventEmitter();
     complaintText?: string;
-    alreadySubmitted: boolean;
-    submittedDate: Moment;
+    alreadySubmitted = false;
+    submittedDate: dayjs.Dayjs;
     accepted?: boolean;
     handled: boolean;
     complaintResponse: ComplaintResponse;
     ComplaintType = ComplaintType;
     loaded = true;
 
-    constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
+    constructor(private complaintService: ComplaintService, private alertService: AlertService, private complaintResponseService: ComplaintResponseService) {}
 
     ngOnInit(): void {
         this.complaintService
-            .findByResultId(this.resultId)
+            .findBySubmissionId(this.submissionId)
             .pipe(filter((res) => !!res.body))
             .subscribe(
                 (res) => {
@@ -51,11 +52,11 @@ export class ComplaintsComponent implements OnInit {
                     this.handled = this.accepted !== undefined;
 
                     if (this.handled) {
-                        this.complaintResponseService.findByComplaintId(complaint.id!).subscribe((complaintResponse) => (this.complaintResponse = complaintResponse.body!));
+                        this.complaintResponse = complaint.complaintResponse!;
                     }
                 },
                 (error: HttpErrorResponse) => {
-                    onError(this.jhiAlertService, error);
+                    onError(this.alertService, error);
                 },
             );
     }
@@ -72,11 +73,9 @@ export class ComplaintsComponent implements OnInit {
             (res) => {
                 this.submittedDate = res.body!.submittedTime!;
                 this.alreadySubmitted = true;
-                if (complaint.complaintType === ComplaintType.COMPLAINT) {
+                if (complaint.complaintType === ComplaintType.COMPLAINT && !this.examId) {
                     // we do not track the number of complaints for exams
-                    if (!this.examId) {
-                        this.allowedComplaints--;
-                    }
+                    this.allowedComplaints--;
                 }
                 this.loaded = true;
                 this.submit.emit();
@@ -84,9 +83,9 @@ export class ComplaintsComponent implements OnInit {
             (err: HttpErrorResponse) => {
                 this.loaded = true;
                 if (err && err.error && err.error.errorKey === 'toomanycomplaints') {
-                    this.jhiAlertService.error('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintsPerCourse });
+                    this.alertService.error('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintsPerCourse });
                 } else {
-                    onError(this.jhiAlertService, err);
+                    onError(this.alertService, err);
                 }
             },
         );

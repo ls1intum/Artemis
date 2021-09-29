@@ -1,23 +1,24 @@
 import { ComponentFixture, TestBed, async, inject, tick, fakeAsync } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
-import { JhiLanguageService } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../test.module';
 import { EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/constants/error.constants';
 import { RegisterService } from 'app/account/register/register.service';
 import { RegisterComponent } from 'app/account/register/register.component';
-import { MockLanguageService } from '../../helpers/mocks/service/mock-language.service';
 import { User } from 'app/core/user/user.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Component Tests', () => {
     describe('RegisterComponent', () => {
         let fixture: ComponentFixture<RegisterComponent>;
         let comp: RegisterComponent;
+        let translateService: TranslateService;
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
@@ -28,6 +29,7 @@ describe('Component Tests', () => {
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: ProfileService, useClass: MockProfileService },
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
             })
                 .overrideTemplate(RegisterComponent, '')
@@ -36,8 +38,10 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             fixture = TestBed.createComponent(RegisterComponent);
+            translateService = TestBed.inject(TranslateService);
             comp = fixture.componentInstance;
             comp.isRegistrationEnabled = true;
+            translateService.currentLang = 'en';
         });
 
         it('should ensure the two passwords entered match', () => {
@@ -52,9 +56,9 @@ describe('Component Tests', () => {
         });
 
         it('should update success to true after creating an account', inject(
-            [RegisterService, JhiLanguageService],
-            fakeAsync((service: RegisterService, mockTranslate: MockLanguageService) => {
-                spyOn(service, 'save').and.returnValue(of({}));
+            [RegisterService],
+            fakeAsync((service: RegisterService) => {
+                jest.spyOn(service, 'save').mockReturnValue(of({} as any));
                 comp.registerForm.patchValue({
                     password: 'password',
                     confirmPassword: 'password',
@@ -71,7 +75,6 @@ describe('Component Tests', () => {
                 user.langKey = 'en';
                 expect(service.save).toHaveBeenCalledWith(user);
                 expect(comp.success).toBe(true);
-                expect(mockTranslate.getCurrentLanguageSpy).toHaveBeenCalled();
                 expect(comp.errorUserExists).toBe(false);
                 expect(comp.errorEmailExists).toBe(false);
                 expect(comp.error).toBe(false);
@@ -81,7 +84,7 @@ describe('Component Tests', () => {
         it('should notify of user existence upon 400/login already in use', inject(
             [RegisterService],
             fakeAsync((service: RegisterService) => {
-                spyOn(service, 'save').and.returnValue(
+                jest.spyOn(service, 'save').mockReturnValue(
                     throwError({
                         status: 400,
                         error: { type: LOGIN_ALREADY_USED_TYPE },
@@ -104,7 +107,7 @@ describe('Component Tests', () => {
         it('should notify of email existence upon 400/email address already in use', inject(
             [RegisterService],
             fakeAsync((service: RegisterService) => {
-                spyOn(service, 'save').and.returnValue(
+                jest.spyOn(service, 'save').mockReturnValue(
                     throwError({
                         status: 400,
                         error: { type: EMAIL_ALREADY_USED_TYPE },
@@ -127,7 +130,7 @@ describe('Component Tests', () => {
         it('should notify of generic error', inject(
             [RegisterService],
             fakeAsync((service: RegisterService) => {
-                spyOn(service, 'save').and.returnValue(
+                jest.spyOn(service, 'save').mockReturnValue(
                     throwError({
                         status: 503,
                     }),
