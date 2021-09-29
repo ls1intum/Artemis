@@ -2,7 +2,15 @@
 <div class="row align-items-center">
     <div class="col">
         <div class="row">
-            <p class="m-0 post-title">{{ posting.title }}</p>
+            <fa-icon
+                *ngIf="postIsResolved"
+                [icon]="'check-square'"
+                iconSize="xs"
+                class="col-auto pe-0 resolved"
+                [ngbTooltip]="'artemisApp.metis.postMarkedAsResolvedTooltip' | artemisTranslate"
+            >
+            </fa-icon>
+            <span class="col-auto post-title" [ngClass]="postIsResolved ? 'ps-1' : ''">{{ posting.title }}</span>
         </div>
         <div class="markdown-preview" [innerHTML]="posting.content ? (posting.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"></div>
     </div>

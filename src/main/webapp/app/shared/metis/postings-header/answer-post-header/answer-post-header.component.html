@@ -10,7 +10,7 @@
         </span>
         <fa-icon
             *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
-            size="sm"
+            size="xs"
             class="ms-1 editIcon clickable icon"
             [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
             container="body"
@@ -20,11 +20,32 @@
         <jhi-answer-post-create-edit-modal #editAnswerPostEditModal [posting]="posting"></jhi-answer-post-create-edit-modal>
         <jhi-confirm-icon
             *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
-            iconSize="sm"
+            iconSize="xs"
             (confirmEvent)="deletePosting()"
-            [ngClass]="'mx-1 deleteIcon clickable icon'"
+            [ngClass]="'deleteIcon clickable icon'"
             [initialTooltip]="'artemisApp.metis.deleteAnswer' | artemisTranslate"
             [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
         ></jhi-confirm-icon>
+    </div>
+    <ng-template #notResolved>
+        <div *ngIf="isAtLeastTutorInCourse || isAuthorOfOriginalPost">
+            <fa-icon class="icon" [icon]="'check'" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
+        </div>
+    </ng-template>
+    <div class="col-auto ps-0">
+        <div id="toggleElement" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
+            <div *ngIf="posting.resolvesPost; else notResolved">
+                <fa-icon
+                    class="resolved"
+                    [icon]="'check'"
+                    [ngbTooltip]="
+                        isAtLeastTutorInCourse || isAuthorOfOriginalPost
+                            ? ('artemisApp.metis.unmarkAsResolvingAnswerTooltip' | artemisTranslate)
+                            : ('artemisApp.metis.resolvingAnswerTooltip' | artemisTranslate)
+                    "
+                >
+                </fa-icon>
+            </div>
+        </div>
     </div>
 </div>

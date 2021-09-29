@@ -35,7 +35,8 @@ public abstract class PostingService {
     }
 
     /**
-     * Checks if the requesting user is authorized in the course context
+     * Checks if the requesting user is authorized in the course context,
+     * i.e. user has to be author of post or at least teaching assistant
      *
      * @param posting posting that is requested
      * @param user    requesting user

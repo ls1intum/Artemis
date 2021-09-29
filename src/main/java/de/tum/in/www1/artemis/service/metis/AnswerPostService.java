@@ -99,12 +99,10 @@ public class AnswerPostService extends PostingService {
         Course course = preCheckUserAndCourse(user, courseId);
         mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user, course);
 
-        // update: allow overwriting of values only for depicted fields
+        // overwrite modifyable values
         existingAnswerPost.setContent(answerPost.getContent());
-        // tutor approval can only be toggled by a tutor
-        if (this.authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            existingAnswerPost.setResolvesPost(answerPost.doesResolvePost());
-        }
+        existingAnswerPost.setResolvesPost(answerPost.doesResolvePost());
+
         AnswerPost updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
 
         if (updatedAnswerPost.getPost().getExercise() != null) {

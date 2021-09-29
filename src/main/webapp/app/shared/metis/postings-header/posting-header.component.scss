@@ -6,6 +6,11 @@ $label-color: #6a737d;
     color: $label-color;
 }
 
+.answer-count,
 .posting-header {
-    font-size: 12px;
+    font-size: smaller;
+}
+
+.resolved {
+    color: green;
 }

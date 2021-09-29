@@ -13,7 +13,6 @@ export class PostHeaderComponent extends PostingsHeaderDirective<Post> implement
     @Output() toggleAnswersChange: EventEmitter<void> = new EventEmitter<void>();
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     numberOfAnswerPosts: number;
-    postIsResolved: boolean;
     showAnswers = false;
 
     constructor(protected metisService: MetisService) {
@@ -25,7 +24,6 @@ export class PostHeaderComponent extends PostingsHeaderDirective<Post> implement
      */
     ngOnInit(): void {
         this.numberOfAnswerPosts = this.metisService.getNumberOfAnswerPosts(this.posting);
-        this.postIsResolved = this.metisService.isPostResolved(this.posting);
         super.ngOnInit();
     }
 
@@ -34,7 +32,6 @@ export class PostHeaderComponent extends PostingsHeaderDirective<Post> implement
      */
     ngOnChanges(): void {
         this.numberOfAnswerPosts = this.metisService.getNumberOfAnswerPosts(this.posting);
-        this.postIsResolved = this.metisService.isPostResolved(this.posting);
     }
 
     /**
