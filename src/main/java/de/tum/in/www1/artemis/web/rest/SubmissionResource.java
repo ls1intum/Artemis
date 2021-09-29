@@ -14,7 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -182,11 +182,11 @@ public class SubmissionResource {
     }
 
     private Course findCourseFromSubmission(Submission submission) {
-        StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
-        if (studentParticipation.getExercise() != null && studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember() != null) {
-            return studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        Participation participation = submission.getParticipation();
+        if (participation.getExercise() != null && participation.getExercise().getCourseViaExerciseGroupOrCourseMember() != null) {
+            return participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
 
-        return studentParticipationRepository.findByIdElseThrow(studentParticipation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        return studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
     }
 }
