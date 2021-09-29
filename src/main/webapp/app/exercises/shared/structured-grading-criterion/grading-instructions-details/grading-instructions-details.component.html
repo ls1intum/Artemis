@@ -36,106 +36,109 @@
                         </div>
                     </div>
                 </div>
-                <ngx-datatable
-                    id="gradingInstructionsTable"
-                    class="bootstrap"
-                    trackByProp="id"
-                    [headerHeight]="50"
-                    [limit]="20"
-                    [columnMode]="'force'"
-                    [rowHeight]="'auto'"
-                    [rows]="criterion.structuredGradingInstructions"
-                    *ngIf="criterion.structuredGradingInstructions"
-                >
-                    <ngx-datatable-column prop="credits" [width]="-100">
-                        <ng-template ngx-datatable-header-template let-column="column">
-                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.credits' | artemisTranslate }}</span>
-                            <fa-icon
-                                class="text-secondary"
-                                [icon]="'info-circle'"
-                                ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"
-                                placement="right"
-                            ></fa-icon>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-row="row">
-                            <jhi-table-editable-field [id]="row.id + '-credits'" [value]="row.credits || 0" [onValueUpdate]="updateCreditsInRow(row)"> </jhi-table-editable-field>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column prop="gradingScale" [width]="-50">
-                        <ng-template ngx-datatable-header-template let-column="column">
-                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.gradingScale' | artemisTranslate }}</span>
-                            <fa-icon
-                                class="text-secondary"
-                                [icon]="'info-circle'"
-                                ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"
-                                placement="right"
-                            ></fa-icon>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-row="row">
-                            <jhi-table-editable-field [id]="row.id + '-gradingScale'" [value]="row.gradingScale || ''" [onValueUpdate]="updateGradingScaleInRow(row)">
-                            </jhi-table-editable-field>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column prop="instructionDescription">
-                        <ng-template ngx-datatable-header-template let-column="column">
-                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.instructionDescription' | artemisTranslate }}</span>
-                            <fa-icon
-                                class="text-secondary"
-                                [icon]="'info-circle'"
-                                ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"
-                                placement="right"
-                            ></fa-icon>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-row="row">
-                            <jhi-table-editable-field
-                                [id]="row.id + '-instructionDescription'"
-                                [value]="row.instructionDescription || ''"
-                                [onValueUpdate]="updateDescriptionInRow(row)"
-                            >
-                            </jhi-table-editable-field>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column prop="feedback">
-                        <ng-template ngx-datatable-header-template let-column="column">
-                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.feedback' | artemisTranslate }}</span>
-                            <fa-icon
-                                class="text-secondary"
-                                [icon]="'info-circle'"
-                                ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"
-                                placement="right"
-                            ></fa-icon>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-row="row">
-                            <jhi-table-editable-field [id]="row.id + '-feedback'" [value]="row.feedback || ''" [onValueUpdate]="updateFeedbackInRow(row)">
-                            </jhi-table-editable-field>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column prop="usageCount" [width]="-100">
-                        <ng-template ngx-datatable-header-template let-column="column">
-                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.usageCount' | artemisTranslate }}</span>
-                            <fa-icon
-                                class="text-secondary"
-                                [icon]="'info-circle'"
-                                ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"
-                                placement="right"
-                            ></fa-icon>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-row="row">
-                            <jhi-table-editable-field class="col-2" [id]="row.id + '-usageCount'" [value]="row.usageCount || 0" [onValueUpdate]="updateUsageCountInRow(row)">
-                            </jhi-table-editable-field>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column prop="action" [width]="-100">
-                        <ng-template ngx-datatable-header-template let-column="column">
-                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.instructorCourseDashboard.action' | artemisTranslate }}</span>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-row="row">
-                            <span class="re-evaluate-button col-2" id="delete-instruction" (click)="deleteInstruction(row, criterion)">
-                                <fa-icon [icon]="'trash'" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"></fa-icon>
-                            </span>
-                        </ng-template>
-                    </ngx-datatable-column>
-                </ngx-datatable>
+                <div>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th width="10%">
+                                    <span>{{ 'artemisApp.exercise.credits' | artemisTranslate }}</span>
+                                    <fa-icon
+                                        class="text-secondary"
+                                        [icon]="'info-circle'"
+                                        ngbTooltip="{{ 'artemisApp.exercise.creditsHint' | artemisTranslate }}"
+                                        placement="right"
+                                    ></fa-icon>
+                                </th>
+                                <th width="10%">
+                                    <span>{{ 'artemisApp.exercise.gradingScale' | artemisTranslate }}</span>
+                                    <fa-icon
+                                        class="text-secondary"
+                                        [icon]="'info-circle'"
+                                        ngbTooltip="{{ 'artemisApp.exercise.gradingScaleHint' | artemisTranslate }}"
+                                        placement="right"
+                                    ></fa-icon>
+                                </th>
+                                <th width="30%">
+                                    <span>{{ 'artemisApp.exercise.instructionDescription' | artemisTranslate }}</span>
+                                    <fa-icon
+                                        class="text-secondary"
+                                        [icon]="'info-circle'"
+                                        ngbTooltip="{{ 'artemisApp.exercise.descriptionHint' | artemisTranslate }}"
+                                        placement="right"
+                                    ></fa-icon>
+                                </th>
+                                <th width="30%">
+                                    <span>{{ 'artemisApp.exercise.feedback' | artemisTranslate }}</span>
+                                    <fa-icon
+                                        class="text-secondary"
+                                        [icon]="'info-circle'"
+                                        ngbTooltip="{{ 'artemisApp.exercise.feedbackHint' | artemisTranslate }}"
+                                        placement="right"
+                                    ></fa-icon>
+                                </th>
+                                <th width="10%">
+                                    <span>{{ 'artemisApp.exercise.usageCount' | artemisTranslate }}</span>
+                                    <fa-icon
+                                        class="text-secondary"
+                                        [icon]="'info-circle'"
+                                        ngbTooltip="{{ 'artemisApp.exercise.usageCountHint' | artemisTranslate }}"
+                                        placement="right"
+                                    ></fa-icon>
+                                </th>
+                                <th width="5%">
+                                    <span>{{ 'artemisApp.instructorCourseDashboard.action' | artemisTranslate }}</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let instruction of criterion.structuredGradingInstructions; let i = index" class="grading-scale-table-row">
+                                <td>
+                                    <input
+                                        class="form-control input-lg"
+                                        [(ngModel)]="instruction.credits"
+                                        type="number"
+                                        step="0.1"
+                                        (change)="setCredits($event, instruction, criterion)"
+                                    />
+                                </td>
+                                <td>
+                                    <input
+                                        class="form-control input-lg"
+                                        [(ngModel)]="instruction.gradingScale"
+                                        type="text"
+                                        (change)="setGradingScale($event, instruction, criterion)"
+                                    />
+                                </td>
+                                <td>
+                                    <input
+                                        class="form-control input-lg"
+                                        [(ngModel)]="instruction.instructionDescription"
+                                        type="text"
+                                        (change)="setGradingInstructionDescription($event, instruction, criterion)"
+                                    />
+                                </td>
+                                <td>
+                                    <input class="form-control input-lg" [(ngModel)]="instruction.feedback" type="text" (change)="setFeedback($event, instruction, criterion)" />
+                                </td>
+                                <td>
+                                    <input
+                                        class="form-control input-lg"
+                                        [(ngModel)]="instruction.usageCount"
+                                        type="number"
+                                        step="1"
+                                        min="0"
+                                        (change)="setUsageCount($event, instruction, criterion)"
+                                    />
+                                </td>
+                                <td>
+                                    <span class="re-evaluate-button col-2" id="delete-instruction-row" (click)="deleteInstruction(instruction, criterion)">
+                                        <fa-icon [icon]="'trash'" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"></fa-icon>
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
                 <span class="re-evaluate-button mb-3" id="add-instruction-button" (click)="addNewInstruction(criterion)">
                     <fa-icon [icon]="'plus'" ngbTooltip="{{ 'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate }}"></fa-icon>
                 </span>
@@ -149,7 +152,7 @@
                 </div>
             </div>
         </div>
-        <!--- End Edit Mode --->
+        <!--- End of Edit Mode --->
         <!--- Edit Text Mode --->
         <div *ngIf="!showEditMode">
             <jhi-markdown-editor

@@ -503,73 +503,70 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     /**
+     * Switches edit mode
+     */
+    switchMode() {
+        this.showEditMode = !this.showEditMode;
+    }
+
+    updateGradingInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
+        const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
+        const instructionIndex = this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
+        this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions![instructionIndex] = instruction;
+    }
+
+    /**
      * Updates credits of the GradingInstruction.
      *
-     * @param gradingInstruction
+     * @param gradingInstruction needs to be updated
+     * @param criterion includes instruction needs to be update
      */
-    updateCreditsInRow(gradingInstruction: GradingInstruction) {
-        return (newValue: any) => {
-            if (newValue.match('^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$')) {
-                gradingInstruction.credits = newValue;
-            }
-            return gradingInstruction.credits;
-        };
+    setCredits($event: any, instruction: GradingInstruction, criterion: GradingCriterion) {
+        instruction.credits = $event.target.value;
+        this.updateGradingInstruction(instruction, criterion);
     }
 
     /**
      * Updates gradingScale of the GradingInstruction.
      *
-     * @param gradingInstruction
+     * @param gradingInstruction needs to be updated
+     * @param criterion includes instruction needs to be update
      */
-    updateGradingScaleInRow(gradingInstruction: GradingInstruction) {
-        return (newValue: any) => {
-            gradingInstruction.gradingScale = newValue;
-            return gradingInstruction.gradingScale;
-        };
+    setGradingScale($event: any, instruction: GradingInstruction, criterion: GradingCriterion) {
+        instruction.gradingScale = $event.target.value;
+        this.updateGradingInstruction(instruction, criterion);
     }
 
     /**
      * Updates instructionDescription of the GradingInstruction.
      *
-     * @param gradingInstruction
+     * @param gradingInstruction needs to be updated
+     * @param criterion includes instruction needs to be update
      */
-    updateDescriptionInRow(gradingInstruction: GradingInstruction) {
-        return (newValue: any) => {
-            gradingInstruction.instructionDescription = newValue;
-            return gradingInstruction.instructionDescription;
-        };
+    setGradingInstructionDescription($event: any, instruction: GradingInstruction, criterion: GradingCriterion) {
+        instruction.instructionDescription = $event.target.value;
+        this.updateGradingInstruction(instruction, criterion);
     }
 
     /**
      * Updates feedback of the GradingInstruction.
      *
-     * @param gradingInstruction
+     * @param gradingInstruction needs to be updated
+     * @param criterion includes instruction needs to be update
      */
-    updateFeedbackInRow(gradingInstruction: GradingInstruction) {
-        return (newValue: any) => {
-            gradingInstruction.feedback = newValue;
-            return gradingInstruction.feedback;
-        };
+    setFeedback($event: any, instruction: GradingInstruction, criterion: GradingCriterion) {
+        instruction.feedback = $event.target.value;
+        this.updateGradingInstruction(instruction, criterion);
     }
 
     /**
      * Updates usageCount of the GradingInstruction.
      *
-     * @param gradingInstruction
+     * @param gradingInstruction needs to be updated
+     * @param criterion includes instruction needs to be update
      */
-    updateUsageCountInRow(gradingInstruction: GradingInstruction) {
-        return (newValue: any) => {
-            if (newValue.match('^[0-9]*$')) {
-                gradingInstruction.usageCount = newValue;
-            }
-            return gradingInstruction.usageCount;
-        };
-    }
-
-    /**
-     * Switches edit mode
-     */
-    switchMode() {
-        this.showEditMode = !this.showEditMode;
+    setUsageCount($event: any, instruction: GradingInstruction, criterion: GradingCriterion) {
+        instruction.usageCount = $event.target.value;
+        this.updateGradingInstruction(instruction, criterion);
     }
 }
