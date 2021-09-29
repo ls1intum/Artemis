@@ -31,6 +31,7 @@
         <fa-icon
             [icon]="['far', 'smile']"
             class="reaction-button me-0 text-secondary clickable"
+            [class.open-selector]="showReactionSelector"
             (click)="showReactionSelector = !showReactionSelector"
             cdkOverlayOrigin
             #trigger="cdkOverlayOrigin"
@@ -38,7 +39,14 @@
         >
         </fa-icon>
     </div>
-    <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="trigger" [cdkConnectedOverlayOpen]="showReactionSelector">
+    <ng-template
+        cdkConnectedOverlay
+        [cdkConnectedOverlayHasBackdrop]="true"
+        [cdkConnectedOverlayBackdropClass]="'cdk-overlay-transparent-backdrop'"
+        [cdkConnectedOverlayOrigin]="trigger"
+        [cdkConnectedOverlayOpen]="showReactionSelector"
+        (backdropClick)="toggleEmojiSelect()"
+    >
         <emoji-mart
             [emojisToShowFilter]="emojisToShowFilter"
             (emojiSelect)="selectReaction($event)"
