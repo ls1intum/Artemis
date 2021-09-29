@@ -70,18 +70,18 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify student groups about an exercise update.
+     * Notify all groups but tutors about an exercise update.
      *
      * @param exercise         that has been updated
      * @param notificationText that should be displayed
      */
-    public void notifyStudentGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
+    public void notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         // Do not send a notification before the release date of the exercise.
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
         }
-        // Create and send the notification.
         saveAndSend(createNotification(exercise, userRepository.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_UPDATED, notificationText));
+        notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
     }
 
     /**
