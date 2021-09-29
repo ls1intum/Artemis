@@ -38,7 +38,7 @@
                 <dt>
                     <span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span>
                     <button
-                        *ngIf="modelingExercise && modelingExercise.sampleSolutionModel"
+                        *ngIf="modelingExercise && modelingExercise.sampleSolutionModel && isApollonProfileActive"
                         (click)="downloadAsPDf()"
                         class="btn btn-primary m-2"
                         jhiTranslate="entity.action.export"
