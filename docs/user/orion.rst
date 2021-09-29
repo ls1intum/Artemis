@@ -56,6 +56,7 @@ Students can participate in programming exercises via Orion by performing the fo
  4. To submit the changes, click |submit-button|. This automatically commits, pushes the local changes, and displays the result of the automatic tests in IntelliJ.
 
 Gif showcasing the usage for students:
+
   .. image:: https://raw.githubusercontent.com/ls1intum/Orion/master/.github/media/orion_workflow.gif
             :align: center
             :width: 100%
@@ -65,7 +66,7 @@ Exercise Creation in Orion
 
 Instructors can set up programming exercises via Orion by performing the following steps:
 
- 1. The exercise needs to be created as described at the :ref:`exercise-creation` of programming exercises, step 1 and 2.
+ 1. The exercise needs to be created as described at the exercise creation of programming exercises, step 1 and 2.
  2. After the creation, navigate to the instructor exercise overview using the integrated browser
  3. Each programming exercise provides a button to edit the exercise in Orion |edit-in-intellij-button|. The button is rightmost in the table an might require scrolling. This downloads the template, solution and test repository of the exercise.
  4. Edit the repository files in IntelliJ.
