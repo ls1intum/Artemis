@@ -41,10 +41,6 @@ describe('Exam assessment', () => {
         });
     });
 
-    beforeEach('Generate new exam name', () => {
-        cy.login(admin);
-    });
-
     afterEach('Delete exam', () => {
         cy.login(admin);
         courseManagementRequests.deleteExam(exam);
