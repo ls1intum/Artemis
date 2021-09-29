@@ -34,11 +34,11 @@ Settings
 
 Orion's settings are at *Settings -> Tools -> Orion*. The settings include:
 
-- The Artemis base url. Can be changed to switch to a specific Artemis instance. Defaults to https://artemis.ase.in.tum.de. **Important:** The url must not end with a /, otherwise it does not work!
-- The Artemis exercise paths. Orion suggests to store newly downloaded exercises at ``default-path/course/exercise-name``, with the default path dependant of the setting.
-- The default commit message
-- An option to change the user agent if needed. The user agent is sent to Artemis to identify Orion. I needs to contain "Orion/*orion-version*". Usually, no changes are required.
-- A button to restart the integrated browser. If Orion gets stuck, restarting the browser might solve the issue without restarting IntelliJ.
+- Artemis base url: Can be changed to switch to a specific Artemis instance. Defaults to https://artemis.ase.in.tum.de. **Important:** The url must not end with a ``/``, otherwise it does not work!
+- Artemis exercise paths: Orion suggests to store newly downloaded exercises at ``default-path/course/exercise-name``, with the default path dependent of the setting.
+- Default commit message: The default message for each commit.
+- Change user agent: The user agent is sent to Artemis to identify Orion. I needs to contain "Orion/*orion-version*". Usually, no changes are required.
+- Restart the integrated browser: If Orion gets stuck, restarting the browser might solve the issue without restarting IntelliJ.
 
 Problems
 ^^^^^^^^
@@ -71,8 +71,8 @@ Instructors can set up programming exercises via Orion by performing the followi
  3. Each programming exercise provides a button to edit the exercise in Orion |edit-in-intellij-button|. The button is rightmost in the table an might require scrolling. This downloads the template, solution and test repository of the exercise.
  4. Edit the repository files in IntelliJ.
  5. To submit the changes, click |submit-button|. This commits and pushes all local changes to their respective repository.
- 6. The integrated browser displays the editor to edit the problem statement.
- 7. To test the code locally, click |test-locally-button|, which copies the tests with the local template or solution (whichever was selected) into a new folder and execute them locally.
+ 6. The integrated browser displays the editor to update the problem statement.
+ 7. To test the code locally, click |test-locally-button|, which copies the tests with the local template or solution (whichever was selected) into a new folder and executes them locally.
 
 Assessment in Orion
 -------------------
@@ -80,7 +80,7 @@ Assessment in Orion
 Tutors can assess programming exercises via Orion by performing the following steps:
 
  1. Navigate to the assessment dashboard of the exercise using the integrated browser.
- 2. Click |assess-in-orion-button|. This automatically downloads the automatic tests.
+ 2. Click |assess-in-orion-button|. This automatically downloads the repository with the automatic tests.
  3. After downloading or opening the exercise in IntelliJ, the submission overview is shown in the integrated browser. Each submission can be opened in Orion. To start a new submission, click |start-assessment-in-orion-button|. This downloads the submission files and overwrites the previous submission.
  4. The student's code is in the directory ``assignment``. The tests are in the directory ``tests``. Additionally, there are two directories ``template`` and ``studentSubmission`` that contain internal files and should be ignored.
  5. Opening a file in the ``assignment`` directory opens the editor with two available modes, which can be switched using the tabs at the bottom of the editor.
