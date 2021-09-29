@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.bamboo;
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.getDockerImageName;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -199,7 +200,7 @@ public class BambooBuildPlanService {
             }
             case C -> {
                 // Default tasks:
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, "/" + projectType.name(), sequentialBuildRuns, false, null);
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, File.separator + projectType.name().toLowerCase(), sequentialBuildRuns, false, null);
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0]));
                 // Final tasks:
