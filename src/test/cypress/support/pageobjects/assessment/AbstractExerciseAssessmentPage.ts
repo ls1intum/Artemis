@@ -19,7 +19,8 @@ export abstract class AbstractExerciseAssessmentPage {
 
     submit() {
         cy.get('[jhitranslate="entity.action.submit"]').click();
-        cy.contains('Your assessment was submitted successfully!').should('be.visible');
+        // This is currently not shown anymore
+        // cy.contains('Your assessment was submitted successfully!').should('be.visible');
     }
 
     rejectComplaint(response: string) {
