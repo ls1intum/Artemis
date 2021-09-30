@@ -1531,7 +1531,7 @@ public class CourseResource {
     @PostMapping("courses/{courseId}/{courseGroup}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<StudentDTO>> addStudentsToCourseGroup(@PathVariable Long courseId, @PathVariable String courseGroup, @RequestBody List<StudentDTO> studentDtos) {
-        log.debug("REST request to add {} as " + courseGroup + " to course {}", studentDtos);
+        log.debug("REST request to add {} as " + courseGroup + " to course {}" + courseId, studentDtos);
 
         List<StudentDTO> notFoundStudentsDtos = courseService.registerUsersForCourseGroup(courseId, studentDtos, courseGroup);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
