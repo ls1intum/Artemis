@@ -40,6 +40,7 @@ export abstract class Participation implements BaseEntity {
 
     // workaround for strict template here, only used in case of StudentParticipation
     public participantName?: string;
+    public participantLogin?: string;
 
     // transient
     public submissionCount?: number;
