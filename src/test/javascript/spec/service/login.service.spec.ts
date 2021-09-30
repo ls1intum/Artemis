@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
 import { of, throwError } from 'rxjs';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';

@@ -46,6 +46,7 @@
                 "newFirst": "Newest",
                 "oldFirst": "Oldest",
                 "noExercises": "No exercises available for the course.",
+                "notReleasedTooltip": "Only visible to teaching assistants and instructors. Release Date: ",
                 "notReleased": "Not released",
                 "live": "Live",
                 "noDueDate": "No due date",

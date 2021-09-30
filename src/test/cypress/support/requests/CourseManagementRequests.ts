@@ -1,4 +1,4 @@
-import { BASE_API, DELETE, POST, PUT } from '../constants';
+import { BASE_API, DELETE, POST, PUT, GET } from '../constants';
 import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import { dayjsToString, generateUUID } from '../utils';
@@ -9,9 +9,12 @@ import textExerciseTemplate from '../../fixtures/requests/textExercise_template.
 import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_template.json';
 import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
+import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceSubmission_template.json';
+import shortAnswerSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerSubmission_template.json';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
+export const EXERCISE_BASE = BASE_API + 'exercises/';
 export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
 export const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
 export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
@@ -114,14 +117,25 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     addStudentToCourse(courseId: number, studentName: string) {
-        return cy.request({ url: COURSE_BASE + courseId + '/students/' + studentName, method: POST });
+        return this.addUserToCourse(courseId, studentName, 'students');
     }
 
     /**
      * Adds the specified user to the tutor group in the course
      */
     addTutorToCourse(course: any, user: CypressCredentials) {
-        return cy.request({ method: POST, url: COURSE_BASE + course.id + '/tutors/' + user.username });
+        return this.addUserToCourse(course.id, user.username, 'tutors');
+    }
+
+    /**
+     * Adds the specified user to the instructor group in the course
+     */
+    addInstructorToCourse(courseId: number, user: CypressCredentials) {
+        return this.addUserToCourse(courseId, user.username, 'instructors');
+    }
+
+    private addUserToCourse(courseId: number, username: string, roleIdentifier: string) {
+        return cy.request({ method: POST, url: `${COURSE_BASE}${courseId}/${roleIdentifier}/${username}` });
     }
 
     /**
@@ -163,11 +177,22 @@ export class CourseManagementRequests {
     /**
      * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
-     * */
-    createTextExercise(body: { course: any } | { exerciseGroup: any }, title = 'Text exercise ' + generateUUID()) {
+     */
+    createTextExercise(
+        body: { course: any } | { exerciseGroup: any },
+        title = 'Text exercise ' + generateUUID(),
+        releaseDate = day().subtract(1, 'days'),
+        dueDate = day().add(1, 'days'),
+        assessmentDueDate = day().add(2, 'days'),
+    ) {
         const template: any = { ...textExerciseTemplate, title };
-        const templateWithBody = Object.assign({}, template, body);
-        return cy.request({ method: POST, url: TEXT_EXERCISE_BASE, body: templateWithBody });
+        const textExercise: any = Object.assign({}, template, body);
+        if (body.hasOwnProperty('course')) {
+            textExercise.releaseDate = dayjsToString(releaseDate);
+            textExercise.dueDate = dayjsToString(dueDate);
+            textExercise.assessmentDueDate = dayjsToString(assessmentDueDate);
+        }
+        return cy.request({ method: POST, url: TEXT_EXERCISE_BASE, body: textExercise });
     }
 
     /**
@@ -229,12 +254,28 @@ export class CourseManagementRequests {
         });
     }
 
-    createQuizExercise(body: { course: any } | { exerciseGroup: any }, quizQuestions: [any], title = 'Cypress quiz exercise' + generateUUID(), releaseDate = day()) {
+    /**
+     * Creates a quiz exercise
+     * @param body an object containing either the course or exercise group the exercise will be added to
+     * @param quizQuestions list of quizQuestion objects that make up the Quiz. Can be multiple choice, short answer or drag and drop quizzes.
+     * @param title the title for the Quiz
+     * @param releaseDate time of release for the quiz
+     * @param duration the duration in seconds that the student gets to complete the quiz
+     * @returns <Chainable> request response
+     */
+    createQuizExercise(
+        body: { course: any } | { exerciseGroup: any },
+        quizQuestions: [any],
+        title = 'Cypress quiz exercise' + generateUUID(),
+        releaseDate = day(),
+        duration = 600,
+    ) {
         const quizExercise: any = {
             ...quizTemplate,
             title,
             releaseDate: dayjsToString(releaseDate),
             quizQuestions,
+            duration,
         };
         const newQuizExercise = this.getCourseOrExamExercise(quizExercise, body);
         return cy.request({
@@ -255,6 +296,107 @@ export class CourseManagementRequests {
         return cy.request({
             url: `${QUIZ_EXERCISE_BASE}${quizId}/start-now`,
             method: PUT,
+        });
+    }
+
+    startExerciseParticipation(courseId: number, exerciseId: number) {
+        return cy.request({
+            url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/participations`,
+            method: POST,
+        });
+    }
+
+    makeTextExerciseSubmission(exerciseId: number, text: string) {
+        return cy.request({
+            url: `${EXERCISE_BASE}${exerciseId}/text-submissions`,
+            method: PUT,
+            body: { submissionExerciseType: 'text', text, id: null },
+        });
+    }
+
+    updateTextExerciseDueDate(exercise: any, due = day()) {
+        exercise.dueDate = dayjsToString(due);
+        return this.updateTextExercise(exercise);
+    }
+
+    updateTextExerciseAssessmentDueDate(exercise: any, due = day()) {
+        exercise.assessmentDueDate = dayjsToString(due);
+        return this.updateTextExercise(exercise);
+    }
+
+    private updateTextExercise(exercise: any) {
+        return cy.request({
+            url: TEXT_EXERCISE_BASE,
+            method: PUT,
+            body: exercise,
+        });
+    }
+
+    /**
+     * Creates a submission for a Quiz with only one multiple-choice quiz question
+     * @param quizExercise the response body of a quiz exercise
+     * @param tickOptions a list describing which of the 0..n boxes are to be ticked in the submission
+     */
+    createMultipleChoiceSubmission(quizExercise: any, tickOptions: number[]) {
+        const submittedAnswers = [
+            {
+                ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
+                quizQuestion: quizExercise.quizQuestions[0],
+                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
+            },
+        ];
+        const multipleChoiceSubmission = {
+            ...multipleChoiceSubmissionTemplate,
+            submittedAnswers,
+        };
+        return cy.request({
+            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            method: POST,
+            body: multipleChoiceSubmission,
+        });
+    }
+
+    /**
+     * Creates a submission for a Quiz with only one short-answer quiz question
+     * @param quizExercise the response body of the quiz exercise
+     * @param textAnswers a list containing the answers to be filled into the gaps. In numerical order.
+     */
+    createShortAnswerSubmission(quizExercise: any, textAnswers: string[]) {
+        const submittedTexts = textAnswers.map((answer, index) => {
+            return {
+                text: answer,
+                spot: quizExercise.quizQuestions[0].spots[index],
+            };
+        });
+        const submittedAnswers = [
+            {
+                ...shortAnswerSubmissionTemplate.submittedAnswers[0],
+                quizQuestion: quizExercise.quizQuestions[0],
+                submittedTexts,
+            },
+        ];
+        const shortAnswerSubmission = {
+            ...shortAnswerSubmissionTemplate,
+            submittedAnswers,
+        };
+        return cy.request({
+            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            method: POST,
+            body: shortAnswerSubmission,
+        });
+    }
+
+    getExerciseParticipation(exerciseId: number) {
+        return cy.request({
+            url: EXERCISE_BASE + exerciseId + '/participation',
+            method: GET,
+        });
+    }
+
+    startExerciseParticipation(courseId: number, exerciseId: number) {
+        return cy.request({
+            url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/participations`,
+            method: POST,
         });
     }
 

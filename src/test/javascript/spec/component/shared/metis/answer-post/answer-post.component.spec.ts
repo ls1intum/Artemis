@@ -1,5 +1,3 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -9,9 +7,7 @@ import { getElement } from '../../../../helpers/utils/general.utils';
 import { AnswerPostHeaderComponent } from 'app/shared/metis/postings-header/answer-post-header/answer-post-header.component';
 import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
 import { metisAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -20,7 +16,13 @@ describe('AnswerPostComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            declarations: [AnswerPostComponent, MockPipe(HtmlForMarkdownPipe), MockComponent(AnswerPostHeaderComponent), MockComponent(AnswerPostFooterComponent)],
+            declarations: [
+                AnswerPostComponent,
+                MockPipe(HtmlForMarkdownPipe),
+                MockComponent(AnswerPostHeaderComponent),
+                MockComponent(PostingContentComponent),
+                MockComponent(AnswerPostFooterComponent),
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -32,17 +34,17 @@ describe('AnswerPostComponent', () => {
 
     it('should contain an answer post header', () => {
         const header = getElement(debugElement, 'jhi-answer-post-header');
-        expect(header).to.exist;
+        expect(header).toBeDefined();
     });
 
     it('should contain an answer post footer', () => {
         const footer = getElement(debugElement, 'jhi-answer-post-footer');
-        expect(footer).to.exist;
+        expect(footer).toBeDefined();
     });
 
     it('should have correct content', () => {
         component.posting = metisAnswerPostUser1;
         component.ngOnInit();
-        expect(component.content).to.be.equal(metisAnswerPostUser1.content);
+        expect(component.content).toEqual(metisAnswerPostUser1.content);
     });
 });

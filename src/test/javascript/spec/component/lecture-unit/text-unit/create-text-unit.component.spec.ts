@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CreateTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-text-unit/create-text-unit.component';
@@ -10,8 +10,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
 import { MockProvider } from 'ng-mocks';
-import { JhiAlertService } from 'ng-jhipster';
-import * as moment from 'moment';
+import { AlertService } from 'app/core/util/alert.service';
+import dayjs from 'dayjs';
 import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
@@ -41,7 +41,7 @@ describe('CreateTextUnitComponent', () => {
             declarations: [TextUnitFormStubComponent, LectureUnitLayoutStubComponent, CreateTextUnitComponent],
             providers: [
                 MockProvider(TextUnitService),
-                MockProvider(JhiAlertService),
+                MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
@@ -95,7 +95,7 @@ describe('CreateTextUnitComponent', () => {
         const textUnitService = TestBed.inject(TextUnitService);
         const formDate: TextUnitFormData = {
             name: 'Test',
-            releaseDate: moment({ years: 2010, months: 3, date: 5 }),
+            releaseDate: dayjs().year(2010).month(3).date(5),
             content: 'Lorem Ipsum',
         };
 

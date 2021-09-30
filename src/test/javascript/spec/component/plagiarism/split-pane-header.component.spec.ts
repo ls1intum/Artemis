@@ -38,7 +38,7 @@ describe('Plagiarism Split Pane Header Component', () => {
 
     it('selects the first file on change', () => {
         comp.files = files;
-        spyOn(comp.selectFile, 'emit');
+        jest.spyOn(comp.selectFile, 'emit');
 
         comp.ngOnChanges({
             files: { currentValue: files } as SimpleChange,
@@ -63,7 +63,7 @@ describe('Plagiarism Split Pane Header Component', () => {
     it('handles selection of a file', () => {
         const idx = 1;
         comp.showFiles = true;
-        spyOn(comp.selectFile, 'emit');
+        jest.spyOn(comp.selectFile, 'emit');
 
         comp.handleFileSelect(files[idx], idx);
 

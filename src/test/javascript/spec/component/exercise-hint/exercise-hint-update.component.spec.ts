@@ -34,7 +34,7 @@ describe('ExerciseHint Management Update Component', () => {
             // GIVEN
             const entity = new ExerciseHint();
             entity.id = 123;
-            spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
+            jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.exerciseHint = entity;
             comp.courseId = 1;
             comp.exerciseId = 2;
@@ -50,7 +50,7 @@ describe('ExerciseHint Management Update Component', () => {
         it('Should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
             const entity = new ExerciseHint();
-            spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
+            jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.exerciseHint = entity;
             comp.courseId = 1;
             comp.exerciseId = 2;

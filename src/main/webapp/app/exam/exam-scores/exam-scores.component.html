@@ -424,7 +424,7 @@
         <div class="table-responsive">
             <table class="table table-sm table-striped table-bordered">
                 <thead class="table-dark">
-                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
+                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                         <th>#</th>
                         <th jhiSortBy="name">
                             <span jhiTranslate="artemisApp.examScores.nameColumn">Name</span>

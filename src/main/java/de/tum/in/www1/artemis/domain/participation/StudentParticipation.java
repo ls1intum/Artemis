@@ -130,4 +130,24 @@ public class StudentParticipation extends Participation {
         participation.setId(getId());
         return participation;
     }
+
+    /**
+     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.ExampleSubmissionService#getSubmissionsOnPageWithSize(PageableSearchDTO, Long)}}
+     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
+     */
+    public enum StudentParticipationSearchColumn {
+
+        ID("id"), STUDENT_NAME("student.firstName");
+
+        private final String mappedColumnName;
+
+        StudentParticipationSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
+    }
+
 }

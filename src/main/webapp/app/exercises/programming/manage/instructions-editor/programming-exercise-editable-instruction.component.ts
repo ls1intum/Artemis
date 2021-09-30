@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/util/alert.service';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
@@ -96,7 +96,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private alertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private testCaseService: ProgrammingExerciseGradingService,
         private exerciseHintService: ExerciseHintService,
@@ -200,7 +200,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 }),
                 catchError(() => {
                     // TODO: move to programming exercise translations
-                    this.jhiAlertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
+                    this.alertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
                     return of(undefined);
                 }),
             )

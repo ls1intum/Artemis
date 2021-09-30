@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
+import sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
@@ -104,7 +104,6 @@ describe('AnswerPostCreateEditModalComponent', () => {
         });
         component.confirm();
         expect(metisServiceCreateSpy).to.be.have.been.calledWith({ ...component.posting, content: newContent });
-        expect(component.posting.creationDate).to.not.be.undefined;
         tick();
         expect(component.isLoading).to.equal(false);
         expect(onCreateSpy).to.have.been.called;

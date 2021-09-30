@@ -29,18 +29,32 @@ bootRun {
     args = []
 }
 
-task webpack(type: YarnTask, dependsOn: 'yarn') {
-    inputs.dir("src/main/webapp/")
-    inputs.files("yarn.lock")
+task webapp(type: NpmTask) {
+    inputs.property('appVersion', project.version)
+    inputs.files("package-lock.json")
+            .withPropertyName('package-lock')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files("build.gradle")
-
-    def webpackDevFiles = fileTree("webpack//")
-    webpackDevFiles.exclude("webpack.prod.js")
-    inputs.files(webpackDevFiles)
-
+            .withPropertyName('build.gradle')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files("angular.json")
+            .withPropertyName('angular.json')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files("tsconfig.json", "tsconfig.app.json")
+            .withPropertyName("tsconfig")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir("webpack/")
+            .withPropertyName("webpack/")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir("src/main/webapp/")
+            .withPropertyName("webapp-source-dir")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir("build/resources/main/static/")
+            .withPropertyName("webapp-build-dir")
 
-    args = ["run", "webpack:build"]
+    dependsOn npmInstall
+
+    args = ["run", "webapp:build"]
     environment = [APP_VERSION: project.version]
 }
 
@@ -57,4 +71,5 @@ processResources {
     }
 }
 
+processResources.dependsOn webapp
 bootJar.dependsOn processResources
