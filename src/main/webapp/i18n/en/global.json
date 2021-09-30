@@ -306,7 +306,7 @@
         "invalid.auxiliary.repository.description": "The description of at least one Auxiliary Repository is too long!",
         "unexpectedError": "An unexpected error occurred: {{error}}"
     },
-    "aboutUs": "About",
+    "aboutUs": "About us",
     "contact": "Contact us",
     "bug": "Report a bug",
     "feature": "Request a feature",
