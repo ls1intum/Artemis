@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AnswerPost extends Posting {
 
-    @Column(name = "resolves_post")
+    @Column(name = "resolves_post", nullable = false)
     private Boolean resolvesPost;
 
     @OneToMany(mappedBy = "answerPost", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
@@ -31,7 +31,7 @@ public class AnswerPost extends Posting {
     @JsonIncludeProperties({ "id", "exercise", "lecture", "course", "course_wide_context", "author" })
     private Post post;
 
-    @JsonProperty(value = "resolvesPost")
+    @JsonProperty("resolvesPost")
     public Boolean doesResolvePost() {
         return resolvesPost;
     }
