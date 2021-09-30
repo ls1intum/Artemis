@@ -47,7 +47,7 @@ describe('AnswerPost Service', () => {
         }));
 
         it('should update a AnswerPost resolvesPost field', fakeAsync(() => {
-            const returnedFromService = { ...metisAnswerPostUser1, tutorApproved: true };
+            const returnedFromService = { ...metisAnswerPostUser1, resolvesPost: true };
             const expected = { ...returnedFromService };
             service
                 .update(1, expected)

@@ -1,7 +1,7 @@
 <jhi-post-header [posting]="posting" (toggleAnswersChange)="toggleAnswersChange.emit()"></jhi-post-header>
 <div class="row align-items-center">
     <div class="col">
-        <div class="row">
+        <div>
             <fa-icon
                 *ngIf="postIsResolved"
                 [icon]="'check-square'"
@@ -10,7 +10,7 @@
                 [ngbTooltip]="'artemisApp.metis.postMarkedAsResolvedTooltip' | artemisTranslate"
             >
             </fa-icon>
-            <span class="col-auto post-title" [ngClass]="postIsResolved ? 'ps-1' : ''">
+            <span class="col-auto post-title">
                 {{ posting.title }}
                 <a class="reference-hash" [routerLink]="metisService.getLinkForPost(posting)" [queryParams]="metisService.getQueryParamsForPost(posting)">#{{ posting.id }}</a>
             </span>
