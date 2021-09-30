@@ -22,8 +22,6 @@ public class ReactionService {
 
     private final ReactionRepository reactionRepository;
 
-    private final CourseRepository courseRepository;
-
     private final PostService postService;
 
     private final AnswerPostService answerPostService;
@@ -32,7 +30,6 @@ public class ReactionService {
             AnswerPostService answerPostService) {
         this.userRepository = userRepository;
         this.reactionRepository = reactionRepository;
-        this.courseRepository = courseRepository;
         this.postService = postService;
         this.answerPostService = answerPostService;
     }
@@ -41,11 +38,10 @@ public class ReactionService {
      * Checks reaction validity, determines the reaction's user,
      * retrieves the associated posting and persists the mutual association
      *
-     * @param courseId id of the course the post belongs to
      * @param reaction reaction to create
      * @return created reaction that was persisted
      */
-    public Reaction createReaction(Long courseId, Reaction reaction) {
+    public Reaction createReaction(Reaction reaction) {
         Posting posting = reaction.getPost() == null ? reaction.getAnswerPost() : reaction.getPost();
 
         // checks
@@ -68,7 +64,6 @@ public class ReactionService {
             postService.updateWithReaction(post, reaction);
         }
         else {
-            answerPostService.preCheckUserAndCourse(user, courseId);
             AnswerPost answerPost = answerPostService.findById(posting.getId());
             reaction.setAnswerPost(answerPost);
             // save reaction
@@ -82,12 +77,10 @@ public class ReactionService {
     /**
      * Determines authority to delete reaction and deletes the reaction
      *
-     * @param courseId   id of the course the reaction belongs to
      * @param reactionId id of the reaction to delete
      */
-    public void deleteReactionById(Long courseId, Long reactionId) {
+    public void deleteReactionById(Long reactionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        courseRepository.findByIdElseThrow(courseId);
         Reaction reaction = reactionRepository.findByIdElseThrow(reactionId);
 
         // check if user that wants to delete reaction is user that created the reaction
@@ -95,6 +88,5 @@ public class ReactionService {
             throw new AccessForbiddenException("Reaction", reaction.getId());
         }
         reactionRepository.deleteById(reactionId);
-
     }
 }
