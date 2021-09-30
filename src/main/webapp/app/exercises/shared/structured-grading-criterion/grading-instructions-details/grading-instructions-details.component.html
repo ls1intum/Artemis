@@ -13,11 +13,11 @@
         <div *ngIf="showEditMode">
             <div *ngFor="let criterion of exercise.gradingCriteria">
                 <div class="row border p-2 criterion-title-row">
-                    <div class="col-md-10 text-start">
+                    <div class="col-md-9 text-start">
                         <div class="form-inline">
                             <label class="form-control-label col-sm-2" jhiTranslate="artemisApp.exercise.assessmentCriterion" for="criterionTitle">Assessment Criterion</label>
                             <input
-                                class="form-control col-sm-4"
+                                class="form-control col-sm-6"
                                 type="text"
                                 id="criterionTitle"
                                 name="criterionTitle"
@@ -27,16 +27,16 @@
                             />
                         </div>
                     </div>
-                    <div class="col-md-2 text-end">
+                    <div class="col-md-3 text-end">
                         <div class="col-md-auto input-group-btn d-flex-end">
-                            <span class="btn btn-block btn-danger" id="delete-criterion-button" (click)="deleteGradingCriterion(criterion)">
+                            <span class="btn btn-md btn-danger" id="delete-criterion-button" (click)="deleteGradingCriterion(criterion)">
                                 <fa-icon [icon]="'trash'"></fa-icon>
                                 <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
                             </span>
                         </div>
                     </div>
                 </div>
-                <div>
+                <div class="table-responsive">
                     <table class="table table-striped">
                         <thead>
                             <tr>
