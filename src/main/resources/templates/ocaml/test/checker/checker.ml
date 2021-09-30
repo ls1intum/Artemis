@@ -17,6 +17,8 @@
     external is forbidden as it can be used to circumvent restrictions in the stdlib replacement
     the sequence operator is not forbidden as there is no point,
     "a; b" can be trivially replaced by "let _ = a in b"
+
+    to disable this, simply delete the entire contents of this file
  *)
 
 open Parsetree
